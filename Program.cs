@@ -71,6 +71,7 @@ namespace Net46ConsoleServer
             Console.WriteLine("");
 
             Boolean help = false;
+            /*
             if (args.Length == 0)
                 help = true;
             if (args.Length == 1)
@@ -81,6 +82,7 @@ namespace Net46ConsoleServer
                     help = true;
                 }
             }
+            */
 
             int i = 0;
             while (i < args.Length - 1)
@@ -145,7 +147,7 @@ namespace Net46ConsoleServer
                 Console.WriteLine("-datapath PATH_TO_AASX_FILES");
                 Console.WriteLine("-debugwait = Wait for Debugger to attach");
                 Console.WriteLine("-opclient UPDATERATE = time in ms between getting new values");
-                Console.WriteLine("FILENAME.AASX");
+                // Console.WriteLine("FILENAME.AASX");
                 return;
             }
 
