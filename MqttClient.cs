@@ -1,0 +1,114 @@
+﻿using MQTTnet;
+using MQTTnet.Client;
+using MQTTnet.Client.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AdminShellNS;
+
+/* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
+   Copyright (c) 2019 Phoenix Contact GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
+   Copyright (c) 2019 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbständige Einrichtung der Fraunhofer-Gesellschaft
+    zur Förderung der angewandten Forschung e.V. <florian.pethig@iosb-ina.fraunhofer.de>, author: Florian Pethig
+
+   This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
+*/
+
+/* For Mqtt Content:
+
+MIT License
+
+MQTTnet Copyright (c) 2016-2019 Christian Kratky
+*/
+
+namespace AasxMqttClient
+{
+    public class MqttClient
+    {        
+        public MqttClient()
+        {
+             
+        }
+
+        static int lastAASEnv = 0;
+        static int lastAAS = 0;
+        static int lastSubmodel = 0;
+        public static async Task StartAsync(AdminShell.PackageEnv [] package, AasxRestServerLibrary.GrapevineLoggerSuper logger = null)
+        {                      
+            // Create TCP based options using the builder.
+            var options = new MqttClientOptionsBuilder()
+                .WithClientId("AASXPackageXplorer MQTT Client")
+                .WithTcpServer("localhost", 1883)
+                .Build();
+
+            //create MQTT Client and Connect using options above
+            IMqttClient mqttClient = new MqttFactory().CreateMqttClient();
+            await mqttClient.ConnectAsync(options);
+            // if (mqttClient.IsConnected == true)
+            // logger.Info("### CONNECTED WITH SERVER ###");
+            // Console.WriteLine("### CONNECTED WITH SERVER ###");
+
+            int iAASEnv = 0;
+            for (iAASEnv = 0; iAASEnv < package.Length; iAASEnv++)
+            {
+                if (iAASEnv == lastAASEnv && package[iAASEnv] != null)
+                {
+                    //publish AAS to AAS Topic
+                    foreach (AdminShellV10.AdministrationShell aas in package[iAASEnv].AasEnv.AdministrationShells)
+                    {
+
+                    // logger.Info("Publish AAS");
+                    /*
+                    Console.WriteLine("Publish AAS" + aas.idShort);
+                    var message = new MqttApplicationMessageBuilder()
+                                    .WithTopic("AAS")
+                                    .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(aas))
+                                    .WithExactlyOnceQoS()
+                                    .WithRetainFlag()
+                                    .Build();
+
+                    await mqttClient.PublishAsync(message);
+                    */
+
+                        //publish submodels
+                        int iSubmodel = 0;
+                        foreach (var sm in package[iAASEnv].AasEnv.Submodels)
+                        {
+                            if (iSubmodel == lastSubmodel)
+                            {
+                                // logger.Info("Publish " + "Submodel_" + sm.idShort);
+                                Console.WriteLine("Publish MQTT AAS " + aas.idShort + " Submodel_" + sm.idShort);
+
+                                var message2 = new MqttApplicationMessageBuilder()
+                                                .WithTopic("Submodel_" + sm.idShort)
+                                                .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(sm))
+                                                .WithExactlyOnceQoS()
+                                                .WithRetainFlag()
+                                                .Build();
+
+                                await mqttClient.PublishAsync(message2);
+                                lastSubmodel++;
+                                iSubmodel = -1;
+                                break;
+                            }
+                            iSubmodel++;
+                        }
+                        if (iSubmodel != -1)
+                        {
+                            lastSubmodel = 0;
+                            lastAASEnv++;
+                        }
+                        break;
+                    }
+                    break;
+                }
+            }
+            if (package[lastAASEnv] == null)
+            {
+                lastAASEnv = 0;
+            }
+        }
+    }
+}

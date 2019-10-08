@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="CodeFile1.cs" />
+    <Compile Remove="Grapevine\AssemblyInfo.cs" />
+    <Compile Remove="RESTProgram.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grapevine" Version="4.1.2" />
+    <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.355.26" />
+    <PackageReference Include="System.IO.Packaging" Version="4.6.0-preview3.19128.7" />
+    <PackageReference Include="System.Security.Permissions" Version="4.6.0-preview3.19128.7" />
+  </ItemGroup>
+
+    <!-- Add the following 3 lines: -->
+    <ItemGroup>
+        <RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="true" />
+    </ItemGroup><ItemGroup>
+  <None Update="LICENSE.TXT">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
+</Project>
