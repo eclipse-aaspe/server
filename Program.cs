@@ -26,211 +26,6 @@ namespace Net46ConsoleServer
 {
     class Program
     {
-        private static System.Timers.Timer OPCClientTimer;
-        static bool timerSet = false;
-        private static void SetOPCClientTimer(double value)
-        {
-            if (!timerSet)
-            {
-                // Create a timer with an specified interval.
-                OPCClientTimer = new System.Timers.Timer(value);
-                // Hook up the Elapsed event for the timer. 
-                OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
-                OPCClientTimer.AutoReset = true;
-                OPCClientTimer.Enabled = true;
-
-                timerSet = true;
-            }
-        }
-
-        private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            ReadOPCClient(false);
-        }
-
-        private static System.Timers.Timer restTimer;
-        private static void SetRestTimer(double value)
-        {
-            // Create a timer with a two second interval.
-            restTimer = new System.Timers.Timer(value);
-            // Hook up the Elapsed event for the timer. 
-            restTimer.Elapsed += OnRestTimedEvent;
-            restTimer.AutoReset = true;
-            restTimer.Enabled = true;
-        }
-
-        static bool RESTalreadyRunning = false;
-        static long countGetPut = 0;
-
-        private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            //            if (RESTalreadyRunning)
-            //                return;
-
-            RESTalreadyRunning = true;
-
-            // string GETSUBMODEL = "OPC3";
-            // string GETURL = "http://192.168.1.10:51310";
-            // string PUTSUBMODEL = "OPC3";
-            // string PUTURL = "http://lin-eu-tsdvc03.europe.phoenixcontact.com:51310";
-            string GETSUBMODEL = "";
-            string GETURL = "";
-            string PUTSUBMODEL = "";
-            string PUTURL = "";
-
-            // Search for submodel REST and scan qualifiers for GET and PUT commands
-            foreach (var sm in env[0].AasEnv.Submodels)
-            {
-                if (sm != null && sm.idShort != null && sm.idShort == "REST")
-                {
-                    int count = sm.qualifiers.Count;
-                    if (count != 0)
-                    {
-                        int j = 0;
-
-                        while (j < count) // Scan qualifiers
-                        {
-                            var p = sm.qualifiers[j] as AdminShell.Qualifier;
-
-                            if (p.qualifierType == "GETSUBMODEL")
-                            {
-                                GETSUBMODEL = p.qualifierValue;
-                            }
-                            if (p.qualifierType == "GETURL")
-                            {
-                                GETURL = p.qualifierValue;
-                            }
-                            if (p.qualifierType == "PUTSUBMODEL")
-                            {
-                                PUTSUBMODEL = p.qualifierValue;
-                            }
-                            if (p.qualifierType == "PUTURL")
-                            {
-                                PUTURL = p.qualifierValue;
-                            }
-
-                            j++;
-                        }
-                    }
-                }
-            }
-
-            if (GETSUBMODEL != "" && GETURL != "") // GET
-            {
-                Console.WriteLine("{0} GET Submodel {1} from URL {2}.", countGetPut++, GETSUBMODEL, GETURL);
-
-                var sm = "";
-                try
-                {
-                    var client = new AasxRestServerLibrary.AasxRestClient(GETURL);
-                    sm = client.GetSubmodel(GETSUBMODEL);
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Can not connect to REST server {0}.", GETURL);
-                }
-
-                AdminShell.Submodel submodel = null;
-                try
-                {
-                    using (TextReader reader = new StringReader(sm))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
-                        submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
-                    }
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Can not read SubModel {0}.", GETSUBMODEL);
-                    return;
-                }
-
-                // need id for idempotent behaviour
-                if (submodel.identification == null)
-                {
-                    Console.WriteLine("Identification of SubModel {0} is (null).", GETSUBMODEL);
-                    return;
-                }
-
-                var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.identification);
-
-                // datastructure update
-                if (env == null || env[0].AasEnv == null || env[0].AasEnv.Assets == null)
-                {
-                    Console.WriteLine("Error accessing internal data structures.");
-                    return;
-                }
-
-                // add Submodel
-                var existingSm = env[0].AasEnv.FindSubmodel(submodel.identification);
-                if (existingSm != null)
-                    env[0].AasEnv.Submodels.Remove(existingSm);
-                env[0].AasEnv.Submodels.Add(submodel);
-
-                // add SubmodelRef to AAS            
-                // access the AAS
-                var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
-                var existsmr = aas.HasSubmodelRef(newsmr);
-                if (!existsmr)
-                {
-                    aas.AddSubmodelRef(newsmr);
-                }
-            }
-
-            if (PUTSUBMODEL != "" && PUTURL != "") // PUT
-            {
-                Console.WriteLine("{0} PUT Submodel {1} from URL {2}.", countGetPut++, PUTSUBMODEL, PUTURL);
-
-                {
-                    foreach (var sm in env[0].AasEnv.Submodels)
-                    {
-                        if (sm != null && sm.idShort != null && sm.idShort == PUTSUBMODEL)
-                        {
-                            var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-
-                            try
-                            {
-                                var client = new AasxRestServerLibrary.AasxRestClient(PUTURL);
-                                // theOnlineConnection = client;
-                                string result = client.PutSubmodel(json);
-                            }
-                            catch
-                            {
-                                Console.WriteLine("Can not connect to REST server {0}", PUTURL);
-                            }
-                        }
-                    }
-                }
-            }
-
-            RESTalreadyRunning = false;
-
-            // start MQTT Client as a worker (will start in the background)
-            // Console.WriteLine("Publish MQTT");
-            var worker = new BackgroundWorker();
-            worker.DoWork += async (s1, e1) =>
-            {
-
-                //AasxRestServerLibrary.AasxRestServer.Start(this.thePackageEnv, Options.RestServerHost, Options.RestServerPort, logger);
-                try
-                {
-                    // await AasxMqttClient.MqttClient.StartAsync(this.thePackageEnv, logger);
-                    await AasxMqttClient.MqttClient.StartAsync(env);
-                }
-                catch (Exception)
-                {
-                    // logger.Error(e);
-                }
-            };
-            worker.RunWorkerCompleted += (s1, e1) =>
-            {
-                // in any case, close flyover
-                // CloseFlyover();
-            };
-            worker.RunWorkerAsync();
-        }
-
         public static int envimax = 100;
         public static AdminShell.PackageEnv[] env = new AdminShellV10.PackageEnv[100]
             {
@@ -263,9 +58,10 @@ namespace Net46ConsoleServer
 
             // parse options
             Console.WriteLine("--help for options and help");
-            Console.WriteLine("Copyright (c) 2018-2019 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski");
+            Console.WriteLine("AASX Server Version 0.9.1");
+            Console.WriteLine("Copyright (c) 2019 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski");
             Console.WriteLine("Copyright (c) 2018-2019 Festo AG & Co. KG");
-            Console.WriteLine("Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.");
+            Console.WriteLine("Copyright (c) Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.");
             Console.WriteLine("This software is licensed under the Eclipse Public License 2.0 (EPL-2.0)");
             Console.WriteLine("The Newtonsoft.JSON serialization is licensed under the MIT License (MIT)");
             Console.WriteLine("The Grapevine REST server framework is licensed under Apache License 2.0 (Apache-2.0)");
@@ -479,6 +275,211 @@ namespace Net46ConsoleServer
             AasxRestServer.Stop();
         }
 
+        private static System.Timers.Timer OPCClientTimer;
+        static bool timerSet = false;
+        private static void SetOPCClientTimer(double value)
+        {
+            if (!timerSet)
+            {
+                // Create a timer with an specified interval.
+                OPCClientTimer = new System.Timers.Timer(value);
+                // Hook up the Elapsed event for the timer. 
+                OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
+                OPCClientTimer.AutoReset = true;
+                OPCClientTimer.Enabled = true;
+
+                timerSet = true;
+            }
+        }
+
+        private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            ReadOPCClient(false);
+        }
+
+        private static System.Timers.Timer restTimer;
+        private static void SetRestTimer(double value)
+        {
+            // Create a timer with a two second interval.
+            restTimer = new System.Timers.Timer(value);
+            // Hook up the Elapsed event for the timer. 
+            restTimer.Elapsed += OnRestTimedEvent;
+            restTimer.AutoReset = true;
+            restTimer.Enabled = true;
+        }
+
+        static bool RESTalreadyRunning = false;
+        static long countGetPut = 0;
+
+        private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            //            if (RESTalreadyRunning)
+            //                return;
+
+            RESTalreadyRunning = true;
+
+            // string GETSUBMODEL = "OPC3";
+            // string GETURL = "http://192.168.1.10:51310";
+            // string PUTSUBMODEL = "OPC3";
+            // string PUTURL = "http://lin-eu-tsdvc03.europe.phoenixcontact.com:51310";
+            string GETSUBMODEL = "";
+            string GETURL = "";
+            string PUTSUBMODEL = "";
+            string PUTURL = "";
+
+            // Search for submodel REST and scan qualifiers for GET and PUT commands
+            foreach (var sm in env[0].AasEnv.Submodels)
+            {
+                if (sm != null && sm.idShort != null && sm.idShort == "REST")
+                {
+                    int count = sm.qualifiers.Count;
+                    if (count != 0)
+                    {
+                        int j = 0;
+
+                        while (j < count) // Scan qualifiers
+                        {
+                            var p = sm.qualifiers[j] as AdminShell.Qualifier;
+
+                            if (p.qualifierType == "GETSUBMODEL")
+                            {
+                                GETSUBMODEL = p.qualifierValue;
+                            }
+                            if (p.qualifierType == "GETURL")
+                            {
+                                GETURL = p.qualifierValue;
+                            }
+                            if (p.qualifierType == "PUTSUBMODEL")
+                            {
+                                PUTSUBMODEL = p.qualifierValue;
+                            }
+                            if (p.qualifierType == "PUTURL")
+                            {
+                                PUTURL = p.qualifierValue;
+                            }
+
+                            j++;
+                        }
+                    }
+                }
+            }
+
+            if (GETSUBMODEL != "" && GETURL != "") // GET
+            {
+                Console.WriteLine("{0} GET Submodel {1} from URL {2}.", countGetPut++, GETSUBMODEL, GETURL);
+
+                var sm = "";
+                try
+                {
+                    var client = new AasxRestServerLibrary.AasxRestClient(GETURL);
+                    sm = client.GetSubmodel(GETSUBMODEL);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Can not connect to REST server {0}.", GETURL);
+                }
+
+                AdminShell.Submodel submodel = null;
+                try
+                {
+                    using (TextReader reader = new StringReader(sm))
+                    {
+                        JsonSerializer serializer = new JsonSerializer();
+                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                        submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Can not read SubModel {0}.", GETSUBMODEL);
+                    return;
+                }
+
+                // need id for idempotent behaviour
+                if (submodel.identification == null)
+                {
+                    Console.WriteLine("Identification of SubModel {0} is (null).", GETSUBMODEL);
+                    return;
+                }
+
+                var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.identification);
+
+                // datastructure update
+                if (env == null || env[0].AasEnv == null || env[0].AasEnv.Assets == null)
+                {
+                    Console.WriteLine("Error accessing internal data structures.");
+                    return;
+                }
+
+                // add Submodel
+                var existingSm = env[0].AasEnv.FindSubmodel(submodel.identification);
+                if (existingSm != null)
+                    env[0].AasEnv.Submodels.Remove(existingSm);
+                env[0].AasEnv.Submodels.Add(submodel);
+
+                // add SubmodelRef to AAS            
+                // access the AAS
+                var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
+                var existsmr = aas.HasSubmodelRef(newsmr);
+                if (!existsmr)
+                {
+                    aas.AddSubmodelRef(newsmr);
+                }
+            }
+
+            if (PUTSUBMODEL != "" && PUTURL != "") // PUT
+            {
+                Console.WriteLine("{0} PUT Submodel {1} from URL {2}.", countGetPut++, PUTSUBMODEL, PUTURL);
+
+                {
+                    foreach (var sm in env[0].AasEnv.Submodels)
+                    {
+                        if (sm != null && sm.idShort != null && sm.idShort == PUTSUBMODEL)
+                        {
+                            var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+
+                            try
+                            {
+                                var client = new AasxRestServerLibrary.AasxRestClient(PUTURL);
+                                // theOnlineConnection = client;
+                                string result = client.PutSubmodel(json);
+                            }
+                            catch
+                            {
+                                Console.WriteLine("Can not connect to REST server {0}", PUTURL);
+                            }
+                        }
+                    }
+                }
+            }
+
+            RESTalreadyRunning = false;
+
+            // start MQTT Client as a worker (will start in the background)
+            // Console.WriteLine("Publish MQTT");
+            var worker = new BackgroundWorker();
+            worker.DoWork += async (s1, e1) =>
+            {
+
+                //AasxRestServerLibrary.AasxRestServer.Start(this.thePackageEnv, Options.RestServerHost, Options.RestServerPort, logger);
+                try
+                {
+                    // await AasxMqttClient.MqttClient.StartAsync(this.thePackageEnv, logger);
+                    await AasxMqttClient.MqttClient.StartAsync(env);
+                }
+                catch (Exception)
+                {
+                    // logger.Error(e);
+                }
+            };
+            worker.RunWorkerCompleted += (s1, e1) =>
+            {
+                // in any case, close flyover
+                // CloseFlyover();
+            };
+            worker.RunWorkerAsync();
+        }
+
         private static Boolean OPCWrite(string nodeId, object value)
         /// <summary>
         /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
@@ -512,7 +513,6 @@ namespace Net46ConsoleServer
             }
             return true;
         }
-
 
         static Boolean ReadOPCClient(bool initial)
         /// <summary>
