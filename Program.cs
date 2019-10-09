@@ -52,6 +52,8 @@ namespace Net46ConsoleServer
             // default command line options
             var host = "localhost";
             var port = "51310";
+            bool runOPC = false;
+            bool runMQTT = false;
             bool debugwait = false;
             opcclientActive = false;
             int opcclient_rate = 5000;  // 5 seconds
@@ -71,21 +73,9 @@ namespace Net46ConsoleServer
             Console.WriteLine("");
 
             Boolean help = false;
-            /*
-            if (args.Length == 0)
-                help = true;
-            if (args.Length == 1)
-            {
-                var x = args[0].Trim().ToLower();
-                if (x == "--help")
-                {
-                    help = true;
-                }
-            }
-            */
 
             int i = 0;
-            while (i < args.Length - 1)
+            while (i < args.Length)
             {
                 var x = args[i].Trim().ToLower();
 
@@ -100,6 +90,20 @@ namespace Net46ConsoleServer
                 {
                     port = args[i + 1];
                     i += 2;
+                    continue;
+                }
+
+                if (x == "-opc")
+                {
+                    runOPC = true;
+                    i++;
+                    continue;
+                }
+
+                if (x == "-mqtt")
+                {
+                    runMQTT = true;
+                    i++;
                     continue;
                 }
 
@@ -145,6 +149,8 @@ namespace Net46ConsoleServer
                 Console.WriteLine("-host HOSTIP");
                 Console.WriteLine("-port HOSTPORT");
                 Console.WriteLine("-datapath PATH_TO_AASX_FILES");
+                Console.WriteLine("-OPC = start OPC server");
+                Console.WriteLine("-MQTT = start MQTT publisher");
                 Console.WriteLine("-debugwait = Wait for Debugger to attach");
                 Console.WriteLine("-opclient UPDATERATE = time in ms between getting new values");
                 // Console.WriteLine("FILENAME.AASX");
@@ -162,14 +168,7 @@ namespace Net46ConsoleServer
 
             Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
 
-            string fn = null; //  "Festo-USB-stick-sample-admin-shell.aasx";
-            /*
-            if (args.Length < 1)
-                return;
-            fn = args[args.Length - 1];
-            if (fn == null)
-                return;
-            */
+            string fn = null;
 
             {
                 Boolean is_BaseAddresses = false;
@@ -236,43 +235,55 @@ namespace Net46ConsoleServer
 
             Console.WriteLine("Please wait for servers starting...");
 
-            // REST vor OPC starten
+            // REST always started
             // AasxRestServer.Start(env, host, port, new GrapevineLoggerToConsole());
             AasxRestServer.Start(env, host, port); // without Logger
 
             SetRestTimer(10000); // GET and PUT every 10 seconds
                                  // OnRestTimedEvent(null, null);
 
-            AASMqttServer.MqttSeverStartAsync().Wait();
+            Console.WriteLine("REST Server started..");
 
-            //
-            MySampleServer server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
-
-            server.Run(); // wait for CTRL-C
-            //
-
-            /*
-            // no OPC UA: wait only for CTRL-C
-            ManualResetEvent quitEvent = new ManualResetEvent(false);
-            try
+            if (runMQTT)
             {
-                Console.CancelKeyPress += (sender, eArgs) =>
+                AASMqttServer.MqttSeverStartAsync().Wait();
+                Console.WriteLine("MQTT Publisher started..");
+            }
+
+            if (runOPC)
+            {
+                MySampleServer server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
+                Console.WriteLine("OPC UA Server started..");
+
+                server.Run(); // wait for CTRL-C
+            }
+            else
+            {
+                // no OPC UA: wait only for CTRL-C
+                Console.WriteLine("Servers succesfully started. Press Ctrl-C to exit...");
+                ManualResetEvent quitEvent = new ManualResetEvent(false);
+                try
                 {
-                    quitEvent.Set();
-                    eArgs.Cancel = true;
-                };
-            }
-            catch
-            {
-            }
+                    Console.CancelKeyPress += (sender, eArgs) =>
+                    {
+                        quitEvent.Set();
+                        eArgs.Cancel = true;
+                    };
+                }
+                catch
+                {
+                }
 
-            // wait for timeout or Ctrl-C
-            quitEvent.WaitOne(Timeout.Infinite);
-            */
+                // wait for timeout or Ctrl-C
+                quitEvent.WaitOne(Timeout.Infinite);
+            }
 
             // wait for RETURN
 
-            AASMqttServer.MqttSeverStopAsync().Wait();
+            if (runMQTT)
+            {
+                AASMqttServer.MqttSeverStopAsync().Wait();
+            }
 
             AasxRestServer.Stop();
         }
