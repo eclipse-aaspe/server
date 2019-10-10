@@ -63,7 +63,7 @@ namespace Net46ConsoleServer
             Console.WriteLine("AASX Server Version 0.9.1");
             Console.WriteLine("Copyright (c) 2019 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski");
             Console.WriteLine("Copyright (c) 2018-2019 Festo AG & Co. KG");
-            Console.WriteLine("Copyright (c) Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.");
+            Console.WriteLine("Copyright (c) 2019 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.");
             Console.WriteLine("This software is licensed under the Eclipse Public License 2.0 (EPL-2.0)");
             Console.WriteLine("The Newtonsoft.JSON serialization is licensed under the MIT License (MIT)");
             Console.WriteLine("The Grapevine REST server framework is licensed under Apache License 2.0 (Apache-2.0)");
