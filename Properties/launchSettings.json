@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AasxServer": {
+      "commandName": "Project",
+      "commandLineArgs": "-opc"
+    }
+  }
+}

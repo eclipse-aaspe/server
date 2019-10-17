@@ -24,7 +24,7 @@ using System.ComponentModel;
 
 namespace Net46ConsoleServer
 {
-    class Program
+    public class Program
     {
         public static int envimax = 100;
         public static AdminShell.PackageEnv[] env = new AdminShellV10.PackageEnv[100]
@@ -47,7 +47,7 @@ namespace Net46ConsoleServer
 
         static MqttServer AASMqttServer = new MqttServer();
 
-        static void Main(string[] args)
+        static public void Main(string[] args)
         {
             // default command line options
             var host = "localhost";

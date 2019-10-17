@@ -1532,6 +1532,7 @@ namespace AasxRestServerLibrary
 
             // OZ
             // Hack ASSX laden
+            /*
             if (ids[0].idType == "AASX")
             {
                 SwitchToAASX = ids[0].id;
@@ -1539,7 +1540,7 @@ namespace AasxRestServerLibrary
                 SendTextResponse(context, "switching done");
                 return;
             }
-
+            */
 
             // turn these list into a list of Handles
             var res = new List<AasxHttpHandleIdentification>();
