@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AASXLoader\AASXLoader.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="LICENSE.TXT">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

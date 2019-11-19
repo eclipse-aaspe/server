@@ -21,6 +21,7 @@ using Grapevine.Shared;
 using Formatting = Newtonsoft.Json.Formatting;
 using AasxMqttServer;
 using System.ComponentModel;
+using AASXLoader;
 
 namespace Net46ConsoleServer
 {
@@ -52,15 +53,17 @@ namespace Net46ConsoleServer
             // default command line options
             var host = "localhost";
             var port = "51310";
+            bool runREST = false;
             bool runOPC = false;
             bool runMQTT = false;
             bool debugwait = false;
             opcclientActive = false;
             int opcclient_rate = 5000;  // 5 seconds
+            string registry = null;
 
             // parse options
             Console.WriteLine("--help for options and help");
-            Console.WriteLine("AASX Server Version 0.9.1");
+            Console.WriteLine("AASX Server Version 0.9.2");
             Console.WriteLine("Copyright (c) 2019 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski");
             Console.WriteLine("Copyright (c) 2018-2019 Festo AG & Co. KG");
             Console.WriteLine("Copyright (c) 2019 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.");
@@ -82,6 +85,7 @@ namespace Net46ConsoleServer
                 if (x == "-host")
                 {
                     host = args[i + 1];
+                    Console.WriteLine(args[i] + " " + args[i + 1]);
                     i += 2;
                     continue;
                 }
@@ -89,27 +93,15 @@ namespace Net46ConsoleServer
                 if (x == "-port")
                 {
                     port = args[i + 1];
+                    Console.WriteLine(args[i] + " " + args[i + 1]);
                     i += 2;
-                    continue;
-                }
-
-                if (x == "-opc")
-                {
-                    runOPC = true;
-                    i++;
-                    continue;
-                }
-
-                if (x == "-mqtt")
-                {
-                    runMQTT = true;
-                    i++;
                     continue;
                 }
 
                 if (x == "-datapath")
                 {
                     AasxHttpContextHelper.DataPath = args[i + 1];
+                    Console.WriteLine(args[i] + " " + args[i + 1]);
                     i += 2;
                     continue;
                 }
@@ -117,6 +109,7 @@ namespace Net46ConsoleServer
                 if (x == "-debugwait")
                 {
                     debugwait = true;
+                    Console.WriteLine(args[i]);
                     i++;
                     continue;
                 }
@@ -124,6 +117,7 @@ namespace Net46ConsoleServer
                 if (x == "-opcclient")
                 {
                     opcclientActive = true;
+                    Console.WriteLine(args[i] + " " + args[i + 1]);
                     int rate = 0;
                     if (Int32.TryParse(args[i + 1], out rate))
                     {
@@ -137,6 +131,38 @@ namespace Net46ConsoleServer
                     continue;
                 }
 
+                if (x == "-registry")
+                {
+                    registry = args[i + 1];
+                    Console.WriteLine(args[i] + " " + args[i + 1]);
+                    i += 2;
+                    continue;
+                }
+
+                if (x == "-rest")
+                {
+                    runREST = true;
+                    Console.WriteLine(args[i]);
+                    i++;
+                    continue;
+                }
+
+                if (x == "-opc")
+                {
+                    runOPC = true;
+                    Console.WriteLine(args[i]);
+                    i++;
+                    continue;
+                }
+
+                if (x == "-mqtt")
+                {
+                    runMQTT = true;
+                    Console.WriteLine(args[i]);
+                    i++;
+                    continue;
+                }
+
                 if (x == "--help")
                 {
                     help = true;
@@ -144,18 +170,30 @@ namespace Net46ConsoleServer
                 }
             }
 
+            if(!(runREST || runOPC || runMQTT))
+            {
+                Console.WriteLine();
+                Console.WriteLine("Please specifiy -REST and/or -OPC and/or -MQTT");
+                Console.WriteLine();
+                help = true;
+            }
+
             if (help)
             {
                 Console.WriteLine("-host HOSTIP");
                 Console.WriteLine("-port HOSTPORT");
                 Console.WriteLine("-datapath PATH_TO_AASX_FILES");
+                Console.WriteLine("-REST = start REST server");
                 Console.WriteLine("-OPC = start OPC server");
                 Console.WriteLine("-MQTT = start MQTT publisher");
-                Console.WriteLine("-debugwait = Wait for Debugger to attach");
+                Console.WriteLine("-debugwait = wait for Debugger to attach");
                 Console.WriteLine("-opclient UPDATERATE = time in ms between getting new values");
+                Console.WriteLine("-registry = server IP of BaSyx registry");
                 // Console.WriteLine("FILENAME.AASX");
+                Console.ReadLine();
                 return;
             }
+            Console.WriteLine("");
 
             // auf Debugger warten
             if (debugwait)
@@ -166,10 +204,15 @@ namespace Net46ConsoleServer
                 Console.WriteLine("Debugger attached");
             }
 
-            Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
+            // Register AAS to registry server
+            if (registry != null)
+            {
+                AASXLoader.Registry.RegisterAASX(registry, host + ":" + port, AasxHttpContextHelper.DataPath);
+            }
 
             string fn = null;
 
+            if (runOPC)
             {
                 Boolean is_BaseAddresses = false;
                 Boolean is_uaString = false;
@@ -233,16 +276,21 @@ namespace Net46ConsoleServer
                 SetOPCClientTimer(opcclient_rate); // read again everytime timer expires
             }
 
+            Console.WriteLine();
             Console.WriteLine("Please wait for servers starting...");
 
-            // REST always started
-            // AasxRestServer.Start(env, host, port, new GrapevineLoggerToConsole());
-            AasxRestServer.Start(env, host, port); // without Logger
+            if (runREST)
+            {
+                Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
 
-            SetRestTimer(10000); // GET and PUT every 10 seconds
-                                 // OnRestTimedEvent(null, null);
+                // AasxRestServer.Start(env, host, port, new GrapevineLoggerToConsole());
+                AasxRestServer.Start(env, host, port); // without Logger
 
-            Console.WriteLine("REST Server started..");
+                SetRestTimer(10000); // GET and PUT every 10 seconds
+                                     // OnRestTimedEvent(null, null);
+
+                Console.WriteLine("REST Server started..");
+            }
 
             if (runMQTT)
             {

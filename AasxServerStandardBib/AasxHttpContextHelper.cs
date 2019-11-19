@@ -142,6 +142,55 @@ namespace AasxRestServerLibrary
 
         public AdminShell.AdministrationShell FindAAS(string aasid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
+            AdminShell.AdministrationShell aas = null;
+            int iPackage = -1;
+
+            if (Packages == null)
+                return null;
+
+            if (Regex.IsMatch(aasid, @"^\d+$")) // only number, i.e. index
+            {
+                // Index
+                int i = Convert.ToInt32(aasid);
+
+                if (i > Packages.Length)
+                    return null;
+
+                if (Packages[i] == null || Packages[i].AasEnv == null || Packages[i].AasEnv.AdministrationShells == null
+                    || Packages[i].AasEnv.AdministrationShells.Count < 1)
+                    return null;
+
+                aas = Packages[i].AasEnv.AdministrationShells[0];
+                iPackage = i;
+            }
+            else
+            {
+                // Name
+                if (aasid == "id")
+                {
+                    aas = Packages[0].AasEnv.AdministrationShells[0];
+                    iPackage = 0;
+                }
+                else
+                {
+                    for (int i = 0; i < Packages.Length; i++)
+                    {
+                        if (Packages[i] != null)
+                        {
+                            if (Packages[i].AasEnv.AdministrationShells[0].idShort == aasid)
+                            {
+                                aas = Packages[i].AasEnv.AdministrationShells[0];
+                                iPackage = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return aas;
+
+
             // trivial
             if (Packages[0] == null || Packages[0].AasEnv == null || Packages[0].AasEnv.AdministrationShells == null || Packages[0].AasEnv.AdministrationShells.Count < 1)
                 return null;
