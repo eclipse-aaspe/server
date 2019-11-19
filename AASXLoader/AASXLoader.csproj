@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ApplicationIcon />
+    <StartupObject />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="AAS.xsd" />
+    <None Remove="IEC61360.xsd" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="AAS.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="IEC61360.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BaSyx.Registry.Client.Http" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="C:\Users\7wrmhx\.nuget\packages\basyx.registry.client.http\1.0.0\contentFiles\any\netstandard2.0\RegistryClientSettings.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="C:\Users\ZIC5HO\.nuget\packages\basyx.registry.client.http\1.0.0\contentFiles\any\netstandard2.0\RegistryClientSettings.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
