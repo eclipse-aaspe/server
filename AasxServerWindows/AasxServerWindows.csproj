@@ -53,6 +53,9 @@
     <Reference Include="Grapevine, Version=4.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Grapevine.4.1.2\lib\net40\Grapevine.dll</HintPath>
     </Reference>
+    <Reference Include="jose-jwt, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\jose-jwt.2.5.0\lib\net461\jose-jwt.dll</HintPath>
+    </Reference>
     <Reference Include="M2Mqtt, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\M2MqttDotnetCore.1.0.8\lib\netstandard2.0\M2Mqtt.dll</HintPath>
     </Reference>
@@ -340,6 +343,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Transactions" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />

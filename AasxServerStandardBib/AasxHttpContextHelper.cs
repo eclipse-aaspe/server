@@ -16,6 +16,10 @@ using Grapevine.Server.Attributes;
 using Grapevine.Shared;
 using Grapevine.Server;
 
+using Jose;
+using Jose.jwe;
+using Jose.netstandard1_4;
+
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
 The browser functionality is under the cefSharp license (see https://raw.githubusercontent.com/cefsharp/CefSharp/master/LICENSE).
@@ -1622,23 +1626,90 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
+        public static string JWTtoken = null;
         // OZ
-        public void EvalGetListAAS(IHttpContext context)
+        public void EvalPostAuthenticate(IHttpContext context)
         {
-            // get the list
+            string payload0 = context.Request.Payload;
+
             dynamic res = new ExpandoObject();
 
-            /*
-            var filelist = new List<string>();
-
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(DataPath);
-
-            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
+            var payload = new Dictionary<string, object>()
             {
-                filelist.Add(f.Name);
-            }
-            */
+                { "sub", "industry40.com" },
+                { "exp", 2022 }
+            };
 
+            var secretKey = new byte[] { 164, 60, 194, 0, 161, 189, 41, 38, 130, 89, 141, 164, 45, 170, 159, 209, 69, 137, 243, 216, 191, 131, 47, 250, 32, 107, 231, 117, 37, 158, 225, 234 };
+
+            if (JWTtoken != null)
+            {
+                System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+                secretKey = enc.GetBytes(JWTtoken);
+            }
+
+            JWTtoken = Jose.JWT.Encode(payload, secretKey, JwsAlgorithm.HS256);
+
+            Console.WriteLine();
+            Console.WriteLine("JWT: " + JWTtoken);
+            Console.WriteLine();
+
+            res.apiversion = 1;
+            res.jwt = JWTtoken;
+
+            SendJsonResponse(context, res);
+        }
+        public void EvalGetListAAS(IHttpContext context)
+        {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (JWTtoken != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Check Authentication");
+                string headers = context.Request.Headers.ToString();
+                // Console.WriteLine("Headers = " + headers);
+                Boolean JWTfound = false;
+                var token = context.Request.Headers.Get("Authorization");
+                if (token != null)
+                {
+                    string[] split = token.Split(new Char[] { ' ', '\t' });
+                    if (split[0] != null)
+                    {
+                        if (split[0].ToLower() == "bearer")
+                        {
+                            Console.WriteLine("Received JWT = " + split[1]);
+                            if (JWTtoken == split[1])
+                            {
+                                Console.WriteLine("Authorized by JWT");
+                                JWTfound = true;
+                            }
+                        }
+                    }
+                }
+
+                string[] splitq = context.Request.Url.ToString().Split(new char[] { '?' });
+                if (splitq != null && splitq.Length > 1 && splitq[1] != null)
+                {
+                    Console.WriteLine("Received Query String = " + splitq[1]);
+                    if (JWTtoken == splitq[1])
+                    {
+                        Console.WriteLine("Authorized by Query String");
+                        JWTfound = true;
+                    }
+                }
+
+                if (!JWTfound)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+                res.confirm = "Authorization by JWT successful!";
+            }
+
+            // get the list
             var aaslist = new List<string>();
 
             int aascount = Net46ConsoleServer.Program.env.Length;
@@ -1653,7 +1724,6 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            res.apiversion = 1;
             res.aaslist = aaslist;
 
             // return this list
