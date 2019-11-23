@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using AdminShellNS;
 using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.IO;
 using System.Dynamic;
@@ -1626,9 +1627,13 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public static string JWTtoken = null;
-        // OZ
-        public void EvalPostAuthenticate(IHttpContext context)
+        public static bool withAuthentification = false;
+
+        public static string GuestToken = null;
+
+        public static string secretString = "Industrie4.0-Asset-Administration-Shell";
+
+        public void EvalPostAuthenticateGuest(IHttpContext context)
         {
             string payload0 = context.Request.Payload;
 
@@ -1636,67 +1641,181 @@ namespace AasxRestServerLibrary
 
             var payload = new Dictionary<string, object>()
             {
-                { "sub", "industry40.com" },
-                { "exp", 2022 }
+                { "user", "guest" },
+                { "exp", 2023 }
             };
 
-            var secretKey = new byte[] { 164, 60, 194, 0, 161, 189, 41, 38, 130, 89, 141, 164, 45, 170, 159, 209, 69, 137, 243, 216, 191, 131, 47, 250, 32, 107, 231, 117, 37, 158, 225, 234 };
-
-            if (JWTtoken != null)
+            if (GuestToken == null)
             {
                 System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-                secretKey = enc.GetBytes(JWTtoken);
+                GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            }
+            else
+            {
+                System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+                GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(GuestToken), JwsAlgorithm.HS256);
             }
 
-            JWTtoken = Jose.JWT.Encode(payload, secretKey, JwsAlgorithm.HS256);
-
             Console.WriteLine();
-            Console.WriteLine("JWT: " + JWTtoken);
+            Console.WriteLine("JWT: " + GuestToken);
             Console.WriteLine();
 
-            res.apiversion = 1;
-            res.jwt = JWTtoken;
+            res.user = "guest";
+            res.token = GuestToken;
 
             SendJsonResponse(context, res);
         }
-        public void EvalGetListAAS(IHttpContext context)
+
+        public void EvalPostAuthenticateUser(IHttpContext context)
         {
             dynamic res = new ExpandoObject();
 
-            // check authentication
-            if (JWTtoken != null)
+            var parsed = JObject.Parse(context.Request.Payload);
+            string user = parsed.SelectToken("user").Value<string>();
+            string password = parsed.SelectToken("password").Value<string>();
+
+            bool JWTfound = false;
+
+            int userCount = securityUserName.Length;
+
+            for (int i = 0; i < userCount; i++)
             {
+                if (user == securityUserName[i] && password == securityUserPassword[i])
+                {
+                    JWTfound = true;
+                    break;
+                }
+            }
+
+            if (!JWTfound)
+            {
+                res.error = "User not authorized!";
+                SendJsonResponse(context, res);
+                return;
+            }
+
+            var payload = new Dictionary<string, object>()
+            {
+                { "user", user },
+                { "exp", 2023 }
+            };
+
+            System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+            string token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+
+            withAuthentification = true;
+
+            res.user = user;
+            res.token = token;
+
+            SendJsonResponse(context, res);
+        }
+
+        public void EvalGetListAAS(IHttpContext context)
+        {
+            dynamic res = new ExpandoObject();
+            string accessrights = null;
+
+            withAuthentification = true;
+            // check authentication
+            if (GuestToken != null || withAuthentification)
+            {
+                string[] split = null;
+                string receivedToken = null;
+                Boolean JWTfound = false;
+
                 Console.WriteLine();
-                Console.WriteLine("Check Authentication");
+                Console.WriteLine("Check Authorization");
                 string headers = context.Request.Headers.ToString();
                 // Console.WriteLine("Headers = " + headers);
-                Boolean JWTfound = false;
                 var token = context.Request.Headers.Get("Authorization");
                 if (token != null)
                 {
-                    string[] split = token.Split(new Char[] { ' ', '\t' });
+                    split = token.Split(new Char[] { ' ', '\t' });
                     if (split[0] != null)
                     {
                         if (split[0].ToLower() == "bearer")
                         {
-                            Console.WriteLine("Received JWT = " + split[1]);
-                            if (JWTtoken == split[1])
-                            {
-                                Console.WriteLine("Authorized by JWT");
-                                JWTfound = true;
-                            }
+                            Console.WriteLine("Received bearer token = " + split[1]);
+                            receivedToken = split[1];
                         }
                     }
                 }
 
-                string[] splitq = context.Request.Url.ToString().Split(new char[] { '?' });
-                if (splitq != null && splitq.Length > 1 && splitq[1] != null)
+                if (receivedToken == null)
                 {
-                    Console.WriteLine("Received Query String = " + splitq[1]);
-                    if (JWTtoken == splitq[1])
+                    split = context.Request.Url.ToString().Split(new char[] { '?' });
+                    if (split != null && split.Length > 1 && split[1] != null)
                     {
-                        Console.WriteLine("Authorized by Query String");
+                        Console.WriteLine("Received query string = " + split[1]);
+                        receivedToken = split[1];
+                    }
+                }
+
+                if (receivedToken != null)
+                {
+                    if (receivedToken == GuestToken)
+                    {
+                        accessrights = "GUEST";
                         JWTfound = true;
+                    }
+                    else
+                    {
+                        bool integrityExc = false;
+                        string json = null;
+
+                        try
+                        {
+                            System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+                            json = Jose.JWT.Decode(receivedToken, enc.GetBytes(secretString));
+                        }
+                        catch (Exception ex)
+                        {
+                            integrityExc = true;
+                        }
+
+                        if (!integrityExc && json != null)
+                        {
+                            var parsed = JObject.Parse(json);
+                            string user = parsed.SelectToken("user").Value<string>();
+                            string exp = parsed.SelectToken("exp").Value<string>();
+                            string domain = null;
+
+                            split = user.Split(new char[] { '@' });
+                            if (split != null && split.Length > 1 && split[1] != null)
+                            {
+                                domain = split[1];
+                            }
+
+                            if (user == "guest")
+                            {
+                                if (receivedToken == GuestToken)
+                                {
+                                    accessrights = "GUEST";
+                                    JWTfound = true;
+                                }
+                            }
+                            else // Check user authorization
+                            {
+                                int rightsCount = securityRightsName.Length;
+
+                                for (int i = 0; i < rightsCount; i++)
+                                {
+                                    if (user == securityRightsName[i])
+                                    {
+                                        accessrights = securityRightsValue[i];
+                                        JWTfound = true;
+                                        break;
+                                    }
+                                    if (domain == securityRightsName[i])
+                                    {
+                                        accessrights = securityRightsValue[i];
+                                        JWTfound = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -1706,7 +1825,7 @@ namespace AasxRestServerLibrary
                     SendJsonResponse(context, res);
                     return;
                 }
-                res.confirm = "Authorization by JWT successful!";
+                res.confirm = "Authorization = " + accessrights;
             }
 
             // get the list
@@ -1730,6 +1849,69 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
+        public static string[] securityUserName;
+        public static string[] securityUserPassword;
+
+        public static string[] securityRightsName;
+        public static string[] securityRightsValue;
+
+        public static void securityInit()
+        {
+            int aascount = Net46ConsoleServer.Program.env.Length;
+
+            for (int i = 0; i < aascount; i++)
+            {
+                if (Net46ConsoleServer.Program.env[i] != null)
+                {
+                    if (Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].idShort == "Security")
+                    {
+                        foreach (var sm in Net46ConsoleServer.Program.env[i].AasEnv.Submodels)
+                        {
+                            if (sm != null && sm.idShort != null)
+                            {
+                                int j;
+                                int count;
+
+                                if (sm.idShort == "User")
+                                {
+                                    Console.WriteLine("User");
+                                    count = sm.submodelElements.Count;
+
+                                    securityUserName = new string[count];
+                                    securityUserPassword = new string[count];
+
+                                    for (j = 0; j < count; j++)
+                                    {
+                                        var sme = sm.submodelElements[j].submodelElement;
+                                        var p = sme as AdminShell.Property;
+                                        // Console.WriteLine(p.idShort + " : " + p.value);
+                                        securityUserName[j] = p.idShort;
+                                        securityUserPassword[j] = p.value;
+                                    }
+                                }
+                                if (sm.idShort == "SecurityRights")
+                                {
+                                    Console.WriteLine("SecurityRights");
+                                    count = sm.submodelElements.Count;
+
+                                    securityRightsName = new string[count];
+                                    securityRightsValue = new string[count];
+
+                                    for (j = 0; j < count; j++)
+                                    {
+                                        var sme = sm.submodelElements[j].submodelElement;
+                                        var p = sme as AdminShell.Property;
+                                        // Console.WriteLine(p.idShort + " : " + p.value);
+                                        securityRightsName[j] = p.idShort;
+                                        securityRightsValue[j] = p.value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         public void EvalSelectAASX(IHttpContext context, int fileIndex)
         {
             // get the list

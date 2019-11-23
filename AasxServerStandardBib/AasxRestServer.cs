@@ -101,13 +101,21 @@ namespace AasxRestServerLibrary
 
             // Authenticate
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authenticate(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authenticateGuest(/|)$")]
             public IHttpContext PostAuthenticate(IHttpContext context)
             {
-                helper.EvalPostAuthenticate(context);
+                helper.EvalPostAuthenticateGuest(context);
                 return context;
             }
 
+            // Authenticate User
+
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateUser(/|)$")]
+            public IHttpContext PostAuthenticateUser(IHttpContext context)
+            {
+                helper.EvalPostAuthenticateUser(context);
+                return context;
+            }
             // Server
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/profile(/|)$")]

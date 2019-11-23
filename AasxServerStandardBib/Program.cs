@@ -207,7 +207,10 @@ namespace Net46ConsoleServer
             // Register AAS to registry server
             if (registry != null)
             {
-                AASXLoader.Registry.RegisterAASX(registry, host + ":" + port, AasxHttpContextHelper.DataPath);
+                // AASXLoader.Registry.RegisterAASX(registry, host + ":" + port, AasxHttpContextHelper.DataPath);
+                Console.WriteLine();
+                Console.WriteLine("*** Include #210 in Program.cs and AASXLoader in solution ***");
+                Console.WriteLine();
             }
 
             string fn = null;
@@ -263,6 +266,7 @@ namespace Net46ConsoleServer
                 envi++;
             }
 
+            AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
 
 			if (opcclientActive) // read data by OPC UA
 			{
