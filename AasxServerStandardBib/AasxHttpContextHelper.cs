@@ -1989,13 +1989,21 @@ namespace AasxRestServerLibrary
                 }
             }
         }
-        public void EvalSelectAASX(IHttpContext context, int fileIndex)
+        public void EvalGetAASX(IHttpContext context, int fileIndex)
         {
             // get the list
             dynamic res = new ExpandoObject();
             var filelist = new List<string>();
             string response = "";
 
+            // return as FILE
+
+            FileStream packageStream = File.OpenRead(Net46ConsoleServer.Program.envFileName[fileIndex]);
+
+            SendStreamResponse(context, packageStream, Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]));
+            packageStream.Close();
+
+            /*
             System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(DataPath);
 
             int i = 0; // Index in filelist above
@@ -2015,6 +2023,7 @@ namespace AasxRestServerLibrary
             response = "ERROR: Could not switch AASX!";
             SendTextResponse(context, response);
             return;
+            */
         }
         #endregion
 

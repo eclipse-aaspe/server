@@ -41,6 +41,19 @@ namespace Net46ConsoleServer
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null
             };
+        public static string[] envFileName = new string[100]
+            {
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null
+            };
 
         static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static Boolean opcclientActive;
@@ -258,6 +271,7 @@ namespace Net46ConsoleServer
                 {
                     fn = AasxHttpContextHelper.DataPath + "/" + fn;
                     Console.WriteLine("Loading {0}...", fn);
+                    envFileName[envi] = fn;
                     env[envi] = new AdminShell.PackageEnv(fn);
                     if (env[envi] == null)
                     {

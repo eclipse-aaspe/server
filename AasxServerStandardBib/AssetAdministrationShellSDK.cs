@@ -3607,7 +3607,7 @@ namespace AdminShellNS
                     try
                     {
                         // OZ
-                        var package = Package.Open(fn, FileMode.Open);
+                        var package = Package.Open(fn, FileMode.Open, FileAccess.Read, FileShare.Read);
 
                         // get the origin from the package
                         PackagePart originPart = null;

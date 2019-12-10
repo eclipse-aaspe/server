@@ -141,14 +141,14 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/selectaasx/(\d+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
             public IHttpContext SelectAASX(IHttpContext context)
             {
 
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalSelectAASX(context, Int32.Parse(m.Groups[1].ToString()));
+                    helper.EvalGetAASX(context, Int32.Parse(m.Groups[1].ToString()));
                     return context;
                 }
                 return context;
