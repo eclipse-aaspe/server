@@ -110,13 +110,20 @@ namespace AasxRestServerLibrary
 
             // Authenticate User
 
-            // [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateUser(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/authenticateUser(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateUser(/|)$")]
             public IHttpContext PostAuthenticateUser(IHttpContext context)
             {
                 helper.EvalPostAuthenticateUser(context);
                 return context;
             }
+
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/authenticateUser(/|)$")]
+            public IHttpContext PutAuthenticateUser(IHttpContext context)
+            {
+                helper.EvalPostAuthenticateUser(context);
+                return context;
+            }
+
             // Server
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/profile(/|)$")]

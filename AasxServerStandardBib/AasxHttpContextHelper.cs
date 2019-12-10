@@ -21,6 +21,10 @@ using Jose;
 using Jose.jwe;
 using Jose.netstandard1_4;
 
+using System.Security.Cryptography;
+using System.Security.Permissions;
+using System.Security.Cryptography.X509Certificates;
+
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
 The browser functionality is under the cefSharp license (see https://raw.githubusercontent.com/cefsharp/CefSharp/master/LICENSE).
@@ -1635,6 +1639,9 @@ namespace AasxRestServerLibrary
 
         public void EvalPostAuthenticateGuest(IHttpContext context)
         {
+            Console.WriteLine();
+            Console.WriteLine("AuthenticateUser Guest");
+
             string payload0 = context.Request.Payload;
 
             dynamic res = new ExpandoObject();
@@ -1656,9 +1663,7 @@ namespace AasxRestServerLibrary
                 GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(GuestToken), JwsAlgorithm.HS256);
             }
 
-            Console.WriteLine();
             Console.WriteLine("JWT: " + GuestToken);
-            Console.WriteLine();
 
             res.user = "guest";
             res.token = GuestToken;
@@ -1668,22 +1673,94 @@ namespace AasxRestServerLibrary
 
         public void EvalPostAuthenticateUser(IHttpContext context)
         {
+            string token = null;
+            string user = null;
+            string publicKey = null;
             dynamic res = new ExpandoObject();
-
-            var parsed = JObject.Parse(context.Request.Payload);
-            string user = parsed.SelectToken("user").Value<string>();
-            string password = parsed.SelectToken("password").Value<string>();
-
             bool JWTfound = false;
 
-            int userCount = securityUserName.Length;
+            var parsed = JObject.Parse(context.Request.Payload);
 
-            for (int i = 0; i < userCount; i++)
+            try
             {
-                if (user == securityUserName[i] && password == securityUserPassword[i])
+                token = parsed.SelectToken("token").Value<string>();
+            }
+            catch
+            {
+                // no token in request = user/password
+                token = null;
+            }
+
+            if (token != null && token != "")
+            {
+                Console.WriteLine();
+                Console.WriteLine("AuthenticateUser token");
+                var parsed2 = JObject.Parse(Jose.JWT.Payload(token));
+
+                user = parsed2.SelectToken("user").Value<string>();
+
+                X509Store store = new X509Store("My");
+                store.Open(OpenFlags.ReadOnly);
+                X509Certificate2Collection collection = store.Certificates;
+                X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
+
+                foreach (X509Certificate2 x509 in fcollection)
                 {
+                    try
+                    {
+                        string simpleName = x509.GetNameInfo(X509NameType.SimpleName, true);
+                        if (simpleName == user)
+                        {
+                            publicKey = x509.PublicKey.Key.ToXmlString(false);
+                            x509.Reset();
+                            break;
+                        }
+                    }
+                    catch (CryptographicException)
+                    {
+                        res.error = "User not authorized!";
+                        SendJsonResponse(context, res);
+                        return;
+                    }
+                }
+                store.Close();
+
+                if (publicKey != null)
+                {
+                    string json = null;
+
+                    try
+                    {
+                        System.Text.ASCIIEncoding enc1 = new System.Text.ASCIIEncoding();
+                        json = Jose.JWT.Decode(token, enc1.GetBytes(publicKey));
+                    }
+                    catch (Exception ex)
+                    {
+                        res.error = "User not authorized!";
+                        SendJsonResponse(context, res);
+                        return;
+                    }
+
                     JWTfound = true;
-                    break;
+                }
+            }
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("AuthenticateUser Password");
+
+                user = parsed.SelectToken("user").Value<string>();
+                string password = parsed.SelectToken("password").Value<string>();
+
+                int userCount = securityUserName.Length;
+
+                for (int i = 0; i < userCount; i++)
+                {
+                    if (user == securityUserName[i] && password == securityUserPassword[i])
+                    {
+                        JWTfound = true;
+                        break;
+                    }
                 }
             }
 
@@ -1701,7 +1778,7 @@ namespace AasxRestServerLibrary
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            string token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
             withAuthentification = true;
 
