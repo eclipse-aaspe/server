@@ -1665,6 +1665,8 @@ namespace AasxRestServerLibrary
 
             Console.WriteLine("JWT: " + GuestToken);
 
+            withAuthentification = true;
+
             res.user = "guest";
             res.token = GuestToken;
 
@@ -1788,13 +1790,12 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public void EvalGetListAAS(IHttpContext context)
+        public string SecurityCheck(IHttpContext context)
+
         {
-            dynamic res = new ExpandoObject();
             string accessrights = null;
 
-            withAuthentification = true;
-            // check authentication
+            // return access right: null = no rights
             if (GuestToken != null || withAuthentification)
             {
                 string[] split = null;
@@ -1895,13 +1896,27 @@ namespace AasxRestServerLibrary
                         }
                     }
                 }
+            }
 
-                if (!JWTfound)
+            return accessrights;
+        }
+
+        public void EvalGetListAAS(IHttpContext context)
+        {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
                 {
                     res.error = "You are not authorized for this operation!";
                     SendJsonResponse(context, res);
                     return;
                 }
+
                 res.confirm = "Authorization = " + accessrights;
             }
 
@@ -1925,6 +1940,33 @@ namespace AasxRestServerLibrary
             // return this list
             SendJsonResponse(context, res);
         }
+
+        public void EvalGetAASX(IHttpContext context, int fileIndex)
+        {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
+            // return as FILE
+            FileStream packageStream = File.OpenRead(Net46ConsoleServer.Program.envFileName[fileIndex]);
+
+            SendStreamResponse(context, packageStream, Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]));
+            packageStream.Close();
+        }
+        #endregion
 
         public static string[] securityUserName;
         public static string[] securityUserPassword;
@@ -1989,44 +2031,6 @@ namespace AasxRestServerLibrary
                 }
             }
         }
-        public void EvalGetAASX(IHttpContext context, int fileIndex)
-        {
-            // get the list
-            dynamic res = new ExpandoObject();
-            var filelist = new List<string>();
-            string response = "";
-
-            // return as FILE
-
-            FileStream packageStream = File.OpenRead(Net46ConsoleServer.Program.envFileName[fileIndex]);
-
-            SendStreamResponse(context, packageStream, Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]));
-            packageStream.Close();
-
-            /*
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(DataPath);
-
-            int i = 0; // Index in filelist above
-            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
-            {
-                if (i == fileIndex)
-                {
-                    SwitchToAASX = f.Name;
-                    Net46ConsoleServer.MySampleServer.quitEvent.Set();
-                    response = "Switching to " + f.Name;
-                    SendTextResponse(context, response);
-                    return;
-                }
-                i++;
-            }
-
-            response = "ERROR: Could not switch AASX!";
-            SendTextResponse(context, response);
-            return;
-            */
-        }
-        #endregion
-
 
         #region // Concept Descriptions
 
