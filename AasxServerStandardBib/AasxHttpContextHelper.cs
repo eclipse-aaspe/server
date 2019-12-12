@@ -562,6 +562,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetAasAndAsset(IHttpContext context, string aasid, bool deep = false, bool complete = false)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access the first AAS
             var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             if (aas == null)
@@ -574,7 +591,6 @@ namespace AasxRestServerLibrary
             var asset = this.Packages[0].AasEnv.FindAsset(aas.assetRef);
 
             // result
-            dynamic res = new ExpandoObject();
             res.AAS = aas;
             res.Asset = asset;
 
@@ -585,6 +601,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetAasEnv(IHttpContext context, string aasid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null)
             {
                 context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
@@ -641,6 +674,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetAasThumbnail(IHttpContext context, string aasid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             if (this.Packages[0] == null)
             {
                 context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
@@ -672,6 +722,23 @@ namespace AasxRestServerLibrary
 
         public void EvalPutAas(IHttpContext context)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -716,6 +783,23 @@ namespace AasxRestServerLibrary
 
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // datastructure update
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.AdministrationShells == null)
             {
@@ -754,6 +838,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetAssetLinks(IHttpContext context, string assetid)
         {
+            dynamic res1 = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res1.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res1);
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
+            }
+
             // trivial
             if (assetid == null)
                 return;
@@ -791,6 +892,23 @@ namespace AasxRestServerLibrary
 
         public void EvalPutAsset(IHttpContext context)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -861,6 +979,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodels(IHttpContext context, string aasid)
         {
+            dynamic res1 = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res1.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res1);
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
+            }
+
             // access the AAS
             var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             if (aas == null)
@@ -889,6 +1024,23 @@ namespace AasxRestServerLibrary
         static long countPut = 0;
         public void EvalPutSubmodel(IHttpContext context, string aasid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -964,6 +1116,23 @@ namespace AasxRestServerLibrary
 
         public void EvalDeleteSubmodel(IHttpContext context, string aasid, string smid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -1010,6 +1179,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelContents(IHttpContext context, string aasid, string smid, bool deep = false, bool complete = false)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1029,6 +1215,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelContentsAsTable(IHttpContext context, string aasid, string smid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1147,6 +1350,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids, bool deep = false, bool complete = false)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1173,6 +1393,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelElementsBlob(IHttpContext context, string aasid, string smid, string[] elemids)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1199,6 +1436,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1220,7 +1474,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as little dynamic object
-            dynamic res = new ExpandoObject();
+            // dynamic res = new ExpandoObject();
             res.value = smep.value;
             if (smep.valueId != null)
                 res.valueId = smep.valueId;
@@ -1229,6 +1483,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelElementsFile(IHttpContext context, string aasid, string smid, string[] elemids)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1264,6 +1535,23 @@ namespace AasxRestServerLibrary
 
         public void EvalPutSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -1357,6 +1645,23 @@ namespace AasxRestServerLibrary
 
         public void EvalDeleteSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1400,6 +1705,23 @@ namespace AasxRestServerLibrary
 
         public void EvalInvokeSubmodelElementOperation(IHttpContext context, string aasid, string smid, string[] elemids)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and Submodel
             // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
@@ -1479,6 +1801,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetAllCds(IHttpContext context, string aasid)
         {
+            dynamic res1 = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res1.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res1);
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
+            }
+
             // access the AAS
             var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             if (aas == null)
@@ -1514,6 +1853,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetCdContents(IHttpContext context, string aasid, string cdid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and CD
             var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             var cd = this.FindCdWithoutAas(aas, cdid, context.Request.QueryString, context.Request.RawUrl);
@@ -1529,6 +1885,23 @@ namespace AasxRestServerLibrary
 
         public void EvalDeleteSpecificCd(IHttpContext context, string aasid, string cdid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // access AAS and CD
             var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             var cd = this.FindCdWithoutAas(aas, cdid, context.Request.QueryString, context.Request.RawUrl);
@@ -1556,6 +1929,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetHandlesIdentification(IHttpContext context)
         {
+            dynamic res1 = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res1.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res1);
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
+            }
+
             // get the list
             var res = IdRefHandleStore.FindAll<AasxHttpHandleIdentification>();
 
@@ -1565,6 +1955,23 @@ namespace AasxRestServerLibrary
 
         public void EvalPostHandlesIdentification(IHttpContext context)
         {
+            dynamic res1 = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res1.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res1);
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -1619,6 +2026,23 @@ namespace AasxRestServerLibrary
 
         public void EvalGetServerProfile(IHttpContext context)
         {
+            dynamic res1 = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res1.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res1);
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
+            }
+
             // get the list
             dynamic res = new ExpandoObject();
             var capabilities = new List<ulong>(new ulong[]{
@@ -2036,6 +2460,23 @@ namespace AasxRestServerLibrary
 
         public void EvalPutCd(IHttpContext context, string aasid)
         {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
