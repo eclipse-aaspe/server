@@ -21,7 +21,7 @@ using Grapevine.Shared;
 using Formatting = Newtonsoft.Json.Formatting;
 using AasxMqttServer;
 using System.ComponentModel;
-using AASXLoader;
+// using AASXLoader;
 
 namespace Net46ConsoleServer
 {
@@ -220,7 +220,7 @@ namespace Net46ConsoleServer
             // Register AAS to registry server
             if (registry != null)
             {
-                AASXLoader.Registry.RegisterAASX(registry, host + ":" + port, AasxHttpContextHelper.DataPath);
+                // AASXLoader.Registry.RegisterAASX(registry, host + ":" + port, AasxHttpContextHelper.DataPath);
                 /*
                 Console.WriteLine();
                 Console.WriteLine("*** Include #210 in Program.cs and AASXLoader in solution ***");

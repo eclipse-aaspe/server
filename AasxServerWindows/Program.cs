@@ -1,6 +1,4 @@
-﻿using AASXLoader;
-
-namespace AasxServerWindows
+﻿namespace AasxServerWindows
 {
     class Program
     {

@@ -35,18 +35,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BaSyx.API, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BaSyx.API.1.0.0\lib\netstandard2.0\BaSyx.API.dll</HintPath>
-    </Reference>
-    <Reference Include="BaSyx.Models, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BaSyx.Models.1.0.0\lib\netstandard2.0\BaSyx.Models.dll</HintPath>
-    </Reference>
-    <Reference Include="BaSyx.Registry.Client.Http, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BaSyx.Registry.Client.Http.1.0.0\lib\netstandard2.0\BaSyx.Registry.Client.Http.dll</HintPath>
-    </Reference>
-    <Reference Include="BaSyx.Utils, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BaSyx.Utils.1.0.0\lib\netstandard2.0\BaSyx.Utils.dll</HintPath>
-    </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.4.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
       <HintPath>..\packages\Portable.BouncyCastle.1.8.4\lib\net40\BouncyCastle.Crypto.dll</HintPath>
     </Reference>
@@ -370,10 +358,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AASXLoader\AASXLoader.csproj">
-      <Project>{ac11b693-2b72-4887-8ece-b501717c0f3b}</Project>
-      <Name>AASXLoader</Name>
-    </ProjectReference>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj">
       <Project>{6d8fafa1-0ba5-4e52-87d2-e4e37fc6d95f}</Project>
       <Name>AasxServerStandardBib</Name>

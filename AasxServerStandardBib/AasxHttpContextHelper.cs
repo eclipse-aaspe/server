@@ -2061,35 +2061,46 @@ namespace AasxRestServerLibrary
 
         public static string secretString = "Industrie4.0-Asset-Administration-Shell";
 
+        private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+
+        public int sessionCount = 0;
+        public static string[] sessionUserName = new string[100];
+        public static string[] sessionToken = new string[100];
+
         public void EvalPostAuthenticateGuest(IHttpContext context)
         {
             Console.WriteLine();
             Console.WriteLine("AuthenticateUser Guest");
 
-            string payload0 = context.Request.Payload;
+            // string with real random numbers
+            Byte[] barray = new byte[100];
+            rngCsp.GetBytes(barray);
+            string bstring = Convert.ToBase64String(barray);
+
+            sessionToken[sessionCount] = sessionCount.ToString() + "." + bstring;
+
+            string payload1 = context.Request.Payload;
 
             dynamic res = new ExpandoObject();
-
-            var payload = new Dictionary<string, object>()
+            var payload2 = new Dictionary<string, object>()
             {
                 { "user", "guest" },
-                { "exp", 2023 }
+                { "sessionToken", sessionToken[sessionCount] }
             };
 
-            if (GuestToken == null)
-            {
-                System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-                GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
-            }
-            else
-            {
-                System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-                GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(GuestToken), JwsAlgorithm.HS256);
-            }
+            System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+            GuestToken = Jose.JWT.Encode(payload2, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
-            Console.WriteLine("JWT: " + GuestToken);
+            Console.WriteLine("Token: " + GuestToken);
 
             withAuthentification = true;
+
+            sessionCount++;
+            if (sessionCount >= 100)
+            {
+                Console.WriteLine("ERROR: More than 100 sessions!");
+                Environment.Exit(-1);
+            }
 
             res.user = "guest";
             res.token = GuestToken;
@@ -2099,11 +2110,141 @@ namespace AasxRestServerLibrary
 
         public void EvalPostAuthenticateUser(IHttpContext context)
         {
+            Console.WriteLine();
+            Console.WriteLine("AuthenticateUser Password");
+
+            bool ok = false;
+            bool error = false;
+
+            dynamic res = new ExpandoObject();
+
+            var parsed = JObject.Parse(context.Request.Payload);
+
+            string user = null;
+            string password = null;
+            try
+            {
+                user = parsed.SelectToken("user").Value<string>();
+                password = parsed.SelectToken("password").Value<string>();
+            }
+            catch
+            {
+                error = true;
+            }
+
+            if (!error)
+            {
+                int userCount = securityUserName.Length;
+
+                for (int i = 0; i < userCount; i++)
+                {
+                    if (user == securityUserName[i] && password == securityUserPassword[i])
+                    {
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+
+            if (error || !ok)
+            {
+                res.error = "User not authorized!";
+                SendJsonResponse(context, res);
+                return;
+            }
+
+            // string with real random numbers
+            Byte[] barray = new byte[100];
+            rngCsp.GetBytes(barray);
+            string bstring = Convert.ToBase64String(barray);
+
+            sessionToken[sessionCount] = sessionCount.ToString() + "." + bstring;
+
+            var payload = new Dictionary<string, object>()
+            {
+                { "user", user },
+                { "sessionToken", sessionToken[sessionCount] }
+            };
+
+            System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+            string token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+
+            Console.WriteLine("Token: " + GuestToken);
+
+            sessionCount++;
+            if (sessionCount >= 100)
+            {
+                Console.WriteLine("ERROR: More than 100 sessions!");
+                Environment.Exit(-1);
+            }
+
+            withAuthentification = true;
+
+            res.user = user;
+            res.token = token;
+
+            SendJsonResponse(context, res);
+        }
+
+        public void EvalPostAuthenticateToken(IHttpContext context)
+        {
+            Console.WriteLine();
+            Console.WriteLine("AuthenticateCert");
+
+            bool ok = false;
+            bool error = false;
+
+            dynamic res = new ExpandoObject();
+            X509Certificate2 x509 = null;
+
+            var parsed = JObject.Parse(context.Request.Payload);
+
+            string user = null;
+            string token = null;
+            RSA publicKey = null;
+            try
+            {
+                token = parsed.SelectToken("token").Value<string>();
+
+                parsed = JObject.Parse(Jose.JWT.Payload(token));
+                user = parsed.SelectToken("token").Value<string>();
+
+                x509 = new X509Certificate2("./user/"+user+".cer");
+            }
+            catch
+            {
+                error = true;
+            }
+
+            if (!error)
+            {
+                publicKey = x509.GetRSAPublicKey();
+
+                try
+                {
+                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed with public key?
+                }
+                catch
+                {
+                    error = true;
+                }
+            }
+
+            if (!error)
+            {
+
+            }
+            token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+
+
+
             string token = null;
             string user = null;
-            string publicKey = null;
+            // string publicKey = null;
             dynamic res = new ExpandoObject();
             bool JWTfound = false;
+            // X509Certificate2 x509_2 = new X509Certificate2("..\\OpcUAServer.cer");
+            X509Certificate2 x509_2 = new X509Certificate2("../OpcUaServer.cer");
 
             var parsed = JObject.Parse(context.Request.Payload);
 
@@ -2121,44 +2262,19 @@ namespace AasxRestServerLibrary
             {
                 Console.WriteLine();
                 Console.WriteLine("AuthenticateUser token");
-                var parsed2 = JObject.Parse(Jose.JWT.Payload(token));
 
-                user = parsed2.SelectToken("user").Value<string>();
+                var publicKey1 = x509_2.GetRSAPublicKey();
 
-                X509Store store = new X509Store("My");
-                store.Open(OpenFlags.ReadOnly);
-                X509Certificate2Collection collection = store.Certificates;
-                X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
-
-                foreach (X509Certificate2 x509 in fcollection)
-                {
-                    try
-                    {
-                        string simpleName = x509.GetNameInfo(X509NameType.SimpleName, true);
-                        if (simpleName == user)
-                        {
-                            publicKey = x509.PublicKey.Key.ToXmlString(false);
-                            x509.Reset();
-                            break;
-                        }
-                    }
-                    catch (CryptographicException)
-                    {
-                        res.error = "User not authorized!";
-                        SendJsonResponse(context, res);
-                        return;
-                    }
-                }
-                store.Close();
-
-                if (publicKey != null)
+                if (publicKey1 != null)
                 {
                     string json = null;
 
                     try
                     {
-                        System.Text.ASCIIEncoding enc1 = new System.Text.ASCIIEncoding();
-                        json = Jose.JWT.Decode(token, enc1.GetBytes(publicKey));
+                        // System.Text.ASCIIEncoding enc1 = new System.Text.ASCIIEncoding();
+                        // json = Jose.JWT.Decode(token, enc1.GetBytes(publicKey));
+                        // json = Jose.JWT.Decode(token, publicKey, JweAlgorithm.RSA1_5, JweEncryption.A256GCM);
+                        json = Jose.JWT.Decode(token, publicKey1, JwsAlgorithm.RS256);
                     }
                     catch (Exception ex)
                     {
@@ -2197,14 +2313,23 @@ namespace AasxRestServerLibrary
                 return;
             }
 
+            Byte[] barray = new byte[100]; 
+            rngCsp.GetBytes(barray);
+            string bstring = Convert.ToBase64String(barray);
+
             var payload = new Dictionary<string, object>()
             {
                 { "user", user },
-                { "exp", 2023 }
+                { "array", bstring }
             };
 
-            System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            // System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+            // token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            // var publicKey2 = (RSACryptoServiceProvider)x509_2.PublicKey.Key;
+            var publicKey2 = x509_2.GetRSAPublicKey();
+            // token = Jose.JWT.Encode(payload, publicKey2, JweAlgorithm.RSA1_5, JweEncryption.A256GCM);
+            // token = Jose.JWT.Encode(payload, publicKey2, JweAlgorithm.RSA_OAEP, JweEncryption.A256GCM);
+            token = Jose.JWT.Encode(payload, publicKey2, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
 
             withAuthentification = true;
 
