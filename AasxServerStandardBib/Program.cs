@@ -375,6 +375,8 @@ namespace Net46ConsoleServer
 
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
+            return;
+
             ReadOPCClient(false);
         }
 
@@ -396,6 +398,7 @@ namespace Net46ConsoleServer
         {
             //            if (RESTalreadyRunning)
             //                return;
+            return;
 
             RESTalreadyRunning = true;
 

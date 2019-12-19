@@ -2064,37 +2064,37 @@ namespace AasxRestServerLibrary
         private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
 
         public int sessionCount = 0;
+        public char[] sessionUserType = new char[100];
         public static string[] sessionUserName = new string[100];
         public static string[] sessionToken = new string[100];
 
-        public void EvalPostAuthenticateGuest(IHttpContext context)
+        public void EvalGetAuthenticateGuest(IHttpContext context)
         {
             Console.WriteLine();
-            Console.WriteLine("AuthenticateUser Guest");
+            Console.WriteLine("AuthenticateGuest"); // GET
 
             // string with real random numbers
             Byte[] barray = new byte[100];
             rngCsp.GetBytes(barray);
-            string bstring = Convert.ToBase64String(barray);
-
-            sessionToken[sessionCount] = sessionCount.ToString() + "." + bstring;
-
-            string payload1 = context.Request.Payload;
+            sessionToken[sessionCount] = Convert.ToBase64String(barray);
 
             dynamic res = new ExpandoObject();
-            var payload2 = new Dictionary<string, object>()
+            var payload = new Dictionary<string, object>()
             {
-                { "user", "guest" },
+                { "sessionID", sessionCount },
                 { "sessionToken", sessionToken[sessionCount] }
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            GuestToken = Jose.JWT.Encode(payload2, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
-            Console.WriteLine("Token: " + GuestToken);
+            Console.WriteLine("SessionID: " + sessionCount);
+            Console.WriteLine("SessionToken: " + GuestToken);
 
             withAuthentification = true;
 
+            sessionUserType[sessionCount] = 'G';
+            sessionUserName[sessionCount] = "guest";
             sessionCount++;
             if (sessionCount >= 100)
             {
@@ -2102,7 +2102,6 @@ namespace AasxRestServerLibrary
                 Environment.Exit(-1);
             }
 
-            res.user = "guest";
             res.token = GuestToken;
 
             SendJsonResponse(context, res);
@@ -2111,9 +2110,9 @@ namespace AasxRestServerLibrary
         public void EvalPostAuthenticateUser(IHttpContext context)
         {
             Console.WriteLine();
-            Console.WriteLine("AuthenticateUser Password");
+            Console.WriteLine("AuthenticateUser"); // POST User, Password
 
-            bool ok = false;
+            bool userFound = false;
             bool error = false;
 
             dynamic res = new ExpandoObject();
@@ -2140,13 +2139,13 @@ namespace AasxRestServerLibrary
                 {
                     if (user == securityUserName[i] && password == securityUserPassword[i])
                     {
-                        ok = true;
+                        userFound = true;
                         break;
                     }
                 }
             }
 
-            if (error || !ok)
+            if (error || !userFound)
             {
                 res.error = "User not authorized!";
                 SendJsonResponse(context, res);
@@ -2156,21 +2155,22 @@ namespace AasxRestServerLibrary
             // string with real random numbers
             Byte[] barray = new byte[100];
             rngCsp.GetBytes(barray);
-            string bstring = Convert.ToBase64String(barray);
-
-            sessionToken[sessionCount] = sessionCount.ToString() + "." + bstring;
+            sessionToken[sessionCount] = Convert.ToBase64String(barray);
 
             var payload = new Dictionary<string, object>()
             {
-                { "user", user },
+                { "sessionID", sessionCount },
                 { "sessionToken", sessionToken[sessionCount] }
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
             string token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
-            Console.WriteLine("Token: " + GuestToken);
+            Console.WriteLine("SessionID: " + sessionCount);
+            Console.WriteLine("SessionToken: " + token);
 
+            sessionUserType[sessionCount] = 'U';
+            sessionUserName[sessionCount] = user;
             sessionCount++;
             if (sessionCount >= 100)
             {
@@ -2180,7 +2180,6 @@ namespace AasxRestServerLibrary
 
             withAuthentification = true;
 
-            res.user = user;
             res.token = token;
 
             SendJsonResponse(context, res);
@@ -2189,30 +2188,30 @@ namespace AasxRestServerLibrary
         public void EvalPostAuthenticateToken(IHttpContext context)
         {
             Console.WriteLine();
-            Console.WriteLine("AuthenticateCert");
+            Console.WriteLine("AuthenticateToken"); // POST token with user
 
-            bool ok = false;
             bool error = false;
 
             dynamic res = new ExpandoObject();
             X509Certificate2 x509 = null;
-
-            var parsed = JObject.Parse(context.Request.Payload);
-
             string user = null;
             string token = null;
             RSA publicKey = null;
+
             try
             {
+                var parsed = JObject.Parse(context.Request.Payload);
                 token = parsed.SelectToken("token").Value<string>();
 
                 parsed = JObject.Parse(Jose.JWT.Payload(token));
-                user = parsed.SelectToken("token").Value<string>();
+                user = parsed.SelectToken("user").Value<string>();
 
                 x509 = new X509Certificate2("./user/"+user+".cer");
+                // x509 = new X509Certificate2("C:\\Development\\" + user +".cer");
             }
             catch
             {
+                Console.WriteLine("ERROR: Certificate " + "./user/" + user + ".cer" + " not found!");
                 error = true;
             }
 
@@ -2222,7 +2221,7 @@ namespace AasxRestServerLibrary
 
                 try
                 {
-                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed with public key?
+                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
                 }
                 catch
                 {
@@ -2232,108 +2231,50 @@ namespace AasxRestServerLibrary
 
             if (!error)
             {
+                // user information was correctly signed
 
-            }
-            token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+                // string with real random numbers
+                Byte[] barray = new byte[100];
+                rngCsp.GetBytes(barray);
+                sessionToken[sessionCount] = Convert.ToBase64String(barray);
 
-
-
-            string token = null;
-            string user = null;
-            // string publicKey = null;
-            dynamic res = new ExpandoObject();
-            bool JWTfound = false;
-            // X509Certificate2 x509_2 = new X509Certificate2("..\\OpcUAServer.cer");
-            X509Certificate2 x509_2 = new X509Certificate2("../OpcUaServer.cer");
-
-            var parsed = JObject.Parse(context.Request.Payload);
-
-            try
-            {
-                token = parsed.SelectToken("token").Value<string>();
-            }
-            catch
-            {
-                // no token in request = user/password
-                token = null;
-            }
-
-            if (token != null && token != "")
-            {
-                Console.WriteLine();
-                Console.WriteLine("AuthenticateUser token");
-
-                var publicKey1 = x509_2.GetRSAPublicKey();
-
-                if (publicKey1 != null)
+                var payload = new Dictionary<string, object>()
                 {
-                    string json = null;
+                    { "sessionID", sessionCount },
+                    { "sessionToken", sessionToken[sessionCount] }
+                };
 
-                    try
-                    {
-                        // System.Text.ASCIIEncoding enc1 = new System.Text.ASCIIEncoding();
-                        // json = Jose.JWT.Decode(token, enc1.GetBytes(publicKey));
-                        // json = Jose.JWT.Decode(token, publicKey, JweAlgorithm.RSA1_5, JweEncryption.A256GCM);
-                        json = Jose.JWT.Decode(token, publicKey1, JwsAlgorithm.RS256);
-                    }
-                    catch (Exception ex)
-                    {
-                        res.error = "User not authorized!";
-                        SendJsonResponse(context, res);
-                        return;
-                    }
-
-                    JWTfound = true;
+                try
+                {
+                    token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
                 }
-            }
-            else
-            {
-                Console.WriteLine();
-                Console.WriteLine("AuthenticateUser Password");
-
-                user = parsed.SelectToken("user").Value<string>();
-                string password = parsed.SelectToken("password").Value<string>();
-
-                int userCount = securityUserName.Length;
-
-                for (int i = 0; i < userCount; i++)
+                catch
                 {
-                    if (user == securityUserName[i] && password == securityUserPassword[i])
-                    {
-                        JWTfound = true;
-                        break;
-                    }
+                    error = true;
                 }
             }
 
-            if (!JWTfound)
+            if (error)
             {
                 res.error = "User not authorized!";
                 SendJsonResponse(context, res);
                 return;
             }
 
-            Byte[] barray = new byte[100]; 
-            rngCsp.GetBytes(barray);
-            string bstring = Convert.ToBase64String(barray);
+            Console.WriteLine("SessionID: " + sessionCount);
+            Console.WriteLine("SessionToken: " + token);
 
-            var payload = new Dictionary<string, object>()
+            sessionUserType[sessionCount] = 'T';
+            sessionUserName[sessionCount] = user;
+            sessionCount++;
+            if (sessionCount >= 100)
             {
-                { "user", user },
-                { "array", bstring }
-            };
-
-            // System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            // token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
-            // var publicKey2 = (RSACryptoServiceProvider)x509_2.PublicKey.Key;
-            var publicKey2 = x509_2.GetRSAPublicKey();
-            // token = Jose.JWT.Encode(payload, publicKey2, JweAlgorithm.RSA1_5, JweEncryption.A256GCM);
-            // token = Jose.JWT.Encode(payload, publicKey2, JweAlgorithm.RSA_OAEP, JweEncryption.A256GCM);
-            token = Jose.JWT.Encode(payload, publicKey2, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+                Console.WriteLine("ERROR: More than 100 sessions!");
+                Environment.Exit(-1);
+            }
 
             withAuthentification = true;
 
-            res.user = user;
             res.token = token;
 
             SendJsonResponse(context, res);
@@ -2342,108 +2283,112 @@ namespace AasxRestServerLibrary
         public string SecurityCheck(IHttpContext context)
 
         {
+            bool error = false;
             string accessrights = null;
 
-            // return access right: null = no rights
-            if (GuestToken != null || withAuthentification)
+            // receive token with sessionID inside
+            // check if token is signed by sessionToken
+            // read username for sessionID
+            // check accessrights for username
+
+            dynamic res = new ExpandoObject();
+            int id = -1;
+            string token = null;
+            string bearerToken = null;
+            string user = null;
+
+            // var parsed = JObject.Parse(context.Request.Payload);
+            string[] split = null;
+
+            // Check bearer token
+            string headers = context.Request.Headers.ToString();
+            token = context.Request.Headers.Get("Authorization");
+            if (token != null)
             {
-                string[] split = null;
-                string receivedToken = null;
-                Boolean JWTfound = false;
-
-                Console.WriteLine();
-                Console.WriteLine("Check Authorization");
-                string headers = context.Request.Headers.ToString();
-                // Console.WriteLine("Headers = " + headers);
-                var token = context.Request.Headers.Get("Authorization");
-                if (token != null)
+                split = token.Split(new Char[] { ' ', '\t' });
+                if (split[0] != null)
                 {
-                    split = token.Split(new Char[] { ' ', '\t' });
-                    if (split[0] != null)
+                    if (split[0].ToLower() == "bearer")
                     {
-                        if (split[0].ToLower() == "bearer")
-                        {
-                            Console.WriteLine("Received bearer token = " + split[1]);
-                            receivedToken = split[1];
-                        }
+                        Console.WriteLine();
+                        Console.WriteLine("Received bearer token = " + split[1]);
+                        bearerToken = split[1];
                     }
                 }
-
-                if (receivedToken == null)
+            }
+            else // check query string for bearer token
+            {
+                split = context.Request.Url.ToString().Split(new char[] { '?' });
+                if (split != null && split.Length > 1 && split[1] != null)
                 {
-                    split = context.Request.Url.ToString().Split(new char[] { '?' });
-                    if (split != null && split.Length > 1 && split[1] != null)
-                    {
-                        Console.WriteLine("Received query string = " + split[1]);
-                        receivedToken = split[1];
-                    }
+                    Console.WriteLine();
+                    Console.WriteLine("Received query string = " + split[1]);
+                    bearerToken = split[1];
                 }
+            }
 
-                if (receivedToken != null)
+            if (bearerToken == null)
+            {
+                error = true;
+            }
+            else
+            {
+                try
                 {
-                    if (receivedToken == GuestToken)
-                    {
-                        accessrights = "GUEST";
-                        JWTfound = true;
-                    }
-                    else
-                    {
-                        bool integrityExc = false;
-                        string json = null;
+                    var parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
+                    id = Convert.ToInt32(parsed2.SelectToken("sessionID").Value<string>());
 
-                        try
-                        {
+                    token = sessionToken[id];
+                    user = sessionUserName[id];
+                }
+                catch
+                {
+                    error = true;
+                }
+            }
+
+            if (!error)
+            {
+                try
+                {
+                    string payload = null;
+
+                    switch (sessionUserType[id])
+                    {
+                        case 'G':
+                        case 'U':
+                        case 'T':
                             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-                            json = Jose.JWT.Decode(receivedToken, enc.GetBytes(secretString));
-                        }
-                        catch (Exception ex)
-                        {
-                            integrityExc = true;
-                        }
-
-                        if (!integrityExc && json != null)
-                        {
-                            var parsed = JObject.Parse(json);
-                            string user = parsed.SelectToken("user").Value<string>();
-                            string exp = parsed.SelectToken("exp").Value<string>();
-                            string domain = null;
-
-                            split = user.Split(new char[] { '@' });
-                            if (split != null && split.Length > 1 && split[1] != null)
-                            {
-                                domain = split[1];
-                            }
-
-                            if (user == "guest")
-                            {
-                                if (receivedToken == GuestToken)
-                                {
-                                    accessrights = "GUEST";
-                                    JWTfound = true;
-                                }
-                            }
-                            else // Check user authorization
-                            {
-                                int rightsCount = securityRightsName.Length;
-
-                                for (int i = 0; i < rightsCount; i++)
-                                {
-                                    if (user == securityRightsName[i])
-                                    {
-                                        accessrights = securityRightsValue[i];
-                                        JWTfound = true;
-                                        break;
-                                    }
-                                    if (domain == securityRightsName[i])
-                                    {
-                                        accessrights = securityRightsValue[i];
-                                        JWTfound = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                            payload = Jose.JWT.Decode(bearerToken, enc.GetBytes(token), JwsAlgorithm.HS256); // correctly signed by session token?
+                            break;
                     }
+                }
+                catch
+                {
+                    error = true;
+                }
+            }
+
+            if (!error)
+            {
+                switch (sessionUserType[id])
+                {
+                    case 'G':
+                        accessrights = "GUEST";
+                        break;
+                    case 'U':
+                    case 'T':
+                        int rightsCount = securityRightsName.Length;
+
+                        for (int i = 0; i < rightsCount; i++)
+                        {
+                            if (user == securityRightsName[i])
+                            {
+                                accessrights = securityRightsValue[i];
+                                break;
+                            }
+                        }
+                        break;
                 }
             }
 

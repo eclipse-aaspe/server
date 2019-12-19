@@ -102,9 +102,9 @@ namespace AasxRestServerLibrary
             // Authenticate
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authenticateGuest(/|)$")]
-            public IHttpContext PostAuthenticate(IHttpContext context)
+            public IHttpContext GetAuthenticate(IHttpContext context)
             {
-                helper.EvalPostAuthenticateGuest(context);
+                helper.EvalGetAuthenticateGuest(context);
                 return context;
             }
 
