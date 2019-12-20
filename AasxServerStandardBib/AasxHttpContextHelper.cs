@@ -2378,14 +2378,17 @@ namespace AasxRestServerLibrary
                         break;
                     case 'U':
                     case 'T':
-                        int rightsCount = securityRightsName.Length;
-
-                        for (int i = 0; i < rightsCount; i++)
+                        if (securityRightsName != null)
                         {
-                            if (user == securityRightsName[i])
+                            int rightsCount = securityRightsName.Length;
+
+                            for (int i = 0; i < rightsCount; i++)
                             {
-                                accessrights = securityRightsValue[i];
-                                break;
+                                if (user == securityRightsName[i])
+                                {
+                                    accessrights = securityRightsValue[i];
+                                    break;
+                                }
                             }
                         }
                         break;
@@ -2501,11 +2504,11 @@ namespace AasxRestServerLibrary
         }
         #endregion
 
-        public static string[] securityUserName;
-        public static string[] securityUserPassword;
+        public static string[] securityUserName = null;
+        public static string[] securityUserPassword = null;
 
-        public static string[] securityRightsName;
-        public static string[] securityRightsValue;
+        public static string[] securityRightsName = null;
+        public static string[] securityRightsValue = null;
 
         public static void securityInit()
         {
