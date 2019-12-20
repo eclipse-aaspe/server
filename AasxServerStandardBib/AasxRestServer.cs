@@ -142,13 +142,26 @@ namespace AasxRestServerLibrary
             }
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
-            public IHttpContext SelectAASX(IHttpContext context)
+            public IHttpContext GetAASX(IHttpContext context)
             {
 
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
                     helper.EvalGetAASX(context, Int32.Parse(m.Groups[1].ToString()));
+                    return context;
+                }
+                return context;
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx2/(\d+)(/|)$")]
+            public IHttpContext GetAASX2(IHttpContext context)
+            {
+
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    helper.EvalGetAASX2(context, Int32.Parse(m.Groups[1].ToString()));
                     return context;
                 }
                 return context;

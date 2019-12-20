@@ -2460,6 +2460,45 @@ namespace AasxRestServerLibrary
             SendStreamResponse(context, packageStream, Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]));
             packageStream.Close();
         }
+
+        public void EvalGetAASX2(IHttpContext context, int fileIndex)
+        {
+            dynamic res = new ExpandoObject();
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
+            // Crypt File
+            var x509 = new X509Certificate2("./user/" + "OpcUaServer" + ".cer");
+            var publicKey = x509.GetRSAPublicKey();
+
+            Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
+            string binaryBase64 = Convert.ToBase64String(binaryFile);
+
+            var payload = new Dictionary<string, object>()
+            {
+                { "file", binaryBase64 }
+            };
+
+            string fileToken = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+
+            res.fileName = Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]);
+            res.fileData = fileToken;
+
+            SendJsonResponse(context, res);
+        }
         #endregion
 
         public static string[] securityUserName;
