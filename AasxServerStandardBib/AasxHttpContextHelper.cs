@@ -563,11 +563,12 @@ namespace AasxRestServerLibrary
         public void EvalGetAasAndAsset(IHttpContext context, string aasid, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -602,11 +603,12 @@ namespace AasxRestServerLibrary
         public void EvalGetAasEnv(IHttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -675,11 +677,12 @@ namespace AasxRestServerLibrary
         public void EvalGetAasThumbnail(IHttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -723,11 +726,12 @@ namespace AasxRestServerLibrary
         public void EvalPutAas(IHttpContext context)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -784,11 +788,12 @@ namespace AasxRestServerLibrary
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -839,11 +844,12 @@ namespace AasxRestServerLibrary
         public void EvalGetAssetLinks(IHttpContext context, string assetid)
         {
             dynamic res1 = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -893,11 +899,12 @@ namespace AasxRestServerLibrary
         public void EvalPutAsset(IHttpContext context)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -980,11 +987,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodels(IHttpContext context, string aasid)
         {
             dynamic res1 = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1025,11 +1033,12 @@ namespace AasxRestServerLibrary
         public void EvalPutSubmodel(IHttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1117,11 +1126,12 @@ namespace AasxRestServerLibrary
         public void EvalDeleteSubmodel(IHttpContext context, string aasid, string smid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1180,11 +1190,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelContents(IHttpContext context, string aasid, string smid, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1216,11 +1227,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelContentsAsTable(IHttpContext context, string aasid, string smid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1351,11 +1363,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1394,11 +1407,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelElementsBlob(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1437,11 +1451,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1484,11 +1499,12 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelElementsFile(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1536,11 +1552,12 @@ namespace AasxRestServerLibrary
         public void EvalPutSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1646,11 +1663,13 @@ namespace AasxRestServerLibrary
         public void EvalDeleteSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
+
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1706,11 +1725,12 @@ namespace AasxRestServerLibrary
         public void EvalInvokeSubmodelElementOperation(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1802,11 +1822,12 @@ namespace AasxRestServerLibrary
         public void EvalGetAllCds(IHttpContext context, string aasid)
         {
             dynamic res1 = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1854,11 +1875,12 @@ namespace AasxRestServerLibrary
         public void EvalGetCdContents(IHttpContext context, string aasid, string cdid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1886,11 +1908,12 @@ namespace AasxRestServerLibrary
         public void EvalDeleteSpecificCd(IHttpContext context, string aasid, string cdid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1930,11 +1953,12 @@ namespace AasxRestServerLibrary
         public void EvalGetHandlesIdentification(IHttpContext context)
         {
             dynamic res1 = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -1956,11 +1980,12 @@ namespace AasxRestServerLibrary
         public void EvalPostHandlesIdentification(IHttpContext context)
         {
             dynamic res1 = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -2027,11 +2052,12 @@ namespace AasxRestServerLibrary
         public void EvalGetServerProfile(IHttpContext context)
         {
             dynamic res1 = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -2280,7 +2306,7 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public string SecurityCheck(IHttpContext context)
+        public string SecurityCheck(IHttpContext context, ref int index)
 
         {
             bool error = false;
@@ -2296,6 +2322,8 @@ namespace AasxRestServerLibrary
             string token = null;
             string bearerToken = null;
             string user = null;
+
+            index = -1; // not found
 
             // var parsed = JObject.Parse(context.Request.Payload);
             string[] split = null;
@@ -2395,17 +2423,22 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            if (!error)
+            {
+                index = id;
+            }
             return accessrights;
         }
 
         public void EvalGetListAAS(IHttpContext context)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -2441,11 +2474,12 @@ namespace AasxRestServerLibrary
         public void EvalGetAASX(IHttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -2467,24 +2501,28 @@ namespace AasxRestServerLibrary
         public void EvalGetAASX2(IHttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
-            if (withAuthentification)
+            if (!withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                res.error = "You are not authorized for this operation!";
+                SendJsonResponse(context, res);
+                return;
+            }
+            string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
-                {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
+            if (accessrights == null || index == -1)
+            {
+                res.error = "You are not authorized for this operation!";
+                SendJsonResponse(context, res);
+                return;
             }
 
+            res.confirm = "Authorization = " + accessrights;
+
             // Crypt File
-            var x509 = new X509Certificate2("./user/" + "OpcUaServer" + ".cer");
+            var x509 = new X509Certificate2("./user/" + sessionUserName[index] + ".cer");
             var publicKey = x509.GetRSAPublicKey();
 
             Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
@@ -2573,11 +2611,12 @@ namespace AasxRestServerLibrary
         public void EvalPutCd(IHttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
+            int index = -1;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context);
+                string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
