@@ -2528,10 +2528,13 @@ namespace AasxRestServerLibrary
             Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
 
+            /*
             var payload = new Dictionary<string, object>()
             {
                 { "file", binaryBase64 }
             };
+            */
+            string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
 
             string fileToken = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
 
