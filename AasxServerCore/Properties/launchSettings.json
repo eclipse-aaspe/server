@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AasxServerCore": {
+      "commandName": "Project",
+      "commandLineArgs": "-datapath D:\\aasx -rest"
+    }
+  }
+}
