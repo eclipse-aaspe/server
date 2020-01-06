@@ -2461,7 +2461,8 @@ namespace AasxRestServerLibrary
                 {
                     aaslist.Add(i.ToString() + " : "
                         + Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
-                        + Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].identification);
+                        + Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].identification + " : "
+                        + Net46ConsoleServer.Program.envFileName[i]);
                 }
             }
 
