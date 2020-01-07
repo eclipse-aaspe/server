@@ -64,8 +64,9 @@ namespace Net46ConsoleServer
         static public void Main(string[] args)
         {
             // default command line options
-            var host = "localhost";
-            var port = "51310";
+            string host = "localhost";
+            string port = "51310";
+            bool https = false;
             bool runREST = false;
             bool runOPC = false;
             bool runMQTT = false;
@@ -108,6 +109,14 @@ namespace Net46ConsoleServer
                     port = args[i + 1];
                     Console.WriteLine(args[i] + " " + args[i + 1]);
                     i += 2;
+                    continue;
+                }
+
+                if (x == "-https")
+                {
+                    https = true;
+                    Console.WriteLine(args[i]);
+                    i++;
                     continue;
                 }
 
@@ -195,6 +204,7 @@ namespace Net46ConsoleServer
             {
                 Console.WriteLine("-host HOSTIP");
                 Console.WriteLine("-port HOSTPORT");
+                Console.WriteLine("-https = SSL connection, you must bind certificate to port before");
                 Console.WriteLine("-datapath PATH_TO_AASX_FILES");
                 Console.WriteLine("-REST = start REST server");
                 Console.WriteLine("-OPC = start OPC server");
@@ -304,7 +314,7 @@ namespace Net46ConsoleServer
                 Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
 
                 // AasxRestServer.Start(env, host, port, new GrapevineLoggerToConsole());
-                AasxRestServer.Start(env, host, port); // without Logger
+                AasxRestServer.Start(env, host, port, https); // without Logger
 
                 SetRestTimer(10000); // GET and PUT every 10 seconds
                                      // OnRestTimedEvent(null, null);

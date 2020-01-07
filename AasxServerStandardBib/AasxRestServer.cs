@@ -407,7 +407,7 @@ namespace AasxRestServerLibrary
 
         private static RestServer startedRestServer = null;
 
-        public static void Start(AdminShell.PackageEnv [] packages, string host, string port, GrapevineLoggerSuper logger = null)
+        public static void Start(AdminShell.PackageEnv [] packages, string host, string port, bool https, GrapevineLoggerSuper logger = null)
         {
             // if running, stop old server
             Stop();
@@ -419,16 +419,19 @@ namespace AasxRestServerLibrary
             var serverSettings = new ServerSettings();
             serverSettings.Host = host;
             serverSettings.Port = port;
+            serverSettings.UseHttps = https;
 
             if (logger != null)
                 logger.Warn("Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the" +
                     "specification Details of the Administration Shell. The hereby stated approach is solely the opinion of its author(s).");
+
 
             startedRestServer = new RestServer(serverSettings);
             {
                 if (logger != null)
                     startedRestServer.Logger = logger;
                 startedRestServer.Start();
+                Console.WriteLine(startedRestServer.ListenerPrefix);
             }
 
             // tail of the messages, again
