@@ -117,10 +117,11 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateToken(/|)$")]
-            public IHttpContext PutAuthenticateToken(IHttpContext context)
+            public IHttpContext PostAuthenticateCert(IHttpContext context)
             {
-                helper.EvalPostAuthenticateToken(context);
+                helper.EvalPostAuthenticateCert(context);
                 return context;
             }
 

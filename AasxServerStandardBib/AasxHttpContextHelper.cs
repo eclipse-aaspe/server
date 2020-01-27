@@ -2211,10 +2211,10 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public void EvalPostAuthenticateToken(IHttpContext context)
+        public void EvalPostAuthenticateCert(IHttpContext context)
         {
             Console.WriteLine();
-            Console.WriteLine("AuthenticateToken"); // POST token with user
+            Console.WriteLine("AuthenticateCert"); // POST token with user
 
             bool error = false;
 
@@ -2232,7 +2232,32 @@ namespace AasxRestServerLibrary
                 parsed = JObject.Parse(Jose.JWT.Payload(token));
                 user = parsed.SelectToken("user").Value<string>();
 
-                x509 = new X509Certificate2("./user/"+user+".cer");
+                string fileCert = "./user/" + user + ".cer";
+                if (File.Exists(fileCert))
+                {
+                    x509 = new X509Certificate2(fileCert);
+                    publicKey = x509.GetRSAPublicKey();
+                }
+                else
+                {
+                    // receive .cer and verify against root
+                    string certFileBase64 = parsed.SelectToken("certFile").Value<string>();
+                    Byte[] certFileBytes = Convert.FromBase64String(certFileBase64);
+                    File.WriteAllBytes("./temp/" + user + ".cer", certFileBytes);
+
+                    x509 = new X509Certificate2(certFileBytes);
+
+                    // check if certifcate is valid according to root certificates
+                    X509Chain chain = new X509Chain();
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    bool isValid = chain.Build(x509);
+
+                    if (!isValid)
+                    {
+                        error = true;
+                    }
+                }
+
                 // x509 = new X509Certificate2("C:\\Development\\" + user +".cer");
             }
             catch
@@ -2243,11 +2268,17 @@ namespace AasxRestServerLibrary
 
             if (!error)
             {
-                publicKey = x509.GetRSAPublicKey();
-
                 try
                 {
-                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
+                    if (publicKey != null)
+                    {
+                        Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
+                    }
+                    else
+                    {
+                        var enc = new System.Text.ASCIIEncoding();
+                        Jose.JWT.Decode(token, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+                    }
                 }
                 catch
                 {
@@ -2272,7 +2303,17 @@ namespace AasxRestServerLibrary
 
                 try
                 {
-                    token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+                    /*
+                    if (publicKey != null)
+                    {
+                        token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+                    }
+                    else
+                    */
+                    {
+                        var enc = new System.Text.ASCIIEncoding();
+                        token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+                    }
                 }
                 catch
                 {
@@ -2522,8 +2563,19 @@ namespace AasxRestServerLibrary
 
             res.confirm = "Authorization = " + accessrights;
 
+            X509Certificate2 x509 = null;
             // Crypt File
-            var x509 = new X509Certificate2("./user/" + sessionUserName[index] + ".cer");
+            string fileCert = "./user/" + sessionUserName[index] + ".cer";
+            if (File.Exists(fileCert))
+            {
+                x509 = new X509Certificate2(fileCert);
+            }
+            else
+            {
+                fileCert = "./temp/" + sessionUserName[index] + ".cer";
+                x509 = new X509Certificate2(fileCert);
+            }
+
             var publicKey = x509.GetRSAPublicKey();
 
             Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
@@ -2537,7 +2589,9 @@ namespace AasxRestServerLibrary
             */
             string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
 
-            string fileToken = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+            // string fileToken = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+            System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+            string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
             res.fileName = Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]);
             res.fileData = fileToken;

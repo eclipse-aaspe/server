@@ -21,6 +21,8 @@ using Grapevine.Shared;
 using Formatting = Newtonsoft.Json.Formatting;
 using AasxMqttServer;
 using System.ComponentModel;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 // using AASXLoader;
 
 namespace Net46ConsoleServer
@@ -227,6 +229,23 @@ namespace Net46ConsoleServer
                 Console.WriteLine("Debugger attached");
             }
 
+            // Read root cert from root subdirectory
+
+            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
+            root.Open(OpenFlags.ReadWrite);
+
+            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
+
+            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+            {
+                X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+
+                root.Add(cert);
+                Console.WriteLine("Add " + f.Name + " -> CertStore Root");
+            }
+
+            Directory.CreateDirectory("./temp");
+
             // Register AAS to registry server
             if (registry != null)
             {
@@ -269,7 +288,7 @@ namespace Net46ConsoleServer
                 }
             }
 
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(AasxHttpContextHelper.DataPath);
+            ParentDirectory = new System.IO.DirectoryInfo(AasxHttpContextHelper.DataPath);
 
             int envi = 0;
 
@@ -316,7 +335,7 @@ namespace Net46ConsoleServer
                 // AasxRestServer.Start(env, host, port, new GrapevineLoggerToConsole());
                 AasxRestServer.Start(env, host, port, https); // without Logger
 
-                SetRestTimer(10000); // GET and PUT every 10 seconds
+                // SetRestTimer(10000); // GET and PUT every 10 seconds
                                      // OnRestTimedEvent(null, null);
 
                 Console.WriteLine("REST Server started..");
