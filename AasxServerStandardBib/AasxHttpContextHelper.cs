@@ -43,7 +43,7 @@ namespace AasxRestServerLibrary
         public static String SwitchToAASX = "";
         public static String DataPath = ".";
 
-        public AdminShell.PackageEnv [] Packages = null;
+        public AdminShell.PackageEnv[] Packages = null;
 
         public AasxHttpHandleStore IdRefHandleStore = new AasxHttpHandleStore();
 
@@ -75,7 +75,7 @@ namespace AasxRestServerLibrary
             return m;
         }
 
-        public List<AasxHttpHandleIdentification> CreateHandlesFromQueryString (System.Collections.Specialized.NameValueCollection queryStrings)
+        public List<AasxHttpHandleIdentification> CreateHandlesFromQueryString(System.Collections.Specialized.NameValueCollection queryStrings)
         {
             // start
             var res = new List<AasxHttpHandleIdentification>();
@@ -95,7 +95,7 @@ namespace AasxRestServerLibrary
                         if (vl.Length == 2)
                         {
                             var id = new AdminShell.Identification(vl[0], vl[1]);
-                            var h = new AasxHttpHandleIdentification(id, "@"+k);
+                            var h = new AasxHttpHandleIdentification(id, "@" + k);
                             res.Add(h);
                         }
                     }
@@ -237,7 +237,7 @@ namespace AasxRestServerLibrary
                 {
                     if (smref.MatchesTo(handleId.identification))
                         return smref;
-                } 
+                }
                 else
                 {
                     var sm = this.Packages[0].AasEnv.FindSubmodel(smref);
@@ -264,7 +264,7 @@ namespace AasxRestServerLibrary
                 return Packages[0].AasEnv.FindSubmodel(handleId.identification);
 
             // no, iterate & find
-            
+
             foreach (var smref in aas.submodelRefs)
             {
                 var sm = this.Packages[0].AasEnv.FindSubmodel(smref);
@@ -276,7 +276,7 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        
+
         public AdminShell.Submodel FindSubmodelWithinAas(string aasid, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             AdminShell.AdministrationShell aas = null;
@@ -304,7 +304,7 @@ namespace AasxRestServerLibrary
             {
                 // Name
                 if (aasid == "id")
-                { 
+                {
                     aas = Packages[0].AasEnv.AdministrationShells[0];
                     iPackage = 0;
                 }
@@ -406,7 +406,7 @@ namespace AasxRestServerLibrary
             public AdminShell.SubmodelElementWrapper wrapper = null;
             public AdminShell.Referable parent = null;
 
-            public FindSubmodelElementResult (AdminShell.Referable elem = null, AdminShell.SubmodelElementWrapper wrapper = null, AdminShell.Referable parent = null)
+            public FindSubmodelElementResult(AdminShell.Referable elem = null, AdminShell.SubmodelElementWrapper wrapper = null, AdminShell.Referable parent = null)
             {
                 this.elem = elem;
                 this.wrapper = wrapper;
@@ -521,7 +521,7 @@ namespace AasxRestServerLibrary
         {
             var settings = new JsonSerializerSettings();
             if (contractResolver != null)
-                settings.ContractResolver = contractResolver; 
+                settings.ContractResolver = contractResolver;
             var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
             var buffer = context.Request.ContentEncoding.GetBytes(json);
             var length = buffer.Length;
@@ -891,7 +891,7 @@ namespace AasxRestServerLibrary
                         res.Add(o);
                     }
             }
-                        
+
             // return as JSON
             SendJsonResponse(context, res);
         }
@@ -1400,7 +1400,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            var cr = new AdaptiveFilterContractResolver( deep: deep, complete: complete);
+            var cr = new AdaptiveFilterContractResolver(deep: deep, complete: complete);
             SendJsonResponse(context, sme, cr);
         }
 
@@ -2092,6 +2092,7 @@ namespace AasxRestServerLibrary
         public int sessionCount = 0;
         public char[] sessionUserType = new char[100];
         public static string[] sessionUserName = new string[100];
+        public static RSA[] sessionUserPulicKey = new RSA[100];
         public static string[] sessionToken = new string[100];
 
         public void EvalGetAuthenticateGuest(IHttpContext context)
@@ -2236,7 +2237,6 @@ namespace AasxRestServerLibrary
                 if (File.Exists(fileCert))
                 {
                     x509 = new X509Certificate2(fileCert);
-                    publicKey = x509.GetRSAPublicKey();
                 }
                 else
                 {
@@ -2257,12 +2257,10 @@ namespace AasxRestServerLibrary
                         error = true;
                     }
                 }
-
-                // x509 = new X509Certificate2("C:\\Development\\" + user +".cer");
             }
             catch
             {
-                Console.WriteLine("ERROR: Certificate " + "./user/" + user + ".cer" + " not found!");
+                Console.WriteLine("ERROR: Certificate " + user + ".cer" + " not found!");
                 error = true;
             }
 
@@ -2270,15 +2268,9 @@ namespace AasxRestServerLibrary
             {
                 try
                 {
-                    if (publicKey != null)
-                    {
-                        Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
-                    }
-                    else
-                    {
-                        var enc = new System.Text.ASCIIEncoding();
-                        Jose.JWT.Decode(token, enc.GetBytes(secretString), JwsAlgorithm.HS256);
-                    }
+                    publicKey = x509.GetRSAPublicKey();
+
+                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
                 }
                 catch
                 {
@@ -2303,17 +2295,8 @@ namespace AasxRestServerLibrary
 
                 try
                 {
-                    /*
-                    if (publicKey != null)
-                    {
-                        token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
-                    }
-                    else
-                    */
-                    {
-                        var enc = new System.Text.ASCIIEncoding();
-                        token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
-                    }
+                    var enc = new System.Text.ASCIIEncoding();
+                    token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
                 }
                 catch
                 {
@@ -2333,6 +2316,7 @@ namespace AasxRestServerLibrary
 
             sessionUserType[sessionCount] = 'T';
             sessionUserName[sessionCount] = user;
+            sessionUserPulicKey[sessionCount] = publicKey;
             sessionCount++;
             if (sessionCount >= 100)
             {
@@ -2426,9 +2410,11 @@ namespace AasxRestServerLibrary
                     {
                         case 'G':
                         case 'U':
-                        case 'T':
                             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
                             payload = Jose.JWT.Decode(bearerToken, enc.GetBytes(token), JwsAlgorithm.HS256); // correctly signed by session token?
+                            break;
+                        case 'T':
+                            payload = Jose.JWT.Decode(bearerToken, sessionUserPulicKey[id], JwsAlgorithm.RS256); // correctly signed by session token?
                             break;
                     }
                 }
@@ -2581,15 +2567,8 @@ namespace AasxRestServerLibrary
             Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
 
-            /*
-            var payload = new Dictionary<string, object>()
-            {
-                { "file", binaryBase64 }
-            };
-            */
             string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
 
-            // string fileToken = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
             string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
