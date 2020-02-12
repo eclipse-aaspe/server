@@ -2215,7 +2215,7 @@ namespace AasxRestServerLibrary
         public void EvalPostAuthenticateCert(IHttpContext context)
         {
             Console.WriteLine();
-            Console.WriteLine("AuthenticateCert"); // POST token with user
+            Console.WriteLine("Security 2 Server: /AuthenticateCert"); // POST token with user
 
             bool error = false;
 
@@ -2237,13 +2237,16 @@ namespace AasxRestServerLibrary
                 if (File.Exists(fileCert))
                 {
                     x509 = new X509Certificate2(fileCert);
+                    Console.WriteLine("Security 2.1a Server: " + fileCert + "exists");
                 }
                 else
                 {
                     // receive .cer and verify against root
                     string certFileBase64 = parsed.SelectToken("certFile").Value<string>();
                     Byte[] certFileBytes = Convert.FromBase64String(certFileBase64);
-                    File.WriteAllBytes("./temp/" + user + ".cer", certFileBytes);
+                    fileCert = "./temp/" + user + ".cer";
+                    File.WriteAllBytes(fileCert, certFileBytes);
+                    Console.WriteLine("Security 2.1b Server: " + fileCert + " received");
 
                     x509 = new X509Certificate2(certFileBytes);
 
@@ -2251,6 +2254,7 @@ namespace AasxRestServerLibrary
                     X509Chain chain = new X509Chain();
                     chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     bool isValid = chain.Build(x509);
+                    Console.WriteLine("Security 2.1c Server: Validate " + fileCert + " with root cert");
 
                     if (!isValid)
                     {
@@ -2271,6 +2275,7 @@ namespace AasxRestServerLibrary
                     publicKey = x509.GetRSAPublicKey();
 
                     Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
+                    Console.WriteLine("Security 2.2 Server: Validate signature with publicKey");
                 }
                 catch
                 {
@@ -2285,6 +2290,7 @@ namespace AasxRestServerLibrary
                 // string with real random numbers
                 Byte[] barray = new byte[100];
                 rngCsp.GetBytes(barray);
+                Console.WriteLine("Security 2.3 Server: Create unique sessionToken by real random number");
                 sessionToken[sessionCount] = Convert.ToBase64String(barray);
 
                 var payload = new Dictionary<string, object>()
@@ -2296,7 +2302,9 @@ namespace AasxRestServerLibrary
                 try
                 {
                     var enc = new System.Text.ASCIIEncoding();
-                    token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+                    // token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+                    token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
+                    Console.WriteLine("Security 2.4 Server: Encrypt sessionID and unique sessionToken by public key");
                 }
                 catch
                 {
@@ -2462,9 +2470,12 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
+            Console.WriteLine("Security 3 Server: /server/listaas");
+
             // check authentication
             if (withAuthentification)
             {
+                Console.WriteLine("Security 3.1 Server: Check bearer token and access rights");
                 string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
@@ -2531,6 +2542,8 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
+            Console.WriteLine("Security 4 Server: /server/getaasx2/" + fileIndex);
+
             // check authentication
             if (!withAuthentification)
             {
@@ -2539,6 +2552,7 @@ namespace AasxRestServerLibrary
                 return;
             }
             string accessrights = SecurityCheck(context, ref index);
+            Console.WriteLine("Security 4.1 Server: Check bearer token and access rights");
 
             if (accessrights == null || index == -1)
             {

@@ -63,15 +63,16 @@ namespace Net46ConsoleServer
 
         static MqttServer AASMqttServer = new MqttServer();
 
+        static bool runREST = false;
+        static bool runOPC = false;
+        static bool runMQTT = false;
+        
         static public void Main(string[] args)
         {
             // default command line options
             string host = "localhost";
             string port = "51310";
             bool https = false;
-            bool runREST = false;
-            bool runOPC = false;
-            bool runMQTT = false;
             bool debugwait = false;
             opcclientActive = false;
             int opcclient_rate = 5000;  // 5 seconds
@@ -230,6 +231,8 @@ namespace Net46ConsoleServer
             }
 
             // Read root cert from root subdirectory
+            Console.WriteLine("Security 1 Startup - Server");
+            Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
 
             X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
             root.Open(OpenFlags.ReadWrite);
@@ -241,7 +244,7 @@ namespace Net46ConsoleServer
                 X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
 
                 root.Add(cert);
-                Console.WriteLine("Add " + f.Name + " -> CertStore Root");
+                Console.WriteLine("Security 1.1 Add " + f.Name);
             }
 
             Directory.CreateDirectory("./temp");
@@ -312,18 +315,7 @@ namespace Net46ConsoleServer
             }
 
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-
-			if (opcclientActive) // read data by OPC UA
-			{
-				// Initial read of OPC values, will quit the program if it return false
-				if (!ReadOPCClient(true))
-				{
-					return;
-				}
-
-                Console.WriteLine("OPC client updating every {0} ms.", opcclient_rate);
-                SetOPCClientTimer(opcclient_rate); // read again everytime timer expires
-            }
+            Console.WriteLine("Security 1.2 Scan AAS Security and store access rights");
 
             Console.WriteLine();
             Console.WriteLine("Please wait for servers starting...");
@@ -347,11 +339,27 @@ namespace Net46ConsoleServer
                 Console.WriteLine("MQTT Publisher started..");
             }
 
+            MySampleServer server = null;
             if (runOPC)
             {
-                MySampleServer server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
+                server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
                 Console.WriteLine("OPC UA Server started..");
+            }
 
+            if (opcclientActive) // read data by OPC UA
+            {
+                // Initial read of OPC values, will quit the program if it return false
+                if (!ReadOPCClient(true))
+                {
+                    return;
+                }
+
+                Console.WriteLine("OPC client updating every {0} ms.", opcclient_rate);
+                SetOPCClientTimer(opcclient_rate); // read again everytime timer expires
+            }
+
+            if (runOPC && server != null)
+            {
                 server.Run(); // wait for CTRL-C
             }
             else
@@ -404,8 +412,6 @@ namespace Net46ConsoleServer
 
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
-            return;
-
             ReadOPCClient(false);
         }
 
@@ -598,6 +604,11 @@ namespace Net46ConsoleServer
         /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
         /// </summary>
         {
+            if (!runOPC)
+            {
+                return true;
+            }
+
             AasOpcUaServer.AasNodeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
 
             if (nodeMgr == null)
@@ -692,37 +703,45 @@ namespace Net46ConsoleServer
                         SampleClient.UASampleClient client;
                         lock (Program.opcclientAddLock)
                         {
-                            if (!OPCClients.TryGetValue(sm.idShort, out client))
+                            if (!OPCClients.TryGetValue(URL, out client))
+                            // if (!OPCClients.TryGetValue(sm.idShort, out client))
                             {
                                 try
                                 {
                                     // make OPC UA client
                                     client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                    Console.WriteLine("Connecting to external OPC UA Server at {0} ...", URL);
+                                    Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
                                     client.ConsoleSampleClient().Wait();
                                     // add it to the dictionary under this submodels idShort
-                                    OPCClients.Add(sm.idShort, client);
+                                    // OPCClients.Add(sm.idShort, client);
+                                    OPCClients.Add(URL, client);
                                 }
                                 catch (AggregateException ae)
                                 {
                                     bool cantconnect = false;
                                     ae.Handle((x) =>
-                                    {
-                                        if (x is ServiceResultException)
                                         {
-                                            cantconnect = true;
-                                            return true; // this exception handled
-                                    }
-                                        return false; // others not handled, will cause unhandled exception
-                                });
+                                            if (x is ServiceResultException)
+                                            {
+                                                cantconnect = true;
+                                                return true; // this exception handled
+                                            }
+                                            return false; // others not handled, will cause unhandled exception
+                                        }
+                                    );
                                     if (cantconnect)
                                     {
                                         // stop processing OPC read because we couldnt connect
                                         // but return true as this shouldn't stop the main loop
-                                        Console.WriteLine("Could not connect to {0} ...", URL);
+                                        Console.WriteLine(ae.Message);
+                                        Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
                                         return true;
                                     }
                                 }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
                             }
                         }
                         Console.WriteLine("==================================================");
@@ -752,10 +771,13 @@ namespace Net46ConsoleServer
         {
             if (sme is AdminShell.Property)
             {
-                //Console.WriteLine("{0} is a Property ", sme);
+                // Console.WriteLine("{0} is a Property ", sme);
                 var p = sme as AdminShell.Property;
-                string clientNodeName = nodePath + "." + p.idShort;
-                string serverNodeId = string.Format("{0}.{1}.{2}.Value", serverNodePrefix, nodePath, p.idShort);
+                // string clientNodeName = nodePath + "." + p.idShort;
+                string clientNodeName = nodePath + p.idShort;
+                // string serverNodeId = string.Format("{0}.{1}.{2}.Value", serverNodePrefix, nodePath, p.idShort);
+                // string serverNodeId = string.Format("{0}.{1}.Value", nodePath, p.idShort);
+                string serverNodeId = string.Format("{0}{1}.Value", nodePath, p.idShort);
                 NodeId clientNode = new NodeId(clientNodeName, (ushort)clientNamespace);
                 UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
             }
