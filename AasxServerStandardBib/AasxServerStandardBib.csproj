@@ -14,10 +14,7 @@
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.6.0" />
     <PackageReference Include="System.Security.Permissions" Version="4.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Grapevine\Grapevine.csproj" />
+    <PackageReference Include="Grapevine" Version = "4.1.2" />
   </ItemGroup>
 
   <ItemGroup>
