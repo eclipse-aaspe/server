@@ -57,19 +57,19 @@
 
   <ServerConfiguration>
     <BaseAddresses>
-      <ua:String>opc.tcp://localhost:51210/UA/SampleServer</ua:String>
-      <ua:String>https://localhost:51212/UA/SampleServer/</ua:String>
+      <ua:String>opc.tcp://0.0.0.0:51210/UA/SampleServer</ua:String>
+      <ua:String>https://0.0.0.0:51212/UA/SampleServer/</ua:String>
     </BaseAddresses>
 
-    <!-- 
+    <!--
     These list the alternate addresses (via firewalls, multiple NICs etc.) that can be
     used to communicate with the server. The URL used by the client when calling
     FindServers/GetEndpoints or CreateSession will be used to filter the list of
     endpoints returned by checking for alternate base addresses that have a domain
     that matches the domain in the url provided by the client.
-    
+
     Note that any additional domains should be listed in the server's certificate. If they
-    are left out the client make refuse to connect because it has no way to know if the 
+    are left out the client make refuse to connect because it has no way to know if the
     alternate domain was authorized by the server administrator.
     -->
     <!--
@@ -139,12 +139,12 @@
     <AvailableSamplingRates />
 
     <RegistrationEndpoint>
-      <ua:EndpointUrl>opc.tcp://localhost:4840</ua:EndpointUrl>
+      <ua:EndpointUrl>opc.tcp://0.0.0.0:4840</ua:EndpointUrl>
       <ua:Server>
-        <ua:ApplicationUri>opc.tcp://localhost:4840</ua:ApplicationUri>
+        <ua:ApplicationUri>opc.tcp://0.0.0.0:4840</ua:ApplicationUri>
         <ua:ApplicationType>DiscoveryServer_3</ua:ApplicationType>
         <ua:DiscoveryUrls>
-          <ua:String>opc.tcp://localhost:4840</ua:String>
+          <ua:String>opc.tcp://0.0.0.0:4840</ua:String>
         </ua:DiscoveryUrls>
       </ua:Server>
       <ua:SecurityMode>SignAndEncrypt_3</ua:SecurityMode>
