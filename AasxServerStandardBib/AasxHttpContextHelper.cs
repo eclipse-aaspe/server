@@ -2094,6 +2094,7 @@ namespace AasxRestServerLibrary
         public static string[] sessionUserName = new string[100];
         public static RSA[] sessionUserPulicKey = new RSA[100];
         public static string[] sessionRandom = new string[100];
+        public static string[] sessionChallenge = new string[100];
 
         public void EvalGetAuthenticateGuest(IHttpContext context)
         {
@@ -2212,10 +2213,15 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public void EvalPostAuthenticateCert(IHttpContext context)
+        public void EvalPostAuthenticateCert1(IHttpContext context)
         {
             Console.WriteLine();
-            Console.WriteLine("Security 2 Server: /AuthenticateCert"); // POST token with user
+            Console.WriteLine("Security 2 Server: /AuthenticateCert1"); // POST token with user
+
+            sessionUserType[sessionCount] = ' ';
+            sessionUserName[sessionCount] = "";
+            sessionRandom[sessionCount] = "";
+            sessionChallenge[sessionCount] = "";
 
             bool error = false;
 
@@ -2290,7 +2296,88 @@ namespace AasxRestServerLibrary
                 // string with real random numbers
                 Byte[] barray = new byte[100];
                 rngCsp.GetBytes(barray);
-                Console.WriteLine("Security 2.3 Server: Create session unique bearerToken signed by real random");
+                
+                Console.WriteLine("Security 2.3 Server: Create session unique challenge by real random");
+                sessionChallenge[sessionCount] = Convert.ToBase64String(barray);
+            }
+
+            if (error)
+            {
+                res.error = "User not authorized!";
+                SendJsonResponse(context, res);
+                return;
+            }
+
+            Console.WriteLine("sessionID: " + sessionCount);
+            Console.WriteLine("session challenge: " + sessionChallenge[sessionCount]);
+
+            sessionUserType[sessionCount] = 'T';
+            sessionUserName[sessionCount] = user;
+            sessionUserPulicKey[sessionCount] = publicKey;
+
+            withAuthentification = true;
+
+            res.challenge = sessionChallenge[sessionCount];
+
+            SendJsonResponse(context, res);
+        }
+
+        public void EvalPostAuthenticateCert2(IHttpContext context)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Security 3 Server: /AuthenticateCert2"); // POST token with user
+
+            sessionRandom[sessionCount] = "";
+
+            bool error = false;
+
+            dynamic res = new ExpandoObject();
+            string token = null;
+            string challenge = null;
+            RSA publicKey = null;
+
+            try
+            {
+                var parsed = JObject.Parse(context.Request.Payload);
+                token = parsed.SelectToken("token").Value<string>();
+
+                parsed = JObject.Parse(Jose.JWT.Payload(token));
+                challenge = parsed.SelectToken("challenge").Value<string>();
+            }
+            catch
+            {
+                Console.WriteLine("ERROR: Challenge sent is not received back!");
+                error = true;
+            }
+
+            if (challenge != sessionChallenge[sessionCount] || sessionChallenge[sessionCount] == null || sessionChallenge[sessionCount] == "")
+            {
+                error = true;
+            }
+
+            if (!error)
+            {
+                try
+                {
+                    publicKey = sessionUserPulicKey[sessionCount];
+
+                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
+                    Console.WriteLine("Security 3.1 Server: Validate challenge signature with publicKey");
+                }
+                catch
+                {
+                    error = true;
+                }
+            }
+
+            if (!error)
+            {
+                // challenge was correctly signed
+
+                // string with real random numbers
+                Byte[] barray = new byte[100];
+                rngCsp.GetBytes(barray);
+                Console.WriteLine("Security 3.2 Server: Create session unique bearerToken signed by real random");
                 sessionRandom[sessionCount] = Convert.ToBase64String(barray);
 
                 var payload = new Dictionary<string, object>()
@@ -2303,7 +2390,7 @@ namespace AasxRestServerLibrary
                     var enc = new System.Text.ASCIIEncoding();
                     token = Jose.JWT.Encode(payload, enc.GetBytes(sessionRandom[sessionCount]), JwsAlgorithm.HS256);
                     // token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
-                    Console.WriteLine("Security 2.4 Server: Sign sessionID and by server sessionRandom");
+                    Console.WriteLine("Security 3.3 Server: Sign sessionID by server sessionRandom");
                 }
                 catch
                 {
@@ -2322,9 +2409,6 @@ namespace AasxRestServerLibrary
             Console.WriteLine("session random: " + sessionRandom[sessionCount]);
             Console.WriteLine("session bearerToken: " + token);
 
-            sessionUserType[sessionCount] = 'T';
-            sessionUserName[sessionCount] = user;
-            sessionUserPulicKey[sessionCount] = publicKey;
             sessionCount++;
             if (sessionCount >= 100)
             {
@@ -2338,7 +2422,6 @@ namespace AasxRestServerLibrary
 
             SendJsonResponse(context, res);
         }
-
         public string SecurityCheck(IHttpContext context, ref int index)
 
         {
@@ -2393,7 +2476,8 @@ namespace AasxRestServerLibrary
             {
                 error = true;
             }
-            else
+
+            if (!error)
             {
                 try
                 {
@@ -2402,6 +2486,11 @@ namespace AasxRestServerLibrary
 
                     random = sessionRandom[id];
                     user = sessionUserName[id];
+
+                    if (random == null || random == "" || user == null || user == "")
+                    {
+                        error = true;
+                    }
                 }
                 catch
                 {
@@ -2474,13 +2563,13 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
-            Console.WriteLine("Security 3 Server: /server/listaas");
+            Console.WriteLine("Security 4 Server: /server/listaas");
 
             // check authentication
             if (withAuthentification)
             {
-                Console.WriteLine("Security 3.1 Server: Check bearer token and access rights");
-                Console.WriteLine("Security 3.2 Server: Validate that bearer token is signed by session unique random");
+                Console.WriteLine("Security 4.1 Server: Check bearer token and access rights");
+                Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by session unique random");
                 string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
@@ -2547,7 +2636,7 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
-            Console.WriteLine("Security 4 Server: /server/getaasx2/" + fileIndex);
+            Console.WriteLine("Security 5 Server: /server/getaasx2/" + fileIndex);
 
             // check authentication
             if (!withAuthentification)
@@ -2557,8 +2646,8 @@ namespace AasxRestServerLibrary
                 return;
             }
             string accessrights = SecurityCheck(context, ref index);
-            Console.WriteLine("Security 4.1 Server: Check bearer token and access rights");
-            Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by session unique random");
+            Console.WriteLine("Security 5.1 Server: Check bearer token and access rights");
+            Console.WriteLine("Security 5.2 Server: Validate that bearer token is signed by session unique random");
 
             if (accessrights == null || index == -1)
             {
