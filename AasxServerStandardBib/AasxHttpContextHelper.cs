@@ -2236,35 +2236,87 @@ namespace AasxRestServerLibrary
                 var parsed = JObject.Parse(context.Request.Payload);
                 token = parsed.SelectToken("token").Value<string>();
 
-                parsed = JObject.Parse(Jose.JWT.Payload(token));
-                user = parsed.SelectToken("user").Value<string>();
+                var headers = Jose.JWT.Headers(token);
+                string x5c = headers["x5c"].ToString();
 
-                string fileCert = "./user/" + user + ".cer";
-                if (File.Exists(fileCert))
+                if (x5c != "")
                 {
-                    x509 = new X509Certificate2(fileCert);
-                    Console.WriteLine("Security 2.1a Server: " + fileCert + "exists");
-                }
-                else
-                {
-                    // receive .cer and verify against root
-                    string certFileBase64 = parsed.SelectToken("certFile").Value<string>();
-                    Byte[] certFileBytes = Convert.FromBase64String(certFileBase64);
-                    fileCert = "./temp/" + user + ".cer";
+                    Console.WriteLine("Security 2.1a Server: x5c with certificate chain received");
+
+                    parsed = JObject.Parse(Jose.JWT.Payload(token));
+                    user = parsed.SelectToken("user").Value<string>();
+
+                    X509Store storeCA = new X509Store("CA", StoreLocation.CurrentUser);
+                    storeCA.Open(OpenFlags.ReadWrite);
+                    bool valid = false;
+
+                    string[] x5c64 = JsonConvert.DeserializeObject<string[]>(x5c);
+
+                    X509Certificate2Collection xcc = new X509Certificate2Collection();
+                    Byte[] certFileBytes = Convert.FromBase64String(x5c64[0]);
+                    string fileCert = "./temp/" + user + ".cer";
                     File.WriteAllBytes(fileCert, certFileBytes);
                     Console.WriteLine("Security 2.1b Server: " + fileCert + " received");
 
                     x509 = new X509Certificate2(certFileBytes);
-
-                    // check if certifcate is valid according to root certificates
-                    X509Chain chain = new X509Chain();
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                    bool isValid = chain.Build(x509);
-                    Console.WriteLine("Security 2.1c Server: Validate " + fileCert + " with root cert");
-
-                    if (!isValid)
+                    xcc.Add(x509);
+                    for (int i = 1; i < x5c64.Length; i++)
                     {
+                        var cert = new X509Certificate2(Convert.FromBase64String(x5c64[i]));
+                        Console.WriteLine("Security 2.1c Certificate in Chain: " + cert.Subject);
+                        if (cert.Subject != cert.Issuer)
+                        {
+                            xcc.Add(cert);
+                            storeCA.Add(cert);
+                        }
+                    }
+
+                    X509Chain c = new X509Chain();
+                    c.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+                    valid = c.Build(x509);
+
+                    storeCA.RemoveRange(xcc);
+                    Console.WriteLine("Security 2.1d Server: Validate chain with root cert");
+
+                    if (!valid)
+                    {
+                        Console.WriteLine("ERROR: Certificate " + x509.Subject + " not valid!");
                         error = true;
+                    }
+                }
+                else
+                {
+                    parsed = JObject.Parse(Jose.JWT.Payload(token));
+                    user = parsed.SelectToken("user").Value<string>();
+
+                    string fileCert = "./user/" + user + ".cer";
+                    if (File.Exists(fileCert))
+                    {
+                        x509 = new X509Certificate2(fileCert);
+                        Console.WriteLine("Security 2.1a Server: " + fileCert + "exists");
+                    }
+                    else
+                    {
+                        // receive .cer and verify against root
+                        string certFileBase64 = parsed.SelectToken("certFile").Value<string>();
+                        Byte[] certFileBytes = Convert.FromBase64String(certFileBase64);
+                        fileCert = "./temp/" + user + ".cer";
+                        File.WriteAllBytes(fileCert, certFileBytes);
+                        Console.WriteLine("Security 2.1b Server: " + fileCert + " received");
+
+                        x509 = new X509Certificate2(certFileBytes);
+
+                        // check if certifcate is valid according to root certificates
+                        X509Chain chain = new X509Chain();
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                        bool isValid = chain.Build(x509);
+                        Console.WriteLine("Security 2.1c Server: Validate " + fileCert + " with root cert");
+
+                        if (!isValid)
+                        {
+                            error = true;
+                        }
                     }
                 }
             }
