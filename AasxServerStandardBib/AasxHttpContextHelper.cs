@@ -2260,6 +2260,15 @@ namespace AasxRestServerLibrary
 
                     x509 = new X509Certificate2(certFileBytes);
                     xcc.Add(x509);
+
+                    StringBuilder builder = new StringBuilder();
+                    builder.AppendLine("-----BEGIN CERTIFICATE-----");
+                    builder.AppendLine(
+                        Convert.ToBase64String(x509.RawData, Base64FormattingOptions.InsertLineBreaks));
+                    builder.AppendLine("-----END CERTIFICATE-----");
+                    Console.WriteLine("Certificate: ");
+                    Console.WriteLine(builder);
+
                     for (int i = 1; i < x5c64.Length; i++)
                     {
                         var cert = new X509Certificate2(Convert.FromBase64String(x5c64[i]));
