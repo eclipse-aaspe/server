@@ -6,6 +6,7 @@ using Opc.Ua.Server;
 using Opc.Ua.Client;
 using System;
 using System.IO;
+using System.IO.Packaging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,7 @@ using AasxMqttServer;
 using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Components;
 // using AASXLoader;
 
 namespace Net46ConsoleServer
@@ -56,6 +58,40 @@ namespace Net46ConsoleServer
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null
             };
+
+        public static string[] envSymbols = new string[100]
+            {
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null
+            };
+
+        public static string[] envSubjectIssuer = new string[100]
+            {
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null
+            };
+
+        public static string hostPort = "";
+        public static ulong dataVersion = 0;
+
+        public static void changeDataVersion() { dataVersion++; }
+        public static ulong getDataVersion() { return(dataVersion); }
 
         static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static Boolean opcclientActive;
@@ -230,6 +266,8 @@ namespace Net46ConsoleServer
                 Console.WriteLine("Debugger attached");
             }
 
+            hostPort = host + ":" + port;
+
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
@@ -291,17 +329,22 @@ namespace Net46ConsoleServer
                 }
             }
 
-            ParentDirectory = new System.IO.DirectoryInfo(AasxHttpContextHelper.DataPath);
+            // ParentDirectory = new System.IO.DirectoryInfo(AasxHttpContextHelper.DataPath);
 
             int envi = 0;
 
-            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
+            string[] fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
+            Array.Sort(fileNames);
+
+            // foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
+            while (envi < fileNames.Length)
             {
-                fn = f.Name;
+                // fn = f.Name;
+                fn = fileNames[envi];
 
                 if (fn != "" && envi < envimax)
                 {
-                    fn = AasxHttpContextHelper.DataPath + "/" + fn;
+                    // fn = AasxHttpContextHelper.DataPath + "/" + fn;
                     Console.WriteLine("Loading {0}...", fn);
                     envFileName[envi] = fn;
                     env[envi] = new AdminShell.PackageEnv(fn);
@@ -310,12 +353,47 @@ namespace Net46ConsoleServer
                         Console.Out.WriteLine($"Cannot open {fn}. Aborting..");
                         return;
                     }
+                    // check if signed
+                    string name = Path.GetFileName(fn);
+                    string fileCert = "./user/" + name + ".cer";
+                    if (File.Exists(fileCert))
+                    {
+                        X509Certificate2 x509 = new X509Certificate2(fileCert);
+                        envSymbols[envi] = "S";
+                        envSubjectIssuer[envi] = x509.Subject;
+
+                        X509Chain chain = new X509Chain();
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                        bool isValid = chain.Build(x509);
+                        if (isValid)
+                        {
+                            envSymbols[envi] += ";V";
+                            envSubjectIssuer[envi] += ";" + x509.Issuer;
+                        }
+                    }
+
+                }
+                envi++;
+            }
+
+            fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
+            Array.Sort(fileNames);
+
+            // foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
+            for (int j = 0; j < fileNames.Length; j++)
+            {
+                // fn = f.Name;
+                fn = fileNames[j];
+
+                if (fn != "" && envi < envimax)
+                {
+                    envFileName[envi] = fn;
+                    envSymbols[envi] = "L"; // Show lock
                 }
                 envi++;
             }
 
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-            Console.WriteLine("Security 1.2 Scan AAS Security and store access rights");
 
             Console.WriteLine();
             Console.WriteLine("Please wait for servers starting...");
@@ -410,9 +488,11 @@ namespace Net46ConsoleServer
             }
         }
 
+        public static event EventHandler NewOpcDataAvailable; 
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
+            NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
         private static System.Timers.Timer restTimer;
@@ -433,7 +513,7 @@ namespace Net46ConsoleServer
         {
             //            if (RESTalreadyRunning)
             //                return;
-            return;
+            // return;
 
             RESTalreadyRunning = true;
 
@@ -764,6 +844,12 @@ namespace Net46ConsoleServer
                     }
                 }
             }
+            if (!initial)
+            {
+                // StateHasChanged();
+                // dataVersion++;
+                changeDataVersion();
+            }
             return true;
         }
 
@@ -811,8 +897,10 @@ namespace Net46ConsoleServer
         // update in AAS env
         p.Set(p.valueType, value);
         // update in OPC
+        /*
         if (!OPCWrite(serverNodeId, value))
             Console.WriteLine("OPC write not successful.");
+        */
     }
 }
 

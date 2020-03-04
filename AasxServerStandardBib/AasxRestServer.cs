@@ -174,6 +174,27 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getfile/(\d+)/aasx/(([^/]+)/){0,99}([^/]+)$")] 
+            public IHttpContext GetFile(IHttpContext context)
+            {
+                int index = -1;
+                string path = "/aasx";
+
+                string[] split = context.Request.PathInfo.Split(new Char[] { '/' });
+                if (split[1].ToLower() == "server" && split[2].ToLower() == "getfile")
+                {
+                    index = Int32.Parse(split[3]);
+                    for (int i = 5; i < split.Length; i++)
+                    {
+                        path += "/" + split[i];
+                    }
+                }
+
+                helper.EvalGetFile(context, index, path);
+
+                return context;
+            }
+
             // Assets
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/assets/([^/]+)(/|)$")]

@@ -69,7 +69,7 @@
     that matches the domain in the url provided by the client.
 
     Note that any additional domains should be listed in the server's certificate. If they
-    are left out the client make refuse to connect because it has no way to know if the
+    are left out the client make refuse to connect because it has no way to know if the 
     alternate domain was authorized by the server administrator.
     -->
     <!--

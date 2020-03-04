@@ -25,6 +25,8 @@ using System.Security.Cryptography;
 using System.Security.Permissions;
 using System.Security.Cryptography.X509Certificates;
 
+using Net46ConsoleServer;
+
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
 The browser functionality is under the cefSharp license (see https://raw.githubusercontent.com/cefsharp/CefSharp/master/LICENSE).
@@ -2483,6 +2485,7 @@ namespace AasxRestServerLibrary
 
             SendJsonResponse(context, res);
         }
+
         public string SecurityCheck(IHttpContext context, ref int index)
 
         {
@@ -2748,6 +2751,29 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
         #endregion
+
+        public void EvalGetFile(IHttpContext context, int envIndex, string filePath)
+        {
+            dynamic res = new ExpandoObject();
+            int index = -1;
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context, ref index);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
+            SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
+        }
 
         public static string[] securityUserName = null;
         public static string[] securityUserPassword = null;
