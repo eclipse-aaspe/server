@@ -9,8 +9,6 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System;
 using System.IO.Packaging;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -3553,28 +3551,6 @@ namespace AdminShellNS
                 {
                     return aasenv;
                 }
-            }
-
-            public bool validate()
-            {
-                // Check Signatures
-                /*
-                VerifyResult vResult;
-                Dictionary<string, X509ChainStatusFlags> certificatesStatus = new Dictionary<string, X509ChainStatusFlags>();
-                // PackageDigitalSignatureManager dsm = new PackageDigitalSignatureManager(env[envi].openPackage);
-                Package p = null;
-                PackageDigitalSignatureManager dsm = new PackageDigitalSignatureManager(p);
-
-                // Verify the collection of certificates in the package
-                foreach (PackageDigitalSignature signature in dsm.Signatures)
-                {
-                    certificatesStatus.Add(signature.Signer.Subject, PackageDigitalSignatureManager.VerifyCertificate(signature.Signer));
-                }
-
-                // For this example, if all certificates are valid, verify all signatures in the package.
-                vResult = dsm.VerifySignatures(false);
-                */
-                return true;
             }
 
             public bool Load(string fn)
