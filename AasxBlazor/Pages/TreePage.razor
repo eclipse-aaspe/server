@@ -1,0 +1,589 @@
+﻿@page "/"
+@inject AASService SubmodelService
+@using AasxBlazor.Data
+@using static AdminShellNS.AdminShellV10;
+@using System
+@implements IDisposable
+
+<div class="col-12 row">
+    <br />
+    <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
+        <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
+              @bind-SelectedNode="SelectedNode"
+              @bind-ExpandedNodes="ExpandedNodes"
+              HasChildNodes="@(item => item.Childs?.Any() == true)">
+            <TitleTemplate>
+                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span> @ViewNodeID(context)@ViewNodeInfo(context)
+                <strong><span style="color:blue">@getSymbols(context)</span></strong>
+            </TitleTemplate>
+        </Tree>
+    </div>
+    <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
+        <div class="sticky-top" style="word-wrap:break-word">
+            @{
+                <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
+                for (int line = 0; line < 5; line++)
+                {
+                    string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
+                    string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
+                    if (nodeDetails0 != "" && nodeDetails1 != "")
+                    {
+                        <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
+                    }
+                }
+                if (selectedNode != null && hasDownloadFile(selectedNode))
+                {
+                    <button @onclick="DownloadFile">Download File</button><br>
+                }
+                string link = getLink(selectedNode);
+                if (selectedNode != null && link != "")
+                {
+                    <a href="@link" target="_blank">@link</a><br>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+
+@inject IJSRuntime js
+@using Net46ConsoleServer;
+
+@code {
+    async Task DownloadFile()
+    {
+        this.StateHasChanged();
+        var f = selectedNode.Tag as File;
+        var fileName = System.IO.Path.GetFileName(f.value);
+        if (fileName != "")
+        {
+            try
+            {
+                /*
+                string data;
+                using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
+                {
+                    data = reader.ReadToEnd();
+                }
+                */
+                //
+                byte[] data;
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                {
+                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
+                    data = ms.ToArray();
+                }
+                //
+                await SaveAs(js, fileName, data);
+            }
+            catch
+            {
+            }
+
+        }
+    }
+    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
+    // async Task SaveAs(IJSRuntime js, string filename, string data)
+    {
+        ; await js.InvokeAsync<object>(
+     "saveAsFile",
+     filename,
+     data
+     );
+        /*
+        await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            Convert.ToBase64String(data)
+            );
+        */
+        /*
+        await js.InvokeAsync<object>(
+            "download",
+            data,
+            filename,
+            "application/pdf"
+            );
+        */
+    }
+
+    public class Item
+    {
+        public string Text { get; set; }
+        public IEnumerable<Item> Childs { get; set; }
+        // public List<Item> Childs { get; set; }
+        public object Tag { get; set; }
+        public int envIndex { get; set; }
+    }
+
+    List<Item> Items = null;
+
+    IList<Item> ExpandedNodes = new List<Item>();
+    Item selectedNode;
+    Item SelectedNode
+    {
+        get { return selectedNode; }
+        set
+        {
+            selectedNode = value;
+            // OnSelectNode(selectedNode);
+        }
+    }
+
+    static ulong dataVersion = 0;
+
+    public static void checkDataVersion()
+    {
+        if (Program.getDataVersion() != dataVersion)
+        {
+            dataVersion = Program.getDataVersion();
+            // TreePage.StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Items = SubmodelService.GetTree();
+        // StateHasChanged();
+
+        //ExpandedNodes.Add(Items.Skip(1).First());
+        //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
+
+        SubmodelService.NewOpcDataAvailable += NewOpcData;
+    }
+    public void Dispose()
+    {
+        SubmodelService.NewOpcDataAvailable -= NewOpcData;
+    }
+    void NewOpcData(object source, EventArgs args)
+    {
+        InvokeAsync(() => this.StateHasChanged());
+    }
+
+    bool hasDownloadFile(Item item)
+    {
+        return false;
+
+        if (item == null)
+        {
+            return false;
+        }
+
+        object o = item.Tag;
+
+        if (o is File)
+        {
+
+            var f = o as File;
+
+            // Test for /aasx/
+            string[] split = f.value.Split(new Char[] { '/' });
+            if (split[1].ToLower() == "aasx")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    string getLink(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        object o = item.Tag;
+
+        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        {
+            return "http://" + Program.hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+        }
+
+        if (o is AdministrationShell)
+        {
+            return "http://" + Program.hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+        }
+
+        if (o is File || o is Property)
+        {
+            string value = "";
+
+            if (o is File)
+            {
+                value = (o as File).value;
+            }
+            if (o is Property)
+            {
+                value = (o as Property).value;
+            }
+
+            string[] split = value.Split(new Char[] { ':' });
+            if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
+            {
+                return value;
+            }
+
+            // Test for /aasx/
+            split = value.Split(new Char[] { '/' });
+            if (split.Length > 1)
+            {
+                if (split[1].ToLower() == "aasx")
+                {
+                    return "http://" + Program.hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    string getSymbols(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "";
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            string symbols = Program.envSymbols[item.envIndex];
+
+            if (symbols != null)
+            {
+                string[] s = symbols.Split(';');
+
+                for (int i = 0; i < s.Length; i++)
+                {
+                    switch (s[i])
+                    {
+                        case "L":
+                            ret += "ENCRYPTED ";
+                            break;
+                        case "S":
+                            ret += "SIGNED ";
+                            break;
+                        case "V":
+                            ret += "VALIDATED ";
+                            break;
+                    }
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    string ViewNodeType(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "NULL";
+
+        object o = item.Tag;
+
+        /*
+        if (o is Referable)
+        {
+            ret = (o as Referable).GetElementName();
+            return (ret);
+        }
+        */
+
+        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        {
+            ret = "AASX2";
+        }
+
+        if (o is AdministrationShell)
+        {
+            ret = "AAS";
+        }
+        if (o is Submodel)
+        {
+            ret = "Sub";
+        }
+        if (o is SubmodelElement)
+        {
+            if (o is SubmodelElementCollection)
+            {
+                ret = "Coll";
+            }
+            if (o is Property)
+            {
+                ret = "Prop";
+            }
+        }
+        if (o is File)
+        {
+            ret = "File";
+        }
+        return (ret);
+    }
+
+    string ViewNodeID(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "NULL";
+
+        object o = item.Tag;
+
+        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        {
+            ret = item.Text;
+        }
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            ret = aas.idShort;
+        }
+        if (o is Submodel)
+        {
+            var sm = o as Submodel;
+            ret = sm.idShort;
+        }
+        if (o is SubmodelElement)
+        {
+            var sme = o as SubmodelElement;
+            ret = sme.idShort;
+        }
+        if (o is File)
+        {
+            var f = o as File;
+            ret = f.idShort;
+        }
+        return (ret);
+    }
+
+    string ViewNodeInfo(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "";
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            // ret = aas.identification.ToString();
+        }
+        if (o is Submodel)
+        {
+            var sm = o as Submodel;
+            // ret = sm.identification.ToString();
+        }
+        if (o is SubmodelElement)
+        {
+            if (o is Property)
+            {
+                var prop = o as Property;
+                if (prop.value != "")
+                {
+                    ret = " = " + prop.value;
+                }
+            }
+            if (o is File)
+            {
+                var f = o as File;
+                ret = " = " + f.value;
+            }
+        }
+        return (ret);
+    }
+
+    string ViewNodeDetails(Item item, int line, int col)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "NULL";
+
+        object o = item.Tag;
+
+        if (o == null)
+        {
+            return "";
+        }
+
+        if (o is AdministrationShell)
+        {
+            string subjectIssuer = null;
+
+            ret = "";
+            var aas = o as AdministrationShell;
+
+            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+
+            switch (line)
+            {
+                case 0:
+                    ret = "ID";
+                    if (col == 1)
+                        ret = aas.identification + "";
+                    break;
+                case 1:
+                    if (asset != null)
+                    {
+                        ret = "ASSET";
+                        if (col == 1)
+                            ret = asset.idShort;
+                    }
+                    break;
+                case 2:
+                    if (asset != null)
+                    {
+                        ret = "ASSETID";
+                        if (col == 1)
+                            ret = asset.identification + "";
+                    }
+                    break;
+                case 3:
+                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+                    if (subjectIssuer != null)
+                    {
+                        string[] s = subjectIssuer.Split(';');
+                        if (s.Length > 0 && s[0] != "")
+                        {
+                            ret = "SUBJECT";
+                            if (col == 1)
+                                ret = s[0];
+                        }
+                    }
+                    break;
+                case 4:
+                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+                    if (subjectIssuer != null)
+                    {
+                        string[] s = subjectIssuer.Split(';');
+                        if (s.Length > 1 && s[1] != "")
+                        {
+                            ret = "ISSUER";
+                            if (col == 1)
+                                ret = s[1];
+                        }
+                    }
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Submodel)
+        {
+            var sm = o as Submodel;
+            switch (line)
+            {
+                case 0:
+                    ret = "ID";
+                    if (col == 1)
+                        ret = sm.identification + "";
+                    break;
+                case 1:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                        ret = sm.semanticId + "";
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Property)
+        {
+            var prop = o as Property;
+            ret += ", " + prop.value;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                        ret = prop.semanticId + "";
+                    break;
+                case 1:
+                    ret = "Value Type";
+                    if (col == 1)
+                        ret = prop.valueType + "";
+                    break;
+                case 2:
+                    ret = "Value";
+                    if (col == 1)
+                        ret = prop.value + "";
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is File)
+        {
+            var f = o as File;
+            ret += ", " + f.value;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                        ret = f.semanticId + "";
+                    break;
+                case 1:
+                    ret = "Value";
+                    if (col == 1)
+                        ret = f.value;
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is SubmodelElement)
+        {
+            var sme = o as SubmodelElement;
+            ret = sme.idShort + ", " + sme.semanticId;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                        ret = sme.semanticId + "";
+                    break;
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        return (ret);
+    }
+}

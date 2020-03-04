@@ -38,6 +38,9 @@
     <Reference Include="BouncyCastle.Crypto, Version=1.8.4.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
       <HintPath>..\packages\Portable.BouncyCastle.1.8.4\lib\net40\BouncyCastle.Crypto.dll</HintPath>
     </Reference>
+    <Reference Include="Grapevine, Version=4.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grapevine.4.1.2\lib\net40\Grapevine.dll</HintPath>
+    </Reference>
     <Reference Include="jose-jwt, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\jose-jwt.2.5.0\lib\net461\jose-jwt.dll</HintPath>
     </Reference>
@@ -358,10 +361,6 @@
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj">
       <Project>{6d8fafa1-0ba5-4e52-87d2-e4e37fc6d95f}</Project>
       <Name>AasxServerStandardBib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Grapevine\Grapevine.csproj">
-      <Project>{b7518695-ac34-4db4-903b-cc9f6e43110f}</Project>
-      <Name>Grapevine</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
