@@ -746,77 +746,80 @@ namespace Net46ConsoleServer
             if (env == null)
                 return false;
 
-            foreach (var sm in env[0].AasEnv.Submodels)
+            int i = 0;
+            while (env[i] != null)
             {
-                if (sm != null && sm.idShort != null)
+                foreach (var sm in env[i].AasEnv.Submodels)
                 {
-                    int count = sm.qualifiers.Count;
-                    if (count != 0)
+                    if (sm != null && sm.idShort != null)
                     {
-                        int stopTimeout = Timeout.Infinite;
-                        bool autoAccept = true;
-                        // Variablen aus AAS Qualifiern
-                        string Username = "";
-                        string Password = "";
-                        string URL = "";
-                        int Namespace = 0;
-                        string Path = "";
-
-                        int j = 0;
-
-                        while (j < count) // URL, Username, Password, Namespace, Path
+                        int count = sm.qualifiers.Count;
+                        if (count != 0)
                         {
-                            var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                            int stopTimeout = Timeout.Infinite;
+                            bool autoAccept = true;
+                            // Variablen aus AAS Qualifiern
+                            string Username = "";
+                            string Password = "";
+                            string URL = "";
+                            int Namespace = 0;
+                            string Path = "";
 
-                            switch (p.qualifierType)
+                            int j = 0;
+
+                            while (j < count) // URL, Username, Password, Namespace, Path
                             {
-                                case "OPCURL": // URL
-                                    URL = p.qualifierValue;
-                                    break;
-                                case "OPCUsername": // Username
-                                    Username = p.qualifierValue;
-                                    break;
-                                case "OPCPassword": // Password
-                                    Password = p.qualifierValue;
-                                    break;
-                                case "OPCNamespace": // Namespace
-                                    // TODO: if not int, currently throws nondescriptive error
-                                    Namespace = int.Parse(p.qualifierValue);
-                                    break;
-                                case "OPCPath": // Path
-                                    Path = p.qualifierValue;
-                                    break;
-                            }
-                            j++;
-                        }
+                                var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                        if (URL == "" || Username == "" || Password == "" || Namespace == 0 || Path == "")
-                        {
-                            Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
-                            return false;
-                        }
-
-                        // try to get the client from dictionary, else create and add it
-                        SampleClient.UASampleClient client;
-                        lock (Program.opcclientAddLock)
-                        {
-                            if (!OPCClients.TryGetValue(URL, out client))
-                            // if (!OPCClients.TryGetValue(sm.idShort, out client))
-                            {
-                                try
+                                switch (p.qualifierType)
                                 {
-                                    // make OPC UA client
-                                    client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                    Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                    client.ConsoleSampleClient().Wait();
-                                    // add it to the dictionary under this submodels idShort
-                                    // OPCClients.Add(sm.idShort, client);
-                                    OPCClients.Add(URL, client);
+                                    case "OPCURL": // URL
+                                        URL = p.qualifierValue;
+                                        break;
+                                    case "OPCUsername": // Username
+                                        Username = p.qualifierValue;
+                                        break;
+                                    case "OPCPassword": // Password
+                                        Password = p.qualifierValue;
+                                        break;
+                                    case "OPCNamespace": // Namespace
+                                                         // TODO: if not int, currently throws nondescriptive error
+                                        Namespace = int.Parse(p.qualifierValue);
+                                        break;
+                                    case "OPCPath": // Path
+                                        Path = p.qualifierValue;
+                                        break;
                                 }
-                                catch (AggregateException ae)
+                                j++;
+                            }
+
+                            if (URL == "" || Username == "" || Password == "" || Namespace == 0 || Path == "")
+                            {
+                                Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
+                                return false;
+                            }
+
+                            // try to get the client from dictionary, else create and add it
+                            SampleClient.UASampleClient client;
+                            lock (Program.opcclientAddLock)
+                            {
+                                if (!OPCClients.TryGetValue(URL, out client))
+                                // if (!OPCClients.TryGetValue(sm.idShort, out client))
                                 {
-                                    bool cantconnect = false;
-                                    ae.Handle((x) =>
+                                    try
+                                    {
+                                        // make OPC UA client
+                                        client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
+                                        Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                        client.ConsoleSampleClient().Wait();
+                                        // add it to the dictionary under this submodels idShort
+                                        // OPCClients.Add(sm.idShort, client);
+                                        OPCClients.Add(URL, client);
+                                    }
+                                    catch (AggregateException ae)
+                                    {
+                                        bool cantconnect = false;
+                                        ae.Handle((x) =>
                                         {
                                             if (x is ServiceResultException)
                                             {
@@ -825,41 +828,44 @@ namespace Net46ConsoleServer
                                             }
                                             return false; // others not handled, will cause unhandled exception
                                         }
-                                    );
-                                    if (cantconnect)
-                                    {
-                                        // stop processing OPC read because we couldnt connect
-                                        // but return true as this shouldn't stop the main loop
-                                        Console.WriteLine(ae.Message);
-                                        Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
-                                        return true;
+                                        );
+                                        if (cantconnect)
+                                        {
+                                            // stop processing OPC read because we couldnt connect
+                                            // but return true as this shouldn't stop the main loop
+                                            Console.WriteLine(ae.Message);
+                                            Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
+                                            return true;
+                                        }
                                     }
                                 }
+                                else
+                                {
+                                    Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                }
                             }
-                            else
-                            {
-                                Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                            }
-                        }
-                        Console.WriteLine("==================================================");
-                        Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
-                        Console.WriteLine("==================================================");
+                            Console.WriteLine("==================================================");
+                            Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
+                            Console.WriteLine("==================================================");
 
-                        // over all SMEs
-                        count = sm.submodelElements.Count;
-                        for(j = 0; j < count; j++)
-                        {
-                            var sme = sm.submodelElements[j].submodelElement;
-                            //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
-                            // some preparations for multiple AAS below
-                            int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
-                            string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                            string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASIdShort);
-                            string nodePath = Path; // generally starts with Submodel idShort
-                            WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
+                            // over all SMEs
+                            count = sm.submodelElements.Count;
+                            for (j = 0; j < count; j++)
+                            {
+                                var sme = sm.submodelElements[j].submodelElement;
+                                //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
+                                // some preparations for multiple AAS below
+                                int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
+                                // string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
+                                string nodePath = Path; // generally starts with Submodel idShort
+                                WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
+                            }
                         }
                     }
                 }
+                i++;
             }
             if (!initial)
             {
@@ -878,9 +884,10 @@ namespace Net46ConsoleServer
                 var p = sme as AdminShell.Property;
                 // string clientNodeName = nodePath + "." + p.idShort;
                 string clientNodeName = nodePath + p.idShort;
-                // string serverNodeId = string.Format("{0}.{1}.{2}.Value", serverNodePrefix, nodePath, p.idShort);
+                string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.idShort);
+                // string serverNodeId = string.Format("{0}.{1}{2}.Value", serverNodePrefix, nodePath, p.idShort);
                 // string serverNodeId = string.Format("{0}.{1}.Value", nodePath, p.idShort);
-                string serverNodeId = string.Format("{0}{1}.Value", nodePath, p.idShort);
+                // string serverNodeId = string.Format("{0}{1}.Value", nodePath, p.idShort);
                 NodeId clientNode = new NodeId(clientNodeName, (ushort)clientNamespace);
                 UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
             }
@@ -914,10 +921,10 @@ namespace Net46ConsoleServer
         // update in AAS env
         p.Set(p.valueType, value);
         // update in OPC
-        /*
+        
         if (!OPCWrite(serverNodeId, value))
             Console.WriteLine("OPC write not successful.");
-        */
+        
     }
 }
 
