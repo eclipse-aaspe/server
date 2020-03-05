@@ -131,12 +131,13 @@ namespace Net46ConsoleServer
             "Copyright(c) 2018-2020 Festo SE & Co.KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister\n" +
             "Copyright(c) 2019-2020 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer - Gesellschaft\n" +
             "zur Foerderung der angewandten Forschung e.V.\n" +
-            "This software is licensed under the Eclipse Public License 2.0(EPL - 2.0)(see below)\n" +
-            "The Newtonsoft.JSON serialization is licensed under the MIT License(MIT)(see below)\n" +
-            "The Grapevine REST server framework is licensed under Apache License 2.0(Apache - 2.0)(see below)\n" +
-            "The MQTT server and client is licensed under the MIT license(MIT)(see below)\n" +
-            "Portions copyright(c) by OPC Foundation, Inc.and licensed under the Reciprocal Community License(RCL)(see below)\n" +
-            "Font Awesome is licensed under the Font Awesome Free License(see below)\n" +
+            "This software is licensed under the Eclipse Public License 2.0 (EPL - 2.0)\n" +
+            "The Newtonsoft.JSON serialization is licensed under the MIT License (MIT)\n" +
+            "The Grapevine REST server framework is licensed under Apache License 2.0 (Apache - 2.0)\n" +
+            "The MQTT server and client is licensed under the MIT license (MIT)\n" +
+            "Portions copyright(c) by OPC Foundation, Inc.and licensed under the Reciprocal Community License (RCL)\n" +
+            "Jose-JWT is licensed under the MIT license (MIT)\n" +
+            "Font Awesome is licensed under the Font Awesome Free License\n" +
             "This application is a sample application for demonstration of the features of the Administration Shell.\n" +
             "It is not allowed for productive use. The implementation uses the concepts of the document Details of the Asset\n" +
             "Administration Shell published on www.plattform-i40.de which is licensed under Creative Commons CC BY-ND 3.0 DE."
