@@ -80,15 +80,33 @@ namespace AdminShellNS
             if (lines.Length < 1)
                 return "";
             // search for " in "
-            var p = lines[0].IndexOf(" in ");
-            if (p < 0)
-                return "";
-            // search last "\" or "/", to get only filename portion and position
-            p = lines[0].LastIndexOfAny(new char[] { '\\', '/' });
-            if (p < 0)
-                return "";
-            // return this
-            return lines[0].Substring(p);
+            // as the most actual stacktrace might be a built-in function, this might not work and therefore
+            // go down in the stack
+            int currLine = 0;
+            while (true)
+            {
+                // nothing found at all
+                if (currLine >= lines.Length)
+                    return "";
+                // access current line
+                var p = lines[currLine].IndexOf(" in ");
+                if (p < 0)
+                {
+                    // advance to next oldest line
+                    currLine++;
+                    continue;
+                }
+                // search last "\" or "/", to get only filename portion and position
+                p = lines[currLine].LastIndexOfAny(new char[] { '\\', '/' });
+                if (p < 0)
+                {
+                    // advance to next oldest line
+                    currLine++;
+                    continue;
+                }
+                // return this
+                return lines[currLine].Substring(p);
+            }
         }
 
     }
@@ -134,6 +152,20 @@ namespace AdminShellNS
                 this.id = src.id;
             }
 
+            // Creator with validation
+
+            public static Identification CreateNew(string idType, string id)
+            {
+                if (idType == null || id == null)
+                    return null;
+                var found = false;
+                foreach (var x in Key.IdentifierTypeNames)
+                    found = found || idType.ToLower().Trim() == x.ToLower().Trim();
+                if (!found)
+                    return null;
+                return new Identification(idType, id);
+            }
+
             // further
 
             public bool IsEqual(Identification other)
@@ -166,6 +198,12 @@ namespace AdminShellNS
                 this.revision = src.revision;
             }
 
+            public Administration(string version, string revision)
+            {
+                this.version = version;
+                this.revision = revision;
+            }
+
             public override string ToString()
             {
                 return $"R={this.version}, V={this.revision}";
@@ -184,7 +222,8 @@ namespace AdminShellNS
             public string idType = "";
             [XmlIgnore]
             [JsonProperty(PropertyName = "idType")]
-            public string JsonIdType {
+            public string JsonIdType
+            {
                 get { return (idType == "idShort") ? "IdShort" : idType; }
                 set { if (value == "IdShort") idType = "idShort"; else idType = value; }
             }
@@ -322,14 +361,29 @@ namespace AdminShellNS
             // use this in list to designate the GlobalReference
             public static string GlobalReference = "GlobalReference";
             public static string ConceptDescription = "ConceptDescription";
+            public static string SubmodelRef = "SubmodelRef";
+            public static string Submodel = "Submodel";
+            public static string Asset = "Asset";
+            public static string AAS = "AssetAdministrationShell";
 
-            public static string[] IdentifierTypeNames = new string[] { "idShort", "Custom", "IRDI", "URI" };
+            public static string[] IdentifierTypeNames = new string[] { "IdShort", "Custom", "IRDI", "URI" };
 
             public enum IdentifierType { IdShort = 0, Custom, IRDI, URI };
 
             public static string GetIdentifierTypeName(IdentifierType t)
             {
                 return IdentifierTypeNames[(int)t];
+            }
+
+            // some helpers
+
+            public static bool IsInKeyElements(string ke)
+            {
+                var res = false;
+                foreach (var s in KeyElements)
+                    if (s.Trim().ToLower() == ke.Trim().ToLower())
+                        res = true;
+                return res;
             }
 
         }
@@ -403,8 +457,10 @@ namespace AdminShellNS
             public List<Key> Keys { get { return keys?.Keys; } }
             [XmlIgnore]
             [JsonProperty(PropertyName = "keys")]
-            public List<Key> JsonKeys {
-                get {                    
+            public List<Key> JsonKeys
+            {
+                get
+                {
                     keys?.NumberIndices();
                     return keys.Keys;
                 }
@@ -428,18 +484,28 @@ namespace AdminShellNS
 
             public Reference(Key k)
             {
-                keys.Keys.Add(k);
+                if (k != null)
+                    keys.Keys.Add(k);
             }
 
             public Reference(Reference src)
             {
-                foreach (var k in src.Keys)
-                    keys.Add(new Key(k));
+                if (src != null)
+                    foreach (var k in src.Keys)
+                        keys.Add(new Key(k));
             }
 
+            public Reference(SemanticId src)
+            {
+                if (src == null)
+                    foreach (var k in src.Keys)
+                        keys.Add(new Key(k));
+            }
 
             public static Reference CreateNew(Key k)
             {
+                if (k == null)
+                    return null;
                 var r = new Reference();
                 r.keys.Keys.Add(k);
                 return r;
@@ -447,6 +513,8 @@ namespace AdminShellNS
 
             public static Reference CreateNew(List<Key> k)
             {
+                if (k == null)
+                    return null;
                 var r = new Reference();
                 r.keys.Keys.AddRange(k);
                 return r;
@@ -454,6 +522,8 @@ namespace AdminShellNS
 
             public static Reference CreateNew(string type, bool local, string idType, string value)
             {
+                if (type == null || idType == null || value == null)
+                    return null;
                 var r = new Reference();
                 r.keys.Keys.Add(Key.CreateNew(type, local, idType, value));
                 return r;
@@ -461,6 +531,8 @@ namespace AdminShellNS
 
             public static Reference CreateIrdiReference(string irdi)
             {
+                if (irdi == null)
+                    return null;
                 var r = new Reference();
                 r.keys.Keys.Add(new Key(Key.GlobalReference, false, "IRDI", irdi));
                 return r;
@@ -489,8 +561,8 @@ namespace AdminShellNS
                     return false;
 
                 var same = true;
-                for (int i=0; i<this.Count; i++)
-                    same = same 
+                for (int i = 0; i < this.Count; i++)
+                    same = same
                         && this.keys[i].type.Trim().ToLower() == other.keys[i].type.Trim().ToLower()
                         && this.keys[i].local == other.keys[i].local
                         && this.keys[i].idType.Trim().ToLower() == other.keys[i].idType.Trim().ToLower()
@@ -506,6 +578,20 @@ namespace AdminShellNS
                     foreach (var k in keys.Keys)
                         res += k.ToString() + ",";
                 return res.TrimEnd(',');
+            }
+
+            public string ListOfValues(string delim)
+            {
+                string res = "";
+                if (this.Keys != null)
+                    foreach (var x in this.Keys)
+                    {
+                        if (x == null)
+                            continue;
+                        if (res != "") res += delim;
+                        res += x.value;
+                    }
+                return res;
             }
 
             public virtual string GetElementName()
@@ -542,6 +628,13 @@ namespace AdminShellNS
 
             public AssetRef(AssetRef src) : base(src) { }
 
+            // translation
+
+            public static AssetRef CreateNew(Reference r)
+            {
+                return (AssetRef)new Reference(r);
+            }
+
             // further methods
 
             public override string GetElementName()
@@ -566,6 +659,15 @@ namespace AdminShellNS
                 return r;
             }
 
+            public static SubmodelRef CreateNew(Reference src)
+            {
+                if (src == null || src.Keys == null)
+                    return null;
+                var r = new SubmodelRef();
+                r.Keys.AddRange(src.Keys);
+                return r;
+            }
+
             // further methods
 
             public override string GetElementName()
@@ -585,7 +687,7 @@ namespace AdminShellNS
 
             // further methods
 
-            public static ConceptDescriptionRef CreateNew(string type, bool local, string idType, string value)
+            public new static ConceptDescriptionRef CreateNew(string type, bool local, string idType, string value)
             {
                 var r = new ConceptDescriptionRef();
                 r.Keys.Add(Key.CreateNew(type, local, idType, value));
@@ -608,6 +710,16 @@ namespace AdminShellNS
             public DataSpecificationRef(DataSpecificationRef src) : base(src) { }
 
             // further methods
+
+            public static DataSpecificationRef CreateNew(Reference src)
+            {
+                if (src == null || src.Keys == null)
+                    return null;
+                var res = new DataSpecificationRef();
+                foreach (var k in src.Keys)
+                    res.Keys.Add(new Key(k));
+                return res;
+            }
 
             public override string GetElementName()
             {
@@ -638,13 +750,16 @@ namespace AdminShellNS
         {
             // constructors
 
-            public ContainedElementRef () { }
-            public ContainedElementRef (ContainedElementRef src) : base (src) { }
+            public ContainedElementRef() { }
+            public ContainedElementRef(ContainedElementRef src) : base(src) { }
 
-            public static ContainedElementRef FromReference(Reference otherref)
+            public static ContainedElementRef CreateNew(Reference src)
             {
-                var r = ContainedElementRef.CreateNew(otherref.Keys);
-                return (ContainedElementRef)r;
+                if (src == null || src.Keys == null)
+                    return null;
+                var r = new ContainedElementRef();
+                r.Keys.AddRange(src.Keys);
+                return r;
             }
 
             // further methods
@@ -785,11 +900,11 @@ namespace AdminShellNS
 
             [XmlIgnore]
             [JsonIgnore]
-            public bool IsInstance { get { return kind.Trim().ToLower() == "instance"; } }
+            public bool IsInstance { get { return kind == null || kind.Trim().ToLower() == "instance"; } }
 
             [XmlIgnore]
             [JsonIgnore]
-            public bool IsType { get { return kind.Trim().ToLower() == "type"; } }
+            public bool IsType { get { return kind != null && kind.Trim().ToLower() == "type"; } }
 
             // constructors / creators
 
@@ -809,6 +924,20 @@ namespace AdminShellNS
             {
                 var res = new Kind();
                 res.kind = k.kind;
+                return res;
+            }
+
+            public static Kind CreateAsType()
+            {
+                var res = new Kind();
+                res.kind = "Type";
+                return res;
+            }
+
+            public static Kind CreateAsInstance()
+            {
+                var res = new Kind();
+                res.kind = "Instance";
                 return res;
             }
         }
@@ -882,6 +1011,19 @@ namespace AdminShellNS
                 var res = new SemanticId();
                 res.Keys.AddRange(keys);
                 return res;
+            }
+
+            // matching
+
+            public bool Matches(string type, bool local, string idType, string value)
+            {
+                if (this.Count == 1
+                    && this.keys[0].type.ToLower().Trim() == type.ToLower().Trim()
+                    && this.keys[0].local == local
+                    && this.keys[0].idType.ToLower().Trim() == idType.ToLower().Trim()
+                    && this.keys[0].value.ToLower().Trim() == value.ToLower().Trim())
+                    return true;
+                return false;
             }
         }
 
@@ -967,6 +1109,21 @@ namespace AdminShellNS
                         (this.parent).CollectReferencesByParent(refs);
                 }
             }
+
+            public string CollectIdShortByParent()
+            {
+                // recurse first
+                var head = "";
+                if (!(this is Identifiable) && this.parent != null && this.parent is Referable)
+                    // can go up
+                    head = this.parent.CollectIdShortByParent() + "/";
+                // add own
+                var myid = "<no id-Short!>";
+                if (this.idShort != null && this.idShort.Trim() != "")
+                    myid = this.idShort.Trim();
+                // together
+                return head + myid;
+            }
         }
 
         public class Identifiable : Referable
@@ -1046,7 +1203,8 @@ namespace AdminShellNS
             public Views views = null;
             [XmlIgnore]
             [JsonProperty(PropertyName = "views")]
-            public View[] JsonViews {
+            public View[] JsonViews
+            {
                 get { return views?.views.ToArray(); }
                 set { views = Views.CreateOrSetInnerViews(views, value); }
             }
@@ -1059,7 +1217,7 @@ namespace AdminShellNS
             public AdministrationShell() { }
 
             public AdministrationShell(AdministrationShell src)
-                : base (src)
+                : base(src)
             {
                 if (src.hasDataSpecification != null)
                     this.hasDataSpecification = new HasDataSpecification(src.hasDataSpecification);
@@ -1128,6 +1286,9 @@ namespace AdminShellNS
             public Tuple<string, string> ToCaptionInfo()
             {
                 var caption = AdminShellUtil.EvalToNonNullString("\"{0}\" ", idShort, "\"AAS\"");
+                if (administration != null)
+                    caption += "V" + administration.version + "." + administration.revision;
+
                 var info = "";
                 if (identification != null)
                     info = $"[{identification.idType}, {identification.id}]";
@@ -1169,7 +1330,6 @@ namespace AdminShellNS
                     this.submodelRefs = new List<SubmodelRef>();
                 this.submodelRefs.Add(newref);
             }
-
         }
 
         public class Asset : Identifiable
@@ -1239,6 +1399,9 @@ namespace AdminShellNS
             public Tuple<string, string> ToCaptionInfo()
             {
                 var caption = AdminShellUtil.EvalToNonNullString("\"{0}\" ", idShort, "<no idShort!>");
+                if (administration != null)
+                    caption += "V" + administration.version + "." + administration.revision;
+
                 var info = "";
                 if (identification != null)
                     info = $"[{identification.idType}, {identification.id}]";
@@ -1289,13 +1452,13 @@ namespace AdminShellNS
             [JsonIgnore]
             public int Count { get { if (containedElements == null) return 0; return containedElements.Count; } }
 
-            public ContainedElementRef this[int index] { get { return containedElements[index]; } }
+            public ContainedElementRef this[int index] { get { if (containedElements == null) return null; return containedElements[index]; } }
 
             // constructors / creators
 
             public View() { }
 
-            public View (View src)
+            public View(View src)
                 : base(src)
             {
                 if (src.semanticId != null)
@@ -1345,7 +1508,7 @@ namespace AdminShellNS
             {
                 if (containedElements == null)
                     containedElements = new ContainedElements();
-                containedElements.reference.Add(ContainedElementRef.FromReference(r));
+                containedElements.reference.Add(ContainedElementRef.CreateNew(r));
             }
 
             public void AddContainedElement(List<Reference> rlist)
@@ -1353,7 +1516,7 @@ namespace AdminShellNS
                 if (containedElements == null)
                     containedElements = new ContainedElements();
                 foreach (var r in rlist)
-                    containedElements.reference.Add(ContainedElementRef.FromReference(r));
+                    containedElements.reference.Add(ContainedElementRef.CreateNew(r));
             }
 
             public override string GetElementName()
@@ -1386,7 +1549,7 @@ namespace AdminShellNS
             public List<View> views = new List<View>();
 
             // constructors
-        
+
             public Views() { }
 
             public Views(Views src)
@@ -1396,7 +1559,7 @@ namespace AdminShellNS
                         this.views.Add(new View(v));
             }
 
-            public static Views CreateOrSetInnerViews (Views outer, View[] inner)
+            public static Views CreateOrSetInnerViews(Views outer, View[] inner)
             {
                 var res = outer;
                 if (res == null)
@@ -1440,6 +1603,17 @@ namespace AdminShellNS
                 if (src.langString != null)
                     foreach (var ls in src.langString)
                         this.langString.Add(new LangStr(ls));
+            }
+
+            // converter
+
+            public static LangStringIEC61360 CreateFrom(List<LangStr> src)
+            {
+                var res = new LangStringIEC61360();
+                if (src != null)
+                    foreach (var ls in src)
+                        res.langString.Add(new LangStr(ls));
+                return res;
             }
 
         }
@@ -1496,6 +1670,15 @@ namespace AdminShellNS
                 var u = new UnitId();
                 u.keys.Keys.Add(Key.CreateNew(type, local, idType, value));
                 return u;
+            }
+
+            public static UnitId CreateNew(Reference src)
+            {
+                var res = new UnitId();
+                if (src != null && src.Keys != null)
+                    foreach (var k in src.Keys)
+                        res.keys.Add(k);
+                return res;
             }
         }
 
@@ -1798,6 +1981,11 @@ namespace AdminShellNS
                     isCaseOf = new List<Reference>();
                 isCaseOf.Add(ico);
             }
+
+            public static IDisposable CreateNew()
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public class ConceptDictionary : Referable
@@ -1989,6 +2177,66 @@ namespace AdminShellNS
                 return null;
             }
 
+            /* OLD VERSION. OPC UA -> inadequate for finding all References
+            public Referable FindReferableByReference(Reference rf, int keyIndex = 0)
+            {
+                // first index needs to exist ..
+                if (rf == null || keyIndex >= rf.Count)
+                    return null;
+
+                // .. and point to an Submodel
+                if (rf[keyIndex].type.Trim().ToLower() != Key.Submodel.Trim().ToLower())
+                    return null;
+
+                // ok, search Submodel
+                var sm = this.FindSubmodel(new Identification(rf[keyIndex].idType, rf[keyIndex].value));
+                if (sm == null)
+                    return null;
+
+                // go inside
+                return SubmodelElementWrapper.FindReferableByReference(sm.submodelElements, rf, keyIndex + 1);
+            }
+            */
+
+            public Referable FindReferableByReference(Reference rf, int keyIndex = 0)
+            {
+                // first index needs to exist ..
+                if (rf == null || keyIndex >= rf.Count)
+                    return null;
+
+                // which type?
+                var firstType = rf[keyIndex].type.Trim().ToLower();
+                var firstIdentification = new Identification(rf[keyIndex].idType, rf[keyIndex].value);
+
+                if (firstType == Key.AAS.Trim().ToLower())
+                    return this.FindAAS(firstIdentification);
+
+                if (firstType == Key.Asset.Trim().ToLower())
+                    return this.FindAsset(firstIdentification);
+
+                if (firstType == Key.ConceptDescription.Trim().ToLower())
+                    return this.FindConceptDescription(firstIdentification);
+
+                if (firstType == Key.Submodel.Trim().ToLower())
+                {
+                    // ok, search Submodel
+                    var sm = this.FindSubmodel(new Identification(rf[keyIndex].idType, rf[keyIndex].value));
+                    if (sm == null)
+                        return null;
+
+                    // at our end?
+                    if (keyIndex >= rf.Count - 1)
+                        return sm;
+
+                    // go inside
+                    return SubmodelElementWrapper.FindReferableByReference(sm.submodelElements, rf, keyIndex + 1);
+                }
+
+                // nothing in this Environment
+                return null;
+            }
+
+
             public ConceptDescription FindConceptDescription(ConceptDescriptionRef cdr)
             {
                 if (cdr == null)
@@ -2148,7 +2396,7 @@ namespace AdminShellNS
                 return null;
             }
 
-            public AdministrationShellEnv DeserializeFromXmlStream (TextReader reader)
+            public AdministrationShellEnv DeserializeFromXmlStream(TextReader reader)
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
                 var res = serializer.Deserialize(reader) as AdminShell.AdministrationShellEnv;
@@ -2165,7 +2413,7 @@ namespace AdminShellNS
 
             // special functions
 
-            private static void CreateFromExistingEnvRecurseForCDs (AdministrationShellEnv src, List<SubmodelElementWrapper> wrappers, ref List<ConceptDescription> filterForCD)
+            private static void CreateFromExistingEnvRecurseForCDs(AdministrationShellEnv src, List<SubmodelElementWrapper> wrappers, ref List<ConceptDescription> filterForCD)
             {
                 if (wrappers == null || filterForCD == null)
                     return;
@@ -2185,7 +2433,7 @@ namespace AdminShellNS
                         CreateFromExistingEnvRecurseForCDs(src, (w.submodelElement as SubmodelElementCollection).value, ref filterForCD);
 
                     if (w.submodelElement is Operation)
-                        for (int i=0; i<2; i++)
+                        for (int i = 0; i < 2; i++)
                         {
                             var w2s = Operation.GetWrappers((w.submodelElement as Operation)[i]);
                             CreateFromExistingEnvRecurseForCDs(src, w2s, ref filterForCD);
@@ -2194,7 +2442,7 @@ namespace AdminShellNS
                 }
             }
 
-            public static AdministrationShellEnv CreateFromExistingEnv (AdministrationShellEnv src, 
+            public static AdministrationShellEnv CreateFromExistingEnv(AdministrationShellEnv src,
                 List<AdministrationShell> filterForAas = null,
                 List<Asset> filterForAsset = null,
                 List<Submodel> filterForSubmodel = null,
@@ -2321,7 +2569,8 @@ namespace AdminShellNS
                     this.semanticId = new SemanticId(src.semanticId);
                 this.qualifierType = src.qualifierType;
                 this.qualifierValue = src.qualifierValue;
-                this.qualifierValueId = new Reference(src.qualifierValueId);
+                if (src.qualifierValueId != null)
+                    this.qualifierValueId = new Reference(src.qualifierValueId);
             }
 
             public string GetElementName()
@@ -2427,6 +2676,16 @@ namespace AdminShellNS
                 this.qualifiers.Add(q);
             }
 
+            public Qualifier HasQualifierOfType(string qualifierType)
+            {
+                if (this.qualifiers == null || qualifierType == null)
+                    return null;
+                foreach (var q in this.qualifiers)
+                    if (q.qualifierType.Trim().ToLower() == qualifierType.Trim().ToLower())
+                        return q;
+                return null;
+            }
+
             public override string GetElementName()
             {
                 return "SubmodelElement";
@@ -2496,6 +2755,10 @@ namespace AdminShellNS
             [XmlElement(ElementName = "operation", Type = typeof(Operation))]
             public SubmodelElement submodelElement;
 
+            // element names
+            public static string[] AdequateElementNames = { "SubmodelElementCollection", "Property", "File", "Blob", "ReferenceElement",
+                "RelationshipElement", "Operation", "OperationVariable" };
+
             // constructors
 
             public SubmodelElementWrapper() { }
@@ -2524,7 +2787,7 @@ namespace AdminShellNS
             /// </summary>
             /// <param name="elementName">string name (standard PascalCased)</param>
             /// <returns>SubmodelElement</returns>
-            public static SubmodelElement CreateAdequateType (string elementName)
+            public static SubmodelElement CreateAdequateType(string elementName)
             {
                 if (elementName == "Property")
                     return new Property();
@@ -2587,7 +2850,7 @@ namespace AdminShellNS
             {
                 if (submodelElement == null)
                     return ("Null");
-                if (submodelElement is AdminShell.Property) return("Prop");
+                if (submodelElement is AdminShell.Property) return ("Prop");
                 if (submodelElement is AdminShell.File) return ("File");
                 if (submodelElement is AdminShell.Blob) return ("Blob");
                 if (submodelElement is AdminShell.ReferenceElement) return ("Ref");
@@ -2597,7 +2860,7 @@ namespace AdminShellNS
                 return ("Elem");
             }
 
-            public static List<SubmodelElement> ListOfWrappersToListOfElems (List<SubmodelElementWrapper> wrappers)
+            public static List<SubmodelElement> ListOfWrappersToListOfElems(List<SubmodelElementWrapper> wrappers)
             {
                 var res = new List<SubmodelElement>();
                 if (wrappers == null)
@@ -2606,6 +2869,47 @@ namespace AdminShellNS
                     if (w.submodelElement != null)
                         res.Add(w.submodelElement);
                 return res;
+            }
+
+            public static SubmodelElementWrapper CreateFor(SubmodelElement sme)
+            {
+                var res = new SubmodelElementWrapper();
+                res.submodelElement = sme;
+                return res;
+            }
+
+            public static Referable FindReferableByReference(List<SubmodelElementWrapper> wrappers, Reference rf, int keyIndex)
+            {
+                // first index needs to exist ..
+                if (wrappers == null || rf == null || keyIndex >= rf.Count)
+                    return null;
+
+                // as SubmodelElements are not Identifiables, the actual key shall be IdSHort
+                if (rf[keyIndex].idType.Trim().ToLower() != Key.GetIdentifierTypeName(Key.IdentifierType.IdShort).Trim().ToLower())
+                    return null;
+
+                // over all wrappers
+                if (wrappers != null)
+                    foreach (var smw in wrappers)
+                        if (smw.submodelElement != null && smw.submodelElement.idShort.Trim().ToLower() == rf[keyIndex].value.Trim().ToLower())
+                        {
+                            // match on this level. Did we find a leaf element?
+                            if ((keyIndex + 1) >= rf.Count)
+                                return smw.submodelElement;
+
+                            // ok, not a leaf, must be a recursion
+                            // int SMEC
+                            if (smw.submodelElement is SubmodelElementCollection)
+                                return FindReferableByReference((smw.submodelElement as SubmodelElementCollection).value, rf, keyIndex + 1);
+
+                            // TODO: Operation
+
+                            // else: :-(
+                            return null;
+                        }
+
+                // no?
+                return null;
             }
         }
 
@@ -2766,7 +3070,7 @@ namespace AdminShellNS
                 hasDataSpecification.reference.Add(r);
             }
 
-            public SubmodelElementWrapper FindSubmodelElementWrapper (string idShort)
+            public SubmodelElementWrapper FindSubmodelElementWrapper(string idShort)
             {
                 if (this.submodelElements == null)
                     return null;
@@ -2780,6 +3084,8 @@ namespace AdminShellNS
             public Tuple<string, string> ToCaptionInfo()
             {
                 var caption = AdminShellUtil.EvalToNonNullString("\"{0}\" ", idShort, "<no idShort!>");
+                if (administration != null)
+                    caption += "V" + administration.version + "." + administration.revision;
                 var info = "";
                 if (identification != null)
                     info = $"[{identification.idType}, {identification.id}]";
@@ -2794,7 +3100,7 @@ namespace AdminShellNS
 
             // Recursing
 
-            private void RecurseOnSubmodelElementsRecurse (List<SubmodelElementWrapper> wrappers, object state, List<SubmodelElement> parents, Action<object, List<SubmodelElement>, SubmodelElement> lambda)
+            private void RecurseOnSubmodelElementsRecurse(List<SubmodelElementWrapper> wrappers, object state, List<SubmodelElement> parents, Action<object, List<SubmodelElement>, SubmodelElement> lambda)
             {
                 // trivial
                 if (wrappers == null || parents == null || lambda == null)
@@ -2823,7 +3129,7 @@ namespace AdminShellNS
                     if (current is Operation)
                     {
                         var op = current as Operation;
-                        for (int i=0; i<2; i++)
+                        for (int i = 0; i < 2; i++)
                             RecurseOnSubmodelElementsRecurse(Operation.GetWrappers(op[i]), state, parents, lambda);
                     }
 
@@ -2909,7 +3215,7 @@ namespace AdminShellNS
             [JsonProperty(PropertyName = "valueType")]
             public JsonValueTypeCast JsonValueType
             {
-                get { return new JsonValueTypeCast(this.valueType);  }
+                get { return new JsonValueTypeCast(this.valueType); }
                 set { this.valueType = value?.dataObjectType?.name; }
             }
 
@@ -3193,7 +3499,7 @@ namespace AdminShellNS
                         }
                     }
                 }
-            } 
+            }
             // public List<SubmodelElement> JsonSubmodelElements = new List<SubmodelElement>();
 
             // further members
@@ -3258,6 +3564,9 @@ namespace AdminShellNS
         {
             public enum Direction { In, Out };
 
+            // Note: for OperationVariable, the values of the SubmodelElement itself ARE NOT TO BE USED!
+            // only the SME attributes of "value" are counting
+
             // for JSON only
             [XmlIgnore]
             [JsonProperty(PropertyName = "modelType")]
@@ -3268,7 +3577,8 @@ namespace AdminShellNS
 
             // constructors
 
-            public OperationVariable() {
+            public OperationVariable()
+            {
                 this.kind = new Kind("Type");
             }
 
@@ -3372,7 +3682,7 @@ namespace AdminShellNS
             public Operation(Operation src)
                 : base(src)
             {
-                for (int i=0; i<2; i++)
+                for (int i = 0; i < 2; i++)
                     if (src[i] != null)
                     {
                         if (this[i] == null)
@@ -3567,7 +3877,6 @@ namespace AdminShellNS
                     {
                         // TODO: use aasenv serialzers here!
                         XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
-                        // OZ read only
                         TextReader reader = new StreamReader(fn);
                         this.aasenv = serializer.Deserialize(reader) as AdminShell.AdministrationShellEnv;
                         if (this.aasenv == null)
@@ -3606,7 +3915,7 @@ namespace AdminShellNS
                     // load package AASX
                     try
                     {
-                        // OZ
+                        // var package = Package.Open(fn, FileMode.Open);
                         var package = Package.Open(fn, FileMode.Open, FileAccess.Read, FileShare.Read);
 
                         // get the origin from the package
@@ -3696,7 +4005,7 @@ namespace AdminShellNS
                 return true;
             }
 
-            public enum PreferredFormat { None, Xml, Json};
+            public enum PreferredFormat { None, Xml, Json };
 
             public bool SaveAs(string fn, bool writeFreshly = false, PreferredFormat prefFmt = PreferredFormat.None)
             {
@@ -3816,7 +4125,7 @@ namespace AdminShellNS
                         {
                             var name = System.IO.Path.GetFileNameWithoutExtension(specPart.Uri.ToString()).ToLower().Trim();
                             var ext = System.IO.Path.GetExtension(specPart.Uri.ToString()).ToLower().Trim();
-                            if (    (ext == ".json" && prefFmt == PreferredFormat.Xml)
+                            if ((ext == ".json" && prefFmt == PreferredFormat.Xml)
                                  || (ext == ".xml" && prefFmt == PreferredFormat.Json)
                                  || (name.StartsWith("aasenv-with-no-id")))
                             {
@@ -3827,7 +4136,7 @@ namespace AdminShellNS
                                     package.DeletePart(specPart.Uri);
                                 }
                                 catch { }
-                                finally { specPart = null; specRel = null; }                                
+                                finally { specPart = null; specRel = null; }
                             }
                         }
 
@@ -4000,7 +4309,7 @@ namespace AdminShellNS
 
             private int BackupIndex = 0;
 
-            public void BackupInDir (string backupDir, int maxFiles)
+            public void BackupInDir(string backupDir, int maxFiles)
             {
                 // access
                 if (backupDir == null || maxFiles < 1)
@@ -4045,6 +4354,25 @@ namespace AdminShellNS
                 if (part == null)
                     throw (new Exception(string.Format($"Cannot access URI {uriString} in {this.fn} not opened. Aborting!")));
                 return part.GetStream(FileMode.Open);
+            }
+
+            public long GetStreamSizeFromPackage(string uriString)
+            {
+                long res = 0;
+                try
+                {
+                    if (this.openPackage == null)
+                        return 0;
+                    var part = this.openPackage.GetPart(new Uri(uriString, UriKind.RelativeOrAbsolute));
+                    if (part == null)
+                        return 0;
+                    using (var s = part.GetStream(FileMode.Open))
+                    {
+                        res = s.Length;
+                    }
+                }
+                catch { return 0; }
+                return res;
             }
 
             public Stream GetLocalThumbnailStream(ref Uri thumbUri)
@@ -4165,7 +4493,6 @@ namespace AdminShellNS
                 if (file_ext == ".pdf") content_type = System.Net.Mime.MediaTypeNames.Application.Pdf;
                 if (file_ext == ".xml") content_type = System.Net.Mime.MediaTypeNames.Text.Xml;
                 if (file_ext == ".txt") content_type = System.Net.Mime.MediaTypeNames.Text.Plain;
-                if (file_ext == ".xml") content_type = System.Net.Mime.MediaTypeNames.Text.Xml;
                 if (file_ext == ".igs") content_type = "application/iges";
                 if (file_ext == ".iges") content_type = "application/iges";
                 if (file_ext == ".stp") content_type = "application/step";
@@ -4173,7 +4500,7 @@ namespace AdminShellNS
                 if (file_ext == ".jpg") content_type = System.Net.Mime.MediaTypeNames.Image.Jpeg;
                 if (file_ext == ".jpeg") content_type = System.Net.Mime.MediaTypeNames.Image.Jpeg;
                 if (file_ext == ".png") content_type = "image/png";
-                if (file_ext == ".gig") content_type = System.Net.Mime.MediaTypeNames.Image.Gif;
+                if (file_ext == ".gif") content_type = System.Net.Mime.MediaTypeNames.Image.Gif;
                 return content_type;
             }
 

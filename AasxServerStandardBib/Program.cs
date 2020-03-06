@@ -415,6 +415,8 @@ namespace Net46ConsoleServer
             Console.WriteLine();
             Console.WriteLine("Please wait for servers starting...");
 
+            RunScript(); // Initialize
+
             if (runREST)
             {
                 Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
@@ -452,6 +454,8 @@ namespace Net46ConsoleServer
                 Console.WriteLine("OPC client updating every {0} ms.", opcclient_rate);
                 SetOPCClientTimer(opcclient_rate); // read again everytime timer expires
             }
+
+            SetScriptTimer(2000);
 
             if (runOPC && server != null)
             {
@@ -509,6 +513,25 @@ namespace Net46ConsoleServer
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
+            // RunScript();
+            NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
+        }
+
+        private static System.Timers.Timer scriptTimer;
+        private static void SetScriptTimer(double value)
+        {
+            // Create a timer with a two second interval.
+            scriptTimer = new System.Timers.Timer(value);
+            // Hook up the Elapsed event for the timer. 
+            scriptTimer.Elapsed += OnScriptTimedEvent;
+            scriptTimer.AutoReset = true;
+            scriptTimer.Enabled = true;
+        }
+
+        private static void OnScriptTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            // Console.WriteLine("RunScript");
+            RunScript();
             NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
@@ -874,6 +897,100 @@ namespace Net46ConsoleServer
                 changeDataVersion();
             }
             return true;
+        }
+
+        static void RunScript()
+        {
+            if (env == null)
+                return;
+
+            int i = 0;
+            while (env[i] != null)
+            {
+                foreach (var sm in env[i].AasEnv.Submodels)
+                {
+                    if (sm != null && sm.idShort != null)
+                    {
+                        int count = sm.qualifiers.Count;
+                        if (count == 1)
+                        {
+                            var q = sm.qualifiers[0] as AdminShell.Qualifier;
+                            if (q.qualifierType == "SCRIPT")
+                            {
+                                // Triple
+                                // Reference to property with Number
+                                // Reference to submodel with numbers/strings
+                                // Reference to property to store found text
+                                count = sm.submodelElements.Count;
+                                int smi = 0;
+                                while (smi < count)
+                                {
+                                    var sme1 = sm.submodelElements[smi++].submodelElement;
+                                    if (sme1.qualifiers.Count == 0)
+                                    {
+                                        continue;
+                                    }
+                                    var qq = sme1.qualifiers[0] as AdminShell.Qualifier;
+                                    if (qq.qualifierType != "SearchNumber" || smi >= count)
+                                    {
+                                        continue;
+                                    }
+                                    var sme2 = sm.submodelElements[smi++].submodelElement;
+                                    if (sme2.qualifiers.Count == 0)
+                                    {
+                                        continue;
+                                    }
+                                    qq = sme2.qualifiers[0] as AdminShell.Qualifier;
+                                    if (qq.qualifierType != "SearchList" || smi >= count)
+                                    {
+                                        continue;
+                                    }
+                                    var sme3 = sm.submodelElements[smi++].submodelElement;
+                                    if (sme3.qualifiers.Count == 0)
+                                    {
+                                        continue;
+                                    }
+                                    qq = sme3.qualifiers[0] as AdminShell.Qualifier;
+                                    if (qq.qualifierType != "SearchResult")
+                                    {
+                                        break;
+                                    }
+                                    if (sme1 is AdminShell.ReferenceElement &&
+                                        sme2 is AdminShell.ReferenceElement &&
+                                        sme3 is AdminShell.ReferenceElement)
+                                    {
+                                        var r1 = sme1 as AdminShell.ReferenceElement;
+                                        var r2 = sme2 as AdminShell.ReferenceElement;
+                                        var r3 = sme3 as AdminShell.ReferenceElement;
+                                        var ref1 = env[i].AasEnv.FindReferableByReference(r1.value);
+                                        var ref2 = env[i].AasEnv.FindReferableByReference(r2.value);
+                                        var ref3 = env[i].AasEnv.FindReferableByReference(r3.value);
+                                        if (ref1 is AdminShell.Property && ref2 is AdminShell.Submodel && ref3 is AdminShell.Property)
+                                        {
+                                            var p1 = ref1 as AdminShell.Property;
+                                            var sm2 = ref2 as AdminShell.Submodel;
+                                            var p3 = ref3 as AdminShell.Property;
+                                            int count2 = sm2.submodelElements.Count;
+                                            for (int j = 0; j < count2; j++)
+                                            {
+                                                var sme = sm2.submodelElements[j].submodelElement;
+                                                if (sme.idShort == p1.value)
+                                                {
+                                                    p3.value = (sme as AdminShell.Property).value;
+                                                }
+                                            }
+                                            // Simulate changes
+                                            // p1.value = Convert.ToString(Convert.ToInt32(p1.value) + 1);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                i++;
+            }
+            return;
         }
 
         private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace )
