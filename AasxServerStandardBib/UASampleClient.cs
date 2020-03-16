@@ -131,7 +131,14 @@ namespace SampleClient
             var endpointConfiguration = EndpointConfiguration.Create(config);
             var endpoint = new ConfiguredEndpoint(null, selectedEndpoint, endpointConfiguration);
 
-            session = await Session.Create(config, endpoint, false, "OPC UA Console Client", 60000, new UserIdentity(userName, password), null);
+            if (userName == "" && password != "")
+            {
+                session = await Session.Create(config, endpoint, false, "OPC UA Console Client", 60000, new UserIdentity(new AnonymousIdentityToken()), null);
+            }
+            else
+            {
+                session = await Session.Create(config, endpoint, false, "OPC UA Console Client", 60000, new UserIdentity(userName, password), null);
+            }
 
             // register keep alive handler
             session.KeepAlive += Client_KeepAlive;

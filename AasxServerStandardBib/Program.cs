@@ -816,9 +816,14 @@ namespace Net46ConsoleServer
                                 j++;
                             }
 
-                            if (URL == "" || Username == "" || Password == "" || Namespace == 0 || Path == "")
+                            if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
                             {
                                 Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
+                                return false;
+                            }
+                            if (Username == "" && Password == "")
+                            {
+                                Console.WriteLine("Using Anonymous to login ...");
                                 return false;
                             }
 
