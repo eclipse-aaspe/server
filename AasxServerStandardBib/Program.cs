@@ -266,7 +266,7 @@ namespace Net46ConsoleServer
                 Console.WriteLine("-OPC = start OPC server");
                 Console.WriteLine("-MQTT = start MQTT publisher");
                 Console.WriteLine("-debugwait = wait for Debugger to attach");
-                Console.WriteLine("-opclient UPDATERATE = time in ms between getting new values");
+                Console.WriteLine("-opcclient UPDATERATE = time in ms between getting new values");
                 Console.WriteLine("-registry = server IP of BaSyx registry");
                 // Console.WriteLine("FILENAME.AASX");
                 Console.ReadLine();
@@ -968,6 +968,8 @@ namespace Net46ConsoleServer
                                         if (ref1 is AdminShell.Property && ref2 is AdminShell.Submodel && ref3 is AdminShell.Property)
                                         {
                                             var p1 = ref1 as AdminShell.Property;
+                                            // Simulate changes
+                                            // p1.value = Convert.ToString(Convert.ToInt32(p1.value) + 5);
                                             var sm2 = ref2 as AdminShell.Submodel;
                                             var p3 = ref3 as AdminShell.Property;
                                             int count2 = sm2.submodelElements.Count;
@@ -979,8 +981,6 @@ namespace Net46ConsoleServer
                                                     p3.value = (sme as AdminShell.Property).value;
                                                 }
                                             }
-                                            // Simulate changes
-                                            // p1.value = Convert.ToString(Convert.ToInt32(p1.value) + 1);
                                         }
                                     }
                                 }
