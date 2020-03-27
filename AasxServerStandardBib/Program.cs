@@ -102,6 +102,8 @@ namespace Net46ConsoleServer
         static bool runREST = false;
         static bool runOPC = false;
         static bool runMQTT = false;
+
+
         
         static public void Main(string[] args)
         {
@@ -411,6 +413,7 @@ namespace Net46ConsoleServer
             }
 
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+            AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
 
             Console.WriteLine();
             Console.WriteLine("Please wait for servers starting...");

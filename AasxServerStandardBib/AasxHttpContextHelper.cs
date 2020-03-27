@@ -2546,14 +2546,53 @@ namespace AasxRestServerLibrary
                 try
                 {
                     var parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
-                    id = Convert.ToInt32(parsed2.SelectToken("sessionID").Value<string>());
 
-                    random = sessionRandom[id];
-                    user = sessionUserName[id];
+                    string serverName = parsed2.SelectToken("serverName").Value<string>();
 
-                    if (random == null || random == "" || user == null || user == "")
+                    if (serverName != "") // token from Auth Server
                     {
-                        error = true;
+                        X509Certificate2 cert = serverCertFind(serverName);
+
+                        if (cert == null) return null;
+
+                        try
+                        {
+                            Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+
+                        user = parsed2.SelectToken("userName").Value<string>();
+
+                        if (securityRightsName != null)
+                        {
+                            int rightsCount = securityRightsName.Length;
+
+                            for (int i = 0; i < rightsCount; i++)
+                            {
+                                if (user == securityRightsName[i])
+                                {
+                                    accessrights = securityRightsValue[i];
+                                    break;
+                                }
+                            }
+                        }
+
+                        return accessrights;
+                    }
+                    else
+                    {
+                        id = Convert.ToInt32(parsed2.SelectToken("sessionID").Value<string>());
+
+                        random = sessionRandom[id];
+                        user = sessionUserName[id];
+
+                        if (random == null || random == "" || user == null || user == "")
+                        {
+                            error = true;
+                        }
                     }
                 }
                 catch
@@ -2713,7 +2752,8 @@ namespace AasxRestServerLibrary
             Console.WriteLine("Security 5.1 Server: Check bearer token and access rights");
             Console.WriteLine("Security 5.2 Server: Validate that bearer token is signed by session unique random");
 
-            if (accessrights == null || index == -1)
+            // if (accessrights == null || index == -1)
+            if (accessrights == null)
             {
                 res.error = "You are not authorized for this operation!";
                 SendJsonResponse(context, res);
@@ -2722,6 +2762,7 @@ namespace AasxRestServerLibrary
 
             res.confirm = "Authorization = " + accessrights;
 
+            /*
             X509Certificate2 x509 = null;
             // Crypt File
             string fileCert = "./user/" + sessionUserName[index] + ".cer";
@@ -2736,6 +2777,7 @@ namespace AasxRestServerLibrary
             }
 
             var publicKey = x509.GetRSAPublicKey();
+            */
 
             Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
@@ -2781,8 +2823,13 @@ namespace AasxRestServerLibrary
         public static string[] securityRightsName = null;
         public static string[] securityRightsValue = null;
 
+        public static string[] serverCertfileNames;
+        public static X509Certificate2[] serverCerts;
+
         public static void securityInit()
         {
+            withAuthentification = true;
+
             int aascount = Net46ConsoleServer.Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
@@ -2837,6 +2884,32 @@ namespace AasxRestServerLibrary
                     }
                 }
             }
+        }
+
+        public static void serverCertsInit()
+        {
+            serverCertfileNames = Directory.GetFiles("./authservercerts", "*.cer");
+
+            serverCerts = new X509Certificate2[serverCertfileNames.Length];
+
+            for (int i = 0; i < serverCertfileNames.Length; i++)
+            {
+                serverCerts[i] = new X509Certificate2(serverCertfileNames[i]);
+                Console.WriteLine("Loaded auth server certifcate: " + Path.GetFileName(serverCertfileNames[i]));
+            }
+        }
+
+        public static X509Certificate2 serverCertFind(string authServerName)
+        {
+            for (int i = 0; i < serverCertfileNames.Length; i++)
+            {
+                if (Path.GetFileName(serverCertfileNames[i]) == authServerName + ".cer")
+                {
+                    return serverCerts[i];
+                }
+            }
+
+            return null;
         }
 
         #region // Concept Descriptions
