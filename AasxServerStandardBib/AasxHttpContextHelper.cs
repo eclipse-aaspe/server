@@ -2828,7 +2828,7 @@ namespace AasxRestServerLibrary
 
         public static void securityInit()
         {
-            withAuthentification = true;
+            // withAuthentification = true;
 
             int aascount = Net46ConsoleServer.Program.env.Length;
 
