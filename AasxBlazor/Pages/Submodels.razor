@@ -1,7 +1,8 @@
 ﻿@page "/submodels"
 
 @using AasxBlazor.Data
-@using static AdminShellNS.AdminShellV10;
+@using AdminShellNS;
+@using static AdminShellNS.AdminShell;
 @inject AASService SubmodelService
 
 <h1>Liste Submodels</h1>
@@ -36,7 +37,7 @@ else
 }
 
 @code {
-    List<Submodel> submodels;
+    List<AdminShell.Submodel> submodels;
 
     protected override void OnInitialized()
     {

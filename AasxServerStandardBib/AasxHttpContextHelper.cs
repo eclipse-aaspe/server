@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.IO;
 using System.Dynamic;
+using System.Globalization;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
@@ -45,7 +46,7 @@ namespace AasxRestServerLibrary
         public static String SwitchToAASX = "";
         public static String DataPath = ".";
 
-        public AdminShell.PackageEnv[] Packages = null;
+        public AdminShellPackageEnv[] Packages = null;
 
         public AasxHttpHandleStore IdRefHandleStore = new AasxHttpHandleStore();
 
@@ -237,7 +238,7 @@ namespace AasxRestServerLibrary
             {
                 if (handleId != null && handleId.identification != null)
                 {
-                    if (smref.MatchesTo(handleId.identification))
+                    if (smref.Matches(handleId.identification))
                         return smref;
                 }
                 else
@@ -500,19 +501,19 @@ namespace AasxRestServerLibrary
             {
                 JsonProperty property = base.CreateProperty(member, memberSerialization);
 
-                if (!BlobHasValue && property.DeclaringType == typeof(AdminShellV10.Blob) && property.PropertyName == "value")
+                if (!BlobHasValue && property.DeclaringType == typeof(AdminShell.Blob) && property.PropertyName == "value")
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!SubmodelHasElements && property.DeclaringType == typeof(AdminShellV10.Submodel) && property.PropertyName == "submodelElements")
+                if (!SubmodelHasElements && property.DeclaringType == typeof(AdminShell.Submodel) && property.PropertyName == "submodelElements")
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!SmcHasValue && property.DeclaringType == typeof(AdminShellV10.SubmodelElementCollection) && property.PropertyName == "value")
+                if (!SmcHasValue && property.DeclaringType == typeof(AdminShell.SubmodelElementCollection) && property.PropertyName == "value")
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!OpHasVariables && property.DeclaringType == typeof(AdminShellV10.Operation) && (property.PropertyName == "in" || property.PropertyName == "out"))
+                if (!OpHasVariables && property.DeclaringType == typeof(AdminShell.Operation) && (property.PropertyName == "in" || property.PropertyName == "out"))
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!AasHasViews && property.DeclaringType == typeof(AdminShellV10.AdministrationShell) && property.PropertyName == "views")
+                if (!AasHasViews && property.DeclaringType == typeof(AdminShell.AdministrationShell) && property.PropertyName == "views")
                     property.ShouldSerialize = instance => { return false; };
 
                 return property;
@@ -598,7 +599,7 @@ namespace AasxRestServerLibrary
             res.Asset = asset;
 
             // return as JSON
-            var cr = new AdaptiveFilterContractResolver(deep: deep, complete: complete);
+            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
             SendJsonResponse(context, res, cr);
         }
 
@@ -648,7 +649,16 @@ namespace AasxRestServerLibrary
             */
 
             // create a new, filtered AasEnv
-            var copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[0].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { aas }));
+            AdminShell.AdministrationShellEnv copyenv = null;
+            try
+            {
+                copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[0].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { aas }));
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.BadRequest, $"Cannot filter aas envioronment: {ex.Message}.");
+                return;
+            }
 
             // return as FILE
             try
@@ -874,7 +884,7 @@ namespace AasxRestServerLibrary
             if (handle != null && handle.identification != null)
             {
                 foreach (var aas in this.Packages[0].AasEnv.AdministrationShells)
-                    if (aas.assetRef != null && aas.assetRef.MatchesTo(handle.identification))
+                    if (aas.assetRef != null && aas.assetRef.Matches(handle.identification))
                     {
                         dynamic o = new ExpandoObject();
                         o.identification = aas.identification;
@@ -965,7 +975,7 @@ namespace AasxRestServerLibrary
 
         public class GetSubmodelsItem
         {
-            public AdminShell.Identification id = new AdminShellV10.Identification();
+            public AdminShell.Identification id = new AdminShell.Identification();
             public string idShort = "";
             public string kind = "";
 
@@ -1077,7 +1087,7 @@ namespace AasxRestServerLibrary
                 using (TextReader reader = new StringReader(context.Request.Payload))
                 {
                     JsonSerializer serializer = new JsonSerializer();
-                    serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                    serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                     submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
                 }
             }
@@ -1222,7 +1232,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received GET Submodel {1}", countGet++, sm.idShort);
 
             // return as JSON
-            var cr = new AdaptiveFilterContractResolver(deep: deep, complete: complete);
+            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
             SendJsonResponse(context, sm, cr);
         }
 
@@ -1309,7 +1319,7 @@ namespace AasxRestServerLibrary
                         var ds = cd.GetIEC61360();
                         if (ds != null)
                         {
-                            row.shortName = ds.shortName ?? "";
+                            row.shortName = (ds.shortName == null ? "" : ds.shortName.GetDefaultStr());
                             row.unit = ds.unit ?? "";
                         }
                     }
@@ -1402,7 +1412,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            var cr = new AdaptiveFilterContractResolver(deep: deep, complete: complete);
+            var cr = new AdminShellConverters.AdaptiveFilterContractResolver( deep: deep, complete: complete);
             SendJsonResponse(context, sme, cr);
         }
 
@@ -1490,9 +1500,19 @@ namespace AasxRestServerLibrary
                 return;
             }
 
+            // a little bit of demo
+            double dblval = 0.0;
+            string strval = smep.value;
+            if (smep.HasQualifierOfType("DEMO") != null && smep.value != null && smep.valueType != null && smep.valueType.Trim().ToLower() == "double"
+                && double.TryParse(smep.value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
+            {
+                dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
+                strval = dblval.ToString(CultureInfo.InvariantCulture);
+            }
+
             // return as little dynamic object
-            // dynamic res = new ExpandoObject();
-            res.value = smep.value;
+            res = new ExpandoObject();
+            res.value = strval;
             if (smep.valueId != null)
                 res.valueId = smep.valueId;
             SendJsonResponse(context, res);
@@ -1585,7 +1605,7 @@ namespace AasxRestServerLibrary
                 // JsonSerializer serializer = new JsonSerializer();
                 // serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
                 // this.aasenv = (AdministrationShellEnv)serializer.Deserialize(file, typeof(AdministrationShellEnv));
-                sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(context.Request.Payload, new AdminShell.JsonAasxConverter("modelType", "name"));
+                sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(context.Request.Payload, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
             }
             catch (Exception ex)
             {
@@ -1639,7 +1659,7 @@ namespace AasxRestServerLibrary
                 if (parent.elem != null && parent.elem is AdminShell.SubmodelElementCollection)
                 {
                     var parentsmc = parent.elem as AdminShell.SubmodelElementCollection;
-                    var existsmw = parentsmc.FindSubmodelElementWrapper(sme.idShort);
+                    var existsmw = parentsmc.FindFirstIdShort(sme.idShort);
                     if (existsmw != null)
                     {
                         updated = true;
@@ -1765,15 +1785,15 @@ namespace AasxRestServerLibrary
             }
 
             // make 1st expectation
-            int numExpectedInputArgs = smep.valueIn?.Count ?? 0;
+            int numExpectedInputArgs = smep.inputVariable?.Count ?? 0;
             int numGivenInputArgs = 0;
-            int numExpectedOutputArgs = smep.valueOut?.Count ?? 0;
+            int numExpectedOutputArgs = smep.outputVariable?.Count ?? 0;
             var inputArguments = (new int[numExpectedInputArgs]).Select(x => "").ToList();
             var outputArguments = (new int[numExpectedOutputArgs]).Select(x => "my value").ToList();
 
             // is a payload required? Always, if at least one input argument required
 
-            if (smep.valueIn != null && smep.valueIn.Count > 0)
+            if (smep.inputVariable != null && smep.inputVariable.Count > 0)
             {
                 // payload present
                 if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
@@ -1811,7 +1831,7 @@ namespace AasxRestServerLibrary
             }
 
             // just a test
-            if (true)
+            if (smep.HasQualifierOfType("DEMO") != null)
             {
                 for (int i = 0; i < Math.Min(numExpectedInputArgs, numExpectedOutputArgs); i++)
                     outputArguments[i] = "CALC on " + inputArguments[i];
@@ -1862,7 +1882,7 @@ namespace AasxRestServerLibrary
                 // describe
                 dynamic o = new ExpandoObject();
                 o.idShort = cd.idShort;
-                o.shortName = cd.GetShortName();
+                o.shortName = cd.GetDefaultShortName();
                 o.identification = cd.identification;
                 o.isCaseOf = cd.IsCaseOf;
 

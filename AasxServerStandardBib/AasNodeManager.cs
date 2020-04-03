@@ -33,6 +33,8 @@ using Opc.Ua.Sample;
 using System.Reflection;
 using AdminShellNS;
 using System.Diagnostics;
+using System.IO;
+using System;
 
 namespace AasOpcUaServer
 {
@@ -41,24 +43,28 @@ namespace AasOpcUaServer
     /// </summary>
     public class AasNodeManager : SampleNodeManager
     {
-        private AdminShell.PackageEnv [] thePackageEnv = null;
-        
+        private AdminShellPackageEnv[] thePackageEnv = null;
+        private AasxUaServerOptions theServerOptions = null;
+
         #region Constructors
         /// <summary>
         /// Initializes the node manager.
         /// </summary>
         public AasNodeManager(
-            Opc.Ua.Server.IServerInternal server, 
+            Opc.Ua.Server.IServerInternal server,
             ApplicationConfiguration configuration,
-            AdminShell.PackageEnv [] env)
-        :
+            AdminShellPackageEnv[] env,
+            AasxUaServerOptions serverOptions = null)        
+            :
             base(server)
         {
             thePackageEnv = env;
+            theServerOptions = serverOptions;
 
             List<string> namespaceUris = new List<string>();
-            namespaceUris.Add("http://www.micha.com/123");
-            namespaceUris.Add("http://www.micha.com/123" + "/Instance");
+            namespaceUris.Add("http://opcfoundation.org/UA/i4aas/");
+            // namespaceUris.Add("http://opcfoundation.org/UA/i4aas/" + "instance/");
+            namespaceUris.Add("http://admin-shell.io/samples/i4aas/instance/") ;
             NamespaceUris = namespaceUris;
 
             m_typeNamespaceIndex = Server.NamespaceUris.GetIndexOrAppend(namespaceUris[0]);
@@ -103,8 +109,45 @@ namespace AasOpcUaServer
             uint id = preferredNumId;
             if (id == 0)
                 id = Utils.IncrementIdentifier(ref m_lastUsedTypeId);
-            return new NodeId(preferredNumId, m_typeNamespaceIndex);
+            // BUG: return new NodeId(preferredNumId, m_typeNamespaceIndex);
+            return new NodeId(id, m_typeNamespaceIndex);
         }
+
+        // MIHO: pointless
+        /*
+        public class NodeIdForDict : NodeId
+        {
+            public NodeIdForDict()
+                : base()
+            {
+            }
+
+            public NodeIdForDict(uint value, ushort namespaceIndex)
+                : base(value, namespaceIndex)
+            {
+            }
+
+            public bool Equals(NodeIdForDict other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return other.NamespaceIndex == this.NamespaceIndex && other.Identifier == this.Identifier;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != typeof(NodeIdForDict)) return false;
+                return Equals((NodeIdForDict)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.NamespaceIndex.GetHashCode() + this.Identifier.GetHashCode();
+            }
+        }
+        */
 
         #region INodeManager Members
         /// <summary>
@@ -125,7 +168,7 @@ namespace AasOpcUaServer
 
                 if (true)
                 {
-                    var builder = new AasEntityBuilder(this);
+                    var builder = new AasEntityBuilder(this, thePackageEnv, null, this.theServerOptions);
                     var x = builder.CreateAddObject(null, "AASROOT");
                     // this one is special, needs to link to external reference
                     this.AddExternalReference(new NodeId(85, 0), ReferenceTypeIds.Organizes, false, x.NodeId, externalReferences);
@@ -143,6 +186,27 @@ namespace AasOpcUaServer
                 Debug.WriteLine("Done with custom address space?!");
                 Utils.Trace("Done with custom address space?!");
             }
+        }
+
+        public NodeStateCollection GenerateInjectNodeStates()
+        {
+            // new list
+            var res = new NodeStateCollection();
+
+            // Missing Object Types
+            res.Add(AasUaNodeHelper.CreateObjectType("BaseInterfaceType", ObjectTypeIds.BaseObjectType, new NodeId(17602, 0)));
+            res.Add(AasUaNodeHelper.CreateObjectType("DictionaryFolderType", ObjectTypeIds.FolderType, new NodeId(17591, 0)));
+            res.Add(AasUaNodeHelper.CreateObjectType("DictionaryEntryType", ObjectTypeIds.BaseObjectType, new NodeId(17589, 0)));
+            res.Add(AasUaNodeHelper.CreateObjectType("UriDictionaryEntryType", new NodeId(17589, 0), new NodeId(17600, 0)));
+            res.Add(AasUaNodeHelper.CreateObjectType("IrdiDictionaryEntryType", new NodeId(17589, 0), new NodeId(17598, 0)));
+
+            // Missing Reference Types
+            res.Add(AasUaNodeHelper.CreateReferenceType("HasDictionaryEntry", "DictionaryEntryOf", ReferenceTypeIds.NonHierarchicalReferences, new NodeId(17597, 0)));
+            res.Add(AasUaNodeHelper.CreateReferenceType("HasInterface", "InterfaceOf", ReferenceTypeIds.NonHierarchicalReferences, new NodeId(17603, 0)));
+            res.Add(AasUaNodeHelper.CreateReferenceType("HasAddIn", "AddInOf", ReferenceTypeIds.HasComponent, new NodeId(17604, 0)));
+
+            // deliver list
+            return res;
         }
 
         public void AddReference(NodeId node, IReference reference)

@@ -36,7 +36,7 @@ namespace Net46ConsoleServer
     static public class Program
     {
         public static int envimax = 100;
-        public static AdminShell.PackageEnv[] env = new AdminShellV10.PackageEnv[100]
+        public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[100]
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -445,7 +445,7 @@ namespace Net46ConsoleServer
                     // fn = AasxHttpContextHelper.DataPath + "/" + fn;
                     Console.WriteLine("Loading {0}...", fn);
                     envFileName[envi] = fn;
-                    env[envi] = new AdminShell.PackageEnv(fn);
+                    env[envi] = new AdminShellPackageEnv(fn);
                     if (env[envi] == null)
                     {
                         Console.Out.WriteLine($"Cannot open {fn}. Aborting..");
@@ -1088,21 +1088,21 @@ namespace Net46ConsoleServer
                         {
                             var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                            if (p.qualifierType == "GETSUBMODEL")
+                            if (p.type == "GETSUBMODEL")
                             {
-                                GETSUBMODEL = p.qualifierValue;
+                                GETSUBMODEL = p.value;
                             }
-                            if (p.qualifierType == "GETURL")
+                            if (p.type == "GETURL")
                             {
-                                GETURL = p.qualifierValue;
+                                GETURL = p.value;
                             }
-                            if (p.qualifierType == "PUTSUBMODEL")
+                            if (p.type == "PUTSUBMODEL")
                             {
-                                PUTSUBMODEL = p.qualifierValue;
+                                PUTSUBMODEL = p.value;
                             }
-                            if (p.qualifierType == "PUTURL")
+                            if (p.type == "PUTURL")
                             {
-                                PUTURL = p.qualifierValue;
+                                PUTURL = p.value;
                             }
 
                             j++;
@@ -1132,7 +1132,7 @@ namespace Net46ConsoleServer
                     using (TextReader reader = new StringReader(sm))
                     {
                         JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                         submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
                     }
                 }
@@ -1302,23 +1302,23 @@ namespace Net46ConsoleServer
                             {
                                 var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                                switch (p.qualifierType)
+                                switch (p.type)
                                 {
                                     case "OPCURL": // URL
-                                        URL = p.qualifierValue;
+                                        URL = p.value;
                                         break;
                                     case "OPCUsername": // Username
-                                        Username = p.qualifierValue;
+                                        Username = p.value;
                                         break;
                                     case "OPCPassword": // Password
-                                        Password = p.qualifierValue;
+                                        Password = p.value;
                                         break;
                                     case "OPCNamespace": // Namespace
                                                          // TODO: if not int, currently throws nondescriptive error
-                                        Namespace = int.Parse(p.qualifierValue);
+                                        Namespace = int.Parse(p.value);
                                         break;
                                     case "OPCPath": // Path
-                                        Path = p.qualifierValue;
+                                        Path = p.value;
                                         break;
                                 }
                                 j++;
@@ -1428,11 +1428,11 @@ namespace Net46ConsoleServer
                 {
                     if (sm != null && sm.idShort != null)
                     {
-                        int count = sm.qualifiers.Count;
+                        int count = sm.qualifiers != null ? sm.qualifiers.Count : 0;
                         if (count != 0)
                         {
                             var q = sm.qualifiers[0] as AdminShell.Qualifier;
-                            if (q.qualifierType == "SCRIPT")
+                            if (q.type == "SCRIPT")
                             {
                                 // Triple
                                 // Reference to property with Number
@@ -1468,7 +1468,7 @@ namespace Net46ConsoleServer
                                         continue;
                                     }
                                     qq = sme2.qualifiers[0] as AdminShell.Qualifier;
-                                    if (qq.qualifierType != "SearchList" || smi >= count)
+                                    if (qq.type != "SearchList" || smi >= count)
                                     {
                                         continue;
                                     }
@@ -1478,7 +1478,7 @@ namespace Net46ConsoleServer
                                         continue;
                                     }
                                     qq = sme3.qualifiers[0] as AdminShell.Qualifier;
-                                    if (qq.qualifierType != "SearchResult")
+                                    if (qq.type != "SearchResult")
                                     {
                                         break;
                                     }
@@ -1628,11 +1628,11 @@ namespace Net46ConsoleServer
         int serverRunTime = Timeout.Infinite;
         static bool autoAccept = false;
         static ExitCode exitCode;
-        static AdminShell.PackageEnv [] aasxEnv = null;
+        static AdminShellPackageEnv [] aasxEnv = null;
         // OZ
         public static ManualResetEvent quitEvent;
 
-        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShell.PackageEnv [] _aasxEnv)
+        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShellPackageEnv [] _aasxEnv)
         {
             autoAccept = _autoAccept;
             aasxEnv = _aasxEnv;

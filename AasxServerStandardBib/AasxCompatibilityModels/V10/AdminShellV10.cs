@@ -19,7 +19,9 @@ The JSON serialization is under the MIT license (see https://github.com/JamesNK/
 The QR code generation is under the MIT license (see https://github.com/codebude/QRCoder/blob/master/LICENSE.txt).
 The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0). */
 
-namespace AdminShellNS
+#if UseAasxCompatibilityModels
+
+namespace AasxCompatibilityModels
 {
     #region Utils
     // 
@@ -113,10 +115,6 @@ namespace AdminShellNS
 
     #endregion
 
-    /// <summary>
-    /// This empty class derives always from the current version of the Administration Shell class hierarchy.
-    /// </summary>
-    public class AdminShell : AdminShellV10 { }
 
     #region AdminShell_V1_0
 
@@ -497,7 +495,7 @@ namespace AdminShellNS
 
             public Reference(SemanticId src)
             {
-                if (src == null)
+                if (src != null)
                     foreach (var k in src.Keys)
                         keys.Add(new Key(k));
             }
@@ -991,8 +989,9 @@ namespace AdminShellNS
 
             public SemanticId(SemanticId src)
             {
-                foreach (var k in src.Keys)
-                    keys.Add(k);
+                if (src != null)
+                    foreach (var k in src.Keys)
+                        keys.Add(k);
             }
 
             public static SemanticId CreateFromKey(Key key)
@@ -1929,7 +1928,7 @@ namespace AdminShellNS
             {
                 this.embeddedDataSpecification = new EmbeddedDataSpecification();
                 this.embeddedDataSpecification.hasDataSpecification.Keys.Add(Key.CreateNew("GlobalReference", false, "URI", "www.admin-shell.io/DataSpecificationTemplates/DataSpecificationIEC61360"));
-                this.embeddedDataSpecification.dataSpecificationContent.dataSpecificationIEC61360 = AdminShell.DataSpecificationIEC61360.CreateNew(
+                this.embeddedDataSpecification.dataSpecificationContent.dataSpecificationIEC61360 = AdminShellV10.DataSpecificationIEC61360.CreateNew(
                     preferredNames, shortName, unit, unitId, valueFormat, sourceOfDefinition, symbol, dataType, definition
                 );
                 this.AddIsCaseOf(Reference.CreateNew(new Key("ConceptDescription", false, this.identification.idType, this.identification.id)));
@@ -2371,7 +2370,7 @@ namespace AdminShellNS
 
             public void SerializeXmlToStream(StreamWriter s)
             {
-                var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
+                var serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv));
                 var nss = new XmlSerializerNamespaces();
                 nss.Add("xsi", System.Xml.Schema.XmlSchema.InstanceNamespace);
                 nss.Add("aas", "http://www.admin-shell.io/aas/1/0");
@@ -2398,15 +2397,15 @@ namespace AdminShellNS
 
             public AdministrationShellEnv DeserializeFromXmlStream(TextReader reader)
             {
-                XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
-                var res = serializer.Deserialize(reader) as AdminShell.AdministrationShellEnv;
+                XmlSerializer serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
+                var res = serializer.Deserialize(reader) as AdminShellV10.AdministrationShellEnv;
                 return res;
             }
 
             public AdministrationShellEnv DeserializeFromJsonStream(TextReader reader)
             {
                 JsonSerializer serializer = new JsonSerializer();
-                serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                serializer.Converters.Add(new AdminShellV10.JsonAasxConverter("modelType", "name"));
                 var res = (AdministrationShellEnv)serializer.Deserialize(reader, typeof(AdministrationShellEnv));
                 return res;
             }
@@ -2815,32 +2814,32 @@ namespace AdminShellNS
             /// <returns>SubmodelElement</returns>
             public static SubmodelElement CreateAdequateType(int index)
             {
-                AdminShell.SubmodelElement sme = null;
+                AdminShellV10.SubmodelElement sme = null;
                 switch (index)
                 {
                     case 0:
-                        sme = new AdminShell.Property();
+                        sme = new AdminShellV10.Property();
                         break;
                     case 1:
-                        sme = new AdminShell.File();
+                        sme = new AdminShellV10.File();
                         break;
                     case 2:
-                        sme = new AdminShell.Blob();
+                        sme = new AdminShellV10.Blob();
                         break;
                     case 3:
-                        sme = new AdminShell.ReferenceElement();
+                        sme = new AdminShellV10.ReferenceElement();
                         break;
                     case 4:
-                        sme = new AdminShell.SubmodelElementCollection();
+                        sme = new AdminShellV10.SubmodelElementCollection();
                         break;
                     case 5:
-                        sme = new AdminShell.RelationshipElement();
+                        sme = new AdminShellV10.RelationshipElement();
                         break;
                     case 6:
-                        sme = new AdminShell.Operation();
+                        sme = new AdminShellV10.Operation();
                         break;
                     case 7:
-                        sme = new AdminShell.OperationVariable();
+                        sme = new AdminShellV10.OperationVariable();
                         break;
                 }
                 return sme;
@@ -2850,13 +2849,13 @@ namespace AdminShellNS
             {
                 if (submodelElement == null)
                     return ("Null");
-                if (submodelElement is AdminShell.Property) return ("Prop");
-                if (submodelElement is AdminShell.File) return ("File");
-                if (submodelElement is AdminShell.Blob) return ("Blob");
-                if (submodelElement is AdminShell.ReferenceElement) return ("Ref");
-                if (submodelElement is AdminShell.RelationshipElement) return ("Rel");
-                if (submodelElement is AdminShell.SubmodelElementCollection) return ("Coll");
-                if (submodelElement is AdminShell.Operation) return ("Opr");
+                if (submodelElement is AdminShellV10.Property) return ("Prop");
+                if (submodelElement is AdminShellV10.File) return ("File");
+                if (submodelElement is AdminShellV10.Blob) return ("Blob");
+                if (submodelElement is AdminShellV10.ReferenceElement) return ("Ref");
+                if (submodelElement is AdminShellV10.RelationshipElement) return ("Rel");
+                if (submodelElement is AdminShellV10.SubmodelElementCollection) return ("Coll");
+                if (submodelElement is AdminShellV10.Operation) return ("Opr");
                 return ("Elem");
             }
 
@@ -3728,7 +3727,7 @@ namespace AdminShellNS
 
             public override bool CanConvert(Type objectType)
             {
-                if (typeof(AdminShell.SubmodelElement).IsAssignableFrom(objectType))
+                if (typeof(AdminShellV10.SubmodelElement).IsAssignableFrom(objectType))
                     return true;
                 return false;
             }
@@ -3747,7 +3746,7 @@ namespace AdminShellNS
                 JObject jObject = JObject.Load(reader);
 
                 // Create target object based on JObject
-                object target = new AdminShell.SubmodelElement();
+                object target = new AdminShellV10.SubmodelElement();
 
                 if (jObject.ContainsKey(UpperClassProperty))
                 {
@@ -3762,7 +3761,7 @@ namespace AdminShellNS
                             var cpval = cprop.Value.ToObject<string>();
                             if (cpval == null)
                                 continue;
-                            var o = AdminShell.SubmodelElementWrapper.CreateAdequateType(cpval);
+                            var o = AdminShellV10.SubmodelElementWrapper.CreateAdequateType(cpval);
                             if (o != null)
                                 target = o;
                         }
@@ -3855,7 +3854,7 @@ namespace AdminShellNS
                 }
             }
 
-            public AdminShell.AdministrationShellEnv AasEnv
+            public AdminShellV10.AdministrationShellEnv AasEnv
             {
                 get
                 {
@@ -3876,9 +3875,9 @@ namespace AdminShellNS
                     try
                     {
                         // TODO: use aasenv serialzers here!
-                        XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
+                        XmlSerializer serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
                         TextReader reader = new StreamReader(fn);
-                        this.aasenv = serializer.Deserialize(reader) as AdminShell.AdministrationShellEnv;
+                        this.aasenv = serializer.Deserialize(reader) as AdminShellV10.AdministrationShellEnv;
                         if (this.aasenv == null)
                             throw (new Exception("Type error for XML file!"));
                         reader.Close();
@@ -3899,7 +3898,7 @@ namespace AdminShellNS
                         {
                             // TODO: use aasenv serialzers here!
                             JsonSerializer serializer = new JsonSerializer();
-                            serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                            serializer.Converters.Add(new AdminShellV10.JsonAasxConverter("modelType", "name"));
                             this.aasenv = (AdministrationShellEnv)serializer.Deserialize(file, typeof(AdministrationShellEnv));
                         }
                     }
@@ -3915,8 +3914,7 @@ namespace AdminShellNS
                     // load package AASX
                     try
                     {
-                        // var package = Package.Open(fn, FileMode.Open);
-                        var package = Package.Open(fn, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        var package = Package.Open(fn, FileMode.Open);
 
                         // get the origin from the package
                         PackagePart originPart = null;
@@ -3951,7 +3949,7 @@ namespace AdminShellNS
                                     using (StreamReader file = new StreamReader(s))
                                     {
                                         JsonSerializer serializer = new JsonSerializer();
-                                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                                        serializer.Converters.Add(new AdminShellV10.JsonAasxConverter("modelType", "name"));
                                         this.aasenv = (AdministrationShellEnv)serializer.Deserialize(file, typeof(AdministrationShellEnv));
                                     }
                                 }
@@ -3961,8 +3959,8 @@ namespace AdminShellNS
                                 using (var s = specPart.GetStream(FileMode.Open))
                                 {
                                     // own catch loop to be more specific
-                                    XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
-                                    this.aasenv = serializer.Deserialize(s) as AdminShell.AdministrationShellEnv;
+                                    XmlSerializer serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
+                                    this.aasenv = serializer.Deserialize(s) as AdminShellV10.AdministrationShellEnv;
                                     this.openPackage = package;
                                     if (this.aasenv == null)
                                         throw (new Exception("Type error for XML file!"));
@@ -3994,7 +3992,7 @@ namespace AdminShellNS
                     {
                         // TODO: use aasenv serialzers here!
                         JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                        serializer.Converters.Add(new AdminShellV10.JsonAasxConverter("modelType", "name"));
                         this.aasenv = (AdministrationShellEnv)serializer.Deserialize(file, typeof(AdministrationShellEnv));
                     }
                 }
@@ -4019,7 +4017,7 @@ namespace AdminShellNS
                         using (var s = new StreamWriter(this.fn))
                         {
                             // TODO: use aasenv serialzers here!
-                            var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
+                            var serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv));
                             var nss = new XmlSerializerNamespaces();
                             nss.Add("xsi", System.Xml.Schema.XmlSchema.InstanceNamespace);
                             nss.Add("aas", "http://www.admin-shell.io/aas/1/0");
@@ -4178,7 +4176,7 @@ namespace AdminShellNS
                         {
                             using (var s = specPart.GetStream(FileMode.Create))
                             {
-                                var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
+                                var serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv));
                                 var nss = new XmlSerializerNamespaces();
                                 nss.Add("xsi", System.Xml.Schema.XmlSchema.InstanceNamespace);
                                 nss.Add("aas", "http://www.admin-shell.io/aas/1/0");
@@ -4248,7 +4246,7 @@ namespace AdminShellNS
                                 if (filePart == null)
                                 {
                                     // create new part and link
-                                    filePart = package.CreatePart(psfAdd.uri, AdminShell.PackageEnv.GuessMimeType(psfAdd.sourcePath), CompressionOption.Maximum);
+                                    filePart = package.CreatePart(psfAdd.uri, AdminShellV10.PackageEnv.GuessMimeType(psfAdd.sourcePath), CompressionOption.Maximum);
                                     specPart.CreateRelationship(filePart.Uri, TargetMode.Internal, "http://www.admin-shell.io/aasx/relationships/aas-suppl");
                                 }
 
@@ -4276,7 +4274,7 @@ namespace AdminShellNS
                                 if (filePart == null)
                                 {
                                     // create new part and link
-                                    filePart = package.CreatePart(psfAdd.uri, AdminShell.PackageEnv.GuessMimeType(psfAdd.sourcePath), CompressionOption.Maximum);
+                                    filePart = package.CreatePart(psfAdd.uri, AdminShellV10.PackageEnv.GuessMimeType(psfAdd.sourcePath), CompressionOption.Maximum);
                                     package.CreateRelationship(filePart.Uri, TargetMode.Internal, "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail");
                                 }
 
@@ -4334,7 +4332,7 @@ namespace AdminShellNS
                     // raw save
                     using (var s = new StreamWriter(fn))
                     {
-                        var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
+                        var serializer = new XmlSerializer(typeof(AdminShellV10.AdministrationShellEnv));
                         var nss = new XmlSerializerNamespaces();
                         nss.Add("xsi", System.Xml.Schema.XmlSchema.InstanceNamespace);
                         nss.Add("aas", "http://www.admin-shell.io/aas/1/0");
@@ -4587,7 +4585,7 @@ namespace AdminShellNS
 
                 // add a supplementary file
                 var file_fn = "" + targetDir.Trim() + targetFn.Trim();
-                var file_part = this.openPackage.CreatePart(new Uri(file_fn, UriKind.RelativeOrAbsolute), AdminShell.PackageEnv.GuessMimeType(srcFn), CompressionOption.Maximum);
+                var file_part = this.openPackage.CreatePart(new Uri(file_fn, UriKind.RelativeOrAbsolute), AdminShellV10.PackageEnv.GuessMimeType(srcFn), CompressionOption.Maximum);
                 using (var s = file_part.GetStream(FileMode.Create))
                 {
                     var bytes = System.IO.File.ReadAllBytes(srcFn);
@@ -4611,3 +4609,5 @@ namespace AdminShellNS
 
     #endregion
 }
+
+#endif
