@@ -32,7 +32,10 @@ namespace AasxMqttClient
              
         }
 
-        public static async Task StartAsync(AdminShellPackageEnv package, GrapevineLoggerSuper logger = null)
+        static int lastAASEnv = 0;
+        static int lastAAS = 0;
+        static int lastSubmodel = 0;
+        public static async Task StartAsync(AdminShellPackageEnv [] package, GrapevineLoggerSuper logger = null)
         {                      
             // Create TCP based options using the builder.
             var options = new MqttClientOptionsBuilder()
@@ -43,37 +46,69 @@ namespace AasxMqttClient
             //create MQTT Client and Connect using options above
             IMqttClient mqttClient = new MqttFactory().CreateMqttClient();
             await mqttClient.ConnectAsync(options);
-            if(mqttClient.IsConnected == true)
-                logger.Info("### CONNECTED WITH SERVER ###");
+            // if (mqttClient.IsConnected == true)
+            // logger.Info("### CONNECTED WITH SERVER ###");
+            // Console.WriteLine("### CONNECTED WITH SERVER ###");
 
-            //publish AAS to AAS Topic
-            foreach(AdminShell.AdministrationShell aas in package.AasEnv.AdministrationShells)
+            int iAASEnv = 0;
+            for (iAASEnv = 0; iAASEnv < package.Length; iAASEnv++)
             {
-                logger.Info("Publish AAS");
-                var message = new MqttApplicationMessageBuilder()
-                               .WithTopic("AAS")
-                               .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(aas))
-                               .WithExactlyOnceQoS()
-                               .WithRetainFlag()
-                               .Build();
-
-                await mqttClient.PublishAsync(message);
-
-                //publish submodels
-                foreach (var sm in package.AasEnv.Submodels)
+                if (iAASEnv == lastAASEnv && package[iAASEnv] != null)
                 {
-                    logger.Info("Publish " + "Submodel_" + sm.idShort);
+                    //publish AAS to AAS Topic
+                    foreach (AdminShell.AdministrationShell aas in package[iAASEnv].AasEnv.AdministrationShells)
+                    {
 
-                    var message2 = new MqttApplicationMessageBuilder()
-                                   .WithTopic("Submodel_" + sm.idShort)
-                                   .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(sm))
-                                   .WithExactlyOnceQoS()
-                                   .WithRetainFlag()
-                                   .Build();
+                    // logger.Info("Publish AAS");
+                    /*
+                    Console.WriteLine("Publish AAS" + aas.idShort);
+                    var message = new MqttApplicationMessageBuilder()
+                                    .WithTopic("AAS")
+                                    .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(aas))
+                                    .WithExactlyOnceQoS()
+                                    .WithRetainFlag()
+                                    .Build();
 
-                    await mqttClient.PublishAsync(message2);
+                    await mqttClient.PublishAsync(message);
+                    */
+
+                        //publish submodels
+                        int iSubmodel = 0;
+                        foreach (var sm in package[iAASEnv].AasEnv.Submodels)
+                        {
+                            if (iSubmodel == lastSubmodel)
+                            {
+                                // logger.Info("Publish " + "Submodel_" + sm.idShort);
+                                Console.WriteLine("Publish MQTT AAS " + aas.idShort + " Submodel_" + sm.idShort);
+
+                                var message2 = new MqttApplicationMessageBuilder()
+                                                .WithTopic("Submodel_" + sm.idShort)
+                                                .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(sm))
+                                                .WithExactlyOnceQoS()
+                                                .WithRetainFlag()
+                                                .Build();
+
+                                await mqttClient.PublishAsync(message2);
+                                lastSubmodel++;
+                                iSubmodel = -1;
+                                break;
+                            }
+                            iSubmodel++;
+                        }
+                        if (iSubmodel != -1)
+                        {
+                            lastSubmodel = 0;
+                            lastAASEnv++;
+                        }
+                        break;
+                    }
+                    break;
                 }
-            }    
-        }      
+            }
+            if (package[lastAASEnv] == null)
+            {
+                lastAASEnv = 0;
+            }
+        }
     }
 }

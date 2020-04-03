@@ -180,7 +180,7 @@ namespace AasOpcUaServer
         /// Shall be TRUE for local, existing files ..
         /// </summary>
         /// <returns></returns>
-        public bool CheckSuitablity(AdminShellPackageEnv package, AdminShell.File file)
+        public bool CheckSuitablity(AdminShellPackageEnv[] package, AdminShell.File file)
         {
             // trivial
             if (package == null || file == null)
@@ -190,7 +190,7 @@ namespace AasOpcUaServer
             Stream s = null;
             try
             {
-                s = package.GetLocalStreamFromPackage(file.value);
+                s = package[0].GetLocalStreamFromPackage(file.value);
             } catch
             {
                 return false;
@@ -200,7 +200,7 @@ namespace AasOpcUaServer
             return s != null;
         }
 
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, AdminShellPackageEnv package = null, AdminShell.File file = null)
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode, AdminShellPackageEnv[] package = null, AdminShell.File file = null)
         {
             // access
             if (parent == null)
@@ -218,7 +218,7 @@ namespace AasOpcUaServer
                     return null;
 
                 var instData = new InstanceData();
-                instData.packHandler = new AasUaPackageFileHandler(package, file);
+                instData.packHandler = new AasUaPackageFileHandler(package[0], file);
 
                 // containing element
                 var o = this.entityBuilder.CreateAddObject(parent, "File", ReferenceTypeIds.HasComponent, ObjectTypeIds.FileType);
@@ -233,7 +233,7 @@ namespace AasOpcUaServer
                 */
 
                 // this first information is to provide a "off-the-shelf" size information; a Open() will re-new this
-                var fileLen = Convert.ToUInt64(package.GetStreamSizeFromPackage(file.value));
+                var fileLen = Convert.ToUInt64(package[0].GetStreamSizeFromPackage(file.value));
 
                 this.entityBuilder.CreateAddPropertyState<string>(o, "MimeType", DataTypeIds.String, file.mimeType, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
                 instData.nodeOpenCount = this.entityBuilder.CreateAddPropertyState<UInt16>(o, "OpenCount", DataTypeIds.UInt16, 0, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);

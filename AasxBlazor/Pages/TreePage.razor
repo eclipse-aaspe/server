@@ -1,7 +1,7 @@
 ﻿@page "/"
 @inject AASService SubmodelService
 @using AasxBlazor.Data
-@using static AdminShellNS.AdminShellV10;
+@using static AdminShellNS.AdminShellV20;
 @using System
 @implements IDisposable
 
@@ -325,6 +325,18 @@
         {
             ret = "File";
         }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            ret = "Range";
+        }
+        if (o is MultiLanguageProperty)
+        {
+            ret = "Lang";
+        }
+
+        if (ret != "NULL")
+            return (ret);
+
         return (ret);
     }
 
@@ -364,6 +376,16 @@
             var f = o as File;
             ret = f.idShort;
         }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = r.idShort;
+        }
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            ret = mlp.idShort;
+        }
         return (ret);
     }
 
@@ -402,6 +424,21 @@
             {
                 var f = o as File;
                 ret = " = " + f.value;
+            }
+        }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = " = " + r.min + " .. " + r.max;
+        }
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            var ls = mlp.value;
+            ret = " = ";
+            for (int i = 0; i < ls.Count; i++)
+            {
+                ret += ls.langString[i].lang + " ";
             }
         }
         return (ret);
@@ -553,6 +590,63 @@
                     ret = "Value";
                     if (col == 1)
                         ret = f.value;
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                        ret = r.semanticId + "";
+                    break;
+                case 1:
+                    ret = "Min";
+                    if (col == 1)
+                        ret = r.min + "";
+                    break;
+                case 2:
+                    ret = "Max";
+                    if (col == 1)
+                        ret = r.max + "";
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            var ls = mlp.value;
+            for (int i = 0; i < ls.Count; i++)
+            {
+                ret += ls.langString[i].lang + " ";
+            }
+            switch (line)
+            {
+                case 0:
+                case 1:
+                    if (ls.Count > line)
+                    {
+                        ret = ls.langString[line].lang;
+                        if (col == 1)
+                            ret = ls.langString[line].str + "";
+                    }
                     break;
                 case 2:
                 case 3:

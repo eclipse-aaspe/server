@@ -1,7 +1,8 @@
 ﻿using AasxIntegrationBase;
 using AdminShellNS;
+using Grapevine;
 using Grapevine.Client;
-using Newtonsoft.Json.Linq;
+using Grapevine.Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace AasxRestServerLibrary
 {

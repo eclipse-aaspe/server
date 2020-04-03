@@ -627,7 +627,7 @@ namespace Net46ConsoleServer
                     using (TextReader reader = new StringReader(sm))
                     {
                         JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                         submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
                     }
                 }
@@ -919,7 +919,7 @@ namespace Net46ConsoleServer
                 {
                     if (sm != null && sm.idShort != null)
                     {
-                        int count = sm.qualifiers.Count;
+                        int count = sm.qualifiers != null ? sm.qualifiers.Count : 0;
                         if (count == 1)
                         {
                             var q = sm.qualifiers[0] as AdminShell.Qualifier;

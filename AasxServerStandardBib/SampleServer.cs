@@ -42,7 +42,7 @@ namespace AasOpcUaServer
     /// </summary>
     public partial class SampleServer : StandardServer
     {
-        private AdminShellPackageEnv thePackageEnv = null;
+        private AdminShellPackageEnv [] thePackageEnv = null;
         private AasxUaServerOptions theServerOptions = null;
 
         public SampleServer()
@@ -50,13 +50,13 @@ namespace AasOpcUaServer
         {
         }
 
-        public SampleServer(AdminShellPackageEnv env, AasxUaServerOptions serverOptions = null)
+        public SampleServer(AdminShellPackageEnv [] env, AasxUaServerOptions serverOptions = null)
             : base()
         {
             thePackageEnv = env;
-            theServerOptions = serverOptions;
+			theServerOptions = serverOptions;
         }
-
+ 
         #region Overridden Methods
         /// <summary>
         /// Initializes the server before it starts up.
@@ -85,12 +85,10 @@ namespace AasOpcUaServer
             
             // request notifications when the user identity is changed. all valid users are accepted by default.
             server.SessionManager.ImpersonateUser += new ImpersonateEventHandler(SessionManager_ImpersonateUser);
-
             /*
             if (theServerOptions != null && theServerOptions.FinalizeAction != null)
                 theServerOptions.FinalizeAction();
-            */
-        }
+            */        }
 
         /// <summary>
         /// Cleans up before the server shuts down.
@@ -130,8 +128,7 @@ namespace AasOpcUaServer
             List<INodeManager> nodeManagers = new List<INodeManager>();
 
             // create the custom node managers.
-            var aasnm = new global::AasOpcUaServer.AasModeManager(server, configuration, thePackageEnv, theServerOptions);
-            nodeManagers.Add(aasnm);
+            nodeManagers.Add(new global::AasOpcUaServer.AasNodeManager(server, configuration, thePackageEnv));
             
             // create master node manager.
             var x = new MasterNodeManager(server, configuration, null, nodeManagers.ToArray());
@@ -140,13 +137,15 @@ namespace AasOpcUaServer
             if (x.NodeManagers.Count>0)
             {
                 var cm = x.NodeManagers[0] as CustomNodeManager2;
+                /* OZ
                 if (cm != null)
                     cm.AasInjectedNodes = aasnm.GenerateInjectNodeStates();
+                */
             }
 
             // ok
-            return x;
-        }
+            return x;        
+}
         #endif
 
         /// <summary>

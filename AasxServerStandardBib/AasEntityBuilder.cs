@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AasOpcUaServer;
 
 namespace AasOpcUaServer
 {
@@ -13,9 +14,9 @@ namespace AasOpcUaServer
         //// Static singleton for AAS entity builders
         // ugly, but simple: the singleton variables gives access to information
         //
-        public static AasModeManager nodeMgr = null;
+        public static AasNodeManager nodeMgr = null;
 
-        public AdminShellPackageEnv package = null;
+        public AdminShellPackageEnv[] package = null;
 
         public AasxUaServerOptions theServerOptions = null;
 
@@ -42,7 +43,7 @@ namespace AasOpcUaServer
         /// </summary>
         public NodeState RootMissingDictionaryEntries = null;
 
-        public AasEntityBuilder (AasModeManager nodeMgr, AdminShellPackageEnv package, IDictionary<NodeId, IList<IReference>> externalReferences, AasxUaServerOptions options)
+        public AasEntityBuilder (AasNodeManager nodeMgr, AdminShellPackageEnv[] package, IDictionary<NodeId, IList<IReference>> externalReferences, AasxUaServerOptions options)
         {
             AasEntityBuilder.nodeMgr = nodeMgr;
             this.package = package;
@@ -153,6 +154,7 @@ namespace AasOpcUaServer
             this.noteLateActions.Add(la);
         }
 
+        /*
         /// <summary>
         /// Top level creation functions. Uses the definitions of RootAAS, RootConceptDescriptions, RootDataSpecifications
         /// to synthesize information model
@@ -272,7 +274,7 @@ namespace AasOpcUaServer
 
             }
         }
-
+        */
 
         //// references
         //
