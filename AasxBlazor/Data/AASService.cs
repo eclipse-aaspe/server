@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using AdminShellNS;
-using static AdminShellNS.AdminShellV10;
+// using static AdminShellNS.AdminShellV10;
 // using static AasxBlazor.Pages.__generated__TreePage;
 using static AasxBlazor.Pages.TreePage;
 // using static AasxBlazor.Pages.TreeSample;
