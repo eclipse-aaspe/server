@@ -2555,6 +2555,14 @@ namespace AasxRestServerLibrary
 
                         if (cert == null) return null;
 
+                        StringBuilder builder = new StringBuilder();
+                        builder.AppendLine("-----BEGIN CERTIFICATE-----");
+                        builder.AppendLine(
+                            Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
+                        builder.AppendLine("-----END CERTIFICATE-----");
+                        Console.WriteLine("Token Server Certificate: " + serverName);
+                        Console.WriteLine(builder);
+
                         try
                         {
                             Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
@@ -2672,7 +2680,7 @@ namespace AasxRestServerLibrary
             if (withAuthentification)
             {
                 Console.WriteLine("Security 4.1 Server: Check bearer token and access rights");
-                Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by session unique random");
+                Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by token server certificate");
                 string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
@@ -2828,7 +2836,7 @@ namespace AasxRestServerLibrary
 
         public static void securityInit()
         {
-            // withAuthentification = true;
+            withAuthentification = true;
 
             int aascount = Net46ConsoleServer.Program.env.Length;
 
