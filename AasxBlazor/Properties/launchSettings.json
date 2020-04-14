@@ -18,7 +18,7 @@
     },
     "AasxBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-rest -opc -datapath C:\\Users\\7wrmhx\\Documents\\_Standardization\\Typenschild\\AASX_DigTyp40",
+      "commandLineArgs": "-rest -datapath \\development\\aasx -https",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
