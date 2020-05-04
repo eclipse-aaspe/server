@@ -25,11 +25,12 @@ using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Components;
+using System.Net.Http;
 // using AASXLoader;
 
 namespace Net46ConsoleServer
 {
-    public class Program
+    static public class Program
     {
         public static int envimax = 100;
         public static AdminShell.PackageEnv[] env = new AdminShellV10.PackageEnv[100]
@@ -103,8 +104,12 @@ namespace Net46ConsoleServer
         static bool runOPC = false;
         static bool runMQTT = false;
 
+        static string connectServer = "";
+        static string connectNodeName = "";
+        static int connectUpdateRate = 1000;
+        static Thread connectThread;
+        static bool connectLoop = false;
 
-        
         static public void Main(string[] args)
         {
             // default command line options
@@ -243,6 +248,18 @@ namespace Net46ConsoleServer
                     continue;
                 }
 
+                if (x == "-connect")
+                {
+                    string connect = args[i + 1];
+                    var c = connect.Split(',');
+                    connectServer = c[0];
+                    connectNodeName = c[1];
+                    connectUpdateRate = Convert.ToInt32(c[2]);
+                    Console.WriteLine("-connect: Connect Server " + connectServer + ", Name " + connectNodeName + ", Update Rate " + connectUpdateRate);
+                    i += 2;
+                    continue;
+                }
+
                 if (x == "--help")
                 {
                     help = true;
@@ -269,6 +286,7 @@ namespace Net46ConsoleServer
                 Console.WriteLine("-MQTT = start MQTT publisher");
                 Console.WriteLine("-debugwait = wait for Debugger to attach");
                 Console.WriteLine("-opcclient UPDATERATE = time in ms between getting new values");
+                Console.WriteLine("-connect SERVER,NAME,UPDATERATE = AAS Connect Server, Node Name, time in ms between publishing/subscribing new values");
                 Console.WriteLine("-registry = server IP of BaSyx registry");
                 // Console.WriteLine("FILENAME.AASX");
                 Console.ReadLine();
@@ -460,6 +478,18 @@ namespace Net46ConsoleServer
 
             SetScriptTimer(2000);
 
+            if (connectServer != "")
+            {
+                HttpClient httpClient = new HttpClient();
+                string payload = "{ \"node\" : \"" + connectNodeName + "\" }";
+                var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+                httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
+
+                connectThread = new Thread(new ThreadStart(connectThreadLoop));
+                connectThread.Start();
+                connectLoop = true;
+            }
+
             if (runOPC && server != null)
             {
                 server.Run(); // wait for CTRL-C
@@ -487,12 +517,226 @@ namespace Net46ConsoleServer
 
             // wait for RETURN
 
+            if (connectServer != "")
+            {
+                HttpClient httpClient = new HttpClient();
+                string payload = "{ \"node\" : \"" + connectNodeName + "\" }";
+                var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+                httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
+
+                connectLoop = false;
+                connectThread.Abort();
+            }
+
             if (runMQTT)
             {
                 AASMqttServer.MqttSeverStopAsync().Wait();
             }
 
             AasxRestServer.Stop();
+        }
+
+        public static string ContentToString(this HttpContent httpContent)
+        {
+            var readAsStringAsync = httpContent.ReadAsStringAsync();
+            return readAsStringAsync.Result;
+        }
+
+        public class transmit
+        {
+            public string node;
+            public List<string> publish;
+            public transmit()
+            {
+                publish = new List<string> { };
+            }
+        }
+
+        public static void connectThreadLoop()
+        {
+            while (connectLoop)
+            {
+                transmit t = new transmit
+                {
+                    node = connectNodeName
+                };
+
+                foreach (var sm in env[0].AasEnv.Submodels)
+                {
+                    if (sm != null && sm.idShort != null)
+                    {
+                        int count = sm.qualifiers.Count;
+                        if (count != 0)
+                        {
+                            int j = 0;
+
+                            while (j < count) // Scan qualifiers
+                            {
+                                var p = sm.qualifiers[j] as AdminShell.Qualifier;
+
+                                if (p.qualifierType == "PUBLISH")
+                                {
+                                    var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                                    t.publish.Add(json);
+                                    Console.WriteLine("Publish Submodel " + sm.idShort);
+                                }
+
+                                j++;
+                            }
+                        }
+                    }
+                }
+
+                string publish = JsonConvert.SerializeObject(t, Formatting.Indented);
+
+                HttpClient httpClient = new HttpClient();
+                var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
+
+                var result = httpClient.PostAsync("http://" + connectServer + "/publish", contentJson).Result;
+                string content = ContentToString(result.Content);
+
+                if (content != "")
+                {
+                    string node = "";
+
+                    try
+                    {
+                        transmit t2;
+                        t2 = Newtonsoft.Json.JsonConvert.DeserializeObject<transmit>(content);
+
+                        node = t2.node;
+                        foreach (string sm in t2.publish)
+                        {
+                            AdminShell.Submodel submodel = null;
+                            try
+                            {
+                                using (TextReader reader = new StringReader(sm))
+                                {
+                                    JsonSerializer serializer = new JsonSerializer();
+                                    serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                                    submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("Can not read SubModel!");
+                                return;
+                            }
+
+                            // need id for idempotent behaviour
+                            if (submodel.identification == null)
+                            {
+                                Console.WriteLine("Identification of SubModel is (null)!");
+                                return;
+                            }
+
+                            var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.identification);
+
+                            if (aas != null)
+                            {
+                                // datastructure update
+                                if (env == null || env[0].AasEnv == null || env[0].AasEnv.Assets == null)
+                                {
+                                    Console.WriteLine("Error accessing internal data structures.");
+                                    return;
+                                }
+
+                                // add Submodel
+                                var existingSm = env[0].AasEnv.FindSubmodel(submodel.identification);
+                                if (existingSm != null)
+                                {
+                                    int count = existingSm.qualifiers.Count;
+                                    if (count != 0)
+                                    {
+                                        int j = 0;
+
+                                        while (j < count) // Scan qualifiers
+                                        {
+                                            var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
+
+                                            if (p.qualifierType == "SUBSCRIBE")
+                                            {
+                                                Console.WriteLine("Subscribe Submodel " + submodel.idShort);
+
+                                                int c2 = submodel.qualifiers.Count;
+                                                if (c2 != 0)
+                                                {
+                                                    int k = 0;
+
+                                                    while (k < c2) // Scan qualifiers
+                                                    {
+                                                        var q = submodel.qualifiers[k] as AdminShell.Qualifier;
+
+                                                        if (q.qualifierType == "PUBLISH")
+                                                        {
+                                                            q.qualifierType = "SUBSCRIBE";
+                                                        }
+
+                                                        k++;
+                                                    }
+                                                }
+
+                                                bool overwrite = true;
+                                                count = existingSm.submodelElements.Count;
+                                                int count2 = submodel.submodelElements.Count;
+                                                if (count == count2)
+                                                {
+                                                    int smi = 0;
+                                                    while (smi < count)
+                                                    {
+                                                        var sme1 = submodel.submodelElements[smi].submodelElement;
+                                                        var sme2 = existingSm.submodelElements[smi].submodelElement;
+
+                                                        if (sme1 is AdminShell.Property)
+                                                        {
+                                                            if (sme2 is AdminShell.Property)
+                                                            {
+                                                                (sme2 as AdminShell.Property).value = (sme1 as AdminShell.Property).value;
+                                                            }
+                                                            else
+                                                            {
+                                                                overwrite = false;
+                                                                break;
+                                                            }
+                                                        }
+
+                                                        smi++;
+                                                    }
+                                                }
+
+                                                if (!overwrite)
+                                                {
+                                                    env[0].AasEnv.Submodels.Remove(existingSm);
+                                                    env[0].AasEnv.Submodels.Add(submodel);
+
+                                                    // add SubmodelRef to AAS            
+                                                    // access the AAS
+                                                    var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
+                                                    var existsmr = aas.HasSubmodelRef(newsmr);
+                                                    if (!existsmr)
+                                                    {
+                                                        aas.AddSubmodelRef(newsmr);
+                                                    }
+
+                                                }
+                                            }
+
+                                            j++;
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
+                Thread.Sleep(connectUpdateRate);
+            }
         }
 
         private static System.Timers.Timer OPCClientTimer;
@@ -920,7 +1164,7 @@ namespace Net46ConsoleServer
                     if (sm != null && sm.idShort != null)
                     {
                         int count = sm.qualifiers.Count;
-                        if (count == 1)
+                        if (count != 0)
                         {
                             var q = sm.qualifiers[0] as AdminShell.Qualifier;
                             if (q.qualifierType == "SCRIPT")
@@ -939,6 +1183,16 @@ namespace Net46ConsoleServer
                                         continue;
                                     }
                                     var qq = sme1.qualifiers[0] as AdminShell.Qualifier;
+
+                                    if (qq.qualifierType == "Add")
+                                    {
+                                        int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
+                                        v += Convert.ToInt32(qq.qualifierValue);
+                                        (sme1 as AdminShell.Property).value = v.ToString();
+                                        continue;
+                                    }
+
+
                                     if (qq.qualifierType != "SearchNumber" || smi >= count)
                                     {
                                         continue;

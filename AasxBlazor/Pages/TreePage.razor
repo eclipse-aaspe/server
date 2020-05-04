@@ -501,6 +501,20 @@
                         ret = sm.semanticId + "";
                     break;
                 case 2:
+                    ret = "Qualifier";
+                    if (col == 1)
+                    {
+                        ret = "";
+                        for (int i = 0; i < sm.qualifiers.Count; i++)
+                        {
+                            ret += sm.qualifiers[i].qualifierType + " ";
+                            if (sm.qualifiers[i].qualifierValue != "")
+                            {
+                                ret += sm.qualifiers[i].qualifierValue + " ";
+                            }
+                        }
+                    }
+                    break;
                 case 3:
                 case 4:
                     ret = "";
@@ -531,6 +545,20 @@
                         ret = prop.value + "";
                     break;
                 case 3:
+                    ret = "Qualifier";
+                    if (col == 1)
+                    {
+                        ret = "";
+                        for (int i = 0; i < prop.qualifiers.Count; i++)
+                        {
+                            ret += prop.qualifiers[i].qualifierType + " ";
+                            if (prop.qualifiers[i].qualifierValue != "")
+                            {
+                                ret += prop.qualifiers[i].qualifierValue + " ";
+                            }
+                        }
+                    }
+                    break;
                 case 4:
                     ret = "";
                     break;
