@@ -481,7 +481,7 @@ namespace Net46ConsoleServer
             if (connectServer != "")
             {
                 HttpClient httpClient = new HttpClient();
-                string payload = "{ \"node\" : \"" + connectNodeName + "\" }";
+                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
                 var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
                 httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
 
@@ -520,7 +520,7 @@ namespace Net46ConsoleServer
             if (connectServer != "")
             {
                 HttpClient httpClient = new HttpClient();
-                string payload = "{ \"node\" : \"" + connectNodeName + "\" }";
+                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
                 var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
                 httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
 
@@ -544,7 +544,10 @@ namespace Net46ConsoleServer
 
         public class transmit
         {
-            public string node;
+            public string source;
+            public string destination;
+            public string type;
+            public string encrypt;
             public List<string> publish;
             public transmit()
             {
@@ -558,7 +561,7 @@ namespace Net46ConsoleServer
             {
                 transmit t = new transmit
                 {
-                    node = connectNodeName
+                    source = connectNodeName
                 };
 
                 foreach (var sm in env[0].AasEnv.Submodels)
@@ -592,7 +595,7 @@ namespace Net46ConsoleServer
                 HttpClient httpClient = new HttpClient();
                 var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
 
-                var result = httpClient.PostAsync("http://" + connectServer + "/publish", contentJson).Result;
+                var result = httpClient.PostAsync("http://" + connectServer + "/publishUp", contentJson).Result;
                 string content = ContentToString(result.Content);
 
                 if (content != "")
@@ -604,7 +607,7 @@ namespace Net46ConsoleServer
                         transmit t2;
                         t2 = Newtonsoft.Json.JsonConvert.DeserializeObject<transmit>(content);
 
-                        node = t2.node;
+                        node = t2.source;
                         foreach (string sm in t2.publish)
                         {
                             AdminShell.Submodel submodel = null;

@@ -18,7 +18,7 @@
     },
     "AasxBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-rest -datapath \\development\\ExamplePublish -connect h2841345.stratoserver.net:52000,AASX1,500",
+      "commandLineArgs": "-rest -datapath \\development\\ExamplePublish -connect localhost:52001,AASX1,500",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
