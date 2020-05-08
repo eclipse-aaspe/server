@@ -752,12 +752,16 @@ namespace Net46ConsoleServer
                                 var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
                                 if (existingSm != null)
                                 {
-                                    int count = existingSm.qualifiers.Count;
-                                    if (count != 0)
+                                    if (existingSm.idShort == "OPC3")
+                                    {
+                                        int xx = 0;
+                                    }
+                                    int eqcount = existingSm.qualifiers.Count;
+                                    if (eqcount != 0)
                                     {
                                         int j = 0;
 
-                                        while (j < count) // Scan qualifiers
+                                        while (j < eqcount) // Scan qualifiers
                                         {
                                             var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
 
@@ -784,12 +788,12 @@ namespace Net46ConsoleServer
                                                 }
 
                                                 bool overwrite = true;
-                                                count = existingSm.submodelElements.Count;
+                                                int escount = existingSm.submodelElements.Count;
                                                 int count2 = submodel.submodelElements.Count;
-                                                if (count == count2)
+                                                if (escount == count2)
                                                 {
                                                     int smi = 0;
-                                                    while (smi < count)
+                                                    while (smi < escount)
                                                     {
                                                         var sme1 = submodel.submodelElements[smi].submodelElement;
                                                         var sme2 = existingSm.submodelElements[smi].submodelElement;
