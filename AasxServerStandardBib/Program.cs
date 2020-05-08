@@ -690,8 +690,16 @@ namespace Net46ConsoleServer
                 }
                 var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
 
-                var result = httpClient.PostAsync("http://" + connectServer + "/publishUp", contentJson).Result;
-                string content = ContentToString(result.Content);
+                string content = "";
+                try
+                {
+                    var result = httpClient.PostAsync("http://" + connectServer + "/publishUp", contentJson).Result;
+                    content = ContentToString(result.Content);
+                }
+                catch
+                {
+
+                }
 
                 if (content != "")
                 {
