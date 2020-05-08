@@ -26,6 +26,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http;
+using System.Net;
 // using AASXLoader;
 
 namespace Net46ConsoleServer
@@ -110,6 +111,9 @@ namespace Net46ConsoleServer
         static Thread connectThread;
         static bool connectLoop = false;
 
+        public static WebProxy proxy = null;
+        public static HttpClientHandler clientHandler = null;
+
         static public void Main(string[] args)
         {
             // default command line options
@@ -120,6 +124,7 @@ namespace Net46ConsoleServer
             opcclientActive = false;
             int opcclient_rate = 5000;  // 5 seconds
             string registry = null;
+            string proxyFile = "";
 
             Console.WriteLine("--help for options and help");
             /*
@@ -158,6 +163,14 @@ namespace Net46ConsoleServer
             while (i < args.Length)
             {
                 var x = args[i].Trim().ToLower();
+
+                if (x == "-proxy")
+                {
+                    proxyFile = args[i + 1];
+                    Console.WriteLine(args[i] + " " + args[i + 1]);
+                    i += 2;
+                    continue;
+                }
 
                 if (x == "-host")
                 {
@@ -302,6 +315,52 @@ namespace Net46ConsoleServer
                     System.Threading.Thread.Sleep(100);
                 Console.WriteLine("Debugger attached");
             }
+
+            // Proxy
+            string proxyAddress = "";
+            string username = "";
+            string password = "";
+
+            if (proxyFile != "")
+            {
+                if (!File.Exists(proxyFile))
+                {
+                    Console.WriteLine(proxyFile + " not found!");
+                    Console.ReadLine();
+                    return;
+                }
+
+                try
+                {
+                    using (StreamReader sr = new StreamReader(proxyFile))
+                    {
+                        proxyAddress = sr.ReadLine();
+                        username = sr.ReadLine();
+                        password = sr.ReadLine();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(proxyFile + " not found!");
+                }
+
+                if (proxyAddress != "")
+                {
+                    proxy = new WebProxy();
+                    Uri newUri = new Uri(proxyAddress);
+                    proxy.Address = newUri;
+                    proxy.Credentials = new NetworkCredential(username, password);
+                    // proxy.BypassProxyOnLocal = true;
+                    Console.WriteLine("Using proxy: " + proxyAddress);
+
+                    clientHandler = new HttpClientHandler
+                    {
+                        Proxy = proxy,
+                        UseProxy = true
+                    };
+                }
+            };
 
             hostPort = host + ":" + port;
 
@@ -480,10 +539,21 @@ namespace Net46ConsoleServer
 
             if (connectServer != "")
             {
-                HttpClient httpClient = new HttpClient();
+                HttpClient httpClient;
+                if (clientHandler != null)
+                {
+                    httpClient = new HttpClient(clientHandler);
+                }
+                else
+                {
+                    httpClient = new HttpClient();
+                }
+
                 string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
                 var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
+                // httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
+                var result = httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Result;
+                string content = ContentToString(result.Content);
 
                 connectThread = new Thread(new ThreadStart(connectThreadLoop));
                 connectThread.Start();
@@ -519,10 +589,21 @@ namespace Net46ConsoleServer
 
             if (connectServer != "")
             {
-                HttpClient httpClient = new HttpClient();
+                HttpClient httpClient;
+                if (clientHandler != null)
+                {
+                    httpClient = new HttpClient(clientHandler);
+                }
+                else
+                {
+                    httpClient = new HttpClient();
+                }
+
                 string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
                 var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
+                // httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
+                var result = httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Result;
+                string content = ContentToString(result.Content);
 
                 connectLoop = false;
                 connectThread.Abort();
@@ -564,35 +645,49 @@ namespace Net46ConsoleServer
                     source = connectNodeName
                 };
 
-                foreach (var sm in env[0].AasEnv.Submodels)
+                int envi = 0;
+                while (env[envi] != null)
                 {
-                    if (sm != null && sm.idShort != null)
+                    foreach (var sm in env[envi].AasEnv.Submodels)
                     {
-                        int count = sm.qualifiers.Count;
-                        if (count != 0)
+                        if (sm != null && sm.idShort != null)
                         {
-                            int j = 0;
-
-                            while (j < count) // Scan qualifiers
+                            int count = sm.qualifiers.Count;
+                            if (count != 0)
                             {
-                                var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                                int j = 0;
 
-                                if (p.qualifierType == "PUBLISH")
+                                while (j < count) // Scan qualifiers
                                 {
-                                    var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-                                    t.publish.Add(json);
-                                    Console.WriteLine("Publish Submodel " + sm.idShort);
-                                }
+                                    var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                                j++;
+                                    if (p.qualifierType == "PUBLISH")
+                                    {
+                                        var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                                        t.publish.Add(json);
+                                        Console.WriteLine("Publish Submodel " + sm.idShort);
+                                    }
+
+                                    j++;
+                                }
                             }
                         }
                     }
+
+                    envi++;
                 }
 
                 string publish = JsonConvert.SerializeObject(t, Formatting.Indented);
 
-                HttpClient httpClient = new HttpClient();
+                HttpClient httpClient;
+                if (clientHandler != null)
+                {
+                    httpClient = new HttpClient(clientHandler);
+                }
+                else
+                {
+                    httpClient = new HttpClient();
+                }
                 var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
 
                 var result = httpClient.PostAsync("http://" + connectServer + "/publishUp", contentJson).Result;
@@ -633,19 +728,28 @@ namespace Net46ConsoleServer
                                 return;
                             }
 
-                            var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.identification);
+                            AdminShellV10.AdministrationShell aas = null;
+                            envi = 0;
+                            while (env[envi] != null)
+                            {
+                                aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.identification);
+                                if (aas != null)
+                                    break;
+                                envi++;
+                            }
+
 
                             if (aas != null)
                             {
                                 // datastructure update
-                                if (env == null || env[0].AasEnv == null || env[0].AasEnv.Assets == null)
+                                if (env == null || env[envi].AasEnv == null || env[envi].AasEnv.Assets == null)
                                 {
                                     Console.WriteLine("Error accessing internal data structures.");
                                     return;
                                 }
 
                                 // add Submodel
-                                var existingSm = env[0].AasEnv.FindSubmodel(submodel.identification);
+                                var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
                                 if (existingSm != null)
                                 {
                                     int count = existingSm.qualifiers.Count;
@@ -709,8 +813,8 @@ namespace Net46ConsoleServer
 
                                                 if (!overwrite)
                                                 {
-                                                    env[0].AasEnv.Submodels.Remove(existingSm);
-                                                    env[0].AasEnv.Submodels.Add(submodel);
+                                                    env[envi].AasEnv.Submodels.Remove(existingSm);
+                                                    env[envi].AasEnv.Submodels.Add(submodel);
 
                                                     // add SubmodelRef to AAS            
                                                     // access the AAS
@@ -1066,80 +1170,84 @@ namespace Net46ConsoleServer
                                 j++;
                             }
 
-                            if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
+                            if (URL != "")
                             {
-                                Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
-                                return false;
-                            }
-                            if (Username == "" && Password == "")
-                            {
-                                Console.WriteLine("Using Anonymous to login ...");
-                                return false;
-                            }
-
-                            // try to get the client from dictionary, else create and add it
-                            SampleClient.UASampleClient client;
-                            lock (Program.opcclientAddLock)
-                            {
-                                if (!OPCClients.TryGetValue(URL, out client))
-                                // if (!OPCClients.TryGetValue(sm.idShort, out client))
+                                if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
                                 {
-                                    try
+                                    Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
+                                    return false;
+                                }
+                                if (Username == "" && Password == "")
+                                {
+                                    Console.WriteLine("Using Anonymous to login ...");
+                                    return false;
+                                }
+
+                                // try to get the client from dictionary, else create and add it
+                                SampleClient.UASampleClient client;
+                                lock (Program.opcclientAddLock)
+                                {
+                                    if (!OPCClients.TryGetValue(URL, out client))
+                                    // if (!OPCClients.TryGetValue(sm.idShort, out client))
                                     {
-                                        // make OPC UA client
-                                        client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                        Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                        client.ConsoleSampleClient().Wait();
-                                        // add it to the dictionary under this submodels idShort
-                                        // OPCClients.Add(sm.idShort, client);
-                                        OPCClients.Add(URL, client);
-                                    }
-                                    catch (AggregateException ae)
-                                    {
-                                        bool cantconnect = false;
-                                        ae.Handle((x) =>
+                                        try
                                         {
-                                            if (x is ServiceResultException)
+                                            // make OPC UA client
+                                            client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
+                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                            client.ConsoleSampleClient().Wait();
+                                            // add it to the dictionary under this submodels idShort
+                                            // OPCClients.Add(sm.idShort, client);
+                                            OPCClients.Add(URL, client);
+                                        }
+                                        catch (AggregateException ae)
+                                        {
+                                            bool cantconnect = false;
+                                            ae.Handle((x) =>
                                             {
-                                                cantconnect = true;
-                                                return true; // this exception handled
+                                                if (x is ServiceResultException)
+                                                {
+                                                    cantconnect = true;
+                                                    return true; // this exception handled
+                                                }
+                                                return false; // others not handled, will cause unhandled exception
                                             }
-                                            return false; // others not handled, will cause unhandled exception
-                                        }
-                                        );
-                                        if (cantconnect)
-                                        {
-                                            // stop processing OPC read because we couldnt connect
-                                            // but return true as this shouldn't stop the main loop
-                                            Console.WriteLine(ae.Message);
-                                            Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
-                                            return true;
+                                            );
+                                            if (cantconnect)
+                                            {
+                                                // stop processing OPC read because we couldnt connect
+                                                // but return true as this shouldn't stop the main loop
+                                                Console.WriteLine(ae.Message);
+                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
+                                                return true;
+                                            }
                                         }
                                     }
+                                    else
+                                    {
+                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                    }
                                 }
-                                else
-                                {
-                                    Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                }
-                            }
-                            Console.WriteLine("==================================================");
-                            Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
-                            Console.WriteLine("==================================================");
+                                Console.WriteLine("==================================================");
+                                Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
+                                Console.WriteLine("==================================================");
 
-                            // over all SMEs
-                            count = sm.submodelElements.Count;
-                            for (j = 0; j < count; j++)
-                            {
-                                var sme = sm.submodelElements[j].submodelElement;
-                                //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
-                                // some preparations for multiple AAS below
-                                int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
-                                // string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                                string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                                string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
-                                string nodePath = Path; // generally starts with Submodel idShort
-                                WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
+                                // over all SMEs
+                                count = sm.submodelElements.Count;
+                                for (j = 0; j < count; j++)
+                                {
+                                    var sme = sm.submodelElements[j].submodelElement;
+                                    //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
+                                    // some preparations for multiple AAS below
+                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
+                                                                // string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                    string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                    string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
+                                    string nodePath = Path; // generally starts with Submodel idShort
+                                    WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
+                                }
                             }
+
                         }
                     }
                 }
