@@ -539,22 +539,6 @@ namespace Net46ConsoleServer
 
             if (connectServer != "")
             {
-                var aaslist = new List<string>();
-                int aascount = Net46ConsoleServer.Program.env.Length;
-
-                for (int j = 0; j < aascount; j++)
-                {
-                    if (Net46ConsoleServer.Program.env[j] != null)
-                    {
-                        aaslist.Add(j.ToString() + ";"
-                            + Net46ConsoleServer.Program.env[j].AasEnv.AdministrationShells[0].idShort + ";"
-                            + Net46ConsoleServer.Program.env[j].AasEnv.AdministrationShells[0].identification + ";"
-                            + Net46ConsoleServer.Program.envFileName[j]);
-                    }
-                }
-
-                string aaslistJson = JsonConvert.SerializeObject(aaslist, Formatting.Indented);
-
                 HttpClient httpClient;
                 if (clientHandler != null)
                 {
@@ -565,9 +549,7 @@ namespace Net46ConsoleServer
                     httpClient = new HttpClient();
                 }
 
-                string payload = "{ \"source\" : \"" + connectNodeName + "\", " +
-                                    "\"aaslist\" : " + aaslistJson +
-                                    " }";
+                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
 
                 string content = "";
                 try
@@ -669,6 +651,23 @@ namespace Net46ConsoleServer
             return readAsStringAsync.Result;
         }
 
+        public class aasListParameters
+        {
+            public int index;
+            public string idShort;
+            public string identification;
+            public string fileName;
+        }
+        public class aasDirectoryParameters
+        {
+            public string source;
+            public List<aasListParameters> aasList;
+            public aasDirectoryParameters()
+            {
+                aasList = new List<aasListParameters> { };
+            }
+        }
+
         public class transmit
         {
             public string source;
@@ -682,6 +681,8 @@ namespace Net46ConsoleServer
             }
         }
 
+        static bool connectInit = true;
+
         public static void connectThreadLoop()
         {
             while (connectLoop)
@@ -691,37 +692,69 @@ namespace Net46ConsoleServer
                     source = connectNodeName
                 };
 
-                int envi = 0;
-                while (env[envi] != null)
+                if (connectInit)
                 {
-                    foreach (var sm in env[envi].AasEnv.Submodels)
+                    aasDirectoryParameters adp = new aasDirectoryParameters();
+
+                    adp.source = connectNodeName;
+
+                    // var aaslist = new List<string>();
+                    int aascount = Net46ConsoleServer.Program.env.Length;
+
+                    for (int j = 0; j < aascount; j++)
                     {
-                        if (sm != null && sm.idShort != null)
+                        aasListParameters alp = new aasListParameters();
+
+                        if (Net46ConsoleServer.Program.env[j] != null)
                         {
-                            int count = sm.qualifiers.Count;
-                            if (count != 0)
-                            {
-                                int j = 0;
+                            alp.index = j;
+                            alp.idShort = Net46ConsoleServer.Program.env[j].AasEnv.AdministrationShells[0].idShort;
+                            alp.identification = Net46ConsoleServer.Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
+                            alp.fileName = Net46ConsoleServer.Program.envFileName[j];
 
-                                while (j < count) // Scan qualifiers
-                                {
-                                    var p = sm.qualifiers[j] as AdminShell.Qualifier;
-
-                                    if (p.qualifierType == "PUBLISH")
-                                    {
-                                        var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-                                        t.type = "submodel";
-                                        t.publish.Add(json);
-                                        Console.WriteLine("Publish Submodel " + sm.idShort);
-                                    }
-
-                                    j++;
-                                }
-                            }
+                            adp.aasList.Add(alp);
                         }
                     }
 
-                    envi++;
+                    var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
+                    t.type = "directory";
+                    t.publish.Add(json);
+
+                    connectInit = false;
+                }
+                else
+                {
+                    int envi = 0;
+                    while (env[envi] != null)
+                    {
+                        foreach (var sm in env[envi].AasEnv.Submodels)
+                        {
+                            if (sm != null && sm.idShort != null)
+                            {
+                                int count = sm.qualifiers.Count;
+                                if (count != 0)
+                                {
+                                    int j = 0;
+
+                                    while (j < count) // Scan qualifiers
+                                    {
+                                        var p = sm.qualifiers[j] as AdminShell.Qualifier;
+
+                                        if (p.qualifierType == "PUBLISH")
+                                        {
+                                            var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                                            t.type = "submodel";
+                                            t.publish.Add(json);
+                                            Console.WriteLine("Publish Submodel " + sm.idShort);
+                                        }
+
+                                        j++;
+                                    }
+                                }
+                            }
+                        }
+                        envi++;
+                    }
                 }
 
                 string publish = JsonConvert.SerializeObject(t, Formatting.Indented);
@@ -786,7 +819,7 @@ namespace Net46ConsoleServer
                                 }
 
                                 AdminShellV10.AdministrationShell aas = null;
-                                envi = 0;
+                                int envi = 0;
                                 while (env[envi] != null)
                                 {
                                     aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.identification);
