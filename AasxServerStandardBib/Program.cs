@@ -668,16 +668,26 @@ namespace Net46ConsoleServer
             }
         }
 
-        public class transmit
+        public class TransmitData
         {
             public string source;
             public string destination;
             public string type;
             public string encrypt;
             public List<string> publish;
-            public transmit()
+            public TransmitData()
             {
                 publish = new List<string> { };
+            }
+        }
+
+        public class TransmitFrame
+        {
+            public string source;
+            public List<TransmitData> data;
+            public TransmitFrame()
+            {
+                data = new List<TransmitData> { };
             }
         }
 
@@ -687,7 +697,11 @@ namespace Net46ConsoleServer
         {
             while (connectLoop)
             {
-                transmit t = new transmit
+                TransmitFrame tf = new TransmitFrame
+                {
+                    source = connectNodeName
+                };
+                TransmitData td = new TransmitData
                 {
                     source = connectNodeName
                 };
@@ -717,8 +731,9 @@ namespace Net46ConsoleServer
                     }
 
                     var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
-                    t.type = "directory";
-                    t.publish.Add(json);
+                    td.type = "directory";
+                    td.publish.Add(json);
+                    tf.data.Add(td);
 
                     connectInit = false;
                 }
@@ -743,8 +758,9 @@ namespace Net46ConsoleServer
                                         if (p.qualifierType == "PUBLISH")
                                         {
                                             var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-                                            t.type = "submodel";
-                                            t.publish.Add(json);
+                                            td.type = "submodel";
+                                            td.publish.Add(json);
+                                            tf.data.Add(td);
                                             Console.WriteLine("Publish Submodel " + sm.idShort);
                                         }
 
@@ -757,7 +773,7 @@ namespace Net46ConsoleServer
                     }
                 }
 
-                string publish = JsonConvert.SerializeObject(t, Formatting.Indented);
+                string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
 
                 HttpClient httpClient;
                 if (clientHandler != null)
@@ -787,142 +803,145 @@ namespace Net46ConsoleServer
 
                     try
                     {
-                        transmit t2;
-                        t2 = Newtonsoft.Json.JsonConvert.DeserializeObject<transmit>(content);
+                        TransmitFrame tf2 = new TransmitFrame();
+                        tf2 = Newtonsoft.Json.JsonConvert.DeserializeObject<TransmitFrame>(content);
 
-                        node = t2.source;
-                        if (t2.type == "submodel")
+                        node = tf2.source;
+                        foreach (TransmitData td2 in tf2.data)
                         {
-                            foreach (string sm in t2.publish)
+                            if (td2.type == "submodel")
                             {
-                                AdminShell.Submodel submodel = null;
-                                try
+                                foreach (string sm in td2.publish)
                                 {
-                                    using (TextReader reader = new StringReader(sm))
+                                    AdminShell.Submodel submodel = null;
+                                    try
                                     {
-                                        JsonSerializer serializer = new JsonSerializer();
-                                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
-                                        submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
+                                        using (TextReader reader = new StringReader(sm))
+                                        {
+                                            JsonSerializer serializer = new JsonSerializer();
+                                            serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                                            submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
+                                        }
                                     }
-                                }
-                                catch (Exception)
-                                {
-                                    Console.WriteLine("Can not read SubModel!");
-                                    return;
-                                }
-
-                                // need id for idempotent behaviour
-                                if (submodel.identification == null)
-                                {
-                                    Console.WriteLine("Identification of SubModel is (null)!");
-                                    return;
-                                }
-
-                                AdminShellV10.AdministrationShell aas = null;
-                                int envi = 0;
-                                while (env[envi] != null)
-                                {
-                                    aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.identification);
-                                    if (aas != null)
-                                        break;
-                                    envi++;
-                                }
-
-
-                                if (aas != null)
-                                {
-                                    // datastructure update
-                                    if (env == null || env[envi].AasEnv == null || env[envi].AasEnv.Assets == null)
+                                    catch (Exception)
                                     {
-                                        Console.WriteLine("Error accessing internal data structures.");
+                                        Console.WriteLine("Can not read SubModel!");
                                         return;
                                     }
 
-                                    // add Submodel
-                                    var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
-                                    if (existingSm != null)
+                                    // need id for idempotent behaviour
+                                    if (submodel.identification == null)
                                     {
-                                        if (existingSm.idShort == "OPC3")
+                                        Console.WriteLine("Identification of SubModel is (null)!");
+                                        return;
+                                    }
+
+                                    AdminShellV10.AdministrationShell aas = null;
+                                    int envi = 0;
+                                    while (env[envi] != null)
+                                    {
+                                        aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.identification);
+                                        if (aas != null)
+                                            break;
+                                        envi++;
+                                    }
+
+
+                                    if (aas != null)
+                                    {
+                                        // datastructure update
+                                        if (env == null || env[envi].AasEnv == null || env[envi].AasEnv.Assets == null)
                                         {
-                                            int xx = 0;
+                                            Console.WriteLine("Error accessing internal data structures.");
+                                            return;
                                         }
-                                        int eqcount = existingSm.qualifiers.Count;
-                                        if (eqcount != 0)
+
+                                        // add Submodel
+                                        var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
+                                        if (existingSm != null)
                                         {
-                                            int j = 0;
-
-                                            while (j < eqcount) // Scan qualifiers
+                                            if (existingSm.idShort == "OPC3")
                                             {
-                                                var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
+                                                int xx = 0;
+                                            }
+                                            int eqcount = existingSm.qualifiers.Count;
+                                            if (eqcount != 0)
+                                            {
+                                                int j = 0;
 
-                                                if (p.qualifierType == "SUBSCRIBE")
+                                                while (j < eqcount) // Scan qualifiers
                                                 {
-                                                    Console.WriteLine("Subscribe Submodel " + submodel.idShort);
+                                                    var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
 
-                                                    int c2 = submodel.qualifiers.Count;
-                                                    if (c2 != 0)
+                                                    if (p.qualifierType == "SUBSCRIBE")
                                                     {
-                                                        int k = 0;
+                                                        Console.WriteLine("Subscribe Submodel " + submodel.idShort);
 
-                                                        while (k < c2) // Scan qualifiers
+                                                        int c2 = submodel.qualifiers.Count;
+                                                        if (c2 != 0)
                                                         {
-                                                            var q = submodel.qualifiers[k] as AdminShell.Qualifier;
+                                                            int k = 0;
 
-                                                            if (q.qualifierType == "PUBLISH")
+                                                            while (k < c2) // Scan qualifiers
                                                             {
-                                                                q.qualifierType = "SUBSCRIBE";
+                                                                var q = submodel.qualifiers[k] as AdminShell.Qualifier;
+
+                                                                if (q.qualifierType == "PUBLISH")
+                                                                {
+                                                                    q.qualifierType = "SUBSCRIBE";
+                                                                }
+
+                                                                k++;
+                                                            }
+                                                        }
+
+                                                        bool overwrite = true;
+                                                        int escount = existingSm.submodelElements.Count;
+                                                        int count2 = submodel.submodelElements.Count;
+                                                        if (escount == count2)
+                                                        {
+                                                            int smi = 0;
+                                                            while (smi < escount)
+                                                            {
+                                                                var sme1 = submodel.submodelElements[smi].submodelElement;
+                                                                var sme2 = existingSm.submodelElements[smi].submodelElement;
+
+                                                                if (sme1 is AdminShell.Property)
+                                                                {
+                                                                    if (sme2 is AdminShell.Property)
+                                                                    {
+                                                                        (sme2 as AdminShell.Property).value = (sme1 as AdminShell.Property).value;
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        overwrite = false;
+                                                                        break;
+                                                                    }
+                                                                }
+
+                                                                smi++;
+                                                            }
+                                                        }
+
+                                                        if (!overwrite)
+                                                        {
+                                                            env[envi].AasEnv.Submodels.Remove(existingSm);
+                                                            env[envi].AasEnv.Submodels.Add(submodel);
+
+                                                            // add SubmodelRef to AAS            
+                                                            // access the AAS
+                                                            var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
+                                                            var existsmr = aas.HasSubmodelRef(newsmr);
+                                                            if (!existsmr)
+                                                            {
+                                                                aas.AddSubmodelRef(newsmr);
                                                             }
 
-                                                            k++;
                                                         }
                                                     }
 
-                                                    bool overwrite = true;
-                                                    int escount = existingSm.submodelElements.Count;
-                                                    int count2 = submodel.submodelElements.Count;
-                                                    if (escount == count2)
-                                                    {
-                                                        int smi = 0;
-                                                        while (smi < escount)
-                                                        {
-                                                            var sme1 = submodel.submodelElements[smi].submodelElement;
-                                                            var sme2 = existingSm.submodelElements[smi].submodelElement;
-
-                                                            if (sme1 is AdminShell.Property)
-                                                            {
-                                                                if (sme2 is AdminShell.Property)
-                                                                {
-                                                                    (sme2 as AdminShell.Property).value = (sme1 as AdminShell.Property).value;
-                                                                }
-                                                                else
-                                                                {
-                                                                    overwrite = false;
-                                                                    break;
-                                                                }
-                                                            }
-
-                                                            smi++;
-                                                        }
-                                                    }
-
-                                                    if (!overwrite)
-                                                    {
-                                                        env[envi].AasEnv.Submodels.Remove(existingSm);
-                                                        env[envi].AasEnv.Submodels.Add(submodel);
-
-                                                        // add SubmodelRef to AAS            
-                                                        // access the AAS
-                                                        var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
-                                                        var existsmr = aas.HasSubmodelRef(newsmr);
-                                                        if (!existsmr)
-                                                        {
-                                                            aas.AddSubmodelRef(newsmr);
-                                                        }
-
-                                                    }
+                                                    j++;
                                                 }
-
-                                                j++;
                                             }
                                         }
                                     }
