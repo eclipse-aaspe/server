@@ -131,7 +131,7 @@ namespace SampleClient
             var endpointConfiguration = EndpointConfiguration.Create(config);
             var endpoint = new ConfiguredEndpoint(null, selectedEndpoint, endpointConfiguration);
 
-            if (userName == "" && password != "")
+            if (userName == "" && password == "")
             {
                 session = await Session.Create(config, endpoint, false, "OPC UA Console Client", 60000, new UserIdentity(new AnonymousIdentityToken()), null);
             }

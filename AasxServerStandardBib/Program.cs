@@ -1334,7 +1334,7 @@ namespace Net46ConsoleServer
                                 if (Username == "" && Password == "")
                                 {
                                     Console.WriteLine("Using Anonymous to login ...");
-                                    return false;
+                                    // return false;
                                 }
 
                                 // try to get the client from dictionary, else create and add it
