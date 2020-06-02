@@ -29,10 +29,10 @@ namespace AdminShellNS
         public string sourceLocalPath = null;
         public SourceGetByteChunk sourceGetBytesDel = null;
 
-        public LocationType location = LocationType.InPackage;
-        public SpecialHandlingType specialHandling = SpecialHandlingType.None;
+        public LocationType location;
+        public SpecialHandlingType specialHandling;
 
-        public AdminShellPackageSupplementaryFile(Uri uri, string sourceLocalPath = null, LocationType location = LocationType.InPackage, 
+        public AdminShellPackageSupplementaryFile(Uri uri, string sourceLocalPath = null, LocationType location = LocationType.InPackage,
             SpecialHandlingType specialHandling = SpecialHandlingType.None, SourceGetByteChunk sourceGetBytesDel = null, string useMimeType = null)
         {
             this.uri = uri;
@@ -54,12 +54,13 @@ namespace AdminShellNS
     /// <summary>
     /// Provides (static?) helpers for serializing AAS..
     /// </summary>
-    public class AdminShellSerializationHelper
+    public static class AdminShellSerializationHelper
     {
 
         public static string TryReadXmlFirstElementNamespaceURI(Stream s)
         {
             string res = null;
+            // ReSharper disable EmptyGeneralCatchClause
             try
             {
                 var xr = System.Xml.XmlReader.Create(s);
@@ -81,10 +82,8 @@ namespace AdminShellNS
                 }
                 xr.Close();
             }
-            catch (Exception e)
-            {
-                ;
-            }
+            catch { }
+            // ReSharper enable EmptyGeneralCatchClause
 
             // return to zero pos
             s.Seek(0, SeekOrigin.Begin);
@@ -140,6 +139,9 @@ namespace AdminShellNS
     public class AdminShellPackageEnv
     {
         private string fn = "New Package";
+
+        private string tempFn = null;
+
         private AdminShell.AdministrationShellEnv aasenv = new AdminShell.AdministrationShellEnv();
         private Package openPackage = null;
         private List<AdminShellPackageSupplementaryFile> pendingFilesToAdd = new List<AdminShellPackageSupplementaryFile>();
@@ -155,9 +157,9 @@ namespace AdminShellNS
                 this.aasenv = env;
         }
 
-        public AdminShellPackageEnv(string fn)
+        public AdminShellPackageEnv(string fn, bool indirectLoadSave = false)
         {
-            Load(fn);
+            Load(fn, indirectLoadSave);
         }
 
         public bool IsOpen
@@ -184,7 +186,7 @@ namespace AdminShellNS
             }
         }
 
-        public bool Load(string fn)
+        public bool Load(string fn, bool indirectLoadSave = false)
         {
             this.fn = fn;
             if (this.openPackage != null)
@@ -234,10 +236,31 @@ namespace AdminShellNS
 
             if (fn.ToLower().EndsWith(".aasx"))
             {
+                var fnToLoad = fn;
+                this.tempFn = null;
+                if (indirectLoadSave)
+                    try
+                    {
+                        this.tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
+                        System.IO.File.Copy(fn, this.tempFn);
+                        fnToLoad = this.tempFn;
+
+                        /*
+                        using (var src = File.Open(fn, FileMode.Open, FileAccess.Read))
+                        using (var dst = File.Open(this.tempFn, FileMode.Create))
+                            src.CopyTo(dst);
+                            */
+
+                    }
+                    catch (Exception ex)
+                    {
+                        throw (new Exception(string.Format("While copying AASX {0} for indirect load at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
+                    }
+
                 // load package AASX
                 try
                 {
-                    var package = Package.Open(fn, FileMode.Open);
+                    var package = Package.Open(fnToLoad, FileMode.Open);
 
                     // get the origin from the package
                     PackagePart originPart = null;
@@ -249,7 +272,7 @@ namespace AdminShellNS
                             break;
                         }
                     if (originPart == null)
-                        throw (new Exception(string.Format("Unable to find AASX origin. Aborting!")));
+                        throw (new Exception("Unable to find AASX origin. Aborting!"));
 
                     // get the specs from the package
                     PackagePart specPart = null;
@@ -260,7 +283,7 @@ namespace AdminShellNS
                         break;
                     }
                     if (specPart == null)
-                        throw (new Exception(string.Format("Unable to find AASX spec(s). Aborting!")));
+                        throw (new Exception("Unable to find AASX spec(s). Aborting!"));
 
                     // open spec part to read
                     try
@@ -299,7 +322,6 @@ namespace AdminShellNS
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("\n" + ex.Message);
                     throw (new Exception(string.Format("While reading AASX {0} at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                 }
                 return true;
@@ -332,7 +354,6 @@ namespace AdminShellNS
 
         public bool SaveAs(string fn, bool writeFreshly = false, PreferredFormat prefFmt = PreferredFormat.None, MemoryStream useMemoryStream = null)
         {
-
             if (fn.ToLower().EndsWith(".xml"))
             {
                 // save only XML
@@ -370,10 +391,12 @@ namespace AdminShellNS
 
                         sw.AutoFlush = true;
 
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.NullValueHandling = NullValueHandling.Ignore;
-                        serializer.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
-                        serializer.Formatting = Newtonsoft.Json.Formatting.Indented;
+                        JsonSerializer serializer = new JsonSerializer()
+                        {
+                            NullValueHandling = NullValueHandling.Ignore,
+                            ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                            Formatting = Newtonsoft.Json.Formatting.Indented
+                        };
                         using (JsonWriter writer = new JsonTextWriter(sw))
                         {
                             serializer.Serialize(writer, this.aasenv);
@@ -397,25 +420,32 @@ namespace AdminShellNS
                     // fn could be changed, therefore close "old" package first
                     if (this.openPackage != null)
                     {
+                        // ReSharper disable EmptyGeneralCatchClause
                         try
                         {
                             this.openPackage.Close();
                             if (!writeFreshly)
-                                System.IO.File.Copy(this.fn, fn);
+                            {
+                                if (this.tempFn != null)
+                                    System.IO.File.Copy(this.tempFn, fn);
+                                else
+                                    System.IO.File.Copy(this.fn, fn);
+                            }
                         }
                         catch { }
+                        // ReSharper enable EmptyGeneralCatchClause
                         this.openPackage = null;
                     }
 
                     // approach is to utilize the existing package, if possible. If not, create from scratch
                     Package package = null;
-                    if (useMemoryStream == null)
+                    if (useMemoryStream != null)
                     {
-                        package = Package.Open(fn, (writeFreshly) ? FileMode.Create : FileMode.OpenOrCreate);
+                        package = Package.Open(useMemoryStream, (writeFreshly) ? FileMode.Create : FileMode.OpenOrCreate);
                     }
                     else
                     {
-                        package = Package.Open(useMemoryStream, (writeFreshly) ? FileMode.Create : FileMode.OpenOrCreate);
+                        package = Package.Open((this.tempFn != null) ? this.tempFn : fn, (writeFreshly) ? FileMode.Create : FileMode.OpenOrCreate);
                     }
                     this.fn = fn;
 
@@ -461,6 +491,7 @@ namespace AdminShellNS
                              || (name.StartsWith("aasenv-with-no-id")))
                         {
                             // try kill specpart
+                            // ReSharper disable EmptyGeneralCatchClause
                             try
                             {
                                 originPart.DeleteRelationship(specRel.Id);
@@ -468,6 +499,7 @@ namespace AdminShellNS
                             }
                             catch { }
                             finally { specPart = null; specRel = null; }
+                            // ReSharper enable EmptyGeneralCatchClause
                         }
                     }
 
@@ -559,7 +591,7 @@ namespace AdminShellNS
                     foreach (var psfAdd in pendingFilesToAdd)
                     {
                         // make sure ..
-                        if ( (psfAdd.sourceLocalPath == null && psfAdd.sourceGetBytesDel == null) || psfAdd.location != AdminShellPackageSupplementaryFile.LocationType.AddPending)
+                        if ((psfAdd.sourceLocalPath == null && psfAdd.sourceGetBytesDel == null) || psfAdd.location != AdminShellPackageSupplementaryFile.LocationType.AddPending)
                             continue;
 
                         // normal file?
@@ -623,7 +655,7 @@ namespace AdminShellNS
                                 {
                                     var bytes = psfAdd.sourceGetBytesDel();
                                     if (bytes != null)
-                                        s.Write(bytes, 0, bytes.Length);                                    
+                                        s.Write(bytes, 0, bytes.Length);
                                 }
                             }
                         }
@@ -665,6 +697,19 @@ namespace AdminShellNS
                     // flush, but leave open
                     package.Flush();
                     this.openPackage = package;
+
+                    // if in temp fn, close the package, copy to original fn, re-open the package
+                    if (this.tempFn != null)
+                        try
+                        {
+                            package.Close();
+                            System.IO.File.Copy(this.tempFn, this.fn, overwrite: true);
+                            this.openPackage = Package.Open(this.tempFn, FileMode.OpenOrCreate);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw (new Exception(string.Format("While write AASX {0} indirectly at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
+                        }
                 }
                 catch (Exception ex)
                 {
@@ -686,6 +731,7 @@ namespace AdminShellNS
                 return;
 
             // we do it not caring on any errors
+            // ReSharper disable EmptyGeneralCatchClause
             try
             {
                 // get index in form
@@ -699,10 +745,10 @@ namespace AdminShellNS
                 BackupIndex += 1;
 
                 // build a filename
-                var fn = Path.Combine(backupDir, $"backup{ndx:000}.xml");
+                var bdfn = Path.Combine(backupDir, $"backup{ndx:000}.xml");
 
                 // raw save
-                using (var s = new StreamWriter(fn))
+                using (var s = new StreamWriter(bdfn))
                 {
                     var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
                     var nss = new XmlSerializerNamespaces();
@@ -713,9 +759,10 @@ namespace AdminShellNS
                 }
             }
             catch { }
+            // ReSharper enable EmptyGeneralCatchClause
         }
 
-        public bool IsLocalFile (string uriString)
+        public bool IsLocalFile(string uriString)
         {
             // access
             if (this.openPackage == null)
@@ -749,8 +796,6 @@ namespace AdminShellNS
                 if (this.openPackage == null)
                     return 0;
                 var part = this.openPackage.GetPart(new Uri(uriString, UriKind.RelativeOrAbsolute));
-                if (part == null)
-                    return 0;
                 using (var s = part.GetStream(FileMode.Open))
                 {
                     res = s.Length;
@@ -776,7 +821,7 @@ namespace AdminShellNS
                     break;
                 }
             if (thumbPart == null)
-                throw (new Exception(string.Format("Unable to find AASX thumbnail. Aborting!")));
+                throw (new Exception("Unable to find AASX thumbnail. Aborting!"));
             return thumbPart.GetStream(FileMode.Open);
         }
 
@@ -893,34 +938,51 @@ namespace AdminShellNS
             AdminShellPackageSupplementaryFile.SourceGetByteChunk sourceGetBytesDel = null, string useMimeType = null)
         {
             // beautify parameters
-            if (sourcePath != null)
-                sourcePath = sourcePath.Trim();
+            if ((sourcePath == null && sourceGetBytesDel == null) || targetDir == null || targetFn == null)
+                return;
+
+            // build target path
             targetDir = targetDir.Trim();
             if (!targetDir.EndsWith("/"))
                 targetDir += "/";
             targetDir = targetDir.Replace(@"\", "/");
             targetFn = targetFn.Trim();
             if (sourcePath == "" || targetDir == "" || targetFn == "")
-                throw (new Exception(string.Format("Trying add supplementary file with empty name or path!")));
+                throw (new Exception("Trying add supplementary file with empty name or path!"));
 
-            var file_fn = "" + targetDir.Trim() + targetFn.Trim();
+            var targetPath = "" + targetDir.Trim() + targetFn.Trim();
+
+            // base funciton
+            AddSupplementaryFileToStore(sourcePath, targetPath, embedAsThumb, sourceGetBytesDel, useMimeType);
+        }
+
+        public void AddSupplementaryFileToStore(string sourcePath, string targetPath, bool embedAsThumb,
+            AdminShellPackageSupplementaryFile.SourceGetByteChunk sourceGetBytesDel = null, string useMimeType = null)
+        {
+            // beautify parameters
+            if ((sourcePath == null && sourceGetBytesDel == null) || targetPath == null)
+                return;
+
+            sourcePath = sourcePath?.Trim();
+            targetPath = targetPath.Trim();
 
             // add record
             pendingFilesToAdd.Add(
                 new AdminShellPackageSupplementaryFile(
-                    new Uri(file_fn, UriKind.RelativeOrAbsolute),
+                    new Uri(targetPath, UriKind.RelativeOrAbsolute),
                     sourcePath,
                     location: AdminShellPackageSupplementaryFile.LocationType.AddPending,
                     specialHandling: (embedAsThumb ? AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail : AdminShellPackageSupplementaryFile.SpecialHandlingType.None),
                     sourceGetBytesDel: sourceGetBytesDel,
                     useMimeType: useMimeType)
                 );
+
         }
 
         public void DeleteSupplementaryFile(AdminShellPackageSupplementaryFile psf)
         {
             if (psf == null)
-                throw (new Exception(string.Format("No supplementary file given!")));
+                throw (new Exception("No supplementary file given!"));
 
             if (psf.location == AdminShellPackageSupplementaryFile.LocationType.AddPending)
             {

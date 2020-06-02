@@ -54,9 +54,9 @@ namespace AasOpcUaServer
             : base()
         {
             thePackageEnv = env;
-			theServerOptions = serverOptions;
+            theServerOptions = serverOptions;
         }
- 
+
         #region Overridden Methods
         /// <summary>
         /// Initializes the server before it starts up.
@@ -85,10 +85,12 @@ namespace AasOpcUaServer
             
             // request notifications when the user identity is changed. all valid users are accepted by default.
             server.SessionManager.ImpersonateUser += new ImpersonateEventHandler(SessionManager_ImpersonateUser);
+
             /*
             if (theServerOptions != null && theServerOptions.FinalizeAction != null)
                 theServerOptions.FinalizeAction();
-            */        }
+            */
+        }
 
         /// <summary>
         /// Cleans up before the server shuts down.
@@ -128,7 +130,8 @@ namespace AasOpcUaServer
             List<INodeManager> nodeManagers = new List<INodeManager>();
 
             // create the custom node managers.
-            nodeManagers.Add(new global::AasOpcUaServer.AasNodeManager(server, configuration, thePackageEnv));
+            var aasnm = new global::AasOpcUaServer.AasNodeManager(server, configuration, thePackageEnv, theServerOptions);
+            nodeManagers.Add(aasnm);
             
             // create master node manager.
             var x = new MasterNodeManager(server, configuration, null, nodeManagers.ToArray());
@@ -144,8 +147,8 @@ namespace AasOpcUaServer
             }
 
             // ok
-            return x;        
-}
+            return x;
+        }
         #endif
 
         /// <summary>

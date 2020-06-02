@@ -535,7 +535,14 @@
                 case 1:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = sm.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = sm.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 2:
                 case 3:
@@ -555,7 +562,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = prop.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = prop.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                     ret = "Value Type";
@@ -584,7 +598,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = f.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = f.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                     ret = "Value";
@@ -609,7 +630,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = r.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                     ret = "Min";
@@ -640,15 +668,26 @@
             switch (line)
             {
                 case 0:
-                case 1:
-                    if (ls.Count > line)
+                    ret = "Semantic ID";
+                    if (col == 1)
                     {
-                        ret = ls.langString[line].lang;
-                        if (col == 1)
-                            ret = ls.langString[line].str + "";
+                        ret = "NULL";
+                        var k = mlp.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
                     }
                     break;
+                case 1:
                 case 2:
+                    if (ls.Count > line-1)
+                    {
+                        ret = ls.langString[line-1].lang;
+                        if (col == 1)
+                            ret = ls.langString[line-1].str + "";
+                    }
+                    break;
                 case 3:
                 case 4:
                     ret = "";
@@ -666,7 +705,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = sme.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = sme.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                 case 2:
