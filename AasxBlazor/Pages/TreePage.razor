@@ -333,6 +333,15 @@
         {
             ret = "Lang";
         }
+        if (o is RelationshipElement)
+        {
+            ret = "Rel";
+        }
+
+        if (o is Entity)
+        {
+            ret = "Ent";
+        }
 
         if (ret != "NULL")
             return (ret);
@@ -589,6 +598,38 @@
             return ret;
         }
 
+        if (o is Entity)
+        {
+            var e = o as Entity;
+            ret += ", " + e.entityType;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = e.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Entity Type";
+                    if (col == 1)
+                        ret = e.entityType + "";
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
         if (o is File)
         {
             var f = o as File;
@@ -648,6 +689,56 @@
                     ret = "Max";
                     if (col == 1)
                         ret = r.max + "";
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is RelationshipElement)
+        {
+            var r = o as RelationshipElement;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "First";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.first;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToString();
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = "Second";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.second;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToString();
+                        }
+                    }
                     break;
                 case 3:
                 case 4:
