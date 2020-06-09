@@ -112,6 +112,7 @@
         public string Text { get; set; }
         public IEnumerable<Item> Childs { get; set; }
         // public List<Item> Childs { get; set; }
+        public string Type { get; set; }
         public object Tag { get; set; }
         public int envIndex { get; set; }
     }
@@ -285,6 +286,11 @@
             return "";
         }
 
+        if (item.Type != null)
+        {
+            return item.Type;
+        }
+
         string ret = "NULL";
 
         object o = item.Tag;
@@ -321,6 +327,10 @@
                 ret = "Prop";
             }
         }
+        if (o is Operation)
+        {
+            ret = "Opr";
+        }
         if (o is File)
         {
             ret = "File";
@@ -337,7 +347,10 @@
         {
             ret = "Rel";
         }
-
+        if (o is ReferenceElement)
+        {
+            ret = "Ref";
+        }
         if (o is Entity)
         {
             ret = "Ent";
@@ -622,6 +635,23 @@
                         ret = e.entityType + "";
                     break;
                 case 2:
+                    ret = "";
+                    if (e.GetEntityType() == Entity.EntityTypeEnum.SelfManagedEntity)
+                    {
+                        if (e.assetRef != null)
+                        {
+                            ret = "Asset";
+                            if (col == 1)
+                            {
+                                var k = e.assetRef.Keys;
+                                if (k != null)
+                                {
+                                    ret = k.ToString();
+                                }
+                            }
+                        }
+                    }
+                    break;
                 case 3:
                 case 4:
                     ret = "";
@@ -698,6 +728,54 @@
             return ret;
         }
 
+        if (o is Operation)
+        {
+            var op = o as Operation;
+            ret = op.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = op.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "CountInputs";
+                    if (col == 1)
+                    {
+                        ret = "0";
+                        if (op.inputVariable != null)
+                        {
+                            ret = op.inputVariable.Count + "";
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = "CountOutputs";
+                    if (col == 1)
+                    {
+                        ret = "0";
+                        if (op.outputVariable != null)
+                        {
+                            ret = op.outputVariable.Count + "";
+                        }
+                    }
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
         if (o is RelationshipElement)
         {
             var r = o as RelationshipElement;
@@ -740,6 +818,48 @@
                         }
                     }
                     break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is ReferenceElement)
+        {
+            var r = o as ReferenceElement;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Value";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        if (!(r.value == null || r.value.IsEmpty))
+                        {
+                            var k = r.value.Keys;
+                            if (k != null)
+                            {
+                                ret = k.ToString();
+                            }
+                        }
+                    }
+                    break;
+                case 2:
                 case 3:
                 case 4:
                     ret = "";

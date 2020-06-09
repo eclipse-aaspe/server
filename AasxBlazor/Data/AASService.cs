@@ -73,6 +73,16 @@ namespace AasxBlazor.Data
                                         var smec = sme.submodelElement as SubmodelElementCollection;
                                         createSMECItems(smeItem, smec, i);
                                     }
+                                    if (sme.submodelElement is Operation)
+                                    {
+                                        var o = sme.submodelElement as Operation;
+                                        createOperationItems(smeItem, o, i);
+                                    }
+                                    if (sme.submodelElement is Entity)
+                                    {
+                                        var e = sme.submodelElement as Entity;
+                                        createEntityItems(smeItem, e, i);
+                                    }
                                 }
                                 smItem.Childs = smChilds;
                             }
@@ -105,6 +115,64 @@ namespace AasxBlazor.Data
                     var smecNext = sme.submodelElement as SubmodelElementCollection;
                     createSMECItems(smeItem, smecNext, i);
                 }
+                if (sme.submodelElement is Operation)
+                {
+                    var o = sme.submodelElement as Operation;
+                    createOperationItems(smeItem, o, i);
+                }
+                if (sme.submodelElement is Entity)
+                {
+                    var e = sme.submodelElement as Entity;
+                    createEntityItems(smeItem, e, i);
+                }
+            }
+            smeRootItem.Childs = smChilds;
+        }
+
+        void createOperationItems(Item smeRootItem, Operation op, int i)
+        {
+            List<Item> smChilds = new List<Item>();
+            foreach (var v in op.inputVariable)
+            {
+                var smeItem = new Item();
+                smeItem.envIndex = i;
+                smeItem.Text = v.value.submodelElement.idShort;
+                smeItem.Type = "In";
+                smeItem.Tag = v.value.submodelElement;
+                smChilds.Add(smeItem);
+            }
+            foreach (var v in op.outputVariable)
+            {
+                var smeItem = new Item();
+                smeItem.envIndex = i;
+                smeItem.Text = v.value.submodelElement.idShort;
+                smeItem.Type = "Out";
+                smeItem.Tag = v.value.submodelElement;
+                smChilds.Add(smeItem);
+            }
+            foreach (var v in op.inoutputVariable)
+            {
+                var smeItem = new Item();
+                smeItem.envIndex = i;
+                smeItem.Text = v.value.submodelElement.idShort;
+                smeItem.Type = "InOut";
+                smeItem.Tag = v.value.submodelElement;
+                smChilds.Add(smeItem);
+            }
+            smeRootItem.Childs = smChilds;
+        }
+
+        void createEntityItems(Item smeRootItem, Entity e, int i)
+        {
+            List<Item> smChilds = new List<Item>();
+            foreach (var s in e.statements)
+            {
+                var smeItem = new Item();
+                smeItem.envIndex = i;
+                smeItem.Text = s.submodelElement.idShort;
+                smeItem.Type = "In";
+                smeItem.Tag = s.submodelElement;
+                smChilds.Add(smeItem);
             }
             smeRootItem.Childs = smChilds;
         }
