@@ -9,6 +9,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
+#if _hidden_
 
 using System;
 using System.Collections.Generic;
@@ -637,3 +638,5 @@ namespace Opc.Ua
         private NodeIdDictionary<Type> m_types;
     }
 }
+
+#endif
