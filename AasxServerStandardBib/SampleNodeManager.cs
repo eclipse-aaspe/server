@@ -675,6 +675,19 @@ namespace Opc.Ua.Sample
             referencesToAdd.Add(referenceToAdd);
         }
 
+        // TODO: MIHO added this
+
+        public void AddExternalReferencePublic(
+            NodeId sourceId,
+            NodeId referenceTypeId,
+            bool isInverse,
+            NodeId targetId,
+            IDictionary<NodeId, IList<IReference>> externalReferences)
+        {
+            if (externalReferences != null)
+                AddExternalReference(sourceId, referenceTypeId, isInverse, targetId, externalReferences);
+        }
+
         /// <summary>
         /// Recursively adds the types to the type tree.
         /// </summary>

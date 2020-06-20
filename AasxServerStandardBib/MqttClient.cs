@@ -35,7 +35,7 @@ namespace AasxMqttClient
         static int lastAASEnv = 0;
         static int lastAAS = 0;
         static int lastSubmodel = 0;
-        public static async Task StartAsync(AdminShell.PackageEnv [] package, AasxRestServerLibrary.GrapevineLoggerSuper logger = null)
+        public static async Task StartAsync(AdminShellPackageEnv [] package, GrapevineLoggerSuper logger = null)
         {                      
             // Create TCP based options using the builder.
             var options = new MqttClientOptionsBuilder()
@@ -56,7 +56,7 @@ namespace AasxMqttClient
                 if (iAASEnv == lastAASEnv && package[iAASEnv] != null)
                 {
                     //publish AAS to AAS Topic
-                    foreach (AdminShellV10.AdministrationShell aas in package[iAASEnv].AasEnv.AdministrationShells)
+                    foreach (AdminShell.AdministrationShell aas in package[iAASEnv].AasEnv.AdministrationShells)
                     {
 
                     // logger.Info("Publish AAS");

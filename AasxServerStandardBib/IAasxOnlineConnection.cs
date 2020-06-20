@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdminShellNS;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,5 +17,6 @@ namespace AasxIntegrationBase
         bool IsConnected();
         string GetInfo();
         Stream GetThumbnailStream();
+        string UpdatePropertyValue(AdminShell.AdministrationShellEnv env, AdminShell.Submodel submodel, AdminShell.SubmodelElement sme);
     }
 }

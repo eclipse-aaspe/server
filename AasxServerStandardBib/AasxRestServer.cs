@@ -17,6 +17,8 @@ using Grapevine.Shared;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server;
 
+using AasxMqttClient;
+
 // using Grapevine;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -435,7 +437,7 @@ namespace AasxRestServerLibrary
 
         private static RestServer startedRestServer = null;
 
-        public static void Start(AdminShell.PackageEnv [] packages, string host, string port, bool https, GrapevineLoggerSuper logger = null)
+        public static void Start(AdminShellPackageEnv [] packages, string host, string port, bool https, GrapevineLoggerSuper logger = null)
         {
             // if running, stop old server
             Stop();
