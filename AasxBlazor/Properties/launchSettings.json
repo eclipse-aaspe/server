@@ -18,7 +18,7 @@
     },
     "AasxBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-rest -datapath C:/Development/ExampleSubscribe -connect localhost:52000,AASX1,500",
+      "commandLineArgs": "-rest",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

@@ -1,5 +1,4 @@
-﻿using Grapevine;
-using Grapevine.Interfaces.Shared;
+﻿using Grapevine.Interfaces.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +16,7 @@ The Grapevine REST server framework is under Apache license v.2 (see http://www.
 /* Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the
 specification Details of the Administration Shell. The hereby stated approach is solely the opinion of its author(s). */
 
-namespace AasxRestServerLibrary
+namespace AasxMqttClient
 {
     public class GrapevineLoggerSuper : IGrapevineLogger
     {

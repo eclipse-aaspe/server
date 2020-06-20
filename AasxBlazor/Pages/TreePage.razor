@@ -1,7 +1,7 @@
 ﻿@page "/"
 @inject AASService SubmodelService
 @using AasxBlazor.Data
-@using static AdminShellNS.AdminShellV10;
+@using static AdminShellNS.AdminShellV20;
 @using System
 @implements IDisposable
 
@@ -112,6 +112,7 @@
         public string Text { get; set; }
         public IEnumerable<Item> Childs { get; set; }
         // public List<Item> Childs { get; set; }
+        public string Type { get; set; }
         public object Tag { get; set; }
         public int envIndex { get; set; }
     }
@@ -285,6 +286,11 @@
             return "";
         }
 
+        if (item.Type != null)
+        {
+            return item.Type;
+        }
+
         string ret = "NULL";
 
         object o = item.Tag;
@@ -321,10 +327,38 @@
                 ret = "Prop";
             }
         }
+        if (o is Operation)
+        {
+            ret = "Opr";
+        }
         if (o is File)
         {
             ret = "File";
         }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            ret = "Range";
+        }
+        if (o is MultiLanguageProperty)
+        {
+            ret = "Lang";
+        }
+        if (o is RelationshipElement)
+        {
+            ret = "Rel";
+        }
+        if (o is ReferenceElement)
+        {
+            ret = "Ref";
+        }
+        if (o is Entity)
+        {
+            ret = "Ent";
+        }
+
+        if (ret != "NULL")
+            return (ret);
+
         return (ret);
     }
 
@@ -364,6 +398,16 @@
             var f = o as File;
             ret = f.idShort;
         }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = r.idShort;
+        }
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            ret = mlp.idShort;
+        }
         return (ret);
     }
 
@@ -402,6 +446,21 @@
             {
                 var f = o as File;
                 ret = " = " + f.value;
+            }
+        }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = " = " + r.min + " .. " + r.max;
+        }
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            var ls = mlp.value;
+            ret = " = ";
+            for (int i = 0; i < ls.Count; i++)
+            {
+                ret += ls.langString[i].lang + " ";
             }
         }
         return (ret);
@@ -498,7 +557,14 @@
                 case 1:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = sm.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = sm.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 2:
                     ret = "Qualifier";
@@ -507,10 +573,10 @@
                         ret = "";
                         for (int i = 0; i < sm.qualifiers.Count; i++)
                         {
-                            ret += sm.qualifiers[i].qualifierType + " ";
-                            if (sm.qualifiers[i].qualifierValue != "")
+                            ret += sm.qualifiers[i].type + " ";
+                            if (sm.qualifiers[i].value != "")
                             {
-                                ret += sm.qualifiers[i].qualifierValue + " ";
+                                ret += sm.qualifiers[i].value + " ";
                             }
                         }
                     }
@@ -532,7 +598,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = prop.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = prop.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                     ret = "Value Type";
@@ -551,14 +624,63 @@
                         ret = "";
                         for (int i = 0; i < prop.qualifiers.Count; i++)
                         {
-                            ret += prop.qualifiers[i].qualifierType + " ";
-                            if (prop.qualifiers[i].qualifierValue != "")
+                            ret += prop.qualifiers[i].type + " ";
+                            if (prop.qualifiers[i].value != "")
                             {
-                                ret += prop.qualifiers[i].qualifierValue + " ";
+                                ret += prop.qualifiers[i].value + " ";
                             }
                         }
                     }
                     break;
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Entity)
+        {
+            var e = o as Entity;
+            ret += ", " + e.entityType;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = e.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Entity Type";
+                    if (col == 1)
+                        ret = e.entityType + "";
+                    break;
+                case 2:
+                    ret = "";
+                    if (e.GetEntityType() == Entity.EntityTypeEnum.SelfManagedEntity)
+                    {
+                        if (e.assetRef != null)
+                        {
+                            ret = "Asset";
+                            if (col == 1)
+                            {
+                                var k = e.assetRef.Keys;
+                                if (k != null)
+                                {
+                                    ret = k.ToString();
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case 3:
                 case 4:
                     ret = "";
                     break;
@@ -575,7 +697,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = f.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = f.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                     ret = "Value";
@@ -583,6 +712,221 @@
                         ret = f.value;
                     break;
                 case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Min";
+                    if (col == 1)
+                        ret = r.min + "";
+                    break;
+                case 2:
+                    ret = "Max";
+                    if (col == 1)
+                        ret = r.max + "";
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Operation)
+        {
+            var op = o as Operation;
+            ret = op.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = op.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "CountInputs";
+                    if (col == 1)
+                    {
+                        ret = "0";
+                        if (op.inputVariable != null)
+                        {
+                            ret = op.inputVariable.Count + "";
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = "CountOutputs";
+                    if (col == 1)
+                    {
+                        ret = "0";
+                        if (op.outputVariable != null)
+                        {
+                            ret = op.outputVariable.Count + "";
+                        }
+                    }
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is RelationshipElement)
+        {
+            var r = o as RelationshipElement;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "First";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.first;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToString();
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = "Second";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.second;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToString();
+                        }
+                    }
+                    break;
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is ReferenceElement)
+        {
+            var r = o as ReferenceElement;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Value";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        if (!(r.value == null || r.value.IsEmpty))
+                        {
+                            var k = r.value.Keys;
+                            if (k != null)
+                            {
+                                ret = k.ToString();
+                            }
+                        }
+                    }
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            var ls = mlp.value;
+            for (int i = 0; i < ls.Count; i++)
+            {
+                ret += ls.langString[i].lang + " ";
+            }
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = mlp.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                case 2:
+                    if (ls.Count > line-1)
+                    {
+                        ret = ls.langString[line-1].lang;
+                        if (col == 1)
+                            ret = ls.langString[line-1].str + "";
+                    }
+                    break;
                 case 3:
                 case 4:
                     ret = "";
@@ -600,7 +944,14 @@
                 case 0:
                     ret = "Semantic ID";
                     if (col == 1)
-                        ret = sme.semanticId + "";
+                    {
+                        ret = "NULL";
+                        var k = sme.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
                     break;
                 case 1:
                 case 2:

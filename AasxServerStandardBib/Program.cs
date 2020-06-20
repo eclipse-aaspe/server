@@ -36,7 +36,7 @@ namespace Net46ConsoleServer
     static public class Program
     {
         public static int envimax = 100;
-        public static AdminShell.PackageEnv[] env = new AdminShellV10.PackageEnv[100]
+        public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[100]
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -445,7 +445,7 @@ namespace Net46ConsoleServer
                     // fn = AasxHttpContextHelper.DataPath + "/" + fn;
                     Console.WriteLine("Loading {0}...", fn);
                     envFileName[envi] = fn;
-                    env[envi] = new AdminShell.PackageEnv(fn);
+                    env[envi] = new AdminShellPackageEnv(fn);
                     if (env[envi] == null)
                     {
                         Console.Out.WriteLine($"Cannot open {fn}. Aborting..");
@@ -768,7 +768,7 @@ namespace Net46ConsoleServer
                                     {
                                         var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                                        if (p.qualifierType == "PUBLISH")
+                                        if (p.type == "PUBLISH")
                                         {
                                             var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
                                             td.type = "submodel";
@@ -860,7 +860,7 @@ namespace Net46ConsoleServer
                                         using (TextReader reader = new StringReader(sm))
                                         {
                                             JsonSerializer serializer = new JsonSerializer();
-                                            serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                                            serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                             submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
                                         }
                                     }
@@ -877,7 +877,7 @@ namespace Net46ConsoleServer
                                         return;
                                     }
 
-                                    AdminShellV10.AdministrationShell aas = null;
+                                    AdminShell.AdministrationShell aas = null;
                                     int envi = 0;
                                     while (env[envi] != null)
                                     {
@@ -914,7 +914,7 @@ namespace Net46ConsoleServer
                                                 {
                                                     var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
 
-                                                    if (p.qualifierType == "SUBSCRIBE")
+                                                    if (p.type == "SUBSCRIBE")
                                                     {
                                                         Console.WriteLine("Subscribe Submodel " + submodel.idShort);
 
@@ -927,9 +927,9 @@ namespace Net46ConsoleServer
                                                             {
                                                                 var q = submodel.qualifiers[k] as AdminShell.Qualifier;
 
-                                                                if (q.qualifierType == "PUBLISH")
+                                                                if (q.type == "PUBLISH")
                                                                 {
-                                                                    q.qualifierType = "SUBSCRIBE";
+                                                                    q.type = "SUBSCRIBE";
                                                                 }
 
                                                                 k++;
@@ -1088,21 +1088,21 @@ namespace Net46ConsoleServer
                         {
                             var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                            if (p.qualifierType == "GETSUBMODEL")
+                            if (p.type == "GETSUBMODEL")
                             {
-                                GETSUBMODEL = p.qualifierValue;
+                                GETSUBMODEL = p.value;
                             }
-                            if (p.qualifierType == "GETURL")
+                            if (p.type == "GETURL")
                             {
-                                GETURL = p.qualifierValue;
+                                GETURL = p.value;
                             }
-                            if (p.qualifierType == "PUTSUBMODEL")
+                            if (p.type == "PUTSUBMODEL")
                             {
-                                PUTSUBMODEL = p.qualifierValue;
+                                PUTSUBMODEL = p.value;
                             }
-                            if (p.qualifierType == "PUTURL")
+                            if (p.type == "PUTURL")
                             {
-                                PUTURL = p.qualifierValue;
+                                PUTURL = p.value;
                             }
 
                             j++;
@@ -1132,7 +1132,7 @@ namespace Net46ConsoleServer
                     using (TextReader reader = new StringReader(sm))
                     {
                         JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
+                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                         submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
                     }
                 }
@@ -1302,106 +1302,102 @@ namespace Net46ConsoleServer
                             {
                                 var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                                switch (p.qualifierType)
+                                switch (p.type)
                                 {
                                     case "OPCURL": // URL
-                                        URL = p.qualifierValue;
+                                        URL = p.value;
                                         break;
                                     case "OPCUsername": // Username
-                                        Username = p.qualifierValue;
+                                        Username = p.value;
                                         break;
                                     case "OPCPassword": // Password
-                                        Password = p.qualifierValue;
+                                        Password = p.value;
                                         break;
                                     case "OPCNamespace": // Namespace
                                                          // TODO: if not int, currently throws nondescriptive error
-                                        Namespace = int.Parse(p.qualifierValue);
+                                        Namespace = int.Parse(p.value);
                                         break;
                                     case "OPCPath": // Path
-                                        Path = p.qualifierValue;
+                                        Path = p.value;
                                         break;
                                 }
                                 j++;
                             }
 
-                            if (URL != "")
+                            if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
                             {
-                                if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
-                                {
-                                    Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
-                                    return false;
-                                }
-                                if (Username == "" && Password == "")
-                                {
-                                    Console.WriteLine("Using Anonymous to login ...");
-                                    // return false;
-                                }
-
-                                // try to get the client from dictionary, else create and add it
-                                SampleClient.UASampleClient client;
-                                lock (Program.opcclientAddLock)
-                                {
-                                    if (!OPCClients.TryGetValue(URL, out client))
-                                    // if (!OPCClients.TryGetValue(sm.idShort, out client))
-                                    {
-                                        try
-                                        {
-                                            // make OPC UA client
-                                            client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                            client.ConsoleSampleClient().Wait();
-                                            // add it to the dictionary under this submodels idShort
-                                            // OPCClients.Add(sm.idShort, client);
-                                            OPCClients.Add(URL, client);
-                                        }
-                                        catch (AggregateException ae)
-                                        {
-                                            bool cantconnect = false;
-                                            ae.Handle((x) =>
-                                            {
-                                                if (x is ServiceResultException)
-                                                {
-                                                    cantconnect = true;
-                                                    return true; // this exception handled
-                                                }
-                                                return false; // others not handled, will cause unhandled exception
-                                            }
-                                            );
-                                            if (cantconnect)
-                                            {
-                                                // stop processing OPC read because we couldnt connect
-                                                // but return true as this shouldn't stop the main loop
-                                                Console.WriteLine(ae.Message);
-                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                    }
-                                }
-                                Console.WriteLine("==================================================");
-                                Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
-                                Console.WriteLine("==================================================");
-
-                                // over all SMEs
-                                count = sm.submodelElements.Count;
-                                for (j = 0; j < count; j++)
-                                {
-                                    var sme = sm.submodelElements[j].submodelElement;
-                                    //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
-                                    // some preparations for multiple AAS below
-                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
-                                                                // string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                                    string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                                    string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
-                                    string nodePath = Path; // generally starts with Submodel idShort
-                                    WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
-                                }
+                                Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
+                                return false;
+                            }
+                            if (Username == "" && Password == "")
+                            {
+                                Console.WriteLine("Using Anonymous to login ...");
+                                // return false;
                             }
 
+                            // try to get the client from dictionary, else create and add it
+                            SampleClient.UASampleClient client;
+                            lock (Program.opcclientAddLock)
+                            {
+                                if (!OPCClients.TryGetValue(URL, out client))
+                                // if (!OPCClients.TryGetValue(sm.idShort, out client))
+                                {
+                                    try
+                                    {
+                                        // make OPC UA client
+                                        client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
+                                        Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                        client.ConsoleSampleClient().Wait();
+                                        // add it to the dictionary under this submodels idShort
+                                        // OPCClients.Add(sm.idShort, client);
+                                        OPCClients.Add(URL, client);
+                                    }
+                                    catch (AggregateException ae)
+                                    {
+                                        bool cantconnect = false;
+                                        ae.Handle((x) =>
+                                        {
+                                            if (x is ServiceResultException)
+                                            {
+                                                cantconnect = true;
+                                                return true; // this exception handled
+                                            }
+                                            return false; // others not handled, will cause unhandled exception
+                                        }
+                                        );
+                                        if (cantconnect)
+                                        {
+                                            // stop processing OPC read because we couldnt connect
+                                            // but return true as this shouldn't stop the main loop
+                                            Console.WriteLine(ae.Message);
+                                            Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
+                                            return true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                }
+                            }
+                            Console.WriteLine("==================================================");
+                            Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
+                            Console.WriteLine("==================================================");
+
+                            // over all SMEs
+                            count = sm.submodelElements.Count;
+                            for (j = 0; j < count; j++)
+                            {
+                                var sme = sm.submodelElements[j].submodelElement;
+                                //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
+                                // some preparations for multiple AAS below
+                                int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
+                                // string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
+                                string nodePath = Path; // generally starts with Submodel idShort
+                                WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
+                            }
                         }
                     }
                 }
@@ -1428,11 +1424,11 @@ namespace Net46ConsoleServer
                 {
                     if (sm != null && sm.idShort != null)
                     {
-                        int count = sm.qualifiers.Count;
+                        int count = sm.qualifiers != null ? sm.qualifiers.Count : 0;
                         if (count != 0)
                         {
                             var q = sm.qualifiers[0] as AdminShell.Qualifier;
-                            if (q.qualifierType == "SCRIPT")
+                            if (q.type == "SCRIPT")
                             {
                                 // Triple
                                 // Reference to property with Number
@@ -1449,16 +1445,15 @@ namespace Net46ConsoleServer
                                     }
                                     var qq = sme1.qualifiers[0] as AdminShell.Qualifier;
 
-                                    if (qq.qualifierType == "Add")
+                                    if (qq.type == "Add")
                                     {
                                         int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
-                                        v += Convert.ToInt32(qq.qualifierValue);
+                                        v += Convert.ToInt32(qq.type);
                                         (sme1 as AdminShell.Property).value = v.ToString();
                                         continue;
                                     }
 
-
-                                    if (qq.qualifierType != "SearchNumber" || smi >= count)
+                                    if (qq.type != "SearchNumber" || smi >= count)
                                     {
                                         continue;
                                     }
@@ -1468,7 +1463,7 @@ namespace Net46ConsoleServer
                                         continue;
                                     }
                                     qq = sme2.qualifiers[0] as AdminShell.Qualifier;
-                                    if (qq.qualifierType != "SearchList" || smi >= count)
+                                    if (qq.type != "SearchList" || smi >= count)
                                     {
                                         continue;
                                     }
@@ -1478,7 +1473,7 @@ namespace Net46ConsoleServer
                                         continue;
                                     }
                                     qq = sme3.qualifiers[0] as AdminShell.Qualifier;
-                                    if (qq.qualifierType != "SearchResult")
+                                    if (qq.type != "SearchResult")
                                     {
                                         break;
                                     }
@@ -1628,11 +1623,11 @@ namespace Net46ConsoleServer
         int serverRunTime = Timeout.Infinite;
         static bool autoAccept = false;
         static ExitCode exitCode;
-        static AdminShell.PackageEnv [] aasxEnv = null;
+        static AdminShellPackageEnv [] aasxEnv = null;
         // OZ
         public static ManualResetEvent quitEvent;
 
-        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShell.PackageEnv [] _aasxEnv)
+        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShellPackageEnv [] _aasxEnv)
         {
             autoAccept = _autoAccept;
             aasxEnv = _aasxEnv;
