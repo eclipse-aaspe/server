@@ -571,12 +571,15 @@
                     if (col == 1)
                     {
                         ret = "";
-                        for (int i = 0; i < sm.qualifiers.Count; i++)
+                        if (sm.qualifiers != null)
                         {
-                            ret += sm.qualifiers[i].type + " ";
-                            if (sm.qualifiers[i].value != "")
+                            for (int i = 0; i < sm.qualifiers.Count; i++)
                             {
-                                ret += sm.qualifiers[i].value + " ";
+                                ret += sm.qualifiers[i].type + " ";
+                                if (sm.qualifiers[i].value != "")
+                                {
+                                    ret += sm.qualifiers[i].value + " ";
+                                }
                             }
                         }
                     }
@@ -622,12 +625,15 @@
                     if (col == 1)
                     {
                         ret = "";
-                        for (int i = 0; i < prop.qualifiers.Count; i++)
+                        if (prop.qualifiers != null)
                         {
-                            ret += prop.qualifiers[i].type + " ";
-                            if (prop.qualifiers[i].value != "")
+                            for (int i = 0; i < prop.qualifiers.Count; i++)
                             {
-                                ret += prop.qualifiers[i].value + " ";
+                                ret += prop.qualifiers[i].type + " ";
+                                if (prop.qualifiers[i].value != "")
+                                {
+                                    ret += prop.qualifiers[i].value + " ";
+                                }
                             }
                         }
                     }

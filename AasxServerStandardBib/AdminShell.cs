@@ -1,3 +1,5 @@
+#define UseAasxCompatibilityModels
+
 using System.Xml;
 using System.Runtime;
 using System.ComponentModel;
@@ -3613,6 +3615,24 @@ namespace AdminShellNS
         /// </summary>
         public class QualifierCollection : List<Qualifier>
         {
+            public QualifierCollection()
+            {
+
+            }
+
+#if UseAasxCompatibilityModels
+            public QualifierCollection(List<AasxCompatibilityModels.AdminShellV10.Qualifier> src, bool shallowCopy = false)
+
+            {
+                if (src.Count != 0)
+                {
+                    foreach (var q in src)
+                    {
+                        this.Add(new Qualifier(q));
+                    }
+                }
+            }
+#endif
 
             /// <summary>
             /// Add qualifier. If null, do nothing
@@ -3755,7 +3775,7 @@ namespace AdminShellNS
                 if (src.qualifiers != null)
                 {
                     if (qualifiers == null)
-                        qualifiers = new QualifierCollection();
+                        qualifiers = new QualifierCollection(src.qualifiers);
                     foreach (var q in src.qualifiers)
                         qualifiers.Add(new Qualifier(q));
                 }
@@ -4597,6 +4617,8 @@ namespace AdminShellNS
                     this.semanticId = new SemanticId(src.semanticId);
                 if (src.kind != null)
                     this.kind = new ModelingKind(src.kind);
+                if (src.qualifiers != null)
+                    this.qualifiers = new QualifierCollection(src.qualifiers);
                 if (!shallowCopy && src.submodelElements != null)
                 {
                     if (this.submodelElements == null)

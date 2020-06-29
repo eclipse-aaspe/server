@@ -257,73 +257,118 @@ namespace AdminShellNS
                         throw (new Exception(string.Format("While copying AASX {0} for indirect load at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                     }
 
-                // load package AASX
-                try
+                string nsuri = "";
+
+                for (int loop = 0; loop < 2; loop++)
                 {
-                    var package = Package.Open(fnToLoad, FileMode.Open);
-                    // var package = Package.Open(fnToLoad, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                    // get the origin from the package
-                    PackagePart originPart = null;
-                    var xs = package.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aasx-origin");
-                    foreach (var x in xs)
-                        if (x.SourceUri.ToString() == "/")
-                        {
-                            originPart = package.GetPart(x.TargetUri);
-                            break;
-                        }
-                    if (originPart == null)
-                        throw (new Exception("Unable to find AASX origin. Aborting!"));
-
-                    // get the specs from the package
-                    PackagePart specPart = null;
-                    xs = originPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-spec");
-                    foreach (var x in xs)
-                    {
-                        specPart = package.GetPart(x.TargetUri);
-                        break;
-                    }
-                    if (specPart == null)
-                        throw (new Exception("Unable to find AASX spec(s). Aborting!"));
-
-                    // open spec part to read
+                    // load package AASX
                     try
                     {
-                        if (specPart.Uri.ToString().ToLower().Trim().EndsWith("json"))
+                        Package package = null;
+                        switch (loop)
                         {
-                            using (var s = specPart.GetStream(FileMode.Open))
+                            case 0:
+                                package = Package.Open(fnToLoad, FileMode.Open);
+                                break;
+                            case 1:
+                                package = Package.Open(fnToLoad, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                break;
+                        }
+
+                        // get the origin from the package
+                        PackagePart originPart = null;
+                        var xs = package.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aasx-origin");
+                        foreach (var x in xs)
+                            if (x.SourceUri.ToString() == "/")
                             {
-                                using (StreamReader file = new StreamReader(s))
+                                originPart = package.GetPart(x.TargetUri);
+                                break;
+                            }
+                        if (originPart == null)
+                            throw (new Exception("Unable to find AASX origin. Aborting!"));
+
+                        // get the specs from the package
+                        PackagePart specPart = null;
+                        xs = originPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-spec");
+                        foreach (var x in xs)
+                        {
+                            specPart = package.GetPart(x.TargetUri);
+                            break;
+                        }
+                        if (specPart == null)
+                            throw (new Exception("Unable to find AASX spec(s). Aborting!"));
+
+                        // open spec part to read
+                        try
+                        {
+                            if (specPart.Uri.ToString().ToLower().Trim().EndsWith("json"))
+                            {
+                                using (var s = specPart.GetStream(FileMode.Open))
                                 {
-                                    JsonSerializer serializer = new JsonSerializer();
-                                    serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                    this.aasenv = (AdminShell.AdministrationShellEnv)serializer.Deserialize(file, typeof(AdminShell.AdministrationShellEnv));
+                                    using (StreamReader file = new StreamReader(s))
+                                    {
+                                        JsonSerializer serializer = new JsonSerializer();
+                                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                        this.aasenv = (AdminShell.AdministrationShellEnv)serializer.Deserialize(file, typeof(AdminShell.AdministrationShellEnv));
+                                    }
+                                }
+                                loop = 2;
+                            }
+                            else
+                            {
+                                using (var s = specPart.GetStream(FileMode.Open))
+                                {
+                                    // own catch loop to be more specific
+                                    //XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
+                                    //this.aasenv = serializer.Deserialize(s) as AdminShell.AdministrationShellEnv;
+                                    // this.aasenv = AdminShellSerializationHelper.DeserializeXmlFromStreamWithCompat(s);
+
+                                    if (loop == 0)
+                                    {
+                                        nsuri = AdminShellSerializationHelper.TryReadXmlFirstElementNamespaceURI(s);
+                                        s.Close();
+                                        package.Close();
+                                        continue;
+                                    }
+
+                                    // read V1.0?
+                                    if (nsuri != null && nsuri.Trim() == "http://www.admin-shell.io/aas/1/0")
+                                    {
+#if UseAasxCompatibilityModels
+                                        XmlSerializer serializer = new XmlSerializer(typeof(AasxCompatibilityModels.AdminShellV10.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
+                                        var v10 = serializer.Deserialize(s) as AasxCompatibilityModels.AdminShellV10.AdministrationShellEnv;
+                                        this.aasenv = new AdminShellV20.AdministrationShellEnv(v10);
+#else
+                throw (new Exception("Cannot handle AAS file format http://www.admin-shell.io/aas/1/0 !"));
+#endif
+                                    }
+
+                                    // read V2.0?
+                                    if (nsuri != null && nsuri.Trim() == "http://www.admin-shell.io/aas/2/0")
+                                    {
+                                        XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/2/0");
+                                        this.aasenv = serializer.Deserialize(s) as AdminShell.AdministrationShellEnv;
+                                    }
+
+
+                                    // this.aasenv = AdminShellSerializationHelper.DeserializeXmlFromStreamWithCompat(s);
+
+                                    this.openPackage = package;
+                                    if (this.aasenv == null)
+                                        throw (new Exception("Type error for XML file!"));
+                                    s.Close();
                                 }
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            using (var s = specPart.GetStream(FileMode.Open))
-                            {
-                                // own catch loop to be more specific
-                                //XmlSerializer serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/1/0");
-                                //this.aasenv = serializer.Deserialize(s) as AdminShell.AdministrationShellEnv;
-                                this.aasenv = AdminShellSerializationHelper.DeserializeXmlFromStreamWithCompat(s);
-                                this.openPackage = package;
-                                if (this.aasenv == null)
-                                    throw (new Exception("Type error for XML file!"));
-                                s.Close();
-                            }
+                            throw (new Exception(string.Format("While reading AAS {0} spec at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                         }
                     }
                     catch (Exception ex)
                     {
-                        throw (new Exception(string.Format("While reading AAS {0} spec at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
+                        throw (new Exception(string.Format("While reading AASX {0} at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                     }
-                }
-                catch (Exception ex)
-                {
-                    throw (new Exception(string.Format("While reading AASX {0} at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                 }
                 return true;
             }

@@ -1324,6 +1324,11 @@ namespace Net46ConsoleServer
                                 j++;
                             }
 
+                            if (URL == "")
+                            {
+                                continue;
+                            }
+
                             if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
                             {
                                 Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
@@ -1448,7 +1453,7 @@ namespace Net46ConsoleServer
                                     if (qq.type == "Add")
                                     {
                                         int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
-                                        v += Convert.ToInt32(qq.type);
+                                        v += Convert.ToInt32(qq.value);
                                         (sme1 as AdminShell.Property).value = v.ToString();
                                         continue;
                                     }
