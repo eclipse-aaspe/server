@@ -1,5 +1,3 @@
-#define UseAasxCompatibilityModels
-
 using System.Xml;
 using System.Runtime;
 using System.ComponentModel;
