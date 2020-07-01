@@ -22,7 +22,7 @@
         <div class="sticky-top" style="word-wrap:break-word">
             @{
                 <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
-                for (int line = 0; line < 5; line++)
+                for (int line = 0; line < 6; line++)
                 {
                     string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
                     string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
@@ -286,12 +286,12 @@
             return "";
         }
 
+        string ret = "";
+
         if (item.Type != null)
         {
-            return item.Type;
+            ret = item.Type + " ";
         }
-
-        string ret = "NULL";
 
         object o = item.Tag;
 
@@ -305,59 +305,64 @@
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
-            ret = "AASX2";
+            ret += "AASX2";
         }
 
         if (o is AdministrationShell)
         {
-            ret = "AAS";
+            ret += "AAS";
         }
         if (o is Submodel)
         {
-            ret = "Sub";
+            ret += "Sub";
         }
         if (o is SubmodelElement)
         {
             if (o is SubmodelElementCollection)
             {
-                ret = "Coll";
+                ret += "Coll";
             }
             if (o is Property)
             {
-                ret = "Prop";
+                ret += "Prop";
             }
         }
         if (o is Operation)
         {
-            ret = "Opr";
+            ret += "Opr";
         }
         if (o is File)
         {
-            ret = "File";
+            ret += "File";
+        }
+        if (o is Blob)
+        {
+            ret += "Blob";
         }
         if (o is AdminShellNS.AdminShellV20.Range)
         {
-            ret = "Range";
+            ret += "Range";
         }
         if (o is MultiLanguageProperty)
         {
-            ret = "Lang";
+            ret += "Lang";
         }
         if (o is RelationshipElement)
         {
-            ret = "Rel";
+            ret += "Rel";
         }
         if (o is ReferenceElement)
         {
-            ret = "Ref";
+            ret += "Ref";
         }
         if (o is Entity)
         {
-            ret = "Ent";
+            ret += "Ent";
         }
-
-        if (ret != "NULL")
-            return (ret);
+        if (o is AdminShellNS.AdminShellV20.BasicEvent)
+        {
+            ret += "Evt";
+        }
 
         return (ret);
     }
@@ -386,27 +391,50 @@
         if (o is Submodel)
         {
             var sm = o as Submodel;
-            ret = sm.idShort;
+            ret = "";
+            if (sm.kind != null && sm.kind.IsTemplate)
+                ret += "<T> ";
+            ret += sm.idShort;
         }
         if (o is SubmodelElement)
         {
             var sme = o as SubmodelElement;
-            ret = sme.idShort;
+            ret = "";
+            if (sme.kind != null && sme.kind.IsTemplate)
+                ret += "<T> ";
+            ret += sme.idShort;
         }
         if (o is File)
         {
             var f = o as File;
-            ret = f.idShort;
+            ret = "";
+            if (f.kind != null && f.kind.IsTemplate)
+                ret += "<T> ";
+            ret += f.idShort;
+        }
+        if (o is Blob)
+        {
+            var b = o as Blob;
+            ret = "";
+            if (b.kind != null && b.kind.IsTemplate)
+                ret += "<T> ";
+            ret += b.idShort;
         }
         if (o is AdminShellNS.AdminShellV20.Range)
         {
             var r = o as AdminShellNS.AdminShellV20.Range;
-            ret = r.idShort;
+            ret = "";
+            if (r.kind != null && r.kind.IsTemplate)
+                ret += "<T> ";
+            ret += r.idShort;
         }
         if (o is MultiLanguageProperty)
         {
             var mlp = o as MultiLanguageProperty;
-            ret = mlp.idShort;
+            ret = "";
+            if (mlp.kind != null && mlp.kind.IsTemplate)
+                ret += "<T> ";
+            ret += mlp.idShort;
         }
         return (ret);
     }
@@ -431,6 +459,10 @@
         {
             var sm = o as Submodel;
             // ret = sm.identification.ToString();
+            if (sm.qualifiers != null && sm.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
         }
         if (o is SubmodelElement)
         {
@@ -441,17 +473,29 @@
                 {
                     ret = " = " + prop.value;
                 }
+                if (prop.qualifiers != null && prop.qualifiers.Count > 0)
+                {
+                    ret += " @QUALIFIERS";
+                }
             }
             if (o is File)
             {
                 var f = o as File;
                 ret = " = " + f.value;
+                if (f.qualifiers != null && f.qualifiers.Count > 0)
+                {
+                    ret += " @QUALIFIERS";
+                }
             }
         }
         if (o is AdminShellNS.AdminShellV20.Range)
         {
             var r = o as AdminShellNS.AdminShellV20.Range;
             ret = " = " + r.min + " .. " + r.max;
+            if (r.qualifiers != null && r.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
         }
         if (o is MultiLanguageProperty)
         {
@@ -461,6 +505,10 @@
             for (int i = 0; i < ls.Count; i++)
             {
                 ret += ls.langString[i].lang + " ";
+            }
+            if (mlp.qualifiers != null && mlp.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
             }
         }
         return (ret);
@@ -540,6 +588,13 @@
                         }
                     }
                     break;
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
             }
             return ret;
         }
@@ -567,25 +622,15 @@
                     }
                     break;
                 case 2:
-                    ret = "Qualifier";
-                    if (col == 1)
-                    {
-                        ret = "";
-                        if (sm.qualifiers != null)
-                        {
-                            for (int i = 0; i < sm.qualifiers.Count; i++)
-                            {
-                                ret += sm.qualifiers[i].type + " ";
-                                if (sm.qualifiers[i].value != "")
-                                {
-                                    ret += sm.qualifiers[i].value + " ";
-                                }
-                            }
-                        }
-                    }
+                    ret = getQualifiers(sm.qualifiers, col);
                     break;
                 case 3:
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -621,24 +666,16 @@
                         ret = prop.value + "";
                     break;
                 case 3:
-                    ret = "Qualifier";
-                    if (col == 1)
-                    {
-                        ret = "";
-                        if (prop.qualifiers != null)
-                        {
-                            for (int i = 0; i < prop.qualifiers.Count; i++)
-                            {
-                                ret += prop.qualifiers[i].type + " ";
-                                if (prop.qualifiers[i].value != "")
-                                {
-                                    ret += prop.qualifiers[i].value + " ";
-                                }
-                            }
-                        }
-                    }
+                    ret = getQualifiers(prop.qualifiers, col);
                     break;
                 case 4:
+                    ret = getUnit(item, prop, col);
+                    break;
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -687,7 +724,14 @@
                     }
                     break;
                 case 3:
+                    ret = getQualifiers(e.qualifiers, col);
+                    break;
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -718,8 +762,57 @@
                         ret = f.value;
                     break;
                 case 2:
+                    ret = getQualifiers(f.qualifiers, col);
+                    break;
                 case 3:
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Blob)
+        {
+            var b = o as Blob;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = b.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "MimeType";
+                    if (col == 1)
+                        ret = b.mimeType;
+                    break;
+                case 2:
+                    ret = "Value";
+                    if (col == 1)
+                        ret = b.value;
+                    break;
+                case 3:
+                    ret = getQualifiers(b.qualifiers, col);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -755,7 +848,16 @@
                         ret = r.max + "";
                     break;
                 case 3:
+                    ret = getQualifiers(r.qualifiers, col);
+                    break;
                 case 4:
+                    ret = getUnit(item, r, col);
+                    break;
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -803,7 +905,14 @@
                     }
                     break;
                 case 3:
+                    ret = getQualifiers(op.qualifiers, col);
+                    break;
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -853,7 +962,14 @@
                     }
                     break;
                 case 3:
+                    ret = getQualifiers(r.qualifiers, col);
+                    break;
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -894,8 +1010,15 @@
                     }
                     break;
                 case 2:
+                    ret = getQualifiers(r.qualifiers, col);
+                    break;
                 case 3:
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -926,6 +1049,9 @@
                     break;
                 case 1:
                 case 2:
+                case 3:
+                case 4:
+                    ret = "";
                     if (ls.Count > line-1)
                     {
                         ret = ls.langString[line-1].lang;
@@ -933,8 +1059,13 @@
                             ret = ls.langString[line-1].str + "";
                     }
                     break;
-                case 3:
-                case 4:
+                case 5:
+                    ret = getQualifiers(mlp.qualifiers, col);
+                    break;
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -960,9 +1091,16 @@
                     }
                     break;
                 case 1:
+                    ret = getQualifiers(sme.qualifiers, col);
+                    break;
                 case 2:
                 case 3:
                 case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
                     ret = "";
                     break;
             }
@@ -970,5 +1108,55 @@
         }
 
         return (ret);
+    }
+
+    static string getQualifiers(QualifierCollection q, int col)
+    {
+        string ret = "";
+
+        if (q != null && q.Count > 0)
+        {
+            ret = "Qualifiers";
+            if (col == 1)
+            {
+                ret = "";
+                for (int i = 0; i < q.Count; i++)
+                {
+                    if (i != 0)
+                        ret += ", ";
+                    ret += q[i].type + " ";
+                    if (q[i].value != "")
+                    {
+                        ret += "= " + q[i].value;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    public string getUnit(Item item, SubmodelElement se, int col)
+    {
+        string ret = "";
+        if (se.semanticId == null || se.semanticId.Keys == null)
+        {
+            return ret;
+        }
+        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescription(se.semanticId.Keys);
+        if (cd != null)
+        {
+            var iec = cd.GetIEC61360();
+            if (iec != null)
+            {
+                ret = "Unit";
+                if (col == 1)
+                {
+                    ret = iec.unit;
+                    if (iec.unitId != null && iec.unitId.keys != null && iec.unitId.keys.Count > 0)
+                        ret += " (UnitId = " + iec.unitId.keys[0].ToString() + ")";
+                }
+            }
+        }
+        return ret;
     }
 }
