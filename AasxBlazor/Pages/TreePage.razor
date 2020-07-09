@@ -38,7 +38,67 @@
                 string link = getLink(selectedNode);
                 if (selectedNode != null && link != "")
                 {
-                    <a href="@link" target="_blank">@link</a><br>
+                    // <a href="@link" target="_blank">@link</a><br>
+                    <button onclick="window.location.href = '@link';">Download</button><br>
+                }
+                if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
+                {
+                    bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                    bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                    if (toPublish)
+                    {
+                        <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                    }
+                    else
+                    {
+                        <button @onclick="setSubmodelToPublish">Publish</button>
+                    }
+                    if (toSubscribe)
+                    {
+                        <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                    }
+                    else
+                    {
+                        <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                    }
+                    // <button onclick="window.location.href = '@link';">Subscribe</button><br>
+                    @code {
+                        private void resetSubmodelToPublish()
+                        {
+                            Program.submodelsToPublish.Remove(selectedNode.Tag);
+                        }
+                        private void setSubmodelToPublish()
+                        {
+                            bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                            if (!toSubscribe)
+                                Program.submodelsToPublish.Add(selectedNode.Tag);
+                        }
+                        private void resetSubmodelToSubscribe()
+                        {
+                            Program.submodelsToSubscribe.Remove(selectedNode.Tag);
+                        }
+                        private void setSubmodelToSubscribe()
+                        {
+                            bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                            if (!toPublish)
+                                Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                        }
+                    }
+                }
+                if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                {
+                    // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    @code { private string CurrentValue { get; set; } }
+                    if (CurrentValue != null && CurrentValue != "")
+                    {
+                        if (selectedNode.Tag is Property)
+                        {
+                            (selectedNode.Tag as Property).value = CurrentValue;
+                            this.StateHasChanged();
+                        }
+                        CurrentValue = "";
+                    }
                 }
             }
         </div>
@@ -111,6 +171,7 @@
     {
         public string Text { get; set; }
         public IEnumerable<Item> Childs { get; set; }
+        public object parent { get; set; }
         // public List<Item> Childs { get; set; }
         public string Type { get; set; }
         public object Tag { get; set; }
@@ -150,11 +211,11 @@
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
 
-        SubmodelService.NewOpcDataAvailable += NewOpcData;
+        SubmodelService.NewDataAvailable += NewOpcData;
     }
     public void Dispose()
     {
-        SubmodelService.NewOpcDataAvailable -= NewOpcData;
+        SubmodelService.NewDataAvailable -= NewOpcData;
     }
     void NewOpcData(object source, EventArgs args)
     {

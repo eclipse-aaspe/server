@@ -25,12 +25,12 @@ namespace AasxBlazor.Data
         {
             loadAAS();
 
-            Program.NewOpcDataAvailable += (s, a) =>
+            Program.NewDataAvailable += (s, a) =>
             {
-                NewOpcDataAvailable?.Invoke(this, EventArgs.Empty);
+                NewDataAvailable?.Invoke(this, EventArgs.Empty);
             };
         }
-        public event EventHandler NewOpcDataAvailable;
+        public event EventHandler NewDataAvailable;
         public void loadAAS()
         {
             // env = new AdminShell.PackageEnv("Example_AAS_ServoDCMotor_21.aasx");
@@ -85,9 +85,13 @@ namespace AasxBlazor.Data
                                     }
                                 }
                                 smItem.Childs = smChilds;
+                                foreach (var c in smChilds)
+                                    c.parent = smItem;
                             }
                         }
                         root.Childs = childs;
+                        foreach (var c in childs)
+                            c.parent = root;
                         items.Add(root);
                     }
                 }
@@ -127,6 +131,8 @@ namespace AasxBlazor.Data
                 }
             }
             smeRootItem.Childs = smChilds;
+            foreach (var c in smChilds)
+                c.parent = smeRootItem;
         }
 
         void createOperationItems(Item smeRootItem, Operation op, int i)
@@ -160,6 +166,8 @@ namespace AasxBlazor.Data
                 smChilds.Add(smeItem);
             }
             smeRootItem.Childs = smChilds;
+            foreach (var c in smChilds)
+                c.parent = smeRootItem;
         }
 
         void createEntityItems(Item smeRootItem, Entity e, int i)
@@ -175,6 +183,8 @@ namespace AasxBlazor.Data
                 smChilds.Add(smeItem);
             }
             smeRootItem.Childs = smChilds;
+            foreach (var c in smChilds)
+                c.parent = smeRootItem;
         }
 
         public List<Submodel> GetSubmodels()

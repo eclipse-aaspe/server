@@ -95,7 +95,7 @@ namespace Net46ConsoleServer
         public static ulong dataVersion = 0;
 
         public static void changeDataVersion() { dataVersion++; }
-        public static ulong getDataVersion() { return(dataVersion); }
+        public static ulong getDataVersion() { return (dataVersion); }
 
         static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static Boolean opcclientActive;
@@ -107,7 +107,7 @@ namespace Net46ConsoleServer
         static bool runOPC = false;
         static bool runMQTT = false;
 
-        static string connectServer = "";
+        public static string connectServer = "";
         static string connectNodeName = "";
         static int connectUpdateRate = 1000;
         static Thread connectThread;
@@ -116,6 +116,11 @@ namespace Net46ConsoleServer
         public static WebProxy proxy = null;
         public static HttpClientHandler clientHandler = null;
 
+        public static bool noSecurity = false;
+        public static bool edit = false;
+
+        public static HashSet<object> submodelsToPublish = new HashSet<object>();
+        public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
         static public void Main(string[] args)
         {
             // default command line options
@@ -265,13 +270,46 @@ namespace Net46ConsoleServer
 
                 if (x == "-connect")
                 {
-                    string connect = args[i + 1];
-                    var c = connect.Split(',');
-                    connectServer = c[0];
-                    connectNodeName = c[1];
-                    connectUpdateRate = Convert.ToInt32(c[2]);
-                    Console.WriteLine("-connect: Connect Server " + connectServer + ", Name " + connectNodeName + ", Update Rate " + connectUpdateRate);
-                    i += 2;
+                    string[] c = null;
+                    if (i+1 < args.Length)
+                    {
+                        string connect = args[i + 1];
+                        c = connect.Split(',');
+                    }
+                    if (c != null && c.Length == 3)
+                    {
+                        connectServer = c[0];
+                        connectNodeName = c[1];
+                        connectUpdateRate = Convert.ToInt32(c[2]);
+                        i += 2;
+                    }
+                    else
+                    {
+                        connectServer = "http://admin-shell-io.com:52000";
+                        Byte[] barray = new byte[10];
+                        RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                        rngCsp.GetBytes(barray);
+                        connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
+                        connectUpdateRate = 2000;
+                        i++;
+                    }
+                    Console.WriteLine("-connect: ConnectServer " + connectServer + ", NodeName " + connectNodeName + ", UpdateRate " + connectUpdateRate);
+                    continue;
+                }
+
+                if (x == "-nosecurity")
+                {
+                    noSecurity = true;
+                    Console.WriteLine(args[i]);
+                    i++;
+                    continue;
+                }
+
+                if (x == "-edit")
+                {
+                    edit = true;
+                    Console.WriteLine(args[i]);
+                    i++;
                     continue;
                 }
 
@@ -542,30 +580,31 @@ namespace Net46ConsoleServer
             if (connectServer != "")
             {
                 HttpClient httpClient;
-                if (clientHandler != null)
+                if (clientHandler == null)
                 {
+                    clientHandler = new HttpClientHandler();
+                    clientHandler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                     httpClient = new HttpClient(clientHandler);
                 }
-                else
-                {
-                    httpClient = new HttpClient();
-                }
+                httpClient = new HttpClient(clientHandler);
 
                 string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
 
+                /*
                 string content = "";
                 try
                 {
                     var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
                     // httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
-                    var result = httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Result;
+                    var result = httpClient.PostAsync(connectServer + "/connect", contentJson).Result;
                     content = ContentToString(result.Content);
                 }
                 catch
                 {
 
                 }
-
+                */
+                string content = "OK";
                 if (content == "OK")
                 {
                     connectThread = new Thread(new ThreadStart(connectThreadLoop));
@@ -574,7 +613,7 @@ namespace Net46ConsoleServer
                 }
                 else
                 {
-                    Console.WriteLine("Can not connect to: " + "http://" + connectServer);
+                    Console.WriteLine("Can not connect to: " + connectServer);
                 }
             }
 
@@ -607,6 +646,7 @@ namespace Net46ConsoleServer
 
             if (connectServer != "")
             {
+                /*
                 HttpClient httpClient;
                 if (clientHandler != null)
                 {
@@ -624,18 +664,19 @@ namespace Net46ConsoleServer
                 {
                     var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
                     // httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
-                    var result = httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Result;
+                    var result = httpClient.PostAsync(connectServer + "/disconnect", contentJson).Result;
                     content = ContentToString(result.Content);
                 }
                 catch
                 {
 
                 }
+                */
 
                 if (connectLoop)
                 {
                     connectLoop = false;
-                    connectThread.Abort();
+                    // connectThread.Abort();
                 }
             }
 
@@ -759,26 +800,33 @@ namespace Net46ConsoleServer
                         {
                             if (sm != null && sm.idShort != null)
                             {
-                                int count = sm.qualifiers.Count;
-                                if (count != 0)
+                                bool toPublish = Program.submodelsToPublish.Contains(sm);
+                                if (!toPublish)
                                 {
-                                    int j = 0;
-
-                                    while (j < count) // Scan qualifiers
+                                    int count = sm.qualifiers.Count;
+                                    if (count != 0)
                                     {
-                                        var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                                        int j = 0;
 
-                                        if (p.type == "PUBLISH")
+                                        while (j < count) // Scan qualifiers
                                         {
-                                            var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-                                            td.type = "submodel";
-                                            td.publish.Add(json);
-                                            tf.data.Add(td);
-                                            Console.WriteLine("Publish Submodel " + sm.idShort);
-                                        }
+                                            var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                                        j++;
+                                            if (p.type == "PUBLISH")
+                                            {
+                                                toPublish = true;
+                                            }
+                                            j++;
+                                        }
                                     }
+                                }
+                                if (toPublish)
+                                {
+                                    var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                                    td.type = "submodel";
+                                    td.publish.Add(json);
+                                    tf.data.Add(td);
+                                    Console.WriteLine("Publish Submodel " + sm.idShort);
                                 }
                             }
                         }
@@ -802,7 +850,7 @@ namespace Net46ConsoleServer
                 string content = "";
                 try
                 {
-                    var result = httpClient.PostAsync("http://" + connectServer + "/publishUp", contentJson).Result;
+                    var result = httpClient.PostAsync(connectServer + "/publish", contentJson).Result;
                     content = ContentToString(result.Content);
                 }
                 catch
@@ -897,91 +945,96 @@ namespace Net46ConsoleServer
                                             return;
                                         }
 
-                                        // add Submodel
                                         var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
                                         if (existingSm != null)
                                         {
-                                            if (existingSm.idShort == "OPC3")
+                                            bool toSubscribe = Program.submodelsToSubscribe.Contains(existingSm);
+                                            if (!toSubscribe)
                                             {
-                                                int xx = 0;
-                                            }
-                                            int eqcount = existingSm.qualifiers.Count;
-                                            if (eqcount != 0)
-                                            {
-                                                int j = 0;
-
-                                                while (j < eqcount) // Scan qualifiers
+                                                int eqcount = existingSm.qualifiers.Count;
+                                                if (eqcount != 0)
                                                 {
-                                                    var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
+                                                    int j = 0;
 
-                                                    if (p.type == "SUBSCRIBE")
+                                                    while (j < eqcount) // Scan qualifiers
                                                     {
-                                                        Console.WriteLine("Subscribe Submodel " + submodel.idShort);
+                                                        var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
 
-                                                        int c2 = submodel.qualifiers.Count;
-                                                        if (c2 != 0)
+                                                        if (p.type == "SUBSCRIBE")
                                                         {
-                                                            int k = 0;
-
-                                                            while (k < c2) // Scan qualifiers
-                                                            {
-                                                                var q = submodel.qualifiers[k] as AdminShell.Qualifier;
-
-                                                                if (q.type == "PUBLISH")
-                                                                {
-                                                                    q.type = "SUBSCRIBE";
-                                                                }
-
-                                                                k++;
-                                                            }
+                                                            toSubscribe = true;
+                                                            break;
                                                         }
-
-                                                        bool overwrite = true;
-                                                        int escount = existingSm.submodelElements.Count;
-                                                        int count2 = submodel.submodelElements.Count;
-                                                        if (escount == count2)
-                                                        {
-                                                            int smi = 0;
-                                                            while (smi < escount)
-                                                            {
-                                                                var sme1 = submodel.submodelElements[smi].submodelElement;
-                                                                var sme2 = existingSm.submodelElements[smi].submodelElement;
-
-                                                                if (sme1 is AdminShell.Property)
-                                                                {
-                                                                    if (sme2 is AdminShell.Property)
-                                                                    {
-                                                                        (sme2 as AdminShell.Property).value = (sme1 as AdminShell.Property).value;
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        overwrite = false;
-                                                                        break;
-                                                                    }
-                                                                }
-
-                                                                smi++;
-                                                            }
-                                                        }
-
-                                                        if (!overwrite)
-                                                        {
-                                                            env[envi].AasEnv.Submodels.Remove(existingSm);
-                                                            env[envi].AasEnv.Submodels.Add(submodel);
-
-                                                            // add SubmodelRef to AAS            
-                                                            // access the AAS
-                                                            var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
-                                                            var existsmr = aas.HasSubmodelRef(newsmr);
-                                                            if (!existsmr)
-                                                            {
-                                                                aas.AddSubmodelRef(newsmr);
-                                                            }
-
-                                                        }
+                                                        j++;
                                                     }
+                                                }
 
-                                                    j++;
+
+                                            }
+
+                                            if (toSubscribe)
+                                            {
+                                                Console.WriteLine("Subscribe Submodel " + submodel.idShort);
+
+                                                int c2 = submodel.qualifiers.Count;
+                                                if (c2 != 0)
+                                                {
+                                                    int k = 0;
+
+                                                    while (k < c2) // Scan qualifiers
+                                                    {
+                                                        var q = submodel.qualifiers[k] as AdminShell.Qualifier;
+
+                                                        if (q.type == "PUBLISH")
+                                                        {
+                                                            q.type = "SUBSCRIBE";
+                                                        }
+
+                                                        k++;
+                                                    }
+                                                }
+
+                                                bool overwrite = true;
+                                                int escount = existingSm.submodelElements.Count;
+                                                int count2 = submodel.submodelElements.Count;
+                                                if (escount == count2)
+                                                {
+                                                    int smi = 0;
+                                                    while (smi < escount)
+                                                    {
+                                                        var sme1 = submodel.submodelElements[smi].submodelElement;
+                                                        var sme2 = existingSm.submodelElements[smi].submodelElement;
+
+                                                        if (sme1 is AdminShell.Property)
+                                                        {
+                                                            if (sme2 is AdminShell.Property)
+                                                            {
+                                                                (sme2 as AdminShell.Property).value = (sme1 as AdminShell.Property).value;
+                                                            }
+                                                            else
+                                                            {
+                                                                overwrite = false;
+                                                                break;
+                                                            }
+                                                        }
+
+                                                        smi++;
+                                                    }
+                                                }
+
+                                                if (!overwrite)
+                                                {
+                                                    env[envi].AasEnv.Submodels.Remove(existingSm);
+                                                    env[envi].AasEnv.Submodels.Add(submodel);
+
+                                                    // add SubmodelRef to AAS            
+                                                    // access the AAS
+                                                    var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
+                                                    var existsmr = aas.HasSubmodelRef(newsmr);
+                                                    if (!existsmr)
+                                                    {
+                                                        aas.AddSubmodelRef(newsmr);
+                                                    }
                                                 }
                                             }
                                         }
@@ -995,7 +1048,7 @@ namespace Net46ConsoleServer
                     }
                 }
 
-                NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
+                NewDataAvailable?.Invoke(null, EventArgs.Empty);
                 Thread.Sleep(connectUpdateRate);
             }
         }
@@ -1017,12 +1070,12 @@ namespace Net46ConsoleServer
             }
         }
 
-        public static event EventHandler NewOpcDataAvailable; 
+        public static event EventHandler NewDataAvailable; 
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
             // RunScript();
-            NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
+            NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
         private static System.Timers.Timer scriptTimer;
@@ -1040,7 +1093,7 @@ namespace Net46ConsoleServer
         {
             // Console.WriteLine("RunScript");
             RunScript();
-            NewOpcDataAvailable?.Invoke(null, EventArgs.Empty);
+            NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
         private static System.Timers.Timer restTimer;

@@ -18,7 +18,7 @@
     },
     "AasxBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-rest",
+      "commandLineArgs": "-rest -connect http://localhost:52000,AASX1,2000 -edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
