@@ -1,16 +1,29 @@
-Server of I40 .AASX packages accessable by REST, OPC UA and MQTT
+# AASX Server
 
-AASX Server - based on code of AASX Package Explorer
+AASX Server serves Industrie 4.0 AASX packages accessible by REST, OPC UA and MQTT protocols.
 
-Binary download with short explanation at
-https://github.com/admin-shell/aasx-server
+The AASX Server is based on code of AASX Package Explorer (https://github.com/admin-shell-io/aasx-package-explorer).
+
+The binaries are available in the [Releases section](https://github.com/admin-shell-io/aasx-server/releases).  
+
+# Build Container on Linux/MacOS
 
 To run inside a Docker container on Linux/MacOS:
-Build the container with buildContainer.sh
-Run the container with runContainer.sh
+* Build the container with `buildContainer.sh`
+* Run the container with `runContainer.sh`
 
-You can then connect to the ports as ususal. For Windows, there is no script yet. You can do that manually by using the command line (for non Linux systems):
+You can then connect to the ports as ususal. 
+
+# Build Container on Windows
+
+For Windows, there is still no script to build the container. You can build the container manually by using the command line.
+
 Build your container with:
+```
 docker build -t aasxserver-img .
+```
+
 And run with:
+```
 docker run -d -p 51210:51210 -p 51310:51310 --name AasxServer aasxserver-img
+```
