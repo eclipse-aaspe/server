@@ -9,17 +9,19 @@ The binaries are available in the [Releases section](https://github.com/admin-sh
 # Build Container on Linux/MacOS
 
 To run inside a Docker container on Linux/MacOS:
-* Build the container with `buildContainer.sh`
-* Run the container with `runContainer.sh`
+* Build the container with `src/buildContainer.sh`
+* Run the container with `src/runContainer.sh`
 
 You can then connect to the ports as ususal. 
 
 # Build Container on Windows
 
-For Windows, there is still no script to build the container. You can build the container manually by using the command line.
+For Windows, there is still no script to build the container. 
+You can build the container manually by using the command line.
 
 Build your container with:
 ```
+cd src/
 docker build -t aasxserver-img .
 ```
 
