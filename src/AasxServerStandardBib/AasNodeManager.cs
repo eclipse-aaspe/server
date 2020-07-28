@@ -1,4 +1,4 @@
-/* ========================================================================
+﻿/* ========================================================================
  * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
@@ -63,7 +63,6 @@ namespace AasOpcUaServer
 
             List<string> namespaceUris = new List<string>();
             namespaceUris.Add("http://opcfoundation.org/UA/i4aas/");
-            // namespaceUris.Add("http://opcfoundation.org/UA/i4aas/" + "instance/");
             namespaceUris.Add("http://admin-shell.io/samples/i4aas/instance/") ;
             NamespaceUris = namespaceUris;
 
@@ -85,7 +84,6 @@ namespace AasOpcUaServer
         {
             uint id = Utils.IncrementIdentifier(ref m_lastUsedId);
             return new NodeId(id, m_namespaceIndex);
-            // return new NodeId(node.BrowseName.Name, m_namespaceIndex);
         }
         #endregion
 
@@ -109,45 +107,8 @@ namespace AasOpcUaServer
             uint id = preferredNumId;
             if (id == 0)
                 id = Utils.IncrementIdentifier(ref m_lastUsedTypeId);
-            // BUG: return new NodeId(preferredNumId, m_typeNamespaceIndex);
             return new NodeId(id, m_typeNamespaceIndex);
         }
-
-        // MIHO: pointless
-        /*
-        public class NodeIdForDict : NodeId
-        {
-            public NodeIdForDict()
-                : base()
-            {
-            }
-
-            public NodeIdForDict(uint value, ushort namespaceIndex)
-                : base(value, namespaceIndex)
-            {
-            }
-
-            public bool Equals(NodeIdForDict other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return other.NamespaceIndex == this.NamespaceIndex && other.Identifier == this.Identifier;
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != typeof(NodeIdForDict)) return false;
-                return Equals((NodeIdForDict)obj);
-            }
-
-            public override int GetHashCode()
-            {
-                return this.NamespaceIndex.GetHashCode() + this.Identifier.GetHashCode();
-            }
-        }
-        */
 
         #region INodeManager Members
         /// <summary>
@@ -164,7 +125,6 @@ namespace AasOpcUaServer
             {
                 base.CreateAddressSpace(externalReferences);
 
-                // var env = new AdminShell.PackageEnv("Festo-USB-stick-sample-admin-shell.aasx");
 
                 if (true)
                 {
@@ -173,7 +133,6 @@ namespace AasOpcUaServer
                     // this one is special, needs to link to external reference
                     this.AddExternalReference(new NodeId(85, 0), ReferenceTypeIds.Organizes, false, x.NodeId, externalReferences);
 
-                    // builder.AasTypes.Asset.CreateAddInstanceObject(x, env.AasEnv.Assets[0]);
                     for (int i = 0; i < thePackageEnv.Length; i++)
                     {
                         if (thePackageEnv[i] != null)
@@ -222,7 +181,6 @@ namespace AasOpcUaServer
         protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
         {
             NodeStateCollection predefinedNodes = new NodeStateCollection();
-            // predefinedNodes.LoadFromBinaryResource(context, "Opc.Ua.Sample.Boiler.Boiler.PredefinedNodes.uanodes", this.GetType().GetTypeInfo().Assembly, true);
             return predefinedNodes;
         }
 

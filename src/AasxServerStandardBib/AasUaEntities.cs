@@ -258,8 +258,7 @@ namespace AasOpcUaServer
             if (mode == CreateMode.Type || refdata?.category != null)
                 this.entityBuilder.CreateAddPropertyState<string>(parent, "Category", DataTypeIds.String, (mode == CreateMode.Type) ? null : "" + refdata.category, defaultSettings: true, modellingRule: AasUaNodeHelper.ModellingRule.Optional);
 
-            // No idShort as typically in the DisplayName of the node
-            // this.entityBuilder.CreateAddPropertyState<string>(parent, "IdShort", DataTypeIds.String, "" + refdata.idShort, defaultSettings: true);
+
 
             if (mode == CreateMode.Instance)
             {
@@ -387,7 +386,6 @@ namespace AasOpcUaServer
             // re-use AASReferenceType for this
             this.typeObject = this.entityBuilder.AasTypes.Reference.GetTypeObject();
             // with some elements
-            // this was duplicate: this.CreateAddKeyElements(this.typeObject, CreateMode.Type);
             this.CreateAddReferenceElements(this.typeObject, CreateMode.Type);
         }
 
@@ -754,9 +752,7 @@ namespace AasOpcUaServer
 
             if (mode == CreateMode.Type)
             {
-                // a bit extra-reguar, for the type we're constructing the BaseType directly
-                // parent.AddReference(ReferenceTypeIds.HasComponent, false, this.entityBuilder.AasTypes.SubmodelElement.GetTypeNodeId());
-                // return null;
+
 
                 // create only containing element (base type) with generic name
                 var o = this.entityBuilder.CreateAddObject(parent, "SubmodelElement", ReferenceTypeIds.HasComponent, this.entityBuilder.AasTypes.SubmodelElement.GetTypeNodeId(), modellingRule: modellingRule);
@@ -940,7 +936,6 @@ namespace AasOpcUaServer
             base.PopulateInstanceObject(o, coll);
 
             // own attributes
-            // this.entityBuilder.CreateAddPropertyState<bool>(o, "Ordered", DataTypeIds.Boolean, coll.ordered, defaultSettings: true);
             this.entityBuilder.CreateAddPropertyState<bool>(o, "AllowDuplicates", DataTypeIds.Boolean, coll.allowDuplicates, defaultSettings: true);
 
             // values
@@ -1132,8 +1127,8 @@ namespace AasOpcUaServer
 
             // indicate the Operation
             this.entityBuilder.CreateAddMethodState(this.typeObject, "Operation",
-                    inputArgs: null /* new Argument[] { }*/,
-                    outputArgs: null /* new Argument[] { }*/,
+                    inputArgs: null,
+                    outputArgs: null,
                     referenceTypeFromParentId: ReferenceTypeIds.HasComponent);
 
             // some elements
@@ -1165,7 +1160,6 @@ namespace AasOpcUaServer
                     var o2 = this.entityBuilder.CreateAddObject(o, (i == 0) ? "OperationInputVariables" : "OperationOutputVariables", 
                         ReferenceTypeIds.HasComponent, /* TODO */ GetTypeObject().NodeId);
                     foreach (var opvar in opvarList)
-                        // this.entityBuilder.AasTypes.OperationVariable.CreateAddInstanceObject(o2, opvar);
                         if (opvar != null && opvar.value != null)
                             this.entityBuilder.AasTypes.SubmodelWrapper.CreateAddElements(o2, CreateMode.Instance, opvar.value);
                 }
@@ -1259,8 +1253,6 @@ namespace AasOpcUaServer
 
             if (mode == CreateMode.Type)
             {
-                //parent.AddReference(ReferenceTypeIds.HasComponent, false, this.GetTypeNodeId());
-                //return null;
 
                 // create only containing element with generic name
                 var o = this.entityBuilder.CreateAddObject(parent, "View", ReferenceTypeIds.HasComponent, this.GetTypeNodeId(), modellingRule: modellingRule);

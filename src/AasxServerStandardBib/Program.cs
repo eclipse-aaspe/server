@@ -29,7 +29,6 @@ using System.Net.Http;
 using System.Net;
 using System.Dynamic;
 using Jose;
-// using AASXLoader;
 
 namespace Net46ConsoleServer
 {
@@ -134,17 +133,6 @@ namespace Net46ConsoleServer
             string proxyFile = "";
 
             Console.WriteLine("--help for options and help");
-            /*
-            Console.WriteLine("AASX Server Version 0.9.10");
-            Console.WriteLine("Copyright (c) 2019 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski");
-            Console.WriteLine("Copyright (c) 2018-2019 Festo AG & Co. KG");
-            Console.WriteLine("Copyright (c) 2019 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.");
-            Console.WriteLine("This software is licensed under the Eclipse Public License 2.0 (EPL-2.0)");
-            Console.WriteLine("The Newtonsoft.JSON serialization is licensed under the MIT License (MIT)");
-            Console.WriteLine("The Grapevine REST server framework is licensed under Apache License 2.0 (Apache-2.0)");
-            Console.WriteLine("The MQTT server and client is licensed under the MIT license (MIT) (see below)");
-            Console.WriteLine("Portions copyright(c) by OPC Foundation, Inc. and licensed under the Reciprocal Community License (RCL)");
-            */
             Console.WriteLine(
             "Copyright(c) 2019-2020 PHOENIX CONTACT GmbH & Co.KG <opensource@phoenixcontact.com>, author: Andreas Orzelski\n" +
             "Copyright(c) 2018-2020 Festo SE & Co.KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister\n" +
@@ -341,7 +329,6 @@ namespace Net46ConsoleServer
                 Console.WriteLine("-opcclient UPDATERATE = time in ms between getting new values");
                 Console.WriteLine("-connect SERVER,NAME,UPDATERATE = AAS Connect Server, Node Name, time in ms between publishing/subscribing new values");
                 Console.WriteLine("-registry = server IP of BaSyx registry");
-                // Console.WriteLine("FILENAME.AASX");
                 Console.ReadLine();
                 return;
             }
@@ -391,7 +378,6 @@ namespace Net46ConsoleServer
                     Uri newUri = new Uri(proxyAddress);
                     proxy.Address = newUri;
                     proxy.Credentials = new NetworkCredential(username, password);
-                    // proxy.BypassProxyOnLocal = true;
                     Console.WriteLine("Using proxy: " + proxyAddress);
 
                     clientHandler = new HttpClientHandler
@@ -423,16 +409,8 @@ namespace Net46ConsoleServer
 
             Directory.CreateDirectory("./temp");
 
-            // Register AAS to registry server
-            if (registry != null)
-            {
-                // AASXLoader.Registry.RegisterAASX(registry, host + ":" + port, AasxHttpContextHelper.DataPath);
-                /*
-                Console.WriteLine();
-                Console.WriteLine("*** Include #210 in Program.cs and AASXLoader in solution ***");
-                Console.WriteLine();
-                */
-            }
+
+
 
             string fn = null;
 
@@ -465,22 +443,18 @@ namespace Net46ConsoleServer
                 }
             }
 
-            // ParentDirectory = new System.IO.DirectoryInfo(AasxHttpContextHelper.DataPath);
 
             int envi = 0;
 
             string[] fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
             Array.Sort(fileNames);
 
-            // foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
             while (envi < fileNames.Length)
             {
-                // fn = f.Name;
                 fn = fileNames[envi];
 
                 if (fn != "" && envi < envimax)
                 {
-                    // fn = AasxHttpContextHelper.DataPath + "/" + fn;
                     Console.WriteLine("Loading {0}...", fn);
                     envFileName[envi] = fn;
                     env[envi] = new AdminShellPackageEnv(fn);
@@ -515,10 +489,8 @@ namespace Net46ConsoleServer
             fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
             Array.Sort(fileNames);
 
-            // foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("*.aasx"))
             for (int j = 0; j < fileNames.Length; j++)
             {
-                // fn = f.Name;
                 fn = fileNames[j];
 
                 if (fn != "" && envi < envimax)
@@ -541,11 +513,8 @@ namespace Net46ConsoleServer
             {
                 Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
 
-                // AasxRestServer.Start(env, host, port, new GrapevineLoggerToConsole());
                 AasxRestServer.Start(env, host, port, https); // without Logger
 
-                // SetRestTimer(10000); // GET and PUT every 10 seconds
-                                     // OnRestTimedEvent(null, null);
 
                 Console.WriteLine("REST Server started..");
             }
@@ -590,20 +559,6 @@ namespace Net46ConsoleServer
 
                 string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
 
-                /*
-                string content = "";
-                try
-                {
-                    var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                    // httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
-                    var result = httpClient.PostAsync(connectServer + "/connect", contentJson).Result;
-                    content = ContentToString(result.Content);
-                }
-                catch
-                {
-
-                }
-                */
                 string content = "OK";
                 if (content == "OK")
                 {
@@ -646,37 +601,10 @@ namespace Net46ConsoleServer
 
             if (connectServer != "")
             {
-                /*
-                HttpClient httpClient;
-                if (clientHandler != null)
-                {
-                    httpClient = new HttpClient(clientHandler);
-                }
-                else
-                {
-                    httpClient = new HttpClient();
-                }
-
-                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
-
-                string content = "";
-                try
-                {
-                    var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                    // httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
-                    var result = httpClient.PostAsync(connectServer + "/disconnect", contentJson).Result;
-                    content = ContentToString(result.Content);
-                }
-                catch
-                {
-
-                }
-                */
 
                 if (connectLoop)
                 {
                     connectLoop = false;
-                    // connectThread.Abort();
                 }
             }
 
@@ -758,7 +686,6 @@ namespace Net46ConsoleServer
 
                     adp.source = connectNodeName;
 
-                    // var aaslist = new List<string>();
                     int aascount = Net46ConsoleServer.Program.env.Length;
 
                     for (int j = 0; j < aascount; j++)
@@ -1074,7 +1001,6 @@ namespace Net46ConsoleServer
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
-            // RunScript();
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
@@ -1091,7 +1017,6 @@ namespace Net46ConsoleServer
 
         private static void OnScriptTimedEvent(Object source, ElapsedEventArgs e)
         {
-            // Console.WriteLine("RunScript");
             RunScript();
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
@@ -1112,16 +1037,9 @@ namespace Net46ConsoleServer
 
         private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
         {
-            //            if (RESTalreadyRunning)
-            //                return;
-            // return;
 
             RESTalreadyRunning = true;
 
-            // string GETSUBMODEL = "OPC3";
-            // string GETURL = "http://192.168.1.10:51310";
-            // string PUTSUBMODEL = "OPC3";
-            // string PUTURL = "http://lin-eu-tsdvc03.europe.phoenixcontact.com:51310";
             string GETSUBMODEL = "";
             string GETURL = "";
             string PUTSUBMODEL = "";
@@ -1241,7 +1159,6 @@ namespace Net46ConsoleServer
                             try
                             {
                                 var client = new AasxRestServerLibrary.AasxRestClient(PUTURL);
-                                // theOnlineConnection = client;
                                 string result = client.PutSubmodel(json);
                             }
                             catch
@@ -1256,26 +1173,21 @@ namespace Net46ConsoleServer
             RESTalreadyRunning = false;
 
             // start MQTT Client as a worker (will start in the background)
-            // Console.WriteLine("Publish MQTT");
             var worker = new BackgroundWorker();
             worker.DoWork += async (s1, e1) =>
             {
 
-                //AasxRestServerLibrary.AasxRestServer.Start(this.thePackageEnv, Options.RestServerHost, Options.RestServerPort, logger);
                 try
                 {
-                    // await AasxMqttClient.MqttClient.StartAsync(this.thePackageEnv, logger);
                     await AasxMqttClient.MqttClient.StartAsync(env);
                 }
                 catch (Exception)
                 {
-                    // logger.Error(e);
                 }
             };
             worker.RunWorkerCompleted += (s1, e1) =>
             {
-                // in any case, close flyover
-                // CloseFlyover();
+
             };
             worker.RunWorkerAsync();
         }
@@ -1305,7 +1217,6 @@ namespace Net46ConsoleServer
             if (bvs == null)
             {
                 Console.WriteLine("node {0} does not exist in server!", nodeId);
-                //throw new ArgumentNullException("Error on OPCWrite. Node does not exist?");
                 return false;
             }
             var convertedValue = Convert.ChangeType(value, bvs.Value.GetType()) ;
@@ -1390,7 +1301,6 @@ namespace Net46ConsoleServer
                             if (Username == "" && Password == "")
                             {
                                 Console.WriteLine("Using Anonymous to login ...");
-                                // return false;
                             }
 
                             // try to get the client from dictionary, else create and add it
@@ -1398,7 +1308,6 @@ namespace Net46ConsoleServer
                             lock (Program.opcclientAddLock)
                             {
                                 if (!OPCClients.TryGetValue(URL, out client))
-                                // if (!OPCClients.TryGetValue(sm.idShort, out client))
                                 {
                                     try
                                     {
@@ -1407,7 +1316,6 @@ namespace Net46ConsoleServer
                                         Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
                                         client.ConsoleSampleClient().Wait();
                                         // add it to the dictionary under this submodels idShort
-                                        // OPCClients.Add(sm.idShort, client);
                                         OPCClients.Add(URL, client);
                                     }
                                     catch (AggregateException ae)
@@ -1447,10 +1355,9 @@ namespace Net46ConsoleServer
                             for (j = 0; j < count; j++)
                             {
                                 var sme = sm.submodelElements[j].submodelElement;
-                                //Console.WriteLine("{0} contains {1}", sm.idShort, sme.idShort);
                                 // some preparations for multiple AAS below
                                 int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
-                                // string AASIdShort = "AAS"; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+
                                 string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
                                 string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
                                 string nodePath = Path; // generally starts with Submodel idShort
@@ -1463,8 +1370,6 @@ namespace Net46ConsoleServer
             }
             if (!initial)
             {
-                // StateHasChanged();
-                // dataVersion++;
                 changeDataVersion();
             }
             return true;
@@ -1549,7 +1454,6 @@ namespace Net46ConsoleServer
                                         {
                                             var p1 = ref1 as AdminShell.Property;
                                             // Simulate changes
-                                            // p1.value = Convert.ToString(Convert.ToInt32(p1.value) + 5);
                                             var sm2 = ref2 as AdminShell.Submodel;
                                             var p3 = ref3 as AdminShell.Property;
                                             int count2 = sm2.submodelElements.Count;
@@ -1577,14 +1481,9 @@ namespace Net46ConsoleServer
         {
             if (sme is AdminShell.Property)
             {
-                // Console.WriteLine("{0} is a Property ", sme);
                 var p = sme as AdminShell.Property;
-                // string clientNodeName = nodePath + "." + p.idShort;
                 string clientNodeName = nodePath + p.idShort;
                 string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.idShort);
-                // string serverNodeId = string.Format("{0}.{1}{2}.Value", serverNodePrefix, nodePath, p.idShort);
-                // string serverNodeId = string.Format("{0}.{1}.Value", nodePath, p.idShort);
-                // string serverNodeId = string.Format("{0}{1}.Value", nodePath, p.idShort);
                 NodeId clientNode = new NodeId(clientNodeName, (ushort)clientNamespace);
                 UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
             }
@@ -1593,7 +1492,6 @@ namespace Net46ConsoleServer
                 var collection = sme as AdminShell.SubmodelElementCollection;
                 for (int i = 0; i < collection.value.Count; i++)
                 {
-                    //Console.WriteLine("Collection {0} contains {1}", collection.idShort, collection.value[i].submodelElement);
                     string newNodeIdBase = nodePath + "." + collection.idShort;
                     WalkSubmodelElement(collection.value[i].submodelElement, newNodeIdBase, serverNodePrefix, client, clientNamespace);
                 }
@@ -1605,7 +1503,6 @@ namespace Net46ConsoleServer
         string value;
         try
         {
-            //Console.WriteLine(string.Format("Trying to read {0}", clientNodeId.ToString()));
             value = client.ReadSubmodelElementValue(clientNodeId);
             Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
         }
@@ -1751,11 +1648,9 @@ namespace Net46ConsoleServer
                 e.Accept = autoAccept;
                 if (autoAccept)
                 {
-                    // Console.WriteLine("Accepted Certificate: {0}", e.Certificate.Subject);
                 }
                 else
                 {
-                    // Console.WriteLine("Rejected Certificate: {0}", e.Certificate.Subject);
                 }
             }
         }
@@ -1821,7 +1716,6 @@ namespace Net46ConsoleServer
                     }
                     item += String.Format(":{0}", session.Id);
                 }
-                // Console.WriteLine(item);
             }
         }
 

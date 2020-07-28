@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,29 +8,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-/*
-using Microsoft.AspNet.SignalR;
-using Microsoft.AspNet.SignalR.Transports;
-using Owin;
-
-namespace MyApplication
-{
-    public static class Startup
-    {
-        public static void ConfigureSignalR(IAppBuilder app)
-        {
-            // If using the global dependency resolver
-            TurnOfForeverFrame(GlobalHost.DependencyResolver);
-            app.MapSignalR();
-        }
-        public static void TurnOfForeverFrame(IDependencyResolver resolver)
-        {
-            var transportManager = resolver.Resolve<ITransportManager>() as TransportManager;
-            transportManager.Remove("webSockets");
-        }
-    }
-}
-*/
 
 namespace AasxBlazor
 {
@@ -42,9 +19,7 @@ namespace AasxBlazor
 
             CreateHostBuilder(args).Build().RunAsync();
 
-            Net46ConsoleServer.Program.Main(args);
-            
-            // CreateHostBuilder(args).Build().Run();
+            Net46ConsoleServer.Program.Main(args);            
 
         }
 

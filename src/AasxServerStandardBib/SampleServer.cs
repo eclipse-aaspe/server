@@ -1,4 +1,4 @@
-/* ========================================================================
+﻿/* ========================================================================
  * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
@@ -86,10 +86,6 @@ namespace AasOpcUaServer
             // request notifications when the user identity is changed. all valid users are accepted by default.
             server.SessionManager.ImpersonateUser += new ImpersonateEventHandler(SessionManager_ImpersonateUser);
 
-            /*
-            if (theServerOptions != null && theServerOptions.FinalizeAction != null)
-                theServerOptions.FinalizeAction();
-            */
         }
 
         /// <summary>
@@ -140,10 +136,6 @@ namespace AasOpcUaServer
             if (x.NodeManagers.Count>0)
             {
                 var cm = x.NodeManagers[0] as CustomNodeManager2;
-                /* OZ
-                if (cm != null)
-                    cm.AasInjectedNodes = aasnm.GenerateInjectNodeStates();
-                */
             }
 
             // ok
@@ -168,12 +160,8 @@ namespace AasOpcUaServer
             properties.BuildNumber      = Utils.GetAssemblyBuildNumber();
             properties.BuildDate        = Utils.GetAssemblyTimestamp();
 
-            // TBD - All applications have software certificates that need to added to the properties.
 
-            // for (int ii = 0; ii < certificates.Count; ii++)
-            // {
-            //    properties.SoftwareCertificates.Add(certificates[ii]);
-            // }
+
 
             return properties; 
         }

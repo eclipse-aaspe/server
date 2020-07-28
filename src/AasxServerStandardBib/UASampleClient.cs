@@ -9,7 +9,6 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
-
 using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
@@ -52,7 +51,6 @@ namespace SampleClient
                 Utils.Trace("ServiceResultException:" + ex.Message);
                 Console.WriteLine("Exception: {0}", ex.Message);
                 Console.WriteLine("press any key to continue");
-                // Console.ReadKey();
                 return;
             }
 
@@ -86,7 +84,6 @@ namespace SampleClient
 
         public async Task ConsoleSampleClient()
         {
-            // Console.WriteLine("1 - Create an Application Configuration.");
             exitCode = ExitCode.ErrorCreateApplication;
 
             ApplicationInstance application = new ApplicationInstance
@@ -117,16 +114,13 @@ namespace SampleClient
             }
             else
             {
-                // Console.WriteLine("    WARN: missing application certificate, using unsecure connection.");
             }
 
-            // Console.WriteLine("2 - Discover endpoints of {0}.", endpointURL);
             exitCode = ExitCode.ErrorDiscoverEndpoints;
             var selectedEndpoint = CoreClientUtils.SelectEndpoint(endpointURL, haveAppCertificate, 15000);
             // Console.WriteLine("    Selected endpoint uses: {0}",
             selectedEndpoint.SecurityPolicyUri.Substring(selectedEndpoint.SecurityPolicyUri.LastIndexOf('#') + 1);
 
-            // Console.WriteLine("3 - Create a session with OPC UA server.");
             exitCode = ExitCode.ErrorCreateSession;
             var endpointConfiguration = EndpointConfiguration.Create(config);
             var endpoint = new ConfiguredEndpoint(null, selectedEndpoint, endpointConfiguration);
@@ -187,14 +181,6 @@ namespace SampleClient
             if (e.Error.StatusCode == StatusCodes.BadCertificateUntrusted)
             {
                 e.Accept = autoAccept;
-                if (autoAccept)
-                {
-                    // Console.WriteLine("Accepted Certificate: {0}", e.Certificate.Subject);
-                }
-                else
-                {
-                    // Console.WriteLine("Rejected Certificate: {0}", e.Certificate.Subject);
-                }
             }
         }
 

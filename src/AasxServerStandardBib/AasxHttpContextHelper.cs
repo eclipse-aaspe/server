@@ -211,8 +211,7 @@ namespace AasxRestServerLibrary
             if (aasid == null || aasid.Trim() == "" || aasid.Trim().ToLower() == "id")
                 return Packages[0].AasEnv.AdministrationShells[0];
 
-            // resolve an ID?
-            // var specialHandles = this.CreateHandlesFromQueryString(queryStrings);
+
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(aasid, specialHandles);
             if (handleId != null && handleId.identification != null)
@@ -229,7 +228,6 @@ namespace AasxRestServerLibrary
                 return null;
 
             // via handle
-            // var specialHandles = this.CreateHandlesFromQueryString(queryStrings);
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
 
@@ -260,7 +258,6 @@ namespace AasxRestServerLibrary
                 return null;
 
             // via handle
-            // var specialHandles = this.CreateHandlesFromQueryString(queryStrings);
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
             if (handleId != null && handleId.identification != null)
@@ -331,14 +328,6 @@ namespace AasxRestServerLibrary
             if (aas == null)
                 return null;
 
-            // via handle
-            // var specialHandles = this.CreateHandlesFromQueryString(queryStrings);
-            /*
-            var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
-            var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
-            if (handleId != null && handleId.identification != null)
-                return Packages[0].AasEnv.FindSubmodel(handleId.identification);
-            */
             // no, iterate & find
 
             foreach (var smref in aas.submodelRefs)
@@ -361,7 +350,6 @@ namespace AasxRestServerLibrary
                 return null;
 
             // via handle
-            // var specialHandles = this.CreateHandlesFromQueryString(queryStrings);
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
             if (handleId != null && handleId.identification != null)
@@ -385,7 +373,6 @@ namespace AasxRestServerLibrary
                 return null;
 
             // via handle
-            // var specialHandles = this.CreateHandlesFromQueryString(queryStrings);
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(cdid, specialHandles);
             if (handleId != null && handleId.identification != null)
@@ -551,7 +538,6 @@ namespace AasxRestServerLibrary
             context.Response.ContentLength64 = stream.Length;
             context.Response.SendChunked = true;
 
-            // context.Response.Advanced.ContentType = "application/pdf";
             if (headerAttachmentFileName != null)
                 context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
 
@@ -638,15 +624,7 @@ namespace AasxRestServerLibrary
             }
 
             // OZ
-            // return as JSON
-            /*
-            dynamic res = new ExpandoObject();
-            res.AAS = aas;
-            var cr = new AdaptiveFilterContractResolver(deep: true, complete: true);
-            SendJsonResponse(context, res, cr);
 
-            return;
-            */
 
             // create a new, filtered AasEnv
             AdminShell.AdministrationShellEnv copyenv = null;
@@ -1083,7 +1061,6 @@ namespace AasxRestServerLibrary
             AdminShell.Submodel submodel = null;
             try
             {
-                // submodel = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Submodel>(context.Request.Payload);
                 using (TextReader reader = new StringReader(context.Request.Payload))
                 {
                     JsonSerializer serializer = new JsonSerializer();
@@ -1220,8 +1197,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
             if (sm == null)
             {
@@ -1257,8 +1232,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -1393,8 +1366,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -1437,8 +1408,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -1481,8 +1450,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -1539,8 +1506,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -1602,9 +1567,6 @@ namespace AasxRestServerLibrary
             AdminShell.SubmodelElement sme = null;
             try
             {
-                // JsonSerializer serializer = new JsonSerializer();
-                // serializer.Converters.Add(new AdminShell.JsonAasxConverter("modelType", "name"));
-                // this.aasenv = (AdministrationShellEnv)serializer.Deserialize(file, typeof(AdministrationShellEnv));
                 sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(context.Request.Payload, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
             }
             catch (Exception ex)
@@ -1621,8 +1583,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -1704,8 +1664,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null || elemids == null || elemids.Length < 1)
@@ -1765,8 +1723,6 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            // var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
             var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
@@ -2044,15 +2000,6 @@ namespace AasxRestServerLibrary
 
             // OZ
             // Hack ASSX laden
-            /*
-            if (ids[0].idType == "AASX")
-            {
-                SwitchToAASX = ids[0].id;
-                Net46ConsoleServer.MySampleServer.quitEvent.Set();
-                SendTextResponse(context, "switching done");
-                return;
-            }
-            */
 
             // turn these list into a list of Handles
             var res = new List<AasxHttpHandleIdentification>();
@@ -2472,7 +2419,6 @@ namespace AasxRestServerLibrary
                 {
                     var enc = new System.Text.ASCIIEncoding();
                     token = Jose.JWT.Encode(payload, enc.GetBytes(sessionRandom[sessionCount]), JwsAlgorithm.HS256);
-                    // token = Jose.JWT.Encode(payload, publicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
                     Console.WriteLine("Security 3.3 Server: Sign sessionID by server sessionRandom");
                 }
                 catch
@@ -2526,7 +2472,6 @@ namespace AasxRestServerLibrary
 
             index = -1; // not found
 
-            // var parsed = JObject.Parse(context.Request.Payload);
             string[] split = null;
 
             // Check bearer token
@@ -2539,7 +2484,6 @@ namespace AasxRestServerLibrary
                 {
                     if (split[0].ToLower() == "bearer")
                     {
-                        // Console.WriteLine();
                         Console.WriteLine("Received bearer token = " + split[1]);
                         bearerToken = split[1];
                     }
@@ -2550,7 +2494,6 @@ namespace AasxRestServerLibrary
                 split = context.Request.Url.ToString().Split(new char[] { '?' });
                 if (split != null && split.Length > 1 && split[1] != null)
                 {
-                    // Console.WriteLine();
                     Console.WriteLine("Received query string = " + split[1]);
                     bearerToken = split[1];
                 }
@@ -2643,11 +2586,6 @@ namespace AasxRestServerLibrary
                             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
                             payload = Jose.JWT.Decode(bearerToken, enc.GetBytes(random), JwsAlgorithm.HS256); // correctly signed by session token?
                             break;
-                        /*
-                        case 'T':
-                            payload = Jose.JWT.Decode(bearerToken, sessionUserPulicKey[id], JwsAlgorithm.RS256); // correctly signed by session token?
-                            break;
-                        */
                     }
                 }
                 catch
@@ -2741,7 +2679,6 @@ namespace AasxRestServerLibrary
             int index = -1;
 
             // check authentication
-            // if (withAuthentification)
             if (false && withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
@@ -2781,7 +2718,6 @@ namespace AasxRestServerLibrary
             Console.WriteLine("Security 5.1 Server: Check bearer token and access rights");
             Console.WriteLine("Security 5.2 Server: Validate that bearer token is signed by session unique random");
 
-            // if (accessrights == null || index == -1)
             if (accessrights == null)
             {
                 res.error = "You are not authorized for this operation!";
@@ -2791,22 +2727,6 @@ namespace AasxRestServerLibrary
 
             res.confirm = "Authorization = " + accessrights;
 
-            /*
-            X509Certificate2 x509 = null;
-            // Crypt File
-            string fileCert = "./user/" + sessionUserName[index] + ".cer";
-            if (File.Exists(fileCert))
-            {
-                x509 = new X509Certificate2(fileCert);
-            }
-            else
-            {
-                fileCert = "./temp/" + sessionUserName[index] + ".cer";
-                x509 = new X509Certificate2(fileCert);
-            }
-
-            var publicKey = x509.GetRSAPublicKey();
-            */
 
             Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
@@ -2829,7 +2749,6 @@ namespace AasxRestServerLibrary
             int index = -1;
 
             // check authentication
-            // if (withAuthentification)
             if (false && withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
@@ -2887,7 +2806,6 @@ namespace AasxRestServerLibrary
                                     {
                                         var sme = sm.submodelElements[j].submodelElement;
                                         var p = sme as AdminShell.Property;
-                                        // Console.WriteLine(p.idShort + " : " + p.value);
                                         securityUserName[j] = p.idShort;
                                         securityUserPassword[j] = p.value;
                                     }
@@ -2904,7 +2822,6 @@ namespace AasxRestServerLibrary
                                     {
                                         var sme = sm.submodelElements[j].submodelElement;
                                         var p = sme as AdminShell.Property;
-                                        // Console.WriteLine(p.idShort + " : " + p.value);
                                         securityRightsName[j] = p.idShort;
                                         securityRightsValue[j] = p.value;
                                     }

@@ -177,21 +177,6 @@ namespace Opc.Ua
 
             for (int ii = 0; ii < this.Count; ii++)
             {
-                /*
-                // MIHO pointless
-                var found = false;
-                if (nodeSet.Items != null)
-                    foreach (var x in nodeSet.Items)
-                        if (x.NodeId == this[ii].NodeId.ToString())
-                            found = true;
-
-                if (found)
-                    continue;
-
-                if (this[ii].NodeId.NamespaceIndex == 2 && (uint)this[ii].NodeId.Identifier == (uint)1)
-                    ;
-                */
-
                 nodeSet.Export(context, this[ii]);
             }
 

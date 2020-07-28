@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using AdminShellNS;
-// using static AasxBlazor.Pages.__generated__TreePage;
 using static AasxBlazor.Pages.TreePage;
-// using static AasxBlazor.Pages.TreeSample;
 using Net46ConsoleServer;
 using static AdminShellNS.AdminShellV20;
 
@@ -19,8 +17,7 @@ namespace AasxBlazor.Data
 
     public class AASService
     {
-        // public AdminShell.PackageEnv env;
-        
+
         public AASService()
         {
             loadAAS();
@@ -33,8 +30,6 @@ namespace AasxBlazor.Data
         public event EventHandler NewDataAvailable;
         public void loadAAS()
         {
-            // env = new AdminShell.PackageEnv("Example_AAS_ServoDCMotor_21.aasx");
-            // env = new AdminShell.PackageEnv("BoschRexroth_HCS-TypePlate.aasx");
         }
 
         public List<Item> GetTree()

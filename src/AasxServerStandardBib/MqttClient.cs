@@ -46,9 +46,6 @@ namespace AasxMqttClient
             //create MQTT Client and Connect using options above
             IMqttClient mqttClient = new MqttFactory().CreateMqttClient();
             await mqttClient.ConnectAsync(options);
-            // if (mqttClient.IsConnected == true)
-            // logger.Info("### CONNECTED WITH SERVER ###");
-            // Console.WriteLine("### CONNECTED WITH SERVER ###");
 
             int iAASEnv = 0;
             for (iAASEnv = 0; iAASEnv < package.Length; iAASEnv++)
@@ -59,18 +56,6 @@ namespace AasxMqttClient
                     foreach (AdminShell.AdministrationShell aas in package[iAASEnv].AasEnv.AdministrationShells)
                     {
 
-                    // logger.Info("Publish AAS");
-                    /*
-                    Console.WriteLine("Publish AAS" + aas.idShort);
-                    var message = new MqttApplicationMessageBuilder()
-                                    .WithTopic("AAS")
-                                    .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(aas))
-                                    .WithExactlyOnceQoS()
-                                    .WithRetainFlag()
-                                    .Build();
-
-                    await mqttClient.PublishAsync(message);
-                    */
 
                         //publish submodels
                         int iSubmodel = 0;
@@ -78,7 +63,6 @@ namespace AasxMqttClient
                         {
                             if (iSubmodel == lastSubmodel)
                             {
-                                // logger.Info("Publish " + "Submodel_" + sm.idShort);
                                 Console.WriteLine("Publish MQTT AAS " + aas.idShort + " Submodel_" + sm.idShort);
 
                                 var message2 = new MqttApplicationMessageBuilder()

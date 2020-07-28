@@ -223,14 +223,7 @@ namespace AasOpcUaServer
                 // containing element
                 var o = this.entityBuilder.CreateAddObject(parent, "File", ReferenceTypeIds.HasComponent, ObjectTypeIds.FileType);
 
-                // populate attributes from the spec
-                /*
-                this.entityBuilder.CreateAddPropertyState<string>("MimeType", DataTypeIds.String, file.mimeType, ReferenceTypeIds.HasProperty, o.NodeId, VariableIds.FileType_MimeType);
-                this.entityBuilder.CreateAddPropertyState<UInt16>("OpenCount", DataTypeIds.UInt16, 0, ReferenceTypeIds.HasProperty, o.NodeId, VariableIds.FileType_OpenCount);
-                this.entityBuilder.CreateAddPropertyState<UInt64>("Size", DataTypeIds.UInt64, 0, ReferenceTypeIds.HasProperty, o.NodeId, VariableIds.FileType_Size);
-                this.entityBuilder.CreateAddPropertyState<bool>("UserWritable", DataTypeIds.Boolean, true, ReferenceTypeIds.HasProperty, o.NodeId, VariableIds.FileType_UserWritable);
-                this.entityBuilder.CreateAddPropertyState<bool>("Writable", DataTypeIds.Boolean, true, ReferenceTypeIds.HasProperty, o.NodeId, VariableIds.FileType_Writable);
-                */
+
 
                 // this first information is to provide a "off-the-shelf" size information; a Open() will re-new this
                 var fileLen = Convert.ToUInt64(package[0].GetStreamSizeFromPackage(file.value));
@@ -370,25 +363,6 @@ namespace AasOpcUaServer
         }
 
 
-        /*
-        protected ServiceResult IsResumeExecutable(
-            ISystemContext context,
-            NodeState node,
-            ref bool value)
-        {
-            value = true;
-            return ServiceResult.Good;
-        }
-
-        protected ServiceResult IsResumeUserExecutable(
-            ISystemContext context,
-            NodeState node,
-            ref bool value)
-        {
-            value = true;
-            return ServiceResult.Good;
-        }
-        */
 
     }
 }
