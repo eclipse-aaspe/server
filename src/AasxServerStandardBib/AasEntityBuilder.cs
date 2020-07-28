@@ -154,127 +154,8 @@ namespace AasOpcUaServer
             this.noteLateActions.Add(la);
         }
 
-        /*
-        /// <summary>
-        /// Top level creation functions. Uses the definitions of RootAAS, RootConceptDescriptions, RootDataSpecifications
-        /// to synthesize information model
-        /// </summary>
-        public void CreateAddInstanceObjects (AdminShell.AdministrationShellEnv env)
-        {
-            if (RootAAS == null)
-                return;
 
-            // CDs (build 1st to be "remembered" as targets for "HasDictionaryEntry")
-            if (env.ConceptDescriptions != null && this.RootConceptDescriptions != null)
-                foreach (var cd in env.ConceptDescriptions)
-                {
-                    //if (cd.identification != null && cd.identification.idType.Trim().ToUpper() == "URI")
-                    //    this.AasTypes.UriConceptDescription.CreateAddInstanceObject(this.RootConceptDescriptions, cd);
-                    //if (cd.identification != null && cd.identification.idType.Trim().ToUpper() == "IRDI")
-                    //    this.AasTypes.IrdiConceptDescription.CreateAddInstanceObject(this.RootConceptDescriptions, cd);
 
-                    this.AasTypes.ConceptDescription.CreateAddElements(this.RootConceptDescriptions, AasUaBaseEntity.CreateMode.Instance, cd);
-                }
-
-            // AAS
-            if (env.AdministrationShells != null)
-                foreach (var aas in env.AdministrationShells)
-                    this.AasTypes.AAS.CreateAddInstanceObject(RootAAS, env, aas);
-
-            // go through late actions
-            foreach (var la in this.noteLateActions)
-            {
-                // make a Reference ??
-                var lax = la as NodeLateActionLinkToReference;
-
-                // more simple case: AasReference between known entities
-                if (lax != null && lax.actionType == NodeLateActionLinkToReference.ActionType.SetAasReference
-                    && lax.uanode != null
-                    && this.package != null && this.package.AasEnv != null)
-                {
-                    // 1st, take reference and turn it into Referable
-                    var targetReferable = this.package.AasEnv.FindReferableByReference(lax.targetReference);
-                    if (targetReferable == null)
-                        continue;
-
-                    // 2nd, try to lookup the Referable and turn it into a uanode
-                    var targetNodeRec = this.LookupNodeRecordFromReferable(targetReferable);
-                    if (targetNodeRec == null || targetNodeRec.uanode == null)
-                        continue;
-
-                    // now, we have everything to formulate a reference
-                    lax.uanode.AddReference(this.AasTypes.HasAasReference.GetTypeNodeId(), false, targetNodeRec.uanode.NodeId);
-                }
-
-                // a bit more complicated: could include a "empty reference" to outside concept
-                if (lax != null && lax.actionType == NodeLateActionLinkToReference.ActionType.SetDictionaryEntry
-                    && lax.uanode != null
-                    && this.package != null && this.package.AasEnv != null)
-                {
-                    // tracking
-                    var foundAtAll = false;
-
-                    // 1st, take reference and turn it into Referable
-                    var targetReferable = this.package.AasEnv.FindReferableByReference(lax.targetReference);
-                    if (targetReferable != null)
-                    {
-                        // 2nd, try to lookup the Referable and turn it into a uanode
-                        var targetNodeRec = this.LookupNodeRecordFromReferable(targetReferable);
-                        if (targetNodeRec != null && targetNodeRec.uanode != null)
-                        {
-                            // simple case: have a target node, just make a link
-                            lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false, targetNodeRec.uanode.NodeId);
-                            foundAtAll = true;
-                        }
-                    }
-
-                    // make "empty reference"??
-                    // by definition, this makes only sense if the targetReference has exactly 1 key, as we could only have 
-                    // one key in a dictionary entry
-                    if (!foundAtAll && lax.targetReference.Keys.Count == 1)
-                    {
-                        // can turn the targetReference to a simple identification
-                        var targetId = new AdminShell.Identification(lax.targetReference.Keys[0].idType, lax.targetReference.Keys[0].value);
-
-                        // we might have such an (empty) target already available as uanode
-                        var nr = this.LookupNodeRecordFromIdentification(targetId);
-                        if (nr != null)
-                        {
-                            // just create the missing link
-                            lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false, nr.uanode?.NodeId);
-                        }
-                        else
-                        {
-                            // create NEW empty reference?
-                            if (this.RootMissingDictionaryEntries != null)
-                            {
-                                // create missing object
-                                var miss = this.CreateAddObject(
-                                    this.RootMissingDictionaryEntries,
-                                    targetId.id,
-                                    ReferenceTypeIds.HasComponent,
-                                    this.AasTypes.ConceptDescription.GetTypeObjectFor(targetId)?.NodeId);
-
-                                // add the reference
-                                lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false, miss?.NodeId);
-
-                                // put it into the NodeRecords, that it can be re-used?? no!!
-                                this.AddNodeRecord(new AasEntityBuilder.NodeRecord(miss, targetId));
-                            }
-                            else
-                            {
-                                // just create the missing link
-                                // TODO: which namespace????
-                                var missingTarget = new ExpandedNodeId("" + targetId.id, 99);
-                                lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false, missingTarget);
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-        */
 
 
         //// references
@@ -317,7 +198,6 @@ namespace AasOpcUaServer
             x.Symmetric = false;
             x.IsAbstract = false;
             x.NodeId = nodeMgr.NewType(nodeMgr.SystemContext, x, preferredNumId);
-            // y.NodeId = new NodeId(17597, 0);
             nodeMgr.AddPredefinedNode(nodeMgr.SystemContext, x) ;
 
             // set Subtype reference
@@ -439,17 +319,8 @@ namespace AasOpcUaServer
                     x.AddReference(referenceTypeFromParentId, true, parent.NodeId);
                 if (referenceTypeFromParentId == ReferenceTypeIds.HasProperty)
                     x.AddReference(referenceTypeFromParentId, true, parent.NodeId);
-                // nodeMgr.AddReference(parentNodeId, new AasReference(referenceTypeId, false, x.NodeId));
             }
 
-            /*
-            if (typeDefinitionId != null)
-            {
-                x.TypeDefinitionId = typeDefinitionId;
-                x.AddReference(ReferenceTypeIds.HasTypeDefinition, false, typeDefinitionId);
-                // nodeMgr.AddReference(x.NodeId, new AasReference(ReferenceTypeIds.HasTypeDefinition, false, typeDefinitionId));
-            }
-            */
 
             return x;
         }
@@ -515,23 +386,10 @@ namespace AasOpcUaServer
                     x.AddReference(referenceTypeFromParentId, true, parent.NodeId);
                 if (referenceTypeFromParentId == ReferenceTypeIds.HasProperty)
                     x.AddReference(referenceTypeFromParentId, true, parent.NodeId);
-                /*
-                nodeMgr.AddReference(parentNodeId, new AasReference(referenceTypeId, false, x.NodeId));
-                if (referenceTypeId == ReferenceTypeIds.HasComponent)
-                    nodeMgr.AddReference(x.NodeId, new AasReference(ReferenceTypeIds.HasComponent, true, parentNodeId));
-                if (referenceTypeId == ReferenceTypeIds.HasProperty)
-                    nodeMgr.AddReference(x.NodeId, new AasReference(ReferenceTypeIds.HasProperty, true, parentNodeId));
-                */
             }
             if (typeDefinitionId != null)
             {
                 x.TypeDefinitionId = typeDefinitionId;
-                /*
-                 x.AddReference(ReferenceTypeIds.HasTypeDefinition, false, typeDefinitionId);
-                */
-                /*
-                nodeMgr.AddReference(x.NodeId, new AasReference(ReferenceTypeIds.HasTypeDefinition, false, typeDefinitionId));
-                */
             }
 
             return x;

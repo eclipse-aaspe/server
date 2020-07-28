@@ -1,4 +1,4 @@
-/* ========================================================================
+﻿/* ========================================================================
  * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
@@ -579,22 +579,6 @@ namespace Opc.Ua.Sample
                 }
 
                 // add reference from supertype for type nodes.
-                /*
-                BaseTypeState type = source as BaseTypeState;
-
-                if (type != null && !NodeId.IsNull(type.SuperTypeId))
-                {
-                    if (!IsNodeIdInNamespace(type.SuperTypeId))
-                    {
-                        AddExternalReference(
-                            type.SuperTypeId,
-                            ReferenceTypeIds.HasSubtype,
-                            false,
-                            type.NodeId,
-                            externalReferences);
-                    }
-                }
-                */
 
                 IList<IReference> references = new List<IReference>();
                 source.GetReferences(SystemContext, references);
