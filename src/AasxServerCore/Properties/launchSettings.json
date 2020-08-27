@@ -2,7 +2,7 @@
   "profiles": {
     "AasxServerCore": {
       "commandName": "Project",
-      "commandLineArgs": "-datapath D:\\aasx -rest"
+      "commandLineArgs": "-datapath C:\\Hoffmeister\\git\\github\\admin-shell-io\\aasx-server-factory\\AasxServerWindows\\bin\\Debug -rest"
     }
   }
 }

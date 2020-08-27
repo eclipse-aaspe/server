@@ -10,7 +10,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "commandLineArgs": "-rest -datapath D:/ExampleSubscribe -connect h2841345.stratoserver.net:52000,AASX2,500",
+      "commandLineArgs": "-rest -datapath C:\\Hoffmeister\\git\\github\\admin-shell-io\\aasx-server-factory\\AasxServerWindows\\bin\\Debug",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -18,12 +18,12 @@
     },
     "AasxBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-rest -connect http://localhost:52000,AASX1,2000 -edit",
+      "commandLineArgs": "-rest -datapath C:\\Development\\aasx",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5000"
+      "applicationUrl": "http://localhost:5001"
     }
   }
 }

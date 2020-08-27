@@ -8,6 +8,14 @@ a, .btn-link {
     color: #0366d6;
 }
 
+img {
+    max-width: 80%;
+    max-height: auto;
+}
+
+.square {
+}
+
 .btn-primary {
   color: #fff;
   background-color: #1b6ec2;

@@ -5,102 +5,114 @@
 @using System
 @implements IDisposable
 
-<div class="col-12 row">
-    <br />
-    <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
-        <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
-              @bind-SelectedNode="SelectedNode"
-              @bind-ExpandedNodes="ExpandedNodes"
-              HasChildNodes="@(item => item.Childs?.Any() == true)">
-            <TitleTemplate>
-                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span> @ViewNodeID(context)@ViewNodeInfo(context)
-                <strong><span style="color:blue">@getSymbols(context)</span></strong>
-            </TitleTemplate>
-        </Tree>
-    </div>
-    <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
-        <div class="sticky-top" style="word-wrap:break-word">
-            @{
-                <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
-                for (int line = 0; line < 6; line++)
-                {
-                    string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
-                    string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
-                    if (nodeDetails0 != "" && nodeDetails1 != "")
+    <div class="col-12 row">
+        <br />
+        <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
+            <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
+                  @bind-SelectedNode="SelectedNode"
+                  @bind-ExpandedNodes="ExpandedNodes"
+                  HasChildNodes="@(item => item.Childs?.Any() == true)">
+                <TitleTemplate>
+                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span> @ViewNodeID(context)@ViewNodeInfo(context)
+                    <strong><span style="color:blue">@getSymbols(context)</span></strong>
+                </TitleTemplate>
+            </Tree>
+        </div>
+        <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
+            <div class="sticky-top" style="word-wrap:break-word">
+                @{
+                    <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
+                    for (int line = 0; line < 6; line++)
                     {
-                        <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
-                    }
-                }
-                if (selectedNode != null && hasDownloadFile(selectedNode))
-                {
-                    <button @onclick="DownloadFile">Download File</button><br>
-                }
-                string link = getLink(selectedNode);
-                if (selectedNode != null && link != "")
-                {
-                    // <a href="@link" target="_blank">@link</a><br>
-                    <button onclick="window.location.href = '@link';">Download</button><br>
-                }
-                if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
-                {
-                    bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                    bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                    if (toPublish)
-                    {
-                        <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
-                    }
-                    else
-                    {
-                        <button @onclick="setSubmodelToPublish">Publish</button>
-                    }
-                    if (toSubscribe)
-                    {
-                        <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
-                    }
-                    else
-                    {
-                        <button @onclick="setSubmodelToSubscribe">Subscribe</button>
-                    }
-                    // <button onclick="window.location.href = '@link';">Subscribe</button><br>
-                    @code {
-                        private void resetSubmodelToPublish()
+                        string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
+                        string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
+                        if (nodeDetails0 != "" && nodeDetails1 != "")
                         {
-                            Program.submodelsToPublish.Remove(selectedNode.Tag);
-                        }
-                        private void setSubmodelToPublish()
-                        {
-                            bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                            if (!toSubscribe)
-                                Program.submodelsToPublish.Add(selectedNode.Tag);
-                        }
-                        private void resetSubmodelToSubscribe()
-                        {
-                            Program.submodelsToSubscribe.Remove(selectedNode.Tag);
-                        }
-                        private void setSubmodelToSubscribe()
-                        {
-                            bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                            if (!toPublish)
-                                Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                            <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
                         }
                     }
-                }
-                if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
-                {
-                    // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                    <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                    @code { private string CurrentValue { get; set; } }
-                    if (CurrentValue != null && CurrentValue != "")
+                    if (selectedNode != null && hasDownloadFile(selectedNode))
                     {
-                        if (selectedNode.Tag is Property)
+                        <button @onclick="DownloadFile">Download File</button><br>
+                        <img src="test.jpg" alt="Thumbnail" />
+                    }
+                    string link = getLink(selectedNode);
+                    if (selectedNode != null && link != "")
+                    {
+                        // <a href="@link" target="_blank">@link</a><br>
+                        <button onclick="window.location.href = '@link';">Download</button><br>
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
+                    {
+                        bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                        bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                        if (toPublish)
                         {
-                            (selectedNode.Tag as Property).value = CurrentValue;
-                            this.StateHasChanged();
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
                         }
-                        CurrentValue = "";
+                        else
+                        {
+                            <button @onclick="setSubmodelToPublish">Publish</button>
+                        }
+                        if (toSubscribe)
+                        {
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                        }
+                        else
+                        {
+                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                        }
+                        // <button onclick="window.location.href = '@link';">Subscribe</button><br>
+                        @code {
+                            private void resetSubmodelToPublish()
+                            {
+                                Program.submodelsToPublish.Remove(selectedNode.Tag);
+                            }
+                            private void setSubmodelToPublish()
+                            {
+                                bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                                if (!toSubscribe)
+                                    Program.submodelsToPublish.Add(selectedNode.Tag);
+                            }
+                            private void resetSubmodelToSubscribe()
+                            {
+                                Program.submodelsToSubscribe.Remove(selectedNode.Tag);
+                            }
+                            private void setSubmodelToSubscribe()
+                            {
+                                bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                                if (!toPublish)
+                                    Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                            }
+                        }
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                    {
+                        // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                        <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                        @code { private string CurrentValue { get; set; } }
+                        if (CurrentValue != null && CurrentValue != "")
+                        {
+                            if (selectedNode.Tag is Property)
+                            {
+                                (selectedNode.Tag as Property).value = CurrentValue;
+                                this.StateHasChanged();
+                            }
+                            CurrentValue = "";
+                        }
+                    }
+                    if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
+                    {
+                        string detailsImage = createDetailsImage(selectedNode);
+                        if (detailsImage != "")
+                        {
+                            <br />
+                            <div>
+                                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+                            </div>
+                        }
                     }
                 }
-            }
         </div>
     </div>
 </div>
@@ -220,6 +232,66 @@
     void NewOpcData(object source, EventArgs args)
     {
         InvokeAsync(() => this.StateHasChanged());
+    }
+
+    string createDetailsImage(Item item)
+    {
+        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
+
+        if (item == null)
+        {
+            return "";
+        }
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+            if (s != null)
+            {
+                /*
+                using (var fileStream = new System.IO.FileStream("details.jpg", System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                {
+                    s.CopyTo(fileStream);
+                }
+                */
+                using (var m = new System.IO.MemoryStream())
+                {
+                    s.CopyTo(m);
+                    return System.Convert.ToBase64String(m.ToArray());
+                }
+            }
+        }
+
+        if (o is File)
+        {
+            var f = o as File;
+            // Test for /aasx/
+            string[] split = f.value.Split(new Char[] { '/' });
+            if (split[1].ToLower() == "aasx")
+            {
+                split = f.value.Split(new Char[] { '.' });
+                switch(split.Last().ToLower())
+                {
+                    case "jpg":
+                    case "bmp":
+                        var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
+                        if (s != null)
+                        {
+                            using (var m = new System.IO.MemoryStream())
+                            {
+                                s.CopyTo(m);
+                                return System.Convert.ToBase64String(m.ToArray());
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        return "";
     }
 
     bool hasDownloadFile(Item item)
@@ -1113,11 +1185,11 @@
                 case 3:
                 case 4:
                     ret = "";
-                    if (ls.Count > line-1)
+                    if (ls.Count > line - 1)
                     {
-                        ret = ls.langString[line-1].lang;
+                        ret = ls.langString[line - 1].lang;
                         if (col == 1)
-                            ret = ls.langString[line-1].str + "";
+                            ret = ls.langString[line - 1].str + "";
                     }
                     break;
                 case 5:

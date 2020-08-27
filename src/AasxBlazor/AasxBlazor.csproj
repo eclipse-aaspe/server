@@ -16,4 +16,6 @@
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>
+
 </Project>

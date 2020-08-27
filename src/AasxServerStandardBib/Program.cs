@@ -27,9 +27,13 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http;
 using System.Net;
-using System.Dynamic;
+// using System.Dynamic;
 using Jose;
-
+using System.Xml.Linq;
+// using System.Web.Helpers;
+using System.IO.Compression;
+using System.Net.Http.Headers;
+// using AASXLoader;
 namespace Net46ConsoleServer
 {
     static public class Program
@@ -120,6 +124,7 @@ namespace Net46ConsoleServer
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
+
         static public void Main(string[] args)
         {
             // default command line options
@@ -131,6 +136,7 @@ namespace Net46ConsoleServer
             int opcclient_rate = 5000;  // 5 seconds
             string registry = null;
             string proxyFile = "";
+            bool generate = false;
 
             Console.WriteLine("--help for options and help");
             Console.WriteLine(
@@ -301,6 +307,14 @@ namespace Net46ConsoleServer
                     continue;
                 }
 
+                if (x == "-generate")
+                {
+                    generate = true;
+                    Console.WriteLine(args[i]);
+                    i++;
+                    continue;
+                }
+
                 if (x == "--help")
                 {
                     help = true;
@@ -348,6 +362,9 @@ namespace Net46ConsoleServer
             string username = "";
             string password = "";
 
+
+            if (generate)
+                proxyFile = "/dat/proxy.dat";
             if (proxyFile != "")
             {
                 if (!File.Exists(proxyFile))
@@ -387,6 +404,20 @@ namespace Net46ConsoleServer
                     };
                 }
             };
+
+            // OZ
+            Console.WriteLine("AAS Factory\n");
+
+            if (generate)
+            {
+                Console.WriteLine("Press ENTER");
+                Console.ReadLine();
+
+                if (true)
+                    return;
+                //
+            }
+
 
             hostPort = host + ":" + port;
 
@@ -559,6 +590,20 @@ namespace Net46ConsoleServer
 
                 string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
 
+                /*
+                string content = "";
+                try
+                {
+                    var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+                    // httpClient.PostAsync("http://" + connectServer + "/connect", contentJson).Wait();
+                    var result = httpClient.PostAsync(connectServer + "/connect", contentJson).Result;
+                    content = ContentToString(result.Content);
+                }
+                catch
+                {
+
+                }
+                */
                 string content = "OK";
                 if (content == "OK")
                 {
@@ -601,6 +646,32 @@ namespace Net46ConsoleServer
 
             if (connectServer != "")
             {
+                /*
+                HttpClient httpClient;
+                if (clientHandler != null)
+                {
+                    httpClient = new HttpClient(clientHandler);
+                }
+                else
+                {
+                    httpClient = new HttpClient();
+                }
+
+                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
+
+                string content = "";
+                try
+                {
+                    var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+                    // httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
+                    var result = httpClient.PostAsync(connectServer + "/disconnect", contentJson).Result;
+                    content = ContentToString(result.Content);
+                }
+                catch
+                {
+
+                }
+                */
 
                 if (connectLoop)
                 {
@@ -801,7 +872,7 @@ namespace Net46ConsoleServer
                             {
                                 int aasIndex = Convert.ToInt32(td2.extensions);
 
-                                dynamic res = new ExpandoObject();
+                                dynamic res = new System.Dynamic.ExpandoObject();
 
                                 Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[aasIndex]);
                                 string binaryBase64 = Convert.ToBase64String(binaryFile);
@@ -1001,6 +1072,7 @@ namespace Net46ConsoleServer
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
+            // RunScript();
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
