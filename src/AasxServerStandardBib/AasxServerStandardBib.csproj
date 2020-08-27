@@ -11,7 +11,6 @@
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
     <PackageReference Include="jose-jwt" Version="2.5.0" />
-    <PackageReference Include="JWT" Version="5.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.2" />
     <PackageReference Include="Microsoft.CSharp" Version="4.6.0" />
     <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8" />
