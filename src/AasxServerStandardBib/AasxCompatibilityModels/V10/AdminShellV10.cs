@@ -1,3 +1,5 @@
+#define UseAasxCompatibilityModels
+
 using System.Xml;
 using System.Runtime;
 using System.ComponentModel;
@@ -23,7 +25,7 @@ The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www
 
 namespace AasxCompatibilityModels
 {
-    #region Utils
+#region Utils
     // 
     // Utils
     //
@@ -113,10 +115,10 @@ namespace AasxCompatibilityModels
 
     }
 
-    #endregion
+#endregion
 
 
-    #region AdminShell_V1_0
+#region AdminShell_V1_0
 
     /// <summary>
     /// Version of Details of Administration Shell Part 1 V1.0 published Nov/Dec/Jan 2018/19
@@ -4607,7 +4609,7 @@ namespace AasxCompatibilityModels
 
     }
 
-    #endregion
+#endregion
 }
 
 #endif
