@@ -2772,8 +2772,8 @@ namespace AasxRestServerLibrary
         public static string[] securityRightsName = null;
         public static string[] securityRightsValue = null;
 
-        public static string[] serverCertfileNames;
-        public static X509Certificate2[] serverCerts;
+        public static string[] serverCertfileNames = null;
+        public static X509Certificate2[] serverCerts = null;
 
         public static void securityInit()
         {
@@ -2835,24 +2835,30 @@ namespace AasxRestServerLibrary
 
         public static void serverCertsInit()
         {
-            serverCertfileNames = Directory.GetFiles("./authservercerts", "*.cer");
-
-            serverCerts = new X509Certificate2[serverCertfileNames.Length];
-
-            for (int i = 0; i < serverCertfileNames.Length; i++)
+            if (Directory.Exists("./authservercerts"))
             {
-                serverCerts[i] = new X509Certificate2(serverCertfileNames[i]);
-                Console.WriteLine("Loaded auth server certifcate: " + Path.GetFileName(serverCertfileNames[i]));
+                serverCertfileNames = Directory.GetFiles("./authservercerts", "*.cer");
+
+                serverCerts = new X509Certificate2[serverCertfileNames.Length];
+
+                for (int i = 0; i < serverCertfileNames.Length; i++)
+                {
+                    serverCerts[i] = new X509Certificate2(serverCertfileNames[i]);
+                    Console.WriteLine("Loaded auth server certifcate: " + Path.GetFileName(serverCertfileNames[i]));
+                }
             }
         }
 
         public static X509Certificate2 serverCertFind(string authServerName)
         {
-            for (int i = 0; i < serverCertfileNames.Length; i++)
+            if (serverCertfileNames != null)
             {
-                if (Path.GetFileName(serverCertfileNames[i]) == authServerName + ".cer")
+                for (int i = 0; i < serverCertfileNames.Length; i++)
                 {
-                    return serverCerts[i];
+                    if (Path.GetFileName(serverCertfileNames[i]) == authServerName + ".cer")
+                    {
+                        return serverCerts[i];
+                    }
                 }
             }
 

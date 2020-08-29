@@ -144,15 +144,16 @@ namespace Net46ConsoleServer
             "Copyright(c) 2018-2020 Festo SE & Co.KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister\n" +
             "Copyright(c) 2019-2020 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer - Gesellschaft\n" +
             "zur Foerderung der angewandten Forschung e.V.\n" +
-            "This software is licensed under the Eclipse Public License 2.0 (EPL - 2.0)\n" +
+            "The AASX Server is licensed under the Apache License 2.0 (Apache-2.0)\n" +
             "The Newtonsoft.JSON serialization is licensed under the MIT License (MIT)\n" +
             "The Grapevine REST server framework is licensed under Apache License 2.0 (Apache - 2.0)\n" +
             "The MQTT server and client is licensed under the MIT license (MIT)\n" +
-            "Portions copyright(c) by OPC Foundation, Inc.and licensed under the Reciprocal Community License (RCL)\n" +
             "Jose-JWT is licensed under the MIT license (MIT)\n" +
             "Font Awesome is licensed under the Font Awesome Free License\n" +
+            "JetBrains.Annotations is licensed under the MIT license (MIT)\n" +
+            "The OPC UA Example Code of OPC UA Standard is licensed under the MIT license (MIT)\n" +
             "This application is a sample application for demonstration of the features of the Administration Shell.\n" +
-            "It is not allowed for productive use. The implementation uses the concepts of the document Details of the Asset\n" +
+            "The implementation uses the concepts of the document Details of the Asset\n" +
             "Administration Shell published on www.plattform-i40.de which is licensed under Creative Commons CC BY-ND 3.0 DE."
             );
             Console.WriteLine("For further details see LICENSE.TXT");
@@ -430,18 +431,18 @@ namespace Net46ConsoleServer
 
             System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
 
-            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+            if (Directory.Exists("./root"))
             {
-                X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+                foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+                {
+                    X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
 
-                root.Add(cert);
-                Console.WriteLine("Security 1.1 Add " + f.Name);
+                    root.Add(cert);
+                    Console.WriteLine("Security 1.1 Add " + f.Name);
+                }
             }
 
             Directory.CreateDirectory("./temp");
-
-
-
 
             string fn = null;
 
@@ -477,59 +478,63 @@ namespace Net46ConsoleServer
 
             int envi = 0;
 
-            string[] fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
-            Array.Sort(fileNames);
-
-            while (envi < fileNames.Length)
+            string[] fileNames = null;
+            if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                fn = fileNames[envi];
+                fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
+                Array.Sort(fileNames);
 
-                if (fn != "" && envi < envimax)
+                while (envi < fileNames.Length)
                 {
-                    Console.WriteLine("Loading {0}...", fn);
-                    envFileName[envi] = fn;
-                    env[envi] = new AdminShellPackageEnv(fn);
-                    if (env[envi] == null)
-                    {
-                        Console.Out.WriteLine($"Cannot open {fn}. Aborting..");
-                        return;
-                    }
-                    // check if signed
-                    string name = Path.GetFileName(fn);
-                    string fileCert = "./user/" + name + ".cer";
-                    if (File.Exists(fileCert))
-                    {
-                        X509Certificate2 x509 = new X509Certificate2(fileCert);
-                        envSymbols[envi] = "S";
-                        envSubjectIssuer[envi] = x509.Subject;
+                    fn = fileNames[envi];
 
-                        X509Chain chain = new X509Chain();
-                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                        bool isValid = chain.Build(x509);
-                        if (isValid)
+                    if (fn != "" && envi < envimax)
+                    {
+                        Console.WriteLine("Loading {0}...", fn);
+                        envFileName[envi] = fn;
+                        env[envi] = new AdminShellPackageEnv(fn);
+                        if (env[envi] == null)
                         {
-                            envSymbols[envi] += ";V";
-                            envSubjectIssuer[envi] += ";" + x509.Issuer;
+                            Console.Out.WriteLine($"Cannot open {fn}. Aborting..");
+                            return;
                         }
+                        // check if signed
+                        string name = Path.GetFileName(fn);
+                        string fileCert = "./user/" + name + ".cer";
+                        if (File.Exists(fileCert))
+                        {
+                            X509Certificate2 x509 = new X509Certificate2(fileCert);
+                            envSymbols[envi] = "S";
+                            envSubjectIssuer[envi] = x509.Subject;
+
+                            X509Chain chain = new X509Chain();
+                            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                            bool isValid = chain.Build(x509);
+                            if (isValid)
+                            {
+                                envSymbols[envi] += ";V";
+                                envSubjectIssuer[envi] += ";" + x509.Issuer;
+                            }
+                        }
+
                     }
-
+                    envi++;
                 }
-                envi++;
-            }
 
-            fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
-            Array.Sort(fileNames);
+                fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
+                Array.Sort(fileNames);
 
-            for (int j = 0; j < fileNames.Length; j++)
-            {
-                fn = fileNames[j];
-
-                if (fn != "" && envi < envimax)
+                for (int j = 0; j < fileNames.Length; j++)
                 {
-                    envFileName[envi] = fn;
-                    envSymbols[envi] = "L"; // Show lock
+                    fn = fileNames[j];
+
+                    if (fn != "" && envi < envimax)
+                    {
+                        envFileName[envi] = fn;
+                        envSymbols[envi] = "L"; // Show lock
+                    }
+                    envi++;
                 }
-                envi++;
             }
 
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
