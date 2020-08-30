@@ -223,14 +223,15 @@
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
 
-        SubmodelService.NewDataAvailable += NewOpcData;
+        SubmodelService.NewDataAvailable += NewData;
     }
     public void Dispose()
     {
-        SubmodelService.NewDataAvailable -= NewOpcData;
+        SubmodelService.NewDataAvailable -= NewData;
     }
-    void NewOpcData(object source, EventArgs args)
+    void NewData(object source, EventArgs args)
     {
+        Items = SubmodelService.GetTree();
         InvokeAsync(() => this.StateHasChanged());
     }
 

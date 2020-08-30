@@ -20,21 +20,25 @@ namespace AasxBlazor.Data
 
         public AASService()
         {
-            loadAAS();
-
             Program.NewDataAvailable += (s, a) =>
             {
+                buildTree();
                 NewDataAvailable?.Invoke(this, EventArgs.Empty);
             };
         }
         public event EventHandler NewDataAvailable;
-        public void loadAAS()
-        {
-        }
+
+        public static List<Item> items = null;
+        public static List<Item> viewItems = null;
 
         public List<Item> GetTree()
         {
-            List<Item> items = new List<Item>();
+            return viewItems;
+        }
+
+        public void buildTree()
+        {
+            items = new List<Item>();
             for (int i = 0; i < Program.envimax; i++)
             {
                 Item root = new Item();
@@ -96,7 +100,7 @@ namespace AasxBlazor.Data
                     items.Add(root);
                 }
             }
-            return items;
+            viewItems = items;
         }
 
         void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)

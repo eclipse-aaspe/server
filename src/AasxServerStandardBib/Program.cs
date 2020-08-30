@@ -555,6 +555,8 @@ namespace Net46ConsoleServer
                 Console.WriteLine("REST Server started..");
             }
 
+            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+
             if (runMQTT)
             {
                 AASMqttServer.MqttSeverStartAsync().Wait();
@@ -580,7 +582,8 @@ namespace Net46ConsoleServer
                 SetOPCClientTimer(opcclient_rate); // read again everytime timer expires
             }
 
-            SetScriptTimer(2000);
+            // TODO
+            // SetScriptTimer(2000);
 
             if (connectServer != "")
             {
@@ -745,6 +748,8 @@ namespace Net46ConsoleServer
 
         public static void connectThreadLoop()
         {
+            bool newConnectData = false;
+
             while (connectLoop)
             {
                 TransmitFrame tf = new TransmitFrame
@@ -863,6 +868,7 @@ namespace Net46ConsoleServer
 
                 if (content != "")
                 {
+                    newConnectData = false;
                     string node = "";
 
                     try
@@ -1039,6 +1045,7 @@ namespace Net46ConsoleServer
                                                         aas.AddSubmodelRef(newsmr);
                                                     }
                                                 }
+                                                newConnectData = true;
                                             }
                                         }
                                     }
@@ -1049,9 +1056,12 @@ namespace Net46ConsoleServer
                     catch
                     {
                     }
+                    if (newConnectData)
+                    {
+                        NewDataAvailable?.Invoke(null, EventArgs.Empty);
+                    }
                 }
 
-                NewDataAvailable?.Invoke(null, EventArgs.Empty);
                 Thread.Sleep(connectUpdateRate);
             }
         }
