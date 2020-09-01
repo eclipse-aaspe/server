@@ -22,11 +22,7 @@ function PackageRelease($outputDir)
     $targets = $(
     "AasxBlazor"
     "AasxServerCore"
-    <#
-    TODO (mristin, 2020-09-01): AasxServerWindows does not compile due to
-    an error related to missing dependencies.
-    #>
-    #"AasxServerWindows"
+    "AasxServerWindows"
     )
 
     foreach ($target in $targets)
