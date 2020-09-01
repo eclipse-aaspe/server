@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿#define UseAasxCompatibilityModels
+
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;

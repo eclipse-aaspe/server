@@ -16,26 +16,42 @@ Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function `
 
 function PackageRelease($outputDir)
 {
-    $buildDir = Join-Path $( GetArtefactsDir ) "build" `
-        | Join-Path -ChildPath "Release" `
-        | Join-Path -ChildPath "aasx-server"
+    $baseBuildDir = Join-Path $( GetArtefactsDir ) "build" `
+        | Join-Path -ChildPath "Release"
 
-    if (!(Test-Path $buildDir))
+    $targets = $(
+    "AasxBlazor"
+    "AasxServerCore"
+    <#
+    TODO (mristin, 2020-09-01): AasxServerWindows does not compile due to
+    an error related to missing dependencies.
+    #>
+    #"AasxServerWindows"
+    )
+
+    foreach ($target in $targets)
     {
-        throw ("The build directory with the release does " +
-                "not exist: $buildDir; did you build the solution " +
-                "with BuildForRelease.ps1?")
+        $buildDir = Join-Path $baseBuildDir $target
+
+        if (!(Test-Path $buildDir))
+        {
+            throw ("The build directory with the release does " +
+                    "not exist: $buildDir; did you build the targets " +
+                    "with BuildForRelease.ps1?")
+        }
+
+        $targetOutputDir = Join-Path $outputDir $target
+
+        New-Item -ItemType Directory -Force -Path $outputDir|Out-Null
+
+        $archPath = Join-Path $outputDir "$target.zip"
+
+        Write-Host "Compressing to: $archPath"
+
+        Compress-Archive `
+            -Path $buildDir `
+            -DestinationPath $archPath
     }
-
-    New-Item -ItemType Directory -Force -Path $outputDir|Out-Null
-
-    $archPath = Join-Path $outputDir "aasx-server.zip"
-
-    Write-Host "Compressing to: $archPath"
-
-    Compress-Archive `
-        -Path $buildDir `
-        -DestinationPath $archPath
 
     # Do not copy the source code in the releases.
     # The source code will be distributed automatically through Github releases.

@@ -42,8 +42,14 @@ jobs:
         working-directory: src
         run: powershell .\PackageRelease.ps1 -version LATEST.alpha
 
-      - name: Upload
+      - name: Upload AasxBlazor
         uses: actions/upload-artifact@v2
         with:
-          name: aasx-server.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/aasx-server.zip
+          name: AasxBlazor.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          path: artefacts/release/LATEST.alpha/AasxBlazor.zip
+
+      - name: Upload AasxServerCore
+        uses: actions/upload-artifact@v2
+        with:
+          name: AasxServerCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          path: artefacts/release/LATEST.alpha/AasxServerCore.zip
