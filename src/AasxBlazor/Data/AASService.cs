@@ -33,6 +33,7 @@ namespace AasxBlazor.Data
 
         public List<Item> GetTree()
         {
+            buildTree();
             return viewItems;
         }
 
