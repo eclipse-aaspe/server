@@ -19,20 +19,34 @@ function Main
 {
     Set-Location $PSScriptRoot
 
-    $buildDir = Join-Path $( GetArtefactsDir ) "build" `
-        | Join-Path -ChildPath "Release" `
-        | Join-Path -ChildPath "aasx-server"
+    $baseBuildDir = Join-Path $( GetArtefactsDir ) "build" `
+        | Join-Path -ChildPath "Release"
 
     if ($clean)
     {
-        Write-Host "Removing the build directory: $buildDir"
-        Remove-Item -LiteralPath $buildDir -Force -Recurse
+        Write-Host "Removing the build directory: $baseBuildDir"
+        Remove-Item -LiteralPath $baseBuildDir -Force -Recurse
     }
     else
     {
         AssertDotnet
-        Write-Host "Publishing the solution to: $buildDir"
-        dotnet.exe publish -c Release -o $buildDir
+
+        $targets = $(
+        "AasxBlazor"
+        "AasxServerCore"
+        <#
+        TODO (mristin, 2020-09-01): AasxServerWindows does not compile due to
+        an error related to missing dependencies.
+        #>
+        #"AasxServerWindows"
+        )
+
+        foreach ($target in $targets)
+        {
+            $buildDir = Join-Path $baseBuildDir $target
+            Write-Host "Publishing $target to: $buildDir"
+            dotnet.exe publish -c Release -o $buildDir $target
+        }
     }
 }
 
