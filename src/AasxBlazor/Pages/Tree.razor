@@ -5,43 +5,45 @@
 @typeparam TNode
 
 <div class="uic-tree @(Visible ? "" : "uic-tree--hidden")">
-    
+
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
         var nodeExpanded = ExpandedNodes.Contains(node);
         var nodeSelected = node.Equals(SelectedNode);
         var hasChilds = HasChildNodes(node);
 
-        <div>
-            
-            @if (hasChilds)
-            {
-                <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))">
-                    <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
-                </span>
-            }
+    <div>
 
-            <div class="uic-tree__title">
-                <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))">
-                    @TitleTemplate(node)
-                </span>
-            </div>
+        @if (hasChilds)
+        {
+            <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))">
+                <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
+            </span>
+        }
 
-            @if (hasChilds)
-            {
-                <Tree 
-                    Nodes="ChildSelector(node)"
-                    TitleTemplate="TitleTemplate" 
-                    ChildSelector="ChildSelector"
-                    ExpandedNodes="ExpandedNodes"
-                    ExpandedNodesChanged="ExpandedNodesChanged"
-                    SelectedNode="SelectedNode"
-                    SelectedNodeChanged="SelectedNodeChanged"
-                    Visible="nodeExpanded"
-                    HasChildNodes="HasChildNodes" />
-            }
-            
+        <div class="uic-tree__title">
+            <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))">
+                @TitleTemplate(node)
+            </span>
         </div>
+
+        @if (hasChilds)
+        {
+            if (nodeExpanded)
+            {
+                <Tree Nodes="ChildSelector(node)"
+                      TitleTemplate="TitleTemplate"
+                      ChildSelector="ChildSelector"
+                      ExpandedNodes="ExpandedNodes"
+                      ExpandedNodesChanged="ExpandedNodesChanged"
+                      SelectedNode="SelectedNode"
+                      SelectedNodeChanged="SelectedNodeChanged"
+                      Visible="nodeExpanded"
+                      HasChildNodes="HasChildNodes" />
+            }
+        }
+
+    </div>
     }
 
 </div>

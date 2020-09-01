@@ -18,7 +18,7 @@
     },
     "AasxBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-rest -datapath D:\\aasx",
+      "commandLineArgs": "-datapath C:\\Hoffmeister\\git\\github\\admin-shell-io\\aasx-server-factory\\AasxServerWindows\\bin\\Debug -rest",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
