@@ -20,7 +20,7 @@ function PackageRelease($outputDir)
         | Join-Path -ChildPath "Release"
 
     $targets = $(
-    "AasxBlazor"
+    "AasxServerBlazor"
     "AasxServerCore"
     "AasxServerWindows"
     )
