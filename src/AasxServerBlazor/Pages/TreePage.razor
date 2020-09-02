@@ -1,0 +1,1296 @@
+﻿@page "/"
+@inject AASService SubmodelService
+@using AasxServerBlazor.Data
+@using static AdminShellNS.AdminShellV20;
+@using System
+@implements IDisposable
+
+    <div class="col-12 row">
+        <br />
+        <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
+            <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
+                  @bind-SelectedNode="SelectedNode"
+                  @bind-ExpandedNodes="ExpandedNodes"
+                  HasChildNodes="@(item => item.Childs?.Any() == true)">
+                <TitleTemplate>
+                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span> @ViewNodeID(context)@ViewNodeInfo(context)
+                    <strong><span style="color:blue">@getSymbols(context)</span></strong>
+                </TitleTemplate>
+            </Tree>
+        </div>
+        <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
+            <div class="sticky-top" style="word-wrap:break-word">
+                @{
+                    <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
+                    for (int line = 0; line < 6; line++)
+                    {
+                        string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
+                        string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
+                        if (nodeDetails0 != "" && nodeDetails1 != "")
+                        {
+                            <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
+                        }
+                    }
+                    if (selectedNode != null && hasDownloadFile(selectedNode))
+                    {
+                        <button @onclick="DownloadFile">Download File</button><br>
+                        <img src="test.jpg" alt="Thumbnail" />
+                    }
+                    string link = getLink(selectedNode);
+                    if (selectedNode != null && link != "")
+                    {
+                        // <a href="@link" target="_blank">@link</a><br>
+                        <button onclick="window.location.href = '@link';">Download</button><br>
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
+                    {
+                        bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                        bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                        if (toPublish)
+                        {
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                        }
+                        else
+                        {
+                            <button @onclick="setSubmodelToPublish">Publish</button>
+                        }
+                        if (toSubscribe)
+                        {
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                        }
+                        else
+                        {
+                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                        }
+                        // <button onclick="window.location.href = '@link';">Subscribe</button><br>
+                        @code {
+                            private void resetSubmodelToPublish()
+                            {
+                                Program.submodelsToPublish.Remove(selectedNode.Tag);
+                            }
+                            private void setSubmodelToPublish()
+                            {
+                                bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                                if (!toSubscribe)
+                                    Program.submodelsToPublish.Add(selectedNode.Tag);
+                            }
+                            private void resetSubmodelToSubscribe()
+                            {
+                                Program.submodelsToSubscribe.Remove(selectedNode.Tag);
+                            }
+                            private void setSubmodelToSubscribe()
+                            {
+                                bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                                if (!toPublish)
+                                    Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                            }
+                        }
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                    {
+                        // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                        <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                        @code { private string CurrentValue { get; set; } }
+                        if (CurrentValue != null && CurrentValue != "")
+                        {
+                            if (selectedNode.Tag is Property)
+                            {
+                                (selectedNode.Tag as Property).value = CurrentValue;
+                                this.StateHasChanged();
+                            }
+                            CurrentValue = "";
+                        }
+                    }
+                    if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
+                    {
+                        string detailsImage = createDetailsImage(selectedNode);
+                        if (detailsImage != "")
+                        {
+                            <br />
+                            <div>
+                                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+                            </div>
+                        }
+                    }
+                }
+        </div>
+    </div>
+</div>
+
+
+@inject IJSRuntime js
+@using Net46ConsoleServer;
+
+@code {
+    async Task DownloadFile()
+    {
+        this.StateHasChanged();
+        var f = selectedNode.Tag as File;
+        var fileName = System.IO.Path.GetFileName(f.value);
+        if (fileName != "")
+        {
+            try
+            {
+                /*
+                string data;
+                using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
+                {
+                    data = reader.ReadToEnd();
+                }
+                */
+                //
+                byte[] data;
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                {
+                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
+                    data = ms.ToArray();
+                }
+                //
+                await SaveAs(js, fileName, data);
+            }
+            catch
+            {
+            }
+
+        }
+    }
+    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
+    // async Task SaveAs(IJSRuntime js, string filename, string data)
+    {
+        ; await js.InvokeAsync<object>(
+     "saveAsFile",
+     filename,
+     data
+     );
+        /*
+        await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            Convert.ToBase64String(data)
+            );
+        */
+        /*
+        await js.InvokeAsync<object>(
+            "download",
+            data,
+            filename,
+            "application/pdf"
+            );
+        */
+    }
+
+    public class Item
+    {
+        public string Text { get; set; }
+        public IEnumerable<Item> Childs { get; set; }
+        public object parent { get; set; }
+        // public List<Item> Childs { get; set; }
+        public string Type { get; set; }
+        public object Tag { get; set; }
+        public int envIndex { get; set; }
+    }
+
+    List<Item> Items = null;
+
+    IList<Item> ExpandedNodes = new List<Item>();
+    Item selectedNode;
+    Item SelectedNode
+    {
+        get { return selectedNode; }
+        set
+        {
+            selectedNode = value;
+            // OnSelectNode(selectedNode);
+        }
+    }
+
+    static ulong dataVersion = 0;
+
+    public static void checkDataVersion()
+    {
+        if (Program.getDataVersion() != dataVersion)
+        {
+            dataVersion = Program.getDataVersion();
+            // TreePage.StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Items = SubmodelService.GetTree();
+        // StateHasChanged();
+
+        //ExpandedNodes.Add(Items.Skip(1).First());
+        //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
+
+        SubmodelService.NewDataAvailable += NewData;
+    }
+    public void Dispose()
+    {
+        SubmodelService.NewDataAvailable -= NewData;
+    }
+    void NewData(object source, EventArgs args)
+    {
+        Items = SubmodelService.GetTree();
+        InvokeAsync(() => this.StateHasChanged());
+    }
+
+    string createDetailsImage(Item item)
+    {
+        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
+
+        if (item == null)
+        {
+            return "";
+        }
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+            if (s != null)
+            {
+                /*
+                using (var fileStream = new System.IO.FileStream("details.jpg", System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                {
+                    s.CopyTo(fileStream);
+                }
+                */
+                using (var m = new System.IO.MemoryStream())
+                {
+                    s.CopyTo(m);
+                    return System.Convert.ToBase64String(m.ToArray());
+                }
+            }
+        }
+
+        if (o is File)
+        {
+            var f = o as File;
+            // Test for /aasx/
+            string[] split = f.value.Split(new Char[] { '/' });
+            if (split[1].ToLower() == "aasx")
+            {
+                split = f.value.Split(new Char[] { '.' });
+                switch(split.Last().ToLower())
+                {
+                    case "jpg":
+                    case "bmp":
+                        var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
+                        if (s != null)
+                        {
+                            using (var m = new System.IO.MemoryStream())
+                            {
+                                s.CopyTo(m);
+                                return System.Convert.ToBase64String(m.ToArray());
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    bool hasDownloadFile(Item item)
+    {
+        return false;
+
+        if (item == null)
+        {
+            return false;
+        }
+
+        object o = item.Tag;
+
+        if (o is File)
+        {
+
+            var f = o as File;
+
+            // Test for /aasx/
+            string[] split = f.value.Split(new Char[] { '/' });
+            if (split[1].ToLower() == "aasx")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    string getLink(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        object o = item.Tag;
+
+        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        {
+            return "http://" + Program.hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+        }
+
+        if (o is AdministrationShell)
+        {
+            return "http://" + Program.hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+        }
+
+        if (o is File || o is Property)
+        {
+            string value = "";
+
+            if (o is File)
+            {
+                value = (o as File).value;
+            }
+            if (o is Property)
+            {
+                value = (o as Property).value;
+            }
+
+            string[] split = value.Split(new Char[] { ':' });
+            if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
+            {
+                return value;
+            }
+
+            // Test for /aasx/
+            split = value.Split(new Char[] { '/' });
+            if (split.Length > 1)
+            {
+                if (split[1].ToLower() == "aasx")
+                {
+                    return "http://" + Program.hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    string getSymbols(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "";
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            string symbols = Program.envSymbols[item.envIndex];
+
+            if (symbols != null)
+            {
+                string[] s = symbols.Split(';');
+
+                for (int i = 0; i < s.Length; i++)
+                {
+                    switch (s[i])
+                    {
+                        case "L":
+                            ret += "ENCRYPTED ";
+                            break;
+                        case "S":
+                            ret += "SIGNED ";
+                            break;
+                        case "V":
+                            ret += "VALIDATED ";
+                            break;
+                    }
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    string ViewNodeType(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "";
+
+        if (item.Type != null)
+        {
+            ret = item.Type + " ";
+        }
+
+        object o = item.Tag;
+
+        /*
+        if (o is Referable)
+        {
+            ret = (o as Referable).GetElementName();
+            return (ret);
+        }
+        */
+
+        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        {
+            ret += "AASX2";
+        }
+
+        if (o is AdministrationShell)
+        {
+            ret += "AAS";
+        }
+        if (o is Submodel)
+        {
+            ret += "Sub";
+        }
+        if (o is SubmodelElement)
+        {
+            if (o is SubmodelElementCollection)
+            {
+                ret += "Coll";
+            }
+            if (o is Property)
+            {
+                ret += "Prop";
+            }
+        }
+        if (o is Operation)
+        {
+            ret += "Opr";
+        }
+        if (o is File)
+        {
+            ret += "File";
+        }
+        if (o is Blob)
+        {
+            ret += "Blob";
+        }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            ret += "Range";
+        }
+        if (o is MultiLanguageProperty)
+        {
+            ret += "Lang";
+        }
+        if (o is RelationshipElement)
+        {
+            ret += "Rel";
+        }
+        if (o is ReferenceElement)
+        {
+            ret += "Ref";
+        }
+        if (o is Entity)
+        {
+            ret += "Ent";
+        }
+        if (o is AdminShellNS.AdminShellV20.BasicEvent)
+        {
+            ret += "Evt";
+        }
+
+        return (ret);
+    }
+
+    string ViewNodeID(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "NULL";
+
+        object o = item.Tag;
+
+        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        {
+            ret = item.Text;
+        }
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            ret = aas.idShort;
+        }
+        if (o is Submodel)
+        {
+            var sm = o as Submodel;
+            ret = "";
+            if (sm.kind != null && sm.kind.IsTemplate)
+                ret += "<T> ";
+            ret += sm.idShort;
+        }
+        if (o is SubmodelElement)
+        {
+            var sme = o as SubmodelElement;
+            ret = "";
+            if (sme.kind != null && sme.kind.IsTemplate)
+                ret += "<T> ";
+            ret += sme.idShort;
+        }
+        if (o is File)
+        {
+            var f = o as File;
+            ret = "";
+            if (f.kind != null && f.kind.IsTemplate)
+                ret += "<T> ";
+            ret += f.idShort;
+        }
+        if (o is Blob)
+        {
+            var b = o as Blob;
+            ret = "";
+            if (b.kind != null && b.kind.IsTemplate)
+                ret += "<T> ";
+            ret += b.idShort;
+        }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = "";
+            if (r.kind != null && r.kind.IsTemplate)
+                ret += "<T> ";
+            ret += r.idShort;
+        }
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            ret = "";
+            if (mlp.kind != null && mlp.kind.IsTemplate)
+                ret += "<T> ";
+            ret += mlp.idShort;
+        }
+        return (ret);
+    }
+
+    string ViewNodeInfo(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "";
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            // ret = aas.identification.ToString();
+        }
+        if (o is Submodel)
+        {
+            var sm = o as Submodel;
+            // ret = sm.identification.ToString();
+            if (sm.qualifiers != null && sm.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
+        }
+        if (o is SubmodelElement)
+        {
+            if (o is Property)
+            {
+                var prop = o as Property;
+                if (prop.value != "")
+                {
+                    ret = " = " + prop.value;
+                }
+                if (prop.qualifiers != null && prop.qualifiers.Count > 0)
+                {
+                    ret += " @QUALIFIERS";
+                }
+            }
+            if (o is File)
+            {
+                var f = o as File;
+                ret = " = " + f.value;
+                if (f.qualifiers != null && f.qualifiers.Count > 0)
+                {
+                    ret += " @QUALIFIERS";
+                }
+            }
+        }
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = " = " + r.min + " .. " + r.max;
+            if (r.qualifiers != null && r.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
+        }
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            var ls = mlp.value;
+            ret = " = ";
+            for (int i = 0; i < ls.Count; i++)
+            {
+                ret += ls.langString[i].lang + " ";
+            }
+            if (mlp.qualifiers != null && mlp.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
+        }
+        return (ret);
+    }
+
+    string ViewNodeDetails(Item item, int line, int col)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "NULL";
+
+        object o = item.Tag;
+
+        if (o == null)
+        {
+            return "";
+        }
+
+        if (o is AdministrationShell)
+        {
+            string subjectIssuer = null;
+
+            ret = "";
+            var aas = o as AdministrationShell;
+
+            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+
+            switch (line)
+            {
+                case 0:
+                    ret = "ID";
+                    if (col == 1)
+                        ret = aas.identification + "";
+                    break;
+                case 1:
+                    if (asset != null)
+                    {
+                        ret = "ASSET";
+                        if (col == 1)
+                            ret = asset.idShort;
+                    }
+                    break;
+                case 2:
+                    if (asset != null)
+                    {
+                        ret = "ASSETID";
+                        if (col == 1)
+                            ret = asset.identification + "";
+                    }
+                    break;
+                case 3:
+                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+                    if (subjectIssuer != null)
+                    {
+                        string[] s = subjectIssuer.Split(';');
+                        if (s.Length > 0 && s[0] != "")
+                        {
+                            ret = "SUBJECT";
+                            if (col == 1)
+                                ret = s[0];
+                        }
+                    }
+                    break;
+                case 4:
+                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+                    if (subjectIssuer != null)
+                    {
+                        string[] s = subjectIssuer.Split(';');
+                        if (s.Length > 1 && s[1] != "")
+                        {
+                            ret = "ISSUER";
+                            if (col == 1)
+                                ret = s[1];
+                        }
+                    }
+                    break;
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Submodel)
+        {
+            var sm = o as Submodel;
+            switch (line)
+            {
+                case 0:
+                    ret = "ID";
+                    if (col == 1)
+                        ret = sm.identification + "";
+                    break;
+                case 1:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = sm.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = getQualifiers(sm.qualifiers, col);
+                    break;
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Property)
+        {
+            var prop = o as Property;
+            ret += ", " + prop.value;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = prop.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Value Type";
+                    if (col == 1)
+                        ret = prop.valueType + "";
+                    break;
+                case 2:
+                    ret = "Value";
+                    if (col == 1)
+                        ret = prop.value + "";
+                    break;
+                case 3:
+                    ret = getQualifiers(prop.qualifiers, col);
+                    break;
+                case 4:
+                    ret = getUnit(item, prop, col);
+                    break;
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Entity)
+        {
+            var e = o as Entity;
+            ret += ", " + e.entityType;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = e.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Entity Type";
+                    if (col == 1)
+                        ret = e.entityType + "";
+                    break;
+                case 2:
+                    ret = "";
+                    if (e.GetEntityType() == Entity.EntityTypeEnum.SelfManagedEntity)
+                    {
+                        if (e.assetRef != null)
+                        {
+                            ret = "Asset";
+                            if (col == 1)
+                            {
+                                var k = e.assetRef.Keys;
+                                if (k != null)
+                                {
+                                    ret = k.ToString();
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case 3:
+                    ret = getQualifiers(e.qualifiers, col);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is File)
+        {
+            var f = o as File;
+            ret += ", " + f.value;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = f.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Value";
+                    if (col == 1)
+                        ret = f.value;
+                    break;
+                case 2:
+                    ret = getQualifiers(f.qualifiers, col);
+                    break;
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Blob)
+        {
+            var b = o as Blob;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = b.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "MimeType";
+                    if (col == 1)
+                        ret = b.mimeType;
+                    break;
+                case 2:
+                    ret = "Value";
+                    if (col == 1)
+                        ret = b.value;
+                    break;
+                case 3:
+                    ret = getQualifiers(b.qualifiers, col);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is AdminShellNS.AdminShellV20.Range)
+        {
+            var r = o as AdminShellNS.AdminShellV20.Range;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Min";
+                    if (col == 1)
+                        ret = r.min + "";
+                    break;
+                case 2:
+                    ret = "Max";
+                    if (col == 1)
+                        ret = r.max + "";
+                    break;
+                case 3:
+                    ret = getQualifiers(r.qualifiers, col);
+                    break;
+                case 4:
+                    ret = getUnit(item, r, col);
+                    break;
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is Operation)
+        {
+            var op = o as Operation;
+            ret = op.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = op.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "CountInputs";
+                    if (col == 1)
+                    {
+                        ret = "0";
+                        if (op.inputVariable != null)
+                        {
+                            ret = op.inputVariable.Count + "";
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = "CountOutputs";
+                    if (col == 1)
+                    {
+                        ret = "0";
+                        if (op.outputVariable != null)
+                        {
+                            ret = op.outputVariable.Count + "";
+                        }
+                    }
+                    break;
+                case 3:
+                    ret = getQualifiers(op.qualifiers, col);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is RelationshipElement)
+        {
+            var r = o as RelationshipElement;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "First";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.first;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToString();
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = "Second";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.second;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToString();
+                        }
+                    }
+                    break;
+                case 3:
+                    ret = getQualifiers(r.qualifiers, col);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is ReferenceElement)
+        {
+            var r = o as ReferenceElement;
+            ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = "Value";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        if (!(r.value == null || r.value.IsEmpty))
+                        {
+                            var k = r.value.Keys;
+                            if (k != null)
+                            {
+                                ret = k.ToString();
+                            }
+                        }
+                    }
+                    break;
+                case 2:
+                    ret = getQualifiers(r.qualifiers, col);
+                    break;
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is MultiLanguageProperty)
+        {
+            var mlp = o as MultiLanguageProperty;
+            var ls = mlp.value;
+            for (int i = 0; i < ls.Count; i++)
+            {
+                ret += ls.langString[i].lang + " ";
+            }
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = mlp.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    ret = "";
+                    if (ls.Count > line - 1)
+                    {
+                        ret = ls.langString[line - 1].lang;
+                        if (col == 1)
+                            ret = ls.langString[line - 1].str + "";
+                    }
+                    break;
+                case 5:
+                    ret = getQualifiers(mlp.qualifiers, col);
+                    break;
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        if (o is SubmodelElement)
+        {
+            var sme = o as SubmodelElement;
+            ret = sme.idShort + ", " + sme.semanticId;
+            switch (line)
+            {
+                case 0:
+                    ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = sme.semanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = k.ToString();
+                        }
+                    }
+                    break;
+                case 1:
+                    ret = getQualifiers(sme.qualifiers, col);
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
+
+        return (ret);
+    }
+
+    static string getQualifiers(QualifierCollection q, int col)
+    {
+        string ret = "";
+
+        if (q != null && q.Count > 0)
+        {
+            ret = "Qualifiers";
+            if (col == 1)
+            {
+                ret = "";
+                for (int i = 0; i < q.Count; i++)
+                {
+                    if (i != 0)
+                        ret += ", ";
+                    ret += q[i].type + " ";
+                    if (q[i].value != "")
+                    {
+                        ret += "= " + q[i].value;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    public string getUnit(Item item, SubmodelElement se, int col)
+    {
+        string ret = "";
+        if (se.semanticId == null || se.semanticId.Keys == null)
+        {
+            return ret;
+        }
+        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescription(se.semanticId.Keys);
+        if (cd != null)
+        {
+            var iec = cd.GetIEC61360();
+            if (iec != null)
+            {
+                ret = "Unit";
+                if (col == 1)
+                {
+                    ret = iec.unit;
+                    if (iec.unitId != null && iec.unitId.keys != null && iec.unitId.keys.Count > 0)
+                        ret += " (UnitId = " + iec.unitId.keys[0].ToString() + ")";
+                }
+            }
+        }
+        return ret;
+    }
+}

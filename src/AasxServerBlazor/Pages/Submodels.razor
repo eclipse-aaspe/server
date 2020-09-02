@@ -1,0 +1,46 @@
+﻿@page "/submodels"
+
+@using AasxServerBlazor.Data
+@using AdminShellNS;
+@using static AdminShellNS.AdminShell;
+@inject AASService SubmodelService
+
+<h1>Liste Submodels</h1>
+
+<p>This component demonstrates fetching data from a service.</p>
+
+@if (SubmodelService.GetSubmodels() == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Submodels</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sm in SubmodelService.GetSubmodels())
+            {
+                if (sm != null && sm.idShort != null)
+                {
+                    <tr>
+                        <td>@sm.idShort</td>
+                    </tr>
+                }
+            }
+
+        </tbody>
+    </table>
+}
+
+@code {
+    List<AdminShell.Submodel> submodels;
+
+    protected override void OnInitialized()
+    {
+        submodels = SubmodelService.GetSubmodels();
+    }
+}
