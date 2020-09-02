@@ -1,0 +1,29 @@
+name: Build-and-publish-docker-images-workflow
+
+on:
+  push
+
+jobs:
+  Build-and-publish-docker-images:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Build and publish AasxServerBlazor
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: mristin/aasx-server-blazor
+          tag_with_ref: true
+          dockerfile: src/docker/Dockerfile-AasxServerBlazor
+
+      - name: Build and publish AasxServerCore
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: mristin/aasx-server-core
+          tag_with_ref: true
+          dockerfile: src/docker/Dockerfile-AasxServerCore
