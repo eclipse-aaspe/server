@@ -106,15 +106,26 @@ function Main
         "AasxServerCore"
         )
 
+        $runtimes = @(
+        "win-x64"
+        "linux-x64"
+        )
+
         foreach ($target in $dotnetTargets)
         {
-            $buildDir = Join-Path $baseBuildDir $target
-            Write-Host "Publishing with dotnet $target to: $buildDir"
-            dotnet.exe publish -c Release -o $buildDir $target
-
-            if ($LASTEXITCODE -ne 0)
+            foreach ($runtime in $runtimes)
             {
-                throw "Failed to dotnet publish $target."
+                $buildDir = Join-Path $baseBuildDir "$target.$runtime"
+
+                Write-Host ("Publishing with dotnet $target " +
+                    "for runtime $runtime to: $buildDir")
+
+                dotnet.exe publish -c Release -o $buildDir -r $runtime $target
+                if ($LASTEXITCODE -ne 0)
+                {
+                    throw ("Failed to dotnet publish $target " +
+                        "for runtime $runtime.")
+                }
             }
         }
 
@@ -137,7 +148,7 @@ function Main
         Write-Host "Restoring NuGet dependencies for $target ..."
         nuget.exe restore $target -PackagesDirectory packages
 
-        $buildDir = Join-Path $baseBuildDir $target
+        $buildDir = Join-Path $baseBuildDir "$target.win-x64"
         Write-Host "Building with MSBuild $target to: $buildDir"
         & $msbuild `
             "/p:OutputPath=$buildDir" `

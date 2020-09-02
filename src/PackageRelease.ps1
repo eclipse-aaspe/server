@@ -19,15 +19,17 @@ function PackageRelease($outputDir)
     $baseBuildDir = Join-Path $( GetArtefactsDir ) "build" `
         | Join-Path -ChildPath "Release"
 
-    $targets = $(
-    "AasxServerBlazor"
-    "AasxServerCore"
-    "AasxServerWindows"
+    $targetsRuntimes = $(
+    "AasxServerBlazor.win-x64"
+    "AasxServerBlazor.linux-x64"
+    "AasxServerCore.win-x64"
+    "AasxServerCore.linux-x64"
+    "AasxServerWindows.win-x64"
     )
 
-    foreach ($target in $targets)
+    foreach ($targetRuntime in $targetsRuntimes)
     {
-        $buildDir = Join-Path $baseBuildDir $target
+        $buildDir = Join-Path $baseBuildDir $targetRuntime
 
         if (!(Test-Path $buildDir))
         {
@@ -36,11 +38,11 @@ function PackageRelease($outputDir)
                     "with BuildForRelease.ps1?")
         }
 
-        $targetOutputDir = Join-Path $outputDir $target
+        $targetOutputDir = Join-Path $outputDir $targetRuntime
 
         New-Item -ItemType Directory -Force -Path $outputDir|Out-Null
 
-        $archPath = Join-Path $outputDir "$target.zip"
+        $archPath = Join-Path $outputDir "$targetRuntime.zip"
 
         Write-Host "Compressing to: $archPath"
 
