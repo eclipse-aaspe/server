@@ -28,6 +28,42 @@ The binaries are available in the [Releases section](
 https://github.com/admin-shell-io/aasx-server/releases
 ). We provide x64 binaries for Windows and Linux.
 
+### Installation & Running
+
+AASX Server depends on .NET Core runtime (`blazor` and `core` variants) 
+and .NET Framework (`windows` variant), respectively. You need to install the 
+respective runtimes before you start the server.
+
+To deploy the binaries, simply extract the release bundle (*e.g.*, 
+`AasxServerCore.win-x64.zip`) somewhere on your system. 
+
+Invoke the executable with the same name as the variant to start the server.
+
+For example, assuming you run on Linux, call `AasxServerCore` from where you 
+unpacked the release bundle: 
+
+```
+AasxServerCore
+```
+
+To obtain help on individual flags and options, supply the argument `--help`:
+
+```
+./AasxServerCore --help
+```
+
+We include an example AASX and various extra files (*e.g.*, certificates) in
+the release bundle so that you can readily start the server for demonstration
+purposes. The scripts `startForDemo.sh` and `startForDemo.bat` will start the
+server with these pre-packaged files.
+
+For example, if you run on Linux, change to the directory where you extracted
+the release bundle and invoke:
+
+```
+./startForDemo.sh
+``` 
+
 ### Build and Package Binaries
 
 To build the binaries from the source code, run the powershell script 
@@ -43,15 +79,16 @@ For more information on continuous integration, see
 [.github/workflows/check-release.yml](.github/workflows/check-release.yml) for
 a workflow which is executed on each push to master branch.
 
-## Docker
+## Docker Containers for Demonstration
 
-We provide pre-built docker images for the different variants at the following 
-repositories:
+We provide pre-built docker images meant for demonstration purposes at the 
+following DockerHub repositories:
 
 * `blazor`: https://hub.docker.com/repository/docker/mristin/aasx-server-blazor
 * `core`: https://hub.docker.com/repository/docker/mristin/aasx-server-core
 
-For example, to pull the latest `core` variant of the server, invoke:
+For example, to pull the latest `core` variant of the server for the 
+demonstration, invoke:
 
 ```
 docker pull mristin/aasx-server-core
@@ -63,15 +100,7 @@ You can then run the container with:
 docker run -d -p 51210:51210 -p 51310:51310 aasx-server-core
 ```
 
-### Build Docker Container on Linux/MacOS
+### Build Docker Containers for Demonstration on Linux/MacOS
 
-We provide a powershell script to build the docker container at 
-[`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1). 
-
-Once the images have been built, you can execute:
-* [`src/RunAasxServerBlazorDocker.ps1`](
-src/RunAasxServerBlazorDocker.ps1
-) for the `blazor` variant or
-* [`src/RunAasxServerCoreDocker.ps1`](
-src/RunAasxServerCoreDocker.ps1
-) for the `core` variant, respectively.
+We provide a powershell script to build the docker containers meant for 
+demonstrations at [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1). 
