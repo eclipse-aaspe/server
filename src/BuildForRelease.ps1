@@ -84,7 +84,7 @@ function Main
     if ($clean)
     {
         Write-Host "dotnet clean'ing ..."
-        dotnet.exe clean
+        dotnet clean
         if ($LASTEXITCODE -ne 0)
         {
             throw "Failed to dotnet clean."
@@ -120,7 +120,7 @@ function Main
                 Write-Host ("Publishing with dotnet $target " +
                     "for runtime $runtime to: $buildDir")
 
-                dotnet.exe publish -c Release -o $buildDir -r $runtime $target
+                dotnet publish -c Release -o $buildDir -r $runtime $target
                 if ($LASTEXITCODE -ne 0)
                 {
                     throw ("Failed to dotnet publish $target " +

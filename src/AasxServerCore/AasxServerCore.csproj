@@ -16,6 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="startForDemo.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
   </ItemGroup>
 

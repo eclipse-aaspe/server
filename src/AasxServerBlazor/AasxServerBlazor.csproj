@@ -19,6 +19,12 @@
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>
 
   <ItemGroup>
+    <Content Include="startForDemo.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="wwwroot\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
