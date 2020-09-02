@@ -102,7 +102,7 @@ function Main
         ##
 
         $dotnetTargets = $(
-        "AasxBlazor"
+        "AasxServerBlazor"
         "AasxServerCore"
         )
 
