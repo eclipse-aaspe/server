@@ -27,8 +27,7 @@ function Main
         -f src/docker/Dockerfile-AasxServerBlazor `
         .
     
-    Write-Host ("The image $imageTag has been built. To run it:`n" +
-        "docker run $imageTag")
+    Write-Host "The image $imageTag has been built."
     
     ##
     # AasxServerCore
@@ -41,8 +40,7 @@ function Main
         -f src/docker/Dockerfile-AasxServerCore `
         .
     
-    Write-Host ("The image $imageTag has been built. To run it:`n" +
-        "docker run $imageTag")
+    Write-Host "The image $imageTag has been built."
 }
 
 $previousLocation = Get-Location
