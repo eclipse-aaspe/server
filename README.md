@@ -28,29 +28,16 @@ The binaries are available in the [Releases section](
 https://github.com/admin-shell-io/aasx-server/releases
 ). We provide x64 binaries for Windows and Linux.
 
-### Installation & Running
+### Installation
 
-AASX Server depends on .NET Core runtime (`blazor` and `core` variants) 
+AASX Server depends on .NET Core 3.1 runtime (`blazor` and `core` variants) 
 and .NET Framework (`windows` variant), respectively. You need to install the 
 respective runtimes before you start the server.
 
 To deploy the binaries, simply extract the release bundle (*e.g.*, 
-`AasxServerCore.win-x64.zip`) somewhere on your system. 
+`AasxServerCore.zip`) somewhere on your system. 
 
-Invoke the executable with the same name as the variant to start the server.
-
-For example, assuming you run on Linux, call `AasxServerCore` from where you 
-unpacked the release bundle: 
-
-```
-AasxServerCore
-```
-
-To obtain help on individual flags and options, supply the argument `--help`:
-
-```
-./AasxServerCore --help
-```
+### Running for Demonstration
 
 We include an example AASX and various extra files (*e.g.*, certificates) in
 the release bundle so that you can readily start the server for demonstration
@@ -63,6 +50,33 @@ the release bundle and invoke:
 ```
 ./startForDemo.sh
 ``` 
+
+### Running on Windows
+
+Change to the directory where you extracted the release bundle.
+
+Invoke the executable with the same name as the server variant. For example:
+
+```
+AasxServerCore.exe -OPC -REST -datapath /path/to/aasxs
+```
+
+To obtain help on individual flags and options, supply the argument `--help`:
+
+```
+AasxServerCore.exe --help
+```
+
+### Running on Linux
+
+Change to the directory where you extracted the release bundle.
+
+Use `dotnet` to execute the DLL with the same name as the server variant.
+For example:
+
+```
+dotnet AasxServerCore.dll -OPC -REST -datapath /path/to/aasxs
+```
 
 ### Build and Package Binaries
 

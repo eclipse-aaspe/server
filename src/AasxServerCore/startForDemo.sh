@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./AasxServerCore -REST -datapath ./aasxs
+dotnet AasxServerCore.dll -REST -datapath ./aasxs
