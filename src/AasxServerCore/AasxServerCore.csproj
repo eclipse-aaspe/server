@@ -26,12 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="aasxs\**">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
   </ItemGroup>
 
