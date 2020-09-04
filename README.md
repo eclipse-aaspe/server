@@ -84,20 +84,20 @@ a workflow which is executed on each push to master branch.
 We provide pre-built docker images meant for demonstration purposes at the 
 following DockerHub repositories:
 
-* `blazor`: https://hub.docker.com/repository/docker/mristin/aasx-server-blazor
-* `core`: https://hub.docker.com/repository/docker/mristin/aasx-server-core
+* `blazor`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
+* `core`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
 
 For example, to pull the latest `core` variant of the server for the 
 demonstration, invoke:
 
 ```
-docker pull mristin/aasx-server-core
+docker pull adminshellio/aasx-server-core-for-demo
 ```
 
 You can then run the container with:
 
 ```
-docker run -d -p 51210:51210 -p 51310:51310 aasx-server-core
+docker run -d -p 51210:51210 -p 51310:51310 aasx-server-core-for-demo
 ```
 
 ### Build Docker Containers for Demonstration on Linux/MacOS

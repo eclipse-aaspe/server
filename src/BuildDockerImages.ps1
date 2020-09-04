@@ -20,7 +20,7 @@ function Main
     # AasxServerBlazor
     ##
     
-    $imageTag = "aasx-server-blazor"
+    $imageTag = "aasx-server-blazor-for-demo"
     Write-Host "Building the docker image: $imageTag"
     docker build `
         -t $imageTag `
@@ -33,7 +33,7 @@ function Main
     # AasxServerCore
     ##
     
-    $imageTag = "aasx-server-core"
+    $imageTag = "aasx-server-core-for-demo"
     Write-Host "Building the docker image: $imageTag"
     docker build `
         -t $imageTag `
