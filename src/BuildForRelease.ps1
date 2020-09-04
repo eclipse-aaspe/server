@@ -73,6 +73,19 @@ function FindMSBuild
     return $msbuild
 }
 
+function CopyContentForDemo($Destination)
+{
+    $contentForDemoDir = Join-Path (Split-Path -Parent $PSScriptRoot) "content-for-demo"
+    if (!(Test-Path $contentForDemoDir))
+    {
+       throw "The directory with the content for demo does not exist: $contentForDemoDir"
+    }
+
+    Write-Host "Copying content for demo from $contentForDemoDir to: $Destination"
+
+    Get-ChildItem -Path $contentForDemoDir `
+        | Copy-Item -Destination $Destination -Recurse -Container
+}
 
 function Main
 {
@@ -117,6 +130,8 @@ function Main
             {
                 throw "Failed to dotnet publish: $target"
             }
+
+            CopyContentForDemo -Destination $buildDir
         }
 
         ##
@@ -152,6 +167,8 @@ function Main
         {
             throw "Failed to MSBuild $target."
         }
+
+        CopyContentForDemo -Destination $buildDir
     }
 }
 
