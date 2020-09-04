@@ -84,7 +84,7 @@ function CopyContentForDemo($Destination)
     Write-Host "Copying content for demo from $contentForDemoDir to: $Destination"
 
     Get-ChildItem -Path $contentForDemoDir `
-        | Copy-Item -Destination $Destination -Recurse -Container
+        | Copy-Item -Destination $Destination -Recurse -Container -Force
 }
 
 function Main
