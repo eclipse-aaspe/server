@@ -42,32 +42,20 @@ jobs:
         working-directory: src
         run: powershell .\PackageRelease.ps1 -version LATEST.alpha
 
-      - name: Upload AasxServerBlazor.win-x64
+      - name: Upload AasxServerBlazor
         uses: actions/upload-artifact@v2
         with:
-          name: AasxServerBlazor.win-x64.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerBlazor.win-x64.zip
+          name: AasxServerBlazor.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
 
-      - name: Upload AasxServerBlazor.linux-x64
+      - name: Upload AasxServerCore
         uses: actions/upload-artifact@v2
         with:
-          name: AasxServerBlazor.linux-x64.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerBlazor.linux-x64.zip
+          name: AasxServerCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          path: artefacts/release/LATEST.alpha/AasxServerCore.zip
 
-      - name: Upload AasxServerCore.win-x64
+      - name: Upload AasxServerWindows
         uses: actions/upload-artifact@v2
         with:
-          name: AasxServerCore.win-x64.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerCore.win-x64.zip
-
-      - name: Upload AasxServerCore.linux-x64
-        uses: actions/upload-artifact@v2
-        with:
-          name: AasxServerCore.linux-x64.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerCore.linux-x64.zip
-
-      - name: Upload AasxServerWindows.win-x64
-        uses: actions/upload-artifact@v2
-        with:
-          name: AasxServerWindows.win-x64.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerWindows.win-x64.zip
+          name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          path: artefacts/release/LATEST.alpha/AasxServerWindows.zip

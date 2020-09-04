@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./AasxServerBlazor -REST -datapath ./aasxs
+dotnet AasxServerBlazor.dll -REST -datapath ./aasxs
