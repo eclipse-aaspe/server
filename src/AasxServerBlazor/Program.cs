@@ -19,7 +19,7 @@ namespace AasxServerBlazor
 
             CreateHostBuilder(args).Build().RunAsync();
 
-            Net46ConsoleServer.Program.Main(args);
+            AasxServer.Program.Main(args);
 
         }
 

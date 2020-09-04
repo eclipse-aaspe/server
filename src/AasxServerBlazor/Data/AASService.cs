@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AasxServer;
 using AdminShellNS;
-using Net46ConsoleServer;
 using static AasxServerBlazor.Pages.TreePage;
 using static AdminShellNS.AdminShellV20;
 

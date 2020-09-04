@@ -10,6 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Permissions;
 using System.Text;
 using System.Text.RegularExpressions;
+using AasxServer;
 using AdminShellNS;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server;
@@ -18,7 +19,6 @@ using Grapevine.Shared;
 using Jose;
 using Jose.jwe;
 using Jose.netstandard1_4;
-using Net46ConsoleServer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -2650,16 +2650,16 @@ namespace AasxRestServerLibrary
             // get the list
             var aaslist = new List<string>();
 
-            int aascount = Net46ConsoleServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
             {
-                if (Net46ConsoleServer.Program.env[i] != null)
+                if (AasxServer.Program.env[i] != null)
                 {
                     aaslist.Add(i.ToString() + " : "
-                        + Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
-                        + Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].identification + " : "
-                        + Net46ConsoleServer.Program.envFileName[i]);
+                        + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
+                        + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].identification + " : "
+                        + AasxServer.Program.envFileName[i]);
                 }
             }
 
@@ -2690,9 +2690,9 @@ namespace AasxRestServerLibrary
             }
 
             // return as FILE
-            FileStream packageStream = File.OpenRead(Net46ConsoleServer.Program.envFileName[fileIndex]);
+            FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
 
-            SendStreamResponse(context, packageStream, Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]));
+            SendStreamResponse(context, packageStream, Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
             packageStream.Close();
         }
 
@@ -2724,7 +2724,7 @@ namespace AasxRestServerLibrary
             res.confirm = "Authorization = " + accessrights;
 
 
-            Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[fileIndex]);
+            Byte[] binaryFile = File.ReadAllBytes(AasxServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
 
             string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
@@ -2732,7 +2732,7 @@ namespace AasxRestServerLibrary
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
             string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
-            res.fileName = Path.GetFileName(Net46ConsoleServer.Program.envFileName[fileIndex]);
+            res.fileName = Path.GetFileName(AasxServer.Program.envFileName[fileIndex]);
             res.fileData = fileToken;
 
             SendJsonResponse(context, res);
@@ -2775,15 +2775,15 @@ namespace AasxRestServerLibrary
         {
             withAuthentification = !Program.noSecurity;
 
-            int aascount = Net46ConsoleServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
             {
-                if (Net46ConsoleServer.Program.env[i] != null)
+                if (AasxServer.Program.env[i] != null)
                 {
-                    if (Net46ConsoleServer.Program.env[i].AasEnv.AdministrationShells[0].idShort == "Security")
+                    if (AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort == "Security")
                     {
-                        foreach (var sm in Net46ConsoleServer.Program.env[i].AasEnv.Submodels)
+                        foreach (var sm in AasxServer.Program.env[i].AasEnv.Submodels)
                         {
                             if (sm != null && sm.idShort != null)
                             {
