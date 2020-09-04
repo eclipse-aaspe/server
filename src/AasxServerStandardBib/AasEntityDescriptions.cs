@@ -112,7 +112,7 @@ namespace AasOpcUaServer
             var desc = keyToDescription[key.Trim().ToLower()];
             desc = Regex.Replace(desc, @"\s+", " ");
             return desc;
-        }        
+        }
 
     }
 }

@@ -1,11 +1,11 @@
-﻿using AdminShellNS;
-using Opc.Ua;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AdminShellNS;
+using Opc.Ua;
 
 namespace AasOpcUaServer
 {
@@ -132,7 +132,7 @@ namespace AasOpcUaServer
             readlen = Math.Min(readlen, (2 << 15) - 1);
 
             byte[] res = new byte[readlen];
-            h.packStream.Seek((long) h.filepos, SeekOrigin.Begin);
+            h.packStream.Seek((long)h.filepos, SeekOrigin.Begin);
             var redd = h.packStream.Read(res, 0, (int)readlen);
             h.filepos += (UInt64)redd;
             return res;
@@ -154,7 +154,7 @@ namespace AasOpcUaServer
     }
 
     public class AasUaEntityFileType : AasUaBaseEntity
-    {       
+    {
         private class InstanceData
         {
             public AasUaPackageFileHandler packHandler = null;
@@ -191,7 +191,8 @@ namespace AasOpcUaServer
             try
             {
                 s = package[0].GetLocalStreamFromPackage(file.value);
-            } catch
+            }
+            catch
             {
                 return false;
             }

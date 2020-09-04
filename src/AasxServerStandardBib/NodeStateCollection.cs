@@ -26,7 +26,7 @@ namespace Opc.Ua
     /// </summary>
     public class NodeStateCollection : List<NodeState>
     {
-        #region Constructors
+#region Constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="NodeStateCollection"/> class.
         /// </summary>
@@ -52,9 +52,9 @@ namespace Opc.Ua
         public NodeStateCollection(IEnumerable<NodeState> collection) : base(collection)
         {
         }
-        #endregion
+#endregion
 
-        #region Public Methods
+#region Public Methods
         /// <summary>
         /// Writes the collection to a stream using the NodeSet schema.
         /// </summary>
@@ -94,7 +94,7 @@ namespace Opc.Ua
             }
         }
 
-        #region Well-Known Aliases
+#region Well-Known Aliases
         /// <summary>
         /// Stores a well known alias.
         /// </summary>
@@ -151,7 +151,7 @@ namespace Opc.Ua
             new AliasToUse(BrowseNames.HasEncoding, ReferenceTypeIds.HasEncoding),
             new AliasToUse(BrowseNames.HasDescription, ReferenceTypeIds.HasDescription)
         };
-        #endregion
+#endregion
         
         /// <summary>
         /// Writes the collection to a stream using the Opc.Ua.Schema.UANodeSet schema.

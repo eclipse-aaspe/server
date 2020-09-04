@@ -1,9 +1,9 @@
-﻿using Grapevine.Interfaces.Shared;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Grapevine.Interfaces.Shared;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
@@ -33,7 +33,7 @@ namespace AasxMqttClient
         public void Error(string message) { if (this.level >= LogLevel.Error) this.Append("ERR: {0}", message); }
         public void Error(object obj) { if (this.level >= LogLevel.Error) this.Append("ERR: {0}", obj); }
         public void Fatal(string message) { if (this.level >= LogLevel.Fatal) this.Append("FTL: {0}", message); }
-        public void Fatal(object obj) { if (this.level >= LogLevel.Fatal ) this.Append("FTL: {0}", obj); }
+        public void Fatal(object obj) { if (this.level >= LogLevel.Fatal) this.Append("FTL: {0}", obj); }
         public void Fatal(string message, Exception ex) { if (this.level >= LogLevel.Fatal) this.Append("FTL: Exception when {0}: {1}", message, ex.ToString()); }
         public void Info(string message, Exception ex) { if (this.level >= LogLevel.Info) this.Append("INF: Exception when {0}: {1}", message, ex.ToString()); }
         public void Info(string message) { if (this.level >= LogLevel.Info) this.Append("INF: {0}", message); }
@@ -69,8 +69,9 @@ namespace AasxMqttClient
 
         public override void Append(string msg, params object[] args)
         {
-            lock (list) {
-                list.Add(string.Format(msg, args)); 
+            lock (list)
+            {
+                list.Add(string.Format(msg, args));
             }
         }
 

@@ -1,38 +1,38 @@
-﻿using AasOpcUaServer;
-using AdminShellNS;
-using Opc.Ua;
-using Opc.Ua.Configuration;
-using Opc.Ua.Server;
-using Opc.Ua.Client;
-using System;
-using System.IO;
-using System.IO.Packaging;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+// using System.Web.Helpers;
+using System.IO.Compression;
+using System.IO.Packaging;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using AasxRestServerLibrary;
 using System.Timers;
-using Newtonsoft.Json;
+using System.Xml;
+using System.Xml.Linq;
+using AasOpcUaServer;
+using AasxMqttServer;
+using AasxRestServerLibrary;
+using AdminShellNS;
 using Grapevine;
 using Grapevine.Client;
 using Grapevine.Shared;
-using Formatting = Newtonsoft.Json.Formatting;
-using AasxMqttServer;
-using System.ComponentModel;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNetCore.Components;
-using System.Net.Http;
-using System.Net;
 // using System.Dynamic;
 using Jose;
-using System.Xml.Linq;
-// using System.Web.Helpers;
-using System.IO.Compression;
-using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json;
+using Opc.Ua;
+using Opc.Ua.Client;
+using Opc.Ua.Configuration;
+using Opc.Ua.Server;
+using Formatting = Newtonsoft.Json.Formatting;
 // using AASXLoader;
 namespace Net46ConsoleServer
 {
@@ -266,7 +266,7 @@ namespace Net46ConsoleServer
                 if (x == "-connect")
                 {
                     string[] c = null;
-                    if (i+1 < args.Length)
+                    if (i + 1 < args.Length)
                     {
                         string connect = args[i + 1];
                         c = connect.Split(',');
@@ -323,7 +323,7 @@ namespace Net46ConsoleServer
                 }
             }
 
-            if(!(runREST || runOPC || runMQTT))
+            if (!(runREST || runOPC || runMQTT))
             {
                 Console.WriteLine();
                 Console.WriteLine("Please specifiy -REST and/or -OPC and/or -MQTT");
@@ -1083,7 +1083,7 @@ namespace Net46ConsoleServer
             }
         }
 
-        public static event EventHandler NewDataAvailable; 
+        public static event EventHandler NewDataAvailable;
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
@@ -1306,7 +1306,7 @@ namespace Net46ConsoleServer
                 Console.WriteLine("node {0} does not exist in server!", nodeId);
                 return false;
             }
-            var convertedValue = Convert.ChangeType(value, bvs.Value.GetType()) ;
+            var convertedValue = Convert.ChangeType(value, bvs.Value.GetType());
             if (!object.Equals(bvs.Value, convertedValue))
             {
                 bvs.Value = convertedValue;
@@ -1564,7 +1564,7 @@ namespace Net46ConsoleServer
             return;
         }
 
-        private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace )
+        private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
         {
             if (sme is AdminShell.Property)
             {
@@ -1585,29 +1585,29 @@ namespace Net46ConsoleServer
             }
         }
 
-    private static void UpdatePropertyFromOPCClient(AdminShell.Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
+        private static void UpdatePropertyFromOPCClient(AdminShell.Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
         {
-        string value;
-        try
-        {
-            value = client.ReadSubmodelElementValue(clientNodeId);
-            Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
-        }
-        catch (ServiceResultException ex)
-        {
-            Console.WriteLine(string.Format("OPC ServiceResultException ({0}) trying to read {1}", ex.Message, clientNodeId.ToString()));
-            return;
-        }
+            string value;
+            try
+            {
+                value = client.ReadSubmodelElementValue(clientNodeId);
+                Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
+            }
+            catch (ServiceResultException ex)
+            {
+                Console.WriteLine(string.Format("OPC ServiceResultException ({0}) trying to read {1}", ex.Message, clientNodeId.ToString()));
+                return;
+            }
 
-        // update in AAS env
-        p.Set(p.valueType, value);
-        // update in OPC
-        
-        if (!OPCWrite(serverNodeId, value))
-            Console.WriteLine("OPC write not successful.");
-        
+            // update in AAS env
+            p.Set(p.valueType, value);
+            // update in OPC
+
+            if (!OPCWrite(serverNodeId, value))
+                Console.WriteLine("OPC write not successful.");
+
+        }
     }
-}
 
     public class ApplicationMessageDlg : IApplicationMessageDlg
     {
@@ -1665,11 +1665,11 @@ namespace Net46ConsoleServer
         int serverRunTime = Timeout.Infinite;
         static bool autoAccept = false;
         static ExitCode exitCode;
-        static AdminShellPackageEnv [] aasxEnv = null;
+        static AdminShellPackageEnv[] aasxEnv = null;
         // OZ
         public static ManualResetEvent quitEvent;
 
-        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShellPackageEnv [] _aasxEnv)
+        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShellPackageEnv[] _aasxEnv)
         {
             autoAccept = _autoAccept;
             aasxEnv = _aasxEnv;
@@ -1697,7 +1697,8 @@ namespace Net46ConsoleServer
             quitEvent = new ManualResetEvent(false);
             try
             {
-                Console.CancelKeyPress += (sender, eArgs) => {
+                Console.CancelKeyPress += (sender, eArgs) =>
+                {
                     quitEvent.Set();
                     eArgs.Cancel = true;
                 };
@@ -1712,7 +1713,7 @@ namespace Net46ConsoleServer
             if (server != null)
             {
                 Console.WriteLine("Server stopped. Waiting for exit...");
-                
+
                 using (SampleServer _server = server)
                 {
                     // Stop status thread

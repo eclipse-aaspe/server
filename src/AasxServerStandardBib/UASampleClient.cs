@@ -9,13 +9,13 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
-using Opc.Ua;
-using Opc.Ua.Client;
-using Opc.Ua.Configuration;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AdminShellNS;
+using Opc.Ua;
+using Opc.Ua.Client;
+using Opc.Ua.Configuration;
 
 namespace SampleClient
 {
@@ -188,7 +188,7 @@ namespace SampleClient
 
         {
             NodeId node = new NodeId(nodeName, (ushort)index);
-            return(session.ReadValue(node).ToString());
+            return (session.ReadValue(node).ToString());
         }
 
         public string ReadSubmodelElementValue(NodeId nodeId)

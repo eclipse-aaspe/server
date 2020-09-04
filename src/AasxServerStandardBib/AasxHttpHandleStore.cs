@@ -1,10 +1,10 @@
-﻿using AdminShellNS;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AdminShellNS;
+using Newtonsoft.Json;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
@@ -37,11 +37,11 @@ namespace AasxRestServerLibrary
     /// </summary>
     public class AasxHttpHandleIdentification : AasxHttpHandle
     {
-        private static int counter = 1; 
+        private static int counter = 1;
 
         public AdminShell.Identification identification = null;
 
-        public AasxHttpHandleIdentification (AdminShell.Identification src, string keyPreset = null)
+        public AasxHttpHandleIdentification(AdminShell.Identification src, string keyPreset = null)
         {
             if (keyPreset == null)
                 this.Key = $"@ID{counter++:00000000}";

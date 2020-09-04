@@ -1,16 +1,16 @@
 #define UseAasxCompatibilityModels
 
-using System.Xml;
-using System.Runtime;
-using System.ComponentModel;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Xml.Serialization;
+using System.ComponentModel;
+using System.IO;
+using System.IO.Packaging;
+using System.Runtime;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.IO;
-using System;
-using System.IO.Packaging;
+using System.Xml;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -25,7 +25,7 @@ The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www
 
 namespace AasxCompatibilityModels
 {
-#region Utils
+    #region Utils
     // 
     // Utils
     //
@@ -115,10 +115,10 @@ namespace AasxCompatibilityModels
 
     }
 
-#endregion
+    #endregion
 
 
-#region AdminShell_V1_0
+    #region AdminShell_V1_0
 
     /// <summary>
     /// Version of Details of Administration Shell Part 1 V1.0 published Nov/Dec/Jan 2018/19
@@ -4609,7 +4609,7 @@ namespace AasxCompatibilityModels
 
     }
 
-#endregion
+    #endregion
 }
 
 #endif

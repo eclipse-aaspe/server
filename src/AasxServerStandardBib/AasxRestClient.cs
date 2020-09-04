@@ -1,15 +1,15 @@
-﻿using AasxIntegrationBase;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using AasxIntegrationBase;
 using AdminShellNS;
 using Grapevine;
 using Grapevine.Client;
 using Grapevine.Shared;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
 using Newtonsoft.Json.Linq;
 
 namespace AasxRestServerLibrary
@@ -62,7 +62,7 @@ namespace AasxRestServerLibrary
 
         // interface
 
-        public bool IsValid() { return this.uri != null ; } // assume validity
+        public bool IsValid() { return this.uri != null; } // assume validity
         public bool IsConnected() { return true; } // always, as there is no open connection by principle
         public string GetInfo() { return uri.ToString(); }
 
@@ -184,7 +184,7 @@ namespace AasxRestServerLibrary
             if (respose.StatusCode != Grapevine.Shared.HttpStatusCode.Ok)
                 throw new Exception($"REST {respose.ResponseUri} response {respose.StatusCode} with {respose.StatusDescription}");
 
-            var json=respose.GetContent();
+            var json = respose.GetContent();
             var parsed = JObject.Parse(json);
             var value = parsed.SelectToken("value").Value<string>();
             return value;
