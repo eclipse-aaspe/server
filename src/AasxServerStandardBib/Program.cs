@@ -2,41 +2,28 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-// using System.Web.Helpers;
-using System.IO.Compression;
-using System.IO.Packaging;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
-using System.Xml.Linq;
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
 using AdminShellNS;
-using Grapevine;
-using Grapevine.Client;
-using Grapevine.Shared;
-// using System.Dynamic;
 using Jose;
-using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
 using Opc.Ua;
-using Opc.Ua.Client;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
 using Formatting = Newtonsoft.Json.Formatting;
-// using AASXLoader;
+
 namespace AasxServer
 {
-    static public class Program
+    public static class Program
     {
         public static int envimax = 100;
         public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[100]
@@ -125,7 +112,7 @@ namespace AasxServer
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
 
-        static public void Main(string[] args)
+        public static void Main(string[] args)
         {
             // default command line options
             string host = "localhost";
@@ -134,7 +121,6 @@ namespace AasxServer
             bool debugwait = false;
             opcclientActive = false;
             int opcclient_rate = 5000;  // 5 seconds
-            string registry = null;
             string proxyFile = "";
             bool generate = false;
 
@@ -227,14 +213,6 @@ namespace AasxServer
                         }
                         opcclient_rate = rate;
                     }
-                    i += 2;
-                    continue;
-                }
-
-                if (x == "-registry")
-                {
-                    registry = args[i + 1];
-                    Console.WriteLine(args[i] + " " + args[i + 1]);
                     i += 2;
                     continue;
                 }
@@ -343,7 +321,6 @@ namespace AasxServer
                 Console.WriteLine("-debugwait = wait for Debugger to attach");
                 Console.WriteLine("-opcclient UPDATERATE = time in ms between getting new values");
                 Console.WriteLine("-connect SERVER,NAME,UPDATERATE = AAS Connect Server, Node Name, time in ms between publishing/subscribing new values");
-                Console.WriteLine("-registry = server IP of BaSyx registry");
                 Console.ReadLine();
                 return;
             }
