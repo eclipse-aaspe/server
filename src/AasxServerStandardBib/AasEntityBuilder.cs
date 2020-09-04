@@ -1,11 +1,11 @@
-﻿using AdminShellNS;
-using Opc.Ua;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AasOpcUaServer;
+using AdminShellNS;
+using Opc.Ua;
 
 namespace AasOpcUaServer
 {
@@ -43,7 +43,7 @@ namespace AasOpcUaServer
         /// </summary>
         public NodeState RootMissingDictionaryEntries = null;
 
-        public AasEntityBuilder (AasNodeManager nodeMgr, AdminShellPackageEnv[] package, IDictionary<NodeId, IList<IReference>> externalReferences, AasxUaServerOptions options)
+        public AasEntityBuilder(AasNodeManager nodeMgr, AdminShellPackageEnv[] package, IDictionary<NodeId, IList<IReference>> externalReferences, AasxUaServerOptions options)
         {
             AasEntityBuilder.nodeMgr = nodeMgr;
             this.package = package;
@@ -128,7 +128,7 @@ namespace AasOpcUaServer
         /// <summary>
         /// Make a late reference to another node identified by a AAS reference information
         /// </summary>
-        public class NodeLateActionLinkToReference: NodeLateAction
+        public class NodeLateActionLinkToReference : NodeLateAction
         {
             public enum ActionType { None, SetAasReference, SetDictionaryEntry }
 
@@ -198,7 +198,7 @@ namespace AasOpcUaServer
             x.Symmetric = false;
             x.IsAbstract = false;
             x.NodeId = nodeMgr.NewType(nodeMgr.SystemContext, x, preferredNumId);
-            nodeMgr.AddPredefinedNode(nodeMgr.SystemContext, x) ;
+            nodeMgr.AddPredefinedNode(nodeMgr.SystemContext, x);
 
             // set Subtype reference
             if (sourceId == null)
@@ -252,9 +252,9 @@ namespace AasOpcUaServer
         /// <param name="descriptionKey">Lookup a Description on AAS literal/ refSemantics</param>
         /// <param name="modellingRule">Modeling Rule, if not None</param>
         public BaseObjectTypeState CreateAddObjectType(
-            string browseDisplayName, 
-            NodeId superTypeId, 
-            uint preferredNumId = 0, 
+            string browseDisplayName,
+            NodeId superTypeId,
+            uint preferredNumId = 0,
             string descriptionKey = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
@@ -298,11 +298,11 @@ namespace AasOpcUaServer
         /// <param name="typeDefinitionId">Type of the Object</param>
         /// <param name="modellingRule">Modeling Rule, if not None</param>
         /// <returns>The node</returns>
-        public BaseObjectState CreateAddObject (
-            NodeState parent, 
-            string browseDisplayName, 
-            NodeId referenceTypeFromParentId = null, 
-            NodeId typeDefinitionId = null, 
+        public BaseObjectState CreateAddObject(
+            NodeState parent,
+            string browseDisplayName,
+            NodeId referenceTypeFromParentId = null,
+            NodeId typeDefinitionId = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None,
             string extraName = null)
         {
@@ -344,12 +344,12 @@ namespace AasOpcUaServer
         /// <param name="modellingRule">Modeling Rule, if not None</param>
         /// <returns>NodeState</returns>
         public PropertyState<T> CreateAddPropertyState<T>(
-            NodeState parent, string browseDisplayName, 
-            NodeId dataTypeId, T value, 
-            NodeId referenceTypeFromParentId = null, 
-            NodeId typeDefinitionId = null, 
-            int valueRank = -2, 
-            bool defaultSettings = false, 
+            NodeState parent, string browseDisplayName,
+            NodeId dataTypeId, T value,
+            NodeId referenceTypeFromParentId = null,
+            NodeId typeDefinitionId = null,
+            int valueRank = -2,
+            bool defaultSettings = false,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             // apply cumulative settings
@@ -423,7 +423,7 @@ namespace AasOpcUaServer
             }
 
             // can have inputs, outputs
-            for (int i=0; i<2; i++)
+            for (int i = 0; i < 2; i++)
             {
                 // pretty argument list
                 var arguments = (i == 0) ? inputArgs : outputArgs;
@@ -540,7 +540,7 @@ namespace AasOpcUaServer
                 Reference = new AasUaEntityReference(builder, 1005);
                 SemanticId = new AasUaEntitySemanticId(builder, 1006); // dependecies: Reference
                 HasAasReference = new AasUaReferenceHasAasReference(builder, 4000); // dependencies: Referable
-                
+
                 // Data Specifications
                 DataSpecification = new AasUaEntityDataSpecification(builder, 3000);
                 DataSpecificationIEC61360 = new AasUaEntityDataSpecificationIEC61360(builder, 3001); // dependencies: Reference, Identification, Administration
@@ -565,7 +565,7 @@ namespace AasOpcUaServer
                 ConceptDescription = new AasUaEntityConceptDescription(builder, 1021);
                 View = new AasUaEntityView(builder, 1022);
                 Asset = new AasUaEntityAsset(builder, 1023);
-                AAS = new AasUaEntityAAS(builder, 1024);                
+                AAS = new AasUaEntityAAS(builder, 1024);
             }
         }
 
@@ -577,7 +577,7 @@ namespace AasOpcUaServer
 
         private Dictionary<NodeState, List<object>> nodeStateAnnotations = new Dictionary<NodeState, List<object>>();
 
-        public void AddNodeStateAnnotation (NodeState nodeState, object businessObject)
+        public void AddNodeStateAnnotation(NodeState nodeState, object businessObject)
         {
             if (!nodeStateAnnotations.ContainsKey(nodeState))
                 nodeStateAnnotations[nodeState] = new List<object>();

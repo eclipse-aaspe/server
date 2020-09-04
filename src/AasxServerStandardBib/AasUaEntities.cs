@@ -1,12 +1,12 @@
-﻿using AdminShellNS;
-using Opc.Ua;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AdminShellNS;
+using Opc.Ua;
 
 namespace AasOpcUaServer
 {
@@ -176,7 +176,7 @@ namespace AasOpcUaServer
 
                 // do a little extra?
                 string extraName = null;
-                if (qualifier.type != null && qualifier.type.Length>0)
+                if (qualifier.type != null && qualifier.type.Length > 0)
                 {
                     extraName = "Qualifier:" + qualifier.type;
                     if (qualifier.value != null && qualifier.value.Length > 0)
@@ -332,7 +332,7 @@ namespace AasOpcUaServer
     }
 
     public class AasUaEntityReference : AasUaEntityReferenceBase
-        {
+    {
         public AasUaEntityReference(AasEntityBuilder entityBuilder, uint preferredTypeNumId = 0)
             : base(entityBuilder)
         {
@@ -452,7 +452,7 @@ namespace AasOpcUaServer
             if (parent == null)
                 return null;
             // Create whole object only if required
-            if (mode == CreateMode.Instance && asset     == null)
+            if (mode == CreateMode.Instance && asset == null)
                 return null;
 
             // containing element
@@ -577,7 +577,7 @@ namespace AasOpcUaServer
                 {
                     // TODO: reference to CDs. They are stored sepaately
                 }
-            } 
+            }
 
             // results
             return o;
@@ -679,7 +679,7 @@ namespace AasOpcUaServer
             // add some elements to the type
             // Note: in this special case, the instance elements are populated by AasUaEntitySubmodelElementBase, while the elements
             // for the type are populated here
-            
+
             // Referable
             this.entityBuilder.AasTypes.Referable.CreateAddElements(this.typeObject, CreateMode.Type);
             // HasSemantics
@@ -761,7 +761,7 @@ namespace AasOpcUaServer
             else
             {
                 if (smw == null || smw.submodelElement == null)
-                return null;
+                    return null;
 
                 if (smw.submodelElement is AdminShell.SubmodelElementCollection)
                 {
@@ -797,7 +797,7 @@ namespace AasOpcUaServer
 
             // elements not in the base type
             this.entityBuilder.AasTypes.Reference.CreateAddElements(this.typeObject, CreateMode.Instance, null, "ValueId", modellingRule: AasUaNodeHelper.ModellingRule.Optional);
-            this.entityBuilder.CreateAddPropertyState<string>(this.typeObject, "ValueType", DataTypeIds.String,null, defaultSettings: true, modellingRule: AasUaNodeHelper.ModellingRule.Mandatory);
+            this.entityBuilder.CreateAddPropertyState<string>(this.typeObject, "ValueType", DataTypeIds.String, null, defaultSettings: true, modellingRule: AasUaNodeHelper.ModellingRule.Mandatory);
             this.entityBuilder.CreateAddPropertyState<string>(this.typeObject, "Value", DataTypeIds.BaseDataType, null, defaultSettings: true, modellingRule: AasUaNodeHelper.ModellingRule.Mandatory);
         }
 
@@ -911,10 +911,10 @@ namespace AasOpcUaServer
             // create type object
             // TODO: use the collection element of UA
             this.typeObject = this.entityBuilder.CreateAddObjectType("AASSubmodelElementCollectionType", entityBuilder.AasTypes.SubmodelElement.GetTypeNodeId(), preferredTypeNumId, descriptionKey: "AAS:SubmodelElementCollection");
-            this.typeObjectOrdered = this.entityBuilder.CreateAddObjectType("AASSubmodelElementOrderedCollectionType", this.GetTypeNodeId(), preferredTypeNumId+1, descriptionKey: "AAS:SubmodelElementCollection");
+            this.typeObjectOrdered = this.entityBuilder.CreateAddObjectType("AASSubmodelElementOrderedCollectionType", this.GetTypeNodeId(), preferredTypeNumId + 1, descriptionKey: "AAS:SubmodelElementCollection");
 
             // some elements
-            foreach (var o in new NodeState[] {  this.typeObject /* , this.typeObjectOrdered */ })
+            foreach (var o in new NodeState[] { this.typeObject /* , this.typeObjectOrdered */ })
             {
                 this.entityBuilder.CreateAddPropertyState<bool>(o, "AllowDuplicates", DataTypeIds.Boolean, false, defaultSettings: true, modellingRule: AasUaNodeHelper.ModellingRule.Optional);
             }
@@ -1152,12 +1152,12 @@ namespace AasOpcUaServer
             base.PopulateInstanceObject(o, op);
 
             // own AAS attributes (in/out op vars)
-            for (int i=0; i<2; i++)
+            for (int i = 0; i < 2; i++)
             {
                 var opvarList = op[i];
                 if (opvarList != null && opvarList.Count > 0)
                 {
-                    var o2 = this.entityBuilder.CreateAddObject(o, (i == 0) ? "OperationInputVariables" : "OperationOutputVariables", 
+                    var o2 = this.entityBuilder.CreateAddObject(o, (i == 0) ? "OperationInputVariables" : "OperationOutputVariables",
                         ReferenceTypeIds.HasComponent, /* TODO */ GetTypeObject().NodeId);
                     foreach (var opvar in opvarList)
                         if (opvar != null && opvar.value != null)
@@ -1175,12 +1175,12 @@ namespace AasOpcUaServer
                         {
                             // TODO: decide to from where the name comes
                             var name = "noname";
-                            
+
                             // TODO: description: get "en" version is appropriate?
                             LocalizedText desc = new LocalizedText("");
 
                             // TODO: parse UA data type out .. OK?
-                            NodeId dataType = null; 
+                            NodeId dataType = null;
                             if (opvar.value != null && opvar.value.submodelElement != null)
                             {
                                 // better name .. but not best (see below)
@@ -1633,7 +1633,7 @@ namespace AasOpcUaServer
             return null;
         }
     }
-    
+
 
     //
     // Interfaces   

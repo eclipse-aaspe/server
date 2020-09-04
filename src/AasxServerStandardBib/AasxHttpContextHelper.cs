@@ -1,32 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using System.Text.RegularExpressions;
-
-using Newtonsoft.Json;
-using AdminShellNS;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
-using System.IO;
 using System.Dynamic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Permissions;
+using System.Text;
+using System.Text.RegularExpressions;
+using AdminShellNS;
 using Grapevine.Interfaces.Server;
+using Grapevine.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
-using Grapevine.Server;
-
 using Jose;
 using Jose.jwe;
 using Jose.netstandard1_4;
-
-using System.Security.Cryptography;
-using System.Security.Permissions;
-using System.Security.Cryptography.X509Certificates;
-
 using Net46ConsoleServer;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
@@ -1383,7 +1378,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            var cr = new AdminShellConverters.AdaptiveFilterContractResolver( deep: deep, complete: complete);
+            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
             SendJsonResponse(context, sme, cr);
         }
 
@@ -1987,7 +1982,8 @@ namespace AasxRestServerLibrary
             try
             {
                 ids = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AdminShell.Identification>>(context.Request.Payload);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
                 return;
@@ -2326,7 +2322,7 @@ namespace AasxRestServerLibrary
                 // string with real random numbers
                 Byte[] barray = new byte[100];
                 rngCsp.GetBytes(barray);
-                
+
                 Console.WriteLine("Security 2.3 Server: Create session unique challenge by real random");
                 sessionChallenge[sessionCount] = Convert.ToBase64String(barray);
             }

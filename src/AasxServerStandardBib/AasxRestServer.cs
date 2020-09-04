@@ -2,22 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-using System.Text.RegularExpressions;
-
-using Newtonsoft.Json;
-using AdminShellNS;
-
-
 using System.Reflection;
-using Grapevine.Server.Attributes;
-using Grapevine.Shared;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using AasxMqttClient;
+using AdminShellNS;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server;
-
-using AasxMqttClient;
+using Grapevine.Server.Attributes;
+using Grapevine.Shared;
+using Newtonsoft.Json;
 
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -175,7 +170,7 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getfile/(\d+)/aasx/(([^/]+)/){0,99}([^/]+)$")] 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getfile/(\d+)/aasx/(([^/]+)/){0,99}([^/]+)$")]
             public IHttpContext GetFile(IHttpContext context)
             {
                 int index = -1;
@@ -436,7 +431,7 @@ namespace AasxRestServerLibrary
 
         private static RestServer startedRestServer = null;
 
-        public static void Start(AdminShellPackageEnv [] packages, string host, string port, bool https, GrapevineLoggerSuper logger = null)
+        public static void Start(AdminShellPackageEnv[] packages, string host, string port, bool https, GrapevineLoggerSuper logger = null)
         {
             // if running, stop old server
             Stop();

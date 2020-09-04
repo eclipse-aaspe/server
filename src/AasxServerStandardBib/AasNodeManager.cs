@@ -27,14 +27,14 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
+using System;
 using System.Collections.Generic;
-using Opc.Ua;
-using Opc.Ua.Sample;
-using System.Reflection;
-using AdminShellNS;
 using System.Diagnostics;
 using System.IO;
-using System;
+using System.Reflection;
+using AdminShellNS;
+using Opc.Ua;
+using Opc.Ua.Sample;
 
 namespace AasOpcUaServer
 {
@@ -54,7 +54,7 @@ namespace AasOpcUaServer
             Opc.Ua.Server.IServerInternal server,
             ApplicationConfiguration configuration,
             AdminShellPackageEnv[] env,
-            AasxUaServerOptions serverOptions = null)        
+            AasxUaServerOptions serverOptions = null)
             :
             base(server)
         {
@@ -63,7 +63,7 @@ namespace AasOpcUaServer
 
             List<string> namespaceUris = new List<string>();
             namespaceUris.Add("http://opcfoundation.org/UA/i4aas/");
-            namespaceUris.Add("http://admin-shell.io/samples/i4aas/instance/") ;
+            namespaceUris.Add("http://admin-shell.io/samples/i4aas/instance/");
             NamespaceUris = namespaceUris;
 
             m_typeNamespaceIndex = Server.NamespaceUris.GetIndexOrAppend(namespaceUris[0]);
@@ -87,17 +87,20 @@ namespace AasOpcUaServer
         }
         #endregion
 
-        public NodeId NewFromParent(ISystemContext context, NodeState node, NodeState parent) {
+        public NodeId NewFromParent(ISystemContext context, NodeState node, NodeState parent)
+        {
             // create known node ids from the full path in the AAS
             // causes an exception if anything has more than one qualifier!
-            if (parent == null) {
+            if (parent == null)
+            {
                 return new NodeId(node.BrowseName.Name, m_namespaceIndex);
             }
             if (node.BrowseName.Name == "Qualifier")
             {
                 return New(context, node);
             }
-            else {
+            else
+            {
                 return new NodeId(parent.NodeId.Identifier.ToString() + "." + node.BrowseName.Name, m_namespaceIndex);
             }
         }

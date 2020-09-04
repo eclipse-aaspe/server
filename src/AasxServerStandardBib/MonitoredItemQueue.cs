@@ -52,24 +52,24 @@ namespace Opc.Ua.Sample
             m_nextSampleTime = 0;
             m_samplingInterval = 0;
         }
-        
+
         #region Public Methods
         /// <summary>
         /// Gets the current queue size.
         /// </summary>
         public uint QueueSize
         {
-            get 
+            get
             {
                 if (m_values == null)
                 {
                     return 0;
                 }
 
-                return (uint)m_values.Length; 
+                return (uint)m_values.Length;
             }
         }
-        
+
         /// <summary>
         /// Sets the sampling interval used when queuing values.
         /// </summary>
@@ -83,7 +83,7 @@ namespace Opc.Ua.Sample
             }
 
             // calculate the next sampling interval.
-            m_samplingInterval = (long)(samplingInterval*TimeSpan.TicksPerMillisecond);
+            m_samplingInterval = (long)(samplingInterval * TimeSpan.TicksPerMillisecond);
 
             if (m_samplingInterval > 0)
             {
@@ -114,14 +114,14 @@ namespace Opc.Ua.Sample
             int end = m_end;
 
             // create new queue.
-            DataValue[] values = new DataValue[length];            
+            DataValue[] values = new DataValue[length];
             ServiceResult[] errors = null;
 
             if ((diagnosticsMasks & DiagnosticsMasks.OperationAll) != 0)
             {
                 errors = new ServiceResult[length];
             }
-            
+
             // copy existing values.
             List<DataValue> existingValues = null;
             List<ServiceResult> existingErrors = null;
@@ -158,7 +158,7 @@ namespace Opc.Ua.Sample
                 }
             }
         }
-        
+
         /// <summary>
         /// Adds the value to the queue.
         /// </summary>
@@ -173,11 +173,11 @@ namespace Opc.Ua.Sample
                 // check if too soon for another sample.
                 if (now < m_nextSampleTime)
                 {
-                    int last = m_end-1;
+                    int last = m_end - 1;
 
                     if (last < 0)
                     {
-                        last = m_values.Length-1;
+                        last = m_values.Length - 1;
                     }
 
                     // replace last value and error.
@@ -199,7 +199,7 @@ namespace Opc.Ua.Sample
 
                 if (m_samplingInterval > 0 && delta >= 0)
                 {
-                    m_nextSampleTime += ((delta/m_samplingInterval)+1)*m_samplingInterval;                 
+                    m_nextSampleTime += ((delta / m_samplingInterval) + 1) * m_samplingInterval;
                 }
             }
             else
@@ -222,7 +222,7 @@ namespace Opc.Ua.Sample
             return Dequeue(out value, out error);
         }
         #endregion
-        
+
         #region Private Methods
         /// <summary>
         /// Adds the value to the queue. Discards values if the queue is full.
@@ -261,7 +261,7 @@ namespace Opc.Ua.Sample
             {
                 if (!m_discardOldest)
                 {
-                    m_overflow = m_end-1;
+                    m_overflow = m_end - 1;
                     return;
                 }
 
@@ -285,7 +285,7 @@ namespace Opc.Ua.Sample
                 m_errors[next] = error;
             }
 
-            m_end = next+1;
+            m_end = next + 1;
         }
 
         /// <summary>
@@ -307,7 +307,7 @@ namespace Opc.Ua.Sample
 
             value = m_values[m_start];
             m_values[m_start] = null;
-            
+
             if (m_errors != null)
             {
                 error = m_errors[m_start];
@@ -322,7 +322,7 @@ namespace Opc.Ua.Sample
             }
 
             m_start++;
-            
+
             // check if queue has been emptied.
             if (m_start == m_end)
             {
@@ -335,7 +335,7 @@ namespace Opc.Ua.Sample
             {
                 m_start = 0;
             }
-            
+
             return true;
         }
 
