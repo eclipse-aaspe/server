@@ -34,7 +34,7 @@ using Opc.Ua.Configuration;
 using Opc.Ua.Server;
 using Formatting = Newtonsoft.Json.Formatting;
 // using AASXLoader;
-namespace Net46ConsoleServer
+namespace AasxServer
 {
     static public class Program
     {
@@ -767,18 +767,18 @@ namespace Net46ConsoleServer
 
                     adp.source = connectNodeName;
 
-                    int aascount = Net46ConsoleServer.Program.env.Length;
+                    int aascount = Program.env.Length;
 
                     for (int j = 0; j < aascount; j++)
                     {
                         aasListParameters alp = new aasListParameters();
 
-                        if (Net46ConsoleServer.Program.env[j] != null)
+                        if (Program.env[j] != null)
                         {
                             alp.index = j;
-                            alp.idShort = Net46ConsoleServer.Program.env[j].AasEnv.AdministrationShells[0].idShort;
-                            alp.identification = Net46ConsoleServer.Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
-                            alp.fileName = Net46ConsoleServer.Program.envFileName[j];
+                            alp.idShort = Program.env[j].AasEnv.AdministrationShells[0].idShort;
+                            alp.identification = Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
+                            alp.fileName = Program.envFileName[j];
 
                             adp.aasList.Add(alp);
                         }
@@ -885,7 +885,7 @@ namespace Net46ConsoleServer
 
                                 dynamic res = new System.Dynamic.ExpandoObject();
 
-                                Byte[] binaryFile = File.ReadAllBytes(Net46ConsoleServer.Program.envFileName[aasIndex]);
+                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
                                 string binaryBase64 = Convert.ToBase64String(binaryFile);
 
                                 string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
@@ -893,7 +893,7 @@ namespace Net46ConsoleServer
                                 System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
                                 string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(AasxRestServerLibrary.AasxHttpContextHelper.secretString), JwsAlgorithm.HS256);
 
-                                res.fileName = Path.GetFileName(Net46ConsoleServer.Program.envFileName[aasIndex]);
+                                res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
                                 res.fileData = fileToken;
 
                                 string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);

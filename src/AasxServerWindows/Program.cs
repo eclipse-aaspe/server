@@ -4,7 +4,7 @@
     {
         static void Main(string[] args)
         {
-            Net46ConsoleServer.Program.Main(args);
+            AasxServer.Program.Main(args);
         }
     }
 }
