@@ -1,1 +1,1 @@
-AasxServerBlazor.exe -REST -datapath aasxs
+AasxServerBlazor.exe --rest --data-path aasxs

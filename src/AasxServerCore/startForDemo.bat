@@ -1,1 +1,1 @@
-AasxServerCore.exe -REST -datapath aasxs
+AasxServerCore.exe --rest --data-path aasxs

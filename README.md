@@ -58,7 +58,7 @@ Change to the directory where you extracted the release bundle.
 Invoke the executable with the same name as the server variant. For example:
 
 ```
-AasxServerCore.exe -OPC -REST -datapath /path/to/aasxs
+AasxServerCore.exe --opc --rest -data-path /path/to/aasxs
 ```
 
 To obtain help on individual flags and options, supply the argument `--help`:
@@ -101,7 +101,7 @@ Use `dotnet` to execute the DLL with the same name as the server variant.
 For example:
 
 ```
-dotnet AasxServerCore.dll -OPC -REST -datapath /path/to/aasxs
+dotnet AasxServerCore.dll --opc --rest --data-path /path/to/aasxs
 ```
 
 ### Build and Package Binaries
