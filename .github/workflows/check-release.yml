@@ -38,6 +38,10 @@ jobs:
         working-directory: src
         run: powershell .\BuildForRelease.ps1
 
+      - name: Check --help and Readme coincide
+        working-directory: src
+        run: powershell .\CheckHelpInReadme.ps1
+
       - name: Package
         working-directory: src
         run: powershell .\PackageRelease.ps1 -version LATEST.alpha

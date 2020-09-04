@@ -66,6 +66,32 @@ To obtain help on individual flags and options, supply the argument `--help`:
 ```
 AasxServerCore.exe --help
 ```
+<!--- Help starts. -->
+```
+AasxServerCore:
+  serve AASX packages over different interface
+
+Usage:
+  AasxServerCore [options]
+
+Options:
+  --host <host>                          Host which the server listens on [default: localhost]
+  --port <port>                          Port which the server listens on [default: 51310]
+  --https                                If set, opens SSL connections. Make sure you bind a certificate to the port before.
+  --data-path <data-path>                Path to where the AASXs reside
+  --rest                                 If set, starts the REST server
+  --opc                                  If set, starts the OPC server
+  --mqtt                                 If set, starts a MQTT publisher
+  --debug-wait                           If set, waits for Debugger to attach
+  --opc-client-rate <opc-client-rate>    If set, starts an OPC client and refreshes on the given period (in milliseconds)
+  --connect <connect>                    If set, connects to AAS connect server. Given as a comma-separated-values (server, node name, period in milliseconds) or as a flag (in which case it connects to a default server).
+  --proxy-file <proxy-file>              If set, parses the proxy information from the given proxy file
+  --no-security                          If set, no authentication is required
+  --edit                                 If set, allows edits in the user interface
+  --version                              Show version information
+  -?, -h, --help                         Show help and usage information
+```
+<!--- Help ends. -->
 
 ### Running on Linux
 

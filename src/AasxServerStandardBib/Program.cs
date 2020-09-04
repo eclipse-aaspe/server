@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Help;
+using System.CommandLine.IO;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
@@ -88,14 +91,11 @@ namespace AasxServer
         public static ulong getDataVersion() { return (dataVersion); }
 
         static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
-        static Boolean opcclientActive;
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
 
         static MqttServer AASMqttServer = new MqttServer();
 
-        static bool runREST = false;
         static bool runOPC = false;
-        static bool runMQTT = false;
 
         public static string connectServer = "";
         static string connectNodeName = "";
@@ -112,227 +112,118 @@ namespace AasxServer
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
 
-        public static void Main(string[] args)
+        private class CommandLineArguments
         {
-            // default command line options
-            string host = "localhost";
-            string port = "51310";
-            bool https = false;
-            bool debugwait = false;
-            opcclientActive = false;
-            int opcclient_rate = 5000;  // 5 seconds
-            string proxyFile = "";
-            bool generate = false;
+            // ReSharper disable UnusedAutoPropertyAccessor.Local
+#pragma warning disable 8618
+            public string Host { get; set; }
+            public string Port { get; set; }
+            public bool Https { get; set; }
+            public string DataPath { get; set; }
+            public bool Rest { get; set; }
+            public bool Opc { get; set; }
+            public bool Mqtt { get; set; }
+            public bool DebugWait { get; set; }
+            public int? OpcClientRate { get; set; }
+            public string[] Connect { get; set; }
+            public string ProxyFile { get; set; }
+            public bool NoSecurity { get; set; }
+            public bool Edit { get; set; }
+#pragma warning restore 8618
+            // ReSharper enable UnusedAutoPropertyAccessor.Local
+        }
 
-            Console.WriteLine("--help for options and help");
-            Console.WriteLine(
-            "Copyright(c) 2019-2020 PHOENIX CONTACT GmbH & Co.KG <opensource@phoenixcontact.com>, author: Andreas Orzelski\n" +
-            "Copyright(c) 2018-2020 Festo SE & Co.KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister\n" +
-            "Copyright(c) 2019-2020 Fraunhofer IOSB-INA Lemgo, eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer - Gesellschaft\n" +
-            "zur Foerderung der angewandten Forschung e.V.\n" +
-            "The AASX Server is licensed under the Apache License 2.0 (Apache-2.0)\n" +
-            "The Newtonsoft.JSON serialization is licensed under the MIT License (MIT)\n" +
-            "The Grapevine REST server framework is licensed under Apache License 2.0 (Apache - 2.0)\n" +
-            "The MQTT server and client is licensed under the MIT license (MIT)\n" +
-            "Jose-JWT is licensed under the MIT license (MIT)\n" +
-            "Font Awesome is licensed under the Font Awesome Free License\n" +
-            "JetBrains.Annotations is licensed under the MIT license (MIT)\n" +
-            "The OPC UA Example Code of OPC UA Standard is licensed under the MIT license (MIT)\n" +
-            "This application is a sample application for demonstration of the features of the Administration Shell.\n" +
-            "The implementation uses the concepts of the document Details of the Asset\n" +
-            "Administration Shell published on www.plattform-i40.de which is licensed under Creative Commons CC BY-ND 3.0 DE."
-            );
-            Console.WriteLine("For further details see LICENSE.TXT");
-            Console.WriteLine("");
-
-            Boolean help = false;
-
-            int i = 0;
-            while (i < args.Length)
+        private static int Run(CommandLineArguments a)
+        {
+            if (a.Connect != null)
             {
-                var x = args[i].Trim().ToLower();
-
-                if (x == "-proxy")
+                if (a.Connect.Length == 0)
                 {
-                    proxyFile = args[i + 1];
-                    Console.WriteLine(args[i] + " " + args[i + 1]);
-                    i += 2;
-                    continue;
+                    Program.connectServer = "http://admin-shell-io.com:52000";
+                    Byte[] barray = new byte[10];
+                    RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                    rngCsp.GetBytes(barray);
+                    Program.connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
+                    Program.connectUpdateRate = 2000;
                 }
-
-                if (x == "-host")
+                else if (a.Connect.Length == 1)
                 {
-                    host = args[i + 1];
-                    Console.WriteLine(args[i] + " " + args[i + 1]);
-                    i += 2;
-                    continue;
-                }
+                    bool parsable = true;
 
-                if (x == "-port")
-                {
-                    port = args[i + 1];
-                    Console.WriteLine(args[i] + " " + args[i + 1]);
-                    i += 2;
-                    continue;
-                }
-
-                if (x == "-https")
-                {
-                    https = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-datapath")
-                {
-                    AasxHttpContextHelper.DataPath = args[i + 1];
-                    Console.WriteLine(args[i] + " " + args[i + 1]);
-                    i += 2;
-                    continue;
-                }
-
-                if (x == "-debugwait")
-                {
-                    debugwait = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-opcclient")
-                {
-                    opcclientActive = true;
-                    Console.WriteLine(args[i] + " " + args[i + 1]);
-                    int rate = 0;
-                    if (Int32.TryParse(args[i + 1], out rate))
+                    string[] c = a.Connect[0].Split(',');
+                    if (c.Length == 3)
                     {
-                        if (rate < 200)
+                        int rate = 0;
+                        try
                         {
-                            Console.WriteLine("Recommend an OPC client update rate > 200 ms.");
+                            rate = Convert.ToInt32(c[2]);
                         }
-                        opcclient_rate = rate;
-                    }
-                    i += 2;
-                    continue;
-                }
+                        catch (FormatException)
+                        {
+                            parsable = false;
+                        }
 
-                if (x == "-rest")
-                {
-                    runREST = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-opc")
-                {
-                    runOPC = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-mqtt")
-                {
-                    runMQTT = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-connect")
-                {
-                    string[] c = null;
-                    if (i + 1 < args.Length)
-                    {
-                        string connect = args[i + 1];
-                        c = connect.Split(',');
-                    }
-                    if (c != null && c.Length == 3)
-                    {
-                        connectServer = c[0];
-                        connectNodeName = c[1];
-                        connectUpdateRate = Convert.ToInt32(c[2]);
-                        i += 2;
+                        if (parsable)
+                        {
+                            if (c[0].Length == 0 || c[1].Length == 0 || c[2].Length == 0 || rate <= 0)
+                            {
+                                parsable = false;
+                            }
+                            else
+                            {
+                                Program.connectServer = c[0];
+                                Program.connectNodeName = c[1];
+                                Program.connectUpdateRate = Convert.ToInt32(c[2]);
+                            }
+                        }
                     }
                     else
                     {
-                        connectServer = "http://admin-shell-io.com:52000";
-                        Byte[] barray = new byte[10];
-                        RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-                        rngCsp.GetBytes(barray);
-                        connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
-                        connectUpdateRate = 2000;
-                        i++;
+                        parsable = false;
                     }
-                    Console.WriteLine("-connect: ConnectServer " + connectServer + ", NodeName " + connectNodeName + ", UpdateRate " + connectUpdateRate);
-                    continue;
+
+                    if (!parsable)
+                    {
+                        Console.Error.WriteLine(
+                            "Invalid --connect. " +
+                            "Expected a comma-separated values (server, node name, period in milliseconds), " +
+                            $"but got: {a.Connect[0]}");
+                        return 1;
+                    }
                 }
 
-                if (x == "-nosecurity")
-                {
-                    noSecurity = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-edit")
-                {
-                    edit = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "-generate")
-                {
-                    generate = true;
-                    Console.WriteLine(args[i]);
-                    i++;
-                    continue;
-                }
-
-                if (x == "--help")
-                {
-                    help = true;
-                    break;
-                }
+                Console.WriteLine(
+                    $"--connect: " +
+                    $"ConnectServer {connectServer}, " +
+                    $"NodeName {connectNodeName}, " +
+                    $"UpdateRate {connectUpdateRate}");
             }
 
-            if (!(runREST || runOPC || runMQTT))
-            {
-                Console.WriteLine();
-                Console.WriteLine("Please specifiy -REST and/or -OPC and/or -MQTT");
-                Console.WriteLine();
-                help = true;
-            }
+            /*
+             * Set the global variables at this point inferred from the command-line arguments
+             */
 
-            if (help)
+            if (a.DataPath != null)
             {
-                Console.WriteLine("-host HOSTIP");
-                Console.WriteLine("-port HOSTPORT");
-                Console.WriteLine("-https = SSL connection, you must bind certificate to port before");
-                Console.WriteLine("-datapath PATH_TO_AASX_FILES");
-                Console.WriteLine("-REST = start REST server");
-                Console.WriteLine("-OPC = start OPC server");
-                Console.WriteLine("-MQTT = start MQTT publisher");
-                Console.WriteLine("-debugwait = wait for Debugger to attach");
-                Console.WriteLine("-opcclient UPDATERATE = time in ms between getting new values");
-                Console.WriteLine("-connect SERVER,NAME,UPDATERATE = AAS Connect Server, Node Name, time in ms between publishing/subscribing new values");
-                Console.ReadLine();
-                return;
+                Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
+                AasxHttpContextHelper.DataPath = a.DataPath;
             }
-            Console.WriteLine("");
+            Program.runOPC = a.Opc;
+            Program.noSecurity = a.NoSecurity;
+            Program.edit = a.Edit;
 
-            // auf Debugger warten
-            if (debugwait)
+            // Wait for Debugger
+            if (a.DebugWait)
             {
-                Console.WriteLine("Please attach debugger now to {0}!", host);
+                Console.WriteLine("Please attach debugger now to {0}!", a.Host);
                 while (!System.Diagnostics.Debugger.IsAttached)
                     System.Threading.Thread.Sleep(100);
                 Console.WriteLine("Debugger attached");
+            }
+
+            if (a.OpcClientRate != null && a.OpcClientRate < 200)
+            {
+                Console.WriteLine("Recommend an OPC client update rate > 200 ms.");
             }
 
             // Proxy
@@ -340,21 +231,17 @@ namespace AasxServer
             string username = "";
             string password = "";
 
-
-            if (generate)
-                proxyFile = "/dat/proxy.dat";
-            if (proxyFile != "")
+            if (a.ProxyFile != null)
             {
-                if (!File.Exists(proxyFile))
+                if (!File.Exists(a.ProxyFile))
                 {
-                    Console.WriteLine(proxyFile + " not found!");
-                    Console.ReadLine();
-                    return;
+                    Console.Error.WriteLine($"Proxy file not found: {a.ProxyFile}");
+                    return 1;
                 }
 
                 try
                 {
-                    using (StreamReader sr = new StreamReader(proxyFile))
+                    using (StreamReader sr = new StreamReader(a.ProxyFile))
                     {
                         proxyAddress = sr.ReadLine();
                         username = sr.ReadLine();
@@ -364,7 +251,7 @@ namespace AasxServer
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
-                    Console.WriteLine(proxyFile + " not found!");
+                    Console.WriteLine(a.ProxyFile + " not found!");
                 }
 
                 if (proxyAddress != "")
@@ -383,21 +270,8 @@ namespace AasxServer
                 }
             };
 
-            // OZ
-            Console.WriteLine("AAS Factory\n");
 
-            if (generate)
-            {
-                Console.WriteLine("Press ENTER");
-                Console.ReadLine();
-
-                if (true)
-                    return;
-                //
-            }
-
-
-            hostPort = host + ":" + port;
+            hostPort = a.Host + ":" + a.Port;
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -423,7 +297,7 @@ namespace AasxServer
 
             string fn = null;
 
-            if (runOPC)
+            if (a.Opc)
             {
                 Boolean is_BaseAddresses = false;
                 Boolean is_uaString = false;
@@ -472,8 +346,8 @@ namespace AasxServer
                         env[envi] = new AdminShellPackageEnv(fn);
                         if (env[envi] == null)
                         {
-                            Console.Out.WriteLine($"Cannot open {fn}. Aborting..");
-                            return;
+                            Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                            return 1;
                         }
                         // check if signed
                         string name = Path.GetFileName(fn);
@@ -518,45 +392,45 @@ namespace AasxServer
             AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
 
             Console.WriteLine();
-            Console.WriteLine("Please wait for servers starting...");
+            Console.WriteLine("Please wait for the servers to start...");
 
             RunScript(); // Initialize
 
-            if (runREST)
+            if (a.Rest)
             {
-                Console.WriteLine("Connect to REST by: {0}:{1}", host, port);
+                Console.WriteLine("Connect to REST by: {0}:{1}", a.Host, a.Port);
 
-                AasxRestServer.Start(env, host, port, https); // without Logger
+                AasxRestServer.Start(env, a.Host, a.Port, a.Https); // without Logger
 
-
-                Console.WriteLine("REST Server started..");
+                Console.WriteLine("REST Server started.");
             }
 
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
-            if (runMQTT)
+            if (a.Mqtt)
             {
                 AASMqttServer.MqttSeverStartAsync().Wait();
-                Console.WriteLine("MQTT Publisher started..");
+                Console.WriteLine("MQTT Publisher started.");
             }
 
             MySampleServer server = null;
-            if (runOPC)
+            if (a.Opc)
             {
                 server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
                 Console.WriteLine("OPC UA Server started..");
             }
 
-            if (opcclientActive) // read data by OPC UA
+            if (a.OpcClientRate != null) // read data by OPC UA
             {
-                // Initial read of OPC values, will quit the program if it return false
+                // Initial read of OPC values, will quit the program if it returns false
                 if (!ReadOPCClient(true))
                 {
-                    return;
+                    Console.Error.WriteLine("Failed to read from the OPC client.");
+                    return 1;
                 }
 
-                Console.WriteLine("OPC client updating every {0} ms.", opcclient_rate);
-                SetOPCClientTimer(opcclient_rate); // read again everytime timer expires
+                Console.WriteLine($"OPC client will be updating every: {a.OpcClientRate} milliseconds");
+                SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
             }
 
             // TODO
@@ -602,14 +476,14 @@ namespace AasxServer
                 }
             }
 
-            if (runOPC && server != null)
+            if (a.Opc && server != null)
             {
                 server.Run(); // wait for CTRL-C
             }
             else
             {
                 // no OPC UA: wait only for CTRL-C
-                Console.WriteLine("Servers succesfully started. Press Ctrl-C to exit...");
+                Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
                 ManualResetEvent quitEvent = new ManualResetEvent(false);
                 try
                 {
@@ -664,12 +538,105 @@ namespace AasxServer
                 }
             }
 
-            if (runMQTT)
+            if (a.Mqtt)
             {
                 AASMqttServer.MqttSeverStopAsync().Wait();
             }
 
             AasxRestServer.Stop();
+
+            return 0;
+        }
+
+        public static void Main(string[] args)
+        {
+            string nl = System.Environment.NewLine;
+
+            var rootCommand = new RootCommand("serve AASX packages over different interface")
+            {
+                new Option<string>(
+                    new[] {"--host"},
+                    () => "localhost",
+                    "Host which the server listens on"),
+
+                new Option<string>(
+                    new[] {"--port"},
+                    ()=>"51310",
+                    "Port which the server listens on"),
+
+                new Option<bool>(
+                    new[] {"--https"},
+                    "If set, opens SSL connections. " +
+                    "Make sure you bind a certificate to the port before."),
+
+                new Option<string>(
+                    new[] {"--data-path"},
+                    "Path to where the AASXs reside"),
+
+                new Option<bool>(
+                    new[] {"--rest"},
+                    "If set, starts the REST server"),
+
+                new Option<bool>(
+                    new[] {"--opc"},
+                    "If set, starts the OPC server"),
+
+                new Option<bool>(
+                    new[] {"--mqtt"},
+                    "If set, starts a MQTT publisher"),
+
+                new Option<bool>(
+                    new[] {"--debug-wait"},
+                    "If set, waits for Debugger to attach"),
+
+                new Option<int>(
+                    new[] {"--opc-client-rate"},
+                    "If set, starts an OPC client and refreshes on the given period " +
+                    "(in milliseconds)"),
+
+                new Option<string[]>(
+                    new[] {"--connect"},
+                    "If set, connects to AAS connect server. " +
+                    "Given as a comma-separated-values (server, node name, period in milliseconds) or " +
+                    "as a flag (in which case it connects to a default server).")
+                {
+                    Argument = new Argument<string[]>{ Arity = ArgumentArity.ZeroOrOne }
+                },
+
+                new Option<string>(
+                    new[] {"--proxy-file"},
+                    "If set, parses the proxy information from the given proxy file"),
+
+                new Option<bool>(
+                    new[] {"--no-security"},
+                    "If set, no authentication is required"),
+
+                new Option<bool>(
+                    new[] {"--edit"},
+                    "If set, allows edits in the user interface"),
+            };
+
+            if (args.Length == 0)
+            {
+                new HelpBuilder(new SystemConsole()).Write(rootCommand);
+                return;
+            }
+
+            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
+                (CommandLineArguments a) =>
+                {
+                    if (!(a.Rest || a.Opc || a.Mqtt))
+                    {
+                        Console.Error.WriteLine($"Please specify --rest and/or --opc and/or --mqtt{nl}");
+                        new HelpBuilder(new SystemConsole()).Write(rootCommand);
+                        return 1;
+                    }
+
+                    return Run(a);
+                });
+
+            int exitCode = rootCommand.InvokeAsync(args).Result;
+            System.Environment.ExitCode = exitCode;
         }
 
         public static string ContentToString(this HttpContent httpContent)
