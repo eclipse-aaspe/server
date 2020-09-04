@@ -15,7 +15,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: mristin/aasx-server-blazor
+          repository: adminshellio/aasx-server-blazor-for-demo
           tag_with_ref: true
           dockerfile: src/docker/Dockerfile-AasxServerBlazor
 
@@ -24,6 +24,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: mristin/aasx-server-core
+          repository: adminshellio/aasx-server-core-for-demo
           tag_with_ref: true
           dockerfile: src/docker/Dockerfile-AasxServerCore
