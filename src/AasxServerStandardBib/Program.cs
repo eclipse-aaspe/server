@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -26,6 +27,26 @@ using Formatting = Newtonsoft.Json.Formatting;
 
 namespace AasxServer
 {
+    /// <summary>
+    /// Checks whether the console will persist after the program exits.
+    /// This should run only on Windows as it depends on kernel32.dll.
+    ///
+    /// The code has been adapted from: https://stackoverflow.com/a/63135555/1600678
+    /// </summary>
+    static class WindowsConsoleWillBeDestroyedAtTheEnd
+    {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
+
+        public static bool Check()
+        {
+            var processList = new uint[1];
+            var processCount = GetConsoleProcessList(processList, 1);
+
+            return processCount == 1;
+        }
+    }
+
     public static class Program
     {
         public static int envimax = 100;
@@ -619,6 +640,14 @@ namespace AasxServer
             if (args.Length == 0)
             {
                 new HelpBuilder(new SystemConsole()).Write(rootCommand);
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+                    WindowsConsoleWillBeDestroyedAtTheEnd.Check())
+                {
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                }
+
                 return;
             }
 
