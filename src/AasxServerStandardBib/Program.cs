@@ -555,12 +555,12 @@ namespace AasxServer
             var rootCommand = new RootCommand("serve AASX packages over different interface")
             {
                 new Option<string>(
-                    new[] {"--host"},
+                    new[] {"--host", "-h"},
                     () => "localhost",
                     "Host which the server listens on"),
 
                 new Option<string>(
-                    new[] {"--port"},
+                    new[] {"--port", "-p"},
                     ()=>"51310",
                     "Port which the server listens on"),
 

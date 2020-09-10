@@ -75,8 +75,8 @@ Usage:
   AasxServerCore [options]
 
 Options:
-  --host <host>                          Host which the server listens on [default: localhost]
-  --port <port>                          Port which the server listens on [default: 51310]
+  -h, --host <host>                      Host which the server listens on [default: localhost]
+  -p, --port <port>                      Port which the server listens on [default: 51310]
   --https                                If set, opens SSL connections. Make sure you bind a certificate to the port before.
   --data-path <data-path>                Path to where the AASXs reside
   --rest                                 If set, starts the REST server
