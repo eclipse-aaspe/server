@@ -540,6 +540,14 @@ namespace AasxRestServerLibrary
             context.Response.Advanced.Close();
         }
 
+        protected static void SendRedirectResponse(Grapevine.Interfaces.Server.IHttpContext context, string redirectUrl)
+        {
+            context.Response.AppendHeader("redirectInfo", "URL");
+            context.Response.Redirect(redirectUrl);
+            context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, redirectUrl);
+        }
+
+
         #endregion
 
         #region AAS and Asset
@@ -2631,7 +2639,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("Security 4 Server: /server/listaas");
 
             // check authentication
-            if (withAuthentification)
+            if (false && withAuthentification)
             {
                 Console.WriteLine("Security 4.1 Server: Check bearer token and access rights");
                 Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by token server certificate");
@@ -2639,6 +2647,18 @@ namespace AasxRestServerLibrary
 
                 if (accessrights == null)
                 {
+                    if (Net46ConsoleServer.Program.redirectServer != "")
+                    {
+                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                        string originalRequest = context.Request.Url.ToString();
+                        queryString.Add("OriginalRequest", originalRequest);
+                        Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                        string response = Net46ConsoleServer.Program.redirectServer + "?" + "authType=" + Net46ConsoleServer.Program.authType + "&" + queryString;
+                        Console.WriteLine("Redirect Response: " + response + "\n");
+                        SendRedirectResponse(context, response);
+                        return;
+                    }
+
                     res.error = "You are not authorized for this operation!";
                     SendJsonResponse(context, res);
                     return;
@@ -2716,13 +2736,24 @@ namespace AasxRestServerLibrary
 
             if (accessrights == null)
             {
+                if (Net46ConsoleServer.Program.redirectServer != "")
+                {
+                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                    string originalRequest = context.Request.Url.ToString();
+                    queryString.Add("OriginalRequest", originalRequest);
+                    Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                    string response = Net46ConsoleServer.Program.redirectServer + "?" + "authType=" + Net46ConsoleServer.Program.authType + "&" + queryString;
+                    Console.WriteLine("Redirect Response: " + response + "\n");
+                    SendRedirectResponse(context, response);
+                    return;
+                }
+
                 res.error = "You are not authorized for this operation!";
                 SendJsonResponse(context, res);
                 return;
             }
 
             res.confirm = "Authorization = " + accessrights;
-
 
             Byte[] binaryFile = File.ReadAllBytes(AasxServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
