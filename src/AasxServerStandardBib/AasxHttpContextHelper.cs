@@ -199,6 +199,7 @@ namespace AasxRestServerLibrary
 
 
             // trivial
+            /*
             if (Packages[0] == null || Packages[0].AasEnv == null || Packages[0].AasEnv.AdministrationShells == null || Packages[0].AasEnv.AdministrationShells.Count < 1)
                 return null;
 
@@ -214,6 +215,7 @@ namespace AasxRestServerLibrary
 
             // no, iterate over idShort
             return Packages[0].AasEnv.FindAAS(aasid);
+            */
         }
 
         public AdminShell.SubmodelRef FindSubmodelRefWithinAas(AdminShell.AdministrationShell aas, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
@@ -2647,13 +2649,13 @@ namespace AasxRestServerLibrary
 
                 if (accessrights == null)
                 {
-                    if (Net46ConsoleServer.Program.redirectServer != "")
+                    if (AasxServer.Program.redirectServer != "")
                     {
                         System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
                         string originalRequest = context.Request.Url.ToString();
                         queryString.Add("OriginalRequest", originalRequest);
                         Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                        string response = Net46ConsoleServer.Program.redirectServer + "?" + "authType=" + Net46ConsoleServer.Program.authType + "&" + queryString;
+                        string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
                         Console.WriteLine("Redirect Response: " + response + "\n");
                         SendRedirectResponse(context, response);
                         return;
@@ -2736,13 +2738,13 @@ namespace AasxRestServerLibrary
 
             if (accessrights == null)
             {
-                if (Net46ConsoleServer.Program.redirectServer != "")
+                if (AasxServer.Program.redirectServer != "")
                 {
                     System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
                     string originalRequest = context.Request.Url.ToString();
                     queryString.Add("OriginalRequest", originalRequest);
                     Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                    string response = Net46ConsoleServer.Program.redirectServer + "?" + "authType=" + Net46ConsoleServer.Program.authType + "&" + queryString;
+                    string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
                     Console.WriteLine("Redirect Response: " + response + "\n");
                     SendRedirectResponse(context, response);
                     return;

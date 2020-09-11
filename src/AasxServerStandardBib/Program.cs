@@ -136,7 +136,6 @@ namespace AasxServer
         public static string redirectServer = "";
         public static string authType = "";
 
-        static public void Main(string[] args)
         private class CommandLineArguments
 
         {

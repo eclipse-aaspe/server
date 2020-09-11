@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "-datapath C:\\Development\\AASX_DigTyp40 -rest",
+      "commandLineArgs": "--data-path C:\\Development\\aasx --rest",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
