@@ -16,7 +16,7 @@
     <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.357.28" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20427.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2" />
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.6.0" />
     <PackageReference Include="System.Security.Permissions" Version="4.6.0" />

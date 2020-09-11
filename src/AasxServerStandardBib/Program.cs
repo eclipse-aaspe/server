@@ -133,7 +133,11 @@ namespace AasxServer
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
 
+        public static string redirectServer = "";
+        public static string authType = "";
+
         private class CommandLineArguments
+
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
 #pragma warning disable 8618
@@ -291,6 +295,22 @@ namespace AasxServer
                 }
             };
 
+            if (File.Exists("redirect.dat"))
+            {
+                try
+                {
+                    using (StreamReader sr = new StreamReader("redirect.dat"))
+                    {
+                        redirectServer = sr.ReadLine();
+                        authType = sr.ReadLine();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine("redirect.dat " + " can not be read!");
+                }
+            }
 
             hostPort = a.Host + ":" + a.Port;
 
