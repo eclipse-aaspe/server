@@ -137,8 +137,54 @@ docker pull adminshellio/aasx-server-core-for-demo
 You can then run the container with:
 
 ```
-docker run -d -p 51210:51210 -p 51310:51310 aasx-server-core-for-demo
+docker run \
+    --detach \
+    --network host \
+    adminshellio/aasx-server-core-for-demo
 ```
+
+The server should be accessible now on your localhost. For example, curl:
+
+```
+curl http://localhost:51310/server/listaas
+```
+
+should give you something like this:
+
+```
+{
+  "aaslist": [
+    "0 : ExampleMotor : [IRI] http://customer.com/aas/9175_7013_7091_9168 : ./aasxs/Example_AAS_ServoDCMotor_21.aasx"
+  ]
+}
+```
+
+As you can see, we already provide an example AASX in the container.
+For a more thorough demo, you might want to copy additional AASX packages
+(*e.g.*, from the [samples][samples]) into the container. Find the container
+ID of your running container with:
+
+```
+docker ps
+```
+
+Then use `docker cp` to copy the AASX packages into the `aasxs` directory
+(assuming your docker container ID is `70fe45f1f102`):
+
+```
+docker cp /path/to/samples/*.aasx  70fe45f1f102:/AasxServerCore/aasxs
+```
+
+If you demo with `blazor` variant, change the destination path analogously to 
+`AasxServerBlazor`.
+
+Mind that there are many other options for managing containers for custom demos 
+such as [Docker multi-stage builds][multi-stage]
+(using one of our demo images as base), [bind mounts][bind-mounts] *etc*.
+
+[samples]: http://admin-shell-io.com/samples/
+[multi-stage]: https://docs.docker.com/develop/develop-images/multistage-build/
+[bind-mounts]: https://docs.docker.com/storage/bind-mounts/
 
 ### Build Docker Containers for Demonstration on Linux/MacOS
 

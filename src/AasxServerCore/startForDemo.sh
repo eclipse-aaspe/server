@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-dotnet AasxServerCore.dll --rest --data-path ./aasxs
+dotnet AasxServerCore.dll --rest --no-security --data-path ./aasxs

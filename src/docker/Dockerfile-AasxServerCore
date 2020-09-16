@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
 WORKDIR /src
 
-# Copy everything else and build
+# Copy the source code and build
 COPY ./src/ /src/
 RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore
 
@@ -10,5 +10,6 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 EXPOSE 51210
 EXPOSE 51310
 COPY --from=build-env /out/AasxServerCore/ /AasxServerCore/
+COPY ./content-for-demo/ /AasxServerCore/
 WORKDIR /AasxServerCore
 ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]

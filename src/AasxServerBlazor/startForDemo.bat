@@ -1,1 +1,1 @@
-AasxServerBlazor.exe --rest --data-path aasxs
+AasxServerBlazor.exe --rest --no-security --data-path aasxs
