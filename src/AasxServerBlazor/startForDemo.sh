@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-dotnet AasxServerBlazor.dll --rest --data-path ./aasxs
+dotnet AasxServerBlazor.dll --rest --no-security --data-path ./aasxs
