@@ -172,7 +172,7 @@ Then use `docker cp` to copy the AASX packages into the `aasxs` directory
 (assuming your docker container ID is `70fe45f1f102`):
 
 ```
-docker cp /path/to/samples/*.aasx  70fe45f1f102:/AasxServerCore/aasxs
+docker cp /path/to/aasx/samples/  70fe45f1f102:/AasxServerCore/aasxs/
 ```
 
 If you demo with `blazor` variant, change the destination path analogously to 
