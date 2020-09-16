@@ -3,7 +3,16 @@
 This document describes how you can build the solution from scratch, submit 
 your code contributions and make releases.
 
-## Building
+In a nutshell, our development workflow is:
+
+* Create a feature branch
+* Make your changes locally
+* Run checks locally
+* Commit & push your changes
+* Wait for the remote checks to pass
+* Squash & merge
+
+## Building Locally
 
 We provide a powershell script to build the solution:
 
@@ -14,19 +23,27 @@ We provide a powershell script to build the solution:
 This script will install all the solution dependencies before the build. Please
 inspect the script if you would like to build only parts of the solution.
 
-## Packaging for Release
+## Locally Packaging for Release
 
-Once the solution has been built, it is packaged to release bundles (compressed
-as zip archives) with:
+Once the solution has been built, you can build your own local release bundles
+(compressed as zip archives) with:
 
 ```
 .\src\PackageForRelease.ps1
 ```
 
-## Pre-commit Checks
+Note that these local release bundles are only meant for testing.
+We set up our continuous integration on GitHub to remotely build, package and
+publish the releases in automatic manner.
+
+## Local Pre-commit Checks
 
 We run a couple of checks to ensure the quality of the code (*e.g.*, checking
 that the code format is consistent).
+
+GitHub will run these checks automatically on every push. However, this can take
+some time, so you usually run these checks locally first to speed up the 
+development.
 
 Please format your code before running the checks with the following script:
 
@@ -48,7 +65,9 @@ Run the checks:
 create a branch prefixed with your Github username using dashes to 
 describe the change (*e.g.*, `mristin/Add-a-shiny-new-feature-B`).
 
-**Otherwise:** fork the repository (see [GitHub documentation about forking][github-fork]).
+**Otherwise:** Since only members of the organization can create branches,
+you need to fork the repository and create your feature branch on the fork (see 
+[GitHub documentation about forking][github-fork]).
 
 [github-fork]: https://docs.github.com/en/github/getting-started-with-github/fork-a-repo
 
@@ -107,17 +126,18 @@ We usually squash & merge the pull requests into master.
 
 ### Releasing
 
-You publish a new version using [GitHub releases feature][release]. The workflow
-`./github/workflows/build-and-package-release.yml` will automatically build and
-package the release bundles and attach them to the GitHub release. 
+We publish a new version using [GitHub Releases][release] in the web 
+browser. The workflow `./github/workflows/build-and-package-release.yml` will 
+automatically build and package the release bundles and attach them to the 
+GitHub release.
 
 [release]: https://docs.github.com/en/github/administering-a-repository/managing-releases-in-a-repository
 
 ### Appendix: GitHub Workflows
 
 We use [GitHub Workflows][workflows] to automatically perform tasks such as 
-pre-commit checks, build, package and publish the release bundles as well as 
-build and publish docker images for demonstration.
+pre-commit checks, building, packaging and publishing the release bundles 
+as well as building and publishing docker images for demonstration.
 
 Please see the directory `./.github/workflows` for the source code of 
 the work flows.
