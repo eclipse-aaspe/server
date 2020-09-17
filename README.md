@@ -51,6 +51,9 @@ the release bundle and invoke:
 ./startForDemo.sh
 ```
 
+We provide a couple of sample admin shells (packaged as .aasx) for you to test
+and play with the software at: http://www.admin-shell-io.com/samples/
+
 ### Running on Windows
 
 Change to the directory where you extracted the release bundle.
