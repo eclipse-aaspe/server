@@ -183,6 +183,15 @@ docker cp /path/to/aasx/samples/  70fe45f1f102:/AasxServerCore/aasxs/
 If you demo with `blazor` variant, change the destination path analogously to 
 `AasxServerBlazor`.
 
+For example a docker with blazor may be startet by
+```
+docker run -p 51000:51310 -p 51001:5001 -v ~/samples:/AasxServerBlazor/aasxs adminshellio/aasx-server-blazor-for-demo
+/AasxServerBlazor
+```
+connecting host port 51000 to REST port 51310 and host port 51001 to blazor
+view port 5001. In addition the host directory ~/samples is used to load
+.AASX files from inside the docker.
+
 Mind that there are many other options for managing containers for custom demos 
 such as [Docker multi-stage builds][multi-stage]
 (using one of our demo images as base), [bind mounts][bind-mounts] *etc*.
