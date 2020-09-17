@@ -21,6 +21,8 @@ There are three variants of the server:
   Mind that *blazor* and *core* variants require these privileges, so they
   can not be used for demonstration purposes on tightly-administered machines
   (which are wide-spread in larger organizations and enterprises).
+  
+A blazor demo server is running on https://admin-shell-io.com:5001/
 
 ## Binaries
 
