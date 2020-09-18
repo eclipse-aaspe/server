@@ -16,6 +16,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: adminshellio/aasx-server-blazor-for-demo
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7
           tag_with_ref: true
           dockerfile: src/docker/Dockerfile-AasxServerBlazor
 
@@ -25,5 +26,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: adminshellio/aasx-server-core-for-demo
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7
           tag_with_ref: true
           dockerfile: src/docker/Dockerfile-AasxServerCore
