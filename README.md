@@ -204,3 +204,14 @@ such as [Docker multi-stage builds][multi-stage]
 
 We provide a powershell script to build the docker containers meant for
 demonstrations at [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1).
+
+## Issues
+
+If you want to request new features or report bugs, please 
+[create an issue](
+https://github.com/admin-shell-io/aasx-server/issues/new). 
+
+## Contributing
+
+Code contributions are very welcome! Please see 
+[CONTRIBUTING.md](CONTRIBUTING.md) for more information.
