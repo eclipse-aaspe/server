@@ -1,9 +1,10 @@
 # It is expected that this docker is executed in the context of repository root.
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
-WORKDIR /src
+WORKDIR /repo/src
 
 # Copy everything else and build
-COPY ./src/ /src/
+COPY ./src/ /repo/src/
+COPY ./LICENSE.txt /repo/
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1

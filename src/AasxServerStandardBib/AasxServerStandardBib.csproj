@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="LICENSE.TXT">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="..\..\LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Opc.Ua.SampleClient.Config.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
