@@ -88,7 +88,8 @@ namespace AdminShellNS
             // ReSharper enable EmptyGeneralCatchClause
 
             // return to zero pos
-            s.Seek(0, SeekOrigin.Begin);
+            // new
+            // s.Seek(0, SeekOrigin.Begin);
 
             // give back
             return res;
@@ -254,7 +255,8 @@ namespace AdminShellNS
 
                 string nsuri = "";
 
-                for (int loop = 0; loop < 2; loop++)
+                // for (int loop = 0; loop < 2; loop++)
+                for (int loop = 1; loop < 2; loop++)
                 {
                     // load package AASX
                     try
@@ -311,7 +313,9 @@ namespace AdminShellNS
                             }
                             else
                             {
-                                using (var s = specPart.GetStream(FileMode.Open))
+                                // using (var s = specPart.GetStream(FileMode.Open))
+                                var s = specPart.GetStream(FileMode.Open);
+
                                 {
                                     // own catch loop to be more specific
 
@@ -322,6 +326,10 @@ namespace AdminShellNS
                                         package.Close();
                                         continue;
                                     }
+                                    // neu
+                                    nsuri = AdminShellSerializationHelper.TryReadXmlFirstElementNamespaceURI(s);
+                                    s.Close();
+                                    s = specPart.GetStream(FileMode.Open, FileAccess.Read);
 
                                     // read V1.0?
                                     if (nsuri != null && nsuri.Trim() == "http://www.admin-shell.io/aas/1/0")
