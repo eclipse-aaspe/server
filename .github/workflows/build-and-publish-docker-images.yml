@@ -28,7 +28,7 @@ jobs:
           tag_with_ref: true
           dockerfile: src/docker/Dockerfile-AasxServerCore
 
-  multi:
+  Build-and-publish-docker-multi-images:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false
     steps:
@@ -49,6 +49,6 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v2
         with:
-          outputs: adminshellio/aasx-server-blazor-for-demo-multi
+          push: adminshellio/aasx-server-blazor-for-demo-multi
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           file: src/docker/Dockerfile-AasxServerBlazor
