@@ -5,7 +5,7 @@ WORKDIR /repo/src
 # Copy the source code and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.txt /repo/
-RUN dotnet publish -c Release -o /out/AasxServerCoreArm AasxServerCoreArm
+RUN dotnet publish -r linux-arm -c Release -o /out/AasxServerCoreArm AasxServerCoreArm
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.2-buster-slim-arm32v7
 EXPOSE 51210
