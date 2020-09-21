@@ -28,13 +28,14 @@ A blazor demo server is running on https://admin-shell-io.com:5001/
 
 The binaries are available in the [Releases section](
 https://github.com/admin-shell-io/aasx-server/releases
-). We provide x64 binaries for Windows and Linux.
+). We provide portable dotnet assemblies.
 
 ### Installation
 
 AASX Server depends on .NET Core 3.1 runtime (`blazor` and `core` variants)
 and .NET Framework (`windows` variant), respectively. You need to install the
 respective runtimes before you start the server.
+See https://dotnet.microsoft.com/download/dotnet-core/3.1
 
 To deploy the binaries, simply extract the release bundle (*e.g.*,
 `AasxServerCore.zip`) somewhere on your system.
