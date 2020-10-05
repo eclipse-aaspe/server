@@ -68,6 +68,24 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/server(/|)$")]
+            public IHttpContext PutAasxOnServer(IHttpContext context)
+            {
+                helper.EvalPutAasxOnServer(context);
+                return context;
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/filesystem/([^/]+)(/|)$")]
+            public IHttpContext PutAasxToFileSystem(IHttpContext context)
+            {
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    helper.EvalPutAasxToFilesystem(context, m.Groups[1].ToString());
+                }
+                return context;
+            }
+
             [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/([^/]+)(/|)$")]
             public IHttpContext DeleteAasAndAsset(IHttpContext context)
             {
@@ -208,6 +226,17 @@ namespace AasxRestServerLibrary
             public IHttpContext PutAssets(IHttpContext context)
             {
                 helper.EvalPutAsset(context);
+                return context;
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/asset(/|)$")]
+            public IHttpContext PutAssetsToAas(IHttpContext context)
+            {
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    helper.EvalPutAssetToAas(context, m.Groups[1].ToString());
+                }
                 return context;
             }
 
