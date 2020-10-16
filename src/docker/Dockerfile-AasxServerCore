@@ -7,7 +7,7 @@ COPY ./src/ /repo/src/
 COPY ./LICENSE.txt /repo/
 RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/core/runtime:3.1
 EXPOSE 51210
 EXPOSE 51310
 COPY --from=build-env /out/AasxServerCore/ /AasxServerCore/
