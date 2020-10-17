@@ -166,6 +166,11 @@ following DockerHub repositories:
 
 In case you want to deploy on Raspberry PI, you probably need to use ARM 32-bit.
 
+Ideally, we would like to set up a multi-arch docker container (see [this article](
+https://www.docker.com/blog/multi-arch-build-and-images-the-simple-way/). If you have experience with multi-arch
+images and would like to help, please let us know by [creating an issue](
+https://github.com/admin-shell-io/aasx-server/issues/new).
+
 For example, to pull the latest `core` variant of the server for the
 demonstration on a x86 64-bit machine (linux/amd64), invoke:
 
