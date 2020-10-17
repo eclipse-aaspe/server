@@ -129,8 +129,7 @@ mono AasxServerWindows.exe --rest --data-path /path/to/aasxs
 ```
 
 If you want to also use "--opc" with Mono you need to change Opc.Ua.SampleServer.Config.xml:
-
-Change "<StoreType>X509Store</StoreType>" to "<StoreType>Directory</StoreType>"
+change `<StoreType>X509Store</StoreType>` to `<StoreType>Directory</StoreType>`.
 
 Mono gives you the possibility to run AasxServer on platforms like x86, PowerPC or MIPS.
 
@@ -158,12 +157,17 @@ a workflow which is executed on each push to master branch.
 We provide pre-built docker images meant for demonstration purposes at the
 following DockerHub repositories:
 
-* `blazor`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
-* `core`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
-* for ARM sytems (e.g. Raspberry PI) add "-arm32" or "-arm64" to the names above.
+* `blazor` (linux/amd64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
+* `blazor` (linux/arm32): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo-arm32
+* `blazor` (linux/arm64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo-arm64
+* `core` (linux/amd64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
+* `core` (linux/arm32): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo-arm32
+* `core` (linux/arm64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo-arm64
+
+In case you want to deploy on Raspberry PI, you probably need to use ARM 32-bit.
 
 For example, to pull the latest `core` variant of the server for the
-demonstration, invoke:
+demonstration on a x86 64-bit machine (linux/amd64), invoke:
 
 ```
 docker pull adminshellio/aasx-server-core-for-demo
