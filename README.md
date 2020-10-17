@@ -141,6 +141,7 @@ following DockerHub repositories:
 
 * `blazor`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
 * `core`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
+* for ARM sytems (e.g. Raspberry PI) add "-arm32" or "-arm64" to the names above.
 
 For example, to pull the latest `core` variant of the server for the
 demonstration, invoke:
