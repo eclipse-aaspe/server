@@ -119,6 +119,22 @@ For example:
 dotnet AasxServerCore.dll --opc --rest --data-path /path/to/aasxs
 ```
 
+### Mono
+
+You can use AasxServerWindows with Mono. Change to the directory where you extracted the release bundle.
+Use `mono` to execute the EXE:
+
+```
+mono AasxServerWindows.exe --rest --data-path /path/to/aasxs
+```
+
+If you want to also use "--opc" with Mono you need to change Opc.Ua.SampleServer.Config.xml:
+Change <StoreType>X509Store</StoreType> to <StoreType>Directory</StoreType>.
+
+Mono gives you the possibility to run AasxServer on platforms like x86, PowerPC or MIPS.
+See plaforms: https://www.mono-project.com/docs/about-mono/supported-platforms/ 
+See downloads: https://www.mono-project.com/download/stable/
+
 ### Build and Package Binaries
 
 To build the binaries from the source code, run the powershell script
