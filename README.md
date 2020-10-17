@@ -129,11 +129,14 @@ mono AasxServerWindows.exe --rest --data-path /path/to/aasxs
 ```
 
 If you want to also use "--opc" with Mono you need to change Opc.Ua.SampleServer.Config.xml:
-Change <StoreType>X509Store</StoreType> to <StoreType>Directory</StoreType>.
+
+Change "<StoreType>X509Store</StoreType>" to "<StoreType>Directory</StoreType>"
 
 Mono gives you the possibility to run AasxServer on platforms like x86, PowerPC or MIPS.
-See plaforms: https://www.mono-project.com/docs/about-mono/supported-platforms/ 
-See downloads: https://www.mono-project.com/download/stable/
+
+See supported Mono platforms on: https://www.mono-project.com/docs/about-mono/supported-platforms/ 
+
+Find Mono downloads on: https://www.mono-project.com/download/stable/
 
 ### Build and Package Binaries
 
