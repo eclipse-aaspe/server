@@ -31,7 +31,10 @@ There are three variants of the server:
   can not be used for demonstration purposes on tightly-administered machines
   (which are wide-spread in larger organizations and enterprises).
   
-A blazor demo server is running on https://admin-shell-io.com:5001/
+A blazor demo server is running on https://admin-shell-io.com:5001/.
+Please click on an AAS and use the DOWNLOAD button on the right or
+use "http://admin-shell-io.com:51410/server/getaasx/0" etc. by browser
+or CURL on the command line.
 
 ## Binaries
 
