@@ -23,9 +23,8 @@ There are three variants of the server:
 
 * **core**. This is a server based on .NET Core 3.1.
 
-* **windows**. This variant uses .NET Framework 4.7.2. While the .NET Framework
-  is outdated, this is the only way how you can start a server on your Windows
-  machine without administrator privileges.
+* **windows**. This variant uses .NET Framework 4.7.2, which is the only way
+how you can start a server on your Windows machine without administrator privileges.
 
   Mind that *blazor* and *core* variants require these privileges, so they
   can not be used for demonstration purposes on tightly-administered machines
