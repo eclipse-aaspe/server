@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -474,8 +475,7 @@ namespace AasxServer
                 SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
             }
 
-            // TODO
-            // SetScriptTimer(2000);
+            // SetScriptTimer(5000);
 
             if (connectServer != "")
             {
@@ -1455,7 +1455,7 @@ namespace AasxServer
             return true;
         }
 
-        static void RunScript()
+        static async void RunScript()
         {
             if (env == null)
                 return;
@@ -1493,6 +1493,52 @@ namespace AasxServer
                                         int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
                                         v += Convert.ToInt32(qq.value);
                                         (sme1 as AdminShell.Property).value = v.ToString();
+                                        continue;
+                                    }
+
+                                    if (qq.type == "GetValue")
+                                    {
+                                        if (!(sme1 is AdminShell.ReferenceElement))
+                                        {
+                                            continue;
+                                        }
+
+                                        string url = qq.value;
+                                        string username = "";
+                                        string password = "";
+
+                                        if (sme1.qualifiers.Count == 3)
+                                        {
+                                            qq = sme1.qualifiers[1] as AdminShell.Qualifier;
+                                            if (qq.type != "Username")
+                                                continue;
+                                            username = qq.value;
+                                            qq = sme1.qualifiers[2] as AdminShell.Qualifier;
+                                            if (qq.type != "Password")
+                                                continue;
+                                            password = qq.value;
+                                        }
+
+                                        var handler = new HttpClientHandler();
+                                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                        var client = new HttpClient(handler);
+
+                                        if (username != "" && password != "")
+                                        {
+                                            var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                    Convert.ToBase64String(authToken));
+                                        }
+
+                                        string response = await client.GetStringAsync(url);
+
+                                        var r12 = sme1 as AdminShell.ReferenceElement;
+                                        var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
+                                        if (ref12 is AdminShell.Property)
+                                        {
+                                            var p1 = ref12 as AdminShell.Property;
+                                            p1.value = response;
+                                        }
                                         continue;
                                     }
 

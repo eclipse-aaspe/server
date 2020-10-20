@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--data-path C:\\Development\\aasx --rest",
+      "commandLineArgs": "--data-path C:\\Users\\7wrmhx\\Downloads\\AASX_18-30 --rest",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
