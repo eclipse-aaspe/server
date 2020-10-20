@@ -2106,7 +2106,8 @@ namespace AasxRestServerLibrary
 
             // access AAS and CD
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString, context.Request.RawUrl); 
+            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString, context.Request.RawUrl);
+
             if (cd == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
