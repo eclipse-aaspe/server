@@ -1,10 +1,11 @@
 name: Build-and-publish-docker-images-workflow
 
 on:
-  push
+  push:
     branches:
       - main
       - master
+      - '*/Fix-*-docker*'
 
   release:
     types: [published]
