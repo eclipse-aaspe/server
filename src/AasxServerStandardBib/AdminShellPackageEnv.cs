@@ -365,7 +365,8 @@ namespace AdminShellNS
                         {
                             throw (new Exception(string.Format("While reading AAS {0} spec at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                         }
-                        package.Close();
+                        // Package must not close to read e.g. thumbnails
+                        //// package.Close();
                     }
                     catch (Exception ex)
                     {

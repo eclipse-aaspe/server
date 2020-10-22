@@ -436,6 +436,8 @@ namespace AasxServer
             Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
 
+            i40LanguageRuntime.initialize();
+
             RunScript(); // Initialize
 
             if (a.Rest)
