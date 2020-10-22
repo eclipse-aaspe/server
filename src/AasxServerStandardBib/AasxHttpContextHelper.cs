@@ -147,10 +147,9 @@ namespace AasxRestServerLibrary
 
         #region // Access package structures
 
-        public AdminShell.AdministrationShell FindAAS(string aasid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public FindAasReturn FindAAS(string aasid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
-            AdminShell.AdministrationShell aas = null;
-            int iPackage = -1;
+            FindAasReturn findAasReturn = new FindAasReturn();
 
             if (Packages == null)
                 return null;
@@ -167,16 +166,16 @@ namespace AasxRestServerLibrary
                     || Packages[i].AasEnv.AdministrationShells.Count < 1)
                     return null;
 
-                aas = Packages[i].AasEnv.AdministrationShells[0];
-                iPackage = i;
+                findAasReturn.aas = Packages[i].AasEnv.AdministrationShells[0];
+                findAasReturn.iPackage = i;
             }
             else
             {
                 // Name
                 if (aasid == "id")
                 {
-                    aas = Packages[0].AasEnv.AdministrationShells[0];
-                    iPackage = 0;
+                    findAasReturn.aas = Packages[0].AasEnv.AdministrationShells[0];
+                    findAasReturn.iPackage = 0;
                 }
                 else
                 {
@@ -186,8 +185,8 @@ namespace AasxRestServerLibrary
                         {
                             if (Packages[i].AasEnv.AdministrationShells[0].idShort == aasid)
                             {
-                                aas = Packages[i].AasEnv.AdministrationShells[0];
-                                iPackage = i;
+                                findAasReturn.aas = Packages[i].AasEnv.AdministrationShells[0];
+                                findAasReturn.iPackage = i;
                                 break;
                             }
                         }
@@ -195,7 +194,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            return aas;
+            return findAasReturn;
 
 
             // trivial
@@ -218,10 +217,10 @@ namespace AasxRestServerLibrary
             */
         }
 
-        public AdminShell.SubmodelRef FindSubmodelRefWithinAas(AdminShell.AdministrationShell aas, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.SubmodelRef FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
-            if (Packages[0] == null || Packages[0].AasEnv == null || aas == null || smid == null || smid.Trim() == "")
+            if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
                 return null;
 
             // via handle
@@ -229,7 +228,7 @@ namespace AasxRestServerLibrary
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
 
             // no, iterate & find
-            foreach (var smref in aas.submodelRefs)
+            foreach (var smref in findAasReturn.aas.submodelRefs)
             {
                 if (handleId != null && handleId.identification != null)
                 {
@@ -238,7 +237,7 @@ namespace AasxRestServerLibrary
                 }
                 else
                 {
-                    var sm = this.Packages[0].AasEnv.FindSubmodel(smref);
+                    var sm = this.Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(smref);
                     if (sm != null && sm.idShort != null && sm.idShort.Trim().ToLower() == smid.Trim().ToLower())
                         return smref;
                 }
@@ -248,23 +247,23 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public AdminShell.Submodel FindSubmodelWithinAas(AdminShell.AdministrationShell aas, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.Submodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
-            if (Packages[0] == null || Packages[0].AasEnv == null || aas == null || smid == null || smid.Trim() == "")
+            if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
                 return null;
 
             // via handle
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
             if (handleId != null && handleId.identification != null)
-                return Packages[0].AasEnv.FindSubmodel(handleId.identification);
+                return Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(handleId.identification);
 
             // no, iterate & find
 
-            foreach (var smref in aas.submodelRefs)
+            foreach (var smref in findAasReturn.aas.submodelRefs)
             {
-                var sm = this.Packages[0].AasEnv.FindSubmodel(smref);
+                var sm = this.Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(smref);
                 if (sm != null && sm.idShort != null && sm.idShort.Trim().ToLower() == smid.Trim().ToLower())
                     return sm;
             }
@@ -363,20 +362,20 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public AdminShell.ConceptDescription FindCdWithoutAas(AdminShell.AdministrationShell aas, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.ConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
-            if (Packages[0] == null || Packages[0].AasEnv == null || aas == null || cdid == null || cdid.Trim() == "")
+            if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || cdid == null || cdid.Trim() == "")
                 return null;
 
             // via handle
             var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
             var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(cdid, specialHandles);
             if (handleId != null && handleId.identification != null)
-                return Packages[0].AasEnv.FindConceptDescription(handleId.identification);
+                return Packages[findAasReturn.iPackage].AasEnv.FindConceptDescription(handleId.identification);
 
             // no, iterate & find
-            foreach (var cd in Packages[0].AasEnv.ConceptDescriptions)
+            foreach (var cd in Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions)
             {
                 if (cd.idShort != null && cd.idShort.Trim().ToLower() == cdid.Trim().ToLower())
                     return cd;
@@ -575,18 +574,18 @@ namespace AasxRestServerLibrary
             }
 
             // access the first AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
                 return;
             }
 
             // try to get the asset as well
-            var asset = this.Packages[0].AasEnv.FindAsset(aas.assetRef);
+            var asset = this.Packages[findAasReturn.iPackage].AasEnv.FindAsset(findAasReturn.aas.assetRef);
 
             // result
-            res.AAS = aas;
+            res.AAS = findAasReturn.aas;
             res.Asset = asset;
 
             // return as JSON
@@ -621,8 +620,8 @@ namespace AasxRestServerLibrary
             }
 
             // access the first AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
                 return;
@@ -635,7 +634,7 @@ namespace AasxRestServerLibrary
             AdminShell.AdministrationShellEnv copyenv = null;
             try
             {
-                copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[0].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { aas }));
+                copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[findAasReturn.iPackage].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { findAasReturn.aas }));
             }
             catch (Exception ex)
             {
@@ -650,8 +649,8 @@ namespace AasxRestServerLibrary
                 {
                     // build a file name
                     var fn = "aasenv.json";
-                    if (aas.idShort != null)
-                        fn = aas.idShort + "." + fn;
+                    if (findAasReturn.aas.idShort != null)
+                        fn = findAasReturn.aas.idShort + "." + fn;
                     // serialize via helper
                     var jsonwriter = copyenv.SerialiazeJsonToStream(new StreamWriter(ms), leaveJsonWriterOpen: true);
                     // write out again
@@ -696,8 +695,8 @@ namespace AasxRestServerLibrary
             }
 
             // access the first AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
                 return;
@@ -706,7 +705,7 @@ namespace AasxRestServerLibrary
             // access the thumbnail
             // Note: in this version, the thumbnail is not specific to the AAS, but maybe in later versions ;-)
             Uri thumbUri = null;
-            var thumbStream = this.Packages[0].GetLocalThumbnailStream(ref thumbUri);
+            var thumbStream = this.Packages[findAasReturn.iPackage].GetLocalThumbnailStream(ref thumbUri);
             if (thumbStream == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No thumbnail available in package.");
@@ -765,19 +764,147 @@ namespace AasxRestServerLibrary
             }
 
             // datastructure update
-            if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.AdministrationShells == null)
+            context.Server.Logger.Debug($"Putting AdministrationShell with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
+
+            bool emptyPackageAvailable = false;
+            int emptyPackageIndex = -1;
+            for (int envi = 0; envi < this.Packages.Length; envi++)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                if (this.Packages[envi] != null)
+                {
+                    var existingAas = this.Packages[envi].AasEnv.FindAAS(aas.identification);
+                    if (existingAas != null)
+                    {
+                        this.Packages[envi].AasEnv.AdministrationShells.Remove(existingAas);
+                        this.Packages[envi].AasEnv.AdministrationShells.Add(aas);
+                        SendTextResponse(context, "OK (update, index=" + envi + ")");
+                        return;
+                    }
+                }
+                else
+                {
+                    if (!emptyPackageAvailable)
+                    {
+                        emptyPackageAvailable = true;
+                        emptyPackageIndex = envi;
+                    }
+                }
+            }
+
+            if (emptyPackageAvailable)
+            {
+                this.Packages[emptyPackageIndex] = new AdminShellPackageEnv();
+                this.Packages[emptyPackageIndex].AasEnv.AdministrationShells.Add(aas);
+                SendTextResponse(context, "OK (new, index=" + emptyPackageIndex + ")");
                 return;
             }
-            context.Server.Logger.Debug($"Putting AdministrationShell with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
-            var existingAas = this.Packages[0].AasEnv.FindAAS(aas.identification);
-            if (existingAas != null)
-                this.Packages[0].AasEnv.AdministrationShells.Remove(existingAas);
-            this.Packages[0].AasEnv.AdministrationShells.Add(aas);
 
-            // simple OK
-            SendTextResponse(context, "OK" + ((existingAas != null) ? " (updated)" : " (new)"));
+            SendTextResponse(context, "Error: not added since datastructure completely filled already");
+            return;
+        }
+
+        public void EvalPutAasxOnServer(IHttpContext context)
+        {
+            Console.WriteLine("EvalPutAasxOnServer: " + context.Request.Payload);
+            // first check
+            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                return;
+            }
+
+            AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
+            if (!file.path.ToLower().EndsWith(".aasx"))
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
+                return;
+            }
+
+            AdminShellPackageEnv aasEnv = null;
+            try
+            {
+                aasEnv = new AdminShellPackageEnv(file.path);
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot open {file.path}. Aborting... {ex.Message}");
+                return;
+            }
+
+            string aasIdShort = "";
+            try
+            {
+                aasIdShort = aasEnv.AasEnv.AdministrationShells[0].idShort;
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot find idShort in {file.path}. Aborting... {ex.Message}");
+                return;
+            }
+
+            var findAasReturn = this.FindAAS(aasIdShort, context.Request.QueryString, context.Request.RawUrl);
+            Console.WriteLine("FindAAS() with idShort \"" + aasIdShort + "\" yields package-index " + findAasReturn.iPackage);
+
+            if (findAasReturn.aas == null)
+            {
+                for (int envi = 0; envi < this.Packages.Length; envi++)
+                {
+                    if (this.Packages[envi] == null)
+                    {
+                        this.Packages[envi] = aasEnv;
+                        SendTextResponse(context, "OK (new, index=" + envi + ")");
+                        return;
+                    }
+                }
+                SendTextResponse(context, "Failed: Server used to capacity.");
+                return;
+            }
+            else
+            {
+                Packages[findAasReturn.iPackage] = aasEnv;
+                SendTextResponse(context, "OK (update, index=" + findAasReturn.iPackage + ")");
+                return;
+            }
+        }
+
+        public void EvalPutAasxToFilesystem(IHttpContext context, string aasid)
+        {
+            // first check
+            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                return;
+            }
+
+            AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
+            if (!file.path.ToLower().EndsWith(".aasx"))
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
+                return;
+            }
+
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            Console.WriteLine("FindAAS() with idShort \"" + aasid + "\" yields package-index " + findAasReturn.iPackage);
+
+            if (findAasReturn.aas == null)
+            {
+                SendTextResponse(context, "Failed: AAS not found.");
+                return;
+            }
+            else
+            {
+                try
+                {
+                    Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
+                }
+                catch (Exception ex)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save in {file.path}. Aborting... {ex.Message}");
+                    return;
+                }
+                SendTextResponse(context, "OK (saved)");
+                return;
+            }
         }
 
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
@@ -808,24 +935,31 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
             // find the asset
-            var asset = this.Packages[0].AasEnv.FindAsset(aas.assetRef);
+            var asset = this.Packages[findAasReturn.iPackage].AasEnv.FindAsset(findAasReturn.aas.assetRef);
 
             // delete
-            context.Server.Logger.Debug($"Deleting AdministrationShell with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
-            this.Packages[0].AasEnv.AdministrationShells.Remove(aas);
+            context.Server.Logger.Debug($"Deleting AdministrationShell with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
+            this.Packages[findAasReturn.iPackage].AasEnv.AdministrationShells.Remove(findAasReturn.aas);
 
-            if (deleteAsset && asset != null)
+            if (this.Packages[findAasReturn.iPackage].AasEnv.AdministrationShells.Count == 0)
             {
-                context.Server.Logger.Debug($"Deleting Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
-                this.Packages[0].AasEnv.Assets.Remove(asset);
+                this.Packages[findAasReturn.iPackage] = null;
+            }
+            else
+            {
+                if (deleteAsset && asset != null)
+                {
+                    context.Server.Logger.Debug($"Deleting Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
+                    this.Packages[findAasReturn.iPackage].AasEnv.Assets.Remove(asset);
+                }
             }
 
             // simple OK
@@ -952,6 +1086,86 @@ namespace AasxRestServerLibrary
             // simple OK
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
+
+        public void EvalPutAssetToAas(IHttpContext context, string aasid)
+        {
+            dynamic res = new ExpandoObject();
+            int index = -1;
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context, ref index);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
+            // first check
+            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                Console.WriteLine("ERROR PUT: No payload or content type is not JSON.");
+                return;
+            }
+
+            // access the AAS
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
+                return;
+            }
+
+            // de-serialize asset
+            AdminShell.Asset asset = null;
+            try
+            {
+                asset = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Payload);
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                return;
+            }
+
+            // need id for idempotent behaviour
+            if (asset.identification == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Identification of entity is (null); PUT cannot be performed.");
+                Console.WriteLine("ERROR PUT: Identification of entity is (null); PUT cannot be performed.");
+                return;
+            }
+
+            // datastructure update
+            if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null || this.Packages[findAasReturn.iPackage].AasEnv.Assets == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                return;
+            }
+
+            // add Asset
+            context.Server.Logger.Debug($"Adding Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
+            var existingAsset = this.Packages[findAasReturn.iPackage].AasEnv.FindAsset(asset.identification);
+            if (existingAsset != null)
+                this.Packages[findAasReturn.iPackage].AasEnv.Assets.Remove(existingAsset);
+            this.Packages[findAasReturn.iPackage].AasEnv.Assets.Add(asset);
+
+            // add AssetRef to AAS        
+            findAasReturn.aas.assetRef = new AdminShellV20.AssetRef(new AdminShellV20.Reference(new AdminShellV20.Key("Asset", true, asset.identification.idType, asset.identification.id)));
+
+            Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
+
+            // simple OK
+            SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
+        }
         #endregion
 
         #region // List of Submodels
@@ -1000,8 +1214,8 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
@@ -1011,9 +1225,9 @@ namespace AasxRestServerLibrary
             var res = new List<GetSubmodelsItem>();
 
             // get all submodels
-            foreach (var smref in aas.submodelRefs)
+            foreach (var smref in findAasReturn.aas.submodelRefs)
             {
-                var sm = this.Packages[0].AasEnv.FindSubmodel(smref);
+                var sm = this.Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(smref);
                 if (sm != null)
                 {
                     res.Add(new GetSubmodelsItem(sm, sm.kind.kind));
@@ -1054,8 +1268,8 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
@@ -1089,7 +1303,7 @@ namespace AasxRestServerLibrary
             }
 
             // datastructure update
-            if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.Assets == null)
+            if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null || this.Packages[findAasReturn.iPackage].AasEnv.Assets == null)
             {
                 context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
                 return;
@@ -1097,18 +1311,25 @@ namespace AasxRestServerLibrary
 
             // add Submodel
             context.Server.Logger.Debug($"Adding Submodel with idShort {submodel.idShort ?? "--"} and id {submodel.identification?.ToString() ?? "--"}");
-            var existingSm = this.Packages[0].AasEnv.FindSubmodel(submodel.identification);
+            var existingSm = this.Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(submodel.identification);
             if (existingSm != null)
-                this.Packages[0].AasEnv.Submodels.Remove(existingSm);
-            this.Packages[0].AasEnv.Submodels.Add(submodel);
+            {
+                int indexOfExistingSm = this.Packages[findAasReturn.iPackage].AasEnv.Submodels.IndexOf(existingSm);
+                this.Packages[findAasReturn.iPackage].AasEnv.Submodels.RemoveAt(indexOfExistingSm);
+                this.Packages[findAasReturn.iPackage].AasEnv.Submodels.Insert(indexOfExistingSm, submodel);
+            }
+            else
+            {
+                this.Packages[findAasReturn.iPackage].AasEnv.Submodels.Add(submodel);
+            }
 
             // add SubmodelRef to AAS            
             var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
-            var existsmr = aas.HasSubmodelRef(newsmr);
+            var existsmr = findAasReturn.aas.HasSubmodelRef(newsmr);
             if (!existsmr)
             {
-                context.Server.Logger.Debug($"Adding SubmodelRef to AAS with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
-                aas.AddSubmodelRef(newsmr);
+                context.Server.Logger.Debug($"Adding SubmodelRef to AAS with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
+                findAasReturn.aas.AddSubmodelRef(newsmr);
             }
 
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.idShort);
@@ -1145,19 +1366,19 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS (absolutely mandatory)
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
             // delete SubmodelRef 1st
-            var smref = this.FindSubmodelRefWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
+            var smref = this.FindSubmodelRefWithinAas(findAasReturn, smid, context.Request.QueryString, context.Request.RawUrl);
             if (smref != null)
             {
-                context.Server.Logger.Debug($"Removing SubmodelRef {smid} from AAS with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
-                aas.submodelRefs.Remove(smref);
+                context.Server.Logger.Debug($"Removing SubmodelRef {smid} from AAS with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
+                findAasReturn.aas.submodelRefs.Remove(smref);
             }
 
             // delete Submodel 2nd
@@ -1165,7 +1386,7 @@ namespace AasxRestServerLibrary
             if (sm != null)
             {
                 context.Server.Logger.Debug($"Removing Submodel {smid} from data structures.");
-                this.Packages[0].AasEnv.Submodels.Remove(sm);
+                this.Packages[findAasReturn.iPackage].AasEnv.Submodels.Remove(sm);
             }
 
             // simple OK
@@ -1605,11 +1826,15 @@ namespace AasxRestServerLibrary
                 {
                     updated = true;
                     context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from Submodel {smid}.");
-                    sm.submodelElements.Remove(existsmw);
+                    int indexOfExistingSmw = sm.submodelElements.IndexOf(existsmw);
+                    sm.submodelElements.RemoveAt(indexOfExistingSmw);
+                    sm.Insert(indexOfExistingSmw, sme);
                 }
-
-                context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
-                sm.Add(sme);
+                else
+                {
+                    context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
+                    sm.Add(sme);
+                }
             }
             else
             {
@@ -1629,11 +1854,15 @@ namespace AasxRestServerLibrary
                     {
                         updated = true;
                         context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from SubmodelCollection.");
-                        parentsmc.value.Remove(existsmw);
+                        int indexOfExistingSmw = parentsmc.value.IndexOf(existsmw);
+                        parentsmc.value.RemoveAt(indexOfExistingSmw);
+                        parentsmc.Insert(indexOfExistingSmw, sme);
                     }
-
-                    context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
-                    parentsmc.Add(sme);
+                    else
+                    {
+                        context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
+                        parentsmc.Add(sme);
+                    }
                 }
                 else
                 {
@@ -1823,8 +2052,8 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
@@ -1835,7 +2064,7 @@ namespace AasxRestServerLibrary
 
             // create a new, filtered AasEnv
             // (this is expensive, but delivers us with a list of CDs which are in relation to the respective AAS)
-            var copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[0].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { aas }));
+            var copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[findAasReturn.iPackage].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { findAasReturn.aas }));
 
             // get all CDs and describe them
             foreach (var cd in copyenv.ConceptDescriptions)
@@ -1876,8 +2105,9 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and CD
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            var cd = this.FindCdWithoutAas(aas, cdid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString, context.Request.RawUrl);
+
             if (cd == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
@@ -1909,8 +2139,8 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and CD
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            var cd = this.FindCdWithoutAas(aas, cdid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString, context.Request.RawUrl);
             if (cd == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
@@ -1919,9 +2149,9 @@ namespace AasxRestServerLibrary
 
             // delete ?!
             var deleted = false;
-            if (this.Packages[0] != null && this.Packages[0].AasEnv != null && this.Packages[0].AasEnv.ConceptDescriptions.Contains(cd))
+            if (this.Packages[findAasReturn.iPackage] != null && this.Packages[findAasReturn.iPackage].AasEnv != null && this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Contains(cd))
             {
-                this.Packages[0].AasEnv.ConceptDescriptions.Remove(cd);
+                this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Remove(cd);
                 deleted = true;
             }
 
@@ -2924,8 +3154,8 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (aas == null)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
@@ -2951,7 +3181,7 @@ namespace AasxRestServerLibrary
             }
 
             // datastructure update
-            if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.Assets == null)
+            if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null || this.Packages[findAasReturn.iPackage].AasEnv.Assets == null)
             {
                 context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
                 return;
@@ -2959,10 +3189,10 @@ namespace AasxRestServerLibrary
 
             // add Submodel
             context.Server.Logger.Debug($"Adding ConceptDescription with idShort {cd.idShort ?? "--"} and id {cd.identification?.ToString() ?? "--"}");
-            var existingCd = this.Packages[0].AasEnv.FindConceptDescription(cd.identification);
+            var existingCd = this.Packages[findAasReturn.iPackage].AasEnv.FindConceptDescription(cd.identification);
             if (existingCd != null)
-                this.Packages[0].AasEnv.ConceptDescriptions.Remove(existingCd);
-            this.Packages[0].AasEnv.ConceptDescriptions.Add(cd);
+                this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Remove(existingCd);
+            this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
             SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));

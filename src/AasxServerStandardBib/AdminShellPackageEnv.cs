@@ -307,7 +307,9 @@ namespace AdminShellNS
                                         JsonSerializer serializer = new JsonSerializer();
                                         serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                         this.aasenv = (AdminShell.AdministrationShellEnv)serializer.Deserialize(file, typeof(AdminShell.AdministrationShellEnv));
+                                        file.Close();
                                     }
+                                    s.Close();
                                 }
                                 loop = 2;
                             }
@@ -363,6 +365,7 @@ namespace AdminShellNS
                         {
                             throw (new Exception(string.Format("While reading AAS {0} spec at {1} gave: {2}", fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                         }
+                        package.Close();
                     }
                     catch (Exception ex)
                     {
@@ -711,9 +714,10 @@ namespace AdminShellNS
                     // after this, there are no more pending for add files
                     pendingFilesToAdd.Clear();
 
-                    // flush, but leave open
+                    // flush and close
                     package.Flush();
-                    this.openPackage = package;
+                    this.openPackage = null;
+                    package.Close();
 
                     // if in temp fn, close the package, copy to original fn, re-open the package
                     if (this.tempFn != null)

@@ -4517,6 +4517,16 @@ namespace AdminShellNS
                 submodelElements.Add(sew);
             }
 
+            public void Insert(int index, SubmodelElement sme)
+            {
+                if (submodelElements == null)
+                    submodelElements = new SubmodelElementWrapperCollection();
+                var sew = new SubmodelElementWrapper();
+                sme.parent = this; // track parent here!
+                sew.submodelElement = sme;
+                submodelElements.Insert(index, sew);
+            }
+
             public void Remove(SubmodelElement sme)
             {
                 if (submodelElements != null)
@@ -5374,6 +5384,16 @@ namespace AdminShellNS
                 sme.parent = this; // track parent here!
                 sew.submodelElement = sme;
                 value.Add(sew);
+            }
+
+            public void Insert(int index, SubmodelElement sme)
+            {
+                if (value == null)
+                    value = new SubmodelElementWrapperCollection();
+                var sew = new SubmodelElementWrapper();
+                sme.parent = this; // track parent here!
+                sew.submodelElement = sme;
+                value.Insert(index, sew);
             }
 
             public void Remove(SubmodelElement sme)
