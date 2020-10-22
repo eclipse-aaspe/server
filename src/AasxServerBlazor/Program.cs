@@ -32,17 +32,17 @@ namespace AasxServerBlazor
                     webBuilder
                         .UseStartup<Startup>()
                         .UseUrls("http://*:5000")
-                        /*
-                        .UseKestrel(options =>
+                    /*
+                    .UseKestrel(options =>
+                    {
+                        options.Listen(IPAddress.Loopback, 5000);  // http:localhost:5000
+                        options.Listen(IPAddress.Any, 80);         // http:*:80
+                        options.Listen(IPAddress.Loopback, 443, listenOptions =>
                         {
-                            options.Listen(IPAddress.Loopback, 5000);  // http:localhost:5000
-                            options.Listen(IPAddress.Any, 80);         // http:*:80
-                            options.Listen(IPAddress.Loopback, 443, listenOptions =>
-                            {
-                                listenOptions.UseHttps("certificate.pfx", "password");
-                            });
-                        })
-                        */
+                            listenOptions.UseHttps("certificate.pfx", "password");
+                        });
+                    })
+                    */
                     ;
                 });
     }
