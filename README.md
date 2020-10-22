@@ -1,4 +1,13 @@
 # AASX Server
+![Check-release-workflow](
+https://github.com/admin-shell-io/aasx-server/workflows/Check-release-workflow/badge.svg
+) ![Check-style-workflow](
+https://github.com/admin-shell-io/aasx-server/workflows/Check-style-workflow/badge.svg
+) ![Build-and-package-release-workflow](
+https://github.com/admin-shell-io/aasx-server/workflows/Build-and-package-release-workflow/badge.svg
+) ![Build-and-publish-docker-images-workflow](
+https://github.com/admin-shell-io/aasx-server/workflows/Build-and-publish-docker-images-workflow/badge.svg
+)
 
 AASX Server serves Industrie 4.0 AASX packages accessible by REST, OPC UA and
 MQTT protocols.
@@ -14,27 +23,30 @@ There are three variants of the server:
 
 * **core**. This is a server based on .NET Core 3.1.
 
-* **windows**. This variant uses .NET Framework 4.7.2. While the .NET Framework
-  is outdated, this is the only way how you can start a server on your Windows
-  machine without administrator privileges.
+* **windows**. This variant uses .NET Framework 4.7.2, which is the only way
+how you can start a server on your Windows machine without administrator privileges.
 
   Mind that *blazor* and *core* variants require these privileges, so they
   can not be used for demonstration purposes on tightly-administered machines
   (which are wide-spread in larger organizations and enterprises).
   
-A blazor demo server is running on https://admin-shell-io.com:5001/
+A blazor demo server is running on https://admin-shell-io.com:5001/.
+Please click on an AAS and use the DOWNLOAD button on the right or
+use "http://admin-shell-io.com:51410/server/getaasx/0" etc. by browser
+or CURL on the command line.
 
 ## Binaries
 
 The binaries are available in the [Releases section](
 https://github.com/admin-shell-io/aasx-server/releases
-). We provide x64 binaries for Windows and Linux.
+). We provide portable dotnet assemblies.
 
 ### Installation
 
 AASX Server depends on .NET Core 3.1 runtime (`blazor` and `core` variants)
 and .NET Framework (`windows` variant), respectively. You need to install the
 respective runtimes before you start the server.
+See https://dotnet.microsoft.com/download/dotnet-core/3.1
 
 To deploy the binaries, simply extract the release bundle (*e.g.*,
 `AasxServerCore.zip`) somewhere on your system.
@@ -109,6 +121,24 @@ For example:
 dotnet AasxServerCore.dll --opc --rest --data-path /path/to/aasxs
 ```
 
+### Mono
+
+You can use AasxServerWindows with Mono. Change to the directory where you extracted the release bundle.
+Use `mono` to execute the EXE:
+
+```
+mono AasxServerWindows.exe --rest --data-path /path/to/aasxs
+```
+
+If you want to also use "--opc" with Mono you need to change Opc.Ua.SampleServer.Config.xml:
+change `<StoreType>X509Store</StoreType>` to `<StoreType>Directory</StoreType>`.
+
+Mono gives you the possibility to run AasxServer on platforms like x86, PowerPC or MIPS.
+
+See supported Mono platforms on: https://www.mono-project.com/docs/about-mono/supported-platforms/ 
+
+Find Mono downloads on: https://www.mono-project.com/download/stable/
+
 ### Build and Package Binaries
 
 To build the binaries from the source code, run the powershell script
@@ -129,11 +159,22 @@ a workflow which is executed on each push to master branch.
 We provide pre-built docker images meant for demonstration purposes at the
 following DockerHub repositories:
 
-* `blazor`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
-* `core`: https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
+* `blazor` (linux/amd64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
+* `blazor` (linux/arm32): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo-arm32
+* `blazor` (linux/arm64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo-arm64
+* `core` (linux/amd64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
+* `core` (linux/arm32): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo-arm32
+* `core` (linux/arm64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo-arm64
+
+In case you want to deploy on Raspberry PI, you probably need to use ARM 32-bit.
+
+Ideally, we would like to set up a multi-arch docker container (see [this article](
+https://www.docker.com/blog/multi-arch-build-and-images-the-simple-way/)). If you have experience with multi-arch
+images and would like to help, please let us know by [creating an issue](
+https://github.com/admin-shell-io/aasx-server/issues/new).
 
 For example, to pull the latest `core` variant of the server for the
-demonstration, invoke:
+demonstration on a x86 64-bit machine (linux/amd64), invoke:
 
 ```
 docker pull adminshellio/aasx-server-core-for-demo
