@@ -477,7 +477,7 @@ namespace AasxServer
                 SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
             }
 
-            // SetScriptTimer(5000);
+            SetScriptTimer(3000);
 
             if (connectServer != "")
             {

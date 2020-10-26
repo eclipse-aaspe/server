@@ -599,6 +599,15 @@
                 ret += " @QUALIFIERS";
             }
         }
+        if (o is SubmodelElementCollection)
+        {
+            var sme = o as SubmodelElementCollection;
+            // ret = sm.identification.ToString();
+            if (sme.value.Count > 0)
+            {
+                ret += " #" + sme.value.Count;
+            }
+        }
         if (o is SubmodelElement)
         {
             if (o is Property)
