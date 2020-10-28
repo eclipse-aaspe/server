@@ -1,4 +1,6 @@
 ﻿using AdminShellNS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Opc.Ua.Server;
 using System;
 using System.Collections.Generic;
@@ -14,14 +16,15 @@ namespace AasxServer
         public AdminShell.SubmodelElementCollection automatonControl;
 
         public string name = "";
-        public string getActualStates = "";
         public string getStatus = "stop";
+        public string getActualStates = "";
         public string getTransitionsEnabled = "";
         public string setMode = "";
         public string getErrors = "";
+        public List<string> getMessages = new List<string>();
         public string setForcedStates = "";
         public string setSingleStep = "";
-        public string setSteppingTime = "2";
+        public string setSteppingTime = "3";
 
         public string[] frameNames;
         public Dictionary<string, string>[] frameContent;
@@ -105,6 +108,10 @@ namespace AasxServer
                                                 if (regex.IsMatch(value))
                                                 {
                                                     auto.setSteppingTime = value;
+                                                }
+                                                else
+                                                {
+                                                    (sme2 as AdminShell.Property).value = auto.setSteppingTime;
                                                 }
                                             }
                                         }
@@ -238,16 +245,63 @@ namespace AasxServer
             {
                 foreach (var auto in automatons)
                 {
-                     if (auto.name != "automatonServiceRequester")
-                     // if (auto.name != "automatonServiceProvider")
+                    if (auto.name != "automatonServiceRequester")
+                    // if (auto.name != "automatonServiceProvider")
+                       continue;
+
+                    // get actual automaton data from AAS
+                    foreach (var smw1 in auto.automatonControl.value)
+                    {
+                        var sme1 = smw1.submodelElement;
+                        if (sme1 is AdminShell.Property && sme1.idShort == "setMode")
+                        {
+                            auto.setMode = (sme1 as AdminShell.Property).value;
+                        }
+                        if (sme1 is AdminShell.Property && sme1.idShort == "setForcedStates")
+                        {
+                            auto.setForcedStates = (sme1 as AdminShell.Property).value;
+                            (sme1 as AdminShell.Property).value = "";
+                        }
+                        if (sme1 is AdminShell.Property && sme1.idShort == "setSingleStep")
+                        {
+                            auto.setSingleStep = (sme1 as AdminShell.Property).value;
+                            (sme1 as AdminShell.Property).value = "";
+                        }
+                        if (sme1 is AdminShell.Property && sme1.idShort == "setSteppingTime")
+                        {
+                            string value = (sme1 as AdminShell.Property).value;
+                            Regex regex = new Regex(@"^\d+$");
+                            if (regex.IsMatch(value))
+                            {
+                                auto.setSteppingTime = value;
+                                auto.maxTick = Convert.ToInt32(auto.setSteppingTime);
+                            }
+                        }
+                    }
+
+                    if (auto.setMode == "stop")
                         continue;
+
+                    if (auto.setMode == "step" && auto.setSingleStep != "step")
+                        continue;
+
+                    if (auto.setMode == "force")
+                    {
+                        if (auto.setForcedStates == "")
+                            continue;
+
+                        auto.actualStates.Clear();
+                        string[] states = auto.setForcedStates.Split(' ');
+                        foreach (var s in states)
+                            auto.actualStates.Add(s);
+                    }
 
                     if (auto.tick >= auto.maxTick)
                     {
                         auto.tick = 0;
 
                         Console.WriteLine(auto.name + ":");
-                        string states = "";
+                        string states = ""; 
                         foreach (var s in auto.actualStates)
                         {
                             states += s + " ";
@@ -276,7 +330,6 @@ namespace AasxServer
                                         fromStates.Add(sme2.idShort);
                                     }
                                 }
-
                             }
 
                             bool allFromStatesActive = true;
@@ -328,15 +381,18 @@ namespace AasxServer
                                                 switch (op.idShort)
                                                 {
                                                     case "wait":
-                                                        opResult = operation_wait(op);
+                                                        opResult = operation_wait(op, auto);
                                                         if (opResult)
                                                             transitionsActive.Add(t.idShort);
                                                         break;
                                                     case "message":
-                                                        opResult = operation_message(op);
+                                                        opResult = operation_message(op, auto);
+                                                        break;
+                                                    case "clearMessages":
+                                                        opResult = operation_clearMessages(op, auto);
                                                         break;
                                                     case "receiveProposals":
-                                                        opResult = operation_reveiceProposals(op);
+                                                        opResult = operation_receiveProposals(op, auto);
                                                         break;
                                                     default:
                                                         transitionsActive.Add(t.idShort);
@@ -356,10 +412,11 @@ namespace AasxServer
                         {
                             if (transitionsActive.Contains(t.idShort))
                             {
+                                // execute output operations
                                 foreach (var smw1 in t.value)
                                 {
                                     var sme1 = smw1.submodelElement;
-                                    if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "from" || sme1.idShort == "From"))
+                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "output")
                                     {
                                         var smc1 = sme1 as AdminShell.SubmodelElementCollection;
 
@@ -367,20 +424,57 @@ namespace AasxServer
                                         {
                                             var sme2 = smw2.submodelElement;
 
-                                            if (!fromStates.Contains(sme2.idShort))
-                                                fromStates.Add(sme2.idShort);
+                                            if (sme2 is AdminShell.Operation)
+                                            {
+                                                var op = sme2 as AdminShell.Operation;
+                                                Console.WriteLine("Operation: " + op.idShort);
+                                                bool opResult = false;
+                                                switch (op.idShort)
+                                                {
+                                                    case "message":
+                                                        opResult = operation_message(op, auto);
+                                                        break;
+                                                    case "clearMessages":
+                                                        opResult = operation_clearMessages(op, auto);
+                                                        break;
+                                                    case "clear":
+                                                        opResult = operation_clear(op, auto);
+                                                        break;
+                                                    case "sendFrame":
+                                                        opResult = operation_sendFrame(op, auto);
+                                                        break;
+                                                }
+                                            }
                                         }
                                     }
-                                    if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "to" || sme1.idShort == "To"))
+
+                                    // changes states
+                                    foreach (var smw21 in t.value)
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
-
-                                        foreach (var smw2 in smc1.value)
+                                        sme1 = smw21.submodelElement;
+                                        if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "from" || sme1.idShort == "From"))
                                         {
-                                            var sme2 = smw2.submodelElement;
+                                            var smc1 = sme1 as AdminShell.SubmodelElementCollection;
 
-                                            if (!toStates.Contains(sme2.idShort))
-                                                toStates.Add(sme2.idShort);
+                                            foreach (var smw2 in smc1.value)
+                                            {
+                                                var sme2 = smw2.submodelElement;
+
+                                                if (!fromStates.Contains(sme2.idShort))
+                                                    fromStates.Add(sme2.idShort);
+                                            }
+                                        }
+                                        if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "to" || sme1.idShort == "To"))
+                                        {
+                                            var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+
+                                            foreach (var smw2 in smc1.value)
+                                            {
+                                                var sme2 = smw2.submodelElement;
+
+                                                if (!toStates.Contains(sme2.idShort))
+                                                    toStates.Add(sme2.idShort);
+                                            }
                                         }
                                     }
                                 }
@@ -406,6 +500,10 @@ namespace AasxServer
                         foreach (var smw1 in auto.automatonControl.value)
                         {
                             var sme1 = smw1.submodelElement;
+                            if (sme1 is AdminShell.Property && sme1.idShort == "getActualTime")
+                            {
+                                (sme1 as AdminShell.Property).value = DateTime.Now.ToString();
+                            }
                             if (sme1 is AdminShell.Property && sme1.idShort == "getStatus")
                             {
                                 (sme1 as AdminShell.Property).value = auto.getStatus;
@@ -430,6 +528,18 @@ namespace AasxServer
                             {
                                 (sme1 as AdminShell.Property).value = auto.getErrors;
                             }
+                            if (sme1 is AdminShell.Property && sme1.idShort == "getMessages")
+                            {
+                                string value = "";
+                                foreach (var text in auto.getMessages)
+                                {
+                                    if (value != "")
+                                        value += ", ";
+                                    value += text;
+                                }
+                                (sme1 as AdminShell.Property).value = value;
+                            }
+                            /*
                             if (sme1 is AdminShell.Property && sme1.idShort == "setMode")
                             {
                                 (sme1 as AdminShell.Property).value = "";
@@ -444,18 +554,25 @@ namespace AasxServer
                             }
                             if (sme1 is AdminShell.Property && sme1.idShort == "setSteppingTime")
                             {
-                                (sme1 as AdminShell.Property).value = "";
+                                string value = (sme1 as AdminShell.Property).value;
+                                Regex regex = new Regex(@"^\d+$");
+                                if (regex.IsMatch(value))
+                                {
+                                    auto.setSteppingTime = value;
+                                    auto.maxTick = Convert.ToInt32(auto.setSteppingTime);
+                                }
                             }
+                            */
                         }
                     }
                     auto.tick++;
                 }
 
-                Thread.Sleep(2000);
+                Thread.Sleep(1000);
             }
         }
 
-        public static bool operation_message(AdminShell.Operation op)
+        public static bool operation_message(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property value = text
             foreach (var v in op.inputVariable)
@@ -463,13 +580,20 @@ namespace AasxServer
                 if (v.value.submodelElement is AdminShell.Property)
                 {
                     var p = v.value.submodelElement as AdminShell.Property;
+                    auto.getMessages.Add(p.value);
                     Console.WriteLine("operation message: " + p.idShort + " = " + p.value);
                 }
             }
             return true;
         }
 
-        public static bool operation_wait(AdminShell.Operation op)
+        public static bool operation_clearMessages(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            auto.getMessages.Clear();
+            return true;
+        }
+
+        public static bool operation_wait(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable reference waitingTime: property value
             // outputVariable reference endTime: property value
@@ -519,28 +643,48 @@ namespace AasxServer
             return false;
         }
 
-        public static bool operation_reveiceProposals(AdminShell.Operation op)
+        public static bool operation_receiveProposals(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
+            // inputVariable property protocol;
             // inputVariable reference frame proposal: collection
             // inputVariable reference submodel
             // outputVariable reference collected proposals: collection
             // outputVariable reference collected not understood proposals: collection
             // outputVariable reference collected refused proposals: collection
+            // outputVariable reference property receivedFrameJSON
 
-            if (op.inputVariable.Count != 2 && op.outputVariable.Count != 3)
+            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 4)
             {
                 return false;
             }
 
             AdminShell.Submodel refSubmodel = null;
-            foreach(var input in op.inputVariable)
+            AdminShell.Property protocol = null;
+            AdminShell.Property receivedFrameJSON = null;
+
+            foreach (var input in op.inputVariable)
             {
                 var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property)
+                {
+                    protocol = (inputRef as AdminShell.Property);
+                    continue;
+                }
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return false;
                 var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
                 if (refElement is AdminShell.Submodel)
                     refSubmodel = refElement as AdminShell.Submodel;
+            }
+
+            foreach (var output in op.outputVariable)
+            {
+                var outputRef = output.value.submodelElement;
+                if (!(outputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.Property)
+                    receivedFrameJSON = refElement as AdminShell.Property;
             }
 
             var out1 = op.outputVariable.First();
@@ -552,15 +696,161 @@ namespace AasxServer
                 return false;
             var smc2 = ref2 as AdminShell.SubmodelElementCollection;
 
-            AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
-            smcSubmodel.idShort = refSubmodel.idShort;
-            foreach (var sme in refSubmodel.submodelElements)
+            string receivedFrame = "";
+            if (auto.name == "automatonServiceRequester")
+                receivedFrame = sendFrameJSONRequester;
+            if (auto.name == "automatonServiceProvider")
+                receivedFrame = sendFrameJSONProvider;
+
+            receivedFrameJSON.value = receivedFrame;
+
+            AdminShell.Submodel submodel = null;
+            JObject parsed = JObject.Parse(receivedFrame);
+            foreach (JProperty jp1 in (JToken)parsed)
             {
-                smcSubmodel.Add(sme.submodelElement);
+                if (jp1.Name == "frame")
+                {
+                    foreach (JProperty jp2 in jp1.Value)
+                    {
+                        if (jp2.Name == "submodel")
+                        {
+                            string text = jp2.Value.ToString();
+                            submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text);
+                        }
+                    }
+                }
             }
-            smc2.Add(smcSubmodel);
+
+            if (submodel != null)
+            {
+                AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
+                smcSubmodel.idShort = refSubmodel.idShort;
+                foreach (var sme in refSubmodel.submodelElements)
+                {
+                    smcSubmodel.Add(sme.submodelElement);
+                }
+                smc2.Add(smcSubmodel);
+            }
 
             return false;
+        }
+
+        static string sendFrameJSONRequester;
+        static string sendFrameJSONProvider;
+
+        public static bool operation_sendFrame(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // inputVariable property protocol;
+            // inputVariable reference frame proposal: collection
+            // inputVariable reference submodel
+            // outputVariable reference property sendFrameJSON
+
+            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 1)
+            {
+                return false;
+            }
+
+            AdminShell.Property protocol = null;
+            AdminShell.SubmodelElementCollection refFrame = null;
+            AdminShell.Submodel refSubmodel = null;
+            AdminShell.Property sendFrameJSON = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property)
+                {
+                    protocol = (inputRef as AdminShell.Property);
+                    continue;
+                }
+                if (!(inputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.SubmodelElementCollection)
+                    refFrame = refElement as AdminShell.SubmodelElementCollection;
+                if (refElement is AdminShell.Submodel)
+                    refSubmodel = refElement as AdminShell.Submodel;
+            }
+
+            foreach (var output in op.outputVariable)
+            {
+                var outputRef = output.value.submodelElement;
+                if (!(outputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.Property)
+                    sendFrameJSON = refElement as AdminShell.Property;
+            }
+
+            if (protocol.value != "memory")
+                return false;
+
+            int frameCount = refFrame.value.Count;
+            string frame = "{ \"frame\": { ";
+            foreach (var smew in refFrame.value)
+            {
+                var sme = smew.submodelElement;
+                if (sme.idShort == "_insert_submodel_into_frame")
+                {
+                    frame += "\"" + "submodel" + "\" : ";
+                    var smJson = JsonConvert.SerializeObject(refSubmodel, Newtonsoft.Json.Formatting.Indented);
+                    frame += smJson;
+                }
+                else
+                {
+                    frame += "\"" + sme.idShort + "\" : ";
+                    if (sme is AdminShell.Property)
+                        frame += "\"" + (sme as AdminShell.Property).value + "\"";
+                    else
+                        frame += "\"\"";
+                }
+                if (frameCount-- != 1)
+                    frame += ",";
+            }
+            frame += " } }";
+            sendFrameJSON.value = frame;
+
+            Console.WriteLine(frame);
+            if (auto.name == "automatonServiceRequester")
+                sendFrameJSONRequester = frame;
+            if (auto.name == "automatonServiceProvider")
+                sendFrameJSONProvider = frame;
+
+            return true;
+        }
+
+        public static bool operation_clear(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // outputVariables are references to collections
+            // alle elements will be removed from collections
+
+            if (op.outputVariable.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var output in op.outputVariable)
+            {
+                var outputRef = output.value.submodelElement;
+                if (!(outputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.SubmodelElementCollection)
+                {
+                    var refSMEC = refElement as AdminShell.SubmodelElementCollection;
+                    List<AdminShell.SubmodelElement> list = new List<AdminShell.SubmodelElement>();
+                    foreach (var sme in refSMEC.value)
+                    {
+                        list.Add(sme.submodelElement);
+                    }
+                    foreach (var sme2 in list)
+                    {
+                        refSMEC.Remove(sme2);
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

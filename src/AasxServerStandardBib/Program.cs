@@ -436,10 +436,6 @@ namespace AasxServer
             Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
 
-            i40LanguageRuntime.initialize();
-
-            RunScript(); // Initialize
-
             if (a.Rest)
             {
                 Console.WriteLine("Connect to REST by: {0}:{1}", a.Host, a.Port);
@@ -449,7 +445,9 @@ namespace AasxServer
                 Console.WriteLine("REST Server started.");
             }
 
-            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+            i40LanguageRuntime.initialize();
+
+            RunScript(); // Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
             if (a.Mqtt)
             {
@@ -477,7 +475,7 @@ namespace AasxServer
                 SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
             }
 
-            SetScriptTimer(3000);
+            SetScriptTimer(1000); // also updates balzor view
 
             if (connectServer != "")
             {

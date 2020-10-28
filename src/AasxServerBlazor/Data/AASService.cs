@@ -19,8 +19,8 @@ namespace AasxServerBlazor.Data
 
         public AASService()
         {
-            buildTree();
-            NewDataAvailable?.Invoke(this, EventArgs.Empty);
+            // buildTree();
+            // NewDataAvailable?.Invoke(this, EventArgs.Empty);
 
             Program.NewDataAvailable += (s, a) =>
             {
