@@ -831,6 +831,59 @@ namespace AasxRestServerLibrary
                 return;
             }
 
+            if (file.instantiateTemplate)
+            {
+                if (file.identificationSuffix == null)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Received no identification suffix. Aborting...");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("EvalPutAasxOnServer: file.identificationSuffix = " + file.identificationSuffix);
+                    /*if (!file.identificationSuffix.StartsWith("#"))
+                    {
+                        file.identificationSuffix = "#" + file.identificationSuffix;
+                    }*/
+                    Console.WriteLine("EvalPutAasxOnServer: file.identificationSuffix = " + file.identificationSuffix);
+
+                    // instantiate aas
+                    foreach (var aas in aasEnv.AasEnv.AdministrationShells)
+                    {
+                        Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aas.idShort);
+                        aas.idShort += file.identificationSuffix;
+                        Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aas.idShort);
+                        aas.identification.id += file.identificationSuffix;
+                        Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aas.idShort);
+                        aas.assetRef[0].value += file.identificationSuffix;
+                        Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aas.idShort);
+                        foreach (var smref in aas.submodelRefs)
+                        {
+                            foreach (var key in smref.Keys)
+                            {
+                                key.value += file.identificationSuffix;
+                            }
+                        }
+                        Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aas.idShort);
+                    }
+
+                    // instantiate asset
+                    foreach (var asset in aasEnv.AasEnv.Assets)
+                    {
+                        asset.idShort += file.identificationSuffix;
+                        asset.identification.id += file.identificationSuffix;
+                    }
+                    Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aasEnv.AasEnv.AdministrationShells[0].idShort);
+
+                    // instantiate submodel
+                    foreach (var submodel in aasEnv.AasEnv.Submodels)
+                    {
+                        submodel.identification.id += file.identificationSuffix;
+                    }
+                    Console.WriteLine("EvalPutAasxOnServer: aas.idShort = " + aasEnv.AasEnv.AdministrationShells[0].idShort);
+                }
+            }
+
             string aasIdShort = "";
             try
             {
