@@ -867,7 +867,7 @@ namespace AasxRestServerLibrary
                         asset.idShort += idShortSuffix;
                         asset.identification.id += idSuffix;
                     }
-                    
+
                     // instantiate submodel
                     foreach (var submodel in aasEnv.AasEnv.Submodels)
                     {
