@@ -239,15 +239,23 @@ namespace AasxServer
             i40LanguageThread.Start();
         }
 
+//        public static string debugAutomaton = "";
+        public static string debugAutomaton = "automatonServiceRequester";
+//        public static string debugAutomaton = "automatonServiceProvider";
         public static void nextTick()
         {
             while (true)
             {
                 foreach (var auto in automatons)
                 {
-                    if (auto.name != "automatonServiceRequester")
+                    // if (auto.name != "automatonServiceRequester")
                     // if (auto.name != "automatonServiceProvider")
-                       continue;
+                    //   continue;
+
+                    if (auto.name == debugAutomaton)
+                    {
+                        int i = 0; // set breakpoint here to debug specific automaton
+                    }
 
                     // get actual automaton data from AAS
                     foreach (var smw1 in auto.automatonControl.value)
@@ -298,6 +306,11 @@ namespace AasxServer
 
                     if (auto.tick >= auto.maxTick)
                     {
+                        if (auto.name == debugAutomaton)
+                        {
+                            int i = 0; // set breakpoint here to debug specific automaton
+                        }
+
                         auto.tick = 0;
 
                         Console.WriteLine(auto.name + ":");
@@ -375,6 +388,11 @@ namespace AasxServer
 
                                             if (sme2 is AdminShell.Operation)
                                             {
+                                                if (auto.name == debugAutomaton)
+                                                {
+                                                    int i = 0; // set breakpoint here to debug specific automaton
+                                                }
+
                                                 var op = sme2 as AdminShell.Operation;
                                                 Console.WriteLine("Operation: " + op.idShort);
                                                 bool opResult = false;
@@ -388,8 +406,10 @@ namespace AasxServer
                                                     case "message":
                                                         opResult = operation_message(op, auto);
                                                         break;
-                                                    case "clearMessages":
-                                                        opResult = operation_clearMessages(op, auto);
+                                                    case "checkCollection":
+                                                        opResult = operation_checkCollection(op, auto);
+                                                        if (opResult)
+                                                            transitionsActive.Add(t.idShort);
                                                         break;
                                                     case "receiveProposals":
                                                         opResult = operation_receiveProposals(op, auto);
@@ -426,6 +446,11 @@ namespace AasxServer
 
                                             if (sme2 is AdminShell.Operation)
                                             {
+                                                if (auto.name == debugAutomaton)
+                                                {
+                                                    int i = 0; // set breakpoint here to debug specific automaton
+                                                }
+
                                                 var op = sme2 as AdminShell.Operation;
                                                 Console.WriteLine("Operation: " + op.idShort);
                                                 bool opResult = false;
@@ -653,6 +678,11 @@ namespace AasxServer
             // outputVariable reference collected refused proposals: collection
             // outputVariable reference property receivedFrameJSON
 
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
             if (op.inputVariable.Count != 3 && op.outputVariable.Count != 4)
             {
                 return false;
@@ -698,26 +728,47 @@ namespace AasxServer
 
             string receivedFrame = "";
             if (auto.name == "automatonServiceRequester")
-                receivedFrame = sendFrameJSONRequester;
-            if (auto.name == "automatonServiceProvider")
+            {
                 receivedFrame = sendFrameJSONProvider;
+                sendFrameJSONProvider = "";
+            }
+                
+            if (auto.name == "automatonServiceProvider")
+            {
+                receivedFrame = sendFrameJSONRequester;
+                sendFrameJSONRequester = "";
+            }
 
             receivedFrameJSON.value = receivedFrame;
 
             AdminShell.Submodel submodel = null;
-            JObject parsed = JObject.Parse(receivedFrame);
-            foreach (JProperty jp1 in (JToken)parsed)
+            if (receivedFrame != "")
             {
-                if (jp1.Name == "frame")
+                try
                 {
-                    foreach (JProperty jp2 in jp1.Value)
+                    if (auto.name == debugAutomaton)
                     {
-                        if (jp2.Name == "submodel")
+                        int i = 0; // set breakpoint here to debug specific automaton
+                    }
+
+                    JObject parsed = JObject.Parse(receivedFrame);
+                    foreach (JProperty jp1 in (JToken)parsed)
+                    {
+                        if (jp1.Name == "frame")
                         {
-                            string text = jp2.Value.ToString();
-                            submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text);
+                            foreach (JProperty jp2 in jp1.Value)
+                            {
+                                if (jp2.Name == "submodel")
+                                {
+                                    string text = jp2.Value.ToString();
+                                    submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text);
+                                }
+                            }
                         }
                     }
+                }
+                catch
+                {
                 }
             }
 
@@ -730,13 +781,14 @@ namespace AasxServer
                     smcSubmodel.Add(sme.submodelElement);
                 }
                 smc2.Add(smcSubmodel);
+                return true;
             }
 
             return false;
         }
 
-        static string sendFrameJSONRequester;
-        static string sendFrameJSONProvider;
+        static string sendFrameJSONRequester = "";
+        static string sendFrameJSONProvider = "";
 
         public static bool operation_sendFrame(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
@@ -744,6 +796,11 @@ namespace AasxServer
             // inputVariable reference frame proposal: collection
             // inputVariable reference submodel
             // outputVariable reference property sendFrameJSON
+
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
 
             if (op.inputVariable.Count != 3 && op.outputVariable.Count != 1)
             {
@@ -824,6 +881,11 @@ namespace AasxServer
             // outputVariables are references to collections
             // alle elements will be removed from collections
 
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
             if (op.outputVariable.Count == 0)
             {
                 return false;
@@ -851,6 +913,52 @@ namespace AasxServer
             }
 
             return true;
+        }
+
+        public static bool operation_checkCollection(AdminShell.Operation op, i40LanguageAutomaton auto)
+        {
+            // inputVariable property checkType: isEmpty, isNotEmpty;
+            // inputVariable reference collection proposal
+
+            if (auto.name == debugAutomaton)
+            {
+                int i = 0; // set breakpoint here to debug specific automaton
+            }
+
+            if (op.inputVariable.Count != 2 && op.outputVariable.Count != 0)
+            {
+                return false;
+            }
+
+            AdminShell.Property checkType = null;
+            AdminShell.SubmodelElementCollection refCollection = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property)
+                {
+                    checkType = (inputRef as AdminShell.Property);
+                    continue;
+                }
+                if (!(inputRef is AdminShell.ReferenceElement))
+                    return false;
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                if (refElement is AdminShell.SubmodelElementCollection)
+                    refCollection = refElement as AdminShell.SubmodelElementCollection;
+            }
+
+            int count = refCollection.value.Count;
+
+            switch (checkType.idShort)
+            {
+                case "isEmpty":
+                    return (count == 0);
+                case "isNotEmpty":
+                    return (count != 0);
+            }
+
+            return false;
         }
     }
 }
