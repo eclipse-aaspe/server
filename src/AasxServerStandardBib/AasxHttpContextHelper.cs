@@ -833,16 +833,16 @@ namespace AasxRestServerLibrary
 
             if (file.instantiateTemplate)
             {
-                if (file.identificationSuffix == null)
+                if (file.instancesIdentificationSuffix == null)
                 {
                     context.Response.SendResponse(HttpStatusCode.BadRequest, $"Received no identification suffix. Aborting...");
                     return;
                 }
                 else
                 {
-                    Console.WriteLine("EvalPutAasxOnServer: file.identificationSuffix = " + file.identificationSuffix);
-                    string idSuffix = "#" + file.identificationSuffix;
-                    string idShortSuffix = "_" + file.identificationSuffix;
+                    Console.WriteLine("EvalPutAasxOnServer: file.instancesIdentificationSuffix = " + file.instancesIdentificationSuffix);
+                    string idSuffix = "#" + file.instancesIdentificationSuffix;
+                    string idShortSuffix = "_" + file.instancesIdentificationSuffix;
                     Console.WriteLine("EvalPutAasxOnServer: idSuffix = " + idSuffix);
                     Console.WriteLine("EvalPutAasxOnServer: idShortSuffix = " + idShortSuffix);
 
