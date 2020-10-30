@@ -2921,6 +2921,46 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
+        public void EvalAssetId(IHttpContext context, int assetId)
+        {
+            dynamic res = new ExpandoObject();
+            int index = -1;
+
+            Console.WriteLine("Test Asset ID");
+
+            string headers = context.Request.Headers.ToString();
+            string token = context.Request.Headers.Get("accept");
+            if (token != null)
+            {
+                if (token == "application/aas")
+                {
+                    Console.WriteLine("Received Accept header = " + token);
+                    // context.Response.ContentType = ContentType.JSON;
+                    context.Response.AddHeader("Content-Type", "application/aas");
+                    res.client = "I40 IT client";
+                    res.assetID = assetId;
+                    res.humanEndpoint = "https://admin-shell-io.com:5001";
+                    res.restEndpoint = "http://" + AasxServer.Program.hostPort;
+
+                    var settings = new JsonSerializerSettings();
+                    // if (contractResolver != null)
+                    //    settings.ContractResolver = contractResolver;
+                    var json = JsonConvert.SerializeObject(res, Formatting.Indented, settings);
+                    var buffer = context.Request.ContentEncoding.GetBytes(json);
+                    var length = buffer.Length;
+
+                    context.Response.ContentEncoding = Encoding.UTF8;
+                    context.Response.ContentLength64 = length;
+                    context.Response.SendResponse(buffer);
+
+                    return;
+                }
+            }
+
+            // SendJsonResponse(context, res);
+            SendRedirectResponse(context, "https://admin-shell-io.com:5001");
+        }
+
         public void EvalGetAASX(IHttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
