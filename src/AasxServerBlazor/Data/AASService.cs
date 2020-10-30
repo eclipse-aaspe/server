@@ -19,9 +19,12 @@ namespace AasxServerBlazor.Data
 
         public AASService()
         {
+            // buildTree();
+            // NewDataAvailable?.Invoke(this, EventArgs.Empty);
+
             Program.NewDataAvailable += (s, a) =>
             {
-                buildTree();
+                // buildTree();
                 NewDataAvailable?.Invoke(this, EventArgs.Empty);
             };
         }
@@ -32,10 +35,15 @@ namespace AasxServerBlazor.Data
 
         public List<Item> GetTree()
         {
-            buildTree();
+            // buildTree();
+            updateVisibleTree();
             return viewItems;
         }
 
+        public void updateVisibleTree()
+        {
+
+        }
         public void buildTree()
         {
             items = new List<Item>();

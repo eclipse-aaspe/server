@@ -162,6 +162,18 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$")]
+            public IHttpContext AssetId(IHttpContext context)
+            {
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    helper.EvalAssetId(context, Int32.Parse(m.Groups[1].ToString()));
+                }
+
+                return context;
+            }
+
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
             public IHttpContext GetAASX(IHttpContext context)
             {

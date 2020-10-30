@@ -215,10 +215,18 @@
         }
     }
 
+    static int hack = 0;
+
     protected override void OnInitialized()
     {
+        // OnInitialized() allways called twice
+        if (hack++ == 0)
+            return;
+
+        hack = 0;
+        SubmodelService.buildTree();
         Items = SubmodelService.GetTree();
-        // StateHasChanged();
+        StateHasChanged();
 
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
@@ -597,6 +605,15 @@
             if (sm.qualifiers != null && sm.qualifiers.Count > 0)
             {
                 ret += " @QUALIFIERS";
+            }
+        }
+        if (o is SubmodelElementCollection)
+        {
+            var sme = o as SubmodelElementCollection;
+            // ret = sm.identification.ToString();
+            if (sme.value.Count > 0)
+            {
+                ret += " #" + sme.value.Count;
             }
         }
         if (o is SubmodelElement)
