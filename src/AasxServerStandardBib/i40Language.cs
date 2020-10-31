@@ -1,13 +1,13 @@
-﻿using AdminShellNS;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua.Server;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using AdminShellNS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Opc.Ua.Server;
 
 namespace AasxServer
 {
@@ -97,7 +97,7 @@ namespace AasxServer
                                     {
                                         var smc1 = sme1 as AdminShell.SubmodelElementCollection;
                                         auto.automatonControl = smc1;
-                                        
+
                                         foreach (var smw2 in smc1.value)
                                         {
                                             var sme2 = smw2.submodelElement;
@@ -242,9 +242,9 @@ namespace AasxServer
             }
         }
 
-//        public static string debugAutomaton = "";
+        //        public static string debugAutomaton = "";
         public static string debugAutomaton = "automatonServiceRequester";
-//        public static string debugAutomaton = "automatonServiceProvider";
+        //        public static string debugAutomaton = "automatonServiceProvider";
         public static void nextTick()
         {
             while (true)
@@ -317,7 +317,7 @@ namespace AasxServer
                         auto.tick = 0;
 
                         Console.WriteLine(auto.name + ":");
-                        string states = ""; 
+                        string states = "";
                         foreach (var s in auto.actualStates)
                         {
                             states += s + " ";
@@ -735,7 +735,7 @@ namespace AasxServer
                 receivedFrame = sendFrameJSONProvider;
                 sendFrameJSONProvider = "";
             }
-                
+
             if (auto.name == "automatonServiceProvider")
             {
                 receivedFrame = sendFrameJSONRequester;
