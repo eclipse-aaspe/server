@@ -19,14 +19,17 @@ https://github.com/admin-shell-io/aasx-package-explorer
 There are three variants of the server:
 
 * **blazor**. This variant uses Blazor framework to provide a graphical user
-  interface in the browser for exploring the AASX packages.
+  interface in the browser for exploring the AASX packages. The other APIs
+  are the same as in the *core* variant.
 
 * **core**. This is a server based on .NET Core 3.1.
 
 * **windows**. This variant uses .NET Framework 4.7.2, which is the only way
-how you can start a server on your Windows machine without administrator privileges.
+  how you can start a server on your Windows machine without administrator privileges.
+  If you run on windows start with this variant first and try *blazor* later.
 
-  Mind that *blazor* and *core* variants require these privileges, so they
+
+  Mind that *blazor* and *core* variants require administrator privileges, so they
   can not be used for demonstration purposes on tightly-administered machines
   (which are wide-spread in larger organizations and enterprises).
   
@@ -45,11 +48,11 @@ https://github.com/admin-shell-io/aasx-server/releases
 
 AASX Server depends on .NET Core 3.1 runtime (`blazor` and `core` variants)
 and .NET Framework (`windows` variant), respectively. You need to install the
-respective runtimes before you start the server.
+respective runtimes before you start the server. .NET framework is part of windows.
 See https://dotnet.microsoft.com/download/dotnet-core/3.1
 
 To deploy the binaries, simply extract the release bundle (*e.g.*,
-`AasxServerCore.zip`) somewhere on your system.
+`AasxServerWindows.zip` or `AasxServerCore.zip`) somewhere on your system.
 
 ### Running for Demonstration
 
@@ -65,8 +68,11 @@ the release bundle and invoke:
 ./startForDemo.sh
 ```
 
+On Windows please start ```startForDemo.bat```.
+
 We provide a couple of sample admin shells (packaged as .aasx) for you to test
 and play with the software at: http://www.admin-shell-io.com/samples/
+Please copy these to the ```aasxs``` subdirectory as needed.
 
 ### Running on Windows
 
@@ -75,14 +81,15 @@ Change to the directory where you extracted the release bundle.
 Invoke the executable with the same name as the server variant. For example:
 
 ```
-AasxServerCore.exe --opc --rest -data-path /path/to/aasxs
+AasxServerWindows.exe --opc --rest -data-path /path/to/aasxs
 ```
+
+### Options
 
 To obtain help on individual flags and options, supply the argument `--help`:
 
-```
-AasxServerCore.exe --help
-```
+```AasxServerWindows.exe --help``` or ```AasxServerCore.exe --help```
+
 <!--- Help starts. -->
 ```
 AasxServerCore:
