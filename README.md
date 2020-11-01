@@ -71,14 +71,15 @@ the release bundle and invoke:
 On Windows please start ```startForDemo.bat```.
 
 We provide a couple of sample admin shells (packaged as .aasx) for you to test
-and play with the software at: http://www.admin-shell-io.com/samples/
+and play with the software at: http://www.admin-shell-io.com/samples/.
 Please copy these to the ```aasxs``` subdirectory as needed.
 
 ### Running on Windows
 
 Change to the directory where you extracted the release bundle.
 
-Invoke the executable with the same name as the server variant. For example:
+Start ```startForDemo.bat``` or invoke the executable with the same name as the
+server variant. For example:
 
 ```
 AasxServerWindows.exe --opc --rest -data-path /path/to/aasxs
@@ -121,8 +122,8 @@ Options:
 
 Change to the directory where you extracted the release bundle.
 
-Use `dotnet` to execute the DLL with the same name as the server variant.
-For example:
+Start ```startForDemo.bat``` or use `dotnet` to execute the DLL with the same name
+as the server variant. For example:
 
 ```
 dotnet AasxServerCore.dll --opc --rest --data-path /path/to/aasxs
