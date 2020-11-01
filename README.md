@@ -85,6 +85,10 @@ server variant. For example:
 AasxServerWindows.exe --opc --rest -data-path /path/to/aasxs
 ```
 
+You can see the AAS on the server with: http://localhost:51310/server/listaas.
+To show the JSON of the exampleMotor AAS please use: http://localhost:51310/aas/ExampleMotor.
+To show submodel "Identification" please use: http://localhost:51310/aas/ExampleMotor/submodels/Identification/complete.
+
 ### Options
 
 To obtain help on individual flags and options, supply the argument `--help`:
