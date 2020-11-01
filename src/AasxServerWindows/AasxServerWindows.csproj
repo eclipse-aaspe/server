@@ -12,6 +12,12 @@
     <None Update="IEC61360.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Update="startForDemo.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="startForDemo.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
