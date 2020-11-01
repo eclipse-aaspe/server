@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-mono AasxServerWindows.dll --rest --no-security --data-path ./aasxs --host 0.0.0.0
+mono AasxServerWindows.exe --rest --no-security --data-path ./aasxs --host 0.0.0.0
