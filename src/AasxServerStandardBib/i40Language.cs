@@ -234,9 +234,12 @@ namespace AasxServer
                 }
             }
 
-            threadDelegate = new ThreadStart(nextTick);
-            i40LanguageThread = new Thread(threadDelegate);
-            i40LanguageThread.Start();
+            if (automatons.Count != 0)
+            {
+                threadDelegate = new ThreadStart(nextTick);
+                i40LanguageThread = new Thread(threadDelegate);
+                i40LanguageThread.Start();
+            }
         }
 
 //        public static string debugAutomaton = "";
