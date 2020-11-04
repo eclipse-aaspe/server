@@ -8,6 +8,7 @@
     <div class="col-12 row">
         <br />
         <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
+            @if (Program.isLoading) { <span style="color:white;background-color:blue;">Loading...</span> }
             <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
                   @bind-SelectedNode="SelectedNode"
                   @bind-ExpandedNodes="ExpandedNodes"

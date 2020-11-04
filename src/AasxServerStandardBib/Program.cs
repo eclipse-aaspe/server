@@ -137,6 +137,8 @@ namespace AasxServer
         public static string redirectServer = "";
         public static string authType = "";
 
+        public static bool isLoading = true;
+
         private class CommandLineArguments
 
         {
@@ -433,6 +435,8 @@ namespace AasxServer
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
             AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
 
+            isLoading = false;
+
             Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
 
@@ -490,7 +494,7 @@ namespace AasxServer
 
                 string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
 
-                /*
+                //
                 string content = "";
                 try
                 {
@@ -503,8 +507,8 @@ namespace AasxServer
                 {
 
                 }
-                */
-                string content = "OK";
+                //
+                // string content = "OK";
                 if (content == "OK")
                 {
                     connectThread = new Thread(new ThreadStart(connectThreadLoop));
@@ -835,6 +839,24 @@ namespace AasxServer
                     }
                 }
 
+                // i40language
+                if (i40LanguageRuntime.sendFrameJSONRequester != "")
+                {
+                    td.type = "i40LanguageRuntime.sendFrameJSONRequester";
+                    var json = JsonConvert.SerializeObject(i40LanguageRuntime.sendFrameJSONRequester, Newtonsoft.Json.Formatting.Indented);
+                    td.publish.Add(json);
+                    tf.data.Add(td);
+                    i40LanguageRuntime.sendFrameJSONRequester = "";
+                }
+                if (i40LanguageRuntime.sendFrameJSONProvider != "")
+                {
+                    td.type = "i40LanguageRuntime.sendFrameJSONProvider";
+                    var json = JsonConvert.SerializeObject(i40LanguageRuntime.sendFrameJSONProvider, Newtonsoft.Json.Formatting.Indented);
+                    td.publish.Add(json);
+                    tf.data.Add(td);
+                    i40LanguageRuntime.sendFrameJSONProvider = "";
+                }
+
                 string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
 
                 HttpClient httpClient;
@@ -1042,6 +1064,22 @@ namespace AasxServer
                                             }
                                         }
                                     }
+                                }
+                            }
+
+                            // i40language
+                            if (td.type == "i40LanguageRuntime.sendFrameJSONRequester")
+                            {
+                                foreach (string s in td2.publish)
+                                {
+                                    i40LanguageRuntime.receivedFrameJSONRequester = JsonConvert.DeserializeObject<string>(s);
+                                }
+                            }
+                            if (td.type == "i40LanguageRuntime.sendFrameJSONProvider")
+                            {
+                                foreach (string s in td2.publish)
+                                {
+                                    i40LanguageRuntime.receivedFrameJSONProvider = JsonConvert.DeserializeObject<string>(s);
                                 }
                             }
                         }

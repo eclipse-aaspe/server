@@ -46,6 +46,8 @@ namespace AasxServerBlazor.Data
         }
         public void buildTree()
         {
+            while (Program.isLoading);
+
             items = new List<Item>();
             for (int i = 0; i < Program.envimax; i++)
             {

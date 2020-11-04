@@ -729,14 +729,18 @@ namespace AasxServer
             string receivedFrame = "";
             if (auto.name == "automatonServiceRequester")
             {
-                receivedFrame = sendFrameJSONProvider;
-                sendFrameJSONProvider = "";
+                // receivedFrame = sendFrameJSONProvider;
+                // sendFrameJSONProvider = "";
+                receivedFrame = receivedFrameJSONRequester;
+                receivedFrameJSONRequester = "";
             }
-                
+
             if (auto.name == "automatonServiceProvider")
             {
-                receivedFrame = sendFrameJSONRequester;
-                sendFrameJSONRequester = "";
+                // receivedFrame = sendFrameJSONRequester;
+                // sendFrameJSONRequester = "";
+                receivedFrame = receivedFrameJSONProvider;
+                receivedFrameJSONProvider = "";
             }
 
             receivedFrameJSON.value = receivedFrame;
@@ -787,8 +791,10 @@ namespace AasxServer
             return false;
         }
 
-        static string sendFrameJSONRequester = "";
-        static string sendFrameJSONProvider = "";
+        public static string sendFrameJSONRequester = "";
+        public static string sendFrameJSONProvider = "";
+        public static string receivedFrameJSONRequester = "";
+        public static string receivedFrameJSONProvider = "";
 
         public static bool operation_sendFrame(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
@@ -868,6 +874,7 @@ namespace AasxServer
             sendFrameJSON.value = frame;
 
             Console.WriteLine(frame);
+
             if (auto.name == "automatonServiceRequester")
                 sendFrameJSONRequester = frame;
             if (auto.name == "automatonServiceProvider")
