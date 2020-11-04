@@ -88,6 +88,10 @@ namespace AasxServer
                                 var auto = new i40LanguageAutomaton();
                                 automatons.Add(auto);
                                 auto.name = sm.idShort;
+                                if (auto.name != "automatonServiceRequester")
+                                    isRequester = true;
+                                if (auto.name != "automatonServiceProvider")
+                                    isProvider = true;
 
                                 foreach (var smw1 in sm.submodelElements)
                                 {
@@ -794,6 +798,8 @@ namespace AasxServer
             return false;
         }
 
+        public static bool isRequester;
+        public static bool isProvider;
         public static string sendFrameJSONRequester = "";
         public static string sendFrameJSONProvider = "";
         public static string receivedFrameJSONRequester = "";
