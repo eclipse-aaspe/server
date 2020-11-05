@@ -841,22 +841,18 @@ namespace AasxRestServerLibrary
                 else
                 {
                     Console.WriteLine("EvalPutAasxOnServer: file.instancesIdentificationSuffix = " + file.instancesIdentificationSuffix);
-                    string idSuffix = "#" + file.instancesIdentificationSuffix;
-                    string idShortSuffix = "_" + file.instancesIdentificationSuffix;
-                    Console.WriteLine("EvalPutAasxOnServer: idSuffix = " + idSuffix);
-                    Console.WriteLine("EvalPutAasxOnServer: idShortSuffix = " + idShortSuffix);
-
+                    
                     // instantiate aas
                     foreach (var aas in aasEnv.AasEnv.AdministrationShells)
                     {
-                        aas.idShort += idShortSuffix;
-                        aas.identification.id += idSuffix;
-                        aas.assetRef[0].value += idSuffix;
+                        aas.idShort += file.instancesIdentificationSuffix;
+                        aas.identification.id += file.instancesIdentificationSuffix;
+                        aas.assetRef[0].value += file.instancesIdentificationSuffix;
                         foreach (var smref in aas.submodelRefs)
                         {
                             foreach (var key in smref.Keys)
                             {
-                                key.value += idSuffix;
+                                key.value += file.instancesIdentificationSuffix;
                             }
                         }
                     }
@@ -864,22 +860,22 @@ namespace AasxRestServerLibrary
                     // instantiate asset
                     foreach (var asset in aasEnv.AasEnv.Assets)
                     {
-                        asset.idShort += idShortSuffix;
-                        asset.identification.id += idSuffix;
+                        asset.idShort += file.instancesIdentificationSuffix;
+                        asset.identification.id += file.instancesIdentificationSuffix;
                     }
 
                     // instantiate submodel
                     foreach (var submodel in aasEnv.AasEnv.Submodels)
                     {
-                        submodel.identification.id += idSuffix;
+                        submodel.identification.id += file.instancesIdentificationSuffix;
                         if (file.instantiateSubmodelsIdShort)
                         {
-                            submodel.idShort += idShortSuffix;
+                            submodel.idShort += file.instancesIdentificationSuffix;
                         }
                     }
                 }
             }
-
+            
             string aasIdShort = "";
             try
             {
