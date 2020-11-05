@@ -841,7 +841,7 @@ namespace AasxRestServerLibrary
                 else
                 {
                     Console.WriteLine("EvalPutAasxOnServer: file.instancesIdentificationSuffix = " + file.instancesIdentificationSuffix);
-                    
+
                     // instantiate aas
                     foreach (var aas in aasEnv.AasEnv.AdministrationShells)
                     {
@@ -875,7 +875,7 @@ namespace AasxRestServerLibrary
                     }
                 }
             }
-            
+
             string aasIdShort = "";
             try
             {
