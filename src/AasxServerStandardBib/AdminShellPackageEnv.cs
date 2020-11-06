@@ -403,6 +403,7 @@ namespace AdminShellNS
 
         public bool SaveAs(string fn, bool writeFreshly = false, PreferredFormat prefFmt = PreferredFormat.None, MemoryStream useMemoryStream = null)
         {
+            Console.WriteLine("SaveAs: " + fn);
             if (fn.ToLower().EndsWith(".xml"))
             {
                 // save only XML

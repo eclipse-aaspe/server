@@ -914,6 +914,7 @@ namespace AasxRestServerLibrary
 
         public void EvalPutAasxToFilesystem(IHttpContext context, string aasid)
         {
+            Console.WriteLine("EvalPutAasxToFilesystem");
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -922,6 +923,7 @@ namespace AasxRestServerLibrary
             }
 
             AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
+            Console.WriteLine("EvalPutAasxToFilesystem: " + JsonConvert.SerializeObject(file.path));
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
@@ -941,14 +943,14 @@ namespace AasxRestServerLibrary
                 try
                 {
                     Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
+                    SendTextResponse(context, "OK (saved)");
+                    return;
                 }
                 catch (Exception ex)
                 {
                     context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save in {file.path}. Aborting... {ex.Message}");
                     return;
                 }
-                SendTextResponse(context, "OK (saved)");
-                return;
             }
         }
 
