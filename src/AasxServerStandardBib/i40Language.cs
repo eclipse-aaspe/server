@@ -88,9 +88,9 @@ namespace AasxServer
                                 var auto = new i40LanguageAutomaton();
                                 automatons.Add(auto);
                                 auto.name = sm.idShort;
-                                if (auto.name != "automatonServiceRequester")
+                                if (auto.name == "automatonServiceRequester")
                                     isRequester = true;
-                                if (auto.name != "automatonServiceProvider")
+                                if (auto.name == "automatonServiceProvider")
                                     isProvider = true;
 
                                 foreach (var smw1 in sm.submodelElements)
@@ -677,7 +677,7 @@ namespace AasxServer
 
         public static bool operation_receiveProposals(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
-            // inputVariable property protocol;
+            // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
             // inputVariable reference submodel
             // outputVariable reference collected proposals: collection
@@ -733,21 +733,30 @@ namespace AasxServer
                 return false;
             var smc2 = ref2 as AdminShell.SubmodelElementCollection;
 
+            if (protocol.value != "memory" && protocol.value != "connect")
+                return false;
+
             string receivedFrame = "";
             if (auto.name == "automatonServiceRequester")
             {
                 // receivedFrame = sendFrameJSONProvider;
                 // sendFrameJSONProvider = "";
-                receivedFrame = receivedFrameJSONRequester;
-                receivedFrameJSONRequester = "";
+                if (receivedFrameJSONRequester.Count != 0)
+                {
+                    receivedFrame = receivedFrameJSONRequester[0];
+                    receivedFrameJSONRequester.RemoveAt(0);
+                }
             }
 
             if (auto.name == "automatonServiceProvider")
             {
                 // receivedFrame = sendFrameJSONRequester;
                 // sendFrameJSONRequester = "";
-                receivedFrame = receivedFrameJSONProvider;
-                receivedFrameJSONProvider = "";
+                if (receivedFrameJSONProvider.Count != 0)
+                {
+                    receivedFrame = receivedFrameJSONProvider[0];
+                    receivedFrameJSONProvider.RemoveAt(0);
+                }
             }
 
             receivedFrameJSON.value = receivedFrame;
@@ -798,16 +807,19 @@ namespace AasxServer
             return false;
         }
 
-        public static bool isRequester;
-        public static bool isProvider;
-        public static string sendFrameJSONRequester = "";
-        public static string sendFrameJSONProvider = "";
-        public static string receivedFrameJSONRequester = "";
-        public static string receivedFrameJSONProvider = "";
-
+        public static bool isRequester = false;
+        public static bool isProvider = false;
+        public static string sendProtocolRequester = "";
+        public static string sendProtocolProvider = "";
+        public static string receiveProtocolRequester = "";
+        public static string receiveProtocolProvider = "";
+        public static List<string> sendFrameJSONRequester = new List<string>();
+        public static List<string> receivedFrameJSONProvider = new List<string>();
+        public static List<string> sendFrameJSONProvider = new List<string>();
+        public static List<string> receivedFrameJSONRequester = new List<string>();
         public static bool operation_sendFrame(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
-            // inputVariable property protocol;
+            // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
             // inputVariable reference submodel
             // outputVariable reference property sendFrameJSON
@@ -854,7 +866,7 @@ namespace AasxServer
                     sendFrameJSON = refElement as AdminShell.Property;
             }
 
-            if (protocol.value != "memory")
+            if (protocol.value != "memory" && protocol.value != "connect")
                 return false;
 
             int frameCount = refFrame.value.Count;
@@ -885,9 +897,29 @@ namespace AasxServer
             Console.WriteLine(frame);
 
             if (auto.name == "automatonServiceRequester")
-                sendFrameJSONRequester = frame;
+            {
+                switch (protocol.value)
+                {
+                    case "memory":
+                        receivedFrameJSONProvider.Add(frame);
+                        break;
+                    case "connect":
+                        sendFrameJSONRequester.Add(frame);
+                        break;
+                }
+            }
             if (auto.name == "automatonServiceProvider")
-                sendFrameJSONProvider = frame;
+            {
+                switch (protocol.value)
+                {
+                    case "memory":
+                        receivedFrameJSONRequester.Add(frame);
+                        break;
+                    case "connect":
+                        sendFrameJSONProvider.Add(frame);
+                        break;
+                }
+            }
 
             return true;
         }
