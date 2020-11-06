@@ -32,88 +32,96 @@
                             <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
                         }
                     }
-                    if (selectedNode != null && hasDownloadFile(selectedNode))
-                    {
-                        <button @onclick="DownloadFile">Download File</button><br>
-                        <img src="test.jpg" alt="Thumbnail" />
-                    }
-                    string link = getLink(selectedNode);
+                    // if (selectedNode != null && hasDownloadFile(selectedNode))
+                    // {
+                    //     <button @onclick="DownloadFile">Download File</button><br>
+                    //     <img src="test.jpg" alt="Thumbnail" />
+                    // }
+                    bool externalLink = false;
+                    string link = getLink(selectedNode, out externalLink);
                     if (selectedNode != null && link != "")
                     {
-                        // <a href="@link" target="_blank">@link</a><br>
-                        <button onclick="window.location.href = '@link';">Download</button><br>
-                    }
-                    if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
-                    {
-                        bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                        bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                        if (toPublish)
+                        // if (externalLink)
+                        if (true)
                         {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                            <a href="@link" target="_blank">@link</a><br>
                         }
                         else
                         {
-                            <button @onclick="setSubmodelToPublish">Publish</button>
+                            <button onclick="window.location.href = '@link'; ">Download</button><br>
                         }
-                        if (toSubscribe)
+                        if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
                         {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                            bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                            bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                            if (toPublish)
+                            {
+                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                            }
+                            else
+                            {
+                                <button @onclick="setSubmodelToPublish">Publish</button>
+                            }
+                            if (toSubscribe)
+                            {
+                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                            }
+                            else
+                            {
+                                <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                            }
+                            // <button onclick="window.location.href = '@link';">Subscribe</button><br>
+                            @code {
+                                private void resetSubmodelToPublish()
+                                {
+                                    Program.submodelsToPublish.Remove(selectedNode.Tag);
+                                }
+                                private void setSubmodelToPublish()
+                                {
+                                    bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                                    if (!toSubscribe)
+                                        Program.submodelsToPublish.Add(selectedNode.Tag);
+                                }
+                                private void resetSubmodelToSubscribe()
+                                {
+                                    Program.submodelsToSubscribe.Remove(selectedNode.Tag);
+                                }
+                                private void setSubmodelToSubscribe()
+                                {
+                                    bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                                    if (!toPublish)
+                                        Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                                }
+                            }
                         }
-                        else
+                        if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                         {
-                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                            // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                            <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                            @code { private string CurrentValue { get; set; } }
+                            if (CurrentValue != null && CurrentValue != "")
+                            {
+                                if (selectedNode.Tag is Property)
+                                {
+                                    (selectedNode.Tag as Property).value = CurrentValue;
+                                    this.StateHasChanged();
+                                }
+                                CurrentValue = "";
+                            }
                         }
-                        // <button onclick="window.location.href = '@link';">Subscribe</button><br>
-                        @code {
-                            private void resetSubmodelToPublish()
+                        if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
+                        {
+                            string detailsImage = createDetailsImage(selectedNode);
+                            if (detailsImage != "")
                             {
-                                Program.submodelsToPublish.Remove(selectedNode.Tag);
-                            }
-                            private void setSubmodelToPublish()
-                            {
-                                bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                                if (!toSubscribe)
-                                    Program.submodelsToPublish.Add(selectedNode.Tag);
-                            }
-                            private void resetSubmodelToSubscribe()
-                            {
-                                Program.submodelsToSubscribe.Remove(selectedNode.Tag);
-                            }
-                            private void setSubmodelToSubscribe()
-                            {
-                                bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                                if (!toPublish)
-                                    Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                                <br />
+                                <div>
+                                    <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+                                </div>
+                                }
                             }
                         }
                     }
-                    if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
-                    {
-                        // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                        <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                        @code { private string CurrentValue { get; set; } }
-                        if (CurrentValue != null && CurrentValue != "")
-                        {
-                            if (selectedNode.Tag is Property)
-                            {
-                                (selectedNode.Tag as Property).value = CurrentValue;
-                                this.StateHasChanged();
-                            }
-                            CurrentValue = "";
-                        }
-                    }
-                    if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
-                    {
-                        string detailsImage = createDetailsImage(selectedNode);
-                        if (detailsImage != "")
-                        {
-                            <br />
-                            <div>
-                                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
-                            </div>
-                        }
-                    }
-                }
         </div>
     </div>
 </div>
@@ -332,8 +340,10 @@
         return false;
     }
 
-    string getLink(Item item)
+    string getLink(Item item, out bool external)
     {
+        external = false;
+        
         if (item == null)
         {
             return "";
@@ -367,6 +377,7 @@
             string[] split = value.Split(new Char[] { ':' });
             if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
             {
+                external = true;
                 return value;
             }
 
