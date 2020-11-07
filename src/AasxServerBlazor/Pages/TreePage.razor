@@ -94,9 +94,10 @@
                                 }
                             }
                         }
-                        if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
-                        {
-                            // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                    {
+                        // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
                             <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
                             @code { private string CurrentValue { get; set; } }
                             if (CurrentValue != null && CurrentValue != "")
@@ -108,17 +109,16 @@
                                 }
                                 CurrentValue = "";
                             }
-                        }
-                        if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
+                    }
+                    if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
+                    {
+                        string detailsImage = createDetailsImage(selectedNode);
+                        if (detailsImage != "")
                         {
-                            string detailsImage = createDetailsImage(selectedNode);
-                            if (detailsImage != "")
-                            {
-                                <br />
-                                <div>
-                                    <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
-                                </div>
-                                }
+                            <br />
+                            <div>
+                                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+                            </div>
                             }
                         }
                     }
