@@ -853,7 +853,7 @@ namespace AasxServer
                 }
                 if (i40LanguageRuntime.isProvider && i40LanguageRuntime.sendFrameJSONProvider.Count != 0)
                 {
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONRequester)
+                    foreach (string s in i40LanguageRuntime.sendFrameJSONProvider)
                     {
                         td.type = "i40LanguageRuntime.sendFrameJSONProvider";
                         var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
