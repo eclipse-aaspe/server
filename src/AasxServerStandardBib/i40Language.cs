@@ -7,6 +7,7 @@ using System.Threading;
 using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Opc.Ua.Server;
 
 namespace AasxServer
@@ -784,7 +785,7 @@ namespace AasxServer
                                     if (jp2.Name == "submodel")
                                     {
                                         string text = jp2.Value.ToString();
-                                        submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text, 
+                                        submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text,
                                             new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                     }
                                 }
