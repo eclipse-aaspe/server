@@ -736,75 +736,79 @@ namespace AasxServer
             if (protocol.value != "memory" && protocol.value != "connect")
                 return false;
 
-            string receivedFrame = "";
-            if (auto.name == "automatonServiceRequester")
+            while ((auto.name == "automatonServiceRequester" && receivedFrameJSONRequester.Count != 0)
+                    || (auto.name == "automatonServiceProvider" && receivedFrameJSONProvider.Count != 0))
             {
-                // receivedFrame = sendFrameJSONProvider;
-                // sendFrameJSONProvider = "";
-                if (receivedFrameJSONRequester.Count != 0)
+                string receivedFrame = "";
+                if (auto.name == "automatonServiceRequester")
                 {
-                    receivedFrame = receivedFrameJSONRequester[0];
-                    receivedFrameJSONRequester.RemoveAt(0);
-                }
-            }
-
-            if (auto.name == "automatonServiceProvider")
-            {
-                // receivedFrame = sendFrameJSONRequester;
-                // sendFrameJSONRequester = "";
-                if (receivedFrameJSONProvider.Count != 0)
-                {
-                    receivedFrame = receivedFrameJSONProvider[0];
-                    receivedFrameJSONProvider.RemoveAt(0);
-                }
-            }
-
-            receivedFrameJSON.value = receivedFrame;
-
-            AdminShell.Submodel submodel = null;
-            if (receivedFrame != "")
-            {
-                try
-                {
-                    if (auto.name == debugAutomaton)
+                    // receivedFrame = sendFrameJSONProvider;
+                    // sendFrameJSONProvider = "";
+                    if (receivedFrameJSONRequester.Count != 0)
                     {
-                        int i = 0; // set breakpoint here to debug specific automaton
+                        receivedFrame = receivedFrameJSONRequester[0];
+                        receivedFrameJSONRequester.RemoveAt(0);
                     }
+                }
 
-                    JObject parsed = JObject.Parse(receivedFrame);
-                    foreach (JProperty jp1 in (JToken)parsed)
+                if (auto.name == "automatonServiceProvider")
+                {
+                    // receivedFrame = sendFrameJSONRequester;
+                    // sendFrameJSONRequester = "";
+                    if (receivedFrameJSONProvider.Count != 0)
                     {
-                        if (jp1.Name == "frame")
+                        receivedFrame = receivedFrameJSONProvider[0];
+                        receivedFrameJSONProvider.RemoveAt(0);
+                    }
+                }
+
+                receivedFrameJSON.value = receivedFrame;
+
+                AdminShell.Submodel submodel = null;
+                if (receivedFrame != "")
+                {
+                    try
+                    {
+                        if (auto.name == debugAutomaton)
                         {
-                            foreach (JProperty jp2 in jp1.Value)
+                            int i = 0; // set breakpoint here to debug specific automaton
+                        }
+
+                        JObject parsed = JObject.Parse(receivedFrame);
+                        foreach (JProperty jp1 in (JToken)parsed)
+                        {
+                            if (jp1.Name == "frame")
                             {
-                                if (jp2.Name == "submodel")
+                                foreach (JProperty jp2 in jp1.Value)
                                 {
-                                    string text = jp2.Value.ToString();
-                                    submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text);
+                                    if (jp2.Name == "submodel")
+                                    {
+                                        string text = jp2.Value.ToString();
+                                        submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text, 
+                                            new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                    }
                                 }
                             }
                         }
                     }
+                    catch
+                    {
+                    }
                 }
-                catch
+
+                if (submodel != null)
                 {
+                    AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
+                    smcSubmodel.idShort = submodel.idShort;
+                    foreach (var sme in submodel.submodelElements)
+                    {
+                        smcSubmodel.Add(sme.submodelElement);
+                    }
+                    smc2.Add(smcSubmodel);
                 }
             }
 
-            if (submodel != null)
-            {
-                AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
-                smcSubmodel.idShort = refSubmodel.idShort;
-                foreach (var sme in refSubmodel.submodelElements)
-                {
-                    smcSubmodel.Add(sme.submodelElement);
-                }
-                smc2.Add(smcSubmodel);
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
         public static bool isRequester = false;
