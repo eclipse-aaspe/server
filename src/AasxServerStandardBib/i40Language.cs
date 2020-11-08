@@ -7,6 +7,7 @@ using System.Threading;
 using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Opc.Ua.Server;
 
 namespace AasxServer
@@ -88,6 +89,10 @@ namespace AasxServer
                                 var auto = new i40LanguageAutomaton();
                                 automatons.Add(auto);
                                 auto.name = sm.idShort;
+                                if (auto.name == "automatonServiceRequester")
+                                    isRequester = true;
+                                if (auto.name == "automatonServiceProvider")
+                                    isProvider = true;
 
                                 foreach (var smw1 in sm.submodelElements)
                                 {
@@ -673,7 +678,7 @@ namespace AasxServer
 
         public static bool operation_receiveProposals(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
-            // inputVariable property protocol;
+            // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
             // inputVariable reference submodel
             // outputVariable reference collected proposals: collection
@@ -729,73 +734,97 @@ namespace AasxServer
                 return false;
             var smc2 = ref2 as AdminShell.SubmodelElementCollection;
 
-            string receivedFrame = "";
-            if (auto.name == "automatonServiceRequester")
-            {
-                receivedFrame = sendFrameJSONProvider;
-                sendFrameJSONProvider = "";
-            }
+            if (protocol.value != "memory" && protocol.value != "connect")
+                return false;
 
-            if (auto.name == "automatonServiceProvider")
+            while ((auto.name == "automatonServiceRequester" && receivedFrameJSONRequester.Count != 0)
+                    || (auto.name == "automatonServiceProvider" && receivedFrameJSONProvider.Count != 0))
             {
-                receivedFrame = sendFrameJSONRequester;
-                sendFrameJSONRequester = "";
-            }
-
-            receivedFrameJSON.value = receivedFrame;
-
-            AdminShell.Submodel submodel = null;
-            if (receivedFrame != "")
-            {
-                try
+                string receivedFrame = "";
+                if (auto.name == "automatonServiceRequester")
                 {
-                    if (auto.name == debugAutomaton)
+                    // receivedFrame = sendFrameJSONProvider;
+                    // sendFrameJSONProvider = "";
+                    if (receivedFrameJSONRequester.Count != 0)
                     {
-                        int i = 0; // set breakpoint here to debug specific automaton
+                        receivedFrame = receivedFrameJSONRequester[0];
+                        receivedFrameJSONRequester.RemoveAt(0);
                     }
+                }
 
-                    JObject parsed = JObject.Parse(receivedFrame);
-                    foreach (JProperty jp1 in (JToken)parsed)
+                if (auto.name == "automatonServiceProvider")
+                {
+                    // receivedFrame = sendFrameJSONRequester;
+                    // sendFrameJSONRequester = "";
+                    if (receivedFrameJSONProvider.Count != 0)
                     {
-                        if (jp1.Name == "frame")
+                        receivedFrame = receivedFrameJSONProvider[0];
+                        receivedFrameJSONProvider.RemoveAt(0);
+                    }
+                }
+
+                receivedFrameJSON.value = receivedFrame;
+
+                AdminShell.Submodel submodel = null;
+                if (receivedFrame != "")
+                {
+                    try
+                    {
+                        if (auto.name == debugAutomaton)
                         {
-                            foreach (JProperty jp2 in jp1.Value)
+                            int i = 0; // set breakpoint here to debug specific automaton
+                        }
+
+                        JObject parsed = JObject.Parse(receivedFrame);
+                        foreach (JProperty jp1 in (JToken)parsed)
+                        {
+                            if (jp1.Name == "frame")
                             {
-                                if (jp2.Name == "submodel")
+                                foreach (JProperty jp2 in jp1.Value)
                                 {
-                                    string text = jp2.Value.ToString();
-                                    submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text);
+                                    if (jp2.Name == "submodel")
+                                    {
+                                        string text = jp2.Value.ToString();
+                                        submodel = JsonConvert.DeserializeObject<AdminShell.Submodel>(text,
+                                            new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                    }
                                 }
                             }
                         }
                     }
+                    catch
+                    {
+                    }
                 }
-                catch
+
+                if (submodel != null)
                 {
+                    AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
+                    smcSubmodel.idShort = submodel.idShort;
+                    foreach (var sme in submodel.submodelElements)
+                    {
+                        smcSubmodel.Add(sme.submodelElement);
+                    }
+                    smc2.Add(smcSubmodel);
                 }
             }
 
-            if (submodel != null)
-            {
-                AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
-                smcSubmodel.idShort = refSubmodel.idShort;
-                foreach (var sme in refSubmodel.submodelElements)
-                {
-                    smcSubmodel.Add(sme.submodelElement);
-                }
-                smc2.Add(smcSubmodel);
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
-        static string sendFrameJSONRequester = "";
-        static string sendFrameJSONProvider = "";
-
+        public static bool isRequester = false;
+        public static bool isProvider = false;
+        public static string sendProtocolRequester = "";
+        public static string sendProtocolProvider = "";
+        public static string receiveProtocolRequester = "";
+        public static string receiveProtocolProvider = "";
+        public static List<string> sendFrameJSONRequester = new List<string>();
+        public static List<string> receivedFrameJSONProvider = new List<string>();
+        public static List<string> sendFrameJSONProvider = new List<string>();
+        public static List<string> receivedFrameJSONRequester = new List<string>();
         public static bool operation_sendFrame(AdminShell.Operation op, i40LanguageAutomaton auto)
         {
-            // inputVariable property protocol;
+            // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
             // inputVariable reference submodel
             // outputVariable reference property sendFrameJSON
@@ -842,7 +871,7 @@ namespace AasxServer
                     sendFrameJSON = refElement as AdminShell.Property;
             }
 
-            if (protocol.value != "memory")
+            if (protocol.value != "memory" && protocol.value != "connect")
                 return false;
 
             int frameCount = refFrame.value.Count;
@@ -871,10 +900,31 @@ namespace AasxServer
             sendFrameJSON.value = frame;
 
             Console.WriteLine(frame);
+
             if (auto.name == "automatonServiceRequester")
-                sendFrameJSONRequester = frame;
+            {
+                switch (protocol.value)
+                {
+                    case "memory":
+                        receivedFrameJSONProvider.Add(frame);
+                        break;
+                    case "connect":
+                        sendFrameJSONRequester.Add(frame);
+                        break;
+                }
+            }
             if (auto.name == "automatonServiceProvider")
-                sendFrameJSONProvider = frame;
+            {
+                switch (protocol.value)
+                {
+                    case "memory":
+                        receivedFrameJSONRequester.Add(frame);
+                        break;
+                    case "connect":
+                        sendFrameJSONProvider.Add(frame);
+                        break;
+                }
+            }
 
             return true;
         }

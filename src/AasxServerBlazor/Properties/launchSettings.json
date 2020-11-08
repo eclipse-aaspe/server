@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--data-path C:\\Development\\AASX_DigTyp40 --rest --edit",
+      "commandLineArgs": "--data-path C:\\Users\\7wrmhx\\Documents\\_Standardization\\Diedrich\\test --rest --edit --connect",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
