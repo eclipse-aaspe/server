@@ -2993,9 +2993,30 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
+            // check authentication
+            string accessrights = null;
+            if (withAuthentification)
+            {
+                accessrights = SecurityCheck(context, ref index);
+
+                if (accessrights == null)
+                {
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+            else
+            {
+                accessrights = "readonly";
+            }
+
             Console.WriteLine("Security 5 Server: /server/getaasx2/" + fileIndex);
 
             // check authentication
+            /*
             if (!withAuthentification)
             {
                 res.error = "You are not authorized for this operation!";
@@ -3003,6 +3024,8 @@ namespace AasxRestServerLibrary
                 return;
             }
             string accessrights = SecurityCheck(context, ref index);
+            */
+
             Console.WriteLine("Security 5.1 Server: Check bearer token and access rights");
             Console.WriteLine("Security 5.2 Server: Validate that bearer token is signed by session unique random");
 
