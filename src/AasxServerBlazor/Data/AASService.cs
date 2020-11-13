@@ -44,6 +44,18 @@ namespace AasxServerBlazor.Data
         {
 
         }
+
+        public void syncSubTree(Item item)
+        {
+            if (item.Tag is SubmodelElementCollection)
+            {
+                var smec = item.Tag as SubmodelElementCollection;
+                if (item.Childs.Count() != smec.value.Count)
+                {
+                    createSMECItems(item, smec, item.envIndex);
+                }
+            }
+        }
         public void buildTree()
         {
             while (Program.isLoading) ;
