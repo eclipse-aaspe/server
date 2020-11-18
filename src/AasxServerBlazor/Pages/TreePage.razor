@@ -14,7 +14,7 @@
                   @bind-ExpandedNodes="ExpandedNodes"
                   HasChildNodes="@(item => item.Childs?.Any() == true)">
                 <TitleTemplate>
-                    @{ SubmodelService.syncSubTree(context);
+                    @{ // SubmodelService.syncSubTree(context);
                     }
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span> @ViewNodeID(context)@ViewNodeInfo(context)
                     <strong><span style="color:blue">@getSymbols(context)</span></strong>
