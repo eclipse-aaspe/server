@@ -19,6 +19,13 @@ namespace AasxServerBlazor
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
 
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json").Build();
+            string[] url = config["Kestrel:Endpoints:Http:Url"].Split(':');
+            if (url[2] != null)
+                AasxServer.Program.blazorHostPort = url[2];
+
             CreateHostBuilder(args).Build().RunAsync();
 
             AasxServer.Program.Main(args);

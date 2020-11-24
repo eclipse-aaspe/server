@@ -3,6 +3,7 @@
 @using AasxServerBlazor.Data
 @using static AdminShellNS.AdminShellV20;
 @using System
+@using System.Net;
 @implements IDisposable
 
     <div class="col-12 row">
@@ -345,7 +346,7 @@
     string getLink(Item item, out bool external)
     {
         external = false;
-        
+
         if (item == null)
         {
             return "";
@@ -729,6 +730,18 @@
                     }
                     break;
                 case 3:
+                    if (asset != null)
+                    {
+                        ret = "AssetID URL encoded";
+                        if (col == 1)
+                        {
+                            string url = WebUtility.UrlEncode(asset.identification.id);
+                            ret = url;
+                        }
+                    }
+                    break;
+                /*
+                case 3:
                     subjectIssuer = Program.envSubjectIssuer[item.envIndex];
                     if (subjectIssuer != null)
                     {
@@ -754,6 +767,7 @@
                         }
                     }
                     break;
+                */
                 case 5:
                 case 6:
                 case 7:

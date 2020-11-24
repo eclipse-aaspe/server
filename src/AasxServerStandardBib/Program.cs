@@ -107,6 +107,7 @@ namespace AasxServer
             };
 
         public static string hostPort = "";
+        public static string blazorHostPort = "";
         public static ulong dataVersion = 0;
 
         public static void changeDataVersion() { dataVersion++; }
@@ -319,6 +320,7 @@ namespace AasxServer
             }
 
             hostPort = a.Host + ":" + a.Port;
+            blazorHostPort = a.Host + ":" + blazorHostPort;
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -712,6 +714,8 @@ namespace AasxServer
             public string identification;
             public string fileName;
             public string assetId;
+            public string humanEndPoint;
+            public string restEndPoint;
         }
         public class aasDirectoryParameters
         {
@@ -787,7 +791,9 @@ namespace AasxServer
                             alp.assetId = "";
                             var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AdministrationShells[0].assetRef);
                             if (asset != null)
-                                alp.assetId = asset.identification + "";
+                                alp.assetId = asset.identification.id;
+                            alp.humanEndPoint = blazorHostPort;
+                            alp.restEndPoint = hostPort;
 
                             adp.aasList.Add(alp);
                         }
