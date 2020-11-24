@@ -98,7 +98,7 @@ To obtain help on individual flags and options, supply the argument `--help`:
 <!--- Help starts. -->
 ```
 AasxServerCore:
-  serve AASX packages over different interface
+  serve AASX packages over different interfaces
 
 Usage:
   AasxServerCore [options]
@@ -118,6 +118,7 @@ Options:
   --no-security                          If set, no authentication is required
   --edit                                 If set, allows edits in the user interface
   --version                              Show version information
+  --name                                 Name of the server
   -?, -h, --help                         Show help and usage information
 ```
 <!--- Help ends. -->
