@@ -107,6 +107,7 @@ namespace AasxServer
             };
 
         public static string hostPort = "";
+        public static string blazorHostPort = "";
         public static ulong dataVersion = 0;
 
         public static void changeDataVersion() { dataVersion++; }
@@ -157,6 +158,7 @@ namespace AasxServer
             public string ProxyFile { get; set; }
             public bool NoSecurity { get; set; }
             public bool Edit { get; set; }
+            public string Name { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -173,6 +175,8 @@ namespace AasxServer
                     rngCsp.GetBytes(barray);
                     Program.connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
                     Program.connectUpdateRate = 2000;
+                    if (a.Name != null && a.Name != "")
+                        Program.connectNodeName = a.Name;
                 }
                 else if (a.Connect.Length == 1)
                 {
@@ -316,6 +320,7 @@ namespace AasxServer
             }
 
             hostPort = a.Host + ":" + a.Port;
+            blazorHostPort = a.Host + ":" + blazorHostPort;
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -597,7 +602,7 @@ namespace AasxServer
         {
             string nl = System.Environment.NewLine;
 
-            var rootCommand = new RootCommand("serve AASX packages over different interface")
+            var rootCommand = new RootCommand("serve AASX packages over different interfaces")
             {
                 new Option<string>(
                     new[] {"--host", "-h"},
@@ -659,6 +664,10 @@ namespace AasxServer
                 new Option<bool>(
                     new[] {"--edit"},
                     "If set, allows edits in the user interface"),
+
+                new Option<string>(
+                    new[] {"--name"},
+                    "Name of the server"),
             };
 
             if (args.Length == 0)
@@ -704,6 +713,9 @@ namespace AasxServer
             public string idShort;
             public string identification;
             public string fileName;
+            public string assetId;
+            public string humanEndPoint;
+            public string restEndPoint;
         }
         public class aasDirectoryParameters
         {
@@ -739,7 +751,7 @@ namespace AasxServer
             }
         }
 
-        static bool connectInit = true;
+        static bool getDirectory = true;
 
         static List<TransmitData> tdPending = new List<TransmitData> { };
 
@@ -758,7 +770,7 @@ namespace AasxServer
                     source = connectNodeName
                 };
 
-                if (connectInit)
+                if (getDirectory)
                 {
                     aasDirectoryParameters adp = new aasDirectoryParameters();
 
@@ -776,6 +788,12 @@ namespace AasxServer
                             alp.idShort = Program.env[j].AasEnv.AdministrationShells[0].idShort;
                             alp.identification = Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
                             alp.fileName = Program.envFileName[j];
+                            alp.assetId = "";
+                            var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AdministrationShells[0].assetRef);
+                            if (asset != null)
+                                alp.assetId = asset.identification.id;
+                            alp.humanEndPoint = blazorHostPort;
+                            alp.restEndPoint = hostPort;
 
                             adp.aasList.Add(alp);
                         }
@@ -786,7 +804,7 @@ namespace AasxServer
                     td.publish.Add(json);
                     tf.data.Add(td);
 
-                    connectInit = false;
+                    getDirectory = false;
                 }
                 else
                 {
@@ -900,6 +918,11 @@ namespace AasxServer
                         node = tf2.source;
                         foreach (TransmitData td2 in tf2.data)
                         {
+                            if (td2.type == "getDirectory")
+                            {
+                                getDirectory = true;
+                            }
+
                             if (td2.type == "getaasx" && td2.destination == connectNodeName)
                             {
                                 int aasIndex = Convert.ToInt32(td2.extensions);
