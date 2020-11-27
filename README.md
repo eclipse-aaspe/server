@@ -117,8 +117,8 @@ Options:
   --proxy-file <proxy-file>              If set, parses the proxy information from the given proxy file
   --no-security                          If set, no authentication is required
   --edit                                 If set, allows edits in the user interface
+  --name <name>                          Name of the server
   --version                              Show version information
-  --name                                 Name of the server
   -?, -h, --help                         Show help and usage information
 ```
 <!--- Help ends. -->
