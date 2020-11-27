@@ -4,6 +4,8 @@
 @using static AdminShellNS.AdminShellV20;
 @using System
 @using System.Net;
+@using QRCoder;
+@using System.Drawing;
 @implements IDisposable
 
     <div class="col-12 row">
@@ -101,20 +103,49 @@
                     if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                     {
                         // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                            <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                            @code { private string CurrentValue { get; set; } }
-                            if (CurrentValue != null && CurrentValue != "")
+                        <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                        @code { private string CurrentValue { get; set; } }
+                        if (CurrentValue != null && CurrentValue != "")
+                        {
+                            if (selectedNode.Tag is Property)
                             {
-                                if (selectedNode.Tag is Property)
-                                {
-                                    (selectedNode.Tag as Property).value = CurrentValue;
-                                    this.StateHasChanged();
-                                }
-                                CurrentValue = "";
+                                (selectedNode.Tag as Property).value = CurrentValue;
+                                this.StateHasChanged();
                             }
+                            CurrentValue = "";
+                        }
                     }
                     if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
                     {
+                        if (selectedNode.Tag is AdministrationShell)
+                        {
+                            <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
+                            string qrcodeLink = getQRCodeLink(selectedNode);
+                            if (Program.generatedQrCodes.ContainsKey(selectedNode))
+                            {
+                                string qrcodeImage = getQRCodeImage(selectedNode);
+                                if (qrcodeImage != "")
+                                {
+                                    <a href="@qrcodeLink" target="_blank">
+                                        <div>
+                                            <img src=data:image;base64,@qrcodeImage style="max-width: 40%;" alt="Qrcode Image" />
+                                        </div>
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
+                            }
+                            @code {
+                                private void runCreateQRCodeImage()
+                                {
+                                    createQRCodeImage(selectedNode);
+                                }
+                            }
+
+                        }
+
                         string detailsImage = createDetailsImage(selectedNode);
                         if (detailsImage != "")
                         {
@@ -122,10 +153,10 @@
                             <div>
                                 <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
                             </div>
-                            }
                         }
                     }
-        </div>
+                }
+            </div>
     </div>
 </div>
 
@@ -314,6 +345,93 @@
         }
 
         return "";
+    }
+
+    string getQRCodeLink(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            var aas = o as AdministrationShell;
+            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            if (asset != null)
+            {
+                string url = WebUtility.UrlEncode(asset.identification.id);
+                string link = "http://admin-shell-io.com:52001/server/aasxbyasset/" + url;
+
+                return link;
+            }
+        }
+
+        return "";
+    }
+
+    string getQRCodeImage(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            string image = Program.generatedQrCodes[item];
+
+            if (image != null)
+                return image;
+        }
+
+        return "";
+    }
+
+    void createQRCodeImage(Item item)
+    {
+        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
+
+        if (item == null)
+        {
+            return;
+        }
+
+        object o = item.Tag;
+
+        if (o is AdministrationShell)
+        {
+            if (Program.generatedQrCodes.ContainsKey(item))
+            {
+                Program.generatedQrCodes.Remove(item);
+                return;
+            }
+
+            var aas = o as AdministrationShell;
+            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            if (asset != null)
+            {
+                string url = WebUtility.UrlEncode(asset.identification.id);
+                string link = "http://admin-shell-io.com:52001/server/aasxbyasset/" + url;
+
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
+                Bitmap qrCodeImage = qrCode.GetGraphic(20);
+                System.IO.MemoryStream memory = new System.IO.MemoryStream();
+                qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                string base64 = Convert.ToBase64String(memory.ToArray());
+
+                Program.generatedQrCodes.Add(item, base64);
+                return;
+            }
+        }
+
+        return;
     }
 
     bool hasDownloadFile(Item item)
@@ -732,7 +850,7 @@
                 case 3:
                     if (asset != null)
                     {
-                        ret = "AssetID URL encoded";
+                        ret = "ASSETID URLENCODED";
                         if (col == 1)
                         {
                             string url = WebUtility.UrlEncode(asset.identification.id);

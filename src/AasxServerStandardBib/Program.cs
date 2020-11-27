@@ -135,6 +135,8 @@ namespace AasxServer
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
 
+        public static Dictionary<object, string> generatedQrCodes = new Dictionary<object, string>();
+
         public static string redirectServer = "";
         public static string authType = "";
 
@@ -752,6 +754,7 @@ namespace AasxServer
         }
 
         static bool getDirectory = true;
+        static string getDirectoryDestination = "";
 
         static List<TransmitData> tdPending = new List<TransmitData> { };
 
@@ -801,10 +804,12 @@ namespace AasxServer
 
                     var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
                     td.type = "directory";
+                    td.destination = getDirectoryDestination;
                     td.publish.Add(json);
                     tf.data.Add(td);
 
                     getDirectory = false;
+                    getDirectoryDestination = "";
                 }
                 else
                 {
@@ -921,6 +926,7 @@ namespace AasxServer
                             if (td2.type == "getDirectory")
                             {
                                 getDirectory = true;
+                                getDirectoryDestination = td2.source;
                             }
 
                             if (td2.type == "getaasx" && td2.destination == connectNodeName)
