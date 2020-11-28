@@ -10,6 +10,11 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Opc.Ua.Server;
 
+/*
+Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
+Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
+*/
+
 namespace AasxServer
 {
     public class i40LanguageAutomaton
