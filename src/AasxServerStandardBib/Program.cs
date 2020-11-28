@@ -26,6 +26,11 @@ using Opc.Ua.Configuration;
 using Opc.Ua.Server;
 using Formatting = Newtonsoft.Json.Formatting;
 
+/*
+Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
+Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
+*/
+
 namespace AasxServer
 {
     /// <summary>
