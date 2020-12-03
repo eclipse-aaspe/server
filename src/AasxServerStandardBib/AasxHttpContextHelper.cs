@@ -512,6 +512,14 @@ namespace AasxRestServerLibrary
             var buffer = context.Request.ContentEncoding.GetBytes(json);
             var length = buffer.Length;
 
+            var queryString = context.Request.QueryString;
+            string refresh = queryString["refresh"];
+            if (refresh != null && refresh != "")
+            {
+                context.Response.Headers.Remove("Refresh");
+                context.Response.Headers.Add("Refresh", refresh);
+            }
+
             context.Response.ContentType = ContentType.JSON;
             context.Response.ContentEncoding = Encoding.UTF8;
             context.Response.ContentLength64 = length;
@@ -520,6 +528,14 @@ namespace AasxRestServerLibrary
 
         protected static void SendTextResponse(Grapevine.Interfaces.Server.IHttpContext context, string txt, string mimeType = null)
         {
+            var queryString = context.Request.QueryString;
+            string refresh = queryString["refresh"];
+            if (refresh != null && refresh != "")
+            {
+                context.Response.Headers.Remove("Refresh");
+                context.Response.Headers.Add("Refresh", refresh);
+            }
+
             context.Response.ContentType = ContentType.TEXT;
             if (mimeType != null)
                 context.Response.Advanced.ContentType = mimeType;
