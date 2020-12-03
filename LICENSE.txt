@@ -20,6 +20,7 @@ The MQTT server and client is licensed under the MIT license (MIT) (see below)
 Jose-JWT is licensed under the MIT license (MIT) (see below)
 Font Awesome is licensed under the Font Awesome Free License (see below)
 JetBrains.Annotations is licensed under the MIT license (MIT) (see below)
+Qrcoder is licensed under the MIT license (MIT) (see below)
 Portions copyright (c) by OPC Foundation, Inc. and licensed under the Reciprocal Community License (RCL) (see below)
 The OPC UA Example Code of OPC UA Standard is licensed under the MIT license (MIT, see below).
 
@@ -518,6 +519,33 @@ BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR P
 NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+With respect to QRcoder
+=======================
+
+(https://github.com/codebude/QRCoder/blob/master/LICENSE.txt)
+
+The MIT License (MIT)
+
+Copyright (c) 2013-2018 Raffael Herrmann
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 With respect to OPC Foundation
