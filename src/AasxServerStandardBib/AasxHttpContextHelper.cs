@@ -1702,6 +1702,24 @@ namespace AasxRestServerLibrary
 
             // find the right SubmodelElement
             var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
+
+            if (fse.elem is AdminShell.SubmodelElementCollection)
+            {
+                res = new ExpandoObject();
+                List<string> idShortValue = new List<string>();
+                foreach (var sme in (fse.elem as AdminShell.SubmodelElementCollection).value)
+                {
+                    if (sme.submodelElement is AdminShell.Property)
+                    {
+                        var p = sme.submodelElement as AdminShell.Property;
+                        idShortValue.Add(p.idShort + " = " + p.value);
+                    }
+                }
+                res.values = idShortValue;
+                SendJsonResponse(context, res);
+                return;
+            }
+
             var smep = fse?.elem as AdminShell.Property;
             if (smep == null || smep.value == null || smep.value == "")
             {
