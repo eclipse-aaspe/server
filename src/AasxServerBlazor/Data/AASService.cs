@@ -130,25 +130,28 @@ namespace AasxServerBlazor.Data
             List<Item> smChilds = new List<Item>();
             foreach (var sme in smec.value)
             {
-                var smeItem = new Item();
-                smeItem.envIndex = i;
-                smeItem.Text = sme.submodelElement.idShort;
-                smeItem.Tag = sme.submodelElement;
-                smChilds.Add(smeItem);
-                if (sme.submodelElement is SubmodelElementCollection)
+                if (sme != null && sme.submodelElement != null)
                 {
-                    var smecNext = sme.submodelElement as SubmodelElementCollection;
-                    createSMECItems(smeItem, smecNext, i);
-                }
-                if (sme.submodelElement is Operation)
-                {
-                    var o = sme.submodelElement as Operation;
-                    createOperationItems(smeItem, o, i);
-                }
-                if (sme.submodelElement is Entity)
-                {
-                    var e = sme.submodelElement as Entity;
-                    createEntityItems(smeItem, e, i);
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = sme.submodelElement.idShort;
+                    smeItem.Tag = sme.submodelElement;
+                    smChilds.Add(smeItem);
+                    if (sme.submodelElement is SubmodelElementCollection)
+                    {
+                        var smecNext = sme.submodelElement as SubmodelElementCollection;
+                        createSMECItems(smeItem, smecNext, i);
+                    }
+                    if (sme.submodelElement is Operation)
+                    {
+                        var o = sme.submodelElement as Operation;
+                        createOperationItems(smeItem, o, i);
+                    }
+                    if (sme.submodelElement is Entity)
+                    {
+                        var e = sme.submodelElement as Entity;
+                        createEntityItems(smeItem, e, i);
+                    }
                 }
             }
             smeRootItem.Childs = smChilds;
@@ -196,12 +199,15 @@ namespace AasxServerBlazor.Data
             List<Item> smChilds = new List<Item>();
             foreach (var s in e.statements)
             {
-                var smeItem = new Item();
-                smeItem.envIndex = i;
-                smeItem.Text = s.submodelElement.idShort;
-                smeItem.Type = "In";
-                smeItem.Tag = s.submodelElement;
-                smChilds.Add(smeItem);
+                if (s != null && s.submodelElement != null)
+                {
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = s.submodelElement.idShort;
+                    smeItem.Type = "In";
+                    smeItem.Tag = s.submodelElement;
+                    smChilds.Add(smeItem);
+                }
             }
             smeRootItem.Childs = smChilds;
             foreach (var c in smChilds)
