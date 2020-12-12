@@ -25,6 +25,7 @@ using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
 using Formatting = Newtonsoft.Json.Formatting;
+using Newtonsoft.Json.Linq;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -447,10 +448,15 @@ namespace AasxServer
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
             AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
 
-            isLoading = false;
-
             Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
+
+            i40LanguageRuntime.initialize();
+
+            RunScript(true); 
+            //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+
+            isLoading = false;
 
             if (a.Rest)
             {
@@ -460,10 +466,6 @@ namespace AasxServer
 
                 Console.WriteLine("REST Server started.");
             }
-
-            i40LanguageRuntime.initialize();
-
-            RunScript(); // Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
             if (a.Mqtt)
             {
@@ -607,6 +609,11 @@ namespace AasxServer
 
         public static void Main(string[] args)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
+            }
+
             string nl = System.Environment.NewLine;
 
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
@@ -1158,7 +1165,7 @@ namespace AasxServer
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
-            // RunScript();
+            // RunScript(false);
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
@@ -1175,7 +1182,7 @@ namespace AasxServer
 
         private static void OnScriptTimedEvent(Object source, ElapsedEventArgs e)
         {
-            RunScript();
+            RunScript(false);
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
@@ -1533,7 +1540,7 @@ namespace AasxServer
             return true;
         }
 
-        static async void RunScript()
+        static async void RunScript(bool init)
         {
             if (env == null)
                 return;
@@ -1620,6 +1627,65 @@ namespace AasxServer
                                         continue;
                                     }
 
+                                    if (qq.type == "GetJSON")
+                                    {
+                                        if (!init)
+                                            continue;
+
+                                        if (!(sme1 is AdminShell.ReferenceElement))
+                                        {
+                                            continue;
+                                        }
+
+                                        string url = qq.value;
+                                        string username = "";
+                                        string password = "";
+
+                                        if (sme1.qualifiers.Count == 3)
+                                        {
+                                            qq = sme1.qualifiers[1] as AdminShell.Qualifier;
+                                            if (qq.type != "Username")
+                                                continue;
+                                            username = qq.value;
+                                            qq = sme1.qualifiers[2] as AdminShell.Qualifier;
+                                            if (qq.type != "Password")
+                                                continue;
+                                            password = qq.value;
+                                        }
+
+                                        var handler = new HttpClientHandler();
+                                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                        var client = new HttpClient(handler);
+
+                                        if (username != "" && password != "")
+                                        {
+                                            var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                    Convert.ToBase64String(authToken));
+                                        }
+
+                                        Console.WriteLine("GetJSON: " + url);
+                                        string response = client.GetStringAsync(url).Result;
+                                        Console.WriteLine(response);
+
+                                        if (response != "")
+                                        {
+                                            var r12 = sme1 as AdminShell.ReferenceElement;
+                                            var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
+                                            if (ref12 is AdminShell.SubmodelElementCollection)
+                                            {
+                                                var c1 = ref12 as AdminShell.SubmodelElementCollection;
+                                                if (c1.value.Count == 0)
+                                                {
+                                                    // dynamic model = JObject.Parse(response);
+                                                    JObject parsed = JObject.Parse(response);
+                                                    parseJson(c1, parsed);
+                                                }
+                                            }
+                                        }
+                                        continue;
+                                    }
+
                                     if (qq.type != "SearchNumber" || smi >= count)
                                     {
                                         continue;
@@ -1679,6 +1745,42 @@ namespace AasxServer
                 i++;
             }
             return;
+        }
+
+        private static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
+        {
+            
+            foreach (JProperty jp1 in (JToken)o)
+            {
+                AdminShell.SubmodelElementCollection c2;
+                switch (jp1.Value.Type)
+                {
+                    case JTokenType.Array:
+                        c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
+                        c.Add(c2);
+                        int count = 1;
+                        foreach (JObject el in jp1.Value)
+                        {
+                            AdminShell.SubmodelElementCollection c3 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name + "_array_" + count++);
+                            c2.Add(c3);
+                            parseJson(c3, el);
+                        }
+                        break;
+                    case JTokenType.Object:
+                        c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
+                        c.Add(c2);
+                        foreach (JObject el in jp1.Value)
+                        {
+                            parseJson(c2, el);
+                        }
+                        break;
+                    default:
+                        AdminShell.Property p = AdminShell.Property.CreateNew(jp1.Name);
+                        p.value = jp1.Value.ToString();
+                        c.Add(p);
+                        break;
+                }
+            }
         }
 
         private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)

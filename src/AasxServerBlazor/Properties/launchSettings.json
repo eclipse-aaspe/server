@@ -18,7 +18,8 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--data-path D:\\AASX2 --rest --no-security --connect --name aorzelski.private",      "launchBrowser": true,
+      "commandLineArgs": "--data-path C:\\Development\\JSON --rest --no-security --connect --name aorzelski.private",
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
