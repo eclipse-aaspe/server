@@ -21,11 +21,11 @@ using AasxRestServerLibrary;
 using AdminShellNS;
 using Jose;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
 using Formatting = Newtonsoft.Json.Formatting;
-using Newtonsoft.Json.Linq;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -453,7 +453,7 @@ namespace AasxServer
 
             i40LanguageRuntime.initialize();
 
-            RunScript(true); 
+            RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
             isLoading = false;
@@ -1749,7 +1749,6 @@ namespace AasxServer
 
         private static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
         {
-            
             foreach (JProperty jp1 in (JToken)o)
             {
                 AdminShell.SubmodelElementCollection c2;
