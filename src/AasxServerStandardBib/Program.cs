@@ -607,6 +607,13 @@ namespace AasxServer
 
         public static void Main(string[] args)
         {
+            Console.WriteLine("Main");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
+            }
+
             string nl = System.Environment.NewLine;
 
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")

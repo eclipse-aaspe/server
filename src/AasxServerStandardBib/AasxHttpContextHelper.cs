@@ -3033,6 +3033,7 @@ namespace AasxRestServerLibrary
             {
                 accessrights = SecurityCheck(context, ref index);
 
+                /*
                 if (accessrights == null)
                 {
                     res.error = "You are not authorized for this operation!";
@@ -3041,6 +3042,7 @@ namespace AasxRestServerLibrary
                 }
 
                 res.confirm = "Authorization = " + accessrights;
+                */
             }
             else
             {
