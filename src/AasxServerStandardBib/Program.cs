@@ -780,13 +780,12 @@ namespace AasxServer
                 {
                     source = connectNodeName
                 };
-                TransmitData td = new TransmitData
-                {
-                    source = connectNodeName
-                };
+                TransmitData td = null;
 
                 if (getDirectory)
                 {
+                    Console.WriteLine("if getDirectory");
+
                     aasDirectoryParameters adp = new aasDirectoryParameters();
 
                     adp.source = connectNodeName;
@@ -814,6 +813,11 @@ namespace AasxServer
                         }
                     }
 
+                    td = new TransmitData
+                    {
+                        source = connectNodeName
+                    };
+
                     var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
                     td.type = "directory";
                     td.destination = getDirectoryDestination;
@@ -823,55 +827,59 @@ namespace AasxServer
                     getDirectory = false;
                     getDirectoryDestination = "";
                 }
-                else
+
+                if (tdPending.Count != 0)
                 {
-                    if (tdPending.Count != 0)
+                    foreach (TransmitData tdp in tdPending)
                     {
-                        foreach (TransmitData tdp in tdPending)
-                        {
-                            tf.data.Add(tdp);
-                        }
-                        tdPending.Clear();
+                        tf.data.Add(tdp);
                     }
-                    int envi = 0;
-                    while (env[envi] != null)
+                    tdPending.Clear();
+                }
+
+                int envi = 0;
+                while (env[envi] != null)
+                {
+                    foreach (var sm in env[envi].AasEnv.Submodels)
                     {
-                        foreach (var sm in env[envi].AasEnv.Submodels)
+                        if (sm != null && sm.idShort != null)
                         {
-                            if (sm != null && sm.idShort != null)
+                            bool toPublish = Program.submodelsToPublish.Contains(sm);
+                            if (!toPublish)
                             {
-                                bool toPublish = Program.submodelsToPublish.Contains(sm);
-                                if (!toPublish)
+                                int count = sm.qualifiers.Count;
+                                if (count != 0)
                                 {
-                                    int count = sm.qualifiers.Count;
-                                    if (count != 0)
+                                    int j = 0;
+
+                                    while (j < count) // Scan qualifiers
                                     {
-                                        int j = 0;
+                                        var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                                        while (j < count) // Scan qualifiers
+                                        if (p.type == "PUBLISH")
                                         {
-                                            var p = sm.qualifiers[j] as AdminShell.Qualifier;
-
-                                            if (p.type == "PUBLISH")
-                                            {
-                                                toPublish = true;
-                                            }
-                                            j++;
+                                            toPublish = true;
                                         }
+                                        j++;
                                     }
                                 }
-                                if (toPublish)
+                            }
+                            if (toPublish)
+                            {
+                                td = new TransmitData
                                 {
-                                    var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-                                    td.type = "submodel";
-                                    td.publish.Add(json);
-                                    tf.data.Add(td);
-                                    Console.WriteLine("Publish Submodel " + sm.idShort);
-                                }
+                                    source = connectNodeName
+                                };
+
+                                var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                                td.type = "submodel";
+                                td.publish.Add(json);
+                                tf.data.Add(td);
+                                Console.WriteLine("Publish Submodel " + sm.idShort);
                             }
                         }
-                        envi++;
                     }
+                    envi++;
                 }
 
                 // i40language
@@ -879,6 +887,11 @@ namespace AasxServer
                 {
                     foreach (string s in i40LanguageRuntime.sendFrameJSONRequester)
                     {
+                        td = new TransmitData
+                        {
+                            source = connectNodeName
+                        };
+
                         td.type = "i40LanguageRuntime.sendFrameJSONRequester";
                         var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
                         td.publish.Add(json);
@@ -888,6 +901,11 @@ namespace AasxServer
                 }
                 if (i40LanguageRuntime.isProvider && i40LanguageRuntime.sendFrameJSONProvider.Count != 0)
                 {
+                    td = new TransmitData
+                    {
+                        source = connectNodeName
+                    };
+
                     foreach (string s in i40LanguageRuntime.sendFrameJSONProvider)
                     {
                         td.type = "i40LanguageRuntime.sendFrameJSONProvider";
@@ -937,6 +955,7 @@ namespace AasxServer
                         {
                             if (td2.type == "getDirectory")
                             {
+                                Console.WriteLine("received getDirectory");
                                 getDirectory = true;
                                 getDirectoryDestination = td2.source;
                             }
@@ -997,7 +1016,7 @@ namespace AasxServer
                                     }
 
                                     AdminShell.AdministrationShell aas = null;
-                                    int envi = 0;
+                                    envi = 0;
                                     while (env[envi] != null)
                                     {
                                         aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.identification);

@@ -54,9 +54,11 @@ namespace AasxRestServerLibrary
             }
             else
             {
+                /*
                 this.proxy = WebProxy.GetDefaultProxy();
                 if (this.proxy != null)
                     this.proxy.UseDefaultCredentials = true;
+                */
             }
         }
 
