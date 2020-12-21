@@ -823,6 +823,7 @@ namespace AasxServer
                     td.destination = getDirectoryDestination;
                     td.publish.Add(json);
                     tf.data.Add(td);
+                    Console.WriteLine("Send directory");
 
                     getDirectory = false;
                     getDirectoryDestination = "";
