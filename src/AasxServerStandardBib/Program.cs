@@ -1828,6 +1828,17 @@ namespace AasxServer
             string value;
             try
             {
+                // ns=#;i=#
+                string[] split = (clientNodeId.ToString()).Split('#');
+                if (split.Length == 2)
+                {
+                    uint i = Convert.ToUInt16(split[1]);
+                    split = clientNodeId.ToString().Split('=');
+                    split = split[1].Split(';');
+                    ushort ns = Convert.ToUInt16(split[0]);
+                    clientNodeId = new NodeId(i, ns);
+                    Console.WriteLine("New node id: ", clientNodeId.ToString());
+                }
                 value = client.ReadSubmodelElementValue(clientNodeId);
                 Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
             }
@@ -1839,11 +1850,10 @@ namespace AasxServer
 
             // update in AAS env
             p.Set(p.valueType, value);
-            // update in OPC
 
+            // update in OPC
             if (!OPCWrite(serverNodeId, value))
                 Console.WriteLine("OPC write not successful.");
-
         }
     }
 

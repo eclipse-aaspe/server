@@ -622,7 +622,6 @@ namespace AasxServer
                         auto.getMessages.Add(p.value);
                     if (auto.getMessages.Count == 100)
                         auto.getMessages.Add("+++");
-
                     // Console.WriteLine("operation message: " + p.idShort + " = " + p.value);
                 }
             }
