@@ -618,7 +618,10 @@ namespace AasxServer
                 if (v.value.submodelElement is AdminShell.Property)
                 {
                     var p = v.value.submodelElement as AdminShell.Property;
-                    auto.getMessages.Add(p.value);
+                    if (auto.getMessages.Count < 100)
+                        auto.getMessages.Add(p.value);
+                    if (auto.getMessages.Count == 100)
+                        auto.getMessages.Add("+++");
                     Console.WriteLine("operation message: " + p.idShort + " = " + p.value);
                 }
             }
