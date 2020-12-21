@@ -326,13 +326,13 @@ namespace AasxServer
 
                         auto.tick = 0;
 
-                        Console.WriteLine(auto.name + ":");
+                        // Console.WriteLine(auto.name + ":");
                         string states = "";
                         foreach (var s in auto.actualStates)
                         {
                             states += s + " ";
                         }
-                        Console.WriteLine("states = " + states);
+                        // Console.WriteLine("states = " + states);
 
                         List<string> transitionsEnabled = new List<string>();
                         List<string> transitionsActive = new List<string>();
@@ -379,7 +379,7 @@ namespace AasxServer
                         {
                             enabled += te + " ";
                         }
-                        Console.WriteLine("Transition enabled: " + enabled);
+                        // Console.WriteLine("Transition enabled: " + enabled);
 
                         // Check which enabled transitions are active by their inputs
                         foreach (var t in auto.transitions)
@@ -407,7 +407,7 @@ namespace AasxServer
                                                 }
 
                                                 var op = sme2 as AdminShell.Operation;
-                                                Console.WriteLine("Operation: " + op.idShort);
+                                                // Console.WriteLine("Operation: " + op.idShort);
                                                 bool opResult = false;
                                                 switch (op.idShort)
                                                 {
@@ -465,7 +465,7 @@ namespace AasxServer
                                                 }
 
                                                 var op = sme2 as AdminShell.Operation;
-                                                Console.WriteLine("Operation: " + op.idShort);
+                                                // Console.WriteLine("Operation: " + op.idShort);
                                                 bool opResult = false;
                                                 switch (op.idShort)
                                                 {
@@ -532,7 +532,7 @@ namespace AasxServer
                         }
                         // self loops are only allowed if no other states are active
 
-                        Console.WriteLine();
+                        // Console.WriteLine();
 
                         // display actual automaton data in AAS
                         foreach (var smw1 in auto.automatonControl.value)
@@ -622,7 +622,7 @@ namespace AasxServer
                         auto.getMessages.Add(p.value);
                     if (auto.getMessages.Count == 100)
                         auto.getMessages.Add("+++");
-                    Console.WriteLine("operation message: " + p.idShort + " = " + p.value);
+                    // Console.WriteLine("operation message: " + p.idShort + " = " + p.value);
                 }
             }
             return true;
@@ -668,11 +668,11 @@ namespace AasxServer
             {
                 var endTime = localTime.AddSeconds(waitingTime);
                 p2.value = endTime.ToString();
-                Console.WriteLine("endTime = " + p2.value);
+                // Console.WriteLine("endTime = " + p2.value);
             }
             else // test if time has elapsed
             {
-                Console.WriteLine("localTime = " + localTime);
+                // Console.WriteLine("localTime = " + localTime);
                 var endTime = DateTime.Parse(p2.value);
                 if (DateTime.Compare(localTime, endTime) > 0)
                 {
@@ -907,7 +907,7 @@ namespace AasxServer
             frame += " } }";
             sendFrameJSON.value = frame;
 
-            Console.WriteLine(frame);
+            // Console.WriteLine(frame);
 
             if (auto.name == "automatonServiceRequester")
             {
