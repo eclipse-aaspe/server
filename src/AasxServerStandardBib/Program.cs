@@ -611,7 +611,7 @@ namespace AasxServer
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
+                // AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
             }
 
             string nl = System.Environment.NewLine;
@@ -1223,7 +1223,7 @@ namespace AasxServer
 
                 if (getaasxFile_destination != "") // block transfer
                 {
-                    Thread.Sleep(200);
+                    Thread.Sleep(500);
                 }
                 else
                     Thread.Sleep(connectUpdateRate);
