@@ -8,6 +8,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -389,7 +390,9 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
+                var dp = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), 
+                    AasxHttpContextHelper.DataPath);
+                fileNames = Directory.GetFiles(dp, "*.aasx");
                 Array.Sort(fileNames);
 
                 while (envi < fileNames.Length)
