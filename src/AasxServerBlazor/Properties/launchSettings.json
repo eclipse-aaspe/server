@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--data-path \"C:\\Development\\OPC PLCnext\" --opc --opc-client-rate 3000 --rest --no-security",
+      "commandLineArgs": "--rest --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

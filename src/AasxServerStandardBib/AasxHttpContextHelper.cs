@@ -551,6 +551,11 @@ namespace AasxRestServerLibrary
             context.Response.ContentLength64 = stream.Length;
             context.Response.SendChunked = true;
 
+            if (sendContentLength)
+            {
+                // context.Response.AddHeader("Content-Length", "" + stream.Length);
+                // context.Response.Headers.Add("Content-Length", "" + stream.Length);
+            }
             if (headerAttachmentFileName != null)
                 context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
 
