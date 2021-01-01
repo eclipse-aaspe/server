@@ -43,7 +43,7 @@ namespace AasOpcUaServer
     /// </summary>
     public class AasModeManager : SampleNodeManager
     {
-        private AdminShellPackageEnv[] thePackageEnv = null;
+        private AdminShellPackageEnv thePackageEnv = null;
         private AasxUaServerOptions theServerOptions = null;
 
         #region Constructors
@@ -53,7 +53,7 @@ namespace AasOpcUaServer
         public AasModeManager(
             Opc.Ua.Server.IServerInternal server,
             ApplicationConfiguration configuration,
-            AdminShellPackageEnv[] env,
+            AdminShellPackageEnv env,
             AasxUaServerOptions serverOptions = null)
         :
             base(server)
@@ -103,7 +103,8 @@ namespace AasOpcUaServer
             // causes an exception if anything has more than one qualifier!
             if (parent == null)
             {
-                return new NodeId(node.BrowseName.Name, m_namespaceIndex);
+                uint id = Utils.IncrementIdentifier(ref m_lastUsedId);
+                return new NodeId(id, m_typeNamespaceIndex);
             }
             if (node.BrowseName.Name == "Qualifier")
             {
@@ -111,9 +112,11 @@ namespace AasOpcUaServer
             }
             else
             {
-                return new NodeId(parent.NodeId.Identifier.ToString() + "." + node.BrowseName.Name, m_namespaceIndex);
+                uint id = Utils.IncrementIdentifier(ref m_lastUsedId);
+                return new NodeId(id, m_namespaceIndex);
             }
         }
+        #endregion
 
         public NodeId NewType(ISystemContext context, AasUaBaseEntity.CreateMode mode,
             NodeState node, uint preferredNumId = 0)
