@@ -216,10 +216,10 @@ namespace AasOpcUaServer
                 // more simple case: AasReference between known entities
                 if (lax != null && lax.actionType == NodeLateActionLinkToReference.ActionType.SetAasReference
                     && lax.uanode != null
-                    && this.package != null && this.package.AasEnv != null)
+                    && this.packages != null)
                 {
                     // 1st, take reference and turn it into Referable
-                    var targetReferable = this.package.AasEnv.FindReferableByReference(lax.targetReference);
+                    var targetReferable = FindAllReferableByReference(this.packages, lax.targetReference);
                     if (targetReferable == null)
                         continue;
 
@@ -236,13 +236,13 @@ namespace AasOpcUaServer
                 // a bit more complicated: could include a "empty reference" to outside concept
                 if (lax != null && lax.actionType == NodeLateActionLinkToReference.ActionType.SetDictionaryEntry
                     && lax.uanode != null
-                    && this.package != null && this.package.AasEnv != null)
+                    && this.packages != null)
                 {
                     // tracking
                     var foundAtAll = false;
 
                     // 1st, take reference and turn it into Referable
-                    var targetReferable = this.package.AasEnv.FindReferableByReference(lax.targetReference);
+                    var targetReferable = FindAllReferableByReference(this.packages, lax.targetReference);
                     if (targetReferable != null)
                     {
                         // 2nd, try to lookup the Referable and turn it into a uanode

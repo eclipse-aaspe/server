@@ -43,7 +43,7 @@ namespace AasOpcUaServer
     /// </summary>
     public class AasModeManager : SampleNodeManager
     {
-        private AdminShellPackageEnv thePackageEnv = null;
+        private AdminShellPackageEnv[] thePackageEnv = null;
         private AasxUaServerOptions theServerOptions = null;
 
         #region Constructors
@@ -53,7 +53,7 @@ namespace AasOpcUaServer
         public AasModeManager(
             Opc.Ua.Server.IServerInternal server,
             ApplicationConfiguration configuration,
-            AdminShellPackageEnv env,
+            AdminShellPackageEnv[] env,
             AasxUaServerOptions serverOptions = null)
         :
             base(server)
