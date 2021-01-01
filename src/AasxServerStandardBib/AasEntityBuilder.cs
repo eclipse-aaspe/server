@@ -24,7 +24,7 @@ namespace AasOpcUaServer
         //
         public static AasModeManager nodeMgr = null;
 
-        public AdminShellPackageEnv package = null;
+        public AdminShellPackageEnv[] packages = null;
 
         public AasxUaServerOptions theServerOptions = null;
 
@@ -51,11 +51,11 @@ namespace AasOpcUaServer
         /// </summary>
         public NodeState RootMissingDictionaryEntries = null;
 
-        public AasEntityBuilder(AasModeManager nodeMgr, AdminShellPackageEnv package,
+        public AasEntityBuilder(AasModeManager nodeMgr, AdminShellPackageEnv[] package,
             IDictionary<NodeId, IList<IReference>> externalReferences, AasxUaServerOptions options)
         {
             AasEntityBuilder.nodeMgr = nodeMgr;
-            this.package = package;
+            this.packages = package;
             this.nodeMgrExternalReferences = externalReferences;
             this.aasTypes = new AasTypeEntities();
             this.theServerOptions = options;
@@ -166,6 +166,25 @@ namespace AasOpcUaServer
             this.noteLateActions.Add(la);
         }
 
+        private AdminShell.Referable FindAllReferableByReference(AdminShellPackageEnv[] packages,
+            AdminShell.Reference rf)
+        {
+            // access
+            if (packages == null || rf == null)
+                return null;
+
+            // find
+            foreach (var pck in packages)
+            {
+                var x = pck?.AasEnv?.FindReferableByReference(rf);
+                if (x != null)
+                    return x;
+            }
+
+            // oh, no
+            return null;
+        }
+
         /// <summary>
         /// Top level creation functions. Uses the definitions of RootAAS, RootConceptDescriptions, 
         /// RootDataSpecifications to synthesize information model
@@ -197,10 +216,10 @@ namespace AasOpcUaServer
                 // more simple case: AasReference between known entities
                 if (lax != null && lax.actionType == NodeLateActionLinkToReference.ActionType.SetAasReference
                     && lax.uanode != null
-                    && this.package != null && this.package.AasEnv != null)
+                    && this.packages != null)
                 {
                     // 1st, take reference and turn it into Referable
-                    var targetReferable = this.package.AasEnv.FindReferableByReference(lax.targetReference);
+                    var targetReferable = FindAllReferableByReference(this.packages, lax.targetReference);
                     if (targetReferable == null)
                         continue;
 
@@ -217,13 +236,13 @@ namespace AasOpcUaServer
                 // a bit more complicated: could include a "empty reference" to outside concept
                 if (lax != null && lax.actionType == NodeLateActionLinkToReference.ActionType.SetDictionaryEntry
                     && lax.uanode != null
-                    && this.package != null && this.package.AasEnv != null)
+                    && this.packages != null)
                 {
                     // tracking
                     var foundAtAll = false;
 
                     // 1st, take reference and turn it into Referable
-                    var targetReferable = this.package.AasEnv.FindReferableByReference(lax.targetReference);
+                    var targetReferable = FindAllReferableByReference(this.packages, lax.targetReference);
                     if (targetReferable != null)
                     {
                         // 2nd, try to lookup the Referable and turn it into a uanode
