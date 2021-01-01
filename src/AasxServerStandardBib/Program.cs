@@ -1501,7 +1501,7 @@ namespace AasxServer
                 return true;
             }
 
-            AasOpcUaServer.AasNodeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
+            AasOpcUaServer.AasModeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
 
             if (nodeMgr == null)
             {
