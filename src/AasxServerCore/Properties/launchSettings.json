@@ -2,7 +2,7 @@
   "profiles": {
     "AasxServerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--rest"
+      "commandLineArgs": "--no-security --rest --data-path C:\\Users\\miho\\Desktop\\201112_Festo_AAS_Demo_Koffer\\repo"
     }
   }
 }
