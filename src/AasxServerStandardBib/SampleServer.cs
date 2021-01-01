@@ -127,7 +127,7 @@ namespace AasOpcUaServer
 
             // create the custom node managers.
             // TODO (MIHO, 2021-01-01): re-implement multi environment UA server again!
-            var aasnm = new global::AasOpcUaServer.AasModeManager(server, configuration, thePackageEnv[0], theServerOptions);
+            var aasnm = new global::AasOpcUaServer.AasModeManager(server, configuration, thePackageEnv, theServerOptions);
             nodeManagers.Add(aasnm);
 
             // create master node manager.
