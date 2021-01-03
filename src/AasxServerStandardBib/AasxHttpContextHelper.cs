@@ -1829,7 +1829,7 @@ namespace AasxRestServerLibrary
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
-            }
+            }                    
 
             // Submodel or SME?
             if (elemids == null || elemids.Length < 1)
