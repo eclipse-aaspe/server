@@ -1678,7 +1678,60 @@ namespace AasxRestServerLibrary
             SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
         }
 
-        public void EvalGetSubmodelElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
+        private string EvalGetSubmodelElementsProperty_EvalValue (AdminShell.Property smep) 
+        {
+            // access
+            if (smep == null)
+                return null;
+
+            // try to apply a little bit voodo
+            double dblval = 0.0;
+            string strval = smep.value;
+            if (smep.HasQualifierOfType("DEMO") != null && smep.value != null && smep.valueType != null
+                && smep.valueType.Trim().ToLower() == "double"
+                && double.TryParse(smep.value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
+            {
+                // add noise
+                dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
+                strval = dblval.ToString(CultureInfo.InvariantCulture);
+            }
+            return strval;
+        }
+
+        private List<ExpandoObject> EvalGetSubmodelElementsProperty_EvalValues (
+            AdminShell.SubmodelElementWrapperCollection wrappers)
+        {
+            // access
+            if (wrappers == null)
+                return null;
+            List<ExpandoObject> res = new List<ExpandoObject>();
+
+            // recurse for results
+            wrappers.RecurseOnSubmodelElements(null, new List<AdminShell.SubmodelElement>(),
+                (_, pars, el) =>
+                {
+                    if (el is AdminShell.Property smep && pars != null)
+                    {
+                        var path = new List<string>();
+                        path.Add("" + smep?.idShort);
+                        for (int i = pars.Count - 1; i >= 0; i--)
+                            path.Insert(0, "" + pars[i].idShort);
+
+                        dynamic tuple = new ExpandoObject();
+                        tuple.path = path;
+                        tuple.value = "" + EvalGetSubmodelElementsProperty_EvalValue(smep);
+                        if (smep.valueId != null)
+                            tuple.valueId = smep.valueId;
+
+                        res.Add(tuple);
+                    }
+                });
+
+            // ok
+            return res;
+        }
+
+        public void EvalGetSubmodelAllElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1705,50 +1758,38 @@ namespace AasxRestServerLibrary
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
-            }
+            }                    
 
-            // find the right SubmodelElement
-            var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
-
-            if (fse.elem is AdminShell.SubmodelElementCollection)
+            // Submodel or SME?
+            if (elemids == null || elemids.Length < 1)
             {
-                res = new ExpandoObject();
-                List<string> idShortValue = new List<string>();
-                foreach (var sme in (fse.elem as AdminShell.SubmodelElementCollection).value)
-                {
-                    if (sme.submodelElement is AdminShell.Property)
-                    {
-                        var p = sme.submodelElement as AdminShell.Property;
-                        idShortValue.Add(p.idShort + " = " + p.value);
-                    }
+                // send the whole Submodel
+                res.values = EvalGetSubmodelElementsProperty_EvalValues(sm.submodelElements);
+            }
+            else
+            {
+                // find the right SubmodelElement
+                var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
+
+                if (fse?.elem is AdminShell.SubmodelElementCollection smec)
+                {                   
+                    res.values = EvalGetSubmodelElementsProperty_EvalValues(smec.value);
                 }
-                res.values = idShortValue;
-                SendJsonResponse(context, res);
-                return;
+                else if (fse?.elem is AdminShell.Property smep)
+                {
+                    res.value = "" + EvalGetSubmodelElementsProperty_EvalValue(smep);
+                    if (smep.valueId != null)
+                        res.valueId = smep.valueId;
+                }
+                else
+                {
+                    context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Property element(s) " +
+                        $"in Submodel found.");
+                    return;
+                }
             }
 
-            var smep = fse?.elem as AdminShell.Property;
-            if (smep == null || smep.value == null || smep.value == "")
-            {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Property element in Submodel found.");
-                return;
-            }
-
-            // a little bit of demo
-            double dblval = 0.0;
-            string strval = smep.value;
-            if (smep.HasQualifierOfType("DEMO") != null && smep.value != null && smep.valueType != null && smep.valueType.Trim().ToLower() == "double"
-                && double.TryParse(smep.value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
-            {
-                dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
-                strval = dblval.ToString(CultureInfo.InvariantCulture);
-            }
-
-            // return as little dynamic object
-            res = new ExpandoObject();
-            res.value = strval;
-            if (smep.valueId != null)
-                res.valueId = smep.valueId;
+            // just send the result
             SendJsonResponse(context, res);
         }
 
