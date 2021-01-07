@@ -195,6 +195,27 @@ namespace AasxRestServerLibrary
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
+                    /*
+                    var req = context.Request;
+                    if (req.ContentLength64 > 0 
+                        && req.Payload != null)
+                    {
+                        var ba = Convert.FromBase64String(req.Payload);
+                        File.WriteAllBytes("test.aasx", ba);
+                    }*/
+                    helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
+                    return context;
+                }
+                return context;
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
+            public IHttpContext PutAASX(IHttpContext context)
+            {
+
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
                     // TODO (MIHO/AO, 2021-01-07): enable productive code instead of dump test code
                     if (true)
                     {
