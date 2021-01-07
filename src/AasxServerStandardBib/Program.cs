@@ -771,9 +771,11 @@ namespace AasxServer
         static string getaasxFile_destination = "";
         static string getaasxFile_fileName = "";
         static string getaasxFile_fileData = "";
-        static int getaasxFile_fileLen = 0;
+        static string getaasxFile_fileType = "";
+        static int getaasxFile_fileLenBase64 = 0;
+        static int getaasxFile_fileLenBinary = 0;
         static int getaasxFile_fileTransmitted = 0;
-        static int blockSize = 2000000;
+        static int blockSize = 1500000;
 
         static List<TransmitData> tdPending = new List<TransmitData> { };
 
@@ -846,18 +848,20 @@ namespace AasxServer
                     };
 
                     int len = 0;
-                    if ((getaasxFile_fileLen - getaasxFile_fileTransmitted) > blockSize)
+                    if ((getaasxFile_fileLenBase64 - getaasxFile_fileTransmitted) > blockSize)
                     {
                         len = blockSize;
                     }
                     else
                     {
-                        len = getaasxFile_fileLen - getaasxFile_fileTransmitted;
+                        len = getaasxFile_fileLenBase64 - getaasxFile_fileTransmitted;
                     }
 
                     res.fileData = getaasxFile_fileData.Substring(getaasxFile_fileTransmitted, len);
                     res.fileName = getaasxFile_fileName;
-                    res.fileLen = getaasxFile_fileLen;
+                    res.fileLenBase64 = getaasxFile_fileLenBase64;
+                    res.fileLenBinary = getaasxFile_fileLenBinary;
+                    res.fileType = getaasxFile_fileType;
                     res.fileTransmitted = getaasxFile_fileTransmitted;
 
                     string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
@@ -869,12 +873,14 @@ namespace AasxServer
 
                     getaasxFile_fileTransmitted += len;
 
-                    if (getaasxFile_fileTransmitted == getaasxFile_fileLen)
+                    if (getaasxFile_fileTransmitted == getaasxFile_fileLenBase64)
                     {
                         getaasxFile_destination = "";
                         getaasxFile_fileName = "";
                         getaasxFile_fileData = "";
-                        getaasxFile_fileLen = 0;
+                        getaasxFile_fileType = "";
+                        res.fileLenBase64 = 0;
+                        res.fileLenBinary = 0;
                         getaasxFile_fileTransmitted = 0;
                     }
                 }
@@ -1045,7 +1051,46 @@ namespace AasxServer
                                     getaasxFile_destination = td2.source;
                                     getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
                                     getaasxFile_fileData = fileToken;
-                                    getaasxFile_fileLen = getaasxFile_fileData.Length;
+                                    getaasxFile_fileType = "getaasxFileStream";
+                                    getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
+                                    getaasxFile_fileLenBinary = binaryFile.Length;
+                                    getaasxFile_fileTransmitted = 0;
+                                }
+                            }
+
+                            if (td2.type == "getaasxstream" && td2.destination == connectNodeName)
+                            {
+                                int aasIndex = Convert.ToInt32(td2.extensions);
+
+                                dynamic res = new System.Dynamic.ExpandoObject();
+
+                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
+                                string binaryBase64 = Convert.ToBase64String(binaryFile);
+
+                                if (binaryBase64.Length <= blockSize)
+                                {
+                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    res.fileData = binaryBase64;
+                                    Byte[] fileBytes = Convert.FromBase64String(binaryBase64);
+
+                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+
+                                    TransmitData tdp = new TransmitData();
+
+                                    tdp.source = connectNodeName;
+                                    tdp.destination = td2.source;
+                                    tdp.type = "getaasxFile";
+                                    tdp.publish.Add(responseJson);
+                                    tdPending.Add(tdp);
+                                }
+                                else
+                                {
+                                    getaasxFile_destination = td2.source;
+                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    getaasxFile_fileData = binaryBase64;
+                                    getaasxFile_fileType = "getaasxFile";
+                                    getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
+                                    getaasxFile_fileLenBinary = binaryFile.Length;
                                     getaasxFile_fileTransmitted = 0;
                                 }
                             }
