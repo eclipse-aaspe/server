@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -182,6 +183,27 @@ namespace AasxRestServerLibrary
                 if (m.Success && m.Groups.Count >= 2)
                 {
                     helper.EvalGetAASX(context, Int32.Parse(m.Groups[1].ToString()));
+                    return context;
+                }
+                return context;
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
+            public IHttpContext PutAASX(IHttpContext context)
+            {
+
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    /*
+                    var req = context.Request;
+                    if (req.ContentLength64 > 0 
+                        && req.Payload != null)
+                    {
+                        var ba = Convert.FromBase64String(req.Payload);
+                        File.WriteAllBytes("test.aasx", ba);
+                    }*/
+                    helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
                     return context;
                 }
                 return context;
