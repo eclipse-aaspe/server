@@ -930,6 +930,71 @@ namespace AasxRestServerLibrary
             }
         }
 
+        public void EvalPutAasxReplacePackage(IHttpContext context, string aasid)
+        {
+            // first check
+            if (context.Request.Payload == null || context.Request.ContentLength64 < 1)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload for replace AASX.");
+                return;
+            }
+
+            // find package index to replace
+            var aasInfo = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            Console.WriteLine("FindAAS() with idShort \"" + aasid + "\" yields package-index " + aasInfo.iPackage);
+            var packIndex = aasInfo.iPackage;
+            if (packIndex < 0 || packIndex >= Packages.Length)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"AASX package to be replaced not found. Aborting!");
+                return;
+            }
+            var packFn = Packages[packIndex].Filename;
+            Console.WriteLine($"Will replace AASX package on server: {packFn}");
+
+            // make temp file
+            var tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
+            try
+            {
+                var ba = Convert.FromBase64String(context.Request.Payload);
+                File.WriteAllBytes(tempFn, ba);
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save AASX temporarily in {tempFn}. Aborting... {ex.Message}");
+                return;
+            }
+
+            // close old and renamed
+            try
+            {
+                // free to overwrite
+                Packages[packIndex].Close();
+
+                // rename
+                File.Move(packFn, packFn + ".bak");
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
+                return;
+            }
+
+            // replace exactly the file
+            try
+            {
+                // copy into same location
+                File.Copy(tempFn, packFn, overwrite: true);
+
+                // open again
+                Packages[packIndex] = new AdminShellPackageEnv(packFn);
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
+                return;
+            }
+        }
+
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
         {
             dynamic res = new ExpandoObject();
