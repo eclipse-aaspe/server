@@ -986,7 +986,14 @@ namespace AasxRestServerLibrary
                 File.Copy(tempFn, packFn, overwrite: true);
 
                 // open again
-                Packages[packIndex] = new AdminShellPackageEnv(packFn);
+                var newAasx = new AdminShellPackageEnv(packFn);
+                if (newAasx != null)
+                    Packages[packIndex] = newAasx;
+                else
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                    return;
+                }
             }
             catch (Exception ex)
             {
