@@ -545,18 +545,12 @@ namespace AasxRestServerLibrary
         }
 
         protected static void SendStreamResponse(IHttpContext context, Stream stream,
-            string headerAttachmentFileName = null,
-            bool sendContentLength = false)
+            string headerAttachmentFileName = null)
         {
             context.Response.ContentType = ContentType.APPLICATION;
             context.Response.ContentLength64 = stream.Length;
             context.Response.SendChunked = true;
 
-            if (sendContentLength)
-            {
-                // context.Response.AddHeader("Content-Length", "" + stream.Length);
-                // context.Response.Headers.Add("Content-Length", "" + stream.Length);
-            }
             if (headerAttachmentFileName != null)
                 context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
 
@@ -3139,8 +3133,7 @@ namespace AasxRestServerLibrary
             FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
 
             SendStreamResponse(context, packageStream,
-                Path.GetFileName(AasxServer.Program.envFileName[fileIndex]),
-                sendContentLength: true);
+                Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
             packageStream.Close();
         }
 
