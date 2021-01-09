@@ -544,7 +544,8 @@ namespace AasxRestServerLibrary
             context.Response.SendResponse(txt);
         }
 
-        protected static void SendStreamResponse(IHttpContext context, Stream stream, string headerAttachmentFileName = null)
+        protected static void SendStreamResponse(IHttpContext context, Stream stream,
+            string headerAttachmentFileName = null)
         {
             context.Response.ContentType = ContentType.APPLICATION;
             context.Response.ContentLength64 = stream.Length;
@@ -919,6 +920,78 @@ namespace AasxRestServerLibrary
                     return;
                 }
                 SendTextResponse(context, "OK (saved)");
+                return;
+            }
+        }
+
+        public void EvalPutAasxReplacePackage(IHttpContext context, string aasid)
+        {
+            // first check
+            if (context.Request.Payload == null || context.Request.ContentLength64 < 1)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload for replace AASX.");
+                return;
+            }
+
+            // find package index to replace
+            var aasInfo = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            Console.WriteLine("FindAAS() with idShort \"" + aasid + "\" yields package-index " + aasInfo.iPackage);
+            var packIndex = aasInfo.iPackage;
+            if (packIndex < 0 || packIndex >= Packages.Length)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"AASX package to be replaced not found. Aborting!");
+                return;
+            }
+            var packFn = Packages[packIndex].Filename;
+            Console.WriteLine($"Will replace AASX package on server: {packFn}");
+
+            // make temp file
+            var tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
+            try
+            {
+                var ba = Convert.FromBase64String(context.Request.Payload);
+                File.WriteAllBytes(tempFn, ba);
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save AASX temporarily in {tempFn}. Aborting... {ex.Message}");
+                return;
+            }
+
+            // close old and renamed
+            try
+            {
+                // free to overwrite
+                Packages[packIndex].Close();
+
+                // rename
+                File.Move(packFn, packFn + ".bak");
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
+                return;
+            }
+
+            // replace exactly the file
+            try
+            {
+                // copy into same location
+                File.Copy(tempFn, packFn, overwrite: true);
+
+                // open again
+                var newAasx = new AdminShellPackageEnv(packFn);
+                if (newAasx != null)
+                    Packages[packIndex] = newAasx;
+                else
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                 return;
             }
         }
@@ -1671,7 +1744,60 @@ namespace AasxRestServerLibrary
             SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
         }
 
-        public void EvalGetSubmodelElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
+        private string EvalGetSubmodelElementsProperty_EvalValue(AdminShell.Property smep)
+        {
+            // access
+            if (smep == null)
+                return null;
+
+            // try to apply a little bit voodo
+            double dblval = 0.0;
+            string strval = smep.value;
+            if (smep.HasQualifierOfType("DEMO") != null && smep.value != null && smep.valueType != null
+                && smep.valueType.Trim().ToLower() == "double"
+                && double.TryParse(smep.value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
+            {
+                // add noise
+                dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
+                strval = dblval.ToString(CultureInfo.InvariantCulture);
+            }
+            return strval;
+        }
+
+        private List<ExpandoObject> EvalGetSubmodelElementsProperty_EvalValues(
+            AdminShell.SubmodelElementWrapperCollection wrappers)
+        {
+            // access
+            if (wrappers == null)
+                return null;
+            List<ExpandoObject> res = new List<ExpandoObject>();
+
+            // recurse for results
+            wrappers.RecurseOnSubmodelElements(null, new List<AdminShell.SubmodelElement>(),
+                (_, pars, el) =>
+                {
+                    if (el is AdminShell.Property smep && pars != null)
+                    {
+                        var path = new List<string>();
+                        path.Add("" + smep?.idShort);
+                        for (int i = pars.Count - 1; i >= 0; i--)
+                            path.Insert(0, "" + pars[i].idShort);
+
+                        dynamic tuple = new ExpandoObject();
+                        tuple.path = path;
+                        tuple.value = "" + EvalGetSubmodelElementsProperty_EvalValue(smep);
+                        if (smep.valueId != null)
+                            tuple.valueId = smep.valueId;
+
+                        res.Add(tuple);
+                    }
+                });
+
+            // ok
+            return res;
+        }
+
+        public void EvalGetSubmodelAllElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1700,48 +1826,36 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            // find the right SubmodelElement
-            var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
-
-            if (fse.elem is AdminShell.SubmodelElementCollection)
+            // Submodel or SME?
+            if (elemids == null || elemids.Length < 1)
             {
-                res = new ExpandoObject();
-                List<string> idShortValue = new List<string>();
-                foreach (var sme in (fse.elem as AdminShell.SubmodelElementCollection).value)
+                // send the whole Submodel
+                res.values = EvalGetSubmodelElementsProperty_EvalValues(sm.submodelElements);
+            }
+            else
+            {
+                // find the right SubmodelElement
+                var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
+
+                if (fse?.elem is AdminShell.SubmodelElementCollection smec)
                 {
-                    if (sme.submodelElement is AdminShell.Property)
-                    {
-                        var p = sme.submodelElement as AdminShell.Property;
-                        idShortValue.Add(p.idShort + " = " + p.value);
-                    }
+                    res.values = EvalGetSubmodelElementsProperty_EvalValues(smec.value);
                 }
-                res.values = idShortValue;
-                SendJsonResponse(context, res);
-                return;
+                else if (fse?.elem is AdminShell.Property smep)
+                {
+                    res.value = "" + EvalGetSubmodelElementsProperty_EvalValue(smep);
+                    if (smep.valueId != null)
+                        res.valueId = smep.valueId;
+                }
+                else
+                {
+                    context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Property element(s) " +
+                        $"in Submodel found.");
+                    return;
+                }
             }
 
-            var smep = fse?.elem as AdminShell.Property;
-            if (smep == null || smep.value == null || smep.value == "")
-            {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Property element in Submodel found.");
-                return;
-            }
-
-            // a little bit of demo
-            double dblval = 0.0;
-            string strval = smep.value;
-            if (smep.HasQualifierOfType("DEMO") != null && smep.value != null && smep.valueType != null && smep.valueType.Trim().ToLower() == "double"
-                && double.TryParse(smep.value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
-            {
-                dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
-                strval = dblval.ToString(CultureInfo.InvariantCulture);
-            }
-
-            // return as little dynamic object
-            res = new ExpandoObject();
-            res.value = strval;
-            if (smep.valueId != null)
-                res.valueId = smep.valueId;
+            // just send the result
             SendJsonResponse(context, res);
         }
 
@@ -3018,7 +3132,8 @@ namespace AasxRestServerLibrary
             // return as FILE
             FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
 
-            SendStreamResponse(context, packageStream, Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
+            SendStreamResponse(context, packageStream,
+                Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
             packageStream.Close();
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -187,6 +188,27 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
+            public IHttpContext PutAASX(IHttpContext context)
+            {
+
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    /*
+                    var req = context.Request;
+                    if (req.ContentLength64 > 0 
+                        && req.Payload != null)
+                    {
+                        var ba = Convert.FromBase64String(req.Payload);
+                        File.WriteAllBytes("test.aasx", ba);
+                    }*/
+                    helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
+                    return context;
+                }
+                return context;
+            }
+
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx2/(\d+)(/|)$")]
             public IHttpContext GetAASX2(IHttpContext context)
             {
@@ -289,15 +311,25 @@ namespace AasxRestServerLibrary
 
             // Contents of a Submodel
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/property)(/|)$")]
             public IHttpContext GetSubmodelContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 4)
                 {
-                    var deep = helper.PathEndsWith(context, "deep");
-                    var complete = helper.PathEndsWith(context, "complete");
-                    helper.EvalGetSubmodelContents(context, m.Groups[1].ToString(), m.Groups[3].ToString(), deep: deep || complete, complete: complete);
+                    var aasid = m.Groups[1].ToString();
+                    var smid = m.Groups[3].ToString();
+
+                    if (helper.PathEndsWith(context, "property"))
+                    {
+                        helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids: null);
+                    }
+                    else
+                    {
+                        var deep = helper.PathEndsWith(context, "deep");
+                        var complete = helper.PathEndsWith(context, "complete");
+                        helper.EvalGetSubmodelContents(context, aasid, smid, deep: deep || complete, complete: complete);
+                    }
                 }
                 return context;
             }
@@ -340,7 +372,7 @@ namespace AasxRestServerLibrary
                     else
                     if (helper.PathEndsWith(context, "property"))
                     {
-                        helper.EvalGetSubmodelElementsProperty(context, aasid, smid, elemids.ToArray());
+                        helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids.ToArray());
                     }
                     else
                     if (helper.PathEndsWith(context, "events"))

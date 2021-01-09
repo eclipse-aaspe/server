@@ -1,4 +1,13 @@
-﻿using System;
+﻿/*
+Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>
+Author: Michael Hoffmeister
+
+This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
+
+This source code may use other Open Source software components (see LICENSE.txt).
+*/
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -94,7 +103,6 @@ namespace AasOpcUaServer
             if (!handles.ContainsKey(handle))
                 throw new InvalidOperationException("handle is unknown");
             handles.Remove(handle);
-            return;
         }
 
         public void SetPosition(UInt32 handle, UInt64 pos)
@@ -180,7 +188,7 @@ namespace AasOpcUaServer
         /// Shall be TRUE for local, existing files ..
         /// </summary>
         /// <returns></returns>
-        public bool CheckSuitablity(AdminShellPackageEnv[] package, AdminShell.File file)
+        public bool CheckSuitablity(AdminShellPackageEnv package, AdminShell.File file)
         {
             // trivial
             if (package == null || file == null)
@@ -190,10 +198,11 @@ namespace AasOpcUaServer
             Stream s = null;
             try
             {
-                s = package[0].GetLocalStreamFromPackage(file.value);
+                s = package.GetLocalStreamFromPackage(file.value);
             }
-            catch
+            catch (Exception ex)
             {
+                AdminShellNS.LogInternally.That.SilentlyIgnoredError(ex);
                 return false;
             }
 
@@ -201,7 +210,8 @@ namespace AasOpcUaServer
             return s != null;
         }
 
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, AdminShellPackageEnv[] package = null, AdminShell.File file = null)
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode,
+            AdminShellPackageEnv package = null, AdminShell.File file = null)
         {
             // access
             if (parent == null)
@@ -210,7 +220,8 @@ namespace AasOpcUaServer
             // for sake of complexity, differentiate early
             if (mode == CreateMode.Type)
             {
-                var o = this.entityBuilder.CreateAddObject(parent, "File", ReferenceTypeIds.HasComponent, ObjectTypeIds.FileType);
+                var o = this.entityBuilder.CreateAddObject(
+                            parent, mode, "File", ReferenceTypeIds.HasComponent, ObjectTypeIds.FileType);
                 return o;
             }
             else
@@ -219,86 +230,99 @@ namespace AasOpcUaServer
                     return null;
 
                 var instData = new InstanceData();
-                instData.packHandler = new AasUaPackageFileHandler(package[0], file);
+                instData.packHandler = new AasUaPackageFileHandler(package, file);
 
                 // containing element
-                var o = this.entityBuilder.CreateAddObject(parent, "File", ReferenceTypeIds.HasComponent, ObjectTypeIds.FileType);
-
+                var o = this.entityBuilder.CreateAddObject(
+                            parent, mode, "File", ReferenceTypeIds.HasComponent, ObjectTypeIds.FileType);
 
 
                 // this first information is to provide a "off-the-shelf" size information; a Open() will re-new this
-                var fileLen = Convert.ToUInt64(package[0].GetStreamSizeFromPackage(file.value));
+                var fileLen = Convert.ToUInt64(package.GetStreamSizeFromPackage(file.value));
 
-                this.entityBuilder.CreateAddPropertyState<string>(o, "MimeType", DataTypeIds.String, file.mimeType, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
-                instData.nodeOpenCount = this.entityBuilder.CreateAddPropertyState<UInt16>(o, "OpenCount", DataTypeIds.UInt16, 0, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
-                instData.nodeSize = this.entityBuilder.CreateAddPropertyState<UInt64>(o, "Size", DataTypeIds.UInt64, fileLen, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType, valueRank: -1);
-                this.entityBuilder.CreateAddPropertyState<bool>(o, "UserWritable", DataTypeIds.Boolean, true, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
-                this.entityBuilder.CreateAddPropertyState<bool>(o, "Writable", DataTypeIds.Boolean, true, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
+                // populate attributes from the spec
+                this.entityBuilder.CreateAddPropertyState<string>(o, mode, "MimeType",
+                    DataTypeIds.String, file.mimeType, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
+                instData.nodeOpenCount = this.entityBuilder.CreateAddPropertyState<UInt16>(o, mode, "OpenCount",
+                    DataTypeIds.UInt16, 0, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
+                instData.nodeSize = this.entityBuilder.CreateAddPropertyState<UInt64>(o, mode, "Size",
+                    DataTypeIds.UInt64, fileLen, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType,
+                    valueRank: -1);
+                this.entityBuilder.CreateAddPropertyState<bool>(o, mode, "UserWritable",
+                    DataTypeIds.Boolean, true, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
+                this.entityBuilder.CreateAddPropertyState<bool>(o, mode, "Writable",
+                    DataTypeIds.Boolean, true, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
 
                 // Open
-                instData.mOpen = this.entityBuilder.CreateAddMethodState(o, "Open",
-                    inputArgs: new Argument[] {
-                new Argument("Mode", DataTypeIds.Byte, -1, "")
+                instData.mOpen = this.entityBuilder.CreateAddMethodState(o, mode, "Open",
+                    inputArgs: new[] {
+                        new Argument("Mode", DataTypeIds.Byte, -1, "")
                     },
-                    outputArgs: new Argument[] {
-                new Argument("FileHandle", DataTypeIds.UInt32, -1, "")
-                    }, referenceTypeFromParentId: ReferenceTypeIds.HasComponent, methodDeclarationId: MethodIds.FileType_Open, onCalled: this.OnMethodCalled);
+                    outputArgs: new[] {
+                        new Argument("FileHandle", DataTypeIds.UInt32, -1, "")
+                    }, referenceTypeFromParentId: ReferenceTypeIds.HasComponent,
+                    methodDeclarationId: MethodIds.FileType_Open, onCalled: this.OnMethodCalled);
 
                 this.entityBuilder.AddNodeStateAnnotation(instData.mOpen, instData);
 
                 // Close
-                instData.mClose = this.entityBuilder.CreateAddMethodState(o, "Close",
-                    inputArgs: new Argument[] {
-                new Argument("FileHandle", DataTypeIds.UInt32, -1, "")
+                instData.mClose = this.entityBuilder.CreateAddMethodState(o, mode, "Close",
+                    inputArgs: new[] {
+                        new Argument("FileHandle", DataTypeIds.UInt32, -1, "")
                     },
                     outputArgs: null,
-                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent, methodDeclarationId: MethodIds.FileType_Close, onCalled: this.OnMethodCalled);
+                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent,
+                    methodDeclarationId: MethodIds.FileType_Close, onCalled: this.OnMethodCalled);
 
                 this.entityBuilder.AddNodeStateAnnotation(instData.mClose, instData);
 
                 // Read
-                instData.mRead = this.entityBuilder.CreateAddMethodState(o, "Read",
-                    inputArgs: new Argument[] {
-                new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
-                new Argument("Length", DataTypeIds.Int32, -1, "")
+                instData.mRead = this.entityBuilder.CreateAddMethodState(o, mode, "Read",
+                    inputArgs: new[] {
+                        new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
+                        new Argument("Length", DataTypeIds.Int32, -1, "")
                     },
-                    outputArgs: new Argument[] {
-                new Argument("Data", DataTypeIds.ByteString, -1, "")
-                    }, referenceTypeFromParentId: ReferenceTypeIds.HasComponent, methodDeclarationId: MethodIds.FileType_Read, onCalled: this.OnMethodCalled);
+                    outputArgs: new[] {
+                        new Argument("Data", DataTypeIds.ByteString, -1, "")
+                    }, referenceTypeFromParentId: ReferenceTypeIds.HasComponent,
+                    methodDeclarationId: MethodIds.FileType_Read, onCalled: this.OnMethodCalled);
 
                 this.entityBuilder.AddNodeStateAnnotation(instData.mRead, instData);
 
                 // Write
-                instData.mWrite = this.entityBuilder.CreateAddMethodState(o, "Write",
-                    inputArgs: new Argument[] {
-                new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
-                new Argument("Data", DataTypeIds.ByteString, -1, "")
+                instData.mWrite = this.entityBuilder.CreateAddMethodState(o, mode, "Write",
+                    inputArgs: new[] {
+                        new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
+                        new Argument("Data", DataTypeIds.ByteString, -1, "")
                     },
                     outputArgs: null,
-                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent, methodDeclarationId: MethodIds.FileType_Write, onCalled: this.OnMethodCalled);
+                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent,
+                    methodDeclarationId: MethodIds.FileType_Write, onCalled: this.OnMethodCalled);
 
                 this.entityBuilder.AddNodeStateAnnotation(instData.mWrite, instData);
 
                 // GetPosition
-                instData.mGetPosition = this.entityBuilder.CreateAddMethodState(o, "GetPosition",
-                    inputArgs: new Argument[] {
-                new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
+                instData.mGetPosition = this.entityBuilder.CreateAddMethodState(o, mode, "GetPosition",
+                    inputArgs: new[] {
+                        new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
                     },
-                    outputArgs: new Argument[] {
-                new Argument("Position", DataTypeIds.UInt64, -1, "")
+                    outputArgs: new[] {
+                        new Argument("Position", DataTypeIds.UInt64, -1, "")
                     },
-                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent, methodDeclarationId: MethodIds.FileType_GetPosition, onCalled: this.OnMethodCalled);
+                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent,
+                    methodDeclarationId: MethodIds.FileType_GetPosition, onCalled: this.OnMethodCalled);
 
                 this.entityBuilder.AddNodeStateAnnotation(instData.mGetPosition, instData);
 
                 // SetPosition
-                instData.mSetPosition = this.entityBuilder.CreateAddMethodState(o, "SetPosition",
-                    inputArgs: new Argument[] {
-                new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
-                new Argument("Position", DataTypeIds.UInt64, -1, "")
+                instData.mSetPosition = this.entityBuilder.CreateAddMethodState(o, mode, "SetPosition",
+                    inputArgs: new[] {
+                        new Argument("FileHandle", DataTypeIds.UInt32, -1, ""),
+                        new Argument("Position", DataTypeIds.UInt64, -1, "")
                     },
                     outputArgs: null,
-                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent, methodDeclarationId: MethodIds.FileType_SetPosition, onCalled: this.OnMethodCalled);
+                    referenceTypeFromParentId: ReferenceTypeIds.HasComponent,
+                    methodDeclarationId: MethodIds.FileType_SetPosition, onCalled: this.OnMethodCalled);
 
                 this.entityBuilder.AddNodeStateAnnotation(instData.mSetPosition, instData);
 
@@ -343,7 +367,8 @@ namespace AasOpcUaServer
 
                 if (method == instData.mRead)
                 {
-                    var data = instData.packHandler.Read(Convert.ToUInt32(inputArguments[0]), Convert.ToUInt32(inputArguments[1]));
+                    var data = instData.packHandler.Read(
+                                Convert.ToUInt32(inputArguments[0]), Convert.ToUInt32(inputArguments[1]));
                     outputArguments[0] = data;
                 }
 
@@ -354,16 +379,16 @@ namespace AasOpcUaServer
                     instData.UpdateSize(Convert.ToUInt64(instData.packHandler.GetLength(fh)));
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                AdminShellNS.LogInternally.That.Error(ex, "The method could not be executed.");
+
                 // treat every exception the same
                 return new ServiceResult(StatusCodes.BadInvalidArgument);
             }
 
             return new ServiceResult(StatusCodes.Good);
         }
-
-
 
     }
 }
