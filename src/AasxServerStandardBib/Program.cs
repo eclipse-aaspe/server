@@ -390,7 +390,7 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                var dp = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), 
+                var dp = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                     AasxHttpContextHelper.DataPath);
                 fileNames = Directory.GetFiles(dp, "*.aasx");
                 Array.Sort(fileNames);
