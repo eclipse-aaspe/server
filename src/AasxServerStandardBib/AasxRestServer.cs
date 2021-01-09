@@ -319,7 +319,7 @@ namespace AasxRestServerLibrary
                 {
                     var aasid = m.Groups[1].ToString();
                     var smid = m.Groups[3].ToString();
-                    
+
                     if (helper.PathEndsWith(context, "property"))
                     {
                         helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids: null);
