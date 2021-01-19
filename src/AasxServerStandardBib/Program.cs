@@ -2116,7 +2116,7 @@ namespace AasxServer
 
             // check the application certificate.
             bool haveAppCertificate = await application.CheckApplicationInstanceCertificate(true, 0);
-            
+
             if (!haveAppCertificate)
             {
                 throw new Exception("Application instance certificate invalid!");
