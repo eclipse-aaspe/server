@@ -2001,10 +2001,11 @@ namespace AasxServer
             application.ConfigSectionName = Utils.IsRunningOnMono() ? "Opc.Ua.MonoSampleServer" : "Opc.Ua.SampleServer";
 
             // load the application configuration.
-            ApplicationConfiguration config = await application.LoadApplicationConfiguration(false);
+            ApplicationConfiguration config = await application.LoadApplicationConfiguration(true);
 
             // check the application certificate.
-            bool haveAppCertificate = await application.CheckApplicationInstanceCertificate(false, 0);
+            bool haveAppCertificate = await application.CheckApplicationInstanceCertificate(true, 0);
+            
             if (!haveAppCertificate)
             {
                 throw new Exception("Application instance certificate invalid!");

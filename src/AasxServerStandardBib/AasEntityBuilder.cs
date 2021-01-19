@@ -217,7 +217,7 @@ namespace AasOpcUaServer
             var x = new FolderState(parent);
             x.BrowseName = browseDisplayName;
             x.DisplayName = browseDisplayName;
-            x.NodeId = nodeMgr.New(nodeMgr.SystemContext, x);
+            x.NodeId = nodeMgr.NewFromParent(nodeMgr.SystemContext, x, parent);
             x.TypeDefinitionId = ObjectTypeIds.FolderType;
             nodeMgr.AddPredefinedNode(nodeMgr.SystemContext, x);
             if (parent != null)
@@ -307,7 +307,7 @@ namespace AasOpcUaServer
             string extraName = null)
         {
             var x = AasUaNodeHelper.CreateObject(parent, browseDisplayName, typeDefinitionId: typeDefinitionId, modellingRule: modellingRule, extraName: extraName);
-            x.NodeId = nodeMgr.New(nodeMgr.SystemContext, x);
+            x.NodeId = nodeMgr.NewFromParent(nodeMgr.SystemContext, x, parent);
             nodeMgr.AddPredefinedNode(nodeMgr.SystemContext, x);
             if (parent != null)
                 parent.AddChild(x);
@@ -371,7 +371,7 @@ namespace AasOpcUaServer
                 x.ValueRank = valueRank;
             x.Value = (T)value;
             AasUaNodeHelper.CheckSetModellingRule(modellingRule, x);
-            x.NodeId = nodeMgr.New(nodeMgr.SystemContext, x);
+            x.NodeId = nodeMgr.NewFromParent(nodeMgr.SystemContext, x, parent);
 
             // add Node
             nodeMgr.AddPredefinedNode(nodeMgr.SystemContext, x);
@@ -402,7 +402,7 @@ namespace AasOpcUaServer
             m.BrowseName = "" + browseDisplayName;
             m.DisplayName = "" + browseDisplayName;
             m.Description = new LocalizedText("en", browseDisplayName);
-            m.NodeId = nodeMgr.New(nodeMgr.SystemContext, m);
+            m.NodeId = nodeMgr.NewFromParent(nodeMgr.SystemContext, m, parent);
             if (methodDeclarationId != null)
                 m.MethodDeclarationId = methodDeclarationId;
 
