@@ -611,7 +611,7 @@ namespace AasxServer
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
+                // AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
             }
 
             string nl = System.Environment.NewLine;
@@ -768,6 +768,15 @@ namespace AasxServer
         static bool getDirectory = true;
         static string getDirectoryDestination = "";
 
+        static string getaasxFile_destination = "";
+        static string getaasxFile_fileName = "";
+        static string getaasxFile_fileData = "";
+        static string getaasxFile_fileType = "";
+        static int getaasxFile_fileLenBase64 = 0;
+        static int getaasxFile_fileLenBinary = 0;
+        static int getaasxFile_fileTransmitted = 0;
+        static int blockSize = 1500000;
+
         static List<TransmitData> tdPending = new List<TransmitData> { };
 
         public static void connectThreadLoop()
@@ -827,6 +836,53 @@ namespace AasxServer
 
                     getDirectory = false;
                     getDirectoryDestination = "";
+                }
+
+                if (getaasxFile_destination != "") // block transfer
+                {
+                    dynamic res = new System.Dynamic.ExpandoObject();
+
+                    td = new TransmitData
+                    {
+                        source = connectNodeName
+                    };
+
+                    int len = 0;
+                    if ((getaasxFile_fileLenBase64 - getaasxFile_fileTransmitted) > blockSize)
+                    {
+                        len = blockSize;
+                    }
+                    else
+                    {
+                        len = getaasxFile_fileLenBase64 - getaasxFile_fileTransmitted;
+                    }
+
+                    res.fileData = getaasxFile_fileData.Substring(getaasxFile_fileTransmitted, len);
+                    res.fileName = getaasxFile_fileName;
+                    res.fileLenBase64 = getaasxFile_fileLenBase64;
+                    res.fileLenBinary = getaasxFile_fileLenBinary;
+                    res.fileType = getaasxFile_fileType;
+                    res.fileTransmitted = getaasxFile_fileTransmitted;
+
+                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+
+                    td.destination = getaasxFile_destination;
+                    td.type = "getaasxBlock";
+                    td.publish.Add(responseJson);
+                    tf.data.Add(td);
+
+                    getaasxFile_fileTransmitted += len;
+
+                    if (getaasxFile_fileTransmitted == getaasxFile_fileLenBase64)
+                    {
+                        getaasxFile_destination = "";
+                        getaasxFile_fileName = "";
+                        getaasxFile_fileData = "";
+                        getaasxFile_fileType = "";
+                        res.fileLenBase64 = 0;
+                        res.fileLenBinary = 0;
+                        getaasxFile_fileTransmitted = 0;
+                    }
                 }
 
                 if (tdPending.Count != 0)
@@ -975,18 +1031,68 @@ namespace AasxServer
                                 System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
                                 string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(AasxRestServerLibrary.AasxHttpContextHelper.secretString), JwsAlgorithm.HS256);
 
-                                res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
-                                res.fileData = fileToken;
+                                if (fileToken.Length <= blockSize)
+                                {
+                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    res.fileData = fileToken;
 
-                                string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
 
-                                TransmitData tdp = new TransmitData();
+                                    TransmitData tdp = new TransmitData();
 
-                                tdp.source = connectNodeName;
-                                tdp.destination = td2.source;
-                                tdp.type = "getaasxFile";
-                                tdp.publish.Add(responseJson);
-                                tdPending.Add(tdp);
+                                    tdp.source = connectNodeName;
+                                    tdp.destination = td2.source;
+                                    tdp.type = "getaasxFile";
+                                    tdp.publish.Add(responseJson);
+                                    tdPending.Add(tdp);
+                                }
+                                else
+                                {
+                                    getaasxFile_destination = td2.source;
+                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    getaasxFile_fileData = fileToken;
+                                    getaasxFile_fileType = "getaasxFileStream";
+                                    getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
+                                    getaasxFile_fileLenBinary = binaryFile.Length;
+                                    getaasxFile_fileTransmitted = 0;
+                                }
+                            }
+
+                            if (td2.type == "getaasxstream" && td2.destination == connectNodeName)
+                            {
+                                int aasIndex = Convert.ToInt32(td2.extensions);
+
+                                dynamic res = new System.Dynamic.ExpandoObject();
+
+                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
+                                string binaryBase64 = Convert.ToBase64String(binaryFile);
+
+                                if (binaryBase64.Length <= blockSize)
+                                {
+                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    res.fileData = binaryBase64;
+                                    Byte[] fileBytes = Convert.FromBase64String(binaryBase64);
+
+                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+
+                                    TransmitData tdp = new TransmitData();
+
+                                    tdp.source = connectNodeName;
+                                    tdp.destination = td2.source;
+                                    tdp.type = "getaasxFile";
+                                    tdp.publish.Add(responseJson);
+                                    tdPending.Add(tdp);
+                                }
+                                else
+                                {
+                                    getaasxFile_destination = td2.source;
+                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    getaasxFile_fileData = binaryBase64;
+                                    getaasxFile_fileType = "getaasxFile";
+                                    getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
+                                    getaasxFile_fileLenBinary = binaryFile.Length;
+                                    getaasxFile_fileTransmitted = 0;
+                                }
                             }
 
                             if (td2.type == "submodel")
@@ -1160,7 +1266,12 @@ namespace AasxServer
                     }
                 }
 
-                Thread.Sleep(connectUpdateRate);
+                if (getaasxFile_destination != "") // block transfer
+                {
+                    Thread.Sleep(500);
+                }
+                else
+                    Thread.Sleep(connectUpdateRate);
             }
         }
 
@@ -1387,7 +1498,7 @@ namespace AasxServer
                 return true;
             }
 
-            AasOpcUaServer.AasNodeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
+            AasOpcUaServer.AasModeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
 
             if (nodeMgr == null)
             {
