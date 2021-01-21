@@ -116,7 +116,6 @@ namespace AasOpcUaServer
                 return new NodeId(id, m_namespaceIndex);
             }
         }
-        #endregion
 
         public NodeId NewType(ISystemContext context, AasUaBaseEntity.CreateMode mode,
             NodeState node, uint preferredNumId = 0)

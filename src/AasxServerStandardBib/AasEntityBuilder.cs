@@ -481,7 +481,8 @@ namespace AasOpcUaServer
             {
                 if (parent != null)
                 {
-                    parent.AddReference(referenceTypeFromParentId, false, x.NodeId);
+                    if (!parent.ReferenceExists(referenceTypeFromParentId, false, x.NodeId))
+                        parent.AddReference(referenceTypeFromParentId, false, x.NodeId);
                     if (referenceTypeFromParentId == ReferenceTypeIds.HasComponent)
                         x.AddReference(referenceTypeFromParentId, true, parent.NodeId);
                     if (referenceTypeFromParentId == ReferenceTypeIds.HasProperty)
