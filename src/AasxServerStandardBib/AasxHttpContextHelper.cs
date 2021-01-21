@@ -964,8 +964,8 @@ namespace AasxRestServerLibrary
                 // free to overwrite
                 Packages[packIndex].Close();
 
-                // rename
-                File.Move(packFn, packFn + ".bak");
+                // copy to back (rename experienced to be more error-prone)
+                File.Copy(packFn, packFn + ".bak", overwrite: true);
             }
             catch (Exception ex)
             {
@@ -994,6 +994,8 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                 return;
             }
+
+            SendTextResponse(context, "OK (saved)");
         }
 
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
