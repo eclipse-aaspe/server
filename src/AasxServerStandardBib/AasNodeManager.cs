@@ -103,8 +103,7 @@ namespace AasOpcUaServer
             // causes an exception if anything has more than one qualifier!
             if (parent == null)
             {
-                uint id = Utils.IncrementIdentifier(ref m_lastUsedId);
-                return new NodeId(id, m_typeNamespaceIndex);
+                return new NodeId(node.BrowseName.Name, m_namespaceIndex);
             }
             if (node.BrowseName.Name == "Qualifier")
             {
@@ -112,8 +111,7 @@ namespace AasOpcUaServer
             }
             else
             {
-                uint id = Utils.IncrementIdentifier(ref m_lastUsedId);
-                return new NodeId(id, m_namespaceIndex);
+                return new NodeId(parent.NodeId.Identifier.ToString() + "." + node.BrowseName.Name, m_namespaceIndex);
             }
         }
 
