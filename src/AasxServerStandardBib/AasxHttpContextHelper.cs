@@ -958,41 +958,44 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            // close old and renamed
-            try
+            lock (Program.changeAasxFile)
             {
-                // free to overwrite
-                Packages[packIndex].Close();
-
-                // copy to back (rename experienced to be more error-prone)
-                File.Copy(packFn, packFn + ".bak", overwrite: true);
-            }
-            catch (Exception ex)
-            {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
-                return;
-            }
-
-            // replace exactly the file
-            try
-            {
-                // copy into same location
-                File.Copy(tempFn, packFn, overwrite: true);
-
-                // open again
-                var newAasx = new AdminShellPackageEnv(packFn);
-                if (newAasx != null)
-                    Packages[packIndex] = newAasx;
-                else
+                // close old and renamed
+                try
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                    // free to overwrite
+                    Packages[packIndex].Close();
+
+                    // copy to back (rename experienced to be more error-prone)
+                    File.Copy(packFn, packFn + ".bak", overwrite: true);
+                }
+                catch (Exception ex)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
                     return;
                 }
-            }
-            catch (Exception ex)
-            {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
-                return;
+
+                // replace exactly the file
+                try
+                {
+                    // copy into same location
+                    File.Copy(tempFn, packFn, overwrite: true);
+
+                    // open again
+                    var newAasx = new AdminShellPackageEnv(packFn);
+                    if (newAasx != null)
+                        Packages[packIndex] = newAasx;
+                    else
+                    {
+                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
+                    return;
+                }
             }
 
             SendTextResponse(context, "OK (saved)");

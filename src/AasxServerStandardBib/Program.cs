@@ -148,6 +148,8 @@ namespace AasxServer
 
         public static bool isLoading = true;
 
+        public static object changeAasxFile = new object();
+
         private class CommandLineArguments
 
         {

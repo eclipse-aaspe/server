@@ -300,19 +300,22 @@
         if (o is AdministrationShell)
         {
             var aas = o as AdministrationShell;
-            var s = Program.env[item.envIndex].GetLocalThumbnailStream();
-            if (s != null)
+            lock (Program.changeAasxFile)
             {
-                /*
-                using (var fileStream = new System.IO.FileStream("details.jpg", System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+                if (s != null)
                 {
-                    s.CopyTo(fileStream);
-                }
-                */
-                using (var m = new System.IO.MemoryStream())
-                {
-                    s.CopyTo(m);
-                    return System.Convert.ToBase64String(m.ToArray());
+                    /*
+                    using (var fileStream = new System.IO.FileStream("details.jpg", System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                    {
+                        s.CopyTo(fileStream);
+                    }
+                    */
+                    using (var m = new System.IO.MemoryStream())
+                    {
+                        s.CopyTo(m);
+                        return System.Convert.ToBase64String(m.ToArray());
+                    }
                 }
             }
         }
