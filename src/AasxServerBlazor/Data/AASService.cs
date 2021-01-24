@@ -58,7 +58,7 @@ namespace AasxServerBlazor.Data
         }
         public void buildTree()
         {
-            while (Program.isLoading);
+            while (Program.isLoading) ;
 
             lock (Program.changeAasxFile)
             {
