@@ -1295,6 +1295,24 @@ namespace AasxServer
         }
 
         public static event EventHandler NewDataAvailable;
+
+        // 0 == same tree, only values changed
+        // 1 == same tree, structure may change
+        // 2 == build new tree, keep open nodes
+        // 3 == build new tree, all nodes closed
+        public static int signalNewDataMode = 2;
+        public static void signalNewData(int mode)
+        {
+            signalNewDataMode = mode;
+            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+        }
+        public static int getSignalNewDataMode()
+        {
+            int mode = signalNewDataMode;
+            signalNewDataMode = 0;
+            return (mode);
+        }
+
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);

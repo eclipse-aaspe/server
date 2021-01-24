@@ -10,6 +10,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Permissions;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using AasxServer;
 using AdminShellNS;
 using Grapevine.Interfaces.Server;
@@ -997,7 +999,7 @@ namespace AasxRestServerLibrary
                     return;
                 }
             }
-
+            Program.signalNewData(2);
             SendTextResponse(context, "OK (saved)");
         }
 

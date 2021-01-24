@@ -11,7 +11,9 @@
     <div class="col-12 row">
         <br />
         <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
-            @if (Program.isLoading) { <span style="color:white;background-color:blue;">Loading...</span> }
+            @updateVisibleTree(Items, selectedNode)
+            @if (Program.isLoading)
+            {<span style="color:white;background-color:blue;">Loading...</span>}
             <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
                   @bind-SelectedNode="SelectedNode"
                   @bind-ExpandedNodes="ExpandedNodes"
@@ -260,6 +262,8 @@
 
     static int hack = 0;
 
+    static System.Threading.Timer refresh = null;
+
     protected override void OnInitialized()
     {
         // OnInitialized() allways called twice
@@ -268,22 +272,228 @@
 
         hack = 0;
         SubmodelService.buildTree();
-        Items = SubmodelService.GetTree();
+        Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
         StateHasChanged();
 
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
 
         SubmodelService.NewDataAvailable += NewData;
+
+        refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
+        {
+            // Note that the following line is necessary because otherwise
+            // Blazor would not recognize the state change and not refresh the UI
+            // InvokeAsync(() => this.StateHasChanged());
+        }), null, 5000, 5000);
     }
     public void Dispose()
     {
         SubmodelService.NewDataAvailable -= NewData;
     }
+
+    static int newDataMode = 0;
+
     void NewData(object source, EventArgs args)
     {
-        Items = SubmodelService.GetTree();
+        // update = true;
+        if (newDataMode == 0)
+            newDataMode = Program.getSignalNewDataMode();
+        Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+
         InvokeAsync(() => this.StateHasChanged());
+        // this.StateHasChanged();
+    }
+
+    bool update = true;
+
+    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+    {
+        if (update)
+        {
+            switch (newDataMode)
+            {
+                // 0 == same tree, only values changed
+                case 0:
+                    break;
+                // 1 == same tree, structure may change
+                // 2 == build new tree, keep open nodes
+                case 1:
+                case 2:
+                    bool isSelected = selectedNode != null;
+                    bool isExpanded = ExpandedNodes.Count != 0;
+                    List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
+                    List<string> selectedNodePath = getPath(selectedNode);
+                    if (isExpanded)
+                    {
+                        for (int j = 0; j < ExpandedNodes.Count; j++)
+                        {
+                            expandedNodesPath[j] = getPath(ExpandedNodes[j]);
+                        }
+                    }
+                    SubmodelService.buildTree();
+                    Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                    ExpandedNodes.Clear();
+                    selectedNode = null;
+                    if (isSelected)
+                    {
+                        selectedNode = findPath(selectedNodePath);
+                    }
+                    if (isExpanded)
+                    {
+                        foreach (var path in expandedNodesPath)
+                        {
+                            Item p = findPath(path);
+                            if (p != null)
+                                ExpandedNodes.Add(p);
+                        }
+                    }
+                    newDataMode = 0;
+                    break;
+                // 3 == build new tree, all nodes closed
+                case 3:
+                    SubmodelService.buildTree();
+                    Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                    ExpandedNodes.Clear();
+                    selectedNode = null;
+                    newDataMode = 0;
+                    break;
+            }
+            SelectedNode = selectedNode;
+            // update = false;
+            // updateNode(viewItems[0]);
+        }
+        return "";
+    }
+
+    List<string> getPath(Item i)
+    {
+        if (i == null)
+            return null;
+
+        List<string> upPath = new List<string>();
+        upPath.Add(i.Text);
+        while (i.parent != null)
+        {
+            i = (Item)i.parent;
+            upPath.Add(i.Text);
+        }
+        List<string> downPath = new List<string>();
+        int j = upPath.Count - 1;
+        while (j >= 0)
+        {
+            downPath.Add(upPath[j--]);
+        }
+        return downPath;
+    }
+
+    Item findPath(List<string> path)
+    {
+        if (path != null && path.Count > 0)
+        {
+            Item found = null;
+            int k = 0;
+            while (k < Items.Count)
+            {
+                Item i = Items[k];
+                if (i.Text != path[0])
+                {
+                    k++;
+                    continue;
+                }
+                int j = 0;
+                found = i;
+                while (++j < path.Count)
+                {
+                    if (i.Childs != null)
+                    {
+                        found = null;
+                        foreach (var c in i.Childs)
+                        {
+                            if (c.Text == path[j])
+                            {
+                                found = c;
+                                break;
+                            }
+                        }
+                    }
+                    if (found == null)
+                    {
+                        return null;
+                    }
+                    i = found;
+                }
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
+    }
+
+    void updateNode(Item i)
+    {
+        var clist = i.Childs as List<Item>;
+        List<string> listIdshort = new List<string>();
+        bool done = false;
+        if (!done && i.Tag is Submodel sm)
+        {
+            foreach (var smew1 in sm.submodelElements)
+            {
+                listIdshort.Add(smew1.submodelElement.idShort);
+            }
+            done = true;
+        }
+        if (!done && i.Tag is SubmodelElementCollection smec)
+        {
+            foreach (var smew2 in smec.value)
+            {
+                listIdshort.Add(smew2.submodelElement.idShort);
+            }
+            done = true;
+        }
+        if (!done && i.Tag is SubmodelElement sme)
+        {
+            listIdshort.Add(sme.idShort);
+            done = true;
+        }
+        // check if child name exists in data children idshorts, if not delete
+        if (done)
+        {
+            List<Item> toDelete = new List<Item>();
+            if (clist != null)
+            {
+                foreach (var c in clist)
+                {
+                    if (!listIdshort.Contains(c.Text))
+                    {
+                        toDelete.Add(c);
+                    }
+                }
+            }
+            else
+            {
+                if (!listIdshort.Contains(i.Text))
+                {
+                    toDelete.Add(i);
+                }
+            }
+            foreach (var c in toDelete)
+            {
+                var parent = c.parent as Item;
+                if (parent != null)
+                {
+                    (parent.Childs as List<Item>).Remove(c);
+                }
+            }
+        }
+        // check if data children idshorts exist in child names, if not insert
+        if (clist != null)
+        {
+            foreach (var c in clist)
+            {
+                updateNode(c);
+            }
+        }
     }
 
     string createDetailsImage(Item item)
