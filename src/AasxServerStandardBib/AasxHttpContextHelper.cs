@@ -550,8 +550,8 @@ namespace AasxRestServerLibrary
             string headerAttachmentFileName = null)
         {
             context.Response.ContentType = ContentType.APPLICATION;
-            context.Response.ContentLength64 = stream.Length;
             context.Response.SendChunked = true;
+            context.Response.ContentLength64 = stream.Length;
 
             if (headerAttachmentFileName != null)
                 context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
