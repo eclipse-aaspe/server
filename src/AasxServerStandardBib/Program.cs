@@ -1317,7 +1317,7 @@ namespace AasxServer
             // NewDataAvailable?.Invoke(null, EventArgs.Empty);
             NewDataAvailable?.Invoke(null, new NewDataAvailableArgs(mode));
         }
-        
+
         /*
         public static int getSignalNewDataMode()
         {
