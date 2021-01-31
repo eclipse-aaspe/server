@@ -25,7 +25,7 @@ namespace AasxServerBlazor.Data
             Program.NewDataAvailable += (s, a) =>
             {
                 // buildTree();
-                NewDataAvailable?.Invoke(this, EventArgs.Empty);
+                NewDataAvailable?.Invoke(this, a);
             };
         }
         public event EventHandler NewDataAvailable;

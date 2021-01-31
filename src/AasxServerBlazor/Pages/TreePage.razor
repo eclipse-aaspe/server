@@ -262,7 +262,7 @@
 
     static int hack = 0;
 
-    static System.Threading.Timer refresh = null;
+    System.Threading.Timer refresh = null;
 
     protected override void OnInitialized()
     {
@@ -273,7 +273,7 @@
         hack = 0;
         SubmodelService.buildTree();
         Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-        StateHasChanged();
+        // StateHasChanged();
 
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
@@ -287,21 +287,30 @@
             // InvokeAsync(() => this.StateHasChanged());
         }), null, 5000, 5000);
     }
+
     public void Dispose()
     {
         SubmodelService.NewDataAvailable -= NewData;
     }
 
-    static int newDataMode = 0;
+    int newDataMode = 0;
 
     void NewData(object source, EventArgs args)
     {
         // update = true;
         if (newDataMode == 0)
-            newDataMode = Program.getSignalNewDataMode();
-        Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+        {
+            if (args is Program.NewDataAvailableArgs newArgs)
+            {
+                newDataMode = newArgs.signalNewDataMode;
+                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                InvokeAsync(() => this.StateHasChanged());
+            }
+        }
+        // newDataMode = Program.getSignalNewDataMode();
+        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
 
-        InvokeAsync(() => this.StateHasChanged());
+        // InvokeAsync(() => this.StateHasChanged());
         // this.StateHasChanged();
     }
 
