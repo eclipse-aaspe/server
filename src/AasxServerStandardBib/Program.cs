@@ -1597,7 +1597,8 @@ namespace AasxServer
                                             break;
                                         case "OPCNamespace": // Namespace
                                                              // TODO: if not int, currently throws nondescriptive error
-                                            Namespace = int.Parse(p.value);
+                                            if (int.TryParse(p.value, out int tmpI))
+                                                Namespace = tmpI;
                                             break;
                                         case "OPCPath": // Path
                                             Path = p.value;

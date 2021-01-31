@@ -2,7 +2,7 @@
   "profiles": {
     "AasxServerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --rest --data-path C:\\Users\\miho\\Desktop\\201112_Festo_AAS_Demo_Koffer\\repo3"
+      "commandLineArgs": "--no-security --rest --opc-client-rate 500 --data-path C:\\Users\\miho\\Desktop\\201112_Festo_AAS_Demo_Koffer\\repo3"
     }
   }
 }
