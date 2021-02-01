@@ -578,7 +578,7 @@ namespace AasxRestServerLibrary
             int index = -1;
 
             // check authentication
-            if (withAuthentification)
+            if (false && withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
@@ -3120,12 +3120,14 @@ namespace AasxRestServerLibrary
         {
             dynamic res = new ExpandoObject();
             int index = -1;
+            string accessrights = null;
 
             // check authentication
-            if (false && withAuthentification)
+            if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context, ref index);
+                accessrights = SecurityCheck(context, ref index);
 
+                /*
                 if (accessrights == null)
                 {
                     res.error = "You are not authorized for this operation!";
@@ -3134,6 +3136,26 @@ namespace AasxRestServerLibrary
                 }
 
                 res.confirm = "Authorization = " + accessrights;
+                */
+
+                if (accessrights == null)
+                {
+                    if (AasxServer.Program.redirectServer != "")
+                    {
+                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                        string originalRequest = context.Request.Url.ToString();
+                        queryString.Add("OriginalRequest", originalRequest);
+                        Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                        string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
+                        Console.WriteLine("Redirect Response: " + response + "\n");
+                        SendRedirectResponse(context, response);
+                        return;
+                    }
+
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
             }
 
             // return as FILE
