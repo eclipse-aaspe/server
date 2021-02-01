@@ -10,6 +10,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using AdminShellNS;
@@ -194,7 +195,7 @@ namespace SampleClient
         public string ReadSubmodelElementValue(NodeId nodeId)
 
         {
-            return (session.ReadValue(nodeId).ToString());
+            return (session.ReadValue(nodeId).ToString(null, CultureInfo.InvariantCulture));
         }
     }
 }
