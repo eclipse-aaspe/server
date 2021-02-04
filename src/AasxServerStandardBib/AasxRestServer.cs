@@ -196,7 +196,9 @@ namespace AasxRestServerLibrary
                 if (m.Success && m.Groups.Count >= 2)
                 {
                     // TODO (MIHO/AO, 2021-01-07): enable productive code instead of dump test code
-                    if (true)
+                    // bool test = true;
+                    bool test = false;
+                    if (test)
                     {
                         // very dump test code
                         var req = context.Request;

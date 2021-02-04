@@ -252,6 +252,8 @@ namespace AasxServer
             }
         }
 
+        static bool treeChanged = false;
+
         //        public static string debugAutomaton = "";
         public static string debugAutomaton = "automatonServiceRequester";
         //        public static string debugAutomaton = "automatonServiceProvider";
@@ -606,6 +608,10 @@ namespace AasxServer
                     auto.tick++;
                 }
 
+                int mode = 0;
+                if (treeChanged)
+                    mode = 2;
+                Program.signalNewData(mode);
                 Thread.Sleep(1000);
             }
         }
@@ -812,6 +818,7 @@ namespace AasxServer
                     foreach (var sme in submodel.submodelElements)
                     {
                         smcSubmodel.Add(sme.submodelElement);
+                        treeChanged = true;
                     }
                     smc2.Add(smcSubmodel);
                 }
@@ -969,6 +976,7 @@ namespace AasxServer
                     foreach (var sme2 in list)
                     {
                         refSMEC.Remove(sme2);
+                        treeChanged = true;
                     }
                 }
             }

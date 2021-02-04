@@ -10,6 +10,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Permissions;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using AasxServer;
 using AdminShellNS;
 using Grapevine.Interfaces.Server;
@@ -548,8 +550,8 @@ namespace AasxRestServerLibrary
             string headerAttachmentFileName = null)
         {
             context.Response.ContentType = ContentType.APPLICATION;
-            context.Response.ContentLength64 = stream.Length;
             context.Response.SendChunked = true;
+            context.Response.ContentLength64 = stream.Length;
 
             if (headerAttachmentFileName != null)
                 context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
@@ -576,7 +578,7 @@ namespace AasxRestServerLibrary
             int index = -1;
 
             // check authentication
-            if (withAuthentification)
+            if (false && withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
@@ -1005,43 +1007,46 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            // close old and renamed
-            try
+            lock (Program.changeAasxFile)
             {
-                // free to overwrite
-                Packages[packIndex].Close();
-
-                // copy to back (rename experienced to be more error-prone)
-                File.Copy(packFn, packFn + ".bak", overwrite: true);
-            }
-            catch (Exception ex)
-            {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
-                return;
-            }
-
-            // replace exactly the file
-            try
-            {
-                // copy into same location
-                File.Copy(tempFn, packFn, overwrite: true);
-
-                // open again
-                var newAasx = new AdminShellPackageEnv(packFn);
-                if (newAasx != null)
-                    Packages[packIndex] = newAasx;
-                else
+                // close old and renamed
+                try
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                    // free to overwrite
+                    Packages[packIndex].Close();
+
+                    // copy to back (rename experienced to be more error-prone)
+                    File.Copy(packFn, packFn + ".bak", overwrite: true);
+                }
+                catch (Exception ex)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
+                    return;
+                }
+
+                // replace exactly the file
+                try
+                {
+                    // copy into same location
+                    File.Copy(tempFn, packFn, overwrite: true);
+
+                    // open again
+                    var newAasx = new AdminShellPackageEnv(packFn);
+                    if (newAasx != null)
+                        Packages[packIndex] = newAasx;
+                    else
+                    {
+                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                     return;
                 }
             }
-            catch (Exception ex)
-            {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
-                return;
-            }
-
+            Program.signalNewData(2);
             SendTextResponse(context, "OK (saved)");
         }
 
@@ -3162,12 +3167,14 @@ namespace AasxRestServerLibrary
         {
             dynamic res = new ExpandoObject();
             int index = -1;
+            string accessrights = null;
 
             // check authentication
-            if (false && withAuthentification)
+            if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context, ref index);
+                accessrights = SecurityCheck(context, ref index);
 
+                /*
                 if (accessrights == null)
                 {
                     res.error = "You are not authorized for this operation!";
@@ -3176,6 +3183,26 @@ namespace AasxRestServerLibrary
                 }
 
                 res.confirm = "Authorization = " + accessrights;
+                */
+
+                if (accessrights == null)
+                {
+                    if (AasxServer.Program.redirectServer != "")
+                    {
+                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                        string originalRequest = context.Request.Url.ToString();
+                        queryString.Add("OriginalRequest", originalRequest);
+                        Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                        string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
+                        Console.WriteLine("Redirect Response: " + response + "\n");
+                        SendRedirectResponse(context, response);
+                        return;
+                    }
+
+                    res.error = "You are not authorized for this operation!";
+                    SendJsonResponse(context, res);
+                    return;
+                }
             }
 
             // return as FILE
