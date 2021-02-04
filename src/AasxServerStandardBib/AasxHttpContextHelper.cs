@@ -848,6 +848,51 @@ namespace AasxRestServerLibrary
                 return;
             }
 
+            if (file.instantiateTemplate)
+            {
+                if (file.instancesIdentificationSuffix == null)
+                {
+                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Received no identification suffix. Aborting...");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("EvalPutAasxOnServer: file.instancesIdentificationSuffix = " + file.instancesIdentificationSuffix);
+
+                    // instantiate aas
+                    foreach (var aas in aasEnv.AasEnv.AdministrationShells)
+                    {
+                        aas.idShort += file.instancesIdentificationSuffix;
+                        aas.identification.id += file.instancesIdentificationSuffix;
+                        aas.assetRef[0].value += file.instancesIdentificationSuffix;
+                        foreach (var smref in aas.submodelRefs)
+                        {
+                            foreach (var key in smref.Keys)
+                            {
+                                key.value += file.instancesIdentificationSuffix;
+                            }
+                        }
+                    }
+
+                    // instantiate asset
+                    foreach (var asset in aasEnv.AasEnv.Assets)
+                    {
+                        asset.idShort += file.instancesIdentificationSuffix;
+                        asset.identification.id += file.instancesIdentificationSuffix;
+                    }
+
+                    // instantiate submodel
+                    foreach (var submodel in aasEnv.AasEnv.Submodels)
+                    {
+                        submodel.identification.id += file.instancesIdentificationSuffix;
+                        if (file.instantiateSubmodelsIdShort)
+                        {
+                            submodel.idShort += file.instancesIdentificationSuffix;
+                        }
+                    }
+                }
+            }
+
             string aasIdShort = "";
             try
             {
@@ -886,6 +931,7 @@ namespace AasxRestServerLibrary
 
         public void EvalPutAasxToFilesystem(IHttpContext context, string aasid)
         {
+            Console.WriteLine("EvalPutAasxToFilesystem");
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
@@ -894,6 +940,7 @@ namespace AasxRestServerLibrary
             }
 
             AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
+            Console.WriteLine("EvalPutAasxToFilesystem: " + JsonConvert.SerializeObject(file.path));
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
@@ -913,14 +960,14 @@ namespace AasxRestServerLibrary
                 try
                 {
                     Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
+                    SendTextResponse(context, "OK (saved)");
+                    return;
                 }
                 catch (Exception ex)
                 {
                     context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save in {file.path}. Aborting... {ex.Message}");
                     return;
                 }
-                SendTextResponse(context, "OK (saved)");
-                return;
             }
         }
 
@@ -964,8 +1011,8 @@ namespace AasxRestServerLibrary
                 // free to overwrite
                 Packages[packIndex].Close();
 
-                // rename
-                File.Move(packFn, packFn + ".bak");
+                // copy to back (rename experienced to be more error-prone)
+                File.Copy(packFn, packFn + ".bak", overwrite: true);
             }
             catch (Exception ex)
             {
@@ -994,6 +1041,8 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                 return;
             }
+
+            SendTextResponse(context, "OK (saved)");
         }
 
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)

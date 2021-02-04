@@ -308,7 +308,6 @@ namespace AasOpcUaServer
             }
         }
 
-
         //// references
         //
 
