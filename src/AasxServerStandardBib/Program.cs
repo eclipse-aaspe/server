@@ -148,6 +148,8 @@ namespace AasxServer
 
         public static bool isLoading = true;
 
+        public static object changeAasxFile = new object();
+
         private class CommandLineArguments
 
         {
@@ -1293,6 +1295,38 @@ namespace AasxServer
         }
 
         public static event EventHandler NewDataAvailable;
+
+        public class NewDataAvailableArgs : EventArgs
+        {
+            public int signalNewDataMode;
+
+            public NewDataAvailableArgs(int mode = 2)
+            {
+                signalNewDataMode = mode;
+            }
+        }
+
+        // 0 == same tree, only values changed
+        // 1 == same tree, structure may change
+        // 2 == build new tree, keep open nodes
+        // 3 == build new tree, all nodes closed
+        // public static int signalNewDataMode = 2;
+        public static void signalNewData(int mode)
+        {
+            // signalNewDataMode = mode;
+            // NewDataAvailable?.Invoke(null, EventArgs.Empty);
+            NewDataAvailable?.Invoke(null, new NewDataAvailableArgs(mode));
+        }
+
+        /*
+        public static int getSignalNewDataMode()
+        {
+            int mode = signalNewDataMode;
+            signalNewDataMode = 0;
+            return (mode);
+        }
+        */
+
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
@@ -1314,7 +1348,7 @@ namespace AasxServer
         private static void OnScriptTimedEvent(Object source, ElapsedEventArgs e)
         {
             RunScript(false);
-            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+            // NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
         private static System.Timers.Timer restTimer;
@@ -1537,132 +1571,136 @@ namespace AasxServer
             if (env == null)
                 return false;
 
-            int i = 0;
-            while (env[i] != null)
+            lock (Program.changeAasxFile)
             {
-                foreach (var sm in env[i].AasEnv.Submodels)
+                int i = 0;
+                while (env[i] != null)
                 {
-                    if (sm != null && sm.idShort != null)
+                    foreach (var sm in env[i].AasEnv.Submodels)
                     {
-                        int count = sm.qualifiers.Count;
-                        if (count != 0)
+                        if (sm != null && sm.idShort != null)
                         {
-                            int stopTimeout = Timeout.Infinite;
-                            bool autoAccept = true;
-                            // Variablen aus AAS Qualifiern
-                            string Username = "";
-                            string Password = "";
-                            string URL = "";
-                            int Namespace = 0;
-                            string Path = "";
-
-                            int j = 0;
-
-                            while (j < count) // URL, Username, Password, Namespace, Path
+                            int count = sm.qualifiers.Count;
+                            if (count != 0)
                             {
-                                var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                                int stopTimeout = Timeout.Infinite;
+                                bool autoAccept = true;
+                                // Variablen aus AAS Qualifiern
+                                string Username = "";
+                                string Password = "";
+                                string URL = "";
+                                int Namespace = 0;
+                                string Path = "";
 
-                                switch (p.type)
+                                int j = 0;
+
+                                while (j < count) // URL, Username, Password, Namespace, Path
                                 {
-                                    case "OPCURL": // URL
-                                        URL = p.value;
-                                        break;
-                                    case "OPCUsername": // Username
-                                        Username = p.value;
-                                        break;
-                                    case "OPCPassword": // Password
-                                        Password = p.value;
-                                        break;
-                                    case "OPCNamespace": // Namespace
-                                                         // TODO: if not int, currently throws nondescriptive error
-                                        Namespace = int.Parse(p.value);
-                                        break;
-                                    case "OPCPath": // Path
-                                        Path = p.value;
-                                        break;
-                                }
-                                j++;
-                            }
+                                    var p = sm.qualifiers[j] as AdminShell.Qualifier;
 
-                            if (URL == "")
-                            {
-                                continue;
-                            }
-
-                            if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
-                            {
-                                Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
-                                return false;
-                            }
-                            if (Username == "" && Password == "")
-                            {
-                                Console.WriteLine("Using Anonymous to login ...");
-                            }
-
-                            // try to get the client from dictionary, else create and add it
-                            SampleClient.UASampleClient client;
-                            lock (Program.opcclientAddLock)
-                            {
-                                if (!OPCClients.TryGetValue(URL, out client))
-                                {
-                                    try
+                                    switch (p.type)
                                     {
-                                        // make OPC UA client
-                                        client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                        Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                        client.ConsoleSampleClient().Wait();
-                                        // add it to the dictionary under this submodels idShort
-                                        OPCClients.Add(URL, client);
+                                        case "OPCURL": // URL
+                                            URL = p.value;
+                                            break;
+                                        case "OPCUsername": // Username
+                                            Username = p.value;
+                                            break;
+                                        case "OPCPassword": // Password
+                                            Password = p.value;
+                                            break;
+                                        case "OPCNamespace": // Namespace
+                                                             // TODO: if not int, currently throws nondescriptive error
+                                            if (int.TryParse(p.value, out int tmpI))
+                                                Namespace = tmpI;
+                                            break;
+                                        case "OPCPath": // Path
+                                            Path = p.value;
+                                            break;
                                     }
-                                    catch (AggregateException ae)
+                                    j++;
+                                }
+
+                                if (URL == "")
+                                {
+                                    continue;
+                                }
+
+                                if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
+                                {
+                                    Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
+                                    return false;
+                                }
+                                if (Username == "" && Password == "")
+                                {
+                                    Console.WriteLine("Using Anonymous to login ...");
+                                }
+
+                                // try to get the client from dictionary, else create and add it
+                                SampleClient.UASampleClient client;
+                                lock (Program.opcclientAddLock)
+                                {
+                                    if (!OPCClients.TryGetValue(URL, out client))
                                     {
-                                        bool cantconnect = false;
-                                        ae.Handle((x) =>
+                                        try
                                         {
-                                            if (x is ServiceResultException)
+                                            // make OPC UA client
+                                            client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
+                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                            client.ConsoleSampleClient().Wait();
+                                            // add it to the dictionary under this submodels idShort
+                                            OPCClients.Add(URL, client);
+                                        }
+                                        catch (AggregateException ae)
+                                        {
+                                            bool cantconnect = false;
+                                            ae.Handle((x) =>
                                             {
-                                                cantconnect = true;
-                                                return true; // this exception handled
+                                                if (x is ServiceResultException)
+                                                {
+                                                    cantconnect = true;
+                                                    return true; // this exception handled
+                                                }
+                                                return false; // others not handled, will cause unhandled exception
                                             }
-                                            return false; // others not handled, will cause unhandled exception
-                                        }
-                                        );
-                                        if (cantconnect)
-                                        {
-                                            // stop processing OPC read because we couldnt connect
-                                            // but return true as this shouldn't stop the main loop
-                                            Console.WriteLine(ae.Message);
-                                            Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
-                                            return true;
+                                            );
+                                            if (cantconnect)
+                                            {
+                                                // stop processing OPC read because we couldnt connect
+                                                // but return true as this shouldn't stop the main loop
+                                                Console.WriteLine(ae.Message);
+                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
+                                                return true;
+                                            }
                                         }
                                     }
+                                    else
+                                    {
+                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                    }
                                 }
-                                else
+                                Console.WriteLine("==================================================");
+                                Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
+                                Console.WriteLine("==================================================");
+
+                                // over all SMEs
+                                count = sm.submodelElements.Count;
+                                for (j = 0; j < count; j++)
                                 {
-                                    Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                    var sme = sm.submodelElements[j].submodelElement;
+                                    // some preparations for multiple AAS below
+                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
+
+                                    string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                    string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
+                                    string nodePath = Path; // generally starts with Submodel idShort
+                                    WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
                                 }
-                            }
-                            Console.WriteLine("==================================================");
-                            Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
-                            Console.WriteLine("==================================================");
-
-                            // over all SMEs
-                            count = sm.submodelElements.Count;
-                            for (j = 0; j < count; j++)
-                            {
-                                var sme = sm.submodelElements[j].submodelElement;
-                                // some preparations for multiple AAS below
-                                int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
-
-                                string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                                string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
-                                string nodePath = Path; // generally starts with Submodel idShort
-                                WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
                             }
                         }
                     }
+                    i++;
                 }
-                i++;
             }
             if (!initial)
             {
@@ -1676,194 +1714,199 @@ namespace AasxServer
             if (env == null)
                 return;
 
-            int i = 0;
-            while (env[i] != null)
+            lock (Program.changeAasxFile)
             {
-                foreach (var sm in env[i].AasEnv.Submodels)
+                int i = 0;
+                while (env[i] != null)
                 {
-                    if (sm != null && sm.idShort != null)
+                    foreach (var sm in env[i].AasEnv.Submodels)
                     {
-                        int count = sm.qualifiers != null ? sm.qualifiers.Count : 0;
-                        if (count != 0)
+                        if (sm != null && sm.idShort != null)
                         {
-                            var q = sm.qualifiers[0] as AdminShell.Qualifier;
-                            if (q.type == "SCRIPT")
+                            int count = sm.qualifiers != null ? sm.qualifiers.Count : 0;
+                            if (count != 0)
                             {
-                                // Triple
-                                // Reference to property with Number
-                                // Reference to submodel with numbers/strings
-                                // Reference to property to store found text
-                                count = sm.submodelElements.Count;
-                                int smi = 0;
-                                while (smi < count)
+                                var q = sm.qualifiers[0] as AdminShell.Qualifier;
+                                if (q.type == "SCRIPT")
                                 {
-                                    var sme1 = sm.submodelElements[smi++].submodelElement;
-                                    if (sme1.qualifiers.Count == 0)
+                                    // Triple
+                                    // Reference to property with Number
+                                    // Reference to submodel with numbers/strings
+                                    // Reference to property to store found text
+                                    count = sm.submodelElements.Count;
+                                    int smi = 0;
+                                    while (smi < count)
                                     {
-                                        continue;
-                                    }
-                                    var qq = sme1.qualifiers[0] as AdminShell.Qualifier;
-
-                                    if (qq.type == "Add")
-                                    {
-                                        int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
-                                        v += Convert.ToInt32(qq.value);
-                                        (sme1 as AdminShell.Property).value = v.ToString();
-                                        continue;
-                                    }
-
-                                    if (qq.type == "GetValue")
-                                    {
-                                        if (!(sme1 is AdminShell.ReferenceElement))
+                                        var sme1 = sm.submodelElements[smi++].submodelElement;
+                                        if (sme1.qualifiers.Count == 0)
                                         {
                                             continue;
                                         }
+                                        var qq = sme1.qualifiers[0] as AdminShell.Qualifier;
 
-                                        string url = qq.value;
-                                        string username = "";
-                                        string password = "";
-
-                                        if (sme1.qualifiers.Count == 3)
+                                        if (qq.type == "Add")
                                         {
-                                            qq = sme1.qualifiers[1] as AdminShell.Qualifier;
-                                            if (qq.type != "Username")
-                                                continue;
-                                            username = qq.value;
-                                            qq = sme1.qualifiers[2] as AdminShell.Qualifier;
-                                            if (qq.type != "Password")
-                                                continue;
-                                            password = qq.value;
-                                        }
-
-                                        var handler = new HttpClientHandler();
-                                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                                        var client = new HttpClient(handler);
-
-                                        if (username != "" && password != "")
-                                        {
-                                            var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                                                    Convert.ToBase64String(authToken));
-                                        }
-
-                                        string response = await client.GetStringAsync(url);
-
-                                        var r12 = sme1 as AdminShell.ReferenceElement;
-                                        var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
-                                        if (ref12 is AdminShell.Property)
-                                        {
-                                            var p1 = ref12 as AdminShell.Property;
-                                            p1.value = response;
-                                        }
-                                        continue;
-                                    }
-
-                                    if (qq.type == "GetJSON")
-                                    {
-                                        if (!init)
-                                            continue;
-
-                                        if (!(sme1 is AdminShell.ReferenceElement))
-                                        {
+                                            int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
+                                            v += Convert.ToInt32(qq.value);
+                                            (sme1 as AdminShell.Property).value = v.ToString();
                                             continue;
                                         }
 
-                                        string url = qq.value;
-                                        string username = "";
-                                        string password = "";
-
-                                        if (sme1.qualifiers.Count == 3)
+                                        if (qq.type == "GetValue")
                                         {
-                                            qq = sme1.qualifiers[1] as AdminShell.Qualifier;
-                                            if (qq.type != "Username")
+                                            /*
+                                            if (!(sme1 is AdminShell.ReferenceElement))
+                                            {
                                                 continue;
-                                            username = qq.value;
-                                            qq = sme1.qualifiers[2] as AdminShell.Qualifier;
-                                            if (qq.type != "Password")
-                                                continue;
-                                            password = qq.value;
-                                        }
+                                            }
 
-                                        var handler = new HttpClientHandler();
-                                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                                        var client = new HttpClient(handler);
+                                            string url = qq.value;
+                                            string username = "";
+                                            string password = "";
 
-                                        if (username != "" && password != "")
-                                        {
-                                            var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                                                    Convert.ToBase64String(authToken));
-                                        }
+                                            if (sme1.qualifiers.Count == 3)
+                                            {
+                                                qq = sme1.qualifiers[1] as AdminShell.Qualifier;
+                                                if (qq.type != "Username")
+                                                    continue;
+                                                username = qq.value;
+                                                qq = sme1.qualifiers[2] as AdminShell.Qualifier;
+                                                if (qq.type != "Password")
+                                                    continue;
+                                                password = qq.value;
+                                            }
 
-                                        Console.WriteLine("GetJSON: " + url);
-                                        string response = client.GetStringAsync(url).Result;
-                                        Console.WriteLine(response);
+                                            var handler = new HttpClientHandler();
+                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                            var client = new HttpClient(handler);
 
-                                        if (response != "")
-                                        {
+                                            if (username != "" && password != "")
+                                            {
+                                                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                        Convert.ToBase64String(authToken));
+                                            }
+
+                                            string response = await client.GetStringAsync(url);
+
                                             var r12 = sme1 as AdminShell.ReferenceElement;
                                             var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
-                                            if (ref12 is AdminShell.SubmodelElementCollection)
+                                            if (ref12 is AdminShell.Property)
                                             {
-                                                var c1 = ref12 as AdminShell.SubmodelElementCollection;
-                                                if (c1.value.Count == 0)
+                                                var p1 = ref12 as AdminShell.Property;
+                                                p1.value = response;
+                                            }
+                                            continue;
+                                            */
+                                        }
+
+                                        if (qq.type == "GetJSON")
+                                        {
+                                            if (!init)
+                                                continue;
+
+                                            if (!(sme1 is AdminShell.ReferenceElement))
+                                            {
+                                                continue;
+                                            }
+
+                                            string url = qq.value;
+                                            string username = "";
+                                            string password = "";
+
+                                            if (sme1.qualifiers.Count == 3)
+                                            {
+                                                qq = sme1.qualifiers[1] as AdminShell.Qualifier;
+                                                if (qq.type != "Username")
+                                                    continue;
+                                                username = qq.value;
+                                                qq = sme1.qualifiers[2] as AdminShell.Qualifier;
+                                                if (qq.type != "Password")
+                                                    continue;
+                                                password = qq.value;
+                                            }
+
+                                            var handler = new HttpClientHandler();
+                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                            var client = new HttpClient(handler);
+
+                                            if (username != "" && password != "")
+                                            {
+                                                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                        Convert.ToBase64String(authToken));
+                                            }
+
+                                            Console.WriteLine("GetJSON: " + url);
+                                            string response = client.GetStringAsync(url).Result;
+                                            Console.WriteLine(response);
+
+                                            if (response != "")
+                                            {
+                                                var r12 = sme1 as AdminShell.ReferenceElement;
+                                                var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
+                                                if (ref12 is AdminShell.SubmodelElementCollection)
                                                 {
-                                                    // dynamic model = JObject.Parse(response);
-                                                    JObject parsed = JObject.Parse(response);
-                                                    parseJson(c1, parsed);
+                                                    var c1 = ref12 as AdminShell.SubmodelElementCollection;
+                                                    if (c1.value.Count == 0)
+                                                    {
+                                                        // dynamic model = JObject.Parse(response);
+                                                        JObject parsed = JObject.Parse(response);
+                                                        parseJson(c1, parsed);
+                                                    }
                                                 }
                                             }
+                                            continue;
                                         }
-                                        continue;
-                                    }
 
-                                    if (qq.type != "SearchNumber" || smi >= count)
-                                    {
-                                        continue;
-                                    }
-                                    var sme2 = sm.submodelElements[smi++].submodelElement;
-                                    if (sme2.qualifiers.Count == 0)
-                                    {
-                                        continue;
-                                    }
-                                    qq = sme2.qualifiers[0] as AdminShell.Qualifier;
-                                    if (qq.type != "SearchList" || smi >= count)
-                                    {
-                                        continue;
-                                    }
-                                    var sme3 = sm.submodelElements[smi++].submodelElement;
-                                    if (sme3.qualifiers.Count == 0)
-                                    {
-                                        continue;
-                                    }
-                                    qq = sme3.qualifiers[0] as AdminShell.Qualifier;
-                                    if (qq.type != "SearchResult")
-                                    {
-                                        break;
-                                    }
-                                    if (sme1 is AdminShell.ReferenceElement &&
-                                        sme2 is AdminShell.ReferenceElement &&
-                                        sme3 is AdminShell.ReferenceElement)
-                                    {
-                                        var r1 = sme1 as AdminShell.ReferenceElement;
-                                        var r2 = sme2 as AdminShell.ReferenceElement;
-                                        var r3 = sme3 as AdminShell.ReferenceElement;
-                                        var ref1 = env[i].AasEnv.FindReferableByReference(r1.value);
-                                        var ref2 = env[i].AasEnv.FindReferableByReference(r2.value);
-                                        var ref3 = env[i].AasEnv.FindReferableByReference(r3.value);
-                                        if (ref1 is AdminShell.Property && ref2 is AdminShell.Submodel && ref3 is AdminShell.Property)
+                                        if (qq.type != "SearchNumber" || smi >= count)
                                         {
-                                            var p1 = ref1 as AdminShell.Property;
-                                            // Simulate changes
-                                            var sm2 = ref2 as AdminShell.Submodel;
-                                            var p3 = ref3 as AdminShell.Property;
-                                            int count2 = sm2.submodelElements.Count;
-                                            for (int j = 0; j < count2; j++)
+                                            continue;
+                                        }
+                                        var sme2 = sm.submodelElements[smi++].submodelElement;
+                                        if (sme2.qualifiers.Count == 0)
+                                        {
+                                            continue;
+                                        }
+                                        qq = sme2.qualifiers[0] as AdminShell.Qualifier;
+                                        if (qq.type != "SearchList" || smi >= count)
+                                        {
+                                            continue;
+                                        }
+                                        var sme3 = sm.submodelElements[smi++].submodelElement;
+                                        if (sme3.qualifiers.Count == 0)
+                                        {
+                                            continue;
+                                        }
+                                        qq = sme3.qualifiers[0] as AdminShell.Qualifier;
+                                        if (qq.type != "SearchResult")
+                                        {
+                                            break;
+                                        }
+                                        if (sme1 is AdminShell.ReferenceElement &&
+                                            sme2 is AdminShell.ReferenceElement &&
+                                            sme3 is AdminShell.ReferenceElement)
+                                        {
+                                            var r1 = sme1 as AdminShell.ReferenceElement;
+                                            var r2 = sme2 as AdminShell.ReferenceElement;
+                                            var r3 = sme3 as AdminShell.ReferenceElement;
+                                            var ref1 = env[i].AasEnv.FindReferableByReference(r1.value);
+                                            var ref2 = env[i].AasEnv.FindReferableByReference(r2.value);
+                                            var ref3 = env[i].AasEnv.FindReferableByReference(r3.value);
+                                            if (ref1 is AdminShell.Property && ref2 is AdminShell.Submodel && ref3 is AdminShell.Property)
                                             {
-                                                var sme = sm2.submodelElements[j].submodelElement;
-                                                if (sme.idShort == p1.value)
+                                                var p1 = ref1 as AdminShell.Property;
+                                                // Simulate changes
+                                                var sm2 = ref2 as AdminShell.Submodel;
+                                                var p3 = ref3 as AdminShell.Property;
+                                                int count2 = sm2.submodelElements.Count;
+                                                for (int j = 0; j < count2; j++)
                                                 {
-                                                    p3.value = (sme as AdminShell.Property).value;
+                                                    var sme = sm2.submodelElements[j].submodelElement;
+                                                    if (sme.idShort == p1.value)
+                                                    {
+                                                        p3.value = (sme as AdminShell.Property).value;
+                                                    }
                                                 }
                                             }
                                         }
@@ -1872,9 +1915,10 @@ namespace AasxServer
                             }
                         }
                     }
+                    i++;
                 }
-                i++;
             }
+
             return;
         }
 

@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--data-path \"C:\\Development\\OPCPLCnext\" --opc --opc-client-rate 3000 --rest --no-security",
+      "commandLineArgs": "--rest --no-security --data-path C:\\Development\\AASX_DigTyp40 --connect --name aorzelski.local1",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

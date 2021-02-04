@@ -195,15 +195,25 @@ namespace AasxRestServerLibrary
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    /*
-                    var req = context.Request;
-                    if (req.ContentLength64 > 0 
-                        && req.Payload != null)
+                    // TODO (MIHO/AO, 2021-01-07): enable productive code instead of dump test code
+                    // bool test = true;
+                    bool test = false;
+                    if (test)
                     {
-                        var ba = Convert.FromBase64String(req.Payload);
-                        File.WriteAllBytes("test.aasx", ba);
-                    }*/
-                    helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
+                        // very dump test code
+                        var req = context.Request;
+                        if (req.ContentLength64 > 0
+                            && req.Payload != null)
+                        {
+                            var ba = Convert.FromBase64String(req.Payload);
+                            File.WriteAllBytes("test.aasx", ba);
+                        }
+                    }
+                    else
+                    {
+                        // here goes the official code
+                        helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
+                    }
                     return context;
                 }
                 return context;
@@ -311,7 +321,7 @@ namespace AasxRestServerLibrary
 
             // Contents of a Submodel
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/property)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/values)(/|)$")]
             public IHttpContext GetSubmodelContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
@@ -320,7 +330,7 @@ namespace AasxRestServerLibrary
                     var aasid = m.Groups[1].ToString();
                     var smid = m.Groups[3].ToString();
 
-                    if (helper.PathEndsWith(context, "property"))
+                    if (helper.PathEndsWith(context, "values"))
                     {
                         helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids: null);
                     }
@@ -347,7 +357,7 @@ namespace AasxRestServerLibrary
 
             // Contents of SubmodelElements
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/property)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values)(/|)$")]
             public IHttpContext GetSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
@@ -370,7 +380,7 @@ namespace AasxRestServerLibrary
                         helper.EvalGetSubmodelElementsBlob(context, aasid, smid, elemids.ToArray());
                     }
                     else
-                    if (helper.PathEndsWith(context, "property"))
+                    if (helper.PathEndsWith(context, "values"))
                     {
                         helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids.ToArray());
                     }
