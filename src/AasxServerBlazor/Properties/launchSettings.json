@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --no-security --data-path C:\\Development\\AASX_DigTyp40 --connect --name aorzelski.local1",
+      "commandLineArgs": "--rest --data-path D:\\i40language --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
