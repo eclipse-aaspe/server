@@ -609,6 +609,7 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res, cr);
         }
 
@@ -622,10 +623,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -645,9 +644,6 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
                 return;
             }
-
-            // OZ
-
 
             // create a new, filtered AasEnv
             AdminShell.AdministrationShellEnv copyenv = null;
@@ -684,6 +680,7 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot serialize and send aas envioronment: {ex.Message}.");
                 return;
             }
+            context.Response.StatusCode = HttpStatusCode.Ok;
         }
 
 
@@ -697,10 +694,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -732,6 +727,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as FILE
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, thumbStream, Path.GetFileName(thumbUri.ToString() ?? ""));
             thumbStream.Close();
         }
@@ -746,10 +742,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -818,12 +812,28 @@ namespace AasxRestServerLibrary
                 return;
             }
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "Error: not added since datastructure completely filled already");
-            return;
         }
 
         public void EvalPutAasxOnServer(IHttpContext context)
         {
+            dynamic res = new ExpandoObject();
+            int index = -1;
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context, ref index);
+
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
+                {
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             Console.WriteLine("EvalPutAasxOnServer: " + context.Request.Payload);
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
@@ -916,16 +926,19 @@ namespace AasxRestServerLibrary
                     if (this.Packages[envi] == null)
                     {
                         this.Packages[envi] = aasEnv;
+                        context.Response.StatusCode = HttpStatusCode.Ok;
                         SendTextResponse(context, "OK (new, index=" + envi + ")");
                         return;
                     }
                 }
+                context.Response.StatusCode = HttpStatusCode.NotFound;
                 SendTextResponse(context, "Failed: Server used to capacity.");
                 return;
             }
             else
             {
                 Packages[findAasReturn.iPackage] = aasEnv;
+                context.Response.StatusCode = HttpStatusCode.Ok;
                 SendTextResponse(context, "OK (update, index=" + findAasReturn.iPackage + ")");
                 return;
             }
@@ -933,6 +946,22 @@ namespace AasxRestServerLibrary
 
         public void EvalPutAasxToFilesystem(IHttpContext context, string aasid)
         {
+            dynamic res = new ExpandoObject();
+            int index = -1;
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context, ref index);
+
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
+                {
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             Console.WriteLine("EvalPutAasxToFilesystem");
             // first check
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
@@ -954,6 +983,7 @@ namespace AasxRestServerLibrary
 
             if (findAasReturn.aas == null)
             {
+                context.Response.StatusCode = HttpStatusCode.NotFound;
                 SendTextResponse(context, "Failed: AAS not found.");
                 return;
             }
@@ -962,6 +992,7 @@ namespace AasxRestServerLibrary
                 try
                 {
                     Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
+                    context.Response.StatusCode = HttpStatusCode.Ok;
                     SendTextResponse(context, "OK (saved)");
                     return;
                 }
@@ -975,6 +1006,22 @@ namespace AasxRestServerLibrary
 
         public void EvalPutAasxReplacePackage(IHttpContext context, string aasid)
         {
+            dynamic res = new ExpandoObject();
+            int index = -1;
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context, ref index);
+
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
+                {
+                    return;
+                }
+
+                res.confirm = "Authorization = " + accessrights;
+            }
+
             // first check
             if (context.Request.Payload == null || context.Request.ContentLength64 < 1)
             {
@@ -1047,6 +1094,7 @@ namespace AasxRestServerLibrary
                 }
             }
             Program.signalNewData(2);
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK (saved)");
         }
 
@@ -1060,10 +1108,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1106,6 +1152,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK");
         }
 
@@ -1123,10 +1170,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res1.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res1);
                     return;
                 }
 
@@ -1135,7 +1180,10 @@ namespace AasxRestServerLibrary
 
             // trivial
             if (assetid == null)
+            {
+                context.Response.StatusCode = HttpStatusCode.NotFound;
                 return;
+            }
 
             // do a manual search
             var res = new List<ExpandoObject>();
@@ -1165,6 +1213,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -1178,10 +1227,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1227,6 +1274,7 @@ namespace AasxRestServerLibrary
             this.Packages[0].AasEnv.Assets.Add(asset);
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
 
@@ -1240,10 +1288,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1307,6 +1353,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
         #endregion
@@ -1346,10 +1393,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res1.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res1);
                     return;
                 }
 
@@ -1378,6 +1423,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -1392,10 +1438,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1478,6 +1522,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.idShort);
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }
 
@@ -1491,10 +1536,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1537,6 +1580,7 @@ namespace AasxRestServerLibrary
             if (smref == null && sm == null)
                 cmt += " (nothing deleted)";
             cmt += ((smref != null) ? " (SubmodelRef deleted)" : "") + ((sm != null) ? " (Submodel deleted)" : "");
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + cmt);
         }
 
@@ -1555,10 +1599,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1577,6 +1619,7 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, sm, cr);
         }
 
@@ -1590,10 +1633,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1707,6 +1748,7 @@ namespace AasxRestServerLibrary
             });
 
             // return as JSON
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, table);
         }
 
@@ -1724,10 +1766,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1753,6 +1793,7 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, sme, cr);
         }
 
@@ -1766,10 +1807,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1795,6 +1834,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as TEXT
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
         }
 
@@ -1861,10 +1901,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1910,6 +1948,7 @@ namespace AasxRestServerLibrary
             }
 
             // just send the result
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -1923,10 +1962,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -1960,6 +1997,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as FILE
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, packageStream, Path.GetFileName(smef.value));
             packageStream.Close();
         }
@@ -1974,10 +2012,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -2075,6 +2111,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
         }
 
@@ -2083,16 +2120,13 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
-
             // check authentication
             if (withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -2135,6 +2169,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
 
@@ -2148,10 +2183,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -2230,6 +2263,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as little dynamic object
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, outputArguments);
         }
 
@@ -2243,10 +2277,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res1.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res1);
                     return;
                 }
 
@@ -2283,6 +2315,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2296,10 +2329,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -2317,6 +2348,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, cd);
         }
 
@@ -2330,10 +2362,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -2358,6 +2388,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
 
@@ -2375,10 +2406,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res1.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res1);
                     return;
                 }
 
@@ -2389,6 +2418,7 @@ namespace AasxRestServerLibrary
             var res = IdRefHandleStore.FindAll<AasxHttpHandleIdentification>();
 
             // return this list
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2402,10 +2432,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res1.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res1);
                     return;
                 }
 
@@ -2449,6 +2477,7 @@ namespace AasxRestServerLibrary
             }
 
             // return this list
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2462,7 +2491,7 @@ namespace AasxRestServerLibrary
             int index = -1;
 
             // check authentication
-            if (withAuthentification)
+            if (false && withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
@@ -2485,6 +2514,7 @@ namespace AasxRestServerLibrary
             res.capabilities = capabilities;
 
             // return this list
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2539,6 +2569,7 @@ namespace AasxRestServerLibrary
 
             res.token = GuestToken;
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2617,6 +2648,7 @@ namespace AasxRestServerLibrary
 
             res.token = token;
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2787,6 +2819,7 @@ namespace AasxRestServerLibrary
 
             res.challenge = sessionChallenge[sessionCount];
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -2887,11 +2920,63 @@ namespace AasxRestServerLibrary
 
             res.token = token;
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
-        public string SecurityCheck(IHttpContext context, ref int index)
+        public bool checkAccessRights(IHttpContext context, string currentRights, string neededRights)
+        {
+            if (neededRights == "READONLY")
+            {
+                switch (currentRights)
+                {
+                    case "READONLY":
+                    case "READWRITE":
+                    case "ADMIN":
+                        return true;
+                }
+            }
+            if (neededRights == "READWRITE")
+            {
+                switch (currentRights)
+                {
+                    case "READWRITE":
+                    case "ADMIN":
+                        return true;
+                }
+            }
+            if (neededRights == "ADMIN")
+            {
+                switch (currentRights)
+                {
+                    case "ADMIN":
+                        return true;
+                }
+            }
 
+            if (currentRights == null)
+            {
+                if (AasxServer.Program.redirectServer != "")
+                {
+                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                    string originalRequest = context.Request.Url.ToString();
+                    queryString.Add("OriginalRequest", originalRequest);
+                    Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                    string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
+                    Console.WriteLine("Redirect Response: " + response + "\n");
+                    SendRedirectResponse(context, response);
+                    return false;
+                }
+            }
+
+            dynamic res = new ExpandoObject();
+            res.error = "You are not authorized for this operation!";
+            context.Response.StatusCode = HttpStatusCode.Unauthorized;
+            SendJsonResponse(context, res);
+
+            return false;
+        }
+        public string SecurityCheck(IHttpContext context, ref int index)
         {
             bool error = false;
             string accessrights = null;
@@ -2974,6 +3059,7 @@ namespace AasxRestServerLibrary
                         }
 
                         user = parsed2.SelectToken("userName").Value<string>();
+                        user = user.ToLower();
 
                         if (securityRightsName != null)
                         {
@@ -3072,12 +3158,14 @@ namespace AasxRestServerLibrary
 
             Console.WriteLine("Security 4 Server: /server/listaas");
 
+            string accessrights = SecurityCheck(context, ref index);
+
             // check authentication
             if (false && withAuthentification)
             {
                 Console.WriteLine("Security 4.1 Server: Check bearer token and access rights");
                 Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by token server certificate");
-                string accessrights = SecurityCheck(context, ref index);
+                // string accessrights = SecurityCheck(context, ref index);
 
                 if (accessrights == null)
                 {
@@ -3110,16 +3198,21 @@ namespace AasxRestServerLibrary
             {
                 if (AasxServer.Program.env[i] != null)
                 {
-                    aaslist.Add(i.ToString() + " : "
-                        + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
-                        + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].identification + " : "
-                        + AasxServer.Program.envFileName[i]);
+                    if (AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort != "Security"
+                            || accessrights == "ADMIN")
+                    {
+                        aaslist.Add(i.ToString() + " : "
+                            + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
+                            + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].identification + " : "
+                            + AasxServer.Program.envFileName[i]);
+                    }
                 }
             }
 
             res.aaslist = aaslist;
 
             // return this list
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
 
@@ -3153,6 +3246,7 @@ namespace AasxRestServerLibrary
 
                     context.Response.ContentEncoding = Encoding.UTF8;
                     context.Response.ContentLength64 = length;
+                    context.Response.StatusCode = HttpStatusCode.Ok;
                     context.Response.SendResponse(buffer);
 
                     return;
@@ -3185,22 +3279,8 @@ namespace AasxRestServerLibrary
                 res.confirm = "Authorization = " + accessrights;
                 */
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    if (AasxServer.Program.redirectServer != "")
-                    {
-                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                        string originalRequest = context.Request.Url.ToString();
-                        queryString.Add("OriginalRequest", originalRequest);
-                        Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                        string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
-                        Console.WriteLine("Redirect Response: " + response + "\n");
-                        SendRedirectResponse(context, response);
-                        return;
-                    }
-
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
             }
@@ -3208,6 +3288,7 @@ namespace AasxRestServerLibrary
             // return as FILE
             FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, packageStream,
                 Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
             packageStream.Close();
@@ -3256,22 +3337,8 @@ namespace AasxRestServerLibrary
             Console.WriteLine("Security 5.1 Server: Check bearer token and access rights");
             Console.WriteLine("Security 5.2 Server: Validate that bearer token is signed by session unique random");
 
-            if (accessrights == null)
+            if (!checkAccessRights(context, accessrights, "READONLY"))
             {
-                if (AasxServer.Program.redirectServer != "")
-                {
-                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                    string originalRequest = context.Request.Url.ToString();
-                    queryString.Add("OriginalRequest", originalRequest);
-                    Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                    string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
-                    Console.WriteLine("Redirect Response: " + response + "\n");
-                    SendRedirectResponse(context, response);
-                    return;
-                }
-
-                res.error = "You are not authorized for this operation!";
-                SendJsonResponse(context, res);
                 return;
             }
 
@@ -3288,6 +3355,7 @@ namespace AasxRestServerLibrary
             res.fileName = Path.GetFileName(AasxServer.Program.envFileName[fileIndex]);
             res.fileData = fileToken;
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
         #endregion
@@ -3302,16 +3370,15 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READONLY"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
                 res.confirm = "Authorization = " + accessrights;
             }
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
         }
 
@@ -3426,10 +3493,8 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (accessrights == null)
+                if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
                     return;
                 }
 
@@ -3485,6 +3550,7 @@ namespace AasxRestServerLibrary
             this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
         }
 
