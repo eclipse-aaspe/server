@@ -609,8 +609,8 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            SendJsonResponse(context, res, cr);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res, cr);
         }
 
         public void EvalGetAasEnv(IHttpContext context, string aasid)
@@ -727,9 +727,9 @@ namespace AasxRestServerLibrary
             }
 
             // return as FILE
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, thumbStream, Path.GetFileName(thumbUri.ToString() ?? ""));
             thumbStream.Close();
-            context.Response.StatusCode = HttpStatusCode.Ok;
         }
 
         public void EvalPutAas(IHttpContext context)
@@ -812,8 +812,8 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            SendTextResponse(context, "Error: not added since datastructure completely filled already");
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "Error: not added since datastructure completely filled already");
         }
 
         public void EvalPutAasxOnServer(IHttpContext context)
@@ -926,20 +926,20 @@ namespace AasxRestServerLibrary
                     if (this.Packages[envi] == null)
                     {
                         this.Packages[envi] = aasEnv;
-                        SendTextResponse(context, "OK (new, index=" + envi + ")");
                         context.Response.StatusCode = HttpStatusCode.Ok;
+                        SendTextResponse(context, "OK (new, index=" + envi + ")");
                         return;
                     }
                 }
-                SendTextResponse(context, "Failed: Server used to capacity.");
                 context.Response.StatusCode = HttpStatusCode.NotFound;
+                SendTextResponse(context, "Failed: Server used to capacity.");
                 return;
             }
             else
             {
                 Packages[findAasReturn.iPackage] = aasEnv;
-                SendTextResponse(context, "OK (update, index=" + findAasReturn.iPackage + ")");
                 context.Response.StatusCode = HttpStatusCode.Ok;
+                SendTextResponse(context, "OK (update, index=" + findAasReturn.iPackage + ")");
                 return;
             }
         }
@@ -983,8 +983,8 @@ namespace AasxRestServerLibrary
 
             if (findAasReturn.aas == null)
             {
-                SendTextResponse(context, "Failed: AAS not found.");
                 context.Response.StatusCode = HttpStatusCode.NotFound;
+                SendTextResponse(context, "Failed: AAS not found.");
                 return;
             }
             else
@@ -992,8 +992,8 @@ namespace AasxRestServerLibrary
                 try
                 {
                     Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
-                    SendTextResponse(context, "OK (saved)");
                     context.Response.StatusCode = HttpStatusCode.Ok;
+                    SendTextResponse(context, "OK (saved)");
                     return;
                 }
                 catch (Exception ex)
@@ -1094,8 +1094,8 @@ namespace AasxRestServerLibrary
                 }
             }
             Program.signalNewData(2);
-            SendTextResponse(context, "OK (saved)");
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK (saved)");
         }
 
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
@@ -1152,8 +1152,8 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            SendTextResponse(context, "OK");
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK");
         }
 
         #endregion
@@ -1213,8 +1213,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalPutAsset(IHttpContext context)
@@ -1274,8 +1274,8 @@ namespace AasxRestServerLibrary
             this.Packages[0].AasEnv.Assets.Add(asset);
 
             // simple OK
-            SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
 
         public void EvalPutAssetToAas(IHttpContext context, string aasid)
@@ -1353,8 +1353,8 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
 
             // simple OK
-            SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
         #endregion
 
@@ -1423,8 +1423,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         static long countPut = 0;
@@ -1522,8 +1522,8 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.idShort);
 
             // simple OK
-            SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }
 
         public void EvalDeleteSubmodel(IHttpContext context, string aasid, string smid)
@@ -1580,8 +1580,8 @@ namespace AasxRestServerLibrary
             if (smref == null && sm == null)
                 cmt += " (nothing deleted)";
             cmt += ((smref != null) ? " (SubmodelRef deleted)" : "") + ((sm != null) ? " (Submodel deleted)" : "");
-            SendTextResponse(context, "OK" + cmt);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + cmt);
         }
 
         #endregion
@@ -1619,8 +1619,8 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            SendJsonResponse(context, sm, cr);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, sm, cr);
         }
 
         public void EvalGetSubmodelContentsAsTable(IHttpContext context, string aasid, string smid)
@@ -1748,8 +1748,8 @@ namespace AasxRestServerLibrary
             });
 
             // return as JSON
-            SendJsonResponse(context, table);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, table);
         }
 
         #endregion
@@ -1793,8 +1793,8 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            SendJsonResponse(context, sme, cr);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, sme, cr);
         }
 
         public void EvalGetSubmodelElementsBlob(IHttpContext context, string aasid, string smid, string[] elemids)
@@ -1834,8 +1834,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as TEXT
-            SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
         }
 
         private string EvalGetSubmodelElementsProperty_EvalValue(AdminShell.Property smep)
@@ -1948,8 +1948,8 @@ namespace AasxRestServerLibrary
             }
 
             // just send the result
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalGetSubmodelElementsFile(IHttpContext context, string aasid, string smid, string[] elemids)
@@ -1997,9 +1997,9 @@ namespace AasxRestServerLibrary
             }
 
             // return as FILE
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, packageStream, Path.GetFileName(smef.value));
             packageStream.Close();
-            context.Response.StatusCode = HttpStatusCode.Ok;
         }
 
         public void EvalPutSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
@@ -2111,8 +2111,8 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
         }
 
         public void EvalDeleteSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
@@ -2169,8 +2169,8 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
 
         public void EvalInvokeSubmodelElementOperation(IHttpContext context, string aasid, string smid, string[] elemids)
@@ -2263,8 +2263,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as little dynamic object
-            SendJsonResponse(context, outputArguments);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, outputArguments);
         }
 
         public void EvalGetAllCds(IHttpContext context, string aasid)
@@ -2315,8 +2315,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalGetCdContents(IHttpContext context, string aasid, string cdid)
@@ -2348,8 +2348,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            SendJsonResponse(context, cd);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, cd);
         }
 
         public void EvalDeleteSpecificCd(IHttpContext context, string aasid, string cdid)
@@ -2388,8 +2388,8 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
 
         #endregion
@@ -2418,8 +2418,8 @@ namespace AasxRestServerLibrary
             var res = IdRefHandleStore.FindAll<AasxHttpHandleIdentification>();
 
             // return this list
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalPostHandlesIdentification(IHttpContext context)
@@ -2477,8 +2477,8 @@ namespace AasxRestServerLibrary
             }
 
             // return this list
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         #endregion
@@ -2514,8 +2514,8 @@ namespace AasxRestServerLibrary
             res.capabilities = capabilities;
 
             // return this list
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public static bool withAuthentification = false;
@@ -2569,8 +2569,8 @@ namespace AasxRestServerLibrary
 
             res.token = GuestToken;
 
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalPostAuthenticateUser(IHttpContext context)
@@ -2648,8 +2648,8 @@ namespace AasxRestServerLibrary
 
             res.token = token;
 
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalPostAuthenticateCert1(IHttpContext context)
@@ -2819,8 +2819,8 @@ namespace AasxRestServerLibrary
 
             res.challenge = sessionChallenge[sessionCount];
 
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalPostAuthenticateCert2(IHttpContext context)
@@ -2920,15 +2920,15 @@ namespace AasxRestServerLibrary
 
             res.token = token;
 
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public bool checkAccessRights(IHttpContext context, string currentRights, string neededRights)
         {
             if (neededRights == "READONLY")
             {
-                switch(currentRights)
+                switch (currentRights)
                 {
                     case "READONLY":
                     case "READWRITE":
@@ -2954,22 +2954,25 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            if (AasxServer.Program.redirectServer != "")
+            if (currentRights == null)
             {
-                System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                string originalRequest = context.Request.Url.ToString();
-                queryString.Add("OriginalRequest", originalRequest);
-                Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
-                Console.WriteLine("Redirect Response: " + response + "\n");
-                SendRedirectResponse(context, response);
-                return false;
+                if (AasxServer.Program.redirectServer != "")
+                {
+                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                    string originalRequest = context.Request.Url.ToString();
+                    queryString.Add("OriginalRequest", originalRequest);
+                    Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                    string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
+                    Console.WriteLine("Redirect Response: " + response + "\n");
+                    SendRedirectResponse(context, response);
+                    return false;
+                }
             }
 
             dynamic res = new ExpandoObject();
             res.error = "You are not authorized for this operation!";
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Unauthorized;
+            SendJsonResponse(context, res);
 
             return false;
         }
@@ -3056,6 +3059,7 @@ namespace AasxRestServerLibrary
                         }
 
                         user = parsed2.SelectToken("userName").Value<string>();
+                        user = user.ToLower();
 
                         if (securityRightsName != null)
                         {
@@ -3195,7 +3199,7 @@ namespace AasxRestServerLibrary
                 if (AasxServer.Program.env[i] != null)
                 {
                     if (AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort != "Security"
-                            || accessrights == /*"ADMIN"*/ "READWRITE")
+                            || accessrights == "ADMIN")
                     {
                         aaslist.Add(i.ToString() + " : "
                             + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
@@ -3208,8 +3212,8 @@ namespace AasxRestServerLibrary
             res.aaslist = aaslist;
 
             // return this list
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalAssetId(IHttpContext context, int assetId)
@@ -3242,8 +3246,8 @@ namespace AasxRestServerLibrary
 
                     context.Response.ContentEncoding = Encoding.UTF8;
                     context.Response.ContentLength64 = length;
-                    context.Response.SendResponse(buffer);
                     context.Response.StatusCode = HttpStatusCode.Ok;
+                    context.Response.SendResponse(buffer);
 
                     return;
                 }
@@ -3284,10 +3288,10 @@ namespace AasxRestServerLibrary
             // return as FILE
             FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
 
+            context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, packageStream,
                 Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
             packageStream.Close();
-            context.Response.StatusCode = HttpStatusCode.Ok;
         }
 
         public void EvalGetAASX2(IHttpContext context, int fileIndex)
@@ -3351,8 +3355,8 @@ namespace AasxRestServerLibrary
             res.fileName = Path.GetFileName(AasxServer.Program.envFileName[fileIndex]);
             res.fileData = fileToken;
 
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
         #endregion
 
@@ -3374,8 +3378,8 @@ namespace AasxRestServerLibrary
                 res.confirm = "Authorization = " + accessrights;
             }
 
-            SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
         }
 
         public static string[] securityUserName = null;
@@ -3546,8 +3550,8 @@ namespace AasxRestServerLibrary
             this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
-            SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
         }
 
         #endregion
