@@ -3067,10 +3067,22 @@ namespace AasxRestServerLibrary
 
                             for (int i = 0; i < rightsCount; i++)
                             {
-                                if (user == securityRightsName[i])
+                                if (securityRightsName[i].Contains("@")) // email address
                                 {
-                                    accessrights = securityRightsValue[i];
-                                    break;
+                                    if (user == securityRightsName[i])
+                                    {
+                                        accessrights = securityRightsValue[i];
+                                        break;
+                                    }
+                                }
+                                else // domain name only
+                                {
+                                    string[] splitUser = user.Split('@');
+                                    if (splitUser[1] == securityRightsName[i])
+                                    {
+                                        accessrights = securityRightsValue[i];
+                                        break;
+                                    }
                                 }
                             }
                         }
