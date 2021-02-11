@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
+using System.Xml.Serialization;
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
@@ -743,6 +744,137 @@ namespace AasxServer
             }
         }
 
+        /* AAS Detail Part 2 Descriptor Definitions BEGIN*/
+        /* End Point Definition */
+        public class AASxEndpoint
+        {
+            [XmlElement(ElementName = "address")]
+            public string address = "";
+            [XmlElement(ElementName = "type")]
+            public string type = "";
+        }
+
+        /* Submodel Descriptor Definition */
+        public class SubmodelDescriptors
+        {
+            [XmlElement(ElementName = "administration")]
+            [JsonIgnore]
+            public AdminShell.Administration administration = null;
+
+            [XmlElement(ElementName = "description")]
+            [JsonIgnore]
+            public AdminShell.Description description = null;
+
+            [XmlElement(ElementName = "idShort")]
+            [JsonIgnore]
+            public string idShort = "";
+
+            [XmlElement(ElementName = "identification")]
+            [JsonIgnore]
+            public AdminShell.Identification identification = null;
+
+            [XmlElement(ElementName = "semanticId")]
+            public AdminShell.SemanticId semanticId = null;
+
+            [XmlElement(ElementName = "endpoints")]
+            public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
+        }
+        /* AAS Descriptor Definiton */
+        public class aasDescriptor
+        {
+
+            [XmlElement(ElementName = "administration")]
+            [JsonIgnore]
+            public AdminShell.Administration administration = null;
+
+            [XmlElement(ElementName = "description")]
+            [JsonIgnore]
+            public AdminShell.Description description = new AdminShell.Description();
+
+            [XmlElement(ElementName = "idShort")]
+            public string idShort = "";
+
+            [XmlElement(ElementName = "identification")]
+            [JsonIgnore]
+            public AdminShell.Identification identification = null;
+
+            [XmlElement(ElementName = "assets")]
+            public List<AdminShell.Asset> assets = new List<AdminShell.Asset>();
+
+            [XmlElement(ElementName = "endpoints")]
+            public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
+
+            [XmlElement(ElementName = "submodelDescriptors")]
+            public List<SubmodelDescriptors> submodelDescriptors = new List<SubmodelDescriptors>();
+        }
+
+        /* AAS Detail Part 2 Descriptor Definitions END*/
+
+        /* Creation of AAS Descriptor */
+        public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
+        {
+            aasDescriptor aasD = new aasDescriptor();
+            string endpointAddress = "http://" + hostPort;
+
+            aasD.idShort = adminShell.AasEnv.AdministrationShells[0].idShort;
+            aasD.identification = adminShell.AasEnv.AdministrationShells[0].identification;
+            aasD.description = adminShell.AasEnv.AdministrationShells[0].description;
+
+            AASxEndpoint endp = new AASxEndpoint();
+            endp.address = endpointAddress + "/aas/" + adminShell.AasEnv.AdministrationShells[0].idShort;
+            aasD.endpoints.Add(endp);
+
+            int submodelCount = adminShell.AasEnv.Submodels.Count;
+            for (int i = 0; i < submodelCount; i++)
+            {
+                SubmodelDescriptors sdc = new SubmodelDescriptors();
+
+                sdc.administration = adminShell.AasEnv.Submodels[i].administration;
+                sdc.description = adminShell.AasEnv.Submodels[i].description;
+                sdc.identification = adminShell.AasEnv.Submodels[i].identification;
+                sdc.idShort = adminShell.AasEnv.Submodels[i].idShort;
+                sdc.semanticId = adminShell.AasEnv.Submodels[i].semanticId;
+
+                AASxEndpoint endpSub = new AASxEndpoint();
+                endpSub.address = endpointAddress + "/aas/" + adminShell.AasEnv.AdministrationShells[0].idShort +
+                                   "/submodels/" + adminShell.AasEnv.Submodels[i].idShort;
+                endpSub.type = "http";
+                sdc.endpoints.Add(endpSub);
+                
+                aasD.submodelDescriptors.Add(sdc);
+            }
+
+            int assetCount = adminShell.AasEnv.Assets.Count;
+            for (int i = 0; i < assetCount; i++)
+            {
+                aasD.assets.Add(adminShell.AasEnv.Assets[i]);
+            }
+            return aasD;
+        }
+
+        /*Publishing the AAS Descriptor*/
+        public static void publishDescriptorData(string descriptorData)
+        {
+            HttpClient httpClient;
+            if (clientHandler != null)
+            {
+                httpClient = new HttpClient(clientHandler);
+            }
+            else
+            {
+                httpClient = new HttpClient();
+            }
+            var descriptorJson = new StringContent(descriptorData, System.Text.Encoding.UTF8, "application/json");
+            try
+            {
+                var result = httpClient.PostAsync(connectServer + "/publish", descriptorJson).Result;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
         public class TransmitData
         {
             public string source;
@@ -796,6 +928,12 @@ namespace AasxServer
                 if (getDirectory)
                 {
                     Console.WriteLine("if getDirectory");
+                    
+                    // AAAS Detail part 2 Descriptor
+                    TransmitFrame descriptortf = new TransmitFrame
+                    {
+                        source = connectNodeName
+                    };
 
                     aasDirectoryParameters adp = new aasDirectoryParameters();
 
@@ -810,6 +948,25 @@ namespace AasxServer
                         if (Program.env[j] != null)
                         {
                             alp.index = j;
+                            
+                            /* Create Detail part 2 Descriptor Start */
+                            aasDescriptor aasDsecritpor = Program.creatAASDescriptor(Program.env[j]);
+                            TransmitData aasDsecritporTData = new TransmitData
+                            {
+                                source = connectNodeName
+                            };
+                            aasDsecritporTData.type = "register";
+                            aasDsecritporTData.destination = "VWS_AAS_Registry";
+                            var aasDescriptorJsonData = JsonConvert.SerializeObject(aasDsecritpor, Newtonsoft.Json.Formatting.Indented,
+                                                                        new JsonSerializerSettings
+                                                                        {
+                                                                            NullValueHandling = NullValueHandling.Ignore
+                                                                        });
+                            aasDsecritporTData.publish.Add(aasDescriptorJsonData);
+                            descriptortf.data.Add(aasDsecritporTData);
+                            /* Create Detail part 2 Descriptor END */
+
+
                             alp.idShort = Program.env[j].AasEnv.AdministrationShells[0].idShort;
                             alp.identification = Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
                             alp.fileName = Program.envFileName[j];
@@ -823,6 +980,15 @@ namespace AasxServer
                             adp.aasList.Add(alp);
                         }
                     }
+
+                    string decriptorData = JsonConvert.SerializeObject(descriptortf, Formatting.Indented);
+                    Program.publishDescriptorData(decriptorData);
+
+                    td = new TransmitData
+                    {
+                        source = connectNodeName
+                    };
+
 
                     td = new TransmitData
                     {
