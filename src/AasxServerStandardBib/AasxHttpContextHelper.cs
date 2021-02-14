@@ -1106,7 +1106,14 @@ namespace AasxRestServerLibrary
                     context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                     return;
                 }
+
+                if (withAuthentification)
+                {
+                    if (Packages[packIndex].AasEnv.AdministrationShells[0].idShort == "Security")
+                        securityInit();
+                }
             }
+
             Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK (saved)");
@@ -3451,7 +3458,7 @@ namespace AasxRestServerLibrary
         public static string[] serverCertfileNames = null;
         public static X509Certificate2[] serverCerts = null;
 
-        public static Dictionary<string, string> securityRightsAAS = new Dictionary<string, string>();
+        public static Dictionary<string, string> securityRightsAAS = null;
 
         public static void securityInit()
         {
@@ -3509,6 +3516,9 @@ namespace AasxRestServerLibrary
                                 if (sm.idShort == "SecurityRightsObjects")
                                 {
                                     Console.WriteLine("SecurityRightsObjects");
+
+                                    securityRightsAAS = new Dictionary<string, string>();
+
                                     count = sm.submodelElements.Count;
 
                                     for (j = 0; j < count; j++)
