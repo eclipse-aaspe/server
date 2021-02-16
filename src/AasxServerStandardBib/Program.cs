@@ -989,12 +989,6 @@ namespace AasxServer
                         source = connectNodeName
                     };
 
-
-                    td = new TransmitData
-                    {
-                        source = connectNodeName
-                    };
-
                     var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
                     td.type = "directory";
                     td.destination = getDirectoryDestination;
