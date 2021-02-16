@@ -840,7 +840,7 @@ namespace AasxServer
                                    "/submodels/" + adminShell.AasEnv.Submodels[i].idShort;
                 endpSub.type = "http";
                 sdc.endpoints.Add(endpSub);
-                
+
                 aasD.submodelDescriptors.Add(sdc);
             }
 
@@ -928,7 +928,7 @@ namespace AasxServer
                 if (getDirectory)
                 {
                     Console.WriteLine("if getDirectory");
-                    
+
                     // AAAS Detail part 2 Descriptor
                     TransmitFrame descriptortf = new TransmitFrame
                     {
@@ -948,7 +948,7 @@ namespace AasxServer
                         if (Program.env[j] != null)
                         {
                             alp.index = j;
-                            
+
                             /* Create Detail part 2 Descriptor Start */
                             aasDescriptor aasDsecritpor = Program.creatAASDescriptor(Program.env[j]);
                             TransmitData aasDsecritporTData = new TransmitData
