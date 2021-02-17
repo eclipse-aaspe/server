@@ -1008,11 +1008,12 @@ namespace AasxRestServerLibrary
         {
             dynamic res = new ExpandoObject();
             int index = -1;
+            string accessrights = null;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context, ref index);
+                accessrights = SecurityCheck(context, ref index);
 
                 if (!checkAccessRights(context, accessrights, "READWRITE"))
                 {
@@ -1038,6 +1039,19 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"AASX package to be replaced not found. Aborting!");
                 return;
             }
+
+            if (withAuthentification)
+            {
+                string idshort = AasxServer.Program.env[packIndex].AasEnv.AdministrationShells[0].idShort;
+                string aasRights = "NONE";
+                if (securityRightsAAS.Count != 0)
+                    aasRights = securityRightsAAS[idshort];
+                if (!checkAccessRights(context, accessrights, aasRights))
+                {
+                    return;
+                }
+            }
+
             var packFn = Packages[packIndex].Filename;
             Console.WriteLine($"Will replace AASX package on server: {packFn}");
 
@@ -1092,7 +1106,14 @@ namespace AasxRestServerLibrary
                     context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                     return;
                 }
+
+                if (withAuthentification)
+                {
+                    if (Packages[packIndex].AasEnv.AdministrationShells[0].idShort == "Security")
+                        securityInit();
+                }
             }
+
             Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK (saved)");
@@ -2924,8 +2945,21 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public bool checkAccessRights(IHttpContext context, string currentRights, string neededRights)
+        public bool checkAccessLevel(string currentRights, string neededRights)
         {
+            if (neededRights == "NONE")
+            {
+                switch (currentRights)
+                {
+                    case null:
+                    case "":
+                    case "NONE":
+                    case "READONLY":
+                    case "READWRITE":
+                    case "ADMIN":
+                        return true;
+                }
+            }
             if (neededRights == "READONLY")
             {
                 switch (currentRights)
@@ -2953,6 +2987,14 @@ namespace AasxRestServerLibrary
                         return true;
                 }
             }
+
+            return false;
+        }
+
+        public bool checkAccessRights(IHttpContext context, string currentRights, string neededRights)
+        {
+            if (checkAccessLevel(currentRights, neededRights))
+                return true;
 
             if (currentRights == null)
             {
@@ -3210,8 +3252,12 @@ namespace AasxRestServerLibrary
             {
                 if (AasxServer.Program.env[i] != null)
                 {
-                    if (AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort != "Security"
-                            || accessrights == "ADMIN")
+                    string idshort = AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort;
+                    string aasRights = "NONE";
+                    if (securityRightsAAS.Count != 0)
+                        securityRightsAAS.TryGetValue(idshort, out aasRights);
+                    // aasRights = securityRightsAAS[idshort];
+                    if (checkAccessLevel(accessrights, aasRights))
                     {
                         aaslist.Add(i.ToString() + " : "
                             + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort + " : "
@@ -3292,6 +3338,15 @@ namespace AasxRestServerLibrary
                 */
 
                 if (!checkAccessRights(context, accessrights, "READONLY"))
+                {
+                    return;
+                }
+
+                string idshort = AasxServer.Program.env[fileIndex].AasEnv.AdministrationShells[0].idShort;
+                string aasRights = "NONE";
+                if (securityRightsAAS.Count != 0)
+                    aasRights = securityRightsAAS[idshort];
+                if (!checkAccessRights(context, accessrights, aasRights))
                 {
                     return;
                 }
@@ -3403,6 +3458,8 @@ namespace AasxRestServerLibrary
         public static string[] serverCertfileNames = null;
         public static X509Certificate2[] serverCerts = null;
 
+        public static Dictionary<string, string> securityRightsAAS = null;
+
         public static void securityInit()
         {
             withAuthentification = !Program.noSecurity;
@@ -3438,9 +3495,9 @@ namespace AasxRestServerLibrary
                                         securityUserPassword[j] = p.value;
                                     }
                                 }
-                                if (sm.idShort == "SecurityRights")
+                                if (sm.idShort == "SecurityRights" || sm.idShort == "SecurityRightsSubjects")
                                 {
-                                    Console.WriteLine("SecurityRights");
+                                    Console.WriteLine("SecurityRightsSubjects");
                                     count = sm.submodelElements.Count;
 
                                     securityRightsName = new string[count];
@@ -3449,9 +3506,34 @@ namespace AasxRestServerLibrary
                                     for (j = 0; j < count; j++)
                                     {
                                         var sme = sm.submodelElements[j].submodelElement;
-                                        var p = sme as AdminShell.Property;
-                                        securityRightsName[j] = p.idShort;
-                                        securityRightsValue[j] = p.value;
+                                        if (sme is AdminShell.Property p)
+                                        {
+                                            securityRightsName[j] = p.idShort;
+                                            securityRightsValue[j] = p.value;
+                                        }
+                                    }
+                                }
+                                if (sm.idShort == "SecurityRightsObjects")
+                                {
+                                    Console.WriteLine("SecurityRightsObjects");
+
+                                    securityRightsAAS = new Dictionary<string, string>();
+
+                                    count = sm.submodelElements.Count;
+
+                                    for (j = 0; j < count; j++)
+                                    {
+                                        var sme = sm.submodelElements[j].submodelElement;
+                                        if (sme is AdminShell.SubmodelElementCollection smc)
+                                        {
+                                            for (int k = 0; k < smc.value.Count; k++)
+                                            {
+                                                if (smc.value[k].submodelElement is AdminShell.Property p)
+                                                {
+                                                    securityRightsAAS.Add(p.idShort, smc.idShort);
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
