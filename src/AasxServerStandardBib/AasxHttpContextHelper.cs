@@ -3254,7 +3254,7 @@ namespace AasxRestServerLibrary
                 {
                     string idshort = AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort;
                     string aasRights = "NONE";
-                    if (securityRightsAAS.Count != 0)
+                    if (securityRightsAAS != null && securityRightsAAS.Count != 0)
                         securityRightsAAS.TryGetValue(idshort, out aasRights);
                     // aasRights = securityRightsAAS[idshort];
                     if (checkAccessLevel(accessrights, aasRights))
