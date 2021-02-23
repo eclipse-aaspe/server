@@ -926,6 +926,7 @@ namespace AasxRestServerLibrary
                     if (this.Packages[envi] == null)
                     {
                         this.Packages[envi] = aasEnv;
+                        Program.envFileName[envi] = file.path;
                         context.Response.StatusCode = HttpStatusCode.Ok;
                         SendTextResponse(context, "OK (new, index=" + envi + ")");
                         return;
@@ -938,6 +939,7 @@ namespace AasxRestServerLibrary
             else
             {
                 Packages[findAasReturn.iPackage] = aasEnv;
+                Program.envFileName[findAasReturn.iPackage] = file.path;
                 context.Response.StatusCode = HttpStatusCode.Ok;
                 SendTextResponse(context, "OK (update, index=" + findAasReturn.iPackage + ")");
                 return;
@@ -992,6 +994,7 @@ namespace AasxRestServerLibrary
                 try
                 {
                     Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
+                    Program.envFileName[findAasReturn.iPackage] = file.path;
                     context.Response.StatusCode = HttpStatusCode.Ok;
                     SendTextResponse(context, "OK (saved)");
                     return;
