@@ -357,10 +357,11 @@ namespace AasxRestServerLibrary
 
             // Contents of SubmodelElements
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
             public IHttpContext GetSubmodelElementsContents(IHttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo.Replace("submodel/submodelElements", "elements"));
                 if (m.Success && m.Groups.Count >= 6 && m.Groups[5].Captures != null && m.Groups[5].Captures.Count >= 1)
                 {
                     var aasid = m.Groups[1].ToString();
@@ -380,7 +381,7 @@ namespace AasxRestServerLibrary
                         helper.EvalGetSubmodelElementsBlob(context, aasid, smid, elemids.ToArray());
                     }
                     else
-                    if (helper.PathEndsWith(context, "values"))
+                    if (helper.PathEndsWith(context, "values") || helper.PathEndsWith(context, "value"))
                     {
                         helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids.ToArray());
                     }
