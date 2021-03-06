@@ -550,7 +550,7 @@ namespace AasxRestServerLibrary
             string headerAttachmentFileName = null)
         {
             context.Response.ContentType = ContentType.APPLICATION;
-            context.Response.SendChunked = true;
+            //// context.Response.SendChunked = true;
             context.Response.ContentLength64 = stream.Length;
 
             if (headerAttachmentFileName != null)
