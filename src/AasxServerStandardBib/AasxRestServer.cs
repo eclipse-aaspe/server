@@ -219,6 +219,13 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasxbyassetid/([^/]+)(/|)$")]
+            public IHttpContext GetAASX2ByAssetId(IHttpContext context)
+            {
+                helper.EvalGetAasxByAssetId(context);
+                return context;
+            }
+
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx2/(\d+)(/|)$")]
             public IHttpContext GetAASX2(IHttpContext context)
             {

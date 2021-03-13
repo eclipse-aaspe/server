@@ -585,7 +585,7 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                string link = "http://admin-shell-io.com:52001/server/aasxbyasset/" + url;
+                string link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + url;
 
                 return link;
             }
@@ -638,7 +638,7 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                string link = "http://admin-shell-io.com:52001/server/aasxbyasset/" + url;
+                string link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + url;
 
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);

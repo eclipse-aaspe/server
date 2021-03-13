@@ -1122,6 +1122,65 @@ namespace AasxRestServerLibrary
             SendTextResponse(context, "OK (saved)");
         }
 
+        public void EvalGetAasxByAssetId(IHttpContext context)
+        {
+            string path = context.Request.PathInfo;
+            string[] split = path.Split('/');
+            string node = split[2];
+            string assetId = split[3].ToUpper();
+
+            for (int envi = 0; envi < Packages.Length; envi++)
+            {
+                if (this.Packages[envi] != null)
+                {
+                    foreach (var aas in this.Packages[envi].AasEnv.AdministrationShells)
+                    {
+                        if (aas.assetRef != null)
+                        {
+                            var asset = Program.env[envi].AasEnv.FindAsset(aas.assetRef);
+                            if (asset != null)
+                            {
+                                string url = System.Net.WebUtility.UrlEncode(asset.identification.id).ToUpper();
+                                if (assetId == url)
+                                {
+                                    string headers = context.Request.Headers.ToString();
+                                    string token = context.Request.Headers.Get("accept");
+                                    if (token == null || token != "application/aas")
+                                    {
+                                        // Human by browser
+                                        string text = "";
+
+                                        text += "<strong>" + "This is the human readable page for your asset" + "</strong><br><br>";
+
+                                        text += "AssetID = " + System.Net.WebUtility.UrlDecode(assetId) + "<br><br>";
+
+                                        var link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + assetId;
+                                        text += "Please open AAS in AASX Package Explorer by: File / Other Connect Options / Connect via REST:<br>" +
+                                            "<a href= \"" + link + "\" target=\"_blank\">" +
+                                            link + "</a>" + "<br><br>";
+
+                                        text += "Please use Postman to get raw data:<br>GET " +
+                                            "<a href= \"" + link + "\" target=\"_blank\">" +
+                                            link + "</a>" + "<br>" +
+                                        "and set Headers / Accept application/aas" + "<br><br>";
+
+                                        context.Response.ContentType = ContentType.HTML;
+                                        context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+                                        context.Response.SendResponse(text);
+                                        return;
+                                    }
+
+                                    EvalGetAASX(context, envi);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with assetId '{assetId}' found.");
+        }
+
         public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
         {
             dynamic res = new ExpandoObject();
