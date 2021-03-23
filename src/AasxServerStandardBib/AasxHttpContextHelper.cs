@@ -3021,7 +3021,7 @@ namespace AasxRestServerLibrary
                     objectAasOrSubmodel != null && securityRoleReference[iRole] == objectAasOrSubmodel &&
                     securityRolePermission[iRole] == neededRights)
                 {
-                    if (securityRoleName[iRole] == currentRole ||
+                    if ((securityRoleCondition[iRole] == "" && securityRoleName[iRole] == currentRole) ||
                         (securityRoleCondition[iRole] == "not" && securityRoleName[iRole] != currentRole))
                     {
                         if (securityRoleKind[iRole] == "allow")
