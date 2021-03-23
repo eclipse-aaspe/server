@@ -3564,7 +3564,7 @@ namespace AasxRestServerLibrary
                                                     for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                                     {
                                                         var sme2 = smec.value[iSmec].submodelElement;
-                                                        switch(sme2.idShort)
+                                                        switch (sme2.idShort)
                                                         {
                                                             case "endpoint":
                                                                 var p2 = sme2 as AdminShell.Property;
@@ -3613,7 +3613,7 @@ namespace AasxRestServerLibrary
                                                                     for (int iSmec3 = 0; iSmec3 < countSmec3; iSmec3++)
                                                                     {
                                                                         var p = smec3.value[iSmec3].submodelElement as AdminShell.Property;
-                                                                        switch(p.idShort)
+                                                                        switch (p.idShort)
                                                                         {
                                                                             case "emailDomain":
                                                                             case "email":
