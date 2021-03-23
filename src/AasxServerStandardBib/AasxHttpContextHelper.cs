@@ -1013,12 +1013,15 @@ namespace AasxRestServerLibrary
             int index = -1;
             string accessrights = null;
 
+            var aasInfo = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+
             // check authentication
             if (withAuthentification)
             {
                 accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/aasx", "UPDATE"))
+                var aas = Program.env[aasInfo.iPackage].AasEnv.AdministrationShells[0];
+                if (!checkAccessRights(context, accessrights, "/aasx", "UPDATE", "aas", aas))
                 {
                     return;
                 }
@@ -1034,7 +1037,6 @@ namespace AasxRestServerLibrary
             }
 
             // find package index to replace
-            var aasInfo = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             Console.WriteLine("FindAAS() with idShort \"" + aasid + "\" yields package-index " + aasInfo.iPackage);
             var packIndex = aasInfo.iPackage;
             if (packIndex < 0 || packIndex >= Packages.Length)
@@ -1114,8 +1116,7 @@ namespace AasxRestServerLibrary
 
                 if (withAuthentification)
                 {
-                    if (Packages[packIndex].AasEnv.AdministrationShells[0].idShort == "Security")
-                        securityInit();
+                    securityInit();
                 }
             }
 
@@ -3009,13 +3010,26 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public bool checkAccessLevel(string currentRole, string operation, string neededRights)
+        public bool checkAccessLevel(string currentRole, string operation, string neededRights, string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             if (currentRole == null)
                 currentRole = "isNotAuthenticated";
             int iRole = 0;
             while (securityRoleName[iRole] != null)
             {
+                if (aasOrSubmodel == "aas" && securityRoleObject[iRole] == "aas" &&
+                    objectAasOrSubmodel != null && securityRoleReference[iRole] == objectAasOrSubmodel &&
+                    securityRolePermission[iRole] == neededRights)
+                {
+                    if (securityRoleName[iRole] == currentRole ||
+                        (securityRoleCondition[iRole] == "not" && securityRoleName[iRole] != currentRole))
+                    {
+                        if (securityRoleKind[iRole] == "allow")
+                            return true;
+                        if (securityRoleKind[iRole] == "deny")
+                            return false;
+                    }
+                }
                 if (securityRoleName[iRole] == currentRole && securityRoleObject[iRole] == "api")
                 {
                     if (securityRoleApiOperation[iRole] == "*" || securityRoleApiOperation[iRole] == operation)
@@ -3030,9 +3044,10 @@ namespace AasxRestServerLibrary
             return false;
         }
 
-        public bool checkAccessRights(IHttpContext context, string currentRole, string operation, string neededRights)
+        public bool checkAccessRights(IHttpContext context, string currentRole, string operation, string neededRights,
+            string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
-            if (checkAccessLevel(currentRole, operation, neededRights))
+            if (checkAccessLevel(currentRole, operation, neededRights, aasOrSubmodel, objectAasOrSubmodel))
                 return true;
 
             if (currentRole == null)
@@ -3267,14 +3282,15 @@ namespace AasxRestServerLibrary
             {
                 if (AasxServer.Program.env[i] != null)
                 {
-                    string idshort = AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort;
+                    var aas = AasxServer.Program.env[i].AasEnv.AdministrationShells[0];
+                    string idshort = aas.idShort;
                     string aasRights = "NONE";
                     if (securityRightsAAS != null && securityRightsAAS.Count != 0)
                         securityRightsAAS.TryGetValue(idshort, out aasRights);
                     // aasRights = securityRightsAAS[idshort];
 
                     bool addEntry = false;
-                    if (idshort == "myAASwithGlobalSecurityMetaModel")
+                    if (idshort == "xxxmyAASwithGlobalSecurityMetaModel")
                     {
                         if (checkAccessLevel(accessrights, "/server/listaas", "SECURITY"))
                         {
@@ -3283,7 +3299,7 @@ namespace AasxRestServerLibrary
                     }
                     else
                     {
-                        if (checkAccessLevel(accessrights, "/server/listaas", "READ"))
+                        if (checkAccessLevel(accessrights, "/server/listaas", "READ", "aas", aas))
                         {
                             addEntry = true;
                         }
@@ -3293,7 +3309,7 @@ namespace AasxRestServerLibrary
                     {
                         aaslist.Add(i.ToString() + " : "
                             + idshort + " : "
-                            + AasxServer.Program.env[i].AasEnv.AdministrationShells[0].identification + " : "
+                            + aas.identification + " : "
                             + AasxServer.Program.envFileName[i]);
                     }
                 }
@@ -3302,8 +3318,8 @@ namespace AasxRestServerLibrary
             res.aaslist = aaslist;
 
             // return this list
-            SendJsonResponse(context, res);
             context.Response.StatusCode = HttpStatusCode.Ok;
+            SendJsonResponse(context, res);
         }
 
         public void EvalAssetId(IHttpContext context, int assetId)
@@ -3369,7 +3385,8 @@ namespace AasxRestServerLibrary
                 res.confirm = "Authorization = " + accessrights;
                 */
 
-                if (!checkAccessRights(context, accessrights, "/aasx", "READ"))
+                var aas = Program.env[fileIndex].AasEnv.AdministrationShells[0];
+                if (!checkAccessRights(context, accessrights, "/aasx", "READ", "aas", aas))
                 {
                     return;
                 }
@@ -3490,10 +3507,13 @@ namespace AasxRestServerLibrary
         public static string[] securityRightsValue = null;
         public static string[] securityRightsRole = null;
 
+        public static string[] securityRoleCondition = null;
         public static string[] securityRoleName = null;
         public static string[] securityRoleObject = null;
         public static string[] securityRoleApiOperation = null;
+        public static object[] securityRoleReference = null;
         public static string[] securityRolePermission = null;
+        public static string[] securityRoleKind = null;
 
         public static string[] serverCertfileNames = null;
         public static X509Certificate2[] serverCerts = null;
@@ -3504,6 +3524,15 @@ namespace AasxRestServerLibrary
         {
             withAuthentification = !Program.noSecurity;
 
+            int iRole = 0;
+            securityRoleCondition = new string[100];
+            securityRoleName = new string[100];
+            securityRoleObject = new string[100];
+            securityRoleReference = new object[100];
+            securityRoleApiOperation = new string[100];
+            securityRolePermission = new string[100];
+            securityRoleKind = new string[100];
+
             int aascount = AasxServer.Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
@@ -3512,7 +3541,7 @@ namespace AasxRestServerLibrary
                 if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
-                    if (aas.idShort == "myAASwithGlobalSecurityMetaModel")
+                    if (true /*aas.idShort == "myAASwithGlobalSecurityMetaModel"*/)
                     {
                         if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                         {
@@ -3616,7 +3645,7 @@ namespace AasxRestServerLibrary
                                             }
                                         }
                                     }
-                                    if (sm.idShort == "SecurityMetaModelForServer")
+                                    if (sm.idShort == "SecurityMetaModelForServer" || sm.idShort == "SecurityMetaModelForAAS")
                                     {
                                         var smc1 = sm.submodelElements.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("accessControlPolicyPoints");
                                         var smc2 = smc1?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("policyAdministrationPoint");
@@ -3625,12 +3654,6 @@ namespace AasxRestServerLibrary
                                         if (smc4 == null) continue;
 
                                         int countSme = smc4.value.Count;
-                                        securityRoleName = new string[100];
-                                        securityRoleObject = new string[100];
-                                        securityRoleApiOperation = new string[100];
-                                        securityRolePermission = new string[100];
-                                        int iRole = 0;
-
                                         for (int iSme = 0; iSme < countSme; iSme++)
                                         {
                                             var sme = smc4.value[iSme].submodelElement; // actual rule
@@ -3639,7 +3662,13 @@ namespace AasxRestServerLibrary
                                             var role = smc6?.value[0].submodelElement as AdminShell.Property;
                                             smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permissionsPerObject");
                                             var smc7 = smc6?.value[0].submodelElement as AdminShell.SubmodelElementCollection;
-                                            var obj = smc7?.value.FindFirstIdShortAs<AdminShell.Property>("object");
+                                            var objProp = smc7?.value.FindFirstIdShortAs<AdminShell.Property>("object");
+                                            var objRef = smc7?.value.FindFirstIdShortAs<AdminShell.ReferenceElement>("object");
+                                            object aasOrSubmodel = null;
+                                            if (objRef != null)
+                                            {
+                                                aasOrSubmodel = env.AasEnv.FindReferableByReference(objRef.value);
+                                            }
                                             var smc8 = smc7?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permission");
 
                                             int countSmc8 = smc8.value.Count;
@@ -3661,21 +3690,48 @@ namespace AasxRestServerLibrary
                                                 }
                                             }
 
+                                            string[] split = null;
                                             foreach (var l in listPermission)
                                             {
-                                                securityRoleName[iRole] = role.idShort;
-                                                string value = obj.value.ToLower();
-                                                securityRoleObject[iRole] = value;
-                                                if (value.Contains("api"))
+                                                if (role.idShort.Contains(":"))
                                                 {
-                                                    string[] split = value.Split(':');
-                                                    if (split[0] == "api")
+                                                    split = role.idShort.Split(':');
+                                                    securityRoleCondition[iRole] = split[0].ToLower();
+                                                    securityRoleName[iRole] = split[1];
+                                                }
+                                                else
+                                                {
+                                                    securityRoleCondition[iRole] = "";
+                                                    securityRoleName[iRole] = role.idShort;
+                                                }
+                                                if (objProp != null)
+                                                {
+                                                    string value = objProp.value.ToLower();
+                                                    securityRoleObject[iRole] = value;
+                                                    if (value.Contains("api"))
                                                     {
-                                                        securityRoleObject[iRole] = split[0];
-                                                        securityRoleApiOperation[iRole] = split[1];
+                                                        split = value.Split(':');
+                                                        if (split[0] == "api")
+                                                        {
+                                                            securityRoleObject[iRole] = split[0];
+                                                            securityRoleApiOperation[iRole] = split[1];
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (aasOrSubmodel != null)
+                                                    {
+                                                        securityRoleReference[iRole] = aasOrSubmodel;
+                                                        if (aasOrSubmodel is AdminShell.AdministrationShell)
+                                                            securityRoleObject[iRole] = "aas";
+                                                        if (aasOrSubmodel is AdminShell.Submodel)
+                                                            securityRoleObject[iRole] = "submodel";
                                                     }
                                                 }
                                                 securityRolePermission[iRole] = l.ToUpper();
+                                                if (kind != null)
+                                                    securityRoleKind[iRole] = kind.value.ToLower();
                                                 iRole++;
                                             }
                                             continue;
