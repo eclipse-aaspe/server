@@ -3520,18 +3520,24 @@ namespace AasxRestServerLibrary
 
         public static Dictionary<string, string> securityRightsAAS = null;
 
+        public class securityRoleClass
+        {
+            public string condition = null;
+            public string name = null;
+            public string objType = null;
+            public string apiOperation = null;
+            public object objReference = null;
+            public string permission = null;
+            public string kind = null;
+            public securityRoleClass() { }
+        }
+        public static List<securityRoleClass> securityRole = null;
+
         public static void securityInit()
         {
             withAuthentification = !Program.noSecurity;
 
-            int iRole = 0;
-            securityRoleCondition = new string[100];
-            securityRoleName = new string[100];
-            securityRoleObject = new string[100];
-            securityRoleReference = new object[100];
-            securityRoleApiOperation = new string[100];
-            securityRolePermission = new string[100];
-            securityRoleKind = new string[100];
+            securityRole = new List<securityRoleClass>();
 
             int aascount = AasxServer.Program.env.Length;
 
@@ -3693,21 +3699,22 @@ namespace AasxRestServerLibrary
                                             string[] split = null;
                                             foreach (var l in listPermission)
                                             {
+                                                securityRoleClass src = new securityRoleClass();
                                                 if (role.idShort.Contains(":"))
                                                 {
                                                     split = role.idShort.Split(':');
-                                                    securityRoleCondition[iRole] = split[0].ToLower();
-                                                    securityRoleName[iRole] = split[1];
+                                                    src.condition = split[0].ToLower();
+                                                    src.name = split[1];
                                                 }
                                                 else
                                                 {
-                                                    securityRoleCondition[iRole] = "";
-                                                    securityRoleName[iRole] = role.idShort;
+                                                    src.condition = "";
+                                                    src.name = role.idShort;
                                                 }
                                                 if (objProp != null)
                                                 {
                                                     string value = objProp.value.ToLower();
-                                                    securityRoleObject[iRole] = value;
+                                                    src.objType = value;
                                                     if (value.Contains("api"))
                                                     {
                                                         split = value.Split(':');
