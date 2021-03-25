@@ -3735,7 +3735,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-         public static void serverCertsInit()
+        public static void serverCertsInit()
         {
             return;
 
