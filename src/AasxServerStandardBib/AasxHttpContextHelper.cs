@@ -3290,19 +3290,9 @@ namespace AasxRestServerLibrary
                     // aasRights = securityRightsAAS[idshort];
 
                     bool addEntry = false;
-                    if (idshort == "xxxmyAASwithGlobalSecurityMetaModel")
+                    if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ", "aas", aas))
                     {
-                        if (checkAccessLevel(accessrights, "/server/listaas", "SECURITY"))
-                        {
-                            addEntry = true;
-                        }
-                    }
-                    else
-                    {
-                        if (checkAccessLevel(accessrights, "/server/listaas", "READ", "aas", aas))
-                        {
-                            addEntry = true;
-                        }
+                        addEntry = true;
                     }
 
                     if (addEntry)
@@ -3745,90 +3735,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        public static void securityInitOld()
-        {
-            withAuthentification = !Program.noSecurity;
-
-            int aascount = AasxServer.Program.env.Length;
-
-            for (int i = 0; i < aascount; i++)
-            {
-                if (AasxServer.Program.env[i] != null)
-                {
-                    if (AasxServer.Program.env[i].AasEnv.AdministrationShells[0].idShort == "Security")
-                    {
-                        foreach (var sm in AasxServer.Program.env[i].AasEnv.Submodels)
-                        {
-                            if (sm != null && sm.idShort != null)
-                            {
-                                int j;
-                                int count;
-
-                                if (sm.idShort == "User")
-                                {
-                                    Console.WriteLine("User");
-                                    count = sm.submodelElements.Count;
-
-                                    securityUserName = new string[count];
-                                    securityUserPassword = new string[count];
-
-                                    for (j = 0; j < count; j++)
-                                    {
-                                        var sme = sm.submodelElements[j].submodelElement;
-                                        var p = sme as AdminShell.Property;
-                                        securityUserName[j] = p.idShort;
-                                        securityUserPassword[j] = p.value;
-                                    }
-                                }
-                                if (sm.idShort == "SecurityRights" || sm.idShort == "SecurityRightsSubjects")
-                                {
-                                    Console.WriteLine("SecurityRightsSubjects");
-                                    count = sm.submodelElements.Count;
-
-                                    securityRightsName = new string[count];
-                                    securityRightsValue = new string[count];
-
-                                    for (j = 0; j < count; j++)
-                                    {
-                                        var sme = sm.submodelElements[j].submodelElement;
-                                        if (sme is AdminShell.Property p)
-                                        {
-                                            securityRightsName[j] = p.idShort;
-                                            securityRightsValue[j] = p.value;
-                                        }
-                                    }
-                                }
-                                if (sm.idShort == "SecurityRightsObjects")
-                                {
-                                    Console.WriteLine("SecurityRightsObjects");
-
-                                    securityRightsAAS = new Dictionary<string, string>();
-
-                                    count = sm.submodelElements.Count;
-
-                                    for (j = 0; j < count; j++)
-                                    {
-                                        var sme = sm.submodelElements[j].submodelElement;
-                                        if (sme is AdminShell.SubmodelElementCollection smc)
-                                        {
-                                            for (int k = 0; k < smc.value.Count; k++)
-                                            {
-                                                if (smc.value[k].submodelElement is AdminShell.Property p)
-                                                {
-                                                    securityRightsAAS.Add(p.idShort, smc.idShort);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        public static void serverCertsInit()
+         public static void serverCertsInit()
         {
             return;
 
