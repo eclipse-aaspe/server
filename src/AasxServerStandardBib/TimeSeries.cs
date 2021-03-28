@@ -10,6 +10,10 @@ namespace AasxTimeSeries
         {
             public AdminShell.SubmodelElementCollection block = null;
             public AdminShell.SubmodelElementCollection data = null;
+            public AdminShell.Property sampleMode = null;
+            public AdminShell.Property sampleRate = null;
+            public AdminShell.Property lowDataIndex = null;
+            public AdminShell.Property highDataIndex = null;
             public int maxSamples = 100;
             public int maxSamplesPerCollection = 10;
             public int samplesCount;
@@ -57,6 +61,24 @@ namespace AasxTimeSeries
                                             var sme2 = smec.value[iSmec].submodelElement;
                                             switch (sme2.idShort)
                                             {
+                                                case "data":
+                                                    if (sme2 is AdminShell.SubmodelElementCollection c)
+                                                    {
+                                                        tsb.data = c;
+                                                    }
+                                                    break;
+                                                case "sampleMode":
+                                                    if (sme2 is AdminShell.Property p0)
+                                                    {
+                                                        tsb.sampleMode = p0;
+                                                    }
+                                                    break;
+                                                case "sampleRate":
+                                                    if (sme2 is AdminShell.Property p1)
+                                                    {
+                                                        tsb.sampleMode = p1;
+                                                    }
+                                                    break;
                                                 case "maxSamples":
                                                     if (sme2 is AdminShell.Property p2)
                                                     {
@@ -69,10 +91,16 @@ namespace AasxTimeSeries
                                                         tsb.maxSamplesPerCollection = Convert.ToInt32(p3.value);
                                                     }
                                                     break;
-                                                case "data":
-                                                    if (sme2 is AdminShell.SubmodelElementCollection c)
+                                                case "lowDataIndex":
+                                                    if (sme2 is AdminShell.Property p4)
                                                     {
-                                                        tsb.data = c;
+                                                        tsb.lowDataIndex = p4;
+                                                    }
+                                                    break;
+                                                case "highDataIndex":
+                                                    if (sme2 is AdminShell.Property p5)
+                                                    {
+                                                        tsb.highDataIndex = p5;
                                                     }
                                                     break;
                                             }
@@ -130,6 +158,8 @@ namespace AasxTimeSeries
                     }
                     if (final || tsb.samplesValuesCount >= tsb.maxSamplesPerCollection)
                     {
+                        if (tsb.highDataIndex != null)
+                            tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
                         var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("Data" + tsb.samplesCollectionsCount++);
                         for (int i = 0; i < tsb.samplesProperties.Count; i++)
                         {
