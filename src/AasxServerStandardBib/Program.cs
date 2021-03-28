@@ -1328,8 +1328,6 @@ namespace AasxServer
                                                         j++;
                                                     }
                                                 }
-
-
                                             }
 
                                             if (toSubscribe)

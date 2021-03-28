@@ -82,6 +82,7 @@ namespace AasxTimeSeries
                                                 if (el is AdminShell.Property p)
                                                 {
                                                     tsb.samplesProperties.Add(p);
+                                                    tsb.samplesValues.Add("");
                                                 }
                                             }
                                         }
@@ -98,7 +99,7 @@ namespace AasxTimeSeries
             }
             dummy = 0;
 
-            for (int i = 0; i < 25; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 timeSeriesSampling();
             }
@@ -111,23 +112,16 @@ namespace AasxTimeSeries
         {
             foreach (var tsb in timeSeriesBlockList)
             {
-                if (tsb.samplesCount < tsb.maxSamples)
+                if (final || tsb.samplesCount+tsb.samplesValuesCount < tsb.maxSamples)
                 {
                     if (!final)
                     {
                         for (int i = 0; i < tsb.samplesProperties.Count; i++)
                         {
                             var p = tsb.samplesProperties[i];
-                            switch (tsb.samplesValues[i])
+                            if (tsb.samplesValues[i] != "")
                             {
-                                case null:
-                                    tsb.samplesValues[i] = "";
-                                    break;
-                                case "":
-                                    break;
-                                default:
-                                    tsb.samplesValues[i] += ",";
-                                    break;
+                                tsb.samplesValues[i] += ",";
                             }
                             // tsb.samplesValues[i] += p.value;
                             tsb.samplesValues[i] += dummy++;
