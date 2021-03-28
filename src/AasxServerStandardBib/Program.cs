@@ -455,6 +455,7 @@ namespace AasxServer
             Console.WriteLine("Please wait for the servers to start...");
 
             i40LanguageRuntime.initialize();
+            AasxTimeSeries.TimeSeries.timeSeriesInit();
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
