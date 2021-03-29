@@ -1,6 +1,8 @@
-﻿using AdminShellNS;
+﻿using AasxServer;
+using AdminShellNS;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace AasxTimeSeries
 {
@@ -10,17 +12,21 @@ namespace AasxTimeSeries
         {
             public AdminShell.SubmodelElementCollection block = null;
             public AdminShell.SubmodelElementCollection data = null;
+            public AdminShell.Property sampleStatus = null;
             public AdminShell.Property sampleMode = null;
             public AdminShell.Property sampleRate = null;
             public AdminShell.Property lowDataIndex = null;
             public AdminShell.Property highDataIndex = null;
-            public int maxSamples = 100;
-            public int maxSamplesPerCollection = 10;
-            public int samplesCount;
+            public AdminShell.Property maxSamples = null;
+            public AdminShell.Property actualSamples = null;
+            public AdminShell.Property maxSamplesInCollection = null;
+            public AdminShell.Property actualSamplesInCollection = null;
+            public int samplesCollectionsCount = 0;
+
             public List<AdminShell.Property> samplesProperties = null;
             public List<string> samplesValues = null;
             public int samplesValuesCount = 0;
-            public int samplesCollectionsCount = 0;
+
         }
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
         public static void timeSeriesInit()
@@ -62,45 +68,66 @@ namespace AasxTimeSeries
                                             switch (sme2.idShort)
                                             {
                                                 case "data":
-                                                    if (sme2 is AdminShell.SubmodelElementCollection c)
+                                                    if (sme2 is AdminShell.SubmodelElementCollection)
                                                     {
-                                                        tsb.data = c;
+                                                        tsb.data = sme2 as AdminShell.SubmodelElementCollection;
+                                                    }
+                                                    break;
+                                                case "sampleStatus":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.sampleStatus = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                                 case "sampleMode":
-                                                    if (sme2 is AdminShell.Property p0)
+                                                    if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.sampleMode = p0;
+                                                        tsb.sampleMode = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                                 case "sampleRate":
-                                                    if (sme2 is AdminShell.Property p1)
+                                                    if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.sampleMode = p1;
+                                                        tsb.sampleRate = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                                 case "maxSamples":
-                                                    if (sme2 is AdminShell.Property p2)
+                                                    if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.maxSamples = Convert.ToInt32(p2.value);
+                                                        tsb.maxSamples = sme2 as AdminShell.Property;
                                                     }
                                                     break;
-                                                case "maxSamplesPerCollection":
-                                                    if (sme2 is AdminShell.Property p3)
+                                                case "actualSamples":
+                                                    if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.maxSamplesPerCollection = Convert.ToInt32(p3.value);
+                                                        tsb.actualSamples = sme2 as AdminShell.Property;
+                                                        tsb.actualSamples.value = "0";
+                                                    }
+                                                    break;
+                                                case "maxSamplesInCollection":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.maxSamplesInCollection = sme2 as AdminShell.Property;
+                                                    }
+                                                    break;
+                                                case "actualSamplesInCollection":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.actualSamplesInCollection = sme2 as AdminShell.Property;
+                                                        tsb.actualSamplesInCollection.value = "0";
                                                     }
                                                     break;
                                                 case "lowDataIndex":
-                                                    if (sme2 is AdminShell.Property p4)
+                                                    if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.lowDataIndex = p4;
+                                                        tsb.lowDataIndex = sme2 as AdminShell.Property;
+                                                        tsb.lowDataIndex.value = "0";
                                                     }
                                                     break;
                                                 case "highDataIndex":
-                                                    if (sme2 is AdminShell.Property p5)
+                                                    if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.highDataIndex = p5;
+                                                        tsb.highDataIndex = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                             }
@@ -125,22 +152,68 @@ namespace AasxTimeSeries
                     }
                 }
             }
-            dummy = 0;
 
-            for (int i = 0; i < 1000; i++)
+            // test
+            if (test)
             {
-                timeSeriesSampling();
+                dummy = 0;
+                for (int i = 0; i < 500; i++)
+                {
+                    timeSeriesSampling(false);
+                }
+                timeSeriesSampling(true);
             }
-            timeSeriesSampling(true);
+            else
+            {
+                timeSeriesThread = new Thread(new ThreadStart(timeSeriesSamplingLoop));
+                timeSeriesThread.Start();
+            }
         }
+
+        static bool test = false;
+
+        static Thread timeSeriesThread;
 
         static int dummy = 0;
 
-        public static void timeSeriesSampling(bool final = false)
+        public static void timeSeriesSamplingLoop()
         {
+            /*
+            while(timeSeriesSampling(false));
+            timeSeriesSampling(true);
+            */
+            while (true)
+            {
+                timeSeriesSampling(false);
+            }
+        }
+
+        public static bool timeSeriesSampling(bool final)
+        {
+            int wait = 0;
+
             foreach (var tsb in timeSeriesBlockList)
             {
-                if (final || tsb.samplesCount+tsb.samplesValuesCount < tsb.maxSamples)
+                if (tsb.sampleStatus.value == "stop")
+                {
+                    tsb.sampleStatus.value = "stopped";
+                    final = true;
+                }
+                else
+                {
+                    if (tsb.sampleStatus.value != "start")
+                        continue;
+                }
+
+                if (tsb.sampleRate != null)
+                    wait = Convert.ToInt32(tsb.sampleRate.value);
+
+                int actualSamples = Convert.ToInt32(tsb.actualSamples.value);
+                int maxSamples = Convert.ToInt32(tsb.maxSamples.value);
+                int actualSamplesInCollection = Convert.ToInt32(tsb.actualSamplesInCollection.value);
+                int maxSamplesInCollection = Convert.ToInt32(tsb.maxSamplesInCollection.value);
+
+                if (final || actualSamples < maxSamples)
                 {
                     if (!final)
                     {
@@ -155,25 +228,58 @@ namespace AasxTimeSeries
                             tsb.samplesValues[i] += dummy++;
                         }
                         tsb.samplesValuesCount++;
-                    }
-                    if (final || tsb.samplesValuesCount >= tsb.maxSamplesPerCollection)
-                    {
-                        if (tsb.highDataIndex != null)
-                            tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                        var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("Data" + tsb.samplesCollectionsCount++);
-                        for (int i = 0; i < tsb.samplesProperties.Count; i++)
+                        actualSamples++;
+                        tsb.actualSamples.value = "" + actualSamples;
+                        actualSamplesInCollection++;
+                        tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                        Program.signalNewData(0);
+                        if (actualSamples >= maxSamples)
                         {
-                            var p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
-                            p.value = tsb.samplesValues[i];
-                            tsb.samplesValues[i] = "";
-                            nextCollection.Add(p);
+                            if (tsb.sampleMode.value == "continuous")
+                            {
+                                var first = 
+                                    tsb.data.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(
+                                        "data" + tsb.lowDataIndex.value);
+                                if (first != null)
+                                {
+                                    actualSamples -= maxSamplesInCollection;
+                                    tsb.actualSamples.value = "" + actualSamples;
+                                    tsb.data.Remove(first);
+                                    tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
+                                    Program.signalNewData(1);
+                                }
+                            }
                         }
-                        tsb.data.Add(nextCollection);
-                        tsb.samplesCount += tsb.samplesValuesCount;
-                        tsb.samplesValuesCount = 0;
+                    }
+                    if (final || actualSamplesInCollection >= maxSamplesInCollection)
+                    {
+                        if (actualSamplesInCollection > 0)
+                        {
+                            if (tsb.highDataIndex != null)
+                                tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
+                            var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
+                            for (int i = 0; i < tsb.samplesProperties.Count; i++)
+                            {
+                                var p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
+                                p.value = tsb.samplesValues[i];
+                                tsb.samplesValues[i] = "";
+                                nextCollection.Add(p);
+                            }
+                            tsb.data.Add(nextCollection);
+                            tsb.samplesValuesCount = 0;
+                            actualSamplesInCollection = 0;
+                            tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                            Program.signalNewData(1);
+                        }
                     }
                 }
             }
+            if (wait != 0)
+            {
+                if (!test)
+                    Thread.Sleep(wait);
+            }
+            return !final;
         }
     }
 }

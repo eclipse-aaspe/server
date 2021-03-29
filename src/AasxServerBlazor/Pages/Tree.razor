@@ -4,7 +4,7 @@
 
 @typeparam TNode
 
-<div class="uic-tree @(Visible ? "" : "uic-tree--hidden")">
+<div class="uic-tree @(Visible ? "" : "uic-tree--hidden")" style="word-wrap:break-word;">
 
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
@@ -12,7 +12,7 @@
         var nodeSelected = node.Equals(SelectedNode);
         var hasChilds = HasChildNodes(node);
 
-    <div>
+    <div style="word-wrap:break-word;">
 
         @if (hasChilds)
         {
@@ -21,7 +21,7 @@
             </span>
         }
 
-        <div class="uic-tree__title">
+        <div class="uic-tree__title" style="word-wrap:break-word;">
             <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))">
                 @TitleTemplate(node)
             </span>
