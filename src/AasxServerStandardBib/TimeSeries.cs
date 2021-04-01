@@ -1,8 +1,17 @@
 ﻿using AasxServer;
 using AdminShellNS;
+using Newtonsoft.Json.Linq;
+using Opc.Ua;
+using Opc.Ua.Client;
+using Opc.Ua.Configuration;
+using SampleClient;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AasxTimeSeries
 {
@@ -21,12 +30,19 @@ namespace AasxTimeSeries
             public AdminShell.Property actualSamples = null;
             public AdminShell.Property maxSamplesInCollection = null;
             public AdminShell.Property actualSamplesInCollection = null;
-            public int samplesCollectionsCount = 0;
 
+            public string sourceType = "";
+            public string sourceAddress = "";
+            public string username = "";
+            public string password = "";
+            public int samplesCollectionsCount = 0;
             public List<AdminShell.Property> samplesProperties = null;
             public List<string> samplesValues = null;
+            public string samplesTimeStamp = "";
             public int samplesValuesCount = 0;
 
+            public List<string> opcNodes = null;
+            public DateTime opcLastTimeStamp;
         }
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
         public static void timeSeriesInit()
@@ -61,12 +77,40 @@ namespace AasxTimeSeries
                                         tsb.block = smec;
                                         tsb.samplesProperties = new List<AdminShell.Property>();
                                         tsb.samplesValues = new List<string>();
+                                        tsb.opcLastTimeStamp = DateTime.UtcNow - TimeSpan.FromMinutes(1) + TimeSpan.FromMinutes(120);
 
                                         for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                         {
                                             var sme2 = smec.value[iSmec].submodelElement;
-                                            switch (sme2.idShort)
+                                            var idShort = sme2.idShort;
+                                            if (idShort.Contains("opcNode"))
+                                                idShort = "opcNode";
+                                            switch (idShort)
                                             {
+                                                case "sourceType":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.sourceType = (sme2 as AdminShell.Property).value;
+                                                    }
+                                                    break;
+                                                case "sourceAddress":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.sourceAddress = (sme2 as AdminShell.Property).value;
+                                                    }
+                                                    break;
+                                                case "username":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.username = (sme2 as AdminShell.Property).value;
+                                                    }
+                                                    break;
+                                                case "password":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.password = (sme2 as AdminShell.Property).value;
+                                                    }
+                                                    break;
                                                 case "data":
                                                     if (sme2 is AdminShell.SubmodelElementCollection)
                                                     {
@@ -130,8 +174,21 @@ namespace AasxTimeSeries
                                                         tsb.highDataIndex = sme2 as AdminShell.Property;
                                                     }
                                                     break;
+                                                case "opcNode":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        string node = (sme2 as AdminShell.Property).value;
+                                                        string[] split = node.Split(',');
+                                                        if (tsb.opcNodes == null)
+                                                            tsb.opcNodes = new List<string>();
+                                                        tsb.opcNodes.Add(split[1] + "," + split[2]);
+                                                        var p = AdminShell.Property.CreateNew(split[0]);
+                                                        tsb.samplesProperties.Add(p);
+                                                        tsb.samplesValues.Add("");
+                                                    }
+                                                    break;
                                             }
-                                            if (sme2 is AdminShell.ReferenceElement r)
+                                            if (tsb.sourceType == "aas" && sme2 is AdminShell.ReferenceElement r)
                                             {
                                                 var el = env.AasEnv.FindReferableByReference(r.value);
                                                 if (el is AdminShell.Property p)
@@ -141,10 +198,7 @@ namespace AasxTimeSeries
                                                 }
                                             }
                                         }
-                                        if (tsb.samplesProperties.Count != 0 && tsb.data != null)
-                                        {
-                                            timeSeriesBlockList.Add(tsb);
-                                        }
+                                        timeSeriesBlockList.Add(tsb);
                                     }
                                 }
                             }
@@ -215,40 +269,128 @@ namespace AasxTimeSeries
 
                 if (final || actualSamples < maxSamples)
                 {
+                    int updateMode = 0;
                     if (!final)
                     {
-                        for (int i = 0; i < tsb.samplesProperties.Count; i++)
+                        int valueCount = 1;
+                        if (tsb.sourceType == "json" && tsb.sourceAddress != "")
                         {
-                            var p = tsb.samplesProperties[i];
-                            if (tsb.samplesValues[i] != "")
+                            AdminShell.SubmodelElementCollection c =
+                                tsb.block.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("jsonData");
+                            if (c == null)
                             {
-                                tsb.samplesValues[i] += ",";
+                                c = new AdminShellV20.SubmodelElementCollection();
+                                c.idShort = "jsonData";
+                                tsb.block.Add(c);
                             }
-                            // tsb.samplesValues[i] += p.value;
-                            tsb.samplesValues[i] += dummy++;
-                        }
-                        tsb.samplesValuesCount++;
-                        actualSamples++;
-                        tsb.actualSamples.value = "" + actualSamples;
-                        actualSamplesInCollection++;
-                        tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                        Program.signalNewData(0);
-                        if (actualSamples >= maxSamples)
-                        {
-                            if (tsb.sampleMode.value == "continuous")
+                            parseJSON(tsb.sourceAddress, "", "", c);
+
+                            foreach (var el in c.value)
                             {
-                                var first = 
-                                    tsb.data.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(
-                                        "data" + tsb.lowDataIndex.value);
-                                if (first != null)
+                                if (el.submodelElement is AdminShell.Property p)
                                 {
-                                    actualSamples -= maxSamplesInCollection;
-                                    tsb.actualSamples.value = "" + actualSamples;
-                                    tsb.data.Remove(first);
-                                    tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
-                                    Program.signalNewData(1);
+                                    if (!tsb.samplesProperties.Contains(p))
+                                    {
+                                        tsb.samplesProperties.Add(p);
+                                        tsb.samplesValues.Add("");
+                                    }
                                 }
                             }
+                        }
+                        if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
+                        {
+                            GetHistory(tsb);
+                            valueCount = table.Count;
+                        }
+
+                        DateTime dt;
+                        int valueIndex = 0;
+                        while (valueIndex < valueCount)
+                        {
+                            if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
+                            {
+                                dt = (DateTime)table[valueIndex][0];
+                                Console.WriteLine(valueIndex + " " + dt + " " + table[valueIndex][1] + " " + table[valueIndex][2]);
+                            }
+                            else
+                            {
+                                dt = DateTime.Now;
+                            }
+                            if (tsb.samplesTimeStamp == "")
+                            {
+                                tsb.samplesTimeStamp += dt.ToString("yy-MM-dd HH:mm:ss.fff");
+                            }
+                            else
+                            {
+                                tsb.samplesTimeStamp += "," + dt.ToString("HH:mm:ss.fff");
+                            }
+
+                            for (int i = 0; i < tsb.samplesProperties.Count; i++)
+                            {
+                                if (tsb.samplesValues[i] != "")
+                                {
+                                    tsb.samplesValues[i] += ",";
+                                }
+
+                                if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
+                                {
+                                    tsb.samplesValues[i] += table[valueIndex][i+1].ToString();
+                                }
+                                else
+                                {
+                                    var p = tsb.samplesProperties[i];
+                                    tsb.samplesValues[i] += p.value;
+                                    // tsb.samplesValues[i] += dummy++;
+                                }
+                            }
+                            tsb.samplesValuesCount++;
+                            actualSamples++;
+                            tsb.actualSamples.value = "" + actualSamples;
+                            actualSamplesInCollection++;
+                            tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                            if (actualSamples >= maxSamples)
+                            {
+                                if (tsb.sampleMode.value == "continuous")
+                                {
+                                    var first =
+                                        tsb.data.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(
+                                            "data" + tsb.lowDataIndex.value);
+                                    if (first != null)
+                                    {
+                                        actualSamples -= maxSamplesInCollection;
+                                        tsb.actualSamples.value = "" + actualSamples;
+                                        tsb.data.Remove(first);
+                                        tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
+                                        updateMode = 1;
+                                    }
+                                }
+                            }
+                            if (actualSamplesInCollection >= maxSamplesInCollection)
+                            {
+                                if (actualSamplesInCollection > 0)
+                                {
+                                    if (tsb.highDataIndex != null)
+                                        tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
+                                    var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
+                                    var p = AdminShell.Property.CreateNew("timeStamp");
+                                    p.value = tsb.samplesTimeStamp;
+                                    tsb.samplesTimeStamp = "";
+                                    nextCollection.Add(p);
+                                    for (int i = 0; i < tsb.samplesProperties.Count; i++)
+                                    {
+                                        p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
+                                        p.value = tsb.samplesValues[i];
+                                        tsb.samplesValues[i] = "";
+                                        nextCollection.Add(p);
+                                    }
+                                    tsb.data.Add(nextCollection);
+                                    tsb.samplesValuesCount = 0;
+                                    actualSamplesInCollection = 0;
+                                    tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                                    updateMode = 1;
+                                }
+                            }
+                            valueIndex++;
                         }
                     }
                     if (final || actualSamplesInCollection >= maxSamplesInCollection)
@@ -258,9 +400,13 @@ namespace AasxTimeSeries
                             if (tsb.highDataIndex != null)
                                 tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
                             var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
+                            var p = AdminShell.Property.CreateNew("timeStamp");
+                            p.value = tsb.samplesTimeStamp;
+                            tsb.samplesTimeStamp = "";
+                            nextCollection.Add(p);
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
-                                var p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
+                                p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
                                 p.value = tsb.samplesValues[i];
                                 tsb.samplesValues[i] = "";
                                 nextCollection.Add(p);
@@ -269,9 +415,10 @@ namespace AasxTimeSeries
                             tsb.samplesValuesCount = 0;
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                            Program.signalNewData(1);
+                            updateMode = 1;
                         }
                     }
+                    Program.signalNewData(updateMode);
                 }
             }
             if (wait != 0)
@@ -280,6 +427,136 @@ namespace AasxTimeSeries
                     Thread.Sleep(wait);
             }
             return !final;
+        }
+
+        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c)
+        {
+            var handler = new HttpClientHandler();
+            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            var client = new HttpClient(handler);
+
+            if (username != "" && password != "")
+            {
+                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                        Convert.ToBase64String(authToken));
+            }
+
+            Console.WriteLine("GetJSON: " + url);
+            string response = client.GetStringAsync(url).Result;
+            Console.WriteLine(response);
+
+            if (response != "")
+            {
+                JObject parsed = JObject.Parse(response);
+                Program.parseJson(c, parsed);
+            }
+        }
+
+        static List<List<object>> table = null;
+        static string ErrorMessage { get; set; }
+        static UASampleClient opc = null;
+        static Opc.Ua.Client.Session session = null;
+        static DateTime startTime;
+        static DateTime endTime;
+
+        public static void GetHistory(TimeSeriesBlock tsb)
+        {
+            Console.WriteLine("Read OPC UA Historical Data:");
+            try
+            {
+                ErrorMessage = "";
+                startTime = tsb.opcLastTimeStamp;
+                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
+                tsb.opcLastTimeStamp = endTime;
+                Connect(tsb);
+                GetData(tsb);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            session?.Close();
+            session?.Dispose();
+            session = null;
+        }
+        public static void Connect(TimeSeriesBlock tsb)
+        {
+            if (opc == null)
+                opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
+            opc.ConsoleSampleClient().Wait();
+            session = opc.session;
+        }
+        public static void GetData(TimeSeriesBlock tsb)
+        {
+            if (session != null)
+            {
+                ReadRawModifiedDetails details = new ReadRawModifiedDetails();
+                details.StartTime = startTime;
+                details.EndTime = endTime;
+                details.NumValuesPerNode = 0;
+                details.IsReadModified = false;
+                details.ReturnBounds = true;
+
+                var nodesToRead = new HistoryReadValueIdCollection();
+                for (int i = 0; i < tsb.opcNodes.Count; i++)
+                {
+                    var nodeToRead = new HistoryReadValueId();
+                    string[] split = tsb.opcNodes[i].Split(',');
+                    nodeToRead.NodeId = new NodeId(split[1], (ushort)Convert.ToInt32(split[0]));
+                    nodesToRead.Add(nodeToRead);
+                }
+
+                table = new List<List<object>>();
+
+                HistoryReadResultCollection results = null;
+                DiagnosticInfoCollection diagnosticInfos = null;
+
+                bool loop = true;
+                while (loop)
+                {
+                    session.HistoryRead(
+                        null,
+                        new ExtensionObject(details),
+                        TimestampsToReturn.Both,
+                        false,
+                        nodesToRead,
+                        out results,
+                        out diagnosticInfos);
+
+                    ClientBase.ValidateResponse(results, nodesToRead);
+                    ClientBase.ValidateDiagnosticInfos(diagnosticInfos, nodesToRead);
+
+                    foreach (var res in results)
+                    {
+                        if (StatusCode.IsBad(res.StatusCode))
+                        {
+                            throw new ServiceResultException(res.StatusCode);
+                        }
+                    }
+
+                    var historyData1 = ExtensionObject.ToEncodeable(results[0].HistoryData) as HistoryData;
+                    var historyData2 = ExtensionObject.ToEncodeable(results[1].HistoryData) as HistoryData;
+                    for (int i = 0; i < historyData1.DataValues.Count; i++)
+                    {
+                        var row = new List<object>();
+                        row.Add(historyData1.DataValues[i].SourceTimestamp);
+                        row.Add(historyData1.DataValues[i].Value);
+                        row.Add(historyData2.DataValues[i].Value);
+                        table.Add(row);
+                    }
+
+                    for (int i = 0; i < results.Count; i++)
+                    {
+                        if (results[i].ContinuationPoint == null || results[i].ContinuationPoint.Length == 0)
+                        {
+                            loop = false;
+                            break;
+                        }
+                        nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
+                    }
+                }
+            }
         }
     }
 }

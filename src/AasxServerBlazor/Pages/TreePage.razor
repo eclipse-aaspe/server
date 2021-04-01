@@ -10,7 +10,7 @@
 
     <div class="col-12 row">
         <br />
-        <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;position:sticky">
+        <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
             @updateVisibleTree(Items, selectedNode)
             @if (Program.isLoading)
             {<span style="color:white;background-color:blue;">Loading...</span>}
@@ -27,7 +27,7 @@
             </Tree>
         </div>
         <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
-            <div class="sticky-top" style="word-wrap:break-word">
+            <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
                 @{
                     <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
                     for (int line = 0; line < 6; line++)

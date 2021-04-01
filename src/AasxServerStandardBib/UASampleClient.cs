@@ -23,7 +23,7 @@ namespace SampleClient
     public class UASampleClient
     {
         const int ReconnectPeriod = 10;
-        Session session;
+        public Session session;
         SessionReconnectHandler reconnectHandler;
         string endpointURL;
         int clientRunTime = Timeout.Infinite;

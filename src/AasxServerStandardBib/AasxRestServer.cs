@@ -34,6 +34,52 @@ namespace AasxRestServerLibrary
         [RestResource]
         public class TestResource
         {
+            // test data server
+
+            public static int varInt1 = -100; // -100..100
+            public static int varInt2 = 0; // 0..10
+            public static double varFloat3 = 0; // sin(varInt1/30);
+            class testData
+            {
+                public int varInt1;
+                public int varInt2;
+                public float varFloat3;
+            }
+
+            void sendJson(IHttpContext context, object o)
+            {
+                var json = JsonConvert.SerializeObject(o, Formatting.Indented);
+                var buffer = context.Request.ContentEncoding.GetBytes(json);
+                var length = buffer.Length;
+
+                context.Response.ContentType = ContentType.JSON;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = length;
+                context.Response.SendResponse(buffer);
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/data4(/|)$")]
+
+            public IHttpContext GetData4(IHttpContext context)
+            {
+                varInt1++;
+                if (varInt1 > 100)
+                    varInt1 = -100;
+                varInt2++;
+                if (varInt2 > 10)
+                    varInt2 = 0;
+                varFloat3 = Math.Sin(varInt1 * 180 / 100);
+
+                testData td = new testData();
+                td.varInt1 = varInt1;
+                td.varInt2 = varInt2;
+                td.varFloat3 = (float)varFloat3;
+
+                sendJson(context, td);
+                return context;
+            }
+
+
             public static AasxHttpContextHelper helper = null;
 
             // Basic AAS + Asset 
