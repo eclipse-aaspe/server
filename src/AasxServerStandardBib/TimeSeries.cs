@@ -31,6 +31,7 @@ namespace AasxTimeSeries
             public AdminShell.Property maxSamplesInCollection = null;
             public AdminShell.Property actualSamplesInCollection = null;
 
+            public int threadCounter = 0;
             public string sourceType = "";
             public string sourceAddress = "";
             public string username = "";
@@ -198,6 +199,8 @@ namespace AasxTimeSeries
                                                 }
                                             }
                                         }
+                                        if (tsb.sampleRate != null)
+                                            tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.value);
                                         timeSeriesBlockList.Add(tsb);
                                     }
                                 }
@@ -259,8 +262,14 @@ namespace AasxTimeSeries
                         continue;
                 }
 
-                if (tsb.sampleRate != null)
-                    wait = Convert.ToInt32(tsb.sampleRate.value);
+                if (tsb.sampleRate == null)
+                    continue;
+
+                tsb.threadCounter -= 100;
+                if (tsb.threadCounter > 0)
+                    continue;
+
+                tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.value);
 
                 int actualSamples = Convert.ToInt32(tsb.actualSamples.value);
                 int maxSamples = Convert.ToInt32(tsb.maxSamples.value);
@@ -302,6 +311,10 @@ namespace AasxTimeSeries
                             GetHistory(tsb);
                             valueCount = table.Count;
                         }
+                        if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
+                        {
+                            valueCount = GetDAData(tsb);
+                        }
 
                         DateTime dt;
                         int valueIndex = 0;
@@ -332,9 +345,15 @@ namespace AasxTimeSeries
                                     tsb.samplesValues[i] += ",";
                                 }
 
-                                if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
+                                if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda") && tsb.sourceAddress != "")
                                 {
-                                    tsb.samplesValues[i] += table[valueIndex][i+1].ToString();
+                                    if (tsb.sourceType == "opchd")
+                                        tsb.samplesValues[i] += table[valueIndex][i+1].ToString();
+                                    if (tsb.sourceType == "opcda")
+                                    {
+                                        tsb.samplesValues[i] += opcDAValues[i];
+                                        Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
+                                    }
                                 }
                                 else
                                 {
@@ -421,11 +440,10 @@ namespace AasxTimeSeries
                     Program.signalNewData(updateMode);
                 }
             }
-            if (wait != 0)
-            {
-                if (!test)
-                    Thread.Sleep(wait);
-            }
+
+            if (!test)
+                Thread.Sleep(100);
+
             return !final;
         }
 
@@ -459,6 +477,37 @@ namespace AasxTimeSeries
         static Opc.Ua.Client.Session session = null;
         static DateTime startTime;
         static DateTime endTime;
+        static List<string> opcDAValues = null;
+
+        public static int GetDAData(TimeSeriesBlock tsb)
+        {
+            Console.WriteLine("Read OPC DA Data:");
+            try
+            {
+                ErrorMessage = "";
+                Connect(tsb);
+                if (session != null)
+                {
+                    opcDAValues = new List<string>();
+                    for (int i = 0; i < tsb.opcNodes.Count; i++)
+                    {
+                        string[] split = tsb.opcNodes[i].Split(',');
+                        string value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
+                        opcDAValues.Add(value);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+                return 0;
+            }
+            session?.Close();
+            session?.Dispose();
+            session = null;
+
+            return 1;
+        }
 
         public static void GetHistory(TimeSeriesBlock tsb)
         {
