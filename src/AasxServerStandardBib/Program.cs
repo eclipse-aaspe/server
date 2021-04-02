@@ -914,6 +914,19 @@ namespace AasxServer
 
         static List<TransmitData> tdPending = new List<TransmitData> { };
 
+        public static void connectPublish(string type, string json)
+        {
+            if (connectServer == "")
+                return;
+            
+            TransmitData tdp = new TransmitData();
+
+            tdp.source = connectNodeName;
+            tdp.type = type;
+            tdp.publish.Add(json);
+            tdPending.Add(tdp);
+        }
+
         public static void connectThreadLoop()
         {
             bool newConnectData = false;
@@ -1255,6 +1268,32 @@ namespace AasxServer
                                     getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
                                     getaasxFile_fileLenBinary = binaryFile.Length;
                                     getaasxFile_fileTransmitted = 0;
+                                }
+                            }
+
+                            if (td2.type.ToLower().Contains("timeseries"))
+                            {
+                                string[] split = td2.type.Split('.');
+                                foreach (var smc in AasxTimeSeries.TimeSeries.timeSeriesSubscribe)
+                                {
+                                    if (smc.idShort == split[0])
+                                    {
+                                        foreach (string data in td2.publish)
+                                        {
+                                            using (TextReader reader = new StringReader(data))
+                                            {
+                                                JsonSerializer serializer = new JsonSerializer();
+                                                serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                                var smcData = (AdminShell.SubmodelElementCollection)serializer.Deserialize(reader,
+                                                    typeof(AdminShell.SubmodelElementCollection));
+                                                if (smcData != null)
+                                                {
+                                                    smc.Add(smcData);
+                                                    signalNewData(1);
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 

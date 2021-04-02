@@ -1,5 +1,6 @@
 ﻿using AasxServer;
 using AdminShellNS;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -46,9 +47,11 @@ namespace AasxTimeSeries
             public DateTime opcLastTimeStamp;
         }
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
+        static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()
         {
             timeSeriesBlockList = new List<TimeSeriesBlock>();
+            timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
 
             int aascount = AasxServer.Program.env.Length;
 
@@ -71,6 +74,25 @@ namespace AasxTimeSeries
                                     var sme = sm.submodelElements[iSme].submodelElement;
                                     if (sme is AdminShell.SubmodelElementCollection && sme.idShort.Contains("TimeSeries"))
                                     {
+                                        bool nextSme = false;
+                                        if (sme.qualifiers.Count > 0)
+                                        {
+                                            int j = 0;
+                                            while (j < sme.qualifiers.Count)
+                                            {
+                                                var q = sme.qualifiers[j] as AdminShell.Qualifier;
+                                                if (q.type == "SUBSCRIBE")
+                                                {
+                                                    timeSeriesSubscribe.Add(sme as AdminShell.SubmodelElementCollection);
+                                                    nextSme = true;
+                                                    break;
+                                                }
+                                                j++;
+                                            }
+                                        }
+                                        if (nextSme)
+                                            continue;
+
                                         var smec = sme as AdminShell.SubmodelElementCollection;
                                         int countSmec = smec.value.Count;
 
@@ -247,8 +269,6 @@ namespace AasxTimeSeries
 
         public static bool timeSeriesSampling(bool final)
         {
-            int wait = 0;
-
             foreach (var tsb in timeSeriesBlockList)
             {
                 if (tsb.sampleStatus.value == "stop")
@@ -407,6 +427,12 @@ namespace AasxTimeSeries
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
                                     updateMode = 1;
+                                    var json = JsonConvert.SerializeObject(nextCollection, Newtonsoft.Json.Formatting.Indented,
+                                                                        new JsonSerializerSettings
+                                                                        {
+                                                                            NullValueHandling = NullValueHandling.Ignore
+                                                                        });
+                                    Program.connectPublish(tsb.block.idShort + "." + nextCollection.idShort, json);
                                 }
                             }
                             valueIndex++;
