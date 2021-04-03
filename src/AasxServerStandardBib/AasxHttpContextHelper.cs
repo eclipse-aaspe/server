@@ -3395,8 +3395,15 @@ namespace AasxRestServerLibrary
                 */
             }
 
+            // save actual data as file
+            lock (Program.changeAasxFile)
+            {
+                Program.env[fileIndex].SaveAs("temp.aasx");
+            }
+
             // return as FILE
-            FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
+            // FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
+            FileStream packageStream = File.OpenRead("temp.aasx");
 
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, packageStream,
