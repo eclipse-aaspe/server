@@ -3398,12 +3398,12 @@ namespace AasxRestServerLibrary
             // save actual data as file
             lock (Program.changeAasxFile)
             {
-                Program.env[fileIndex].SaveAs("temp.aasx");
+                Program.env[fileIndex].SaveAs("./temp/temp.aasx");
             }
 
             // return as FILE
             // FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
-            FileStream packageStream = File.OpenRead("temp.aasx");
+            FileStream packageStream = File.OpenRead("./temp/temp.aasx");
 
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendStreamResponse(context, packageStream,
@@ -3657,7 +3657,16 @@ namespace AasxRestServerLibrary
                                         var sme = smc4.value[iSme].submodelElement; // actual rule
                                         var smc5 = sme as AdminShell.SubmodelElementCollection;
                                         var smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("targetSubjectAttributes");
-                                        var role = smc6?.value[0].submodelElement as AdminShell.Property;
+                                        List<AdminShell.Property> role = new List<AdminShellV20.Property>();
+                                        int iRole = 0;
+                                        while (smc6?.value.Count > iRole)
+                                        {
+                                            if (smc6?.value[iRole].submodelElement is AdminShell.Property rp)
+                                            {
+                                                role.Add(rp);
+                                                iRole++;
+                                            }
+                                        }
                                         smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permissionsPerObject");
                                         var smc7 = smc6?.value[0].submodelElement as AdminShell.SubmodelElementCollection;
                                         var objProp = smc7?.value.FindFirstIdShortAs<AdminShell.Property>("object");
@@ -3691,47 +3700,50 @@ namespace AasxRestServerLibrary
                                         string[] split = null;
                                         foreach (var l in listPermission)
                                         {
-                                            securityRoleClass src = new securityRoleClass();
-                                            if (role.idShort.Contains(":"))
+                                            foreach (var r in role)
                                             {
-                                                split = role.idShort.Split(':');
-                                                src.condition = split[0].ToLower();
-                                                src.name = split[1];
-                                            }
-                                            else
-                                            {
-                                                src.condition = "";
-                                                src.name = role.idShort;
-                                            }
-                                            if (objProp != null)
-                                            {
-                                                string value = objProp.value.ToLower();
-                                                src.objType = value;
-                                                if (value.Contains("api"))
+                                                securityRoleClass src = new securityRoleClass();
+                                                if (r.idShort.Contains(":"))
                                                 {
-                                                    split = value.Split(':');
-                                                    if (split[0] == "api")
+                                                    split = r.idShort.Split(':');
+                                                    src.condition = split[0].ToLower();
+                                                    src.name = split[1];
+                                                }
+                                                else
+                                                {
+                                                    src.condition = "";
+                                                    src.name = r.idShort;
+                                                }
+                                                if (objProp != null)
+                                                {
+                                                    string value = objProp.value.ToLower();
+                                                    src.objType = value;
+                                                    if (value.Contains("api"))
                                                     {
-                                                        src.objType = split[0];
-                                                        src.apiOperation = split[1];
+                                                        split = value.Split(':');
+                                                        if (split[0] == "api")
+                                                        {
+                                                            src.objType = split[0];
+                                                            src.apiOperation = split[1];
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            else
-                                            {
-                                                if (aasOrSubmodel != null)
+                                                else
                                                 {
-                                                    src.objReference = aasOrSubmodel;
-                                                    if (aasOrSubmodel is AdminShell.AdministrationShell)
-                                                        src.objType = "aas";
-                                                    if (aasOrSubmodel is AdminShell.Submodel)
-                                                        src.objType = "submodel";
+                                                    if (aasOrSubmodel != null)
+                                                    {
+                                                        src.objReference = aasOrSubmodel;
+                                                        if (aasOrSubmodel is AdminShell.AdministrationShell)
+                                                            src.objType = "aas";
+                                                        if (aasOrSubmodel is AdminShell.Submodel)
+                                                            src.objType = "submodel";
+                                                    }
                                                 }
+                                                src.permission = l.ToUpper();
+                                                if (kind != null)
+                                                    src.kind = kind.value.ToLower();
+                                                securityRole.Add(src);
                                             }
-                                            src.permission = l.ToUpper();
-                                            if (kind != null)
-                                                src.kind = kind.value.ToLower();
-                                            securityRole.Add(src);
                                         }
                                         continue;
                                     }
