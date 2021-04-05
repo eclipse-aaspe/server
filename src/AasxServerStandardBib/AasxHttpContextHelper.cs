@@ -3396,9 +3396,11 @@ namespace AasxRestServerLibrary
             }
 
             // save actual data as file
+
             lock (Program.changeAasxFile)
             {
-                Program.env[fileIndex].SaveAs("./temp/temp.aasx");
+                var tempAasEnv = new AdminShellPackageEnv(Program.env[fileIndex].AasEnv);
+                tempAasEnv.SaveAs("./temp/temp.aasx");
             }
 
             // return as FILE
