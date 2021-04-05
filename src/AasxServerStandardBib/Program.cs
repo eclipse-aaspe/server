@@ -918,7 +918,7 @@ namespace AasxServer
         {
             if (connectServer == "")
                 return;
-            
+
             TransmitData tdp = new TransmitData();
 
             tdp.source = connectNodeName;
@@ -1808,7 +1808,7 @@ namespace AasxServer
                                             Password = p.value;
                                             break;
                                         case "OPCNamespace": // Namespace
-                                                             // TODO: if not int, currently throws nondescriptive error
+                                            // TODO: if not int, currently throws nondescriptive error
                                             if (int.TryParse(p.value, out int tmpI))
                                                 Namespace = tmpI;
                                             break;
@@ -2146,7 +2146,8 @@ namespace AasxServer
                         foreach (JObject el in jp1.Value)
                         {
                             string n = jp1.Name + "_array_" + count++;
-                            AdminShell.SubmodelElementCollection  c3 = c2.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(n);
+                            AdminShell.SubmodelElementCollection c3 =
+                                c2.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(n);
                             if (c3 == null)
                             {
                                 c3 = AdminShell.SubmodelElementCollection.CreateNew(n);
