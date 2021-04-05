@@ -455,6 +455,7 @@ namespace AasxServer
             Console.WriteLine("Please wait for the servers to start...");
 
             i40LanguageRuntime.initialize();
+            AasxTimeSeries.TimeSeries.timeSeriesInit();
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
@@ -913,6 +914,19 @@ namespace AasxServer
 
         static List<TransmitData> tdPending = new List<TransmitData> { };
 
+        public static void connectPublish(string type, string json)
+        {
+            if (connectServer == "")
+                return;
+
+            TransmitData tdp = new TransmitData();
+
+            tdp.source = connectNodeName;
+            tdp.type = type;
+            tdp.publish.Add(json);
+            tdPending.Add(tdp);
+        }
+
         public static void connectThreadLoop()
         {
             bool newConnectData = false;
@@ -1257,6 +1271,32 @@ namespace AasxServer
                                 }
                             }
 
+                            if (td2.type.ToLower().Contains("timeseries"))
+                            {
+                                string[] split = td2.type.Split('.');
+                                foreach (var smc in AasxTimeSeries.TimeSeries.timeSeriesSubscribe)
+                                {
+                                    if (smc.idShort == split[0])
+                                    {
+                                        foreach (string data in td2.publish)
+                                        {
+                                            using (TextReader reader = new StringReader(data))
+                                            {
+                                                JsonSerializer serializer = new JsonSerializer();
+                                                serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                                var smcData = (AdminShell.SubmodelElementCollection)serializer.Deserialize(reader,
+                                                    typeof(AdminShell.SubmodelElementCollection));
+                                                if (smcData != null && smc.value.Count < 100)
+                                                {
+                                                    smc.Add(smcData);
+                                                    signalNewData(1);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             if (td2.type == "submodel")
                             {
                                 foreach (string sm in td2.publish)
@@ -1327,8 +1367,6 @@ namespace AasxServer
                                                         j++;
                                                     }
                                                 }
-
-
                                             }
 
                                             if (toSubscribe)
@@ -1770,7 +1808,7 @@ namespace AasxServer
                                             Password = p.value;
                                             break;
                                         case "OPCNamespace": // Namespace
-                                                             // TODO: if not int, currently throws nondescriptive error
+                                            // TODO: if not int, currently throws nondescriptive error
                                             if (int.TryParse(p.value, out int tmpI))
                                                 Namespace = tmpI;
                                             break;
@@ -1869,10 +1907,15 @@ namespace AasxServer
             return true;
         }
 
+        static int countRunScript = 0;
+
         static async void RunScript(bool init)
         {
             if (env == null)
                 return;
+
+            // if (countRunScript++ > 1)
+            //    return;
 
             lock (Program.changeAasxFile)
             {
@@ -1962,8 +2005,8 @@ namespace AasxServer
 
                                         if (qq.type == "GetJSON")
                                         {
-                                            if (!init)
-                                                continue;
+                                            if (init)
+                                                return;
 
                                             if (!(sme1 is AdminShell.ReferenceElement))
                                             {
@@ -2008,7 +2051,7 @@ namespace AasxServer
                                                 if (ref12 is AdminShell.SubmodelElementCollection)
                                                 {
                                                     var c1 = ref12 as AdminShell.SubmodelElementCollection;
-                                                    if (c1.value.Count == 0)
+                                                    // if (c1.value.Count == 0)
                                                     {
                                                         // dynamic model = JObject.Parse(response);
                                                         JObject parsed = JObject.Parse(response);
@@ -2082,39 +2125,65 @@ namespace AasxServer
             return;
         }
 
-        private static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
+        public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
         {
+            int newMode = 0;
+
             foreach (JProperty jp1 in (JToken)o)
             {
                 AdminShell.SubmodelElementCollection c2;
                 switch (jp1.Value.Type)
                 {
                     case JTokenType.Array:
-                        c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
-                        c.Add(c2);
+                        c2 = c.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(jp1.Name);
+                        if (c2 == null)
+                        {
+                            c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
+                            c.Add(c2);
+                            newMode = 1;
+                        }
                         int count = 1;
                         foreach (JObject el in jp1.Value)
                         {
-                            AdminShell.SubmodelElementCollection c3 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name + "_array_" + count++);
-                            c2.Add(c3);
+                            string n = jp1.Name + "_array_" + count++;
+                            AdminShell.SubmodelElementCollection c3 =
+                                c2.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(n);
+                            if (c3 == null)
+                            {
+                                c3 = AdminShell.SubmodelElementCollection.CreateNew(n);
+                                c2.Add(c3);
+                                newMode = 1;
+                            }
                             parseJson(c3, el);
                         }
                         break;
                     case JTokenType.Object:
-                        c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
-                        c.Add(c2);
+                        c2 = c.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(jp1.Name);
+                        if (c2 == null)
+                        {
+                            c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
+                            c.Add(c2);
+                            newMode = 1;
+                        }
                         foreach (JObject el in jp1.Value)
                         {
                             parseJson(c2, el);
                         }
                         break;
                     default:
-                        AdminShell.Property p = AdminShell.Property.CreateNew(jp1.Name);
+                        AdminShell.Property p = c.value.FindFirstIdShortAs<AdminShell.Property>(jp1.Name);
+                        if (p == null)
+                        {
+                            p = AdminShell.Property.CreateNew(jp1.Name);
+                            c.Add(p);
+                            newMode = 1;
+                        }
                         p.value = jp1.Value.ToString();
-                        c.Add(p);
                         break;
                 }
             }
+
+            Program.signalNewData(newMode);
         }
 
         private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
