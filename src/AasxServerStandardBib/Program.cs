@@ -1286,7 +1286,7 @@ namespace AasxServer
                                                 serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                                 var smcData = (AdminShell.SubmodelElementCollection)serializer.Deserialize(reader,
                                                     typeof(AdminShell.SubmodelElementCollection));
-                                                if (smcData != null)
+                                                if (smcData != null && smc.value.Count < 100)
                                                 {
                                                     smc.Add(smcData);
                                                     signalNewData(1);
