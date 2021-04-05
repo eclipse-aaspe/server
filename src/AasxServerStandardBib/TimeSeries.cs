@@ -3,8 +3,6 @@ using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
-using Opc.Ua.Client;
-using Opc.Ua.Configuration;
 using SampleClient;
 using System;
 using System.Collections.Generic;
@@ -12,7 +10,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace AasxTimeSeries
 {
@@ -368,7 +365,7 @@ namespace AasxTimeSeries
                                 if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda") && tsb.sourceAddress != "")
                                 {
                                     if (tsb.sourceType == "opchd")
-                                        tsb.samplesValues[i] += table[valueIndex][i+1].ToString();
+                                        tsb.samplesValues[i] += table[valueIndex][i + 1].ToString();
                                     if (tsb.sourceType == "opcda")
                                     {
                                         tsb.samplesValues[i] += opcDAValues[i];
