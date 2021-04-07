@@ -365,7 +365,12 @@ namespace AasxTimeSeries
                                 if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda") && tsb.sourceAddress != "")
                                 {
                                     if (tsb.sourceType == "opchd")
-                                        tsb.samplesValues[i] += table[valueIndex][i + 1].ToString();
+                                    {
+                                        string value = "";
+                                        if (table[valueIndex].Count > i + 1 && table[valueIndex] != null)
+                                            value = table[valueIndex][i + 1].ToString();
+                                        tsb.samplesValues[i] += value;
+                                    }
                                     if (tsb.sourceType == "opcda")
                                     {
                                         tsb.samplesValues[i] += opcDAValues[i];
@@ -508,7 +513,8 @@ namespace AasxTimeSeries
             try
             {
                 ErrorMessage = "";
-                Connect(tsb);
+                if (session == null)
+                    Connect(tsb);
                 if (session != null)
                 {
                     opcDAValues = new List<string>();
@@ -525,9 +531,11 @@ namespace AasxTimeSeries
                 ErrorMessage = ex.Message;
                 return 0;
             }
+            /*
             session?.Close();
             session?.Dispose();
             session = null;
+            */
 
             return 1;
         }
@@ -541,16 +549,19 @@ namespace AasxTimeSeries
                 startTime = tsb.opcLastTimeStamp;
                 endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
                 tsb.opcLastTimeStamp = endTime;
-                Connect(tsb);
+                if (session == null)
+                    Connect(tsb);
                 GetData(tsb);
             }
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
             }
+            /*
             session?.Close();
             session?.Dispose();
             session = null;
+            */
         }
         public static void Connect(TimeSeriesBlock tsb)
         {
