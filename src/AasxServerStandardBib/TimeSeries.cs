@@ -28,6 +28,8 @@ namespace AasxTimeSeries
             public AdminShell.Property actualSamples = null;
             public AdminShell.Property maxSamplesInCollection = null;
             public AdminShell.Property actualSamplesInCollection = null;
+            public AdminShell.Property maxCollections = null;
+            public AdminShell.Property actualCollections = null;
 
             public int threadCounter = 0;
             public string sourceType = "";
@@ -81,7 +83,7 @@ namespace AasxTimeSeries
                                                 if (q.type == "SUBSCRIBE")
                                                 {
                                                     timeSeriesSubscribe.Add(sme as AdminShell.SubmodelElementCollection);
-                                                    nextSme = true;
+                                                    // nextSme = true;
                                                     break;
                                                 }
                                                 j++;
@@ -179,6 +181,19 @@ namespace AasxTimeSeries
                                                     {
                                                         tsb.actualSamplesInCollection = sme2 as AdminShell.Property;
                                                         tsb.actualSamplesInCollection.value = "0";
+                                                    }
+                                                    break;
+                                                case "maxCollections":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.maxCollections = sme2 as AdminShell.Property;
+                                                    }
+                                                    break;
+                                                case "actualCollections":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.actualCollections = sme2 as AdminShell.Property;
+                                                        tsb.actualCollections.value = "0";
                                                     }
                                                     break;
                                                 case "lowDataIndex":
@@ -367,7 +382,7 @@ namespace AasxTimeSeries
                                     if (tsb.sourceType == "opchd")
                                     {
                                         string value = "";
-                                        if (table[valueIndex].Count > i + 1 && table[valueIndex] != null)
+                                        if (table[valueIndex] != null && table[valueIndex][i + 1] != null)
                                             value = table[valueIndex][i + 1].ToString();
                                         tsb.samplesValues[i] += value;
                                     }
@@ -556,6 +571,10 @@ namespace AasxTimeSeries
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
+                session?.Close();
+                session?.Dispose();
+                session = null;
+                opc = null;
             }
             /*
             session?.Close();

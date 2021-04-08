@@ -1278,18 +1278,44 @@ namespace AasxServer
                                 {
                                     if (smc.idShort == split[0])
                                     {
-                                        foreach (string data in td2.publish)
+                                        foreach (var tsb in AasxTimeSeries.TimeSeries.timeSeriesBlockList)
                                         {
-                                            using (TextReader reader = new StringReader(data))
+                                            if (tsb.block == smc)
                                             {
-                                                JsonSerializer serializer = new JsonSerializer();
-                                                serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                                var smcData = (AdminShell.SubmodelElementCollection)serializer.Deserialize(reader,
-                                                    typeof(AdminShell.SubmodelElementCollection));
-                                                if (smcData != null && smc.value.Count < 100)
+                                                foreach (string data in td2.publish)
                                                 {
-                                                    smc.Add(smcData);
-                                                    signalNewData(1);
+                                                    using (TextReader reader = new StringReader(data))
+                                                    {
+                                                        JsonSerializer serializer = new JsonSerializer();
+                                                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                                        var smcData = (AdminShell.SubmodelElementCollection)serializer.Deserialize(reader,
+                                                            typeof(AdminShell.SubmodelElementCollection));
+                                                        if (smcData != null && smc.value.Count < 100)
+                                                        {
+                                                            if (tsb.data != null)
+                                                            {
+                                                                int maxCollections = Convert.ToInt32(tsb.maxCollections.value);
+                                                                int actualCollections = tsb.data.value.Count;
+                                                                if (actualCollections < maxCollections ||
+                                                                    (tsb.sampleMode.value == "continuous" && actualCollections == maxCollections))
+                                                                {
+                                                                    tsb.data.Add(smcData);
+                                                                    actualCollections++;
+                                                                }
+                                                                if (actualCollections > maxCollections)
+                                                                {
+                                                                    tsb.data.value.RemoveAt(0);
+                                                                    actualCollections--;
+                                                                }
+                                                                tsb.actualCollections.value = actualCollections.ToString();
+                                                                tsb.lowDataIndex.value =
+                                                                    tsb.data.value[0].submodelElement.idShort.Substring("data".Length);
+                                                                tsb.highDataIndex.value =
+                                                                    tsb.data.value[tsb.data.value.Count - 1].submodelElement.idShort.Substring("data".Length);
+                                                                signalNewData(1);
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
