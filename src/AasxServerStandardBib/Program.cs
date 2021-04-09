@@ -1280,6 +1280,13 @@ namespace AasxServer
                                     {
                                         foreach (var tsb in AasxTimeSeries.TimeSeries.timeSeriesBlockList)
                                         {
+                                            if (tsb.sampleStatus.value == "stop")
+                                            {
+                                                tsb.sampleStatus.value = "stopped";
+                                            }
+                                            if (tsb.sampleStatus.value != "start")
+                                                continue;
+
                                             if (tsb.block == smc)
                                             {
                                                 foreach (string data in td2.publish)
