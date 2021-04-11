@@ -79,6 +79,23 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            // get authserver
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authserver(/|)$")]
+
+            public IHttpContext GetAuthserver(IHttpContext context)
+            {
+                var txt = AasxServer.Program.redirectServer;
+
+                context.Response.ContentType = ContentType.TEXT;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = txt.Length;
+                context.Response.SendResponse(txt);
+
+                return context;
+            }
+
+
 
             public static AasxHttpContextHelper helper = null;
 
