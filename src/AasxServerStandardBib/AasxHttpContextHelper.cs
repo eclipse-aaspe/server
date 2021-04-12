@@ -3410,7 +3410,7 @@ namespace AasxRestServerLibrary
                 packageStream.Close();
 
                 // Reload
-                Program.env[fileIndex] = new AdminShellPackageEnv(fname);
+                // Program.env[fileIndex] = new AdminShellPackageEnv(fname);
             }
         }
 

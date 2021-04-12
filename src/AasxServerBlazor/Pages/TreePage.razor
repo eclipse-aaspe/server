@@ -521,15 +521,14 @@
             var aas = o as AdministrationShell;
             lock (Program.changeAasxFile)
             {
-                var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+                System.IO.Stream s = null;
+                try
+                {
+                    Program.env[item.envIndex].GetLocalThumbnailStream();
+                }
+                catch { }
                 if (s != null)
                 {
-                    /*
-                    using (var fileStream = new System.IO.FileStream("details.jpg", System.IO.FileMode.Create, System.IO.FileAccess.Write))
-                    {
-                        s.CopyTo(fileStream);
-                    }
-                    */
                     using (var m = new System.IO.MemoryStream())
                     {
                         s.CopyTo(m);
