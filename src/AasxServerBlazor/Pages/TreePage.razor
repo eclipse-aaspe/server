@@ -576,6 +576,16 @@
             return "";
         }
 
+        string prefix = "http://";
+        string hostPort = Program.hostPort;
+
+        string[] split = Program.hostPort.Split(':');
+        if (split[0].ToLower() == "admin-shell-io.com")
+        {
+            // prefix = "https://";
+            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
+        }
+
         object o = item.Tag;
 
         if (o is AdministrationShell)
@@ -585,7 +595,7 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                string link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + url;
+                string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
 
                 return link;
             }
@@ -623,6 +633,16 @@
             return;
         }
 
+        string prefix = "http://";
+        string hostPort = Program.hostPort;
+
+        string[] split = Program.hostPort.Split(':');
+        if (split[0].ToLower() == "admin-shell-io.com")
+        {
+            prefix = "https://";
+            hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
+        }
+
         object o = item.Tag;
 
         if (o is AdministrationShell)
@@ -638,7 +658,7 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                string link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + url;
+                string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
 
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
@@ -692,16 +712,26 @@
             return "";
         }
 
+        string prefix = "http://";
+        string hostPort = Program.hostPort;
+
+        string[] split = Program.hostPort.Split(':');
+        if (split[0].ToLower() == "admin-shell-io.com")
+        {
+            prefix = "https://";
+            hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
+        }
+
         object o = item.Tag;
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
-            return "http://" + Program.hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
         }
 
         if (o is AdministrationShell)
         {
-            return "http://" + Program.hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
         }
 
         if (o is File || o is Property)
@@ -717,7 +747,7 @@
                 value = (o as Property).value;
             }
 
-            string[] split = value.Split(new Char[] { ':' });
+            split = value.Split(new Char[] { ':' });
             if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
             {
                 external = true;
@@ -730,7 +760,7 @@
             {
                 if (split[1].ToLower() == "aasx")
                 {
-                    return "http://" + Program.hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
+                    return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
                 }
             }
         }
