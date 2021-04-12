@@ -852,7 +852,7 @@ namespace AasxRestServerLibrary
             AdminShellPackageEnv aasEnv = null;
             try
             {
-                aasEnv = new AdminShellPackageEnv(file.path);
+                aasEnv = new AdminShellPackageEnv(file.path, true);
             }
             catch (Exception ex)
             {
@@ -1099,7 +1099,7 @@ namespace AasxRestServerLibrary
                     File.Copy(tempFn, packFn, overwrite: true);
 
                     // open again
-                    var newAasx = new AdminShellPackageEnv(packFn);
+                    var newAasx = new AdminShellPackageEnv(packFn, true);
                     if (newAasx != null)
                         Packages[packIndex] = newAasx;
                     else

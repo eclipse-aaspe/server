@@ -403,7 +403,7 @@ namespace AasxServer
                     {
                         Console.WriteLine("Loading {0}...", fn);
                         envFileName[envi] = fn;
-                        env[envi] = new AdminShellPackageEnv(fn);
+                        env[envi] = new AdminShellPackageEnv(fn, true);
                         if (env[envi] == null)
                         {
                             Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
