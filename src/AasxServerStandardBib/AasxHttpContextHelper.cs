@@ -3399,18 +3399,19 @@ namespace AasxRestServerLibrary
 
             lock (Program.changeAasxFile)
             {
-                var tempAasEnv = new AdminShellPackageEnv(Program.env[fileIndex].AasEnv);
-                tempAasEnv.SaveAs("./temp/temp.aasx");
+                string fname = "./temp/" + Path.GetFileName(Program.envFileName[fileIndex]);
+                Program.env[fileIndex].SaveAs(fname);
+
+                // return as FILE
+                FileStream packageStream = File.OpenRead(fname);
+                context.Response.StatusCode = HttpStatusCode.Ok;
+                SendStreamResponse(context, packageStream,
+                    Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
+                packageStream.Close();
+
+                // Reload
+                Program.env[fileIndex] = new AdminShellPackageEnv(fname);
             }
-
-            // return as FILE
-            // FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
-            FileStream packageStream = File.OpenRead("./temp/temp.aasx");
-
-            context.Response.StatusCode = HttpStatusCode.Ok;
-            SendStreamResponse(context, packageStream,
-                Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
-            packageStream.Close();
         }
 
         public void EvalGetAASX2(IHttpContext context, int fileIndex)
