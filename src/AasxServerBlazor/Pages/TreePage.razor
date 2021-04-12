@@ -524,7 +524,7 @@
                 System.IO.Stream s = null;
                 try
                 {
-                    Program.env[item.envIndex].GetLocalThumbnailStream();
+                    s = Program.env[item.envIndex].GetLocalThumbnailStream();
                 }
                 catch { }
                 if (s != null)
