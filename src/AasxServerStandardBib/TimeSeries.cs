@@ -341,7 +341,9 @@ namespace AasxTimeSeries
                         if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
                         {
                             GetHistory(tsb);
-                            valueCount = table.Count;
+                            valueCount = 0;
+                            if (table != null)
+                                valueCount = table.Count;
                         }
                         if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
                         {
