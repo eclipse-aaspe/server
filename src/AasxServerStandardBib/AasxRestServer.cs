@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AasxMqttClient;
+using AdminShellEvents;
 using AdminShellNS;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server;
@@ -95,6 +96,76 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            // get event messages
+            public class eventMessage
+            {
+                public string obj = "";
+                public string operation = "";
+                public DateTime dt;
+
+                public static void add(object o, string op)
+                {
+                    if (o is AdminShell.SubmodelElementCollection smec)
+                    {
+                        var e = new eventMessage();
+                        e.obj = smec.idShort;
+                        e.operation = op;
+                        e.dt = DateTime.Now;
+                        eventList.Add(e);
+                        if (eventList.Count > 100)
+                            eventList.RemoveAt(0);
+
+                        AasPayloadStructuralChangeItem.ChangeReason reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
+                        switch (op)
+                        {
+                            case "Add":
+                                reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
+                                break;
+                            case "Remove":
+                                reason = AasPayloadStructuralChangeItem.ChangeReason.Delete;
+                                break;
+                        }
+                        AdminShell.KeyList keys = AdminShellV20.KeyList.CreateNew("SMEC", false, "SMEC", smec.idShort);
+                        AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(DateTime.Now, reason, keys);
+                        changeList.Add(change);
+                        if (changeList.Count > 100)
+                            changeList.RemoveAt(0);
+                        changeClass.Changes.Add(change);
+                        if (changeClass.Changes.Count > 100)
+                            changeClass.Changes.RemoveAt(0);
+                    }
+                }
+            }
+
+            public static List<eventMessage> eventList = new List<eventMessage>();
+            public static List<AasPayloadStructuralChangeItem> changeList = new List<AasPayloadStructuralChangeItem>();
+            public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
+
+            public IHttpContext GetEventMessages(IHttpContext context)
+            {
+                string txt = "";
+
+                /*
+                foreach (var e in eventList)
+                {
+                    txt += "" + e.dt.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'")
+                        + " " + e.operation + " " + e.obj + "\n";
+                }
+
+                txt += "\n";
+                */
+
+                txt += changeClass.ToString();
+
+                context.Response.ContentType = ContentType.TEXT;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = txt.Length;
+                context.Response.SendResponse(txt);
+
+                return context;
+            }
 
 
             public static AasxHttpContextHelper helper = null;

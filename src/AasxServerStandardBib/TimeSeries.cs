@@ -417,6 +417,7 @@ namespace AasxTimeSeries
                                     {
                                         actualSamples -= maxSamplesInCollection;
                                         tsb.actualSamples.value = "" + actualSamples;
+                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove");
                                         tsb.data.Remove(first);
                                         tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
                                         updateMode = 1;
@@ -442,6 +443,7 @@ namespace AasxTimeSeries
                                         nextCollection.Add(p);
                                     }
                                     tsb.data.Add(nextCollection);
+                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add");
                                     tsb.samplesValuesCount = 0;
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
@@ -476,6 +478,7 @@ namespace AasxTimeSeries
                                 nextCollection.Add(p);
                             }
                             tsb.data.Add(nextCollection);
+                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add");
                             tsb.samplesValuesCount = 0;
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
