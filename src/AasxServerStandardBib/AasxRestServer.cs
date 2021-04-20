@@ -102,8 +102,9 @@ namespace AasxRestServerLibrary
                 public string obj = "";
                 public string operation = "";
                 public DateTime dt;
+                public string data = "";
 
-                public static void add(object o, string op)
+                public static void add(object o, string op, AdminShell.Submodel rootSubmodel)
                 {
                     if (o is AdminShell.SubmodelElementCollection smec)
                     {
@@ -111,6 +112,12 @@ namespace AasxRestServerLibrary
                         e.obj = smec.idShort;
                         e.operation = op;
                         e.dt = DateTime.Now;
+                        var json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
+                                    new JsonSerializerSettings
+                                    {
+                                        NullValueHandling = NullValueHandling.Ignore
+                                    });
+                        e.data = json;
                         eventList.Add(e);
                         if (eventList.Count > 100)
                             eventList.RemoveAt(0);
@@ -125,8 +132,18 @@ namespace AasxRestServerLibrary
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Delete;
                                 break;
                         }
-                        AdminShell.KeyList keys = AdminShellV20.KeyList.CreateNew("SMEC", false, "SMEC", smec.idShort);
-                        AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(DateTime.Now, reason, keys);
+
+                        rootSubmodel.SetAllParents();
+                        AdminShell.KeyList keys = new AdminShellV20.KeyList();
+                        while (smec != null)
+                        {
+                            keys.Add(AdminShellV20.Key.CreateNew("SMEC", false, "SMEC", smec.idShort));
+                            smec = (smec.parent as AdminShell.SubmodelElementCollection);
+                        }
+                        keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
+
+                        AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(
+                            DateTime.Now, reason, keys, json);
                         changeList.Add(change);
                         if (changeList.Count > 100)
                             changeList.RemoveAt(0);
@@ -155,7 +172,6 @@ namespace AasxRestServerLibrary
                 }
 
                 txt += "\n";
-                */
 
                 txt += changeClass.ToString();
 
@@ -163,10 +179,31 @@ namespace AasxRestServerLibrary
                 context.Response.ContentEncoding = Encoding.UTF8;
                 context.Response.ContentLength64 = txt.Length;
                 context.Response.SendResponse(txt);
+                */
+                SendJsonResponse(context, changeClass);
 
                 return context;
             }
 
+            public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
+            {
+                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+                var buffer = context.Request.ContentEncoding.GetBytes(json);
+                var length = buffer.Length;
+
+                var queryString = context.Request.QueryString;
+                string refresh = queryString["refresh"];
+                if (refresh != null && refresh != "")
+                {
+                    context.Response.Headers.Remove("Refresh");
+                    context.Response.Headers.Add("Refresh", refresh);
+                }
+
+                context.Response.ContentType = ContentType.JSON;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = length;
+                context.Response.SendResponse(buffer);
+            }
 
             public static AasxHttpContextHelper helper = null;
 

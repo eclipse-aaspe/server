@@ -47,6 +47,8 @@ namespace AdminShellEvents
         /// </summary>
         public AdminShell.KeyList Path { get; set; }
 
+        public string Data;
+
         //
         // Constructor
         //
@@ -54,11 +56,13 @@ namespace AdminShellEvents
         public AasPayloadStructuralChangeItem(
             DateTime timeStamp,
             ChangeReason reason,
-            AdminShell.KeyList path = null)
+            AdminShell.KeyList path,
+            string data)
         {
             TimeStamp = timeStamp;
             Reason = reason;
             Path = path;
+            Data = data;
         }
 
         //
@@ -73,6 +77,7 @@ namespace AdminShellEvents
                 foreach (var k in Path)
                     res += "/" + k.value;
             res += " -> " + Reason.ToString();
+            res += " " + Data;
             return res;
         }
 

@@ -17,6 +17,7 @@ namespace AasxTimeSeries
     {
         public class TimeSeriesBlock
         {
+            public AdminShell.Submodel submodel = null;
             public AdminShell.SubmodelElementCollection block = null;
             public AdminShell.SubmodelElementCollection data = null;
             public AdminShell.Property sampleStatus = null;
@@ -96,6 +97,7 @@ namespace AasxTimeSeries
                                         int countSmec = smec.value.Count;
 
                                         var tsb = new TimeSeriesBlock();
+                                        tsb.submodel = sm;
                                         tsb.block = smec;
                                         tsb.samplesProperties = new List<AdminShell.Property>();
                                         tsb.samplesValues = new List<string>();
@@ -281,6 +283,9 @@ namespace AasxTimeSeries
 
         public static bool timeSeriesSampling(bool final)
         {
+            if (Program.isLoading)
+                return true;
+
             foreach (var tsb in timeSeriesBlockList)
             {
                 if (tsb.sampleStatus.value == "stop")
@@ -417,7 +422,7 @@ namespace AasxTimeSeries
                                     {
                                         actualSamples -= maxSamplesInCollection;
                                         tsb.actualSamples.value = "" + actualSamples;
-                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove");
+                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove", tsb.submodel);
                                         tsb.data.Remove(first);
                                         tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
                                         updateMode = 1;
@@ -443,7 +448,7 @@ namespace AasxTimeSeries
                                         nextCollection.Add(p);
                                     }
                                     tsb.data.Add(nextCollection);
-                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add");
+                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add", tsb.submodel);
                                     tsb.samplesValuesCount = 0;
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
@@ -478,7 +483,7 @@ namespace AasxTimeSeries
                                 nextCollection.Add(p);
                             }
                             tsb.data.Add(nextCollection);
-                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add");
+                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add", tsb.submodel);
                             tsb.samplesValuesCount = 0;
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
