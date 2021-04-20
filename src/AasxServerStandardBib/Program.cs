@@ -465,14 +465,6 @@ namespace AasxServer
             Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
 
-            i40LanguageRuntime.initialize();
-            AasxTimeSeries.TimeSeries.timeSeriesInit();
-
-            RunScript(true);
-            //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
-
-            isLoading = false;
-
             if (a.Rest)
             {
                 Console.WriteLine("Connect to REST by: {0}:{1}", a.Host, a.Port);
@@ -481,6 +473,14 @@ namespace AasxServer
 
                 Console.WriteLine("REST Server started.");
             }
+
+            i40LanguageRuntime.initialize();
+            AasxTimeSeries.TimeSeries.timeSeriesInit();
+
+            RunScript(true);
+            //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+
+            isLoading = false;
 
             if (a.Mqtt)
             {
@@ -2053,6 +2053,9 @@ namespace AasxServer
                                         if (qq.type == "GetJSON")
                                         {
                                             if (init)
+                                                return;
+
+                                            if (Program.isLoading)
                                                 return;
 
                                             if (!(sme1 is AdminShell.ReferenceElement))
