@@ -102,6 +102,7 @@ namespace AasxRestServerLibrary
                 public string obj = "";
                 public string operation = "";
                 public DateTime dt;
+                public string data = "";
 
                 public static void add(object o, string op, AdminShell.Submodel rootSubmodel)
                 {
@@ -111,6 +112,12 @@ namespace AasxRestServerLibrary
                         e.obj = smec.idShort;
                         e.operation = op;
                         e.dt = DateTime.Now;
+                        var json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
+                                    new JsonSerializerSettings
+                                    {
+                                        NullValueHandling = NullValueHandling.Ignore
+                                    });
+                        e.data = json;
                         eventList.Add(e);
                         if (eventList.Count > 100)
                             eventList.RemoveAt(0);
@@ -135,7 +142,8 @@ namespace AasxRestServerLibrary
                         }
                         keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
 
-                        AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(DateTime.Now, reason, keys);
+                        AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(
+                            DateTime.Now, reason, keys, json);
                         changeList.Add(change);
                         if (changeList.Count > 100)
                             changeList.RemoveAt(0);

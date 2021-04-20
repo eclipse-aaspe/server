@@ -283,6 +283,9 @@ namespace AasxTimeSeries
 
         public static bool timeSeriesSampling(bool final)
         {
+            if (Program.isLoading)
+                return true;
+
             foreach (var tsb in timeSeriesBlockList)
             {
                 if (tsb.sampleStatus.value == "stop")
