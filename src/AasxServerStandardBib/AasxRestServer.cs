@@ -159,9 +159,25 @@ namespace AasxRestServerLibrary
             public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/([^/]+)(/|)$")]
 
             public IHttpContext GetEventMessages(IHttpContext context)
             {
+                bool withMinimumDate = false;
+                DateTime minimumDate = new DateTime();
+
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 2)
+                {
+                    Console.WriteLine(m.Groups[1]);
+                    try
+                    {
+                        minimumDate = DateTime.Parse(m.Groups[1].ToString());
+                        withMinimumDate = true;
+                    }
+                    catch { }
+                }
+
                 string txt = "";
 
                 /*
@@ -180,7 +196,23 @@ namespace AasxRestServerLibrary
                 context.Response.ContentLength64 = txt.Length;
                 context.Response.SendResponse(txt);
                 */
-                SendJsonResponse(context, changeClass);
+
+                AasPayloadStructuralChange filteredChangeClass = new AasPayloadStructuralChange();
+                foreach (var c in changeClass.Changes)
+                {
+                    bool copy = true;
+                    if (withMinimumDate)
+                    {
+                        if (c.TimeStamp <= minimumDate)
+                        {
+                            copy = false;
+                        }
+                    }
+                    if (copy)
+                        filteredChangeClass.Changes.Add(c);
+                }
+
+                SendJsonResponse(context, filteredChangeClass);
 
                 return context;
             }
