@@ -26,6 +26,7 @@ namespace AdminShellEvents
     /// </summary>
     public class AasPayloadStructuralChangeItem
     {
+        public int Count { get; set; }
         public DateTime TimeStamp { get; set; }
 
         /// <summary>
@@ -54,11 +55,13 @@ namespace AdminShellEvents
         //
 
         public AasPayloadStructuralChangeItem(
+            int count,
             DateTime timeStamp,
             ChangeReason reason,
             AdminShell.KeyList path,
             string data)
         {
+            Count = count;
             TimeStamp = timeStamp;
             Reason = reason;
             Path = path;
@@ -72,7 +75,8 @@ namespace AdminShellEvents
         public override string ToString()
         {
             var res = "PayloadStructuralChangeItem: {Observable}";
-            res += TimeStamp.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+            res += " " + Count;
+            res += " " + TimeStamp.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'") + " ";
             if (Path != null)
                 foreach (var k in Path)
                     res += "/" + k.value;
