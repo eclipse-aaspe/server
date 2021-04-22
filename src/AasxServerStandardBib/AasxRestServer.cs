@@ -80,28 +80,12 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            // get authserver
-
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authserver(/|)$")]
-
-            public IHttpContext GetAuthserver(IHttpContext context)
-            {
-                var txt = AasxServer.Program.redirectServer;
-
-                context.Response.ContentType = ContentType.TEXT;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = txt.Length;
-                context.Response.SendResponse(txt);
-
-                return context;
-            }
-
             // get event messages
             public class eventMessage
             {
-                public string obj = "";
-                public string operation = "";
                 public DateTime dt;
+                public string operation = "";
+                public string obj = "";
                 public string data = "";
 
                 public static void add(object o, string op, AdminShell.Submodel rootSubmodel)
@@ -112,15 +96,13 @@ namespace AasxRestServerLibrary
                         e.obj = smec.idShort;
                         e.operation = op;
                         e.dt = DateTime.Now;
+
                         var json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
                                     new JsonSerializerSettings
                                     {
                                         NullValueHandling = NullValueHandling.Ignore
                                     });
                         e.data = json;
-                        eventList.Add(e);
-                        if (eventList.Count > 100)
-                            eventList.RemoveAt(0);
 
                         AasPayloadStructuralChangeItem.ChangeReason reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
                         switch (op)
@@ -143,10 +125,7 @@ namespace AasxRestServerLibrary
                         keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
 
                         AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(
-                            DateTime.Now, reason, keys, json);
-                        changeList.Add(change);
-                        if (changeList.Count > 100)
-                            changeList.RemoveAt(0);
+                            eventsCount++, DateTime.Now, reason, keys, json);
                         changeClass.Changes.Add(change);
                         if (changeClass.Changes.Count > 100)
                             changeClass.Changes.RemoveAt(0);
@@ -154,48 +133,43 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            public static List<eventMessage> eventList = new List<eventMessage>();
-            public static List<AasPayloadStructuralChangeItem> changeList = new List<AasPayloadStructuralChangeItem>();
             public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
+            public static int eventsCount = 0;
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/count/([^/]+)(/|)$")]
 
             public IHttpContext GetEventMessages(IHttpContext context)
             {
                 bool withMinimumDate = false;
                 DateTime minimumDate = new DateTime();
+                bool withMinimumCount = false;
+                int minimumCount = 0;
 
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
+                string path = context.Request.PathInfo;
                 {
-                    Console.WriteLine(m.Groups[1]);
-                    try
+                    Console.WriteLine(path);
+
+                    if (path.Contains("/geteventmessages/time/"))
                     {
-                        minimumDate = DateTime.Parse(m.Groups[1].ToString());
-                        withMinimumDate = true;
+                        try
+                        {
+                            minimumDate = DateTime.Parse(path.Substring("/geteventmessages/time/".Length));
+                            withMinimumDate = true;
+                        }
+                        catch { }
                     }
-                    catch { }
+                    if (path.Contains("/geteventmessages/count"))
+                    {
+                        try
+                        {
+                            minimumCount = Convert.ToInt32(path.Substring("/geteventmessages/count/".Length));
+                            withMinimumCount = true;
+                        }
+                        catch { }
+                    }
                 }
-
-                string txt = "";
-
-                /*
-                foreach (var e in eventList)
-                {
-                    txt += "" + e.dt.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'")
-                        + " " + e.operation + " " + e.obj + "\n";
-                }
-
-                txt += "\n";
-
-                txt += changeClass.ToString();
-
-                context.Response.ContentType = ContentType.TEXT;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = txt.Length;
-                context.Response.SendResponse(txt);
-                */
 
                 AasPayloadStructuralChange filteredChangeClass = new AasPayloadStructuralChange();
                 foreach (var c in changeClass.Changes)
@@ -204,6 +178,13 @@ namespace AasxRestServerLibrary
                     if (withMinimumDate)
                     {
                         if (c.TimeStamp <= minimumDate)
+                        {
+                            copy = false;
+                        }
+                    }
+                    if (withMinimumCount)
+                    {
+                        if (c.Count <= minimumCount)
                         {
                             copy = false;
                         }
@@ -238,6 +219,22 @@ namespace AasxRestServerLibrary
             }
 
             public static AasxHttpContextHelper helper = null;
+
+            // get authserver
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authserver(/|)$")]
+
+            public IHttpContext GetAuthserver(IHttpContext context)
+            {
+                var txt = AasxServer.Program.redirectServer;
+
+                context.Response.ContentType = ContentType.TEXT;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = txt.Length;
+                context.Response.SendResponse(txt);
+
+                return context;
+            }
 
             // Basic AAS + Asset 
 
