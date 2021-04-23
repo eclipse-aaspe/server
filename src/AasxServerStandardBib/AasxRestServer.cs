@@ -88,7 +88,7 @@ namespace AasxRestServerLibrary
                 public string obj = "";
                 public string data = "";
 
-                public static void add(object o, string op, AdminShell.Submodel rootSubmodel)
+                public static void add(object o, string op, AdminShell.Submodel rootSubmodel, ulong changeCount)
                 {
                     if (o is AdminShell.SubmodelElementCollection smec)
                     {
@@ -125,7 +125,7 @@ namespace AasxRestServerLibrary
                         keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
 
                         AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(
-                            eventsCount++, DateTime.Now, reason, keys, json);
+                            changeCount, DateTime.Now, reason, keys, json);
                         changeClass.Changes.Add(change);
                         if (changeClass.Changes.Count > 100)
                             changeClass.Changes.RemoveAt(0);
@@ -134,7 +134,7 @@ namespace AasxRestServerLibrary
             }
 
             public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
-            public static int eventsCount = 0;
+            // public static int eventsCount = 0;
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$")]
@@ -145,7 +145,7 @@ namespace AasxRestServerLibrary
                 bool withMinimumDate = false;
                 DateTime minimumDate = new DateTime();
                 bool withMinimumCount = false;
-                int minimumCount = 0;
+                ulong minimumCount = 0;
 
                 string path = context.Request.PathInfo;
                 {
@@ -164,7 +164,7 @@ namespace AasxRestServerLibrary
                     {
                         try
                         {
-                            minimumCount = Convert.ToInt32(path.Substring("/geteventmessages/count/".Length));
+                            minimumCount = Convert.ToUInt64(path.Substring("/geteventmessages/count/".Length));
                             withMinimumCount = true;
                         }
                         catch { }

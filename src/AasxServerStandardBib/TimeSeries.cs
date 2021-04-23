@@ -449,7 +449,8 @@ namespace AasxTimeSeries
                                         actualSamples -= maxSamplesInCollection;
                                         tsb.actualSamples.value = "" + actualSamples;
                                         useNewChangeNumber = setChangeNumber(tsb.actualSamples, newChangeNumber);
-                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove", tsb.submodel);
+                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                            first, "Remove", tsb.submodel, newChangeNumber);
                                         tsb.data.Remove(first);
                                         useNewChangeNumber = setChangeNumber(tsb.data, newChangeNumber);
                                         tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
@@ -485,7 +486,8 @@ namespace AasxTimeSeries
                                     }
                                     tsb.data.Add(nextCollection);
                                     useNewChangeNumber = setChangeNumber(tsb.data, newChangeNumber);
-                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add", tsb.submodel);
+                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                        nextCollection, "Add", tsb.submodel, newChangeNumber);
                                     tsb.samplesValuesCount = 0;
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
@@ -529,7 +531,8 @@ namespace AasxTimeSeries
                             }
                             tsb.data.Add(nextCollection);
                             useNewChangeNumber = setChangeNumber(tsb.data, newChangeNumber);
-                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(nextCollection, "Add", tsb.submodel);
+                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                nextCollection, "Add", tsb.submodel, newChangeNumber);
                             tsb.samplesValuesCount = 0;
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
