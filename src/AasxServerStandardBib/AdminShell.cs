@@ -1712,6 +1712,7 @@ namespace AdminShellNS
 
         public class Referable : IValidateEntity, IAasElement
         {
+            public ulong ChangeNumber = 0;
 
             // members
 
@@ -2176,6 +2177,8 @@ namespace AdminShellNS
 
         public class AdministrationShell : Identifiable, IFindAllReferences, IGetReference
         {
+            public ulong ChangeNumber = 0;
+
             // for JSON only
             [XmlIgnore]
             [JsonProperty(PropertyName = "modelType")]
