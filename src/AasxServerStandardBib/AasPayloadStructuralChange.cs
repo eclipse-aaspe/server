@@ -26,7 +26,7 @@ namespace AdminShellEvents
     /// </summary>
     public class AasPayloadStructuralChangeItem
     {
-        public int Count { get; set; }
+        public ulong Count { get; set; }
         public DateTime TimeStamp { get; set; }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace AdminShellEvents
         //
 
         public AasPayloadStructuralChangeItem(
-            int count,
+            ulong count,
             DateTime timeStamp,
             ChangeReason reason,
             AdminShell.KeyList path,
