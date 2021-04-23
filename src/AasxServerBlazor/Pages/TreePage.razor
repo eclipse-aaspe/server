@@ -34,7 +34,9 @@
                 <TitleTemplate>
                     @{ //// SubmodelService.syncSubTree(context);
                     }
-                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span> @ViewNodeID(context)@ViewNodeInfo(context)
+                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                    <span style="color:lightgray;">@ViewChangeNumber(context)</span>
+                    @ViewNodeID(context)@ViewNodeInfo(context)
                     <strong><span style="color:blue">@getSymbols(context)</span></strong>
                 </TitleTemplate>
             </Tree>
@@ -933,6 +935,23 @@
         }
 
         return (ret);
+    }
+
+    string ViewChangeNumber(Item item)
+    {
+        if (item == null)
+        {
+            return "";
+        }
+
+        string ret = "";
+
+        object o = item.Tag;
+
+        if (o is Referable r)
+            ret += " (" + r.ChangeNumber + ") ";
+
+        return ret;
     }
 
     string ViewNodeID(Item item)
