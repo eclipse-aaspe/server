@@ -88,27 +88,22 @@ namespace AasxRestServerLibrary
                 public string obj = "";
                 public string data = "";
 
-                public static void add(object o, string op, AdminShell.Submodel rootSubmodel, ulong changeCount)
+                public static void add(AdminShell.Referable o, string op, AdminShell.Submodel rootSubmodel, ulong changeCount)
                 {
                     if (o is AdminShell.SubmodelElementCollection smec)
                     {
-                        var e = new eventMessage();
-                        e.obj = smec.idShort;
-                        e.operation = op;
-                        e.dt = DateTime.Now;
-
-                        var json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
-                                    new JsonSerializerSettings
-                                    {
-                                        NullValueHandling = NullValueHandling.Ignore
-                                    });
-                        e.data = json;
+                        string json = "";
 
                         AasPayloadStructuralChangeItem.ChangeReason reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
                         switch (op)
                         {
                             case "Add":
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
+                                json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
+                                    new JsonSerializerSettings
+                                    {
+                                        NullValueHandling = NullValueHandling.Ignore
+                                    });
                                 break;
                             case "Remove":
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Delete;
@@ -125,7 +120,7 @@ namespace AasxRestServerLibrary
                         keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
 
                         AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(
-                            changeCount, DateTime.Now, reason, keys, json);
+                            changeCount, o.TimeStamp, reason, keys, json);
                         changeClass.Changes.Add(change);
                         if (changeClass.Changes.Count > 100)
                             changeClass.Changes.RemoveAt(0);
@@ -216,6 +211,88 @@ namespace AasxRestServerLibrary
                 context.Response.ContentEncoding = Encoding.UTF8;
                 context.Response.ContentLength64 = length;
                 context.Response.SendResponse(buffer);
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
+
+            public IHttpContext GetDiff(IHttpContext context)
+            {
+                bool withMinimumDate = false;
+                DateTime minimumDate = new DateTime();
+
+                string path = context.Request.PathInfo;
+                {
+                    Console.WriteLine(path);
+
+                    if (path.Contains("/diff/"))
+                    {
+                        try
+                        {
+                            minimumDate = DateTime.Parse(path.Substring("/diff/".Length));
+                            withMinimumDate = true;
+                        }
+                        catch { }
+                    }
+                }
+
+                string diffText = "";
+
+                int aascount = AasxServer.Program.env.Length;
+
+                for (int i = 0; i < aascount; i++)
+                {
+                    var env = AasxServer.Program.env[i];
+                    if (env != null)
+                    {
+                        var aas = env.AasEnv.AdministrationShells[0];
+                        if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                        {
+                            foreach (var smr in aas.submodelRefs)
+                            {
+                                var sm = env.AasEnv.FindSubmodel(smr);
+                                if (sm != null && sm.idShort != null)
+                                {
+                                    if (sm.TimeStamp > minimumDate)
+                                    {
+                                        foreach (var sme in sm.submodelElements)
+                                            diffText += checkDiff(sm.idShort + "/", sme.submodelElement, minimumDate);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                context.Response.ContentType = ContentType.TEXT;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = diffText.Length;
+                context.Response.SendResponse(diffText);
+
+                return context;
+            }
+
+            static string checkDiff(string path, AdminShell.SubmodelElement sme, DateTime minimumDate)
+            {
+                if (!(sme is AdminShell.SubmodelElementCollection))
+                {
+                    if (sme.TimeStamp > minimumDate)
+                    {
+                        return path + sme.idShort + " " + sme.TimeStamp + "\n";
+                    }
+
+                    return "";
+                }
+
+                var smec = sme as AdminShell.SubmodelElementCollection;
+                if (smec.TimeStamp > minimumDate)
+                {
+                    string text = "";
+                    foreach (var sme2 in smec.value)
+                        text += checkDiff(path + sme.idShort + "/", sme2.submodelElement, minimumDate);
+                    return text;
+                }
+
+                return "";
             }
 
             public static AasxHttpContextHelper helper = null;
