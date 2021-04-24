@@ -35,9 +35,9 @@
                     @{ //// SubmodelService.syncSubTree(context);
                     }
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                    <span style="color:lightgray;">@ViewChangeNumber(context)</span>
                     @ViewNodeID(context)@ViewNodeInfo(context)
                     <strong><span style="color:blue">@getSymbols(context)</span></strong>
+                    <span style="color:lightgray;">@ViewTimeStamp(context)</span>
                 </TitleTemplate>
             </Tree>
         </div>
@@ -53,6 +53,10 @@
                         {
                             <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
                         }
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Referable r)
+                    {
+                        <span style="color:lightgray;">@r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
                     }
                     // if (selectedNode != null && hasDownloadFile(selectedNode))
                     // {
@@ -127,6 +131,7 @@
                             if (selectedNode.Tag is Property)
                             {
                                 (selectedNode.Tag as Property).value = CurrentValue;
+                                (selectedNode.Tag as Property).setTimeStamp(DateTime.Now);
                                 this.StateHasChanged();
                             }
                             CurrentValue = "";
@@ -937,7 +942,7 @@
         return (ret);
     }
 
-    string ViewChangeNumber(Item item)
+    string ViewTimeStamp(Item item)
     {
         if (item == null)
         {
@@ -949,7 +954,8 @@
         object o = item.Tag;
 
         if (o is Referable r)
-            ret += " (" + r.ChangeNumber + ") ";
+            // ret += " (" + r.TimeStamp.Ticks + ") ";
+            ret += " (" + r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
 
         return ret;
     }

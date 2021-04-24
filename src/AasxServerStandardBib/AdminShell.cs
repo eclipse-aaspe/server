@@ -1712,7 +1712,25 @@ namespace AdminShellNS
 
         public class Referable : IValidateEntity, IAasElement
         {
-            public ulong ChangeNumber = 0;
+            // public ulong ChangeNumber = 0;
+            public DateTime TimeStamp;
+
+            public void setTimeStamp(DateTime timeStamp)
+            {
+                Referable r = this;
+
+                do
+                {
+                    r.TimeStamp = timeStamp;
+                    if (r != r.parent)
+                    {
+                        r = r.parent;
+                    }
+                    else
+                        r = null;
+                }
+                while (r != null);
+            }
 
             // members
 
@@ -6144,6 +6162,31 @@ namespace AdminShellNS
                 if (this.submodelElements != null)
                     foreach (var sme in this.submodelElements)
                         SetParentsForSME(this, sme.submodelElement);
+            }
+
+            private static void SetParentsForSME(Referable parent, SubmodelElement se, DateTime timeStamp)
+            {
+                if (se == null)
+                    return;
+
+                se.parent = parent;
+                se.TimeStamp = timeStamp;
+
+                // via interface enumaration
+                if (se is IEnumerateChildren)
+                {
+                    var childs = (se as IEnumerateChildren).EnumerateChildren();
+                    if (childs != null)
+                        foreach (var c in childs)
+                            SetParentsForSME(se, c.submodelElement, timeStamp);
+                }
+            }
+
+            public void SetAllParents(DateTime timeStamp)
+            {
+                if (this.submodelElements != null)
+                    foreach (var sme in this.submodelElements)
+                        SetParentsForSME(this, sme.submodelElement, timeStamp);
             }
 
             public T CreateSMEForCD<T>(ConceptDescription cd, string category = null, string idShort = null,

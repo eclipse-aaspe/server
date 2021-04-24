@@ -50,6 +50,8 @@ namespace AasxTimeSeries
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()
         {
+            DateTime timeStamp = DateTime.Now;
+
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
 
@@ -61,6 +63,7 @@ namespace AasxTimeSeries
                 if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
+                    aas.setTimeStamp(timeStamp);
                     if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                     {
                         foreach (var smr in aas.submodelRefs)
@@ -68,11 +71,13 @@ namespace AasxTimeSeries
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.idShort != null)
                             {
-                                sm.SetAllParents();
+                                sm.setTimeStamp(timeStamp);
+                                sm.SetAllParents(timeStamp);
                                 int countSme = sm.submodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
                                     var sme = sm.submodelElements[iSme].submodelElement;
+                                    sme.setTimeStamp(timeStamp);
                                     if (sme is AdminShell.SubmodelElementCollection && sme.idShort.Contains("TimeSeries"))
                                     {
                                         bool nextSme = false;
@@ -107,6 +112,7 @@ namespace AasxTimeSeries
                                         for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                         {
                                             var sme2 = smec.value[iSmec].submodelElement;
+                                            sme2.setTimeStamp(timeStamp);
                                             var idShort = sme2.idShort;
                                             if (idShort.Contains("opcNode"))
                                                 idShort = "opcNode";
@@ -282,6 +288,7 @@ namespace AasxTimeSeries
             }
         }
 
+        /*
         static ulong ChangeNumber = 0;
 
         static bool setChangeNumber(AdminShell.Referable r, ulong changeNumber)
@@ -300,14 +307,16 @@ namespace AasxTimeSeries
 
             return true;
         }
+        */
 
         public static bool timeSeriesSampling(bool final)
         {
             if (Program.isLoading)
                 return true;
 
-            ulong newChangeNumber = ChangeNumber + 1;
-            bool useNewChangeNumber = false;
+            // ulong newChangeNumber = ChangeNumber + 1;
+            // bool useNewChangeNumber = false;
+            DateTime timeStamp = DateTime.Now;
 
             foreach (var tsb in timeSeriesBlockList)
             {
@@ -351,7 +360,7 @@ namespace AasxTimeSeries
                                 c = new AdminShellV20.SubmodelElementCollection();
                                 c.idShort = "jsonData";
                                 tsb.block.Add(c);
-                                useNewChangeNumber = setChangeNumber(tsb.block, newChangeNumber);
+                                tsb.block.setTimeStamp(timeStamp);
                             }
                             parseJSON(tsb.sourceAddress, "", "", c);
 
@@ -433,10 +442,10 @@ namespace AasxTimeSeries
                             tsb.samplesValuesCount++;
                             actualSamples++;
                             tsb.actualSamples.value = "" + actualSamples;
-                            useNewChangeNumber = setChangeNumber(tsb.actualSamples, newChangeNumber);
+                            tsb.actualSamples.setTimeStamp(timeStamp);
                             actualSamplesInCollection++;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                            useNewChangeNumber = setChangeNumber(tsb.actualSamplesInCollection, newChangeNumber);
+                            tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
                             if (actualSamples >= maxSamples)
                             {
                                 if (tsb.sampleMode.value == "continuous")
@@ -448,13 +457,13 @@ namespace AasxTimeSeries
                                     {
                                         actualSamples -= maxSamplesInCollection;
                                         tsb.actualSamples.value = "" + actualSamples;
-                                        useNewChangeNumber = setChangeNumber(tsb.actualSamples, newChangeNumber);
+                                        tsb.actualSamples.setTimeStamp(timeStamp);
                                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                            first, "Remove", tsb.submodel, newChangeNumber);
+                                            first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Remove(first);
-                                        useNewChangeNumber = setChangeNumber(tsb.data, newChangeNumber);
+                                        tsb.data.setTimeStamp(timeStamp);
                                         tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
-                                        useNewChangeNumber = setChangeNumber(tsb.lowDataIndex, newChangeNumber);
+                                        tsb.lowDataIndex.setTimeStamp(timeStamp);
                                         updateMode = 1;
                                     }
                                 }
@@ -466,32 +475,32 @@ namespace AasxTimeSeries
                                     if (tsb.highDataIndex != null)
                                     {
                                         tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                                        useNewChangeNumber = setChangeNumber(tsb.highDataIndex, newChangeNumber);
+                                        tsb.highDataIndex.setTimeStamp(timeStamp);
                                     }
                                     var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
                                     var p = AdminShell.Property.CreateNew("timeStamp");
                                     p.value = tsb.samplesTimeStamp;
-                                    useNewChangeNumber = setChangeNumber(p, newChangeNumber);
+                                    p.setTimeStamp(timeStamp);
                                     tsb.samplesTimeStamp = "";
                                     nextCollection.Add(p);
-                                    useNewChangeNumber = setChangeNumber(nextCollection, newChangeNumber);
+                                    nextCollection.setTimeStamp(timeStamp);
                                     for (int i = 0; i < tsb.samplesProperties.Count; i++)
                                     {
                                         p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
                                         p.value = tsb.samplesValues[i];
-                                        useNewChangeNumber = setChangeNumber(p, newChangeNumber);
+                                        p.setTimeStamp(timeStamp);
                                         tsb.samplesValues[i] = "";
                                         nextCollection.Add(p);
-                                        useNewChangeNumber = setChangeNumber(nextCollection, newChangeNumber);
+                                        nextCollection.setTimeStamp(timeStamp);
                                     }
                                     tsb.data.Add(nextCollection);
-                                    useNewChangeNumber = setChangeNumber(tsb.data, newChangeNumber);
+                                    tsb.data.setTimeStamp(timeStamp);
                                     AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                        nextCollection, "Add", tsb.submodel, newChangeNumber);
+                                        nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                                     tsb.samplesValuesCount = 0;
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                                    useNewChangeNumber = setChangeNumber(tsb.actualSamplesInCollection, newChangeNumber);
+                                    tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
                                     updateMode = 1;
                                     var json = JsonConvert.SerializeObject(nextCollection, Newtonsoft.Json.Formatting.Indented,
                                                                         new JsonSerializerSettings
@@ -511,41 +520,38 @@ namespace AasxTimeSeries
                             if (tsb.highDataIndex != null)
                             {
                                 tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                                useNewChangeNumber = setChangeNumber(tsb.highDataIndex, newChangeNumber);
+                                tsb.highDataIndex.setTimeStamp(timeStamp);
                             }
                             var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
                             var p = AdminShell.Property.CreateNew("timeStamp");
                             p.value = tsb.samplesTimeStamp;
-                            useNewChangeNumber = setChangeNumber(p, newChangeNumber);
+                            p.setTimeStamp(timeStamp);
                             tsb.samplesTimeStamp = "";
                             nextCollection.Add(p);
-                            useNewChangeNumber = setChangeNumber(nextCollection, newChangeNumber);
+                            nextCollection.setTimeStamp(timeStamp);
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
                                 p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
                                 p.value = tsb.samplesValues[i];
-                                useNewChangeNumber = setChangeNumber(p, newChangeNumber);
+                                p.setTimeStamp(timeStamp);
                                 tsb.samplesValues[i] = "";
                                 nextCollection.Add(p);
-                                useNewChangeNumber = setChangeNumber(nextCollection, newChangeNumber);
+                                nextCollection.setTimeStamp(timeStamp);
                             }
                             tsb.data.Add(nextCollection);
-                            useNewChangeNumber = setChangeNumber(tsb.data, newChangeNumber);
+                            tsb.data.setTimeStamp(timeStamp);
                             AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                nextCollection, "Add", tsb.submodel, newChangeNumber);
+                                nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                             tsb.samplesValuesCount = 0;
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                            useNewChangeNumber = setChangeNumber(tsb.actualSamplesInCollection, newChangeNumber);
+                            tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
                             updateMode = 1;
                         }
                     }
                     Program.signalNewData(updateMode);
                 }
             }
-
-            if (useNewChangeNumber)
-                ChangeNumber++;
 
             if (!test)
                 Thread.Sleep(100);
