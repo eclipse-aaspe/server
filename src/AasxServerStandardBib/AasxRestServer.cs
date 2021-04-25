@@ -319,7 +319,7 @@ namespace AasxRestServerLibrary
                     if (diffTimeStamp > minimumDate)
                     {
                         if (mode == "CREATE" || sme.TimeStamp != sme.TimeStampCreate)
-                            return mode + " " + path + sme.idShort + " SME " + 
+                            return mode + " " + path + sme.idShort + " SME " +
                                 sme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
                     }
 
@@ -349,7 +349,7 @@ namespace AasxRestServerLibrary
                             return text;
                         }
 
-                        return mode + " " + path + smec.idShort + " SMEC " + 
+                        return mode + " " + path + smec.idShort + " SMEC " +
                             smec.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
                     }
                 }
