@@ -80,6 +80,8 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            public static List<AdminShell.Referable> deletedList = new List<AdminShell.Referable>();
+
             // get event messages
             public class eventMessage
             {
@@ -124,6 +126,22 @@ namespace AasxRestServerLibrary
                         changeClass.Changes.Add(change);
                         if (changeClass.Changes.Count > 100)
                             changeClass.Changes.RemoveAt(0);
+
+                        if (op == "Remove")
+                        {
+                            o.TimeStamp = DateTime.Now;
+                            AdminShell.Referable x = o;
+                            string path = x.idShort;
+                            while (x.parent != null && x != x.parent)
+                            {
+                                x = x.parent;
+                                path = x.idShort + "/" + path;
+                            }
+                            o.idShort = path;
+                            deletedList.Add(o);
+                            if (deletedList.Count > 1000)
+                                deletedList.RemoveAt(0);
+                        }
                     }
                 }
             }
@@ -214,10 +232,10 @@ namespace AasxRestServerLibrary
             }
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$")]
 
             public IHttpContext GetDiff(IHttpContext context)
             {
-                bool withMinimumDate = false;
                 DateTime minimumDate = new DateTime();
 
                 string path = context.Request.PathInfo;
@@ -229,7 +247,6 @@ namespace AasxRestServerLibrary
                         try
                         {
                             minimumDate = DateTime.Parse(path.Substring("/diff/".Length));
-                            withMinimumDate = true;
                         }
                         catch { }
                     }
@@ -237,25 +254,43 @@ namespace AasxRestServerLibrary
 
                 string diffText = "";
 
+                foreach (var d in deletedList)
+                {
+                    if (d.TimeStamp > minimumDate)
+                        diffText += "DELETE " + d.idShort + " SMEC " +
+                            d.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
+                }
+
                 int aascount = AasxServer.Program.env.Length;
 
-                for (int i = 0; i < aascount; i++)
+                string[] modes = { "CREATE", "UPDATE" };
+
+                for (int imode = 0; imode < modes.Length; imode++)
                 {
-                    var env = AasxServer.Program.env[i];
-                    if (env != null)
+                    for (int i = 0; i < aascount; i++)
                     {
-                        var aas = env.AasEnv.AdministrationShells[0];
-                        if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                        var env = AasxServer.Program.env[i];
+                        if (env != null)
                         {
-                            foreach (var smr in aas.submodelRefs)
+                            var aas = env.AasEnv.AdministrationShells[0];
+                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                             {
-                                var sm = env.AasEnv.FindSubmodel(smr);
-                                if (sm != null && sm.idShort != null)
+                                foreach (var smr in aas.submodelRefs)
                                 {
-                                    if (sm.TimeStamp > minimumDate)
+                                    var sm = env.AasEnv.FindSubmodel(smr);
+                                    if (sm != null && sm.idShort != null)
                                     {
-                                        foreach (var sme in sm.submodelElements)
-                                            diffText += checkDiff(sm.idShort + "/", sme.submodelElement, minimumDate);
+                                        DateTime diffTimeStamp;
+                                        if (modes[imode] == "CREATE")
+                                            diffTimeStamp = sm.TimeStampCreate;
+                                        else // UPDATE
+                                            diffTimeStamp = sm.TimeStamp;
+                                        diffTimeStamp = sm.TimeStamp;
+                                        if (diffTimeStamp > minimumDate)
+                                        {
+                                            foreach (var sme in sm.submodelElements)
+                                                diffText += checkDiff(modes[imode], sm.idShort + "/", sme.submodelElement, minimumDate);
+                                        }
                                     }
                                 }
                             }
@@ -271,25 +306,52 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            static string checkDiff(string path, AdminShell.SubmodelElement sme, DateTime minimumDate)
+            static string checkDiff(string mode, string path, AdminShell.SubmodelElement sme, DateTime minimumDate)
             {
+                DateTime diffTimeStamp;
+
                 if (!(sme is AdminShell.SubmodelElementCollection))
                 {
-                    if (sme.TimeStamp > minimumDate)
+                    if (mode == "CREATE")
+                        diffTimeStamp = sme.TimeStampCreate;
+                    else // UPDATE
+                        diffTimeStamp = sme.TimeStamp;
+                    if (diffTimeStamp > minimumDate)
                     {
-                        return path + sme.idShort + " " + sme.TimeStamp + "\n";
+                        if (mode == "CREATE" || sme.TimeStamp != sme.TimeStampCreate)
+                            return mode + " " + path + sme.idShort + " SME " + 
+                                sme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
                     }
 
                     return "";
                 }
 
                 var smec = sme as AdminShell.SubmodelElementCollection;
+                if (mode == "CREATE")
+                    diffTimeStamp = smec.TimeStampCreate;
+                else // UPDATE
+                    diffTimeStamp = smec.TimeStamp;
+                diffTimeStamp = smec.TimeStamp;
                 if (smec.TimeStamp > minimumDate)
                 {
-                    string text = "";
-                    foreach (var sme2 in smec.value)
-                        text += checkDiff(path + sme.idShort + "/", sme2.submodelElement, minimumDate);
-                    return text;
+                    if (mode == "CREATE" || smec.TimeStamp != smec.TimeStampCreate)
+                    {
+                        bool deeper = false;
+                        foreach (var sme2 in smec.value)
+                            if (sme2.submodelElement.TimeStamp != smec.TimeStamp)
+                                deeper = true;
+
+                        if (deeper)
+                        {
+                            string text = "";
+                            foreach (var sme2 in smec.value)
+                                text += checkDiff(mode, path + sme.idShort + "/", sme2.submodelElement, minimumDate);
+                            return text;
+                        }
+
+                        return mode + " " + path + smec.idShort + " SMEC " + 
+                            smec.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
+                    }
                 }
 
                 return "";

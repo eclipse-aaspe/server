@@ -1713,6 +1713,7 @@ namespace AdminShellNS
         public class Referable : IValidateEntity, IAasElement
         {
             // public ulong ChangeNumber = 0;
+            public DateTime TimeStampCreate;
             public DateTime TimeStamp;
 
             public void setTimeStamp(DateTime timeStamp)
@@ -6171,6 +6172,7 @@ namespace AdminShellNS
 
                 se.parent = parent;
                 se.TimeStamp = timeStamp;
+                se.TimeStampCreate = timeStamp;
 
                 // via interface enumaration
                 if (se is IEnumerateChildren)
