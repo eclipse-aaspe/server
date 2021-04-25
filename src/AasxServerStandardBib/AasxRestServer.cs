@@ -81,6 +81,7 @@ namespace AasxRestServerLibrary
             }
 
             public static List<AdminShell.Referable> deletedList = new List<AdminShell.Referable>();
+            public static DateTime olderDeletedTimeStamp = new DateTime();
 
             // get event messages
             public class eventMessage
@@ -139,8 +140,11 @@ namespace AasxRestServerLibrary
                             }
                             o.idShort = path;
                             deletedList.Add(o);
-                            if (deletedList.Count > 1000)
+                            if (deletedList.Count > 10)
+                            {
+                                olderDeletedTimeStamp = deletedList[0].TimeStamp;
                                 deletedList.RemoveAt(0);
+                            }
                         }
                     }
                 }
@@ -253,6 +257,10 @@ namespace AasxRestServerLibrary
                 }
 
                 string diffText = "";
+
+                if (olderDeletedTimeStamp > minimumDate)
+                    diffText += "DELETE *** more items deleted before *** " +
+                            olderDeletedTimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
 
                 foreach (var d in deletedList)
                 {
