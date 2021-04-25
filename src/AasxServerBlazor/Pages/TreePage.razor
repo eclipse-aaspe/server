@@ -56,7 +56,8 @@
                     }
                     if (selectedNode != null && selectedNode.Tag is Referable r)
                     {
-                        <span style="color:lightgray;">@r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
                     }
                     // if (selectedNode != null && hasDownloadFile(selectedNode))
                     // {
