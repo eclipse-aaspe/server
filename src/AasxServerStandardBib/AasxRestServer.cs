@@ -140,7 +140,7 @@ namespace AasxRestServerLibrary
                             }
                             o.idShort = path;
                             deletedList.Add(o);
-                            if (deletedList.Count > 10)
+                            if (deletedList.Count > 1000)
                             {
                                 olderDeletedTimeStamp = deletedList[0].TimeStamp;
                                 deletedList.RemoveAt(0);
@@ -259,7 +259,7 @@ namespace AasxRestServerLibrary
                 string diffText = "";
 
                 if (olderDeletedTimeStamp > minimumDate)
-                    diffText += "DELETE *** more items deleted before *** " +
+                    diffText += "DELETE ***Deleted_items_before*** ERROR " +
                             olderDeletedTimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "\n";
 
                 foreach (var d in deletedList)
