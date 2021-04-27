@@ -297,22 +297,25 @@
         //// if (hack++ == 0)
         ////    return;
 
-        hack = 0;
-        SubmodelService.buildTree();
-        Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+        // hack = 0;
+        // SubmodelService.buildTree();
+        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
         // StateHasChanged();
 
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
 
         SubmodelService.NewDataAvailable += NewData;
+        Program.signalNewData(1);
 
+        /*
         refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
         {
             // Note that the following line is necessary because otherwise
             // Blazor would not recognize the state change and not refresh the UI
             // InvokeAsync(() => this.StateHasChanged());
         }), null, 5000, 5000);
+        */
     }
 
     public void Dispose()
@@ -330,7 +333,7 @@
             if (args is Program.NewDataAvailableArgs newArgs)
             {
                 newDataMode = newArgs.signalNewDataMode;
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                 InvokeAsync(() => this.StateHasChanged());
             }
         }
