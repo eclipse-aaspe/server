@@ -555,7 +555,8 @@ namespace AasxTimeSeries
                             updateMode = 1;
                         }
                     }
-                    Program.signalNewData(updateMode);
+                    if (updateMode != 0)
+                        Program.signalNewData(updateMode);
                 }
             }
 
