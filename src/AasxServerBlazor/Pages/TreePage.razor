@@ -11,6 +11,19 @@
     <div class="col-12 row">
         <br />
         <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
+            @{
+                /*
+                <span>@("count " + ExpandedNodes.Count() + " mode " + newDataMode + " ")</span>
+                foreach (var node in ExpandedNodes)
+                {
+                    if (node is Item i)
+                    {
+                        <span>@(i.Text + " " + i.GetHashCode() + " ")</span>
+                    }
+                }
+                */
+            }
+
             @updateVisibleTree(Items, selectedNode)
             @if (Program.isLoading)
             {<span style="color:white;background-color:blue;">Loading...</span>}
@@ -267,25 +280,29 @@
     protected override void OnInitialized()
     {
         // OnInitialized() allways called twice
-        //// if (hack++ == 0)
-        ////    return;
+        // if (hack++ == 0)
+        //    return;
 
-        hack = 0;
-        SubmodelService.buildTree();
-        Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+        // hack = 0;
+        // SubmodelService.buildTree();
+        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+        // newDataMode = 1;
         // StateHasChanged();
 
         //ExpandedNodes.Add(Items.Skip(1).First());
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
 
         SubmodelService.NewDataAvailable += NewData;
+        Program.signalNewData(1);
 
+        /*
         refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
         {
             // Note that the following line is necessary because otherwise
             // Blazor would not recognize the state change and not refresh the UI
             // InvokeAsync(() => this.StateHasChanged());
         }), null, 5000, 5000);
+        */
     }
 
     public void Dispose()
@@ -303,7 +320,7 @@
             if (args is Program.NewDataAvailableArgs newArgs)
             {
                 newDataMode = newArgs.signalNewDataMode;
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                 InvokeAsync(() => this.StateHasChanged());
             }
         }
