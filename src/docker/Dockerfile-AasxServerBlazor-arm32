@@ -11,7 +11,7 @@ RUN dotnet restore -r linux-arm
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux-arm --self-contained false --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:3.1-buster-slim-arm32v7 as base
-RUN apt-get update && apt-get install -y libgdiplus
+# RUN apt-get update && apt-get install -y libgdiplus
 EXPOSE 51210
 EXPOSE 51310
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
