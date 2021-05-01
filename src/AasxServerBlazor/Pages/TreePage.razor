@@ -676,8 +676,8 @@
         string[] split = Program.hostPort.Split(':');
         if (split[0].ToLower() == "admin-shell-io.com")
         {
-            prefix = "https://";
-            hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
+            // prefix = "https://";
+            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
         }
 
         object o = item.Tag;
