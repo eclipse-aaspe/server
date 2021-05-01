@@ -1190,9 +1190,7 @@ namespace AasxRestServerLibrary
                                         }
                                         text += "<br>";
 
-                                        // var link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + assetId;
-                                        var link = Program.externalRest + "/server/getaasxbyassetid/" + assetId;
-
+                                        var link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + assetId;
                                         text += "Please open AAS in AASX Package Explorer by: File / Other Connect Options / Connect via REST:<br>" +
                                             "<a href= \"" + link + "\" target=\"_blank\">" +
                                             link + "</a>" + "<br><br>";
