@@ -618,8 +618,8 @@ namespace AasxRestServerLibrary
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/values/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update/([^/]+)(/|)$")]
 
             public IHttpContext GetDiff(IHttpContext context)
             {
@@ -649,14 +649,14 @@ namespace AasxRestServerLibrary
 
                 string restPath = context.Request.PathInfo;
 
-                if (restPath.Contains("/diff/values"))
+                if (restPath.Contains("/diff/update"))
                 {
                     updateOnly = true;
-                    if (restPath.Contains("/diff/values/"))
+                    if (restPath.Contains("/diff/update/"))
                     {
                         try
                         {
-                            searchPath = restPath.Substring("/diff/values/".Length);
+                            searchPath = restPath.Substring("/diff/update/".Length);
                         }
                         catch { }
                     }
@@ -711,16 +711,45 @@ namespace AasxRestServerLibrary
                             var aas = env.AasEnv.AdministrationShells[0];
                             if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                             {
+                                DateTime diffTimeStamp = new DateTime();
+                                diffTimeStamp = aas.TimeStamp;
+                                if (diffTimeStamp > minimumDate)
+                                {
+                                    string mode = modes[imode];
+                                    if (mode == "CREATE" || aas.TimeStamp != aas.TimeStampCreate)
+                                    {
+                                        if (searchPath == "" || aas.idShort.Contains(searchPath))
+                                        {
+                                            diffText += "<tr><td>" + mode + "</td><td><b>" + aas.idShort +
+                                                "</b></td><td>AAS</td><td>" +
+                                                    aas.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
+                                            diffText += "</tr>";
+                                        }
+                                    }
+                                }
+
                                 foreach (var smr in aas.submodelRefs)
                                 {
                                     var sm = env.AasEnv.FindSubmodel(smr);
                                     if (sm != null && sm.idShort != null)
                                     {
-                                        DateTime diffTimeStamp = sm.TimeStamp;
+                                        diffTimeStamp = sm.TimeStamp;
                                         if (diffTimeStamp > minimumDate)
                                         {
+                                            string mode = modes[imode];
+                                            if (mode == "CREATE" || sm.TimeStamp != sm.TimeStampCreate)
+                                            {
+                                                if (searchPath == "" || (aas.idShort + "." + sm.idShort).Contains(searchPath))
+                                                {
+                                                    diffText += "<tr><td>" + mode + "</td><td><b>" + aas.idShort + "." + sm.idShort +
+                                                        "</b></td><td>SM</td><td>" +
+                                                            sm.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
+                                                    diffText += "</tr>";
+                                                }
+                                            }
+
                                             foreach (var sme in sm.submodelElements)
-                                                diffText += checkDiff(modes[imode], sm.idShort + ".", sme.submodelElement,
+                                                diffText += checkDiff(modes[imode], aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
                                                     minimumDate, updateOnly, searchPath);
                                         }
                                     }

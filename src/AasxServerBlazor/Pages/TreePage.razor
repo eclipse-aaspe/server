@@ -43,8 +43,15 @@
                     }
                     if (selectedNode != null && selectedNode.Tag is Referable r)
                     {
-                        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                        <button style="background-color:lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
                         <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        @code {
+                            private void setTimeStamp()
+                            {
+                                (selectedNode.Tag as Referable).setTimeStamp(DateTime.Now);
+                            }
+                        }
                     }
                     // if (selectedNode != null && hasDownloadFile(selectedNode))
                     // {
