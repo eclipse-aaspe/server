@@ -1767,7 +1767,7 @@ namespace AasxRestServerLibrary
                 // SubnmodelElement general
                 row.idShorts = path + sme.idShort ?? "(-)";
                 row.typeName = sme.GetElementName();
-                if (sme.semanticId == null || sme.semanticId.Keys == null)
+                if (sme.semanticId == null || sme.semanticId.Keys == null || sme.semanticId.Keys.Count == 0)
                 { }
                 else if (sme.semanticId.Keys.Count > 1)
                 {
