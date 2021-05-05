@@ -1157,6 +1157,34 @@ namespace AasxRestServerLibrary
 
                                         text += "AssetID = " + System.Net.WebUtility.UrlDecode(assetId) + "<br><br>";
 
+                                        lock (Program.changeAasxFile)
+                                        {
+                                            string detailsImage = "";
+                                            System.IO.Stream s = null;
+                                            try
+                                            {
+                                                s = Program.env[envi].GetLocalThumbnailStream();
+                                            }
+                                            catch { }
+                                            if (s != null)
+                                            {
+                                                using (var m = new System.IO.MemoryStream())
+                                                {
+                                                    s.CopyTo(m);
+                                                    detailsImage = System.Convert.ToBase64String(m.ToArray());
+                                                }
+                                                if (detailsImage != "")
+                                                {
+                                                    text += "<br>" +
+                                                        "Your product image:" +
+                                                        "<div><img src=data:image;base64," +
+                                                        detailsImage +
+                                                        " style=\"max-width: 25%;\" alt=\"Details Image\" /></div>";
+                                                }
+                                            }
+                                        }
+                                        text += "<br>";
+
                                         var link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + assetId;
                                         text += "Please open AAS in AASX Package Explorer by: File / Other Connect Options / Connect via REST:<br>" +
                                             "<a href= \"" + link + "\" target=\"_blank\">" +
