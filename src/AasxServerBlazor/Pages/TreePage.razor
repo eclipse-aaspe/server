@@ -169,6 +169,19 @@
                                 <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
                             </div>
                         }
+
+                        if (selectedNode.Tag is AdministrationShell aas)
+                        {
+                            if (aas.idShort.ToLower().Contains("quint"))
+                            {
+                                <br /> <br />
+                                <div style="border-style:solid;border-color:gray;">
+                                    <iframe src="https://www.phoenixcontact.com/pxr_lp_quint4" width='500px'
+                                            height='400px' frameborder="0"></iframe>
+                                </div>
+                                <br />
+                            }
+                        }
                     }
                 }
             </div>
