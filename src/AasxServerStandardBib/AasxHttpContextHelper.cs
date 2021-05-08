@@ -522,6 +522,11 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Add("Refresh", refresh);
             }
 
+            context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+            context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+
             context.Response.ContentType = ContentType.JSON;
             context.Response.ContentEncoding = Encoding.UTF8;
             context.Response.ContentLength64 = length;
