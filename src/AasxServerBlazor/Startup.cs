@@ -29,6 +29,7 @@ namespace AasxServerBlazor
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
+            services.AddCors();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +63,12 @@ namespace AasxServerBlazor
                 });
                 endpoints.MapFallbackToPage("/_Host");
             });
+
+            app.UseCors(x => x
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .SetIsOriginAllowed(origin => true) // allow any origin
+            .AllowCredentials());
         }
     }
 }
