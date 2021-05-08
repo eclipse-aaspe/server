@@ -186,16 +186,45 @@ namespace SampleClient
         }
 
         public string ReadSubmodelElementValue(string nodeName, int index)
-
         {
             NodeId node = new NodeId(nodeName, (ushort)index);
             return (session.ReadValue(node).ToString());
         }
 
         public string ReadSubmodelElementValue(NodeId nodeId)
-
         {
             return (session.ReadValue(nodeId).ToString(null, CultureInfo.InvariantCulture));
+        }
+
+        public void WriteSubmodelElementValue(NodeId nodeId, object value)
+        {
+            WriteValue nodeToWrite = new WriteValue();
+            nodeToWrite.NodeId = nodeId;
+            nodeToWrite.AttributeId = Attributes.Value;
+            nodeToWrite.Value = new DataValue();
+            nodeToWrite.Value.WrappedValue = new Variant(value);
+
+            WriteValueCollection nodesToWrite = new WriteValueCollection();
+            nodesToWrite.Add(nodeToWrite);
+
+            // read the attributes.
+            StatusCodeCollection results = null;
+            DiagnosticInfoCollection diagnosticInfos = null;
+
+            ResponseHeader responseHeader = session.Write(
+                null,
+                nodesToWrite,
+                out results,
+                out diagnosticInfos);
+
+            ClientBase.ValidateResponse(results, nodesToWrite);
+            ClientBase.ValidateDiagnosticInfos(diagnosticInfos, nodesToWrite);
+
+            // check for error.
+            if (StatusCode.IsBad(results[0]))
+            {
+                throw ServiceResultException.Create(results[0], 0, diagnosticInfos, responseHeader.StringTable);
+            }
         }
     }
 }
