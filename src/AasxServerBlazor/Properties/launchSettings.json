@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path C:\\Development\\ILE_AASX --connect --edit --no-security",
+      "commandLineArgs": "--rest --data-path C:\\Development\\TimeSeries --connect --edit --no-security --opc-client-rate 3000",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

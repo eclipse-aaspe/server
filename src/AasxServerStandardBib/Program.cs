@@ -2242,7 +2242,12 @@ namespace AasxServer
 
         private static void UpdatePropertyFromOPCClient(AdminShell.Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
         {
-            string value;
+            string value = "";
+
+            bool write = (p.HasQualifierOfType("OPCWRITE") != null);
+            if (write)
+                value = p.value;
+
             try
             {
                 // ns=#;i=#
@@ -2256,8 +2261,14 @@ namespace AasxServer
                     clientNodeId = new NodeId(i, ns);
                     Console.WriteLine("New node id: ", clientNodeId.ToString());
                 }
-                value = client.ReadSubmodelElementValue(clientNodeId);
                 Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
+                if (write)
+                {
+                    short i = Convert.ToInt16(value);
+                    client.WriteSubmodelElementValue(clientNodeId, i);
+                }
+                else
+                    value = client.ReadSubmodelElementValue(clientNodeId);
             }
             catch (ServiceResultException ex)
             {
@@ -2266,11 +2277,14 @@ namespace AasxServer
             }
 
             // update in AAS env
-            p.Set(p.valueType, value);
+            if (!write)
+            {
+                p.Set(p.valueType, value);
 
-            // update in OPC
-            if (!OPCWrite(serverNodeId, value))
-                Console.WriteLine("OPC write not successful.");
+                // update in OPC
+                if (!OPCWrite(serverNodeId, value))
+                    Console.WriteLine("OPC write not successful.");
+            }
         }
     }
 
