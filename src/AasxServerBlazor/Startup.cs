@@ -44,7 +44,7 @@ namespace AasxServerBlazor
                 app.UseExceptionHandler("/Error");
             }
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseStaticFiles();
 
