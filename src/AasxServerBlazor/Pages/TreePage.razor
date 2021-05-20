@@ -631,7 +631,8 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
+                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
+                string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
 
                 return link;
             }
@@ -694,7 +695,8 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
+                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
+                string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
 
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
@@ -762,12 +764,14 @@
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
-            return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
         }
 
         if (o is AdministrationShell)
         {
-            return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
         }
 
         if (o is File || o is Property)
