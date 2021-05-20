@@ -138,6 +138,7 @@ namespace AasxServer
 
         public static bool noSecurity = false;
         public static bool edit = false;
+        public static string externalRest = "";
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
@@ -170,6 +171,7 @@ namespace AasxServer
             public bool NoSecurity { get; set; }
             public bool Edit { get; set; }
             public string Name { get; set; }
+            public string ExternalRest { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -312,6 +314,11 @@ namespace AasxServer
                     };
                 }
             };
+
+            if (a.ExternalRest != null)
+            {
+                externalRest = a.ExternalRest;
+            }
 
             if (File.Exists("redirect.dat"))
             {
@@ -686,7 +693,10 @@ namespace AasxServer
                 new Option<string>(
                     new[] {"--name"},
                     "Name of the server"),
-            };
+
+                new Option<string>(
+                    new[] {"--external-rest"},
+                    "exeternal name of the server"),           };
 
             if (args.Length == 0)
             {
