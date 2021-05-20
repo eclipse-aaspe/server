@@ -315,9 +315,16 @@ namespace AasxServer
                 }
             };
 
+            hostPort = a.Host + ":" + a.Port;
+            blazorHostPort = a.Host + ":" + blazorHostPort;
+
             if (a.ExternalRest != null)
             {
                 externalRest = a.ExternalRest;
+            }
+            else
+            {
+                externalRest = "http://" + hostPort;
             }
 
             if (File.Exists("redirect.dat"))
@@ -336,9 +343,6 @@ namespace AasxServer
                     Console.WriteLine("redirect.dat " + " can not be read!");
                 }
             }
-
-            hostPort = a.Host + ":" + a.Port;
-            blazorHostPort = a.Host + ":" + blazorHostPort;
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
