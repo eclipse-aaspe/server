@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define MICHA
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,7 +17,6 @@ using Grapevine.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
 using Newtonsoft.Json;
-
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
@@ -80,7 +81,13 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            public static List<AdminShell.Referable> deletedList = new List<AdminShell.Referable>();
+            public class DeletedListItem
+            {
+                public AdminShell.Submodel sm;
+                public AdminShell.Referable rf;
+            }
+
+            public static List<DeletedListItem> deletedList = new List<DeletedListItem>();
             public static DateTime olderDeletedTimeStamp = new DateTime();
 
             // get event messages
@@ -115,12 +122,22 @@ namespace AasxRestServerLibrary
 
                         rootSubmodel.SetAllParents();
                         AdminShell.KeyList keys = new AdminShellV20.KeyList();
+
+#if MICHA
+                        // keys were in the reverse order
+                        keys = smec.GetReference()?.Keys;
+                        if (keys?.IsEmpty == false)
+                            keys.Remove(keys.Last());
+#else
+
                         while (smec != null)
                         {
                             keys.Add(AdminShellV20.Key.CreateNew("SMEC", false, "SMEC", smec.idShort));
                             smec = (smec.parent as AdminShell.SubmodelElementCollection);
                         }
                         keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
+#endif
+
 
                         AasPayloadStructuralChangeItem change = new AasPayloadStructuralChangeItem(
                             changeCount, o.TimeStamp, reason, keys, json);
@@ -139,10 +156,10 @@ namespace AasxRestServerLibrary
                                 path = x.idShort + "/" + path;
                             }
                             o.idShort = path;
-                            deletedList.Add(o);
-                            if (deletedList.Count > 1000)
+                            deletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o }) ;
+                            if (deletedList.Count > 1000 && deletedList[0].rf != null)
                             {
-                                olderDeletedTimeStamp = deletedList[0].TimeStamp;
+                                olderDeletedTimeStamp = deletedList[0].rf.TimeStamp;
                                 deletedList.RemoveAt(0);
                             }
                         }
@@ -153,12 +170,16 @@ namespace AasxRestServerLibrary
             public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
             // public static int eventsCount = 0;
 
+            private static bool _setAllParentsExecuted = false;
+
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/values(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/count/([^/]+)(/|)$")]
+            // [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/count/([^/]+)(/|)$")]
 
             public IHttpContext GetEventMessages(IHttpContext context)
             {
+#if OLD
                 bool withMinimumDate = false;
                 DateTime minimumDate = new DateTime();
                 bool withMinimumCount = false;
@@ -210,9 +231,241 @@ namespace AasxRestServerLibrary
                         filteredChangeClass.Changes.Add(c);
                 }
 
+                // MICHA: add message payloads ..
+
                 SendJsonResponse(context, filteredChangeClass);
 
                 return context;
+#else
+                // 
+                // Configuration of operation mode
+                //
+                
+                DateTime minimumDate = new DateTime();
+                bool updateOnly = false;
+                string restPath = context.Request.PathInfo;
+
+                if (restPath.Contains("/values"))
+                {
+                    updateOnly = true;
+                }
+                else
+                {
+                    if (restPath.Contains("/time/"))
+                    {
+                        try
+                        {
+                            minimumDate = DateTime.Parse(restPath.Substring("/diff/".Length));
+                        }
+                        catch { }
+                    }
+                }
+
+                //
+                // Set parents for all childs.
+                // Note: this has to be done only once for AASX Server, therefore a better place than
+                // here could be figured out
+                //
+
+                if (!_setAllParentsExecuted)
+                {
+                    _setAllParentsExecuted = true;
+
+                    if (AasxServer.Program.env != null)
+                        foreach (var e in AasxServer.Program.env)
+                            if (e?.AasEnv?.Submodels != null)
+                                foreach (var sm in e.AasEnv.Submodels)
+                                    if (sm != null)
+                                        sm.SetAllParents();
+                }
+
+                //
+                // Create event outer message
+                //
+
+                var eventsOuter = new AasEventMsgEnvelope(
+                        DateTime.UtcNow,
+                        source: null,
+                        sourceSemanticId: null,
+                        observableReference: null,
+                        observableSemanticId: null);
+
+                // directly create lists of update value and structural change events
+
+                var plStruct = new AasPayloadStructuralChange();               
+                var plUpdate = new AasPayloadUpdateValue();
+                
+                string[] modes = { "CREATE", "UPDATE" };
+
+                //
+                // Check for deletes
+                //
+
+                if (!updateOnly)
+                {
+                    foreach (var d in deletedList)
+                    {
+                        if (d.rf == null)
+                            continue;
+                        if (d.rf.TimeStamp > minimumDate)
+                        {
+                            // get the path
+                            // TODO: for the time being: absolute, but needs to be relative to {Observable}
+                            AdminShell.KeyList kl = null;
+                            if (d.rf is AdminShell.Submodel sm)
+                                kl = sm?.GetReference()?.Keys;
+                            if (d.rf is AdminShell.SubmodelElement sme)
+                                kl = sme?.GetReference()?.Keys;
+                            if (kl == null)
+                                continue;
+
+                            // make payload
+                            var pliDel = new AasPayloadStructuralChangeItem(
+                                count: 1,
+                                timeStamp: d.rf.TimeStamp,
+                                AasPayloadStructuralChangeItem.ChangeReason.Delete,
+                                path: kl);
+
+                            // add
+                            plStruct.Changes.Add(pliDel);
+                        }
+                    }
+                }
+                else
+                {
+                }
+
+                //
+                // Create & update
+                //
+
+                int aascount = AasxServer.Program.env.Length;
+
+                for (int imode = 0; imode < modes.Length; imode++)
+                {
+                    for (int i = 0; i < aascount; i++)
+                    {
+                        var env = AasxServer.Program.env[i];
+                        if (env != null)
+                        {
+                            // TODO: only one AAS???
+                            var aas = env.AasEnv.AdministrationShells[0];
+                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                            {
+                                foreach (var smr in aas.submodelRefs)
+                                {
+                                    var sm = env.AasEnv.FindSubmodel(smr);
+                                    if (sm != null && sm.idShort != null)
+                                    {
+                                        DateTime diffTimeStamp = sm.TimeStamp;
+                                        if (diffTimeStamp > minimumDate)
+                                        {
+                                            foreach (var sme in sm.submodelElements)
+                                                GetEventMsgRecurseDiff(
+                                                    modes[imode], sm.idShort + "/", 
+                                                    plStruct, plUpdate,
+                                                    sme.submodelElement,
+                                                    minimumDate, updateOnly);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //
+                // Serialize event message and send
+                //
+
+                if (plStruct.Changes.Count > 0)
+                    eventsOuter.Payloads.Add(plStruct);
+
+                if (plUpdate.Values.Count > 0)
+                    eventsOuter.Payloads.Add(plUpdate);
+
+                SendJsonResponse(context, eventsOuter);
+
+                return context;
+#endif
+            }
+
+            static void GetEventMsgRecurseDiff(
+                string mode, 
+                string path,
+                AasPayloadStructuralChange plStruct,
+                AasPayloadUpdateValue plUpdate,
+                AdminShell.SubmodelElement sme, DateTime minimumDate, bool updateOnly)
+            {
+                DateTime diffTimeStamp;
+
+                if (!(sme is AdminShell.SubmodelElementCollection))
+                {
+                    if (mode == "CREATE")
+                        diffTimeStamp = sme.TimeStampCreate;
+                    else // UPDATE
+                        diffTimeStamp = sme.TimeStamp;
+                    if (diffTimeStamp > minimumDate)
+                    {
+                        if (mode == "CREATE")
+                        {
+                            if (!updateOnly && plStruct != null)
+                                plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
+                                    count: 1,
+                                    timeStamp: sme.TimeStamp,
+                                    AasPayloadStructuralChangeItem.ChangeReason.Create,
+                                    // TODO: make this relative
+                                    path: sme.GetReference()?.Keys,
+                                    // Assumption: models will be serialized correctly
+                                    data: JsonConvert.SerializeObject(sme)));
+                        }
+                        else
+                        if (sme.TimeStamp != sme.TimeStampCreate)
+                        {
+                            if (plUpdate != null)
+                                plUpdate.Values.Add(new AasPayloadUpdateValueItem(
+                                    // TODO: make this relative
+                                    path: sme.GetReference()?.Keys,
+                                    sme.ValueAsText()));
+                        }
+                    }
+
+                    return;
+                }
+
+                var smec = sme as AdminShell.SubmodelElementCollection;
+                diffTimeStamp = smec.TimeStamp;
+                if (smec.TimeStamp > minimumDate)
+                {
+                    // TODO: check if to modify to send serializations of whole SMCs on CREATE
+                    if (mode == "CREATE" || smec.TimeStamp != smec.TimeStampCreate)
+                    {
+                        bool deeper = false;
+                        if (updateOnly)
+                        {
+                            deeper = true;
+                        }
+                        else
+                        {
+                            foreach (var sme2 in smec.value)
+                                if (sme2.submodelElement.TimeStamp != smec.TimeStamp)
+                                {
+                                    deeper = true;
+                                    break;
+                                }
+                        }
+
+                        if (deeper)
+                        {
+                            foreach (var sme2 in smec.value)
+                                GetEventMsgRecurseDiff(
+                                    mode, path + sme.idShort + "/", 
+                                    plStruct, plUpdate, 
+                                    sme2.submodelElement, minimumDate, updateOnly);
+                        }
+
+                    }
+                }
             }
 
             public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
@@ -281,10 +534,12 @@ namespace AasxRestServerLibrary
 
                     foreach (var d in deletedList)
                     {
-                        if (d.TimeStamp > minimumDate)
+                        if (d.rf == null)
+                            continue;
+                        if (d.rf.TimeStamp > minimumDate)
                         {
-                            diffText += "<tr><td>DELETE</td><td><b>" + d.idShort + "</b></td><td>SMEC</td><td>" +
-                                d.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
+                            diffText += "<tr><td>DELETE</td><td><b>" + d.rf.idShort + "</b></td><td>SMEC</td><td>" +
+                                d.rf.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
                         }
                     }
                 }

@@ -26,9 +26,11 @@ namespace AdminShellEvents
     /// </summary>
     public class AasPayloadStructuralChangeItem
     {
+        /// <summary>
+        /// Monotonic count index to follow stream of events
+        /// </summary>
         public ulong Count { get; set; }
-        public DateTime TimeStamp { get; set; }
-
+        
         /// <summary>
         /// Enum telling the reason for a change. According to CRUD principle.
         /// (Retrieve make no sense, update = modify, in order to avoid mismatch with update value)
@@ -42,13 +44,27 @@ namespace AdminShellEvents
         public ChangeReason Reason;
 
         /// <summary>
+        /// Timestamp of generated (sending) event in UTC time.
+        /// </summary>
+        public DateTime TimeStamp { get; set; }
+
+        /// <summary>
         /// Path of the element which was structurally changed. Contains one or more Keys, relative to the 
         /// Observable of the defined Event. 
         /// Is null / empty, if identical to Observable.
         /// </summary>
         public AdminShell.KeyList Path { get; set; }
 
-        public string Data;
+        /// <summary>
+        /// JSON-Serializatin of the Submodel, SMC, SME which was denoted by Observabale and Path.
+        /// </summary>
+        public string Data { get; set; }
+
+        /// <summary>
+        /// If the reason is create and the data element to be created is part of an (ordered) collection,
+        /// and if >= 0, give the index within the collection, where the data element is to be created
+        /// </summary>
+        public int CreateAtIndex = -1;
 
         //
         // Constructor
@@ -56,10 +72,10 @@ namespace AdminShellEvents
 
         public AasPayloadStructuralChangeItem(
             ulong count,
-            DateTime timeStamp,
+            DateTime timeStamp, 
             ChangeReason reason,
-            AdminShell.KeyList path,
-            string data)
+            AdminShell.KeyList path = null,
+            string data = null)
         {
             Count = count;
             TimeStamp = timeStamp;
@@ -75,13 +91,10 @@ namespace AdminShellEvents
         public override string ToString()
         {
             var res = "PayloadStructuralChangeItem: {Observable}";
-            res += " " + Count;
-            res += " " + TimeStamp.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'") + " ";
             if (Path != null)
                 foreach (var k in Path)
                     res += "/" + k.value;
             res += " -> " + Reason.ToString();
-            res += " " + Data;
             return res;
         }
 
@@ -99,6 +112,18 @@ namespace AdminShellEvents
             return new MiniMarkupLine(
                 new MiniMarkupRun(left, isMonospaced: true, padsize: 80),
                 new MiniMarkupRun(right));
+        }
+#endif
+
+#if NOT
+        public AdminShell.Referable GetDataAsReferable()
+        {
+            // access
+            if (Data == null)
+                return null;
+
+            // try deserialize
+            return AdminShellSerializationHelper.DeserializeFromJSON<AdminShell.Referable>(Data);
         }
 #endif
     }
@@ -158,4 +183,3 @@ namespace AdminShellEvents
 #endif
     }
 }
-
