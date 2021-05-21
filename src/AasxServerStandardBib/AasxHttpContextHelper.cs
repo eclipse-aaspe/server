@@ -3587,6 +3587,18 @@ namespace AasxRestServerLibrary
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.idShort != null)
                             {
+                                if (!sm.idShort.ToLower().Contains("Security"))
+                                {
+                                    sm.SetAllParents();
+                                }
+                            }
+                        }
+
+                        foreach (var smr in aas.submodelRefs)
+                        {
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm != null && sm.idShort != null)
+                            {
                                 if (sm.idShort == "SecuritySettingsForServer")
                                 {
                                     int countSme = sm.submodelElements.Count;
@@ -3709,10 +3721,10 @@ namespace AasxRestServerLibrary
                                         var smc7 = smc6?.value[0].submodelElement as AdminShell.SubmodelElementCollection;
                                         var objProp = smc7?.value.FindFirstIdShortAs<AdminShell.Property>("object");
                                         var objRef = smc7?.value.FindFirstIdShortAs<AdminShell.ReferenceElement>("object");
-                                        object aasOrSubmodel = null;
+                                        object aasObject = null;
                                         if (objRef != null)
                                         {
-                                            aasOrSubmodel = env.AasEnv.FindReferableByReference(objRef.value);
+                                            aasObject = env.AasEnv.FindReferableByReference(objRef.value);
                                         }
                                         var smc8 = smc7?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permission");
 
@@ -3768,13 +3780,18 @@ namespace AasxRestServerLibrary
                                                 }
                                                 else
                                                 {
-                                                    if (aasOrSubmodel != null)
+                                                    if (aasObject != null)
                                                     {
-                                                        src.objReference = aasOrSubmodel;
-                                                        if (aasOrSubmodel is AdminShell.AdministrationShell)
+                                                        src.objReference = aasObject;
+                                                        if (aasObject is AdminShell.AdministrationShell)
                                                             src.objType = "aas";
-                                                        if (aasOrSubmodel is AdminShell.Submodel)
-                                                            src.objType = "submodel";
+                                                        if (aasObject is AdminShell.Submodel)
+                                                            src.objType = "sm";
+                                                        if (aasObject is AdminShell.SubmodelElement sme)
+                                                        {
+                                                            src.objType = "sme";
+                                                            string path = sme.idShort;
+                                                        }
                                                     }
                                                 }
                                                 src.permission = l.ToUpper();
