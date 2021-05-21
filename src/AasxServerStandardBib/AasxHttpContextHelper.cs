@@ -3840,7 +3840,7 @@ namespace AasxRestServerLibrary
                                                             src.objType = "sme";
                                                             string path = sme2.idShort;
                                                         }
-                                                        if (aasOrSubmodel is AdminShell.SubmodelElement smep)
+                                                        if (aasObject is AdminShell.SubmodelElement smep)
                                                         {
                                                             AdminShell.Referable rp = smep;
                                                             src.objType = "submodelElement";
