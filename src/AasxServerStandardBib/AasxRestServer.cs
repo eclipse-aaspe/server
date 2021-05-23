@@ -280,111 +280,154 @@ namespace AasxRestServerLibrary
                 }
 
                 //
-                // Create event outer message
+                // Restructuring of sourece code
+                // * outer loop is over all AAS-Env and Submodels
+                // * find event elements in Submodels
+                // * send deletes
+                // * send creates & updates
                 //
 
-                var eventsOuter = new AasEventMsgEnvelope(
-                        DateTime.UtcNow,
-                        source: null,
-                        sourceSemanticId: null,
-                        observableReference: null,
-                        observableSemanticId: null);
-
-                // directly create lists of update value and structural change events
-
-                var plStruct = new AasPayloadStructuralChange();               
-                var plUpdate = new AasPayloadUpdateValue();
-                
-                string[] modes = { "CREATE", "UPDATE" };
-
-                //
-                // Check for deletes
-                //
-
-                if (!updateOnly)
-                {
-                    foreach (var d in deletedList)
-                    {
-                        if (d.rf == null)
-                            continue;
-                        if (d.rf.TimeStamp > minimumDate)
-                        {
-                            // get the path
-                            // TODO: for the time being: absolute, but needs to be relative to {Observable}
-                            AdminShell.KeyList kl = null;
-                            if (d.rf is AdminShell.Submodel sm)
-                                kl = sm?.GetReference()?.Keys;
-                            if (d.rf is AdminShell.SubmodelElement sme)
-                                kl = sme?.GetReference()?.Keys;
-                            if (kl == null)
-                                continue;
-
-                            // make payload
-                            var pliDel = new AasPayloadStructuralChangeItem(
-                                count: 1,
-                                timeStamp: d.rf.TimeStamp,
-                                AasPayloadStructuralChangeItem.ChangeReason.Delete,
-                                path: kl);
-
-                            // add
-                            plStruct.Changes.Add(pliDel);
-                        }
-                    }
-                }
-                else
-                {
-                }
-
-                //
-                // Create & update
-                //
+                var envelopes = new List<AasEventMsgEnvelope>();
 
                 int aascount = AasxServer.Program.env.Length;
-
-                for (int imode = 0; imode < modes.Length; imode++)
+                for (int i = 0; i < aascount; i++)
                 {
-                    for (int i = 0; i < aascount; i++)
+                    var env = AasxServer.Program.env[i];
+                    if (env?.AasEnv?.AdministrationShells == null)
+                        continue;
+
+                    foreach (var aas in env.AasEnv.AdministrationShells)
                     {
-                        var env = AasxServer.Program.env[i];
-                        if (env != null)
+                        if (aas?.submodelRefs == null)
+                            continue;
+
+                        foreach (var smr in aas.submodelRefs)
                         {
-                            // TODO: only one AAS???
-                            var aas = env.AasEnv.AdministrationShells[0];
-                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                            // find Submodel
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm == null)
+                                continue;
+
+                            // find a matching event element
+                            foreach (var bev in sm.FindDeep<AdminShell.BasicEvent>(
+                                (be) => true == be.semanticId?.MatchesExactlyOneKey(
+                                            type: AdminShell.Key.ConceptDescription,
+                                            local: false,
+                                            idType: AdminShell.Identification.IRI,
+                                            id: "https://admin-shell.io/tmp/AAS/Events/CreateUpdateDelete",
+                                            matchMode: AdminShellV20.Key.MatchMode.Relaxed)
+                                        && be.observed != null && be.observed.Count >= 1))
                             {
-                                foreach (var smr in aas.submodelRefs)
+                                // find obseverved as well
+                                var obs = env.AasEnv.FindReferableByReference(bev.observed);
+                                if (obs == null)
+                                    continue;
+
+                                // obseverved semantic id is pain in the ..
+                                AdminShell.SemanticId obsSemId = null;
+                                if (obs is AdminShell.Submodel obssm)
+                                    obsSemId = obssm.semanticId;
+                                if (obs is AdminShell.SubmodelElement obssme)
+                                    obsSemId = obssme.semanticId;
+
+                                //
+                                // Create event outer message
+                                //
+
+                                var eventsOuter = new AasEventMsgEnvelope(
+                                        DateTime.UtcNow,
+                                        source: bev.GetReference(),
+                                        sourceSemanticId: bev.semanticId,
+                                        observableReference: bev.observed,
+                                        observableSemanticId: obsSemId);
+
+                                // directly create lists of update value and structural change events
+
+                                var plStruct = new AasPayloadStructuralChange();
+                                var plUpdate = new AasPayloadUpdateValue();
+
+                                string[] modes = { "CREATE", "UPDATE" };
+
+                                //
+                                // Check for deletes
+                                //
+
+                                if (!updateOnly)
                                 {
-                                    var sm = env.AasEnv.FindSubmodel(smr);
-                                    if (sm != null && sm.idShort != null)
+                                    foreach (var d in deletedList)
                                     {
-                                        DateTime diffTimeStamp = sm.TimeStamp;
-                                        if (diffTimeStamp > minimumDate)
+                                        if (d.rf == null || d.sm != sm)
+                                            continue;
+                                        if (d.rf.TimeStamp > minimumDate)
                                         {
-                                            foreach (var sme in sm.submodelElements)
-                                                GetEventMsgRecurseDiff(
-                                                    modes[imode], sm.idShort + "/", 
-                                                    plStruct, plUpdate,
-                                                    sme.submodelElement,
-                                                    minimumDate, updateOnly);
+                                            // get the path
+                                            AdminShell.KeyList p2 = null;
+                                            if (d.rf is AdminShell.Submodel delsm)
+                                                p2 = delsm?.GetReference()?.Keys;
+                                            if (d.rf is AdminShell.SubmodelElement delsme)
+                                                p2 = delsme?.GetReference()?.Keys;
+                                            if (p2 == null)
+                                                continue;
+
+                                            // prepare p2 to be relative path to observable
+                                            if (true == p2?.StartsWith(bev.observed?.Keys, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                                                p2.RemoveRange(0, bev.observed.Keys.Count);
+
+                                            // make payload
+                                            var pliDel = new AasPayloadStructuralChangeItem(
+                                                count: 1,
+                                                timeStamp: d.rf.TimeStamp,
+                                                AasPayloadStructuralChangeItem.ChangeReason.Delete,
+                                                path: p2);
+
+                                            // add
+                                            plStruct.Changes.Add(pliDel);
                                         }
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
+                                else
+                                {
+                                }
+
+                                //
+                                // Create & update
+                                //
+
+                                for (int imode = 0; imode < modes.Length; imode++)
+                                {
+                                    DateTime diffTimeStamp = sm.TimeStamp;
+                                    if (diffTimeStamp > minimumDate)
+                                    {
+                                        foreach (var sme in sm.submodelElements)
+                                            GetEventMsgRecurseDiff(
+                                                modes[imode],
+                                                plStruct, plUpdate,
+                                                sme.submodelElement,
+                                                minimumDate, updateOnly,
+                                                bev.observed?.Keys);
+                                    }
+                                }
+
+                                // prepare message envelope and remember
+
+                                if (plStruct.Changes.Count > 0)
+                                    eventsOuter.Payloads.Add(plStruct);
+
+                                if (plUpdate.Values.Count > 0)
+                                    eventsOuter.Payloads.Add(plUpdate);
+
+                                if (eventsOuter.Payloads.Count > 0)
+                                    envelopes.Add(eventsOuter);
+                            } // matching events
+                        } // submodels
+                    } // AAS
+                } // AAS-ENV
 
                 //
                 // Serialize event message and send
                 //
 
-                if (plStruct.Changes.Count > 0)
-                    eventsOuter.Payloads.Add(plStruct);
-
-                if (plUpdate.Values.Count > 0)
-                    eventsOuter.Payloads.Add(plUpdate);
-
-                SendJsonResponse(context, eventsOuter);
+                SendJsonResponse(context, envelopes.ToArray());
 
                 return context;
 #endif
@@ -392,10 +435,10 @@ namespace AasxRestServerLibrary
 
             static void GetEventMsgRecurseDiff(
                 string mode, 
-                string path,
                 AasPayloadStructuralChange plStruct,
                 AasPayloadUpdateValue plUpdate,
-                AdminShell.SubmodelElement sme, DateTime minimumDate, bool updateOnly)
+                AdminShell.SubmodelElement sme, DateTime minimumDate, bool updateOnly,
+                AdminShell.KeyList observablePath = null)
             {
                 DateTime diffTimeStamp;
 
@@ -407,15 +450,19 @@ namespace AasxRestServerLibrary
                         diffTimeStamp = sme.TimeStamp;
                     if (diffTimeStamp > minimumDate)
                     {
+                        // prepare p2 to be relative path to observable
+                        var p2 = sme.GetReference()?.Keys;
+                        if (true == p2?.StartsWith(observablePath, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                            p2.RemoveRange(0, observablePath.Count);
+
                         if (mode == "CREATE")
                         {
                             if (!updateOnly && plStruct != null)
                                 plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
                                     count: 1,
                                     timeStamp: sme.TimeStamp,
-                                    AasPayloadStructuralChangeItem.ChangeReason.Create,
-                                    // TODO: make this relative
-                                    path: sme.GetReference()?.Keys,
+                                    AasPayloadStructuralChangeItem.ChangeReason.Create,                                    
+                                    path: p2,
                                     // Assumption: models will be serialized correctly
                                     data: JsonConvert.SerializeObject(sme)));
                         }
@@ -424,8 +471,7 @@ namespace AasxRestServerLibrary
                         {
                             if (plUpdate != null)
                                 plUpdate.Values.Add(new AasPayloadUpdateValueItem(
-                                    // TODO: make this relative
-                                    path: sme.GetReference()?.Keys,
+                                    path: p2,
                                     sme.ValueAsText()));
                         }
                     }
@@ -459,9 +505,9 @@ namespace AasxRestServerLibrary
                         {
                             foreach (var sme2 in smec.value)
                                 GetEventMsgRecurseDiff(
-                                    mode, path + sme.idShort + "/", 
+                                    mode, 
                                     plStruct, plUpdate, 
-                                    sme2.submodelElement, minimumDate, updateOnly);
+                                    sme2.submodelElement, minimumDate, updateOnly, observablePath);
                         }
 
                     }
