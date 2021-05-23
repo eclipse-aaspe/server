@@ -1026,7 +1026,7 @@ namespace AasxRestServerLibrary
                 accessrights = SecurityCheck(context, ref index);
 
                 var aas = Program.env[aasInfo.iPackage].AasEnv.AdministrationShells[0];
-                if (!checkAccessRights(context, accessrights, "/aasx", "UPDATE", "aas", aas))
+                if (!checkAccessRights(context, accessrights, "/aasx", "UPDATE", "", "aas", aas))
                 {
                     return;
                 }
@@ -1885,9 +1885,15 @@ namespace AasxRestServerLibrary
             // check authentication
             if (withAuthentification)
             {
+                string objPath = smid;
+                foreach (var el in elemids)
+                {
+                    objPath += "." + el;
+                }
+
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodelelements", "READ"))
+                if (!checkAccessRights(context, accessrights, "/submodelelements", "READ", objPath))
                 {
                     return;
                 }
@@ -3045,10 +3051,12 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public bool checkAccessLevel(string currentRole, string operation, string neededRights, string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+        public bool checkAccessLevel(string currentRole, string operation, string neededRights,
+            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             if (currentRole == null)
                 currentRole = "isNotAuthenticated";
+
             int iRole = 0;
             while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
             {
@@ -3070,19 +3078,58 @@ namespace AasxRestServerLibrary
                     if (securityRole[iRole].apiOperation == "*" || securityRole[iRole].apiOperation == operation)
                     {
                         if (securityRole[iRole].permission == neededRights)
+                        {
                             return true;
+                        }
                     }
                 }
                 iRole++;
+            }
+            if (operation == "/submodelelements" && objPath != "")
+            {
+                // next object with rule must have allow
+                // no objects below must have deny
+                string deepestDeny = "";
+                string deepestAllow = "";
+                foreach (var role in securityRole)
+                {
+                    if (role.objType == "submodelElement")
+                    {
+                        if (role.kind == "deny")
+                        {
+                            if (objPath.Length >= role.objPath.Length) // deny in tree above
+                            {
+                                if (role.objPath == objPath.Substring(0, role.objPath.Length))
+                                    deepestDeny = role.objPath;
+                            }
+                            if (role.objPath.Length >= objPath.Length) // deny in tree below
+                            {
+                                if (objPath == role.objPath.Substring(0, objPath.Length))
+                                    return false;
+                            }
+                        }
+                        if (role.kind == "allow")
+                        {
+                            if (objPath.Length >= role.objPath.Length) // allow in tree above
+                            {
+                                if (role.objPath == objPath.Substring(0, role.objPath.Length))
+                                    deepestAllow = role.objPath;
+                            }
+                        }
+                    }
+                }
+                if (deepestDeny.Length > deepestAllow.Length)
+                    return false;
+                return true;
             }
 
             return false;
         }
 
         public bool checkAccessRights(IHttpContext context, string currentRole, string operation, string neededRights,
-            string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
-            if (checkAccessLevel(currentRole, operation, neededRights, aasOrSubmodel, objectAasOrSubmodel))
+            if (checkAccessLevel(currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel))
                 return true;
 
             if (currentRole == null)
@@ -3327,7 +3374,7 @@ namespace AasxRestServerLibrary
                     // aasRights = securityRightsAAS[idshort];
 
                     bool addEntry = false;
-                    if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ", "aas", aas))
+                    if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ", "", "aas", aas))
                     {
                         addEntry = true;
                     }
@@ -3413,7 +3460,7 @@ namespace AasxRestServerLibrary
                 */
 
                 var aas = Program.env[fileIndex].AasEnv.AdministrationShells[0];
-                if (!checkAccessRights(context, accessrights, "/aasx", "READ", "aas", aas))
+                if (!checkAccessRights(context, accessrights, "/aasx", "READ", "", "aas", aas))
                 {
                     return;
                 }
@@ -3560,6 +3607,7 @@ namespace AasxRestServerLibrary
             public string objType = null;
             public string apiOperation = null;
             public object objReference = null;
+            public string objPath = "";
             public string permission = null;
             public string kind = null;
             public securityRoleClass() { }
@@ -3791,6 +3839,18 @@ namespace AasxRestServerLibrary
                                                         {
                                                             src.objType = "sme";
                                                             string path = sme2.idShort;
+                                                        }
+                                                        if (aasOrSubmodel is AdminShell.SubmodelElement smep)
+                                                        {
+                                                            AdminShell.Referable rp = smep;
+                                                            src.objType = "submodelElement";
+                                                            string path = rp.idShort;
+                                                            while (rp.parent != null)
+                                                            {
+                                                                rp = rp.parent;
+                                                                path = rp.idShort + "." + path;
+                                                            }
+                                                            src.objPath = path;
                                                         }
                                                     }
                                                 }
