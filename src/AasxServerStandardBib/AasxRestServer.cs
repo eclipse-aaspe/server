@@ -242,12 +242,13 @@ namespace AasxRestServerLibrary
                 //
                 
                 DateTime minimumDate = new DateTime();
-                bool updateOnly = false;
+                bool doUpdate = true;
+                bool doCreateDelete = true;
                 string restPath = context.Request.PathInfo;
 
                 if (restPath.Contains("/values"))
                 {
-                    updateOnly = true;
+                    doCreateDelete = false;
                 }
                 else
                 {
@@ -309,16 +310,36 @@ namespace AasxRestServerLibrary
                                 continue;
 
                             // find a matching event element
-                            foreach (var bev in sm.FindDeep<AdminShell.BasicEvent>(
-                                (be) => true == be.semanticId?.MatchesExactlyOneKey(
-                                            type: AdminShell.Key.ConceptDescription,
-                                            local: false,
-                                            idType: AdminShell.Identification.IRI,
-                                            id: "https://admin-shell.io/tmp/AAS/Events/CreateUpdateDelete",
-                                            matchMode: AdminShellV20.Key.MatchMode.Relaxed)
-                                        && be.observed != null && be.observed.Count >= 1))
+                            foreach (var bev in sm.FindDeep<AdminShell.BasicEvent>())
                             {
+                                // find interesting event?
+                                if (true == bev.semanticId?.MatchesExactlyOneKey(
+                                    type: AdminShell.Key.ConceptDescription,
+                                    local: false,
+                                    idType: AdminShell.Identification.IRI,
+                                    id: "https://admin-shell.io/tmp/AAS/Events/UpdateValueOutwards",
+                                    matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                                {
+                                    doUpdate = true;
+                                    doCreateDelete = false;
+                                }
+                                else
+                                if (true == bev.semanticId?.MatchesExactlyOneKey(
+                                    type: AdminShell.Key.ConceptDescription,
+                                    local: false,
+                                    idType: AdminShell.Identification.IRI,
+                                    id: "https://admin-shell.io/tmp/AAS/Events/StructureChangeOutwards",
+                                    matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                                {
+                                    doUpdate = false;
+                                    doCreateDelete = true;
+                                }
+                                else
+                                    continue;
+
                                 // find obseverved as well
+                                if (bev.observed == null && bev.observed.Count < 1)
+                                    continue;
                                 var obs = env.AasEnv.FindReferableByReference(bev.observed);
                                 if (obs == null)
                                     continue;
@@ -352,7 +373,7 @@ namespace AasxRestServerLibrary
                                 // Check for deletes
                                 //
 
-                                if (!updateOnly)
+                                if (doCreateDelete)
                                 {
                                     foreach (var d in deletedList)
                                     {
@@ -403,7 +424,7 @@ namespace AasxRestServerLibrary
                                                 modes[imode],
                                                 plStruct, plUpdate,
                                                 sme.submodelElement,
-                                                minimumDate, updateOnly,
+                                                minimumDate, doUpdate, doCreateDelete,
                                                 bev.observed?.Keys);
                                     }
                                 }
@@ -437,7 +458,8 @@ namespace AasxRestServerLibrary
                 string mode, 
                 AasPayloadStructuralChange plStruct,
                 AasPayloadUpdateValue plUpdate,
-                AdminShell.SubmodelElement sme, DateTime minimumDate, bool updateOnly,
+                AdminShell.SubmodelElement sme, DateTime minimumDate, 
+                bool doUpdate, bool doCreateDelete,
                 AdminShell.KeyList observablePath = null)
             {
                 DateTime diffTimeStamp;
@@ -457,7 +479,7 @@ namespace AasxRestServerLibrary
 
                         if (mode == "CREATE")
                         {
-                            if (!updateOnly && plStruct != null)
+                            if (doCreateDelete && plStruct != null)
                                 plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
                                     count: 1,
                                     timeStamp: sme.TimeStamp,
@@ -487,7 +509,7 @@ namespace AasxRestServerLibrary
                     if (mode == "CREATE" || smec.TimeStamp != smec.TimeStampCreate)
                     {
                         bool deeper = false;
-                        if (updateOnly)
+                        if (doUpdate && !doCreateDelete)
                         {
                             deeper = true;
                         }
@@ -507,7 +529,7 @@ namespace AasxRestServerLibrary
                                 GetEventMsgRecurseDiff(
                                     mode, 
                                     plStruct, plUpdate, 
-                                    sme2.submodelElement, minimumDate, updateOnly, observablePath);
+                                    sme2.submodelElement, minimumDate, doUpdate, doCreateDelete, observablePath);
                         }
 
                     }
@@ -516,7 +538,14 @@ namespace AasxRestServerLibrary
 
             public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
             {
-                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+                // make JSON
+                var settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(
+                    new[] { typeof(AdminShellEvents.AasEventMsgEnvelope) });
+                settings.TypeNameHandling = TypeNameHandling.Auto;
+                settings.Formatting = Formatting.Indented;
+                var json = JsonConvert.SerializeObject(obj, settings);
+
+                // build buffer
                 var buffer = context.Request.ContentEncoding.GetBytes(json);
                 var length = buffer.Length;
 

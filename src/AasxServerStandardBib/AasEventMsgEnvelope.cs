@@ -16,6 +16,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AasxIntegrationBase;
 using AdminShellNS;
 using Newtonsoft.Json;
 
@@ -27,6 +28,7 @@ namespace AdminShellEvents
     /// 
     /// Note: This envelope is able to carry one or multiple even payloads.
     /// </summary>
+    [DisplayName("AasEventMsgEnvelope")]
     public class AasEventMsgEnvelope
     {
         /// <summary>
