@@ -241,7 +241,7 @@ namespace AasxRestServerLibrary
                 // 
                 // Configuration of operation mode
                 //
-                
+
                 DateTime minimumDate = new DateTime();
                 bool doUpdate = true;
                 bool doCreateDelete = true;
@@ -427,23 +427,27 @@ namespace AasxRestServerLibrary
 
                                 //for (int imode = 0; imode < modes.Length; imode++)
                                 //{
+                                    if ((doCreateDelete || doUpdate) == false)
+                                        throw new Exception("invalid flags");
+
                                     DateTime diffTimeStamp = sm.TimeStamp;
                                     var strMode = "";
                                     if (doCreateDelete)
                                         strMode = "CREATE";
                                     if (doUpdate)
                                         strMode = "UPDATE";
-                                    if (diffTimeStamp > minimumDate)
-                                    {
-                                        ;
-                                        foreach (var sme in sm.submodelElements)
-                                            GetEventMsgRecurseDiff(
-                                                strMode,
-                                                plStruct, plUpdate,
-                                                sme.submodelElement,
-                                                minimumDate, doUpdate, doCreateDelete,
-                                                bev.observed?.Keys);
-                                    }
+                                    if (strMode != "")
+                                        if (diffTimeStamp > minimumDate)
+                                        {
+                                            ;
+                                            foreach (var sme in sm.submodelElements)
+                                                GetEventMsgRecurseDiff(
+                                                    strMode,
+                                                    plStruct, plUpdate,
+                                                    sme.submodelElement,
+                                                    minimumDate, doUpdate, doCreateDelete,
+                                                    bev.observed?.Keys);
+                                        }
                                 //}
 
                                 // prepare message envelope and remember
@@ -547,8 +551,33 @@ namespace AasxRestServerLibrary
                                     mode, 
                                     plStruct, plUpdate, 
                                     sme2.submodelElement, minimumDate, doUpdate, doCreateDelete, observablePath);
+                            return;
                         }
 
+                        // prepare p2 to be relative path to observable
+                        var p2 = sme.GetReference()?.Keys;
+                        if (true == p2?.StartsWith(observablePath, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                            p2.RemoveRange(0, observablePath.Count);
+
+                        if (mode == "CREATE")
+                        {
+                            if (/* doCreateDelete && */ plStruct != null)
+                                plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
+                                    count: 1,
+                                    timeStamp: sme.TimeStamp,
+                                    AasPayloadStructuralChangeItem.ChangeReason.Create,
+                                    path: p2,
+                                    // Assumption: models will be serialized correctly
+                                    data: JsonConvert.SerializeObject(sme)));
+                        }
+                        else
+                        if (sme.TimeStamp != sme.TimeStampCreate)
+                        {
+                            if (/* doUpdate && */ plUpdate != null)
+                                plUpdate.Values.Add(new AasPayloadUpdateValueItem(
+                                    path: p2,
+                                    sme.ValueAsText()));
+                        }
                     }
                 }
             }
