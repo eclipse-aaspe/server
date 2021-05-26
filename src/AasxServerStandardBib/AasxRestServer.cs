@@ -175,6 +175,7 @@ namespace AasxRestServerLibrary
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/values(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/deltasecs/(\\d+)(/|)$")]
             // [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/count/([^/]+)(/|)$")]
 
             public IHttpContext GetEventMessages(IHttpContext context)
@@ -252,11 +253,21 @@ namespace AasxRestServerLibrary
                 }
                 else
                 {
-                    if (restPath.Contains("/time/"))
+                    if (restPath.StartsWith("/geteventmessages/time/"))
                     {
                         try
                         {
-                            minimumDate = DateTime.Parse(restPath.Substring("/diff/".Length));
+                            minimumDate = DateTime.Parse(restPath.Substring("/geteventmessages/time/".Length));
+                        }
+                        catch { }
+                    }
+                    if (restPath.StartsWith("/geteventmessages/deltasecs/"))
+                    {
+                        try
+                        {
+                            var secs = restPath.Substring("/geteventmessages/deltasecs/".Length);
+                            if (int.TryParse(secs, out int i))
+                                minimumDate = DateTime.Now.AddSeconds(-1.0 * i);
                         }
                         catch { }
                     }
@@ -414,20 +425,26 @@ namespace AasxRestServerLibrary
                                 // Create & update
                                 //
 
-                                for (int imode = 0; imode < modes.Length; imode++)
-                                {
+                                //for (int imode = 0; imode < modes.Length; imode++)
+                                //{
                                     DateTime diffTimeStamp = sm.TimeStamp;
+                                    var strMode = "";
+                                    if (doCreateDelete)
+                                        strMode = "CREATE";
+                                    if (doUpdate)
+                                        strMode = "UPDATE";
                                     if (diffTimeStamp > minimumDate)
                                     {
+                                        ;
                                         foreach (var sme in sm.submodelElements)
                                             GetEventMsgRecurseDiff(
-                                                modes[imode],
+                                                strMode,
                                                 plStruct, plUpdate,
                                                 sme.submodelElement,
                                                 minimumDate, doUpdate, doCreateDelete,
                                                 bev.observed?.Keys);
                                     }
-                                }
+                                //}
 
                                 // prepare message envelope and remember
 
@@ -479,7 +496,7 @@ namespace AasxRestServerLibrary
 
                         if (mode == "CREATE")
                         {
-                            if (doCreateDelete && plStruct != null)
+                            if (/* doCreateDelete && */ plStruct != null)
                                 plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
                                     count: 1,
                                     timeStamp: sme.TimeStamp,
@@ -491,7 +508,7 @@ namespace AasxRestServerLibrary
                         else
                         if (sme.TimeStamp != sme.TimeStampCreate)
                         {
-                            if (plUpdate != null)
+                            if (/* doUpdate && */ plUpdate != null)
                                 plUpdate.Values.Add(new AasPayloadUpdateValueItem(
                                     path: p2,
                                     sme.ValueAsText()));
@@ -509,7 +526,7 @@ namespace AasxRestServerLibrary
                     if (mode == "CREATE" || smec.TimeStamp != smec.TimeStampCreate)
                     {
                         bool deeper = false;
-                        if (doUpdate && !doCreateDelete)
+                        if (doUpdate /* && !doCreateDelete */)
                         {
                             deeper = true;
                         }
