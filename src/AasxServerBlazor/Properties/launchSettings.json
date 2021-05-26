@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path D:\\aasx\\TimeSeries --edit --no-security",
+      "commandLineArgs": "--no-security --rest --data-path C:\\MIHO\\Develop\\Aasx\\aasx-server\\src\\AasxServerCore\\bin\\Debug\\netcoreapp3.1\\data --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
