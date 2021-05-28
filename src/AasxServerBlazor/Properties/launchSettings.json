@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --rest --data-path C:\\Development\\Events2 --edit",
+      "commandLineArgs": "--no-security --rest --data-path C:\\MIHO\\Develop\\Aasx\\aasx-server\\src\\AasxServerCore\\bin\\Debug\\netcoreapp3.1\\data --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
