@@ -32,7 +32,7 @@ namespace AdminShellEvents
         /// Monotonic count index to follow stream of events
         /// </summary>
         public ulong Count { get; set; }
-        
+
         /// <summary>
         /// Enum telling the reason for a change. According to CRUD principle.
         /// (Retrieve make no sense, update = modify, in order to avoid mismatch with update value)
@@ -74,7 +74,7 @@ namespace AdminShellEvents
 
         public AasPayloadStructuralChangeItem(
             ulong count,
-            DateTime timeStamp, 
+            DateTime timeStamp,
             ChangeReason reason,
             AdminShell.KeyList path = null,
             string data = null)

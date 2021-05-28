@@ -160,7 +160,7 @@ namespace AasxRestServerLibrary
                             }
                             o.idShort = path;
                             */
-                            deletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o }) ;
+                            deletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o });
                             if (deletedList.Count > 1000 && deletedList[0].rf != null)
                             {
                                 olderDeletedTimeStamp = deletedList[0].rf.TimeStamp;
@@ -431,27 +431,27 @@ namespace AasxRestServerLibrary
 
                                 //for (int imode = 0; imode < modes.Length; imode++)
                                 //{
-                                    if ((doCreateDelete || doUpdate) == false)
-                                        throw new Exception("invalid flags");
+                                if ((doCreateDelete || doUpdate) == false)
+                                    throw new Exception("invalid flags");
 
-                                    DateTime diffTimeStamp = sm.TimeStamp;
-                                    var strMode = "";
-                                    if (doCreateDelete)
-                                        strMode = "CREATE";
-                                    if (doUpdate)
-                                        strMode = "UPDATE";
-                                    if (strMode != "")
-                                        if (diffTimeStamp > minimumDate)
-                                        {
-                                            ;
-                                            foreach (var sme in sm.submodelElements)
-                                                GetEventMsgRecurseDiff(
-                                                    strMode,
-                                                    plStruct, plUpdate,
-                                                    sme.submodelElement,
-                                                    minimumDate, doUpdate, doCreateDelete,
-                                                    bev.observed?.Keys);
-                                        }
+                                DateTime diffTimeStamp = sm.TimeStamp;
+                                var strMode = "";
+                                if (doCreateDelete)
+                                    strMode = "CREATE";
+                                if (doUpdate)
+                                    strMode = "UPDATE";
+                                if (strMode != "")
+                                    if (diffTimeStamp > minimumDate)
+                                    {
+                                        ;
+                                        foreach (var sme in sm.submodelElements)
+                                            GetEventMsgRecurseDiff(
+                                                strMode,
+                                                plStruct, plUpdate,
+                                                sme.submodelElement,
+                                                minimumDate, doUpdate, doCreateDelete,
+                                                bev.observed?.Keys);
+                                    }
                                 //}
 
                                 // prepare message envelope and remember
@@ -480,10 +480,10 @@ namespace AasxRestServerLibrary
             }
 
             static void GetEventMsgRecurseDiff(
-                string mode, 
+                string mode,
                 AasPayloadStructuralChange plStruct,
                 AasPayloadUpdateValue plUpdate,
-                AdminShell.SubmodelElement sme, DateTime minimumDate, 
+                AdminShell.SubmodelElement sme, DateTime minimumDate,
                 bool doUpdate, bool doCreateDelete,
                 AdminShell.KeyList observablePath = null)
             {
@@ -508,7 +508,7 @@ namespace AasxRestServerLibrary
                                 plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
                                     count: 1,
                                     timeStamp: sme.TimeStamp,
-                                    AasPayloadStructuralChangeItem.ChangeReason.Create,                                    
+                                    AasPayloadStructuralChangeItem.ChangeReason.Create,
                                     path: p2,
                                     // Assumption: models will be serialized correctly
                                     data: JsonConvert.SerializeObject(sme)));
@@ -552,8 +552,8 @@ namespace AasxRestServerLibrary
                         {
                             foreach (var sme2 in smec.value)
                                 GetEventMsgRecurseDiff(
-                                    mode, 
-                                    plStruct, plUpdate, 
+                                    mode,
+                                    plStruct, plUpdate,
                                     sme2.submodelElement, minimumDate, doUpdate, doCreateDelete, observablePath);
                             return;
                         }

@@ -89,7 +89,7 @@ namespace AasxIntegrationBase
         public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
             if (false == _typeToName.ContainsKey(serializedType))
-            {                
+            {
                 base.BindToName(serializedType, out assemblyName, out typeName);
                 return;
             }
@@ -123,6 +123,6 @@ namespace AasxIntegrationBase
             };
             return settings;
         }
-        
+
     }
 }

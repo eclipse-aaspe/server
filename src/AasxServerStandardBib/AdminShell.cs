@@ -1712,14 +1712,16 @@ namespace AdminShellNS
 
         public class Referable : IValidateEntity, IAasElement
         {
-            // public ulong ChangeNumber = 0;
-
             [XmlIgnore]
             [JsonIgnore]
+            [SkipForHash] // important to skip, as recursion elsewise will go in cycles!
+            [SkipForReflection] // important to skip, as recursion elsewise will go in cycles!
             public DateTime TimeStampCreate;
 
             [XmlIgnore]
             [JsonIgnore]
+            [SkipForHash] // important to skip, as recursion elsewise will go in cycles!
+            [SkipForReflection] // important to skip, as recursion elsewise will go in cycles!
             public DateTime TimeStamp;
 
             public void setTimeStamp(DateTime timeStamp)
