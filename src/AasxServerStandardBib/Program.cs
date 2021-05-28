@@ -2164,6 +2164,7 @@ namespace AasxServer
         public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
         {
             int newMode = 0;
+            DateTime timeStamp = DateTime.Now;
 
             foreach (JProperty jp1 in (JToken)o)
             {
@@ -2176,6 +2177,8 @@ namespace AasxServer
                         {
                             c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
                             c.Add(c2);
+                            c2.TimeStampCreate = timeStamp;
+                            c2.setTimeStamp(timeStamp);
                             newMode = 1;
                         }
                         int count = 1;
@@ -2188,6 +2191,8 @@ namespace AasxServer
                             {
                                 c3 = AdminShell.SubmodelElementCollection.CreateNew(n);
                                 c2.Add(c3);
+                                c3.TimeStampCreate = timeStamp;
+                                c3.setTimeStamp(timeStamp);
                                 newMode = 1;
                             }
                             parseJson(c3, el);
@@ -2199,6 +2204,8 @@ namespace AasxServer
                         {
                             c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
                             c.Add(c2);
+                            c2.TimeStampCreate = timeStamp;
+                            c2.setTimeStamp(timeStamp);
                             newMode = 1;
                         }
                         foreach (JObject el in jp1.Value)
@@ -2212,9 +2219,12 @@ namespace AasxServer
                         {
                             p = AdminShell.Property.CreateNew(jp1.Name);
                             c.Add(p);
+                            p.TimeStampCreate = timeStamp;
+                            p.setTimeStamp(timeStamp);
                             newMode = 1;
                         }
                         p.value = jp1.Value.ToString();
+                        p.setTimeStamp(timeStamp);
                         break;
                 }
             }
