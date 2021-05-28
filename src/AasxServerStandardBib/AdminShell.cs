@@ -1713,7 +1713,13 @@ namespace AdminShellNS
         public class Referable : IValidateEntity, IAasElement
         {
             // public ulong ChangeNumber = 0;
+
+            [XmlIgnore]
+            [JsonIgnore]
             public DateTime TimeStampCreate;
+
+            [XmlIgnore]
+            [JsonIgnore]
             public DateTime TimeStamp;
 
             public void setTimeStamp(DateTime timeStamp)
@@ -2196,6 +2202,8 @@ namespace AdminShellNS
 
         public class AdministrationShell : Identifiable, IFindAllReferences, IGetReference
         {
+            [XmlIgnore]
+            [JsonIgnore]
             public ulong ChangeNumber = 0;
 
             // for JSON only
