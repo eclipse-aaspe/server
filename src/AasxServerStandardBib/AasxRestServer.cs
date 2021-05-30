@@ -565,14 +565,17 @@ namespace AasxRestServerLibrary
 
                         if (mode == "CREATE")
                         {
-                            if (/* doCreateDelete && */ plStruct != null)
-                                plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
-                                    count: 1,
-                                    timeStamp: sme.TimeStamp,
-                                    AasPayloadStructuralChangeItem.ChangeReason.Create,
-                                    path: p2,
-                                    // Assumption: models will be serialized correctly
-                                    data: JsonConvert.SerializeObject(sme)));
+                            if (sme.TimeStampCreate > minimumDate)
+                            {
+                                if (/* doCreateDelete && */ plStruct != null)
+                                    plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
+                                        count: 1,
+                                        timeStamp: sme.TimeStamp,
+                                        AasPayloadStructuralChangeItem.ChangeReason.Create,
+                                        path: p2,
+                                        // Assumption: models will be serialized correctly
+                                        data: JsonConvert.SerializeObject(sme)));
+                            }
                         }
                         else
                         if (sme.TimeStamp != sme.TimeStampCreate)
