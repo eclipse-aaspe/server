@@ -18,12 +18,13 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --rest --data-path C:\\Development\\Events2 --edit",
+      "commandLineArgs": "--no-security --rest --data-path D:\\aasx\\TimeSeries --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5001"
+      "applicationUrl": "http://localhost:5001",
+      "jsWebView2Debugging": true
     }
   }
 }
