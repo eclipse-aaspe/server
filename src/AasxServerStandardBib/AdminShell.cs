@@ -1716,9 +1716,6 @@ namespace AdminShellNS
             [JsonIgnore]
             [SkipForHash] // important to skip, as recursion elsewise will go in cycles!
             [SkipForReflection] // important to skip, as recursion elsewise will go in cycles!
-
-            [XmlIgnore]
-            [JsonIgnore]
             public DateTime TimeStampCreate;
 
             [XmlIgnore]
