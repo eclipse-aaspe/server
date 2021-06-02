@@ -3835,7 +3835,7 @@ namespace AasxRestServerLibrary
                                                             src.objType = "aas";
                                                         if (aasObject is AdminShell.Submodel)
                                                             src.objType = "sm";
-                                                        if (aasObject is AdminShell.SubmodelElement sme2)
+                                                        if (aasObject is AdminShell.SubmodelElement smep)
                                                         {
                                                             src.objType = "sme";
                                                             string path = sme2.idShort;
