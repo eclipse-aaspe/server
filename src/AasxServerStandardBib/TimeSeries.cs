@@ -17,6 +17,7 @@ namespace AasxTimeSeries
     {
         public class TimeSeriesBlock
         {
+            public AdminShell.Submodel submodel = null;
             public AdminShell.SubmodelElementCollection block = null;
             public AdminShell.SubmodelElementCollection data = null;
             public AdminShell.Property sampleStatus = null;
@@ -49,6 +50,8 @@ namespace AasxTimeSeries
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()
         {
+            DateTime timeStamp = DateTime.Now;
+
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
 
@@ -60,6 +63,8 @@ namespace AasxTimeSeries
                 if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
+                    aas.TimeStampCreate = timeStamp;
+                    aas.setTimeStamp(timeStamp);
                     if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                     {
                         foreach (var smr in aas.submodelRefs)
@@ -67,6 +72,8 @@ namespace AasxTimeSeries
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.idShort != null)
                             {
+                                sm.TimeStampCreate = timeStamp;
+                                sm.SetAllParents(timeStamp);
                                 int countSme = sm.submodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
@@ -96,6 +103,7 @@ namespace AasxTimeSeries
                                         int countSmec = smec.value.Count;
 
                                         var tsb = new TimeSeriesBlock();
+                                        tsb.submodel = sm;
                                         tsb.block = smec;
                                         tsb.samplesProperties = new List<AdminShell.Property>();
                                         tsb.samplesValues = new List<string>();
@@ -219,6 +227,8 @@ namespace AasxTimeSeries
                                                         tsb.opcNodes.Add(split[1] + "," + split[2]);
                                                         var p = AdminShell.Property.CreateNew(split[0]);
                                                         tsb.samplesProperties.Add(p);
+                                                        p.TimeStampCreate = timeStamp;
+                                                        p.setTimeStamp(timeStamp);
                                                         tsb.samplesValues.Add("");
                                                     }
                                                     break;
@@ -279,8 +289,36 @@ namespace AasxTimeSeries
             }
         }
 
+        /*
+        static ulong ChangeNumber = 0;
+
+        static bool setChangeNumber(AdminShell.Referable r, ulong changeNumber)
+        {
+            do
+            {
+                r.ChangeNumber = changeNumber;
+                if (r != r.parent)
+                {
+                    r = r.parent;
+                }
+                else
+                    r = null;
+            }
+            while (r != null);
+
+            return true;
+        }
+        */
+
         public static bool timeSeriesSampling(bool final)
         {
+            if (Program.isLoading)
+                return true;
+
+            // ulong newChangeNumber = ChangeNumber + 1;
+            // bool useNewChangeNumber = false;
+            DateTime timeStamp = DateTime.Now;
+
             foreach (var tsb in timeSeriesBlockList)
             {
                 if (tsb.sampleStatus.value == "stop")
@@ -322,7 +360,9 @@ namespace AasxTimeSeries
                             {
                                 c = new AdminShellV20.SubmodelElementCollection();
                                 c.idShort = "jsonData";
+                                c.TimeStampCreate = timeStamp;
                                 tsb.block.Add(c);
+                                c.setTimeStamp(timeStamp);
                             }
                             parseJSON(tsb.sourceAddress, "", "", c);
 
@@ -404,8 +444,10 @@ namespace AasxTimeSeries
                             tsb.samplesValuesCount++;
                             actualSamples++;
                             tsb.actualSamples.value = "" + actualSamples;
+                            tsb.actualSamples.setTimeStamp(timeStamp);
                             actualSamplesInCollection++;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                            tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
                             if (actualSamples >= maxSamples)
                             {
                                 if (tsb.sampleMode.value == "continuous")
@@ -417,8 +459,13 @@ namespace AasxTimeSeries
                                     {
                                         actualSamples -= maxSamplesInCollection;
                                         tsb.actualSamples.value = "" + actualSamples;
+                                        tsb.actualSamples.setTimeStamp(timeStamp);
+                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                            first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Remove(first);
+                                        tsb.data.setTimeStamp(timeStamp);
                                         tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
+                                        tsb.lowDataIndex.setTimeStamp(timeStamp);
                                         updateMode = 1;
                                     }
                                 }
@@ -428,23 +475,36 @@ namespace AasxTimeSeries
                                 if (actualSamplesInCollection > 0)
                                 {
                                     if (tsb.highDataIndex != null)
+                                    {
                                         tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
+                                        tsb.highDataIndex.setTimeStamp(timeStamp);
+                                    }
                                     var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
                                     var p = AdminShell.Property.CreateNew("timeStamp");
                                     p.value = tsb.samplesTimeStamp;
+                                    p.setTimeStamp(timeStamp);
+                                    p.TimeStampCreate = timeStamp;
                                     tsb.samplesTimeStamp = "";
                                     nextCollection.Add(p);
+                                    nextCollection.setTimeStamp(timeStamp);
+                                    nextCollection.TimeStampCreate = timeStamp;
                                     for (int i = 0; i < tsb.samplesProperties.Count; i++)
                                     {
                                         p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
-                                        p.value = tsb.samplesValues[i];
-                                        tsb.samplesValues[i] = "";
                                         nextCollection.Add(p);
+                                        p.value = tsb.samplesValues[i];
+                                        p.setTimeStamp(timeStamp);
+                                        p.TimeStampCreate = timeStamp;
+                                        tsb.samplesValues[i] = "";
                                     }
                                     tsb.data.Add(nextCollection);
+                                    tsb.data.setTimeStamp(timeStamp);
+                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                        nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                                     tsb.samplesValuesCount = 0;
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                                    tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
                                     updateMode = 1;
                                     var json = JsonConvert.SerializeObject(nextCollection, Newtonsoft.Json.Formatting.Indented,
                                                                         new JsonSerializerSettings
@@ -462,27 +522,41 @@ namespace AasxTimeSeries
                         if (actualSamplesInCollection > 0)
                         {
                             if (tsb.highDataIndex != null)
+                            {
                                 tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
+                                tsb.highDataIndex.setTimeStamp(timeStamp);
+                            }
                             var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
                             var p = AdminShell.Property.CreateNew("timeStamp");
                             p.value = tsb.samplesTimeStamp;
+                            p.setTimeStamp(timeStamp);
+                            p.TimeStampCreate = timeStamp;
                             tsb.samplesTimeStamp = "";
                             nextCollection.Add(p);
+                            nextCollection.setTimeStamp(timeStamp);
+                            nextCollection.TimeStampCreate = timeStamp;
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
                                 p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
                                 p.value = tsb.samplesValues[i];
+                                p.setTimeStamp(timeStamp);
+                                p.TimeStampCreate = timeStamp;
                                 tsb.samplesValues[i] = "";
                                 nextCollection.Add(p);
                             }
                             tsb.data.Add(nextCollection);
+                            tsb.data.setTimeStamp(timeStamp);
+                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                             tsb.samplesValuesCount = 0;
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
+                            tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
                             updateMode = 1;
                         }
                     }
-                    Program.signalNewData(updateMode);
+                    if (updateMode != 0)
+                        Program.signalNewData(updateMode);
                 }
             }
 

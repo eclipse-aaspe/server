@@ -18,12 +18,13 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path D:\\aasx3 --connect --edit",
+      "commandLineArgs": "--no-security --rest --data-path C:\\Development\\Events2 --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5001"
+      "applicationUrl": "http://localhost:5001",
+      "jsWebView2Debugging": true
     }
   }
 }
