@@ -148,18 +148,14 @@ namespace AasxRestServerLibrary
                         if (op == "Remove")
                         {
                             o.TimeStamp = DateTime.Now;
-                            /*
-                             * Andreas: das folgende ist aus meiner Sicht nicht erforderlich!
-                             * oder wolltest Du hier eine Spezilebehandlung machen?
                             AdminShell.Referable x = o;
                             string path = x.idShort;
                             while (x.parent != null && x != x.parent)
                             {
                                 x = x.parent;
-                                path = x.idShort + "/" + path;
+                                path = x.idShort + "." + path;
                             }
                             o.idShort = path;
-                            */
                             deletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o });
                             if (deletedList.Count > 1000 && deletedList[0].rf != null)
                             {

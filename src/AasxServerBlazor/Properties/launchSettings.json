@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --rest --data-path D:\\aasx\\TimeSeries --edit",
+      "commandLineArgs": "--no-security --rest --data-path C:\\Development\\TimeSeries --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
