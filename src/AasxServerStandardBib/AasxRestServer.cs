@@ -149,6 +149,7 @@ namespace AasxRestServerLibrary
                         {
                             o.TimeStamp = DateTime.Now;
                             AdminShell.Referable x = o;
+                            /*
                             string path = x.idShort;
                             while (x.parent != null && x != x.parent)
                             {
@@ -156,6 +157,7 @@ namespace AasxRestServerLibrary
                                 path = x.idShort + "." + path;
                             }
                             o.idShort = path;
+                            */
                             deletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o });
                             if (deletedList.Count > 1000 && deletedList[0].rf != null)
                             {
@@ -684,7 +686,14 @@ namespace AasxRestServerLibrary
                             continue;
                         if (d.rf.TimeStamp > minimumDate)
                         {
-                            diffText += "<tr><td>DELETE</td><td><b>" + d.rf.idShort + "</b></td><td>SMEC</td><td>" +
+                            var x = d.rf;
+                            string path = x.idShort;
+                            while (x.parent != null && x != x.parent)
+                            {
+                                x = x.parent;
+                                path = x.idShort + "." + path;
+                            }
+                            diffText += "<tr><td>DELETE</td><td><b>" + path + "</b></td><td>SMEC</td><td>" +
                                 d.rf.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
                         }
                     }
