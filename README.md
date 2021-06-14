@@ -259,6 +259,89 @@ such as [Docker multi-stage builds][multi-stage]
 We provide a powershell script to build the docker containers meant for
 demonstrations at [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1).
 
+## Basic API
+
+{aas-identifier} = idShort of AAS <br />
+{submodel-identifier} = idShort of Submodel <br />
+{se-identifier} = idShort of SubmodelElement <br />
+{sec-identifier} = idShort of SubmodelElementCollection <br />
+
+### Asset Administration Shell Repository Interface
+
+Cmd | String | Example
+------- | ------ | -------
+GET | /server/profile | <http://localhost:51310/server/profile>
+GET | /server/listaas | <http://localhost:51310/server/listaas>
+
+### Asset Administration Shell Interface
+
+Cmd | String | Example
+------- | ------ | -------
+GET | /aas/{aas-identifier}  <br />  /aas/{aas-identifier}/core  <br />  /aas/{aas-identifier}/complete  <br />  /aas/{aas-identifier}/thumbnail  <br />  /aas/{aas-identifier}/aasenv   | <http://localhost:51310/aas/ExampleMotor>  <br />  <http://localhost:51310/aas/ExampleMotor/core>  <br />  <http://localhost:51310/aas/ExampleMotor/complete>  <br />  <http://localhost:51310/aas/ExampleMotor/thumbnail>  <br />  <http://localhost:51310/aas/ExampleMotor/aasenv>
+
+
+### Submodel Interface
+
+Cmd | String
+------- | ------
+GET | /aas/{aas-identifier}/submodels/\{submodel-identifier} <br /> /aas/{aas-identifier}/submodels/\{submodel-identifier}/core <br /> /aas/{aas-identifier}/submodels/\{submodel-identifier}/deep <br /> /aas/{aas-identifier}/submodels/\{submodel-identifier}/complete <br /> /aas/{aas-identifier}/submodels/\{submodel-identifier}/table
+
+> *Example:* <http://localhost:51310/aas/ExampleMotor/submodels/Documentation/complete>
+
+
+### Submodel Element Interface
+
+Cmd | String
+------- | ------
+GET | /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier} <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/core <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/complete <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/deep <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier}/value <br/>
+PUT | /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/ *+ Payload* <br />  *Payload = content of "elem"-part of a SubmodelElement (see example below)*
+DELETE |  /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{se-identifier} | <http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements/RotationSpeed>
+
+> *Example:* <http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements/RotationSpeed/complete>
+
+### Submodel Element Collection Interface
+Cmd | String
+------- | ------
+GET | /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier} <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/core <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/complete <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/deep <br /> /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}/value
+PUT |     /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier} *+ Payload* <br /> *Payload = content of "elem"-part of a SubmodelElement (see example below)*
+DELETE |  /aas/{aas-identifier}/submodels/{submodel-identifier}/elements/{sec-identifier}/{se-identifier}
+
+> *Example:* <http://localhost:51310/aas/ExampleMotor/submodels/Documentation/elements/OperatingManual/DocumentId/complete>
+
+### Example: PUT SubmodelElement
+`PUT` <http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements>   
+Payload:
+```
+{
+    "value": "1234",
+    "valueId": null,
+    "semanticId": {
+      "keys": [
+        {
+          "type": "ConceptDescription",
+          "local": true,
+          "value": "http://customer.com/cd//1/1/18EBD56F6B43D895",
+          "index": 0,
+          "idType": "IRI"
+        }
+      ]
+    },
+    "constraints": [],
+    "hasDataSpecification": [],
+    "idShort": "RotationSpeedNEW",
+    "category": "VARIABLE",
+    "modelType": {
+      "name": "Property"
+    },
+    "valueType": {
+      "dataObjectType": {
+        "name": "integer"
+      }
+    }
+}
+```
+Test with: `GET` <http://localhost:51310/aas/ExampleMotor/submodels/OperationalData/elements/RotationSpeedNEW>
+
 ## Issues
 
 If you want to request new features or report bugs, please 
