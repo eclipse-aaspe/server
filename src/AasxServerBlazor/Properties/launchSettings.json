@@ -18,8 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-
-      "commandLineArgs": "--rest --data-path D:\\aasx3 --connect --edit --no-security",
+      "commandLineArgs": "--rest --data-path C:\\Development\\Events2 --connect --edit --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

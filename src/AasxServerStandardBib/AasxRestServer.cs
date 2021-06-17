@@ -256,7 +256,7 @@ namespace AasxRestServerLibrary
 
                 if (restPath.Contains("/aas/"))
                 {
-                    // sepcific AAS
+                    // specific AAS
                     string[] split = restPath.Split('/');
                     if (split[2] == "aas")
                     {
@@ -653,6 +653,11 @@ namespace AasxRestServerLibrary
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update/([^/]+)(/|)$")]
 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/time/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update/([^/]+)(/|)$")]
+
             public IHttpContext GetDiff(IHttpContext context)
             {
                 DateTime minimumDate = new DateTime();
@@ -681,6 +686,34 @@ namespace AasxRestServerLibrary
 
                 string restPath = context.Request.PathInfo;
 
+                int aasIndex = -1;
+
+                if (restPath.Contains("/aas/"))
+                {
+                    // specific AAS
+                    string[] split = restPath.Split('/');
+                    if (split[2] == "aas")
+                    {
+                        try
+                        {
+                            if (!int.TryParse(split[3], out aasIndex))
+                                aasIndex = -1;
+                            if (aasIndex >= 0)
+                            {
+                                restPath = "";
+                                for (int i = 1; i < split.Length; i++)
+                                {
+                                    if (i != 2 && i != 3)
+                                    {
+                                        restPath += "/" + split[i];
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
                 if (restPath.Contains("/diff/update"))
                 {
                     updateOnly = true;
@@ -695,11 +728,11 @@ namespace AasxRestServerLibrary
                 }
                 else
                 {
-                    if (restPath.Contains("/diff/"))
+                    if (restPath.Contains("/diff/time/"))
                     {
                         try
                         {
-                            minimumDate = DateTime.Parse(restPath.Substring("/diff/".Length));
+                            minimumDate = DateTime.Parse(restPath.Substring("/diff/time/".Length));
                         }
                         catch { }
                     }
@@ -744,6 +777,9 @@ namespace AasxRestServerLibrary
                 {
                     for (int i = 0; i < aascount; i++)
                     {
+                        if (aasIndex >= 0 && i != aasIndex)
+                            continue;
+
                         var env = AasxServer.Program.env[i];
                         if (env != null)
                         {
