@@ -184,66 +184,13 @@ namespace AasxRestServerLibrary
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/time/([^/]+)(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/deltasecs/(\\d+)(/|)$")]
 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/values(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/time/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/deltasecs/(\\d+)(/|)$")]
+
             public IHttpContext GetEventMessages(IHttpContext context)
             {
-#if OLD
-                bool withMinimumDate = false;
-                DateTime minimumDate = new DateTime();
-                bool withMinimumCount = false;
-                ulong minimumCount = 0;
-
-                string path = context.Request.PathInfo;
-                {
-                    Console.WriteLine(path);
-
-                    if (path.Contains("/geteventmessages/time/"))
-                    {
-                        try
-                        {
-                            minimumDate = DateTime.Parse(path.Substring("/geteventmessages/time/".Length));
-                            withMinimumDate = true;
-                        }
-                        catch { }
-                    }
-                    if (path.Contains("/geteventmessages/count"))
-                    {
-                        try
-                        {
-                            minimumCount = Convert.ToUInt64(path.Substring("/geteventmessages/count/".Length));
-                            withMinimumCount = true;
-                        }
-                        catch { }
-                    }
-                }
-
-                AasPayloadStructuralChange filteredChangeClass = new AasPayloadStructuralChange();
-                foreach (var c in changeClass.Changes)
-                {
-                    bool copy = true;
-                    if (withMinimumDate)
-                    {
-                        if (c.TimeStamp <= minimumDate)
-                        {
-                            copy = false;
-                        }
-                    }
-                    if (withMinimumCount)
-                    {
-                        if (c.Count <= minimumCount)
-                        {
-                            copy = false;
-                        }
-                    }
-                    if (copy)
-                        filteredChangeClass.Changes.Add(c);
-                }
-
-                // MICHA: add message payloads ..
-
-                SendJsonResponse(context, filteredChangeClass);
-
-                return context;
-#else
                 // 
                 // Configuration of operation mode
                 //
@@ -270,6 +217,26 @@ namespace AasxRestServerLibrary
                                 for (int i = 1; i < split.Length; i++)
                                 {
                                     if (i != 2 && i != 3)
+                                    {
+                                        restPath += "/" + split[i];
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                    if (split[1] == "aas")
+                    {
+                        try
+                        {
+                            if (!int.TryParse(split[2], out aasIndex))
+                                aasIndex = -1;
+                            if (aasIndex >= 0)
+                            {
+                                restPath = "";
+                                for (int i = 1; i < split.Length; i++)
+                                {
+                                    if (i != 1 && i != 2)
                                     {
                                         restPath += "/" + split[i];
                                     }
@@ -508,7 +475,6 @@ namespace AasxRestServerLibrary
                 SendJsonResponse(context, envelopes.ToArray());
 
                 return context;
-#endif
             }
 
             static void GetEventMsgRecurseDiff(
@@ -935,8 +901,14 @@ namespace AasxRestServerLibrary
             // Basic AAS + Asset 
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv)(/|)$")]
+
             public IHttpContext GetAasAndAsset(IHttpContext context)
             {
+                if (context.Request.PathInfo.Contains("geteventmessages"))
+                {
+                    return GetEventMessages(context);
+                }
+
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
