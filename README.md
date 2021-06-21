@@ -261,6 +261,8 @@ demonstrations at [`src/BuildDockerImages.ps1`](src/BuildDockerImages.ps1).
 
 ## Basic API
 
+Please find a short description of the REST API below.
+
 {aas-identifier} = idShort of AAS <br />
 {submodel-identifier} = idShort of Submodel <br />
 {se-identifier} = idShort of SubmodelElement <br />
