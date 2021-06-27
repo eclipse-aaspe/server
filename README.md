@@ -35,11 +35,11 @@ There are three variants of the server:
   
 A blazor demo server is running on https://admin-shell-io.com/5001/.
 Please click on an AAS and use the DOWNLOAD button on the right or
-use "http://admin-shell-io.com/51411/server/getaasx/0" etc. by browser
+use "https://admin-shell-io.com/51411/server/getaasx/0" etc. by browser
 or CURL on the command line.
 You can connect to this AASX Server by AASX Package Explorer by
 "File / AASX File Repository / Connect HTTP/REST repository" with
-REST endpoint "http://admin-shell-io.com/51411".
+REST endpoint "https://admin-shell-io.com/51411".
 
 ## Binaries
 
