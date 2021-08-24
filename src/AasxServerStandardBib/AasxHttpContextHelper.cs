@@ -3204,6 +3204,15 @@ namespace AasxRestServerLibrary
             if (bearerToken == null)
             {
                 error = true;
+
+                // Check email token
+                token = context.Request.Headers.Get("Email");
+                if (token != null)
+                {
+                    Console.WriteLine("Received Email token = " + token);
+                    user = token;
+                    error = false;
+                }
             }
 
             // Check email token
@@ -3221,7 +3230,7 @@ namespace AasxRestServerLibrary
 
                 try
                 {
-                    if (user == "")
+                    if (bearerToken != "")
                     {
                         parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
 
