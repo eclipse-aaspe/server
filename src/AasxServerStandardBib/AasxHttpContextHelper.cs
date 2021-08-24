@@ -3175,8 +3175,9 @@ namespace AasxRestServerLibrary
 
             string[] split = null;
 
-            // Check bearer token
             string headers = context.Request.Headers.ToString();
+
+            // Check bearer token
             token = context.Request.Headers.Get("Authorization");
             if (token != null)
             {
@@ -3205,40 +3206,57 @@ namespace AasxRestServerLibrary
                 error = true;
             }
 
+            // Check email token
+            token = context.Request.Headers.Get("Email");
+            if (token != null)
+            {
+                Console.WriteLine("Received Email token = " + token);
+                user = token;
+                error = false;
+            }
+
             if (!error)
             {
+                JObject parsed2 = null;
+
                 try
                 {
-                    var parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
-
-                    string serverName = parsed2.SelectToken("serverName").Value<string>();
-
-                    if (serverName != "") // token from Auth Server
+                    if (user == "")
                     {
-                        X509Certificate2 cert = serverCertFind(serverName);
+                        parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
 
-                        if (cert == null) return null;
+                        string serverName = parsed2.SelectToken("serverName").Value<string>();
 
-                        StringBuilder builder = new StringBuilder();
-                        builder.AppendLine("-----BEGIN CERTIFICATE-----");
-                        builder.AppendLine(
-                            Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
-                        builder.AppendLine("-----END CERTIFICATE-----");
-                        Console.WriteLine("Token Server Certificate: " + serverName);
-                        Console.WriteLine(builder);
-
-                        try
+                        if (serverName != "") // token from Auth Server
                         {
-                            Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
-                        }
-                        catch
-                        {
-                            return null;
-                        }
+                            X509Certificate2 cert = serverCertFind(serverName);
 
-                        user = parsed2.SelectToken("userName").Value<string>();
-                        user = user.ToLower();
+                            if (cert == null) return null;
 
+                            StringBuilder builder = new StringBuilder();
+                            builder.AppendLine("-----BEGIN CERTIFICATE-----");
+                            builder.AppendLine(
+                                Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
+                            builder.AppendLine("-----END CERTIFICATE-----");
+                            Console.WriteLine("Token Server Certificate: " + serverName);
+                            Console.WriteLine(builder);
+
+                            try
+                            {
+                                Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
+                            }
+                            catch
+                            {
+                                return null;
+                            }
+
+                            user = parsed2.SelectToken("userName").Value<string>();
+                            user = user.ToLower();
+                        }
+                    }
+
+                    if (user != null && user != "")
+                    {
                         if (securityRights != null)
                         {
                             int rightsCount = securityRights.Count;
