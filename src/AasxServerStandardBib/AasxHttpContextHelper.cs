@@ -3230,7 +3230,7 @@ namespace AasxRestServerLibrary
 
                 try
                 {
-                    if (bearerToken != "")
+                    if (bearerToken != null)
                     {
                         parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
 
