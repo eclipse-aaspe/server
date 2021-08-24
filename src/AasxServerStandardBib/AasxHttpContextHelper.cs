@@ -3215,6 +3215,15 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            // Check email token
+            token = context.Request.Headers.Get("Email");
+            if (token != null)
+            {
+                Console.WriteLine("Received Email token = " + token);
+                user = token;
+                error = false;
+            }
+
             if (!error)
             {
                 JObject parsed2 = null;
