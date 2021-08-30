@@ -386,3 +386,5 @@ healthchecksdb
 /Grapevine/Shared/StreamExtensions.cs
 /Grapevine/Shared/UriScheme.cs
 /Grapevine/Shared/UriSchemeExtensions.cs
+/src/AasxServerStandardBib/AdminShell.cs.old
+/src/AasxServerBlazor/temp.aasx
