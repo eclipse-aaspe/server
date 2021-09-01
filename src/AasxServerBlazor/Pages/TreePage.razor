@@ -801,7 +801,8 @@
             {
                 if (split[1].ToLower() == "aasx")
                 {
-                    return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
+                    // return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
+                    return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;
                 }
             }
         }
