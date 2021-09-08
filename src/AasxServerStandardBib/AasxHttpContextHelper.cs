@@ -3232,10 +3232,28 @@ namespace AasxRestServerLibrary
                 {
                     if (bearerToken != null)
                     {
+                        string serverName = "";
+                        string email = "";
+
                         parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
 
-                        string serverName = parsed2.SelectToken("serverName").Value<string>();
-
+                        try
+                        {
+                            email = parsed2.SelectToken("email").Value<string>();
+                        }
+                        catch {}
+                        try
+                        {
+                            serverName = parsed2.SelectToken("serverName").Value<string>();
+                        }
+                        catch
+                        {
+                            serverName = "keycloak";
+                        }
+                        if (email != "")
+                        {
+                            user = email.ToLower();
+                        }
                         if (serverName != "") // token from Auth Server
                         {
                             X509Certificate2 cert = serverCertFind(serverName);
@@ -3259,8 +3277,12 @@ namespace AasxRestServerLibrary
                                 return null;
                             }
 
-                            user = parsed2.SelectToken("userName").Value<string>();
-                            user = user.ToLower();
+                            try
+                            {
+                                user = parsed2.SelectToken("userName").Value<string>();
+                                user = user.ToLower();
+                            }
+                            catch { }
                         }
                     }
 
@@ -3693,6 +3715,10 @@ namespace AasxRestServerLibrary
                                                         case "endpoint":
                                                             var p2 = sme2 as AdminShell.Property;
                                                             AasxServer.Program.redirectServer = p2.value;
+                                                            break;
+                                                        case "type":
+                                                            var p3 = sme2 as AdminShell.Property;
+                                                            AasxServer.Program.authType = p3.value;
                                                             break;
                                                         case "publicCertificate":
                                                             var f = sme2 as AdminShell.File;
