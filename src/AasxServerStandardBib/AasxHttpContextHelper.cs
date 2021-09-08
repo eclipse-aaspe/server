@@ -3241,7 +3241,7 @@ namespace AasxRestServerLibrary
                         {
                             email = parsed2.SelectToken("email").Value<string>();
                         }
-                        catch {}
+                        catch { }
                         try
                         {
                             serverName = parsed2.SelectToken("serverName").Value<string>();
