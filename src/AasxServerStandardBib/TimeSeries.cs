@@ -75,11 +75,11 @@ namespace AasxTimeSeries
                                 sm.TimeStampCreate = timeStamp;
                                 sm.SetAllParents(timeStamp);
                                 int countSme = sm.submodelElements.Count;
-                                    for (int iSme = 0; iSme < countSme; iSme++)
+                                for (int iSme = 0; iSme < countSme; iSme++)
+                                {
+                                    var sme = sm.submodelElements[iSme].submodelElement;
+                                    if (sme is AdminShell.SubmodelElementCollection && sme.idShort.Contains("TimeSeries"))
                                     {
-                                        var sme = sm.submodelElements[iSme].submodelElement;
-                                        if (sme is AdminShell.SubmodelElementCollection && sme.idShort.Contains("TimeSeries"))
-                                        {
                                         bool nextSme = false;
                                         if (sme.qualifiers.Count > 0)
                                         {

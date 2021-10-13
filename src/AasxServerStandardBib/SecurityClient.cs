@@ -1,11 +1,4 @@
-﻿using AasxServer;
-using AdminShellNS;
-using IdentityModel;
-using IdentityModel.Client;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -15,6 +8,13 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Helpers;
+using AasxServer;
+using AdminShellNS;
+using IdentityModel;
+using IdentityModel.Client;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace AasxServer
 {
