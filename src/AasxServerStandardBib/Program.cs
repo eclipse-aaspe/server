@@ -478,6 +478,7 @@ namespace AasxServer
 
             i40LanguageRuntime.initialize();
             AasxTimeSeries.TimeSeries.timeSeriesInit();
+            AasxTask.taskInit();
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
