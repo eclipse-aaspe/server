@@ -1643,6 +1643,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.idShort);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }
