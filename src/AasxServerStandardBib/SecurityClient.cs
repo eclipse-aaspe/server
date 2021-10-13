@@ -512,8 +512,12 @@ namespace AasxServer
                     json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
                 if (elementSubmodel != null)
                     json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
-                task = Task.Run(async () => { response = await client.PutAsync(requestPath, new StringContent(json)); });
-                task.Wait();
+                if (json != "")
+                {
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    task = Task.Run(async () => { response = await client.PutAsync(requestPath, content); });
+                    task.Wait();
+                }
             }
         }
 
