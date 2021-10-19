@@ -23,6 +23,8 @@ namespace AasxServer
         public AdminShell.SubmodelElementCollection def = null;
         public AdminShell.Property taskType = null;
         public AdminShell.Property cycleTime = null;
+        public AdminShell.Property cycleCount = null;
+        public AdminShell.Property nextCycle = null;
         public DateTime nextExecution = new DateTime();
         public int envIndex = -1;
 
@@ -76,6 +78,18 @@ namespace AasxServer
                                                     if (sme2 is AdminShell.Property)
                                                     {
                                                         nextTask.cycleTime = sme2 as AdminShell.Property;
+                                                    }
+                                                    break;
+                                                case "cyclecount":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        nextTask.cycleCount = sme2 as AdminShell.Property;
+                                                    }
+                                                    break;
+                                                case "nextcycle":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        nextTask.nextCycle = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                             }
@@ -454,9 +468,16 @@ namespace AasxServer
 
             if (opName == "get")
             {
-                task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
-                task.Wait();
-                if (!response.IsSuccessStatusCode) return;
+                try
+                {
+                    task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                    task.Wait();
+                    if (!response.IsSuccessStatusCode) return;
+                }
+                catch
+                {
+                    return;
+                }
 
                 string json = response.Content.ReadAsStringAsync().Result;
                 AdminShell.SubmodelElementCollection receiveCollection = null;
@@ -499,7 +520,7 @@ namespace AasxServer
                         Program.env[0].AasEnv.Submodels.Add(receiveSubmodel);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
                     return;
                 }
@@ -514,9 +535,16 @@ namespace AasxServer
                     json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
                 if (json != "")
                 {
-                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                    task = Task.Run(async () => { response = await client.PutAsync(requestPath, content); });
-                    task.Wait();
+                    try
+                    {
+                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                        task = Task.Run(async () => { response = await client.PutAsync(requestPath, content); });
+                        task.Wait();
+                    }
+                    catch
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -541,10 +569,18 @@ namespace AasxServer
                 {
                     if (t.nextExecution > DateTime.Now)
                         continue;
+                    if (t.cycleCount != null)
+                    {
+                        if (t.cycleCount.value == "")
+                            t.cycleCount.value = "0";
+                        t.cycleCount.value = (Convert.ToInt32(t.cycleCount.value) + 1).ToString();
+                    }
                     t.nextExecution = DateTime.Now.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
+                    if (t.nextCycle != null)
+                        t.nextCycle.value = t.nextExecution.ToString();
+                    Program.signalNewData(0);
 
-                    if (t.taskType?.value.ToLower() == "cyclic")
-                        runOperations(t.def, t.envIndex);
+                    runOperations(t.def, t.envIndex);
                 }
             }
         }
