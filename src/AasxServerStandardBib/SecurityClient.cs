@@ -229,6 +229,15 @@ namespace AasxServer
                         if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
                             && accessToken != null)
                         {
+                            if (accessToken.value != "")
+                            {
+                                bool valid = true;
+                                var jwtToken = new JwtSecurityToken(accessToken.value);
+                                if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
+                                    valid = false;
+                                if (valid) return;
+                            }
+
                             var handler = new HttpClientHandler();
                             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                             var client = new HttpClient(handler);
