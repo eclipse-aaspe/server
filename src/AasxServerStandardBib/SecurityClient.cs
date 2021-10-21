@@ -32,6 +32,7 @@ namespace AasxServer
 
         public static void taskInit()
         {
+            DateTime timeStamp = DateTime.Now;
             taskList = new List<AasxTask>();
 
             int aascount = AasxServer.Program.env.Length;
@@ -49,6 +50,7 @@ namespace AasxServer
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.idShort != null && sm.idShort.ToLower().Contains("tasks"))
                             {
+                                sm.setTimeStamp(timeStamp);
                                 int countSme = sm.submodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
@@ -96,7 +98,7 @@ namespace AasxServer
                                         }
 
                                         if (nextTask.taskType?.value.ToLower() == "init")
-                                            runOperations(nextTask.def, nextTask.envIndex);
+                                            runOperations(nextTask.def, nextTask.envIndex, timeStamp);
                                     }
                                 }
                             }
@@ -109,7 +111,7 @@ namespace AasxServer
             tasksThread.Start();
         }
 
-        static void runOperations(AdminShell.SubmodelElementCollection smec, int envIndex)
+        static void runOperations(AdminShell.SubmodelElementCollection smec, int envIndex, DateTime timeStamp)
         {
             int countSmec = smec.value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
@@ -122,18 +124,18 @@ namespace AasxServer
                     switch (idShort)
                     {
                         case "authenticate":
-                            operation_authenticate(op, envIndex);
+                            operation_authenticate(op, envIndex, timeStamp);
                             break;
                         case "get":
                         case "put":
-                            operation_get_put(op, envIndex);
+                            operation_get_put(op, envIndex, timeStamp);
                             break;
                     }
                 }
             }
         }
 
-        static void operation_authenticate(AdminShell.Operation op, int envIndex)
+        static void operation_authenticate(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
 
@@ -345,6 +347,7 @@ namespace AasxServer
                                 if (response.IsError) return;
 
                                 accessToken.value = response.AccessToken;
+                                accessToken.setTimeStamp(timeStamp);
                             }
                         }
                         break;
@@ -352,7 +355,7 @@ namespace AasxServer
             }
         }
 
-        static void operation_get_put(AdminShell.Operation op, int envIndex)
+        static void operation_get_put(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
             // inputVariable sourceEndPoint: property
@@ -504,6 +507,7 @@ namespace AasxServer
                                 receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
                                     text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                 elementCollection.value = receiveCollection.value;
+                                elementCollection.setTimeStamp(timeStamp);
                             }
                         }
                     }
@@ -511,6 +515,8 @@ namespace AasxServer
                     {
                         receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Submodel>(
                             json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                        receiveSubmodel.setTimeStamp(timeStamp);
+                        receiveSubmodel.SetAllParents(timeStamp);
 
                         // need id for idempotent behaviour
                         if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
@@ -572,24 +578,30 @@ namespace AasxServer
             if (Program.isLoading)
                 return;
 
+            DateTime timeStamp = DateTime.Now;
+
             foreach (var t in taskList)
             {
                 if (t.taskType?.value.ToLower() == "cyclic")
                 {
-                    if (t.nextExecution > DateTime.Now)
+                    if (t.nextExecution > timeStamp)
                         continue;
                     if (t.cycleCount != null)
                     {
                         if (t.cycleCount.value == "")
                             t.cycleCount.value = "0";
                         t.cycleCount.value = (Convert.ToInt32(t.cycleCount.value) + 1).ToString();
+                        t.cycleCount.setTimeStamp(timeStamp);
                     }
-                    t.nextExecution = DateTime.Now.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
+                    t.nextExecution = timeStamp.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
                     if (t.nextCycle != null)
+                    {
                         t.nextCycle.value = t.nextExecution.ToString();
+                        t.nextCycle.setTimeStamp(timeStamp);
+                    }
                     Program.signalNewData(0);
 
-                    runOperations(t.def, t.envIndex);
+                    runOperations(t.def, t.envIndex, timeStamp);
                 }
             }
         }

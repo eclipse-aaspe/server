@@ -1273,6 +1273,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK");
         }
@@ -1395,6 +1396,7 @@ namespace AasxRestServerLibrary
             this.Packages[0].AasEnv.Assets.Add(asset);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
@@ -1474,6 +1476,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
@@ -1698,6 +1701,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             var cmt = "";
             if (smref == null && sm == null)
                 cmt += " (nothing deleted)";
@@ -2239,6 +2243,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
         }
@@ -2297,6 +2302,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
@@ -2516,6 +2522,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
@@ -2605,6 +2612,7 @@ namespace AasxRestServerLibrary
             }
 
             // return this list
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
@@ -4022,6 +4030,7 @@ namespace AasxRestServerLibrary
             this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
         }

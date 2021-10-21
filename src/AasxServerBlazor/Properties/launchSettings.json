@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path C:\\Development\\Replicator --edit",
+      "commandLineArgs": "--rest --port 51410 --data-path \"C:\\Development\\TimeSeries2\\Client Get\" --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
