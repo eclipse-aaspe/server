@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -2240,7 +2241,8 @@ namespace AasxServer
                             p.setTimeStamp(timeStamp);
                             newMode = 1;
                         }
-                        p.value = jp1.Value.ToString();
+                        // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
+                        p.value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
                         p.setTimeStamp(timeStamp);
                         break;
                 }

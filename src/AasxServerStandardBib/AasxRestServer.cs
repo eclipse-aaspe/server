@@ -70,7 +70,8 @@ namespace AasxRestServerLibrary
                 varInt2++;
                 if (varInt2 > 10)
                     varInt2 = 0;
-                varFloat3 = Math.Sin(varInt1 * 180 / 100);
+                // varFloat3 = Math.Sin(varInt1 * 180 / 100);
+                varFloat3 = Math.Sin((1.0 * varInt1 / 360.0) * 10);
 
                 testData td = new testData();
                 td.varInt1 = varInt1;
