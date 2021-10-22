@@ -551,6 +551,7 @@ namespace AasxTimeSeries
 
                                     AdminShell.SubmodelElementCollection nextCollection = null;
 
+                                    // decide
                                     if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                     {
                                         nextCollection = AddToSMC<AdminShell.SubmodelElementCollection>(
