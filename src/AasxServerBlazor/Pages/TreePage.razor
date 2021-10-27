@@ -335,6 +335,9 @@
 
     void NewData(object source, EventArgs args)
     {
+        if (Program.isLoading)
+            return;
+
         // update = true;
         if (newDataMode == 0)
         {

@@ -327,6 +327,7 @@ namespace AasxServer
                 externalRest = "http://" + hostPort;
             }
 
+            /*
             if (File.Exists("redirect.dat"))
             {
                 try
@@ -343,6 +344,7 @@ namespace AasxServer
                     Console.WriteLine("redirect.dat " + " can not be read!");
                 }
             }
+            */
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -476,6 +478,7 @@ namespace AasxServer
 
             i40LanguageRuntime.initialize();
             AasxTimeSeries.TimeSeries.timeSeriesInit();
+            AasxTask.taskInit();
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);

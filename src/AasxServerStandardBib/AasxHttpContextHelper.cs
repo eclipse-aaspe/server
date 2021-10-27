@@ -1273,6 +1273,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK");
         }
@@ -1395,6 +1396,7 @@ namespace AasxRestServerLibrary
             this.Packages[0].AasEnv.Assets.Add(asset);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
@@ -1474,6 +1476,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
@@ -1643,6 +1646,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.idShort);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }
@@ -1697,6 +1701,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             var cmt = "";
             if (smref == null && sm == null)
                 cmt += " (nothing deleted)";
@@ -2238,6 +2243,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
         }
@@ -2296,6 +2302,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
@@ -2515,6 +2522,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
@@ -2604,6 +2612,7 @@ namespace AasxRestServerLibrary
             }
 
             // return this list
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
@@ -3232,10 +3241,28 @@ namespace AasxRestServerLibrary
                 {
                     if (bearerToken != null)
                     {
+                        string serverName = "";
+                        string email = "";
+
                         parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
 
-                        string serverName = parsed2.SelectToken("serverName").Value<string>();
-
+                        try
+                        {
+                            email = parsed2.SelectToken("email").Value<string>();
+                        }
+                        catch { }
+                        try
+                        {
+                            serverName = parsed2.SelectToken("serverName").Value<string>();
+                        }
+                        catch
+                        {
+                            serverName = "keycloak";
+                        }
+                        if (email != "")
+                        {
+                            user = email.ToLower();
+                        }
                         if (serverName != "") // token from Auth Server
                         {
                             X509Certificate2 cert = serverCertFind(serverName);
@@ -3259,8 +3286,12 @@ namespace AasxRestServerLibrary
                                 return null;
                             }
 
-                            user = parsed2.SelectToken("userName").Value<string>();
-                            user = user.ToLower();
+                            try
+                            {
+                                user = parsed2.SelectToken("userName").Value<string>();
+                                user = user.ToLower();
+                            }
+                            catch { }
                         }
                     }
 
@@ -3694,6 +3725,10 @@ namespace AasxRestServerLibrary
                                                             var p2 = sme2 as AdminShell.Property;
                                                             AasxServer.Program.redirectServer = p2.value;
                                                             break;
+                                                        case "type":
+                                                            var p3 = sme2 as AdminShell.Property;
+                                                            AasxServer.Program.authType = p3.value;
+                                                            break;
                                                         case "publicCertificate":
                                                             var f = sme2 as AdminShell.File;
                                                             serverCertfileNames = new string[1];
@@ -3995,6 +4030,7 @@ namespace AasxRestServerLibrary
             this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
+            Program.signalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
         }

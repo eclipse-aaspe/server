@@ -146,6 +146,12 @@ namespace AasxTimeSeries
                                                     {
                                                         tsb.data = sme2 as AdminShell.SubmodelElementCollection;
                                                     }
+                                                    if (sme2 is AdminShell.ReferenceElement)
+                                                    {
+                                                        var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).value);
+                                                        if (refElement is AdminShell.SubmodelElementCollection)
+                                                            tsb.data = refElement as AdminShell.SubmodelElementCollection;
+                                                    }
                                                     break;
                                                 case "sampleStatus":
                                                     if (sme2 is AdminShell.Property)
@@ -555,8 +561,8 @@ namespace AasxTimeSeries
                             updateMode = 1;
                         }
                     }
-                    if (updateMode != 0)
-                        Program.signalNewData(updateMode);
+                    //// if (updateMode != 0)
+                    Program.signalNewData(updateMode);
                 }
             }
 
