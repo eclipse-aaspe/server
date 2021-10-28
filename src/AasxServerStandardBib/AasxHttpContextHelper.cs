@@ -2142,9 +2142,15 @@ namespace AasxRestServerLibrary
             // check authentication
             if (withAuthentification)
             {
+                string objPath = smid;
+                foreach (var el in elemids)
+                {
+                    objPath += "." + el;
+                }
+
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE"))
+                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE", objPath))
                 {
                     return;
                 }
@@ -3066,6 +3072,13 @@ namespace AasxRestServerLibrary
             if (currentRole == null)
                 currentRole = "isNotAuthenticated";
 
+            Console.WriteLine("checkAccessLevel: " +
+                " currentRole = " + currentRole +
+                " operation = " + operation +
+                " neededRights = " + neededRights +
+                " objPath = " + objPath
+                );
+
             int iRole = 0;
             while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
             {
@@ -3165,6 +3178,7 @@ namespace AasxRestServerLibrary
         }
         public string SecurityCheck(IHttpContext context, ref int index)
         {
+            Console.WriteLine("SecurityCheck");
             bool error = false;
             string accessrights = null;
 

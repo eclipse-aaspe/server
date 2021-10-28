@@ -1959,7 +1959,7 @@ namespace AasxServer
 
         static int countRunScript = 0;
 
-        static async void RunScript(bool init)
+        static void RunScript(bool init)
         {
             if (env == null)
                 return;

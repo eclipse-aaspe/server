@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Helpers;
 using AasxServer;
 using AdminShellNS;
 using IdentityModel;
@@ -30,8 +30,49 @@ namespace AasxServer
 
         public static List<AasxTask> taskList = null;
 
+        public static WebProxy proxy = null;
+
         public static void taskInit()
         {
+            // Test for proxy
+            Console.WriteLine("Test: ../proxy.dat");
+
+            if (File.Exists("../proxy.dat"))
+            {
+                bool error = false;
+                Console.WriteLine("Found: ../proxy.dat");
+                string proxyAddress = "";
+                string username = "";
+                string password = "";
+                try
+                {   // Open the text file using a stream reader.
+                    using (StreamReader sr = new StreamReader("../proxy.dat"))
+                    {
+                        proxyAddress = sr.ReadLine();
+                        username = sr.ReadLine();
+                        password = sr.ReadLine();
+                    }
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine("The file ../proxy.dat could not be read:");
+                    Console.WriteLine(e.Message);
+                    error = true;
+                }
+                if (!error)
+                {
+                    Console.WriteLine("Proxy: " + proxyAddress);
+                    Console.WriteLine("Username: " + username);
+                    Console.WriteLine("Password: " + password);
+                    proxy = new WebProxy();
+                    Uri newUri = new Uri(proxyAddress);
+                    proxy.Address = newUri;
+                    if (username != "" && password != "")
+                        proxy.Credentials = new NetworkCredential(username, password);
+                }
+            }
+
+
             DateTime timeStamp = DateTime.Now;
             taskList = new List<AasxTask>();
 
@@ -241,7 +282,10 @@ namespace AasxServer
                             }
 
                             var handler = new HttpClientHandler();
-                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                            if (proxy != null)
+                                handler.Proxy = proxy;
+                            else
+                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                             var client = new HttpClient(handler);
                             DiscoveryDocumentResponse disco = null;
 
@@ -469,7 +513,10 @@ namespace AasxServer
             }
 
             var handler = new HttpClientHandler();
-            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            if (proxy != null)
+                handler.Proxy = proxy;
+            else
+                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
             var client = new HttpClient(handler);
             if (accessToken != null)
                 client.SetBearerToken(accessToken.value);
