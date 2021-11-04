@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --port 51310 --data-path \"C:\\Development\\TimeSeries2\\Client Put admin-shell-io\" --edit",
+      "commandLineArgs": "--rest --port 51410 --data-path \"C:\\Development\\Security\" --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
