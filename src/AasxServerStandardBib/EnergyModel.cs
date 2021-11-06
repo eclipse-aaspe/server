@@ -6,52 +6,301 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using AasxServer;
+using AasxTimeSeries;
 using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using SampleClient;
 
-namespace AasxTimeSeries
+namespace AasxDemonstration
 {
-    public enum TimeSeriesDestFormat { Plain, TimeSeries10 }
-   
-    public static class TimeSeries
+    /// <summary>
+    /// This class holds information and provides functions to "automate" the energy model
+    /// used by the CESMII / LNI4.0 demonstrator.
+    /// It consists of Properties, which shall be synchronized with Azure IoTHub. It
+    /// includes a time series (according the SM template spec) as well.
+    /// </summary>
+    public static class EnergyModel
     {
-        public class TimeSeriesBlock
+        /// <summary>
+        /// Associated class can release trigger events
+        /// </summary>
+        public interface ITrackHasTrigger
         {
-            public AdminShell.Submodel submodel = null;
-            public AdminShell.SubmodelElementCollection block = null;
-            public AdminShell.SubmodelElementCollection data = null;
-            public AdminShell.Property sampleStatus = null;
-            public AdminShell.Property sampleMode = null;
-            public AdminShell.Property sampleRate = null;
-            public AdminShell.Property lowDataIndex = null;
-            public AdminShell.Property highDataIndex = null;
-            public AdminShell.Property maxSamples = null;
-            public AdminShell.Property actualSamples = null;
-            public AdminShell.Property maxSamplesInCollection = null;
-            public AdminShell.Property actualSamplesInCollection = null;
-            public AdminShell.Property maxCollections = null;
-            public AdminShell.Property actualCollections = null;
-
-            public TimeSeriesDestFormat destFormat;
-
-            public int threadCounter = 0;
-            public string sourceType = "";
-            public string sourceAddress = "";
-            public string username = "";
-            public string password = "";
-            public int samplesCollectionsCount = 0;
-            public List<AdminShell.Property> samplesProperties = null;
-            public List<string> samplesValues = null;
-            public string samplesTimeStamp = "";
-            public int samplesValuesCount = 0;
-            public int totalSamples = 0;
-
-            public List<string> opcNodes = null;
-            public DateTime opcLastTimeStamp;
+            bool IsTrigger(SourceSystem sosy);
         }
+
+        /// <summary>
+        /// Associated class provides a data vlue
+        /// </summary>
+        public interface ITrackHasValue
+        {
+            double GetValue(SourceSystem sosy);
+        }
+
+        /// <summary>
+        /// Codes the source systems; interface methods will provide different behavaiour
+        /// </summary>
+        public enum SourceSystem { None, Debug, Azure }
+
+        /// <summary>
+        /// Tracking of a single data point, which is may be online connected to simulation or Azure ..
+        /// </summary>
+        public class TrackInstanceDataPoint : ITrackHasTrigger, ITrackHasValue
+        {
+            /// <summary>
+            /// Link to an EXISTING SME in the associated Submodel instance
+            /// </summary>
+            public AdminShell.SubmodelElement Sme;
+            
+            /// <summary>
+            /// Link to the online source, e.g. Azure IoTHub
+            /// </summary>
+            public string SourceId;
+
+            // internal members
+
+            protected static Random _rnd = new Random();
+
+            /// <summary>
+            /// Evaluates, if the trigger condition is met, where new data exists
+            /// </summary>
+            public bool IsTrigger(SourceSystem sosy)
+            {
+                if (sosy == SourceSystem.Debug)
+                    return _rnd.Next(0, 9) >= 8;
+                
+                return false;
+            }
+
+            /// <summary>
+            /// depending on a trigger, gets the actual value
+            /// </summary>
+            public double GetValue(SourceSystem sosy)
+            {
+                if (sosy == SourceSystem.Debug)
+                    return _rnd.NextDouble() * 99.9;
+                return 0.0;
+            }
+        }
+
+        /// <summary>
+        /// Tracking of a single time series variable; in accordance to a time axis (trigger) 
+        /// multiple values will aggregated
+        /// </summary>
+        public class TrackInstanceTimeSeriesVariable : ITrackHasValue
+        {
+            /// <summary>
+            /// Link to the CURRENTLY MAINTAINED ValueArray in the associated time series segment
+            /// </summary>
+            public AdminShell.Blob ValueArray;
+
+            public List<double> Values = new List<double>();
+
+            // internal members
+
+            protected static Random _rnd = new Random();
+
+            /// <summary>
+            /// depending on a trigger, gets the actual value
+            /// </summary>
+            public double GetValue(SourceSystem sosy)
+            {
+                if (sosy == SourceSystem.Debug)
+                    return _rnd.NextDouble() * 99.9;
+                return 0.0;
+            }
+        }
+
+        /// <summary>
+        /// Tracking of a time series segement; if values of the time series 
+        /// </summary>
+        public class TrackInstanceTimeSeriesSegment : ITrackHasTrigger
+        {
+            /// <summary>
+            /// Link to the CURRENTLY MAINTAINED time series segment in the associated time series
+            /// </summary>
+            public AdminShell.SubmodelElementCollection Segment;
+
+            // internal members
+
+            protected static Random _rnd = new Random();
+
+            /// <summary>
+            /// Evaluates, if the trigger condition is met, where new data exists
+            /// </summary>
+            public bool IsTrigger(SourceSystem sosy)
+            {
+                if (sosy == SourceSystem.Debug)
+                    return _rnd.Next(0, 9) >= 8;
+
+                return false;
+            }
+        }
+
+        public class EnergyModelInstance
+        {
+            //
+            // Overall Submodel instance
+            //
+
+            protected AdminShell.Submodel submodel;
+
+            //
+            // Managing of the actual value propertes
+            //
+
+            protected List<TrackInstanceDataPoint> _dataPoint = new List<TrackInstanceDataPoint>();
+
+            //
+            // The following entities serve as directs points to the found instance
+            // of the energy model. Taken over from TimeSeries.cs
+            //
+
+            protected AdminShell.SubmodelElementCollection block, data;
+            
+            protected AdminShell.Property 
+                sampleStatus, sampleMode, sampleRate, lowDataIndex, highDataIndex, 
+                actualSamples, actualSamplesInCollection, 
+                actualCollections;
+
+            protected int
+                maxSamples = 200, maxSamplesInCollection = 20;
+
+            protected TimeSeriesDestFormat destFormat;
+
+            protected int threadCounter = 0;
+            protected string sourceType = "";
+            protected string sourceAddress = "";
+            protected string username = "";
+            protected string password = "";
+            protected int samplesCollectionsCount = 0;
+            protected List<AdminShell.Property> samplesProperties = null;
+            protected List<string> samplesValues = null;
+            protected string samplesTimeStamp = "";
+            protected int samplesValuesCount = 0;
+            protected int totalSamples = 0;
+
+            //
+            // Initialize
+            //
+
+            protected void ScanSubmodelForIoTDataPoints(AdminShell.Submodel sm)
+            {
+                // access
+                if (sm == null)
+                    return;
+                _dataPoint = new List<TrackInstanceDataPoint>();
+
+                // find all elements with qualifier
+                sm.RecurseOnSubmodelElements(null, (o, parents, sme) =>
+                {
+                    var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHub);
+                    if (q != null && q.value != null && q.value.Length > 0)
+                        _dataPoint.Add(new TrackInstanceDataPoint()
+                        {
+                            Sme = sme,
+                            AzureId = q.value
+                        });
+                });
+            }
+
+            /// <summary>
+            /// In Andreas' oroginal code, all AAS and SM need to be tagged for time stamping
+            /// </summary>
+            public static void TagAllAasAndSm(
+                AdminShell.AdministrationShellEnv env,
+                DateTime timeStamp)
+            {
+                env?.FindAllSubmodelGroupedByAAS((aas, sm) =>
+                {
+                    // mark aas
+                    aas.TimeStampCreate = timeStamp;
+                    aas.setTimeStamp(timeStamp);
+
+                    // mark sm
+                    sm.TimeStampCreate = timeStamp;
+                    sm.SetAllParents(timeStamp);
+                }
+            }
+
+            public static IEnumerable<EnergyModelInstance> FindAllSmInstances(
+                AdminShell.AdministrationShellEnv env)
+            {
+                if (env == null)
+                    yield break;
+
+                foreach (var sm in env.FindAllSubmodelBySemanticId(
+                    PrefEnergyModel10.SM_EnergyModel, AdminShellV20.Key.MatchMode.Relaxed))
+                {
+                    var emi = new EnergyModelInstance();
+                    emi.ScanSubmodelForIoTDataPoints(sm);
+                    emi.ScanSubmodelForTimeSeriesParameters(sm);
+                    yield return emi;
+                }
+            }
+
+            protected void ScanSubmodelForTimeSeriesParameters(AdminShell.Submodel sm)
+            {
+                // access
+                if (sm?.submodelElements == null)
+                    return;
+                var mm = AdminShell.Key.MatchMode.Relaxed;
+                int i;
+
+                // find time series models in SM
+                foreach (var smcts in sm.submodelElements.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
+                    PrefTimeSeries10.CD_TimeSeries, mm))
+                {
+                    // access
+                    if (smcts?.value == null)
+                        continue;
+
+                    // basic SMC references
+                    block = smcts;
+                    data = smcts;
+
+                    var d2 = smcts.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("data");
+                    if (d2 != null)
+                        data = d2;
+
+                    // rest of the necessary properties
+                    sourceType = "" + smcts.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("sourceType")?.value;
+                    sourceAddress = "" + smcts.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("sourceAddress")?.value;
+                    sampleStatus = smcts.value.FindFirstIdShortAs<AdminShell.Property>("sampleStatus");
+                    sampleMode = smcts.value.FindFirstIdShortAs<AdminShell.Property>("sampleMode");
+                    sampleRate = smcts.value.FindFirstIdShortAs<AdminShell.Property>("sampleRate");
+                    if (int.TryParse(sampleRate?.value, out i))
+                        threadCounter = i;
+
+                    if (int.TryParse(smcts.value.FindFirstIdShortAs<AdminShell.Property>("maxSamples")?.value, out i))
+                        maxSamples = i;
+
+                    if (int.TryParse(smcts.value.FindFirstIdShortAs<AdminShell.Property>("maxSamplesInCollection")?.value, out i))
+                        maxSamplesInCollection = i;
+
+                    actualSamples = smcts.value.FindFirstIdShortAs<AdminShell.Property>("actualSamples");
+                    if (actualSamples != null)
+                        actualCollections.value = "0";
+
+                    actualSamplesInCollection = smcts.value.FindFirstIdShortAs<AdminShell.Property>("actualSamplesInCollection");
+                    if (actualSamplesInCollection != null)
+                        actualSamplesInCollection.value = "0";
+
+                    actualCollections = smcts.value.FindFirstIdShortAs<AdminShell.Property>("actualCollections");
+                    if (actualCollections != null)
+                        actualCollections.value = "0";
+
+                    lowDataIndex = smcts.value.FindFirstIdShortAs<AdminShell.Property>("lowDataIndex");
+                    highDataIndex = smcts.value.FindFirstIdShortAs<AdminShell.Property>("highDataIndex");
+                }
+            }
+        }
+
+
+
+
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()

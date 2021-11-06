@@ -27,6 +27,7 @@ using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
+using static AasxDemonstration.EnergyModel;
 using Formatting = Newtonsoft.Json.Formatting;
 
 /*
@@ -479,6 +480,15 @@ namespace AasxServer
 
             i40LanguageRuntime.initialize();
             AasxTimeSeries.TimeSeries.timeSeriesInit();
+
+            var _energyModelInstances = new List<EnergyModelInstance>();
+            foreach (var penv in AasxServer.Program.env)
+            {
+                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
+                _energyModelInstances.AddRange(
+                    EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
+            }
+
             AasxTask.taskInit();
 
             RunScript(true);
@@ -545,7 +555,8 @@ namespace AasxServer
                 if (content == "OK")
                 {
                     connectThread = new Thread(new ThreadStart(connectThreadLoop));
-                    connectThread.Start();
+                    // MICHA
+                    // connectThread.Start();
                     connectLoop = true;
                 }
                 else

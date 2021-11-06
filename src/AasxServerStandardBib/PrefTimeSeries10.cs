@@ -7,6 +7,10 @@ namespace AasxTimeSeries
 {
     public static class PrefTimeSeries10
     {
+        public static AdminShell.Key CD_TimeSeries =
+            new AdminShell.Key(AdminShell.Key.ConceptDescription, false, AdminShell.Identification.IRI,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0");
+
         public static AdminShell.Key CD_TimeSeriesSegment =
             new AdminShell.Key(AdminShell.Key.ConceptDescription, false, AdminShell.Identification.IRI,
             "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");

@@ -248,7 +248,8 @@ namespace AasxServer
             {
                 threadDelegate = new ThreadStart(nextTick);
                 i40LanguageThread = new Thread(threadDelegate);
-                i40LanguageThread.Start();
+                // MICHA
+                // i40LanguageThread.Start();
             }
         }
 

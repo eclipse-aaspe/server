@@ -106,7 +106,8 @@ namespace AasxServer
             }
 
             tasksThread = new Thread(new ThreadStart(tasksSamplingLoop));
-            tasksThread.Start();
+            // MICHA
+            // tasksThread.Start();
         }
 
         static void runOperations(AdminShell.SubmodelElementCollection smec, int envIndex)
