@@ -81,6 +81,14 @@ namespace AasxDemonstration
         }
 
         /// <summary>
+        /// Implements a source system, which gets data from Azure IoTHub 
+        /// </summary>
+        public class SourceSystemAzureHub : SourceSystemBase
+        {
+            // TODO ERICH
+        }
+
+        /// <summary>
         /// Tracking of a single data point, which is may be online connected to simulation or Azure ..
         /// </summary>
         public class TrackInstanceDataPoint : ITrackHasTrigger, ITrackHasValue
@@ -103,6 +111,10 @@ namespace AasxDemonstration
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.Next(0, 9) >= 8;
 
+                if (sosy is SourceSystemAzureHub azure)
+                    // TODO ERICH
+                    return false;
+
                 return false;
             }
 
@@ -113,6 +125,11 @@ namespace AasxDemonstration
             {
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.NextDouble() * 99.9;
+
+                if (sosy is SourceSystemAzureHub azure)
+                    // TODO ERICH
+                    return 0.0;
+
                 return 0.0;
             }
         }
@@ -214,6 +231,11 @@ namespace AasxDemonstration
             {
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.NextDouble() * 99.9;
+
+                if (sosy is SourceSystemAzureHub azure)
+                    // TODO ERICH
+                    return 0.0;
+
                 return 0.0;
             }
 
@@ -325,6 +347,10 @@ namespace AasxDemonstration
             {
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.Next(0, 9) >= 8;
+
+                if (sosy is SourceSystemAzureHub azure)
+                    // TODO ERICH
+                    return false;
 
                 return false;
             }
