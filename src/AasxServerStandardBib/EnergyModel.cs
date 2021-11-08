@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
+using System.Linq;
 using AasxServer;
 using AasxTimeSeries;
 using AdminShellNS;
@@ -28,7 +29,7 @@ namespace AasxDemonstration
         /// </summary>
         public interface ITrackHasTrigger
         {
-            bool IsTrigger(SourceSystem sosy);
+            bool IsTrigger(SourceSystemBase sosy);
         }
 
         /// <summary>
@@ -36,13 +37,48 @@ namespace AasxDemonstration
         /// </summary>
         public interface ITrackHasValue
         {
-            double GetValue(SourceSystem sosy);
+            double GetValue(SourceSystemBase sosy);
         }
 
         /// <summary>
-        /// Codes the source systems; interface methods will provide different behavaiour
+        /// Associated class renders a value blob according to the time series spec
         /// </summary>
-        public enum SourceSystem { None, Debug, Azure }
+        public interface ITrackRenderValueBlob
+        {
+            string RenderValueBlob(SourceSystemBase sosy, int totalSamples);
+        }
+
+        /// <summary>
+        /// Base class for the source system and its context. Can be used to transport 
+        /// context and global status data w.r.t to the online connect to a source system
+        /// </summary>
+        public class SourceSystemBase {
+
+            public static SourceSystemBase FactoryNewSystem(
+                string sourceType,
+                string sourceAddress,
+                string user, string password,
+                string credentials)
+            {
+                // init
+                sourceType = ("" + sourceType).Trim().ToLower();
+
+                // debug?
+                if (sourceType == "debug")
+                    return new SourceSystemDebug();
+
+                // no, default
+                return new SourceSystemBase();
+            }
+        }
+
+        /// <summary>
+        /// Implements a source system, which provides random values to random times
+        /// </summary>
+        public class SourceSystemDebug : SourceSystemBase
+        {
+            public Random Rnd = new Random();
+        }
 
         /// <summary>
         /// Tracking of a single data point, which is may be online connected to simulation or Azure ..
@@ -53,89 +89,339 @@ namespace AasxDemonstration
             /// Link to an EXISTING SME in the associated Submodel instance
             /// </summary>
             public AdminShell.SubmodelElement Sme;
-            
+
             /// <summary>
             /// Link to the online source, e.g. Azure IoTHub
             /// </summary>
             public string SourceId;
 
-            // internal members
-
-            protected static Random _rnd = new Random();
-
             /// <summary>
             /// Evaluates, if the trigger condition is met, where new data exists
             /// </summary>
-            public bool IsTrigger(SourceSystem sosy)
+            public bool IsTrigger(SourceSystemBase sosy)
             {
-                if (sosy == SourceSystem.Debug)
-                    return _rnd.Next(0, 9) >= 8;
-                
+                if (sosy is SourceSystemDebug dbg)
+                    return dbg.Rnd.Next(0, 9) >= 8;
+
                 return false;
             }
 
             /// <summary>
             /// depending on a trigger, gets the actual value
             /// </summary>
-            public double GetValue(SourceSystem sosy)
+            public double GetValue(SourceSystemBase sosy)
             {
-                if (sosy == SourceSystem.Debug)
-                    return _rnd.NextDouble() * 99.9;
+                if (sosy is SourceSystemDebug dbg)
+                    return dbg.Rnd.NextDouble() * 99.9;
                 return 0.0;
             }
+        }
+
+        private static T AddToSMC<T>(
+            DateTime timestamp,
+            AdminShell.SubmodelElementCollection parent,
+            string idShort,
+            AdminShell.Key semanticIdKey,
+            string smeValue = null) where T : AdminShell.SubmodelElement
+        {
+            var newElem = AdminShell.SubmodelElementWrapper.CreateAdequateType(typeof(T));
+            newElem.idShort = idShort;
+            newElem.semanticId = new AdminShell.SemanticId(semanticIdKey);
+            newElem.setTimeStamp(timestamp);
+            newElem.TimeStampCreate = timestamp;
+            if (parent?.value != null)
+            {
+                parent.value.Add(newElem);
+                parent.setTimeStamp(timestamp);
+            }
+            if (smeValue != null && newElem is AdminShell.Property newP)
+                newP.value = smeValue;
+            if (smeValue != null && newElem is AdminShell.Blob newB)
+                newB.value = smeValue;
+            return newElem as T;
+        }
+
+        private static void UpdateSME(
+            AdminShell.SubmodelElement sme,
+            string value,
+            DateTime timestamp)
+        {
+            // update
+            if (sme is AdminShell.Property prop)
+            {
+                prop.value = value;
+            }
+            if (sme is AdminShell.Blob blob)
+            {
+                blob.value = value;
+            }
+
+            // time stamping
+            sme.setTimeStamp(timestamp);
         }
 
         /// <summary>
         /// Tracking of a single time series variable; in accordance to a time axis (trigger) 
         /// multiple values will aggregated
         /// </summary>
-        public class TrackInstanceTimeSeriesVariable : ITrackHasValue
+        public class TrackInstanceTimeSeriesVariable : ITrackHasValue, ITrackRenderValueBlob
         {
+            /// <summary>
+            /// Link to the CURRENTLY MAINTAINED time series variable in the associated time series segment
+            /// </summary>
+            public AdminShell.SubmodelElementCollection VariableSmc;
+
             /// <summary>
             /// Link to the CURRENTLY MAINTAINED ValueArray in the associated time series segment
             /// </summary>
             public AdminShell.Blob ValueArray;
 
+            /// <summary>
+            /// Link to the online source, e.g. Azure IoTHub
+            /// </summary>
+            public string SourceId;
+
+            /// <summary>
+            /// Record ID given by the template
+            /// </summary>
+            public string TemplateRecordId;
+
+            /// <summary>
+            /// Links to respective SME from the provide time series segment TEMPLATE in the originally
+            /// loaded AASX.
+            /// </summary>
+            public AdminShell.Property TemplateDataPoint;
+
+            /// <summary>
+            /// Maintains the list of values already stored in the variable.
+            /// Is used to always be able to render a current state of the ValueArray
+            /// </summary>
             public List<double> Values = new List<double>();
 
-            // internal members
-
-            protected static Random _rnd = new Random();
+            /// <summary>
+            /// Reset the values, clear the runtime associations
+            /// </summary>
+            public void ClearRuntime()
+            {
+                VariableSmc = null;
+                Values.Clear();
+            }
 
             /// <summary>
             /// depending on a trigger, gets the actual value
             /// </summary>
-            public double GetValue(SourceSystem sosy)
+            public double GetValue(SourceSystemBase sosy)
             {
-                if (sosy == SourceSystem.Debug)
-                    return _rnd.NextDouble() * 99.9;
+                if (sosy is SourceSystemDebug dbg)
+                    return dbg.Rnd.NextDouble() * 99.9;
                 return 0.0;
+            }
+
+            /// <summary>
+            /// Renders list of time stamps according to time series spec
+            /// </summary>
+            public string RenderValueBlob(SourceSystemBase sosy, int totalSamples)
+            {
+                // access
+                if (Values == null)
+                    return "";
+
+                // build
+                return string.Join(", ", Values.Select(
+                    v => String.Format(CultureInfo.InvariantCulture, "[{0}, {1}]", totalSamples++, v)
+                ));
+            }
+
+            /// <summary>
+            /// Create a new set of SubmodelElements for the segment.
+            /// The <c>SegmentSmc</c> and <c>ValueArray</c> will be updated!
+            /// </summary>
+            public void CreateVariableSmc(
+                SourceSystemBase sosy,
+                AdminShell.SubmodelElementCollection segmentSmc,
+                int totalSamples,
+                DateTime timeStamp)
+            {
+                VariableSmc = AddToSMC<AdminShell.SubmodelElementCollection>(
+                    timeStamp, segmentSmc,
+                    "TSvariable_" + TemplateRecordId,
+                    semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+
+                AddToSMC<AdminShell.Property>(timeStamp, VariableSmc,
+                    "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                    smeValue: "" + TemplateRecordId);
+
+                var p = AddToSMC<AdminShell.Property>(timeStamp, VariableSmc,
+                    "" + TemplateDataPoint?.idShort, semanticIdKey: null);                
+                if (TemplateDataPoint != null)
+                {
+                    p.semanticId = TemplateDataPoint.semanticId;
+                    p.description = TemplateDataPoint.description;
+                    if (TemplateDataPoint.qualifiers != null)
+                    {
+                        p.qualifiers = new AdminShell.QualifierCollection();
+                        foreach (var q in TemplateDataPoint.qualifiers)
+                            p.qualifiers.Add(q);
+                    }
+                }
+
+                ValueArray = AddToSMC<AdminShell.Blob>(timeStamp, VariableSmc,
+                    "ValueArray", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                    smeValue: RenderValueBlob(sosy, totalSamples));
+            }
+
+            /// <summary>
+            /// Updates the currently tracked set of SubmodelElements for the segment.
+            /// </summary>
+            public void UpdateVariableSmc(
+                SourceSystemBase sosy,
+                int totalSamples,
+                DateTime timeStamp)
+            {
+                // access
+                if (ValueArray == null)
+                    return;
+
+                // render
+                UpdateSME(
+                    ValueArray,
+                    RenderValueBlob(sosy, totalSamples),
+                    timeStamp);
             }
         }
 
         /// <summary>
         /// Tracking of a time series segement; if values of the time series 
         /// </summary>
-        public class TrackInstanceTimeSeriesSegment : ITrackHasTrigger
+        public class TrackInstanceTimeSeriesSegment : ITrackHasTrigger, ITrackRenderValueBlob
         {
             /// <summary>
             /// Link to the CURRENTLY MAINTAINED time series segment in the associated time series
             /// </summary>
-            public AdminShell.SubmodelElementCollection Segment;
+            public AdminShell.SubmodelElementCollection SegmentSmc;
 
-            // internal members
+            /// <summary>
+            /// Link to the CURRENTLY MAINTAINED ValueArray for the timestamps in the associated time series segment
+            /// </summary>
+            public AdminShell.Blob ValueArray;
 
-            protected static Random _rnd = new Random();
+            /// <summary>
+            /// List of variables to always by MAINTAINED in the segment
+            /// </summary>
+            public List<TrackInstanceTimeSeriesVariable> Variables = new List<TrackInstanceTimeSeriesVariable>();
+
+            /// <summary>
+            /// Holds the timestamp of the samples currently represented in the different variables.
+            /// This list's length should equal the length of the variable's value lists
+            /// Note: obviously this means, that this code can only represent time series segments with
+            ///       exactly one time axis.
+            /// </summary>
+            public List<DateTime> TimeStamps = new List<DateTime>();
 
             /// <summary>
             /// Evaluates, if the trigger condition is met, where new data exists
             /// </summary>
-            public bool IsTrigger(SourceSystem sosy)
+            public bool IsTrigger(SourceSystemBase sosy)
             {
-                if (sosy == SourceSystem.Debug)
-                    return _rnd.Next(0, 9) >= 8;
+                if (sosy is SourceSystemDebug dbg)
+                    return dbg.Rnd.Next(0, 9) >= 8;
 
                 return false;
+            }
+
+            /// <summary>
+            /// Reset the values, clear the runtime associations
+            /// </summary>
+            public void ClearRuntime()
+            {
+                SegmentSmc = null;
+                TimeStamps.Clear();
+                foreach (var vr in Variables)
+                    vr.ClearRuntime();
+            }
+
+            /// <summary>
+            /// Renders list of time stamps according to time series spec
+            /// </summary>
+            public string RenderValueBlob(SourceSystemBase sosy, int totalSamples)
+            {
+                // access
+                if (TimeStamps == null)
+                    return "";
+
+                // build
+                return string.Join(", ", TimeStamps.Select(
+                    dt => String.Format(
+                        CultureInfo.InvariantCulture, "[{0}, {1}]", 
+                        totalSamples++, dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
+                ));
+            }
+
+            /// <summary>
+            /// Create a new set of SubmodelElements for the segment.
+            /// The <c>SegmentSmc</c> and <c>ValueArray</c> will be updated!
+            /// </summary>
+            public AdminShell.SubmodelElementCollection CreateSegmentSmc(
+                SourceSystemBase sosy,
+                AdminShell.SubmodelElementCollection root,
+                int segmentIndex,
+                int totalSamples,
+                DateTime timeStamp)
+            {
+                // segment ifself
+                SegmentSmc = AddToSMC<AdminShell.SubmodelElementCollection>(
+                    timeStamp, root,
+                    "Segment_" + segmentIndex,
+                    semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
+
+                // timestamp variables
+
+                var smcVarTS = AddToSMC<AdminShell.SubmodelElementCollection>(
+                    timeStamp, SegmentSmc,
+                    "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+
+                AddToSMC<AdminShell.Property>(timeStamp, smcVarTS,
+                    "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                    smeValue: "timeStamp");
+
+                AddToSMC<AdminShell.Property>(timeStamp, smcVarTS,
+                    "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime);
+
+                ValueArray = AddToSMC<AdminShell.Blob>(timeStamp, smcVarTS,
+                    "timeStamp", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                    smeValue: RenderValueBlob(sosy, totalSamples));
+
+                // the rest of the variables
+
+                foreach (var vr in Variables)
+                    vr.CreateVariableSmc(sosy, SegmentSmc, totalSamples, timeStamp);
+
+                // ok
+                return SegmentSmc;
+            }
+
+            /// <summary>
+            /// Updates the currently tracked set of SubmodelElements for the segment.
+            /// </summary>
+            public void UpdateSegmentSmc(
+                SourceSystemBase sosy,
+                int totalSamples,
+                DateTime timeStamp)
+            {
+                // access
+                if (ValueArray == null)
+                    return;
+
+                // render
+                UpdateSME(
+                    ValueArray,
+                    RenderValueBlob(sosy, totalSamples),
+                    timeStamp);
+
+                // the rest of the variables
+
+                foreach (var vr in Variables)
+                    vr.UpdateVariableSmc(sosy, totalSamples, timeStamp);
             }
         }
 
@@ -145,7 +431,7 @@ namespace AasxDemonstration
             // Overall Submodel instance
             //
 
-            protected AdminShell.Submodel submodel;
+            protected AdminShell.Submodel _submodel;
 
             //
             // Managing of the actual value propertes
@@ -158,11 +444,11 @@ namespace AasxDemonstration
             // of the energy model. Taken over from TimeSeries.cs
             //
 
-            protected AdminShell.SubmodelElementCollection block, data;
-            
-            protected AdminShell.Property 
-                sampleStatus, sampleMode, sampleRate, lowDataIndex, highDataIndex, 
-                actualSamples, actualSamplesInCollection, 
+            protected AdminShell.SubmodelElementCollection _block, _data;
+
+            protected AdminShell.Property
+                sampleStatus, sampleMode, sampleRate, lowDataIndex, highDataIndex,
+                actualSamples, actualSamplesInCollection,
                 actualCollections;
 
             protected int
@@ -170,11 +456,14 @@ namespace AasxDemonstration
 
             protected TimeSeriesDestFormat destFormat;
 
+            protected SourceSystemBase _sourceSystem = null;
+
+            protected TrackInstanceTimeSeriesSegment _trackSegment = null;
+
+            protected List<AdminShell.SubmodelElementCollection> _existingSegements 
+                = new List<AdminShell.SubmodelElementCollection>();
+
             protected int threadCounter = 0;
-            protected string sourceType = "";
-            protected string sourceAddress = "";
-            protected string username = "";
-            protected string password = "";
             protected int samplesCollectionsCount = 0;
             protected List<AdminShell.Property> samplesProperties = null;
             protected List<string> samplesValues = null;
@@ -193,27 +482,29 @@ namespace AasxDemonstration
                     return;
                 _dataPoint = new List<TrackInstanceDataPoint>();
 
-                // find all elements with qualifier
+                // find all elements with required qualifier
                 sm.RecurseOnSubmodelElements(null, (o, parents, sme) =>
                 {
-                    var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHub);
+                    var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHubDataPoint);
                     if (q != null && q.value != null && q.value.Length > 0)
                         _dataPoint.Add(new TrackInstanceDataPoint()
                         {
                             Sme = sme,
-                            AzureId = q.value
+                            SourceId = q.value
                         });
                 });
             }
 
             /// <summary>
-            /// In Andreas' oroginal code, all AAS and SM need to be tagged for time stamping
+            /// In Andreas' original code, all AAS and SM need to be tagged for time stamping
             /// </summary>
             public static void TagAllAasAndSm(
                 AdminShell.AdministrationShellEnv env,
                 DateTime timeStamp)
             {
-                env?.FindAllSubmodelGroupedByAAS((aas, sm) =>
+                if (env == null)
+                    return;
+                foreach (var x in env.FindAllSubmodelGroupedByAAS((aas, sm) =>
                 {
                     // mark aas
                     aas.TimeStampCreate = timeStamp;
@@ -222,7 +513,10 @@ namespace AasxDemonstration
                     // mark sm
                     sm.TimeStampCreate = timeStamp;
                     sm.SetAllParents(timeStamp);
-                }
+
+                    // need no results
+                    return false;
+                }));
             }
 
             public static IEnumerable<EnergyModelInstance> FindAllSmInstances(
@@ -249,6 +543,9 @@ namespace AasxDemonstration
                 var mm = AdminShell.Key.MatchMode.Relaxed;
                 int i;
 
+                // track of SM
+                _submodel = sm;
+
                 // find time series models in SM
                 foreach (var smcts in sm.submodelElements.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
                     PrefTimeSeries10.CD_TimeSeries, mm))
@@ -258,16 +555,25 @@ namespace AasxDemonstration
                         continue;
 
                     // basic SMC references
-                    block = smcts;
-                    data = smcts;
+                    _block = smcts;
+                    _data = smcts;
 
                     var d2 = smcts.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("data");
                     if (d2 != null)
-                        data = d2;
+                        _data = d2;
+
+                    // initialize the source system
+
+                    _sourceSystem = SourceSystemBase.FactoryNewSystem(
+                        "" + smcts.value.FindFirstIdShortAs<AdminShell.Property>("sourceType")?.value,
+                        "" + smcts.value.FindFirstIdShortAs<AdminShell.Property>("sourceAddress")?.value,
+                        "" + smcts.value.FindFirstIdShortAs<AdminShell.Property>("user")?.value,
+                        "" + smcts.value.FindFirstIdShortAs<AdminShell.Property>("password")?.value,
+                        "" + smcts.value.FindFirstIdShortAs<AdminShell.Property>("credentials")?.value
+                        );
 
                     // rest of the necessary properties
-                    sourceType = "" + smcts.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("sourceType")?.value;
-                    sourceAddress = "" + smcts.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("sourceAddress")?.value;
+
                     sampleStatus = smcts.value.FindFirstIdShortAs<AdminShell.Property>("sampleStatus");
                     sampleMode = smcts.value.FindFirstIdShortAs<AdminShell.Property>("sampleMode");
                     sampleRate = smcts.value.FindFirstIdShortAs<AdminShell.Property>("sampleRate");
@@ -282,7 +588,7 @@ namespace AasxDemonstration
 
                     actualSamples = smcts.value.FindFirstIdShortAs<AdminShell.Property>("actualSamples");
                     if (actualSamples != null)
-                        actualCollections.value = "0";
+                        actualSamples.value = "0";
 
                     actualSamplesInCollection = smcts.value.FindFirstIdShortAs<AdminShell.Property>("actualSamplesInCollection");
                     if (actualSamplesInCollection != null)
@@ -294,836 +600,202 @@ namespace AasxDemonstration
 
                     lowDataIndex = smcts.value.FindFirstIdShortAs<AdminShell.Property>("lowDataIndex");
                     highDataIndex = smcts.value.FindFirstIdShortAs<AdminShell.Property>("highDataIndex");
-                }
-            }
-        }
 
-
-
-
-        static public List<TimeSeriesBlock> timeSeriesBlockList = null;
-        static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
-        public static void timeSeriesInit()
-        {
-            DateTime timeStamp = DateTime.Now;
-
-            timeSeriesBlockList = new List<TimeSeriesBlock>();
-            timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
-
-            int aascount = AasxServer.Program.env.Length;
-
-            for (int i = 0; i < aascount; i++)
-            {
-                var env = AasxServer.Program.env[i];
-                if (env != null)
-                {
-                    var aas = env.AasEnv.AdministrationShells[0];
-                    aas.TimeStampCreate = timeStamp;
-                    aas.setTimeStamp(timeStamp);
-                    if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                    // challenge is to select SMes, which are NOT from a known semantic id!
+                    var tsvAllowed = new[]
                     {
-                        foreach (var smr in aas.submodelRefs)
+                        PrefTimeSeries10.CD_RecordId,
+                        PrefTimeSeries10.CD_UtcTime,
+                        PrefTimeSeries10.CD_ValueArray
+                    };
+
+                    // find a Segment tagged as Template?
+                    // create the time series tracking information                    
+
+                    _trackSegment = new TrackInstanceTimeSeriesSegment();
+                    var todel = new List<AdminShell.SubmodelElementCollection>();
+                    var first = true;
+                    foreach (var smcsegt in smcts.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
+                        PrefTimeSeries10.CD_TimeSeriesSegment, mm))
+                    {
+                        if (smcsegt == null)
+                            continue;
+
+                        // relevant?
+                        if (true == smcsegt.kind?.IsTemplate && first)
                         {
-                            var sm = env.AasEnv.FindSubmodel(smr);
-                            if (sm != null && sm.idShort != null)
+                            first = false;
+
+                            // find all elements with required qualifier FOR A SERIES ELEMENT
+                            smcsegt.value.RecurseOnSubmodelElements(null, null, (o, parents, sme) =>
                             {
-                                sm.TimeStampCreate = timeStamp;
-                                sm.SetAllParents(timeStamp);
-                                int countSme = sm.submodelElements.Count;
-                                for (int iSme = 0; iSme < countSme; iSme++)
+                                var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHubSeries);
+                                if (q != null && q.value != null && q.value.Length > 0)
                                 {
-                                    var sme = sm.submodelElements[iSme].submodelElement;
-                                    if (sme is AdminShell.SubmodelElementCollection && sme.idShort.Contains("TimeSeries"))
+                                    // found the correct Qualifer, should indicate a variable in the
+                                    // TEMPLATED time series
+                                    if (!(sme is AdminShell.SubmodelElementCollection smcVar)
+                                        || (true != sme.semanticId?.Matches(PrefTimeSeries10.CD_TimeSeriesVariable, mm)))
+                                        return;
+
+                                    // ok, need to identify record id
+                                    var pRecId = smcVar.value?.FindFirstSemanticIdAs<AdminShell.Property>(PrefTimeSeries10.CD_RecordId, mm);
+                                    var pDataPoint = smcVar.value?.FindFirstAnySemanticId<AdminShell.Property>(tsvAllowed, mm,
+                                        invertAllowed: true);
+
+                                    // proper?
+                                    if (("" + pRecId?.value).Length < 1 || pDataPoint == null)
+                                        return;
+
+                                    // ok, add
+                                    _trackSegment.Variables.Add(new TrackInstanceTimeSeriesVariable()
                                     {
-                                        bool nextSme = false;
-                                        if (sme.qualifiers.Count > 0)
-                                        {
-                                            int j = 0;
-                                            while (j < sme.qualifiers.Count)
-                                            {
-                                                var q = sme.qualifiers[j] as AdminShell.Qualifier;
-                                                if (q.type == "SUBSCRIBE")
-                                                {
-                                                    timeSeriesSubscribe.Add(sme as AdminShell.SubmodelElementCollection);
-                                                    // nextSme = true;
-                                                    break;
-                                                }
-                                                j++;
-                                            }
-                                        }
-                                        if (nextSme)
-                                            continue;
-
-                                        var smec = sme as AdminShell.SubmodelElementCollection;
-                                        int countSmec = smec.value.Count;
-
-                                        var tsb = new TimeSeriesBlock();
-                                        tsb.submodel = sm;
-                                        tsb.block = smec;
-                                        tsb.data = tsb.block;
-                                        tsb.samplesProperties = new List<AdminShell.Property>();
-                                        tsb.samplesValues = new List<string>();
-                                        tsb.opcLastTimeStamp = DateTime.UtcNow - TimeSpan.FromMinutes(1) + TimeSpan.FromMinutes(120);
-
-                                        for (int iSmec = 0; iSmec < countSmec; iSmec++)
-                                        {
-                                            var sme2 = smec.value[iSmec].submodelElement;
-                                            var idShort = sme2.idShort;
-                                            if (idShort.Contains("opcNode"))
-                                                idShort = "opcNode";
-                                            switch (idShort)
-                                            {
-                                                case "sourceType":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sourceType = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "sourceAddress":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sourceAddress = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "destFormat":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        var xx = (sme2 as AdminShell.Property).value.Trim().ToLower();
-                                                        switch (xx)
-                                                        {
-                                                            case "plain":
-                                                                tsb.destFormat = TimeSeriesDestFormat.Plain;
-                                                                break;
-                                                            case "timeseries/1/0":
-                                                                tsb.destFormat = TimeSeriesDestFormat.TimeSeries10;
-                                                                break;
-                                                        }
-                                                    }
-                                                    break;
-                                                case "username":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.username = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "password":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.password = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "data":
-                                                    if (sme2 is AdminShell.SubmodelElementCollection)
-                                                    {
-                                                        tsb.data = sme2 as AdminShell.SubmodelElementCollection;
-                                                    }
-                                                    break;
-                                                case "sampleStatus":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sampleStatus = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "sampleMode":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sampleMode = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "sampleRate":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sampleRate = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "maxSamples":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.maxSamples = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "actualSamples":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.actualSamples = sme2 as AdminShell.Property;
-                                                        tsb.actualSamples.value = "0";
-                                                    }
-                                                    break;
-                                                case "maxSamplesInCollection":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.maxSamplesInCollection = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "actualSamplesInCollection":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.actualSamplesInCollection = sme2 as AdminShell.Property;
-                                                        tsb.actualSamplesInCollection.value = "0";
-                                                    }
-                                                    break;
-                                                case "maxCollections":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.maxCollections = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "actualCollections":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.actualCollections = sme2 as AdminShell.Property;
-                                                        tsb.actualCollections.value = "0";
-                                                    }
-                                                    break;
-                                                case "lowDataIndex":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.lowDataIndex = sme2 as AdminShell.Property;
-                                                        tsb.lowDataIndex.value = "0";
-                                                    }
-                                                    break;
-                                                case "highDataIndex":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.highDataIndex = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "opcNode":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        string node = (sme2 as AdminShell.Property).value;
-                                                        string[] split = node.Split(',');
-                                                        if (tsb.opcNodes == null)
-                                                            tsb.opcNodes = new List<string>();
-                                                        tsb.opcNodes.Add(split[1] + "," + split[2]);
-                                                        var p = AdminShell.Property.CreateNew(split[0]);
-                                                        tsb.samplesProperties.Add(p);
-                                                        p.TimeStampCreate = timeStamp;
-                                                        p.setTimeStamp(timeStamp);
-                                                        tsb.samplesValues.Add("");
-                                                    }
-                                                    break;
-                                            }
-                                            if (tsb.sourceType == "aas" && sme2 is AdminShell.ReferenceElement r)
-                                            {
-                                                var el = env.AasEnv.FindReferableByReference(r.value);
-                                                if (el is AdminShell.Property p)
-                                                {
-                                                    tsb.samplesProperties.Add(p);
-                                                    tsb.samplesValues.Add("");
-                                                }
-                                            }
-                                        }
-                                        if (tsb.sampleRate != null)
-                                            tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.value);
-                                        timeSeriesBlockList.Add(tsb);
-                                    }
+                                        SourceId = q.value,
+                                        TemplateRecordId = pRecId?.value,
+                                        TemplateDataPoint = pDataPoint
+                                    });
                                 }
-                            }
+                            });
                         }
+
+                        // remove all the stuff for a clean start
+                        todel.Add(smcsegt);
                     }
+                    foreach (var del in todel)
+                        smcts.value.Remove(del);
                 }
             }
 
-            // test
-            if (test)
+            public static void StartAllAsOneThread(IEnumerable<EnergyModelInstance> instances)
             {
-                dummy = 0;
-                for (int i = 0; i < 500; i++)
+                if (instances == null)
+                    return;                
+
+                var t = new Thread(() =>
                 {
-                    timeSeriesSampling(false);
-                }
-                timeSeriesSampling(true);
+                    var storedInstances = instances.ToArray();
+                    while (true)
+                    {
+                        foreach (var emi in storedInstances)
+                            emi?.CyclicCheck();
+
+                        Thread.Sleep(100);
+                    }
+                });
+                t.Start();
             }
-            else
+
+            private int _testi = 0;
+
+            public void CyclicCheck()
             {
-                timeSeriesThread = new Thread(new ThreadStart(timeSeriesSamplingLoop));
-                timeSeriesThread.Start();
+                CyclicCheckDataPoints();
+                CyclicCheckTimeSeries();
             }
-        }
 
-        static bool test = false;
-
-        static Thread timeSeriesThread;
-
-        static int dummy = 0;
-
-        public static void timeSeriesSamplingLoop()
-        {
-            /*
-            while(timeSeriesSampling(false));
-            timeSeriesSampling(true);
-            */
-            while (true)
+            public void CyclicCheckDataPoints()
             {
-                timeSeriesSampling(false);
-            }
-        }
+                // access
+                if (_sourceSystem == null || _dataPoint == null)
+                    return;
+                var timeStamp = DateTime.Now;
 
-        /*
-        static ulong ChangeNumber = 0;
-
-        static bool setChangeNumber(AdminShell.Referable r, ulong changeNumber)
-        {
-            do
-            {
-                r.ChangeNumber = changeNumber;
-                if (r != r.parent)
+                // simply iterate
+                foreach (var dp in _dataPoint)
                 {
-                    r = r.parent;
-                }
-                else
-                    r = null;
-            }
-            while (r != null);
-
-            return true;
-        }
-        */
-
-        private static T AddToSMC<T>(
-            DateTime timestamp,
-            AdminShell.SubmodelElementCollection smc, 
-            string idShort,
-            AdminShell.Key semanticIdKey,
-            string smeValue = null) where T : AdminShell.SubmodelElement
-        {
-            var newElem = AdminShell.SubmodelElementWrapper.CreateAdequateType(typeof(T));
-            newElem.idShort = idShort;
-            newElem.semanticId = new AdminShell.SemanticId(semanticIdKey);
-            newElem.setTimeStamp(timestamp);
-            newElem.TimeStampCreate = timestamp;
-            if (smc?.value != null)
-                smc.value.Add(newElem);
-            if (smeValue != null && newElem is AdminShell.Property newP)
-                newP.value = smeValue;
-            if (smeValue != null && newElem is AdminShell.Blob newB)
-                newB.value = smeValue;
-            return newElem as T;
-        }
-
-        public static bool timeSeriesSampling(bool final)
-        {
-            if (Program.isLoading)
-                return true;
-
-            // ulong newChangeNumber = ChangeNumber + 1;
-            // bool useNewChangeNumber = false;
-            DateTime timeStamp = DateTime.Now;
-
-            foreach (var tsb in timeSeriesBlockList)
-            {
-                if (tsb.sampleStatus == null)
-                    continue;
-
-                if (tsb.sampleStatus.value == "stop")
-                {
-                    tsb.sampleStatus.value = "stopped";
-                    final = true;
-                }
-                else
-                {
-                    if (tsb.sampleStatus.value != "start")
+                    // any action required?
+                    if (dp?.Sme == null || !dp.IsTrigger(_sourceSystem))
                         continue;
+
+                    // adopt new value & set
+                    var val = dp.GetValue(_sourceSystem);
+                    UpdateSME(
+                        dp.Sme, 
+                        string.Format(CultureInfo.InvariantCulture, "{0}", val), 
+                        timeStamp);
                 }
+            }
 
-                if (tsb.sampleRate == null)
-                    continue;
+            public void CyclicCheckTimeSeries()
+            {
+                // access
+                if (_sourceSystem == null || _trackSegment == null)
+                    return;
+                var timeStamp = DateTime.Now;
 
-                tsb.threadCounter -= 100;
-                if (tsb.threadCounter > 0)
-                    continue;
+                // something to be done?
+                if (!_trackSegment.IsTrigger(_sourceSystem))
+                    return;
 
-                tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.value);
-
-                int actualSamples = Convert.ToInt32(tsb.actualSamples.value);
-                int maxSamples = Convert.ToInt32(tsb.maxSamples.value);
-                int actualSamplesInCollection = Convert.ToInt32(tsb.actualSamplesInCollection.value);
-                int maxSamplesInCollection = Convert.ToInt32(tsb.maxSamplesInCollection.value);
-
-                if (final || actualSamples < maxSamples)
+                // test
+                if (actualSamples != null)
                 {
-                    int updateMode = 0;
-                    if (!final)
-                    {
-                        int valueCount = 1;
-                        if (tsb.sourceType == "json" && tsb.sourceAddress != "")
-                        {
-                            AdminShell.SubmodelElementCollection c =
-                                tsb.block.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("jsonData");
-                            if (c == null)
-                            {
-                                c = new AdminShellV20.SubmodelElementCollection();
-                                c.idShort = "jsonData";
-                                c.TimeStampCreate = timeStamp;
-                                tsb.block.Add(c);
-                                c.setTimeStamp(timeStamp);
-                            }
-                            parseJSON(tsb.sourceAddress, "", "", c);
-
-                            foreach (var el in c.value)
-                            {
-                                if (el.submodelElement is AdminShell.Property p)
-                                {
-                                    if (!tsb.samplesProperties.Contains(p))
-                                    {
-                                        tsb.samplesProperties.Add(p);
-                                        tsb.samplesValues.Add("");
-                                    }
-                                }
-                            }
-                        }
-                        if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
-                        {
-                            GetHistory(tsb);
-                            valueCount = 0;
-                            if (table != null)
-                                valueCount = table.Count;
-                        }
-                        if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
-                        {
-                            valueCount = GetDAData(tsb);
-                        }
-
-                        DateTime dt;
-                        int valueIndex = 0;
-                        while (valueIndex < valueCount)
-                        {
-                            if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
-                            {
-                                dt = (DateTime)table[valueIndex][0];
-                                Console.WriteLine(valueIndex + " " + dt + " " + table[valueIndex][1] + " " + table[valueIndex][2]);
-                            }
-                            else
-                            {
-                                dt = DateTime.Now;
-                            }
-
-                            if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                            {
-                                var t = dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                                if (tsb.samplesTimeStamp != "")
-                                    tsb.samplesTimeStamp += ", ";
-                                tsb.samplesTimeStamp += $"[{tsb.totalSamples}, {t}]";
-                            }
-                            else
-                            {
-                                if (tsb.samplesTimeStamp == "")
-                                {
-                                    tsb.samplesTimeStamp += dt.ToString("yy-MM-dd HH:mm:ss.fff");
-                                }
-                                else
-                                {
-                                    tsb.samplesTimeStamp += "," + dt.ToString("HH:mm:ss.fff");
-                                }
-                            }
-
-                            for (int i = 0; i < tsb.samplesProperties.Count; i++)
-                            {
-                                if (tsb.samplesValues[i] != "")
-                                {
-                                    tsb.samplesValues[i] += ",";
-                                }
-
-                                if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda") && tsb.sourceAddress != "")
-                                {
-                                    if (tsb.sourceType == "opchd")
-                                    {
-                                        string value = "";
-                                        if (table[valueIndex] != null && table[valueIndex][i + 1] != null)
-                                            value = table[valueIndex][i + 1].ToString();
-                                        tsb.samplesValues[i] += value;
-                                    }
-                                    if (tsb.sourceType == "opcda")
-                                    {
-                                        tsb.samplesValues[i] += opcDAValues[i];
-                                        Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
-                                    }
-                                }
-                                else
-                                {
-                                    var p = tsb.samplesProperties[i];
-
-                                    if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                    {
-                                        tsb.samplesValues[i] += $"[{tsb.totalSamples}, {p.value}]";
-                                    }
-                                    else
-                                    {
-                                        tsb.samplesValues[i] += p.value;
-                                    }
-                                    // tsb.samplesValues[i] += dummy++;
-                                }
-                            }
-                            tsb.samplesValuesCount++;
-                            actualSamples++;
-                            tsb.totalSamples++;
-                            tsb.actualSamples.value = "" + actualSamples;
-                            tsb.actualSamples.setTimeStamp(timeStamp);
-                            actualSamplesInCollection++;
-                            tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                            tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
-                            if (actualSamples >= maxSamples)
-                            {
-                                if (tsb.sampleMode.value == "continuous")
-                                {
-                                    var firstName = "data" + tsb.lowDataIndex.value;
-                                    if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                        firstName = "Segment_" + tsb.lowDataIndex.value;
-
-                                    var first =
-                                        tsb.data.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(
-                                            firstName);
-                                    if (first != null)
-                                    {
-                                        actualSamples -= maxSamplesInCollection;
-                                        tsb.actualSamples.value = "" + actualSamples;
-                                        tsb.actualSamples.setTimeStamp(timeStamp);
-                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                            first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
-                                        tsb.data.Remove(first);
-                                        tsb.data.setTimeStamp(timeStamp);
-                                        tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
-                                        tsb.lowDataIndex.setTimeStamp(timeStamp);
-                                        updateMode = 1;
-                                    }
-                                }
-                            }
-                            if (actualSamplesInCollection >= maxSamplesInCollection)
-                            {
-                                if (actualSamplesInCollection > 0)
-                                {
-                                    if (tsb.highDataIndex != null)
-                                    {
-                                        tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                                        tsb.highDataIndex.setTimeStamp(timeStamp);
-                                    }
-
-                                    AdminShell.SubmodelElementCollection nextCollection = null;
-
-                                    // decide
-                                    if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                    {
-                                        nextCollection = AddToSMC<AdminShell.SubmodelElementCollection>(
-                                            timeStamp, null,
-                                            "Segment_" + tsb.samplesCollectionsCount++, 
-                                            semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
-
-                                        var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
-                                            timeStamp, nextCollection,
-                                            "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
-
-                                        AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                            "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
-                                            smeValue: "timeStamp");
-
-                                        AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                            "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime);
-
-                                        AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
-                                            "timeStamp", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
-                                            smeValue: tsb.samplesTimeStamp);
-                                    }
-                                    else
-                                    {
-                                        nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
-
-                                        var p = AdminShell.Property.CreateNew("timeStamp");
-                                        p.value = tsb.samplesTimeStamp;
-                                        p.setTimeStamp(timeStamp);
-                                        p.TimeStampCreate = timeStamp;
-
-                                        nextCollection.setTimeStamp(timeStamp);
-                                        nextCollection.TimeStampCreate = timeStamp;
-                                    }
-
-                                    tsb.samplesTimeStamp = "";
-                                    for (int i = 0; i < tsb.samplesProperties.Count; i++)
-                                    {
-                                        if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                        {
-                                            var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
-                                                timeStamp, nextCollection,
-                                                "TSvariable_" + tsb.samplesProperties[i].idShort,
-                                                semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
-
-                                            // MICHA: bad hack
-                                            if (tsb.samplesProperties[i].idShort.ToLower().Contains("int2"))
-                                                smcvar.AddQualifier("TimeSeries.Args", "{ type: \"Bars\" }");
-
-                                            AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                                "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
-                                                smeValue: "" + tsb.samplesProperties[i].idShort);
-
-                                            if (tsb.samplesProperties[i].idShort.ToLower().Contains("float"))
-                                                AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                                    "" + tsb.samplesProperties[i].idShort,
-                                                    semanticIdKey: PrefTimeSeries10.CD_GeneratedFloat);
-                                            else
-                                                AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                                    "" + tsb.samplesProperties[i].idShort, 
-                                                    semanticIdKey: PrefTimeSeries10.CD_GeneratedInteger);
-
-                                            AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
-                                                "ValueArray", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
-                                                smeValue: tsb.samplesValues[i]);
-                                        }
-                                        else
-                                        {
-                                            var p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
-                                            nextCollection.Add(p);
-                                            p.value = tsb.samplesValues[i];
-                                            p.setTimeStamp(timeStamp);
-                                            p.TimeStampCreate = timeStamp;
-                                        }
-
-                                        tsb.samplesValues[i] = "";
-                                    }
-                                    tsb.data.Add(nextCollection);
-                                    tsb.data.setTimeStamp(timeStamp);
-                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                        nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
-                                    tsb.samplesValuesCount = 0;
-                                    actualSamplesInCollection = 0;
-                                    tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                                    tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
-                                    updateMode = 1;
-                                    var json = JsonConvert.SerializeObject(nextCollection, Newtonsoft.Json.Formatting.Indented,
-                                                                        new JsonSerializerSettings
-                                                                        {
-                                                                            NullValueHandling = NullValueHandling.Ignore
-                                                                        });
-                                    Program.connectPublish(tsb.block.idShort + "." + nextCollection.idShort, json);
-                                }
-                            }
-                            valueIndex++;
-                        }
-                    }
-                    if (final || actualSamplesInCollection >= maxSamplesInCollection)
-                    {
-                        if (actualSamplesInCollection > 0)
-                        {
-                            if (tsb.highDataIndex != null)
-                            {
-                                tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                                tsb.highDataIndex.setTimeStamp(timeStamp);
-                            }
-                            var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
-                            var p = AdminShell.Property.CreateNew("timeStamp");
-                            p.value = tsb.samplesTimeStamp;
-                            p.setTimeStamp(timeStamp);
-                            p.TimeStampCreate = timeStamp;
-                            tsb.samplesTimeStamp = "";
-                            nextCollection.Add(p);
-                            nextCollection.setTimeStamp(timeStamp);
-                            nextCollection.TimeStampCreate = timeStamp;
-                            for (int i = 0; i < tsb.samplesProperties.Count; i++)
-                            {
-                                p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
-                                p.value = tsb.samplesValues[i];
-                                p.setTimeStamp(timeStamp);
-                                p.TimeStampCreate = timeStamp;
-                                tsb.samplesValues[i] = "";
-                                nextCollection.Add(p);
-                            }
-                            tsb.data.Add(nextCollection);
-                            tsb.data.setTimeStamp(timeStamp);
-                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
-                            tsb.samplesValuesCount = 0;
-                            actualSamplesInCollection = 0;
-                            tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
-                            tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
-                            updateMode = 1;
-                        }
-                    }
-                    if (updateMode != 0)
-                        Program.signalNewData(updateMode);
+                    _testi++;
+                    UpdateSME(actualSamples, "" + _testi, timeStamp);
                 }
-            }
 
-            if (!test)
-                Thread.Sleep(100);
+                // OK, a new sample shall be added to the segment
+                _trackSegment.TimeStamps.Add(DateTime.UtcNow);
+                foreach (var tsv in _trackSegment.Variables)
+                    tsv.Values.Add(tsv.GetValue(_sourceSystem));
 
-            return !final;
-        }
+                // now check, if the segement should be rendered intermediate or finally
+                var cnt = _trackSegment.TimeStamps.Count;
+                var doNextColl = (cnt >= maxSamplesInCollection);
+                var doIntermediate = (cnt == 1) || (cnt == 3);
 
-        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c)
-        {
-            var handler = new HttpClientHandler();
-            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-            var client = new HttpClient(handler);
-
-            if (username != "" && password != "")
-            {
-                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(authToken));
-            }
-
-            Console.WriteLine("GetJSON: " + url);
-            try
-            {
-                string response = client.GetStringAsync(url).Result;
-
-                Console.WriteLine(response);
-
-                if (response != "")
+                // render on multiple times
+                if (doIntermediate)
                 {
-                    JObject parsed = JObject.Parse(response);
-                    Program.parseJson(c, parsed);
+                    if (_trackSegment.SegmentSmc == null)
+                    {
+                        Console.WriteLine("Create segement {0}", samplesCollectionsCount);
+
+                        // create new segment
+                        var newSeg = _trackSegment.CreateSegmentSmc(
+                            _sourceSystem, _data, samplesCollectionsCount, totalSamples, timeStamp);
+                        
+                        samplesCollectionsCount++;
+
+                        // state initial creation as event .. updates need to follow
+                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                        newSeg, "Add", _submodel, (ulong)timeStamp.Ticks);
+                    }
+                    else
+                    {
+                        // update
+                        _trackSegment.UpdateSegmentSmc(_sourceSystem, totalSamples, timeStamp);
+                    }
                 }
-            } catch (Exception ex)
-            {
-                Console.WriteLine("GetJSON() expection: " + ex.Message);
-            }
-        }
 
-        static List<List<object>> table = null;
-        static string ErrorMessage { get; set; }
-        static UASampleClient opc = null;
-        static Opc.Ua.Client.Session session = null;
-        static DateTime startTime;
-        static DateTime endTime;
-        static List<string> opcDAValues = null;
-
-        public static int GetDAData(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Read OPC DA Data:");
-            try
-            {
-                ErrorMessage = "";
-                if (session == null)
-                    Connect(tsb);
-                if (session != null)
+                // final?
+                if (doNextColl)
                 {
-                    opcDAValues = new List<string>();
-                    for (int i = 0; i < tsb.opcNodes.Count; i++)
+                    // do a final update
+                    _trackSegment.UpdateSegmentSmc(_sourceSystem, totalSamples, timeStamp);
+
+                    // add to already existing segements .. delete an old one
+                    _existingSegements.Add(_trackSegment.SegmentSmc);
+                    if (_existingSegements.Count > 4444)
                     {
-                        string[] split = tsb.opcNodes[i].Split(',');
-                        string value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
-                        opcDAValues.Add(value);
+                        // pop
+                        var first = _existingSegements[0];
+                        _existingSegements.RemoveAt(0);
+
+                        // remove
+                        _data.Remove(first);
+                        _data.setTimeStamp(timeStamp);
+                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                            first, "Remove", _submodel, (ulong)timeStamp.Ticks);
                     }
+
+                    // commit und clear -> will make a new collection
+                    Console.WriteLine("Clear segment");
+                    totalSamples += _trackSegment.TimeStamps.Count;
+                    _trackSegment.ClearRuntime();
                 }
             }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                return 0;
-            }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
 
-            return 1;
-        }
-
-        public static void GetHistory(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Read OPC UA Historical Data:");
-            try
-            {
-                ErrorMessage = "";
-                startTime = tsb.opcLastTimeStamp;
-                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
-                tsb.opcLastTimeStamp = endTime;
-                if (session == null)
-                    Connect(tsb);
-                GetData(tsb);
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                session?.Close();
-                session?.Dispose();
-                session = null;
-                opc = null;
-            }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
-        }
-        public static void Connect(TimeSeriesBlock tsb)
-        {
-            if (opc == null)
-                opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
-            opc.ConsoleSampleClient().Wait();
-            session = opc.session;
-        }
-        public static void GetData(TimeSeriesBlock tsb)
-        {
-            if (session != null)
-            {
-                ReadRawModifiedDetails details = new ReadRawModifiedDetails();
-                details.StartTime = startTime;
-                details.EndTime = endTime;
-                details.NumValuesPerNode = 0;
-                details.IsReadModified = false;
-                details.ReturnBounds = true;
-
-                var nodesToRead = new HistoryReadValueIdCollection();
-                for (int i = 0; i < tsb.opcNodes.Count; i++)
-                {
-                    var nodeToRead = new HistoryReadValueId();
-                    string[] split = tsb.opcNodes[i].Split(',');
-                    nodeToRead.NodeId = new NodeId(split[1], (ushort)Convert.ToInt32(split[0]));
-                    nodesToRead.Add(nodeToRead);
-                }
-
-                table = new List<List<object>>();
-
-                HistoryReadResultCollection results = null;
-                DiagnosticInfoCollection diagnosticInfos = null;
-
-                bool loop = true;
-                while (loop)
-                {
-                    session.HistoryRead(
-                        null,
-                        new ExtensionObject(details),
-                        TimestampsToReturn.Both,
-                        false,
-                        nodesToRead,
-                        out results,
-                        out diagnosticInfos);
-
-                    ClientBase.ValidateResponse(results, nodesToRead);
-                    ClientBase.ValidateDiagnosticInfos(diagnosticInfos, nodesToRead);
-
-                    foreach (var res in results)
-                    {
-                        if (StatusCode.IsBad(res.StatusCode))
-                        {
-                            throw new ServiceResultException(res.StatusCode);
-                        }
-                    }
-
-                    var historyData1 = ExtensionObject.ToEncodeable(results[0].HistoryData) as HistoryData;
-                    var historyData2 = ExtensionObject.ToEncodeable(results[1].HistoryData) as HistoryData;
-                    for (int i = 0; i < historyData1.DataValues.Count; i++)
-                    {
-                        var row = new List<object>();
-                        row.Add(historyData1.DataValues[i].SourceTimestamp);
-                        row.Add(historyData1.DataValues[i].Value);
-                        row.Add(historyData2.DataValues[i].Value);
-                        table.Add(row);
-                    }
-
-                    for (int i = 0; i < results.Count; i++)
-                    {
-                        if (results[i].ContinuationPoint == null || results[i].ContinuationPoint.Length == 0)
-                        {
-                            loop = false;
-                            break;
-                        }
-                        nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
-                    }
-                }
-            }
         }
     }
 }

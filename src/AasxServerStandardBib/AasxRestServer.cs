@@ -516,9 +516,15 @@ namespace AasxRestServerLibrary
                         if (sme.TimeStamp != sme.TimeStampCreate)
                         {
                             if (/* doUpdate && */ plUpdate != null)
+                            {
+                                var val = sme.ValueAsText();
+                                if (sme is AdminShell.Blob blob)
+                                    // take BLOB as "large" text
+                                    val = blob.value;
                                 plUpdate.Values.Add(new AasPayloadUpdateValueItem(
                                     path: p2,
-                                    sme.ValueAsText()));
+                                    val));
+                            }
                         }
                     }
 

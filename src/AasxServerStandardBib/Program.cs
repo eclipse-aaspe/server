@@ -479,15 +479,18 @@ namespace AasxServer
             }
 
             i40LanguageRuntime.initialize();
+
+            // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
 
             var _energyModelInstances = new List<EnergyModelInstance>();
             foreach (var penv in AasxServer.Program.env)
             {
-                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
+                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.Now);
                 _energyModelInstances.AddRange(
                     EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
             }
+            EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
 
             AasxTask.taskInit();
 
