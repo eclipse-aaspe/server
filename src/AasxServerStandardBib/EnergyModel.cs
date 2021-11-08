@@ -67,6 +67,10 @@ namespace AasxDemonstration
                 if (sourceType == "debug")
                     return new SourceSystemDebug();
 
+                // debug?
+                if (sourceType == "azure-iothub")
+                    return new SourceSystemAzureHub();
+
                 // no, default
                 return new SourceSystemBase();
             }
@@ -84,8 +88,16 @@ namespace AasxDemonstration
         /// Implements a source system, which gets data from Azure IoTHub 
         /// </summary>
         public class SourceSystemAzureHub : SourceSystemBase
-        {
-            // TODO ERICH
+        {            
+            public SourceSystemAzureHub() : base() { }
+
+            public SourceSystemAzureHub(
+                string sourceAddress,
+                string user, string password,
+                string credentials) : base()
+            {
+                // TODO ERICH
+            }
         }
 
         /// <summary>
