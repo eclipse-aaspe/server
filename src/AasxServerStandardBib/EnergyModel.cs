@@ -170,6 +170,35 @@ namespace AasxDemonstration
             return newElem as T;
         }
 
+        private static void CopySmeFeatures(
+            AdminShell.SubmodelElement dst, AdminShell.SubmodelElement src,
+            bool copyIdShort = false,
+            bool copyDescription = false,
+            bool copySemanticId = false,
+            bool copyQualifers = false)
+        {
+            // access
+            if (dst == null || src == null)
+                return;
+
+            // feature wise
+            if (copyIdShort)
+                dst.idShort = src.idShort;
+
+            if (copyDescription)
+                dst.description = src.description;
+
+            if (copySemanticId)
+                dst.semanticId = src.semanticId;
+
+            if (copyQualifers)
+            {
+                dst.qualifiers = new AdminShell.QualifierCollection();
+                foreach (var q in src.qualifiers)
+                    dst.qualifiers.Add(q);
+            }
+        }
+
         private static void UpdateSME(
             AdminShell.SubmodelElement sme,
             string value,
@@ -216,10 +245,16 @@ namespace AasxDemonstration
             public string TemplateRecordId;
 
             /// <summary>
-            /// Links to respective SME from the provide time series segment TEMPLATE in the originally
+            /// Links to respective SME from the providing time series segment TEMPLATE in the originally
             /// loaded AASX.
             /// </summary>
             public AdminShell.Property TemplateDataPoint;
+
+            /// <summary>
+            /// Links to respective SMC for the variable from the providing time series segment TEMPLATE in the originally
+            /// loaded AASX.
+            /// </summary>
+            public AdminShell.SubmodelElementCollection TemplateVariable;
 
             /// <summary>
             /// Maintains the list of values already stored in the variable.
@@ -281,23 +316,18 @@ namespace AasxDemonstration
                     "TSvariable_" + TemplateRecordId,
                     semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
 
+                CopySmeFeatures(VariableSmc, TemplateVariable,
+                    copyDescription: true, copyQualifers: true);
+
                 AddToSMC<AdminShell.Property>(timeStamp, VariableSmc,
                     "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
                     smeValue: "" + TemplateRecordId);
 
                 var p = AddToSMC<AdminShell.Property>(timeStamp, VariableSmc,
-                    "" + TemplateDataPoint?.idShort, semanticIdKey: null);                
-                if (TemplateDataPoint != null)
-                {
-                    p.semanticId = TemplateDataPoint.semanticId;
-                    p.description = TemplateDataPoint.description;
-                    if (TemplateDataPoint.qualifiers != null)
-                    {
-                        p.qualifiers = new AdminShell.QualifierCollection();
-                        foreach (var q in TemplateDataPoint.qualifiers)
-                            p.qualifiers.Add(q);
-                    }
-                }
+                    "" + TemplateDataPoint?.idShort, semanticIdKey: null);
+
+                CopySmeFeatures(p, TemplateDataPoint,
+                    copySemanticId: true, copyDescription: true, copyQualifers: true);
 
                 ValueArray = AddToSMC<AdminShell.Blob>(timeStamp, VariableSmc,
                     "ValueArray", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
@@ -690,7 +720,8 @@ namespace AasxDemonstration
                                     {
                                         SourceId = q.value,
                                         TemplateRecordId = pRecId?.value,
-                                        TemplateDataPoint = pDataPoint
+                                        TemplateDataPoint = pDataPoint,
+                                        TemplateVariable = smcVar
                                     });
                                 }
                             });
@@ -727,8 +758,10 @@ namespace AasxDemonstration
 
             public void CyclicCheck()
             {
+                ;
                 CyclicCheckDataPoints();
                 CyclicCheckTimeSeries();
+                ;
             }
 
             public void CyclicCheckDataPoints()
