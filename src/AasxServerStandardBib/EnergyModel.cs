@@ -69,7 +69,7 @@ namespace AasxDemonstration
 
                 // debug?
                 if (sourceType == "azure-iothub")
-                    return new SourceSystemAzureHub();
+                    return new SourceSystemAzureHub(sourceAddress, user, password, credentials);
 
                 // no, default
                 return new SourceSystemBase();
@@ -847,7 +847,7 @@ namespace AasxDemonstration
 
                     // add to already existing segements .. delete an old one
                     _existingSegements.Add(_trackSegment.SegmentSmc);
-                    if (_existingSegements.Count > 4444)
+                    if (_existingSegements.Count > 99)
                     {
                         // pop
                         var first = _existingSegements[0];
