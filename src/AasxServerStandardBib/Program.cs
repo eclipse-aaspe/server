@@ -1489,7 +1489,7 @@ namespace AasxServer
                                                     env[envi].AasEnv.Submodels.Remove(existingSm);
                                                     env[envi].AasEnv.Submodels.Add(submodel);
 
-                                                    // add SubmodelRef to AAS            
+                                                    // add SubmodelRef to AAS
                                                     // access the AAS
                                                     var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
                                                     var existsmr = aas.HasSubmodelRef(newsmr);
@@ -1548,7 +1548,7 @@ namespace AasxServer
             {
                 // Create a timer with an specified interval.
                 OPCClientTimer = new System.Timers.Timer(value);
-                // Hook up the Elapsed event for the timer. 
+                // Hook up the Elapsed event for the timer.
                 OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
                 OPCClientTimer.AutoReset = true;
                 OPCClientTimer.Enabled = true;
@@ -1602,7 +1602,7 @@ namespace AasxServer
         {
             // Create a timer with a two second interval.
             scriptTimer = new System.Timers.Timer(value);
-            // Hook up the Elapsed event for the timer. 
+            // Hook up the Elapsed event for the timer.
             scriptTimer.Elapsed += OnScriptTimedEvent;
             scriptTimer.AutoReset = true;
             scriptTimer.Enabled = true;
@@ -1619,7 +1619,7 @@ namespace AasxServer
         {
             // Create a timer with a two second interval.
             restTimer = new System.Timers.Timer(value);
-            // Hook up the Elapsed event for the timer. 
+            // Hook up the Elapsed event for the timer.
             restTimer.Elapsed += OnRestTimedEvent;
             restTimer.AutoReset = true;
             restTimer.Enabled = true;
@@ -1728,7 +1728,7 @@ namespace AasxServer
                     env[0].AasEnv.Submodels.Remove(existingSm);
                 env[0].AasEnv.Submodels.Add(submodel);
 
-                // add SubmodelRef to AAS            
+                // add SubmodelRef to AAS
                 // access the AAS
                 var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
                 var existsmr = aas.HasSubmodelRef(newsmr);
@@ -2255,7 +2255,7 @@ namespace AasxServer
                             p.setTimeStamp(timeStamp);
                             newMode = 1;
                         }
-                        // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
+                        // see https://github.com/JamesNK/Newtonsoft.Json/issues/874
                         p.value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
                         p.setTimeStamp(timeStamp);
                         break;

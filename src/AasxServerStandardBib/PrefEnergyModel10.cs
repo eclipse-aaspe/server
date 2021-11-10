@@ -11,8 +11,8 @@ namespace AasxDemonstration
             new AdminShell.Key(AdminShell.Key.Submodel, false, AdminShell.Identification.IRI,
             "https://admin-shell.io/sandbox/pi40/CarbonMonitoring/1/0");
 
-        public static string QualiIoTHubDataPoint = "IoTHub";
+        public static string QualiADXDataPoint = "ADX";
 
-        public static string QualiIoTHubSeries = "IoTHubSeries";
+        public static string QualiADXHubSeries = "ADXSeries";
     }
 }

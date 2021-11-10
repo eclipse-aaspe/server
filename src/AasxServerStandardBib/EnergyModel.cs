@@ -1,25 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
-using System.Linq;
-using AasxServer;
-using AasxTimeSeries;
+﻿using AasxTimeSeries;
 using AdminShellNS;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using SampleClient;
+using Kusto.Data;
+using Kusto.Data.Common;
+using Kusto.Data.Net.Client;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
 
 namespace AasxDemonstration
 {
     /// <summary>
     /// This class holds information and provides functions to "automate" the energy model
     /// used by the CESMII / LNI4.0 demonstrator.
-    /// It consists of Properties, which shall be synchronized with Azure IoTHub. It
+    /// It consists of Properties, which shall be synchronized with Azure Data Explorer. It
     /// includes a time series (according the SM template spec) as well.
     /// </summary>
     public static class EnergyModel
@@ -37,7 +35,7 @@ namespace AasxDemonstration
         /// </summary>
         public interface ITrackHasValue
         {
-            double GetValue(SourceSystemBase sosy);
+            double GetValue(SourceSystemBase sosy, string sourceID);
         }
 
         /// <summary>
@@ -49,7 +47,7 @@ namespace AasxDemonstration
         }
 
         /// <summary>
-        /// Base class for the source system and its context. Can be used to transport 
+        /// Base class for the source system and its context. Can be used to transport
         /// context and global status data w.r.t to the online connect to a source system
         /// </summary>
         public class SourceSystemBase {
@@ -68,8 +66,8 @@ namespace AasxDemonstration
                     return new SourceSystemDebug();
 
                 // debug?
-                if (sourceType == "azure-iothub")
-                    return new SourceSystemAzureHub(sourceAddress, user, password, credentials);
+                if (sourceType == "azuredataexplorer")
+                    return new SourceSystemAzureDataExplorer(sourceAddress, user, password, credentials);
 
                 // no, default
                 return new SourceSystemBase();
@@ -85,18 +83,148 @@ namespace AasxDemonstration
         }
 
         /// <summary>
-        /// Implements a source system, which gets data from Azure IoTHub 
+        /// Implements a source system, which gets data from Azure Data Explorer
         /// </summary>
-        public class SourceSystemAzureHub : SourceSystemBase
-        {            
-            public SourceSystemAzureHub() : base() { }
+        public class SourceSystemAzureDataExplorer : SourceSystemBase, IDisposable
+        {
+            private static ICslQueryProvider _queryProvider = null;
+            private static ConcurrentDictionary<string, object> _values = new ConcurrentDictionary<string, object>();
+            private Timer _queryTimer = new Timer(RunQuery, null, Timeout.Infinite, Timeout.Infinite);
 
-            public SourceSystemAzureHub(
+            public double GetValue(string sourceID)
+            {
+                try
+                {
+                    // preprocessing
+                    if (sourceID == "ActiveEnergyTotal")
+                    {
+                        sourceID = "ActiveEnergy";
+                    }
+
+                    if (_values.ContainsKey(sourceID))
+                    {
+                        // lookup
+                        return (double)_values[sourceID];
+                    }
+                    else
+                    {
+                        // calculate our other values
+                        if ((sourceID == "ActiveEnergy1minTotal") && _values.ContainsKey("ActiveEnergy"))
+                        {
+                            // active energy is in Wh, hence divide by 60
+                            return ((double) _values["ActiveEnergy"]) / 60;
+                        }
+
+                        if ((sourceID == "Co2EquivalentTotal") && _values.ContainsKey("ActiveEnergy"))
+                        {
+                            // we use the German energy mix as a baseline, which produces 0.515g/Wh CO2
+                            return ((double)_values["ActiveEnergy"]) * 0.515;
+                        }
+
+                        if ((sourceID == "Co2Equivalent1minTotal") && _values.ContainsKey("ActiveEnergy"))
+                        {
+                            return ((double)_values["ActiveEnergy"]) / 60 * 0.515;
+                        }
+
+                        // if we can't find it, simply return 0
+                        return 0.0;
+                    }
+                }
+                catch (Exception)
+                {
+                    return 0.0;
+                }
+            }
+
+            private static void RunQuery(object state)
+            {
+                // read the newest row from our OPC UA telemetry table
+                string query = "opcua_telemetry | top 1 by creationTimeUtc desc";
+
+                ClientRequestProperties clientRequestProperties = new ClientRequestProperties()
+                {
+                    ClientRequestId = Guid.NewGuid().ToString()
+                };
+
+                using (IDataReader reader = _queryProvider.ExecuteQuery(query, clientRequestProperties))
+                {
+                    while (reader.Read())
+                    {
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            try
+                            {
+                                if (reader.GetValue(i) != null)
+                                {
+                                    // TODO Erich: Remove this debug output
+                                    if (reader.GetDataTypeName(i) == "Double")
+                                    {
+                                        Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDouble(i).ToString());
+                                    }
+
+                                    if (reader.GetDataTypeName(i) == "String")
+                                    {
+                                        Debug.WriteLine(reader.GetName(i) + ": " + reader.GetString(i));
+                                    }
+
+                                    if (reader.GetDataTypeName(i) == "DateTime")
+                                    {
+                                        Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDateTime(i));
+                                    }
+
+                                    if (_values.ContainsKey(reader.GetName(i)))
+                                    {
+                                        _values[reader.GetName(i)] = reader.GetValue(i);
+                                    }
+                                    else
+                                    {
+                                        _values.TryAdd(reader.GetName(i), reader.GetValue(i));
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                // ignore this field
+                            }
+                        }
+                    }
+                }
+            }
+
+            public SourceSystemAzureDataExplorer() : base()
+            {
+                // do nothing in default constructor
+            }
+
+            public SourceSystemAzureDataExplorer(
                 string sourceAddress,
                 string user, string password,
-                string credentials) : base()
+                string credentials)
+                : base()
             {
-                // TODO ERICH
+                // TODO ERICH: retrieve the connection string and credentials from the parameters passed in (read from the AASX file) instead of hard-coding them
+                const string Cluster = "https://sps2021.eastus2.kusto.windows.net";
+                const string Database = "sps";
+                KustoConnectionStringBuilder connectionString = new KustoConnectionStringBuilder(Cluster, Database).WithAadAzCliAuthentication(true);
+
+                _queryProvider = KustoClientFactory.CreateCslQueryProvider(connectionString);
+
+                // TODO ERICH: Make periodic query of ADX configurable (currently set to 10s)
+                _queryTimer.Change(10000, 10000);
+            }
+
+            public void Dispose()
+            {
+                if (_queryTimer != null)
+                {
+                    _queryTimer.Dispose();
+                }
+
+                if (_queryProvider != null)
+                {
+                    _queryProvider.Dispose();
+                    _queryProvider = null;
+                }
             }
         }
 
@@ -111,7 +239,7 @@ namespace AasxDemonstration
             public AdminShell.SubmodelElement Sme;
 
             /// <summary>
-            /// Link to the online source, e.g. Azure IoTHub
+            /// Link to the online source, e.g. Azure Data Explorer
             /// </summary>
             public string SourceId;
 
@@ -123,9 +251,8 @@ namespace AasxDemonstration
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.Next(0, 9) >= 8;
 
-                if (sosy is SourceSystemAzureHub azure)
-                    // TODO ERICH
-                    return false;
+                if (sosy is SourceSystemAzureDataExplorer azure)
+                    return true;
 
                 return false;
             }
@@ -133,14 +260,13 @@ namespace AasxDemonstration
             /// <summary>
             /// depending on a trigger, gets the actual value
             /// </summary>
-            public double GetValue(SourceSystemBase sosy)
+            public double GetValue(SourceSystemBase sosy, string sourceID)
             {
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.NextDouble() * 99.9;
 
-                if (sosy is SourceSystemAzureHub azure)
-                    // TODO ERICH
-                    return 0.0;
+                if (sosy is SourceSystemAzureDataExplorer azure)
+                    return azure.GetValue(sourceID);
 
                 return 0.0;
             }
@@ -219,7 +345,7 @@ namespace AasxDemonstration
         }
 
         /// <summary>
-        /// Tracking of a single time series variable; in accordance to a time axis (trigger) 
+        /// Tracking of a single time series variable; in accordance to a time axis (trigger)
         /// multiple values will aggregated
         /// </summary>
         public class TrackInstanceTimeSeriesVariable : ITrackHasValue, ITrackRenderValueBlob
@@ -235,7 +361,7 @@ namespace AasxDemonstration
             public AdminShell.Blob ValueArray;
 
             /// <summary>
-            /// Link to the online source, e.g. Azure IoTHub
+            /// Link to the online source, e.g. Azure Data Explorer
             /// </summary>
             public string SourceId;
 
@@ -274,14 +400,13 @@ namespace AasxDemonstration
             /// <summary>
             /// depending on a trigger, gets the actual value
             /// </summary>
-            public double GetValue(SourceSystemBase sosy)
+            public double GetValue(SourceSystemBase sosy, string sourceID)
             {
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.NextDouble() * 99.9;
 
-                if (sosy is SourceSystemAzureHub azure)
-                    // TODO ERICH
-                    return 0.0;
+                if (sosy is SourceSystemAzureDataExplorer azure)
+                    return azure.GetValue(sourceID);
 
                 return 0.0;
             }
@@ -355,7 +480,7 @@ namespace AasxDemonstration
         }
 
         /// <summary>
-        /// Tracking of a time series segement; if values of the time series 
+        /// Tracking of a time series segement; if values of the time series
         /// </summary>
         public class TrackInstanceTimeSeriesSegment : ITrackHasTrigger, ITrackRenderValueBlob
         {
@@ -390,9 +515,8 @@ namespace AasxDemonstration
                 if (sosy is SourceSystemDebug dbg)
                     return dbg.Rnd.Next(0, 9) >= 8;
 
-                if (sosy is SourceSystemAzureHub azure)
-                    // TODO ERICH
-                    return false;
+                if (sosy is SourceSystemAzureDataExplorer azure)
+                    return true;
 
                 return false;
             }
@@ -420,7 +544,7 @@ namespace AasxDemonstration
                 // build
                 return string.Join(", ", TimeStamps.Select(
                     dt => String.Format(
-                        CultureInfo.InvariantCulture, "[{0}, {1}]", 
+                        CultureInfo.InvariantCulture, "[{0}, {1}]",
                         totalSamples++, dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
                 ));
             }
@@ -528,7 +652,7 @@ namespace AasxDemonstration
 
             protected TrackInstanceTimeSeriesSegment _trackSegment = null;
 
-            protected List<AdminShell.SubmodelElementCollection> _existingSegements 
+            protected List<AdminShell.SubmodelElementCollection> _existingSegements
                 = new List<AdminShell.SubmodelElementCollection>();
 
             protected int threadCounter = 0;
@@ -553,7 +677,7 @@ namespace AasxDemonstration
                 // find all elements with required qualifier
                 sm.RecurseOnSubmodelElements(null, (o, parents, sme) =>
                 {
-                    var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHubDataPoint);
+                    var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiADXDataPoint);
                     if (q != null && q.value != null && q.value.Length > 0)
                         _dataPoint.Add(new TrackInstanceDataPoint()
                         {
@@ -678,7 +802,7 @@ namespace AasxDemonstration
                     };
 
                     // find a Segment tagged as Template?
-                    // create the time series tracking information                    
+                    // create the time series tracking information
 
                     _trackSegment = new TrackInstanceTimeSeriesSegment();
                     var todel = new List<AdminShell.SubmodelElementCollection>();
@@ -697,7 +821,7 @@ namespace AasxDemonstration
                             // find all elements with required qualifier FOR A SERIES ELEMENT
                             smcsegt.value.RecurseOnSubmodelElements(null, null, (o, parents, sme) =>
                             {
-                                var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHubSeries);
+                                var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiADXHubSeries);
                                 if (q != null && q.value != null && q.value.Length > 0)
                                 {
                                     // found the correct Qualifer, should indicate a variable in the
@@ -738,7 +862,7 @@ namespace AasxDemonstration
             public static void StartAllAsOneThread(IEnumerable<EnergyModelInstance> instances)
             {
                 if (instances == null)
-                    return;                
+                    return;
 
                 var t = new Thread(() =>
                 {
@@ -779,10 +903,10 @@ namespace AasxDemonstration
                         continue;
 
                     // adopt new value & set
-                    var val = dp.GetValue(_sourceSystem);
+                    var val = dp.GetValue(_sourceSystem, dp.SourceId);
                     UpdateSME(
-                        dp.Sme, 
-                        string.Format(CultureInfo.InvariantCulture, "{0}", val), 
+                        dp.Sme,
+                        string.Format(CultureInfo.InvariantCulture, "{0}", val),
                         timeStamp);
                 }
             }
@@ -808,7 +932,7 @@ namespace AasxDemonstration
                 // OK, a new sample shall be added to the segment
                 _trackSegment.TimeStamps.Add(DateTime.UtcNow);
                 foreach (var tsv in _trackSegment.Variables)
-                    tsv.Values.Add(tsv.GetValue(_sourceSystem));
+                    tsv.Values.Add(tsv.GetValue(_sourceSystem, tsv.SourceId));
 
                 // now check, if the segement should be rendered intermediate or finally
                 var cnt = _trackSegment.TimeStamps.Count;
@@ -825,7 +949,7 @@ namespace AasxDemonstration
                         // create new segment
                         var newSeg = _trackSegment.CreateSegmentSmc(
                             _sourceSystem, _data, samplesCollectionsCount, totalSamples, timeStamp);
-                        
+
                         samplesCollectionsCount++;
 
                         // state initial creation as event .. updates need to follow
