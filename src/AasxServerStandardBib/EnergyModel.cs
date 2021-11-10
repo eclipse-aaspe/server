@@ -95,12 +95,6 @@ namespace AasxDemonstration
             {
                 try
                 {
-                    // preprocessing
-                    if (sourceID == "ActiveEnergyTotal")
-                    {
-                        sourceID = "ActiveEnergy";
-                    }
-
                     if (_values.ContainsKey(sourceID))
                     {
                         // lookup
@@ -130,8 +124,10 @@ namespace AasxDemonstration
                         return 0.0;
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Debug.WriteLine(ex.Message);
+
                     return 0.0;
                 }
             }
@@ -146,48 +142,57 @@ namespace AasxDemonstration
                     ClientRequestId = Guid.NewGuid().ToString()
                 };
 
-                using (IDataReader reader = _queryProvider.ExecuteQuery(query, clientRequestProperties))
+                try
                 {
-                    while (reader.Read())
+                    using (IDataReader reader = _queryProvider.ExecuteQuery(query, clientRequestProperties))
                     {
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        while (reader.Read())
                         {
-                            try
+                            for (int i = 0; i < reader.FieldCount; i++)
                             {
-                                if (reader.GetValue(i) != null)
+                                try
                                 {
-                                    // TODO Erich: Remove this debug output
-                                    if (reader.GetDataTypeName(i) == "Double")
+                                    if (reader.GetValue(i) != null)
                                     {
-                                        Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDouble(i).ToString());
-                                    }
+                                        // TODO Erich: Remove this debug output
+                                        if (reader.GetDataTypeName(i) == "Double")
+                                        {
+                                            Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDouble(i).ToString());
+                                        }
 
-                                    if (reader.GetDataTypeName(i) == "String")
-                                    {
-                                        Debug.WriteLine(reader.GetName(i) + ": " + reader.GetString(i));
-                                    }
+                                        if (reader.GetDataTypeName(i) == "String")
+                                        {
+                                            Debug.WriteLine(reader.GetName(i) + ": " + reader.GetString(i));
+                                        }
 
-                                    if (reader.GetDataTypeName(i) == "DateTime")
-                                    {
-                                        Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDateTime(i));
-                                    }
+                                        if (reader.GetDataTypeName(i) == "DateTime")
+                                        {
+                                            Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDateTime(i));
+                                        }
 
-                                    if (_values.ContainsKey(reader.GetName(i)))
-                                    {
-                                        _values[reader.GetName(i)] = reader.GetValue(i);
-                                    }
-                                    else
-                                    {
-                                        _values.TryAdd(reader.GetName(i), reader.GetValue(i));
+                                        if (_values.ContainsKey(reader.GetName(i)))
+                                        {
+                                            _values[reader.GetName(i)] = reader.GetValue(i);
+                                        }
+                                        else
+                                        {
+                                            _values.TryAdd(reader.GetName(i), reader.GetValue(i));
+                                        }
                                     }
                                 }
-                            }
-                            catch (Exception)
-                            {
-                                // ignore this field
+                                catch (Exception ex)
+                                {
+                                    Debug.WriteLine(ex.Message);
+
+                                    // ignore this field and move on
+                                }
                             }
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
                 }
             }
 
@@ -209,8 +214,8 @@ namespace AasxDemonstration
 
                 _queryProvider = KustoClientFactory.CreateCslQueryProvider(connectionString);
 
-                // TODO ERICH: Make periodic query of ADX configurable (currently set to 10s)
-                _queryTimer.Change(10000, 10000);
+                // TODO ERICH: Make periodic query of ADX configurable (currently set to 1s)
+                _queryTimer.Change(1000, 1000);
             }
 
             public void Dispose()
@@ -507,6 +512,8 @@ namespace AasxDemonstration
             /// </summary>
             public List<DateTime> TimeStamps = new List<DateTime>();
 
+            private DateTime _lastUpdate = DateTime.UtcNow;
+
             /// <summary>
             /// Evaluates, if the trigger condition is met, where new data exists
             /// </summary>
@@ -516,7 +523,14 @@ namespace AasxDemonstration
                     return dbg.Rnd.Next(0, 9) >= 8;
 
                 if (sosy is SourceSystemAzureDataExplorer azure)
-                    return true;
+                {
+                    if (DateTime.UtcNow > _lastUpdate.AddSeconds(10))
+                    {
+                        //set this every 10 seconds
+                        _lastUpdate = DateTime.UtcNow;
+                        return true;
+                    }
+                }
 
                 return false;
             }

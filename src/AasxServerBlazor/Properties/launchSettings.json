@@ -25,6 +25,13 @@
       },
       "applicationUrl": "http://localhost:5001",
       "jsWebView2Debugging": true
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "commandLineArgs": "--rest --port 51310 --no-security --data-path ./aasxs --host 127.0.0.1",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "publishAllPorts": true
     }
   }
 }
