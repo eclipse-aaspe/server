@@ -7,8 +7,7 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 WORKDIR /src
 COPY . .
-
-WORKDIR /src/AasxServerBlazor
+WORKDIR AasxServerBlazor
 RUN dotnet restore "AasxServerBlazor.csproj"
 RUN dotnet build "AasxServerBlazor.csproj" -c Release -o /app/build
 RUN dotnet publish "AasxServerBlazor.csproj" -c Release -o /app/publish
