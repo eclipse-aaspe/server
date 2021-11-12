@@ -191,7 +191,8 @@ namespace AasxDemonstration
                 string credentials)
                 : base()
             {
-                KustoConnectionStringBuilder connectionString = new KustoConnectionStringBuilder(sourceAddress, user).WithAadAzCliAuthentication(true);
+                string key = Environment.GetEnvironmentVariable("ADX_PASSWORD");
+                KustoConnectionStringBuilder connectionString = new KustoConnectionStringBuilder(sourceAddress, credentials).WithAadApplicationKeyAuthentication(user, key, password);
                 _queryProvider = KustoClientFactory.CreateCslQueryProvider(connectionString);
 
                 string queryInternval = Environment.GetEnvironmentVariable("ADX_QUERY_INTERVAL");
