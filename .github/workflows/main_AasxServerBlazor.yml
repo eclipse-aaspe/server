@@ -11,7 +11,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: aasxserverblazor
-  AZURE_WEBAPP_PACKAGE_PATH: 'src' # Set this to the path to your web app project, defaults to the repository root:
+  AZURE_WEBAPP_PACKAGE_PATH: './src' # Set this to the path to your web app project, defaults to the repository root:
   DOTNET_VERSION: '5.0.301' # The .NET SDK version to use
 
 jobs:
@@ -27,15 +27,15 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore ./src
 
     - name: Build
       run: |
-        dotnet build --configuration Release --no-restore
-        dotnet publish -c Release -r linux-x64 --self-contained true /p:UseAppHost=true
+        dotnet build ./src --configuration Release --no-restore
+        dotnet publish ./src -c Release -r linux-x64 --self-contained true /p:UseAppHost=true
     - name: Test
       run: |
-        dotnet test --no-restore --verbosity normal
+        dotnet test ./src --no-restore --verbosity normal
 
     - uses: azure/webapps-deploy@v2
       name: Deploy
