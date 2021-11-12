@@ -632,14 +632,18 @@ namespace AasxServer
             {
                 new HelpBuilder(new SystemConsole()).Write(rootCommand);
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
-                    WindowsConsoleWillBeDestroyedAtTheEnd.Check())
-                {
-                    Console.WriteLine("Press any key to continue...");
-                    Console.ReadKey();
-                }
+                // set default arguments
+                List<string> defaults = new List<string>();
 
-                return;
+                defaults.Add("--rest");
+                defaults.Add("--port");
+                defaults.Add("51710");
+                defaults.Add("--data-path");
+                defaults.Add(".");
+                defaults.Add("--edit");
+                defaults.Add("--no-security");
+
+                args = defaults.ToArray();
             }
 
             rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
