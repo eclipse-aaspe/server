@@ -1,0 +1,19 @@
+# Based on https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/Dockerfile.debian-arm32
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build-env
+WORKDIR /repo/src
+
+# Copy everything else and build
+COPY ./src/ /repo/src/
+COPY ./LICENSE.txt /repo/
+
+RUN dotnet restore -r linux-arm
+
+RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore -r linux-arm --self-contained false --no-restore
+
+FROM mcr.microsoft.com/dotnet/runtime:3.1-buster-slim-arm32v7
+EXPOSE 51210
+EXPOSE 51310
+COPY --from=build-env /out/AasxServerCore/ /AasxServerCore/
+COPY ./content-for-demo/ /AasxServerCore/
+WORKDIR /AasxServerCore
+ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]

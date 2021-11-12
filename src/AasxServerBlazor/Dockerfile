@@ -6,13 +6,17 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 WORKDIR /src
-COPY .. .
-WORKDIR /src/AasxServerBlazor
-RUN dotnet restore "AasxServerBlazor.csproj"
+COPY ["AasxServerBlazor/AasxServerBlazor.csproj", "AasxServerBlazor/"]
+COPY ["AasxServerStandardBib/AasxServerStandardBib.csproj", "AasxServerStandardBib/"]
+RUN dotnet restore "AasxServerBlazor/AasxServerBlazor.csproj"
+COPY . .
+WORKDIR "/src/AasxServerBlazor"
 RUN dotnet build "AasxServerBlazor.csproj" -c Release -o /app/build
+
+FROM build AS publish
 RUN dotnet publish "AasxServerBlazor.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AasxServerBlazor.dll"]

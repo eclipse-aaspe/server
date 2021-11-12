@@ -1,0 +1,19 @@
+# Based on https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/Dockerfile.debian-arm32
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build-env
+WORKDIR /repo/src
+
+# Copy everything else and build
+COPY ./src/ /repo/src/
+COPY ./LICENSE.txt /repo/
+
+RUN dotnet restore -r linux-arm64
+
+RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux-arm64 --self-contained false --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:3.1-buster-slim-arm64v8
+EXPOSE 51210
+EXPOSE 51310
+COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
+COPY ./content-for-demo/ /AasxServerBlazor/
+WORKDIR /AasxServerBlazor
+ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]
