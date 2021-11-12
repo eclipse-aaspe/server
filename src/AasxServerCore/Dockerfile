@@ -2,7 +2,7 @@
 
 FROM mcr.microsoft.com/dotnet/runtime:3.1 AS base
 WORKDIR /app
-EXPOSE 51710
+EXPOSE 51310
 
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 WORKDIR /src
