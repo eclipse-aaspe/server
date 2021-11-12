@@ -1,4 +1,14 @@
-﻿using System;
+﻿using AasxServer;
+using AdminShellNS;
+using Grapevine.Interfaces.Server;
+using Grapevine.Server;
+using Grapevine.Server.Attributes;
+using Grapevine.Shared;
+using Jose;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
@@ -7,30 +17,15 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Permissions;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using AasxServer;
-using AdminShellNS;
-using Grapevine.Interfaces.Server;
-using Grapevine.Server;
-using Grapevine.Server.Attributes;
-using Grapevine.Shared;
-using Jose;
-using Jose.jwe;
-using Jose.netstandard1_4;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
 The browser functionality is under the cefSharp license (see https://raw.githubusercontent.com/cefsharp/CefSharp/master/LICENSE).
 The JSON serialization is under the MIT license (see https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md).
 The QR code generation is under the MIT license (see https://github.com/codebude/QRCoder/blob/master/LICENSE.txt).
-The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0). 
+The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0).
 The Grapevine REST server framework is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0). */
 
 /* Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the
@@ -1468,7 +1463,7 @@ namespace AasxRestServerLibrary
                 this.Packages[findAasReturn.iPackage].AasEnv.Assets.Remove(existingAsset);
             this.Packages[findAasReturn.iPackage].AasEnv.Assets.Add(asset);
 
-            // add AssetRef to AAS        
+            // add AssetRef to AAS
             findAasReturn.aas.assetRef = new AdminShellV20.AssetRef(new AdminShellV20.Reference(new AdminShellV20.Key("Asset", true, asset.identification.idType, asset.identification.id)));
 
             Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
@@ -1631,7 +1626,7 @@ namespace AasxRestServerLibrary
                 this.Packages[findAasReturn.iPackage].AasEnv.Submodels.Add(submodel);
             }
 
-            // add SubmodelRef to AAS            
+            // add SubmodelRef to AAS
             var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
             var existsmr = findAasReturn.aas.HasSubmodelRef(newsmr);
             if (!existsmr)

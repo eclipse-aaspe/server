@@ -15,7 +15,7 @@ using SampleClient;
 namespace AasxTimeSeries
 {
     public enum TimeSeriesDestFormat { Plain, TimeSeries10 }
-   
+
     public static class TimeSeries
     {
         public class TimeSeriesBlock
@@ -301,40 +301,16 @@ namespace AasxTimeSeries
 
         public static void timeSeriesSamplingLoop()
         {
-            /*
-            while(timeSeriesSampling(false));
-            timeSeriesSampling(true);
-            */
             while (true)
             {
+                Thread.Sleep(100);
                 timeSeriesSampling(false);
             }
         }
 
-        /*
-        static ulong ChangeNumber = 0;
-
-        static bool setChangeNumber(AdminShell.Referable r, ulong changeNumber)
-        {
-            do
-            {
-                r.ChangeNumber = changeNumber;
-                if (r != r.parent)
-                {
-                    r = r.parent;
-                }
-                else
-                    r = null;
-            }
-            while (r != null);
-
-            return true;
-        }
-        */
-
         private static T AddToSMC<T>(
             DateTime timestamp,
-            AdminShell.SubmodelElementCollection smc, 
+            AdminShell.SubmodelElementCollection smc,
             string idShort,
             AdminShell.Key semanticIdKey,
             string smeValue = null) where T : AdminShell.SubmodelElement
@@ -356,7 +332,10 @@ namespace AasxTimeSeries
         public static bool timeSeriesSampling(bool final)
         {
             if (Program.isLoading)
+            {
+                Thread.Sleep(1000);
                 return true;
+            }
 
             // ulong newChangeNumber = ChangeNumber + 1;
             // bool useNewChangeNumber = false;
@@ -557,7 +536,7 @@ namespace AasxTimeSeries
                                     {
                                         nextCollection = AddToSMC<AdminShell.SubmodelElementCollection>(
                                             timeStamp, null,
-                                            "Segment_" + tsb.samplesCollectionsCount++, 
+                                            "Segment_" + tsb.samplesCollectionsCount++,
                                             semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
 
                                         var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
@@ -612,7 +591,7 @@ namespace AasxTimeSeries
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedFloat);
                                             else
                                                 AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                                    "" + tsb.samplesProperties[i].idShort, 
+                                                    "" + tsb.samplesProperties[i].idShort,
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedInteger);
 
                                             AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
@@ -692,9 +671,6 @@ namespace AasxTimeSeries
                         Program.signalNewData(updateMode);
                 }
             }
-
-            if (!test)
-                Thread.Sleep(100);
 
             return !final;
         }

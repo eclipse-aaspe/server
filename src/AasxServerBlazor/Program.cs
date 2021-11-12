@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace AasxServerBlazor
 {
@@ -22,35 +16,17 @@ namespace AasxServerBlazor
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json").Build();
-            string[] url = config["Kestrel:Endpoints:Http:Url"].Split(':');
-            if (url[2] != null)
-                AasxServer.Program.blazorHostPort = url[2];
 
-            CreateHostBuilder(args).Build().RunAsync();
+            Task.Run(() => AasxServer.Program.Main(args)).ConfigureAwait(false);
 
-            AasxServer.Program.Main(args);
-
+            CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder
-                        .UseStartup<Startup>()
-                        .UseUrls("http://*:5000")
-                    /*
-                    .UseKestrel(options =>
-                    {
-                        options.Listen(IPAddress.Loopback, 5000);  // http:localhost:5000
-                        options.Listen(IPAddress.Any, 80);         // http:*:80
-                        options.Listen(IPAddress.Loopback, 443, listenOptions =>
-                        {
-                            listenOptions.UseHttps("certificate.pfx", "password");
-                        });
-                    })
-                    */
-                    ;
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }

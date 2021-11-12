@@ -2,7 +2,11 @@
   "profiles": {
     "AasxServerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --no-security"
+      "commandLineArgs": "--rest --port 51710 --data-path D:\\\\aasx-server\\\\content-for-demo\\\\aasxs --no-security"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "commandLineArgs": "--rest --port 51710 --data-path ./aasxs --no-security"
     }
   }
 }

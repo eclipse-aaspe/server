@@ -154,22 +154,6 @@ namespace AasxDemonstration
                                 {
                                     if (reader.GetValue(i) != null)
                                     {
-                                        // TODO Erich: Remove this debug output
-                                        if (reader.GetDataTypeName(i) == "Double")
-                                        {
-                                            Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDouble(i).ToString());
-                                        }
-
-                                        if (reader.GetDataTypeName(i) == "String")
-                                        {
-                                            Debug.WriteLine(reader.GetName(i) + ": " + reader.GetString(i));
-                                        }
-
-                                        if (reader.GetDataTypeName(i) == "DateTime")
-                                        {
-                                            Debug.WriteLine(reader.GetName(i) + ": " + reader.GetDateTime(i));
-                                        }
-
                                         if (_values.ContainsKey(reader.GetName(i)))
                                         {
                                             _values[reader.GetName(i)] = reader.GetValue(i);
@@ -207,15 +191,20 @@ namespace AasxDemonstration
                 string credentials)
                 : base()
             {
-                // TODO ERICH: retrieve the connection string and credentials from the parameters passed in (read from the AASX file) instead of hard-coding them
-                const string Cluster = "https://sps2021.eastus2.kusto.windows.net";
-                const string Database = "sps";
-                KustoConnectionStringBuilder connectionString = new KustoConnectionStringBuilder(Cluster, Database).WithAadAzCliAuthentication(true);
-
+                KustoConnectionStringBuilder connectionString = new KustoConnectionStringBuilder(sourceAddress, user).WithAadAzCliAuthentication(true);
                 _queryProvider = KustoClientFactory.CreateCslQueryProvider(connectionString);
 
-                // TODO ERICH: Make periodic query of ADX configurable (currently set to 1s)
-                _queryTimer.Change(1000, 1000);
+                string queryInternval = Environment.GetEnvironmentVariable("ADX_QUERY_INTERVAL");
+                int interval = 5000;
+                if ((queryInternval != null) && int.TryParse(queryInternval, out interval))
+                {
+                    _queryTimer.Change(interval, interval);
+                }
+                else
+                {
+                    // default to 5s interval
+                    _queryTimer.Change(5000, 5000);
+                }
             }
 
             public void Dispose()
@@ -728,8 +717,10 @@ namespace AasxDemonstration
             public static IEnumerable<EnergyModelInstance> FindAllSmInstances(
                 AdminShell.AdministrationShellEnv env)
             {
+                List<EnergyModelInstance> instances = new List<EnergyModelInstance>();
+
                 if (env == null)
-                    yield break;
+                    return instances;
 
                 foreach (var sm in env.FindAllSubmodelBySemanticId(
                     PrefEnergyModel10.SM_EnergyModel, AdminShellV20.Key.MatchMode.Relaxed))
@@ -737,8 +728,10 @@ namespace AasxDemonstration
                     var emi = new EnergyModelInstance();
                     emi.ScanSubmodelForIoTDataPoints(sm);
                     emi.ScanSubmodelForTimeSeriesParameters(sm);
-                    yield return emi;
+                    instances.Add(emi);
                 }
+
+                return instances;
             }
 
             protected void ScanSubmodelForTimeSeriesParameters(AdminShell.Submodel sm)

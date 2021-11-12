@@ -10,7 +10,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--rest --port 51710 --data-path D:\\aasx-server\\content-for-demo\\aasxs --edit --no-security",
+      "commandLineArgs": "--rest --port 51710 --data-path . --edit --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --edit --no-security",
+      "commandLineArgs": "--rest --port 51710 --data-path . --edit --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -28,7 +28,7 @@
     },
     "Docker": {
       "commandName": "Docker",
-      "commandLineArgs": "--rest --port 51310 --no-security --data-path ./aasxs --host 127.0.0.1",
+      "commandLineArgs": "--rest --port 51710 --data-path . --edit --no-security",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
       "publishAllPorts": true

@@ -6,6 +6,7 @@ using System.CommandLine.IO;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -60,60 +61,11 @@ namespace AasxServer
     public static class Program
     {
         public static int envimax = 100;
-        public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[100]
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-        public static string[] envFileName = new string[100]
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
+        public static AdminShellPackageEnv[] env = Enumerable.Repeat<AdminShellPackageEnv>(null, 100).ToArray();
+        public static string[] envFileName = Enumerable.Repeat<string>(null, 100).ToArray();
+        public static string[] envSymbols = Enumerable.Repeat<string>(null, 100).ToArray();
+        public static string[] envSubjectIssuer = Enumerable.Repeat<string>(null, 100).ToArray();
 
-        public static string[] envSymbols = new string[100]
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-
-        public static string[] envSubjectIssuer = new string[100]
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
 
         public static string hostPort = "";
         public static string blazorHostPort = "";
@@ -184,14 +136,14 @@ namespace AasxServer
             {
                 if (a.Connect.Length == 0)
                 {
-                    Program.connectServer = "http://admin-shell-io.com:52000";
+                    connectServer = "http://admin-shell-io.com:52000";
                     Byte[] barray = new byte[10];
                     RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
                     rngCsp.GetBytes(barray);
-                    Program.connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
-                    Program.connectUpdateRate = 2000;
+                    connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
+                    connectUpdateRate = 2000;
                     if (a.Name != null && a.Name != "")
-                        Program.connectNodeName = a.Name;
+                        connectNodeName = a.Name;
                 }
                 else if (a.Connect.Length == 1)
                 {
@@ -218,9 +170,9 @@ namespace AasxServer
                             }
                             else
                             {
-                                Program.connectServer = c[0];
-                                Program.connectNodeName = c[1];
-                                Program.connectUpdateRate = Convert.ToInt32(c[2]);
+                                connectServer = c[0];
+                                connectNodeName = c[1];
+                                connectUpdateRate = Convert.ToInt32(c[2]);
                             }
                         }
                     }
@@ -255,9 +207,9 @@ namespace AasxServer
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
             }
-            Program.runOPC = a.Opc;
-            Program.noSecurity = a.NoSecurity;
-            Program.edit = a.Edit;
+            runOPC = a.Opc;
+            noSecurity = a.NoSecurity;
+            edit = a.Edit;
 
             // Wait for Debugger
             if (a.DebugWait)
@@ -328,25 +280,6 @@ namespace AasxServer
             {
                 externalRest = "http://" + hostPort;
             }
-
-            /*
-            if (File.Exists("redirect.dat"))
-            {
-                try
-                {
-                    using (StreamReader sr = new StreamReader("redirect.dat"))
-                    {
-                        redirectServer = sr.ReadLine();
-                        authType = sr.ReadLine();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                    Console.WriteLine("redirect.dat " + " can not be read!");
-                }
-            }
-            */
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -486,16 +419,18 @@ namespace AasxServer
             var _energyModelInstances = new List<EnergyModelInstance>();
             foreach (var penv in AasxServer.Program.env)
             {
-                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.Now);
-                _energyModelInstances.AddRange(
-                    EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
+                if (penv != null)
+                {
+                    EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.Now);
+                    _energyModelInstances.AddRange(
+                        EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
+                }
             }
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
 
             AasxTask.taskInit();
 
             RunScript(true);
-            //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
             isLoading = false;
 
@@ -597,33 +532,6 @@ namespace AasxServer
 
             if (connectServer != "")
             {
-                /*
-                HttpClient httpClient;
-                if (clientHandler != null)
-                {
-                    httpClient = new HttpClient(clientHandler);
-                }
-                else
-                {
-                    httpClient = new HttpClient();
-                }
-
-                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
-
-                string content = "";
-                try
-                {
-                    var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                    // httpClient.PostAsync("http://" + connectServer + "/disconnect", contentJson).Wait();
-                    var result = httpClient.PostAsync(connectServer + "/disconnect", contentJson).Result;
-                    content = ContentToString(result.Content);
-                }
-                catch
-                {
-
-                }
-                */
-
                 if (connectLoop)
                 {
                     connectLoop = false;
@@ -985,18 +893,18 @@ namespace AasxServer
 
                     adp.source = connectNodeName;
 
-                    int aascount = Program.env.Length;
+                    int aascount = env.Length;
 
                     for (int j = 0; j < aascount; j++)
                     {
                         aasListParameters alp = new aasListParameters();
 
-                        if (Program.env[j] != null)
+                        if (env[j] != null)
                         {
                             alp.index = j;
 
                             /* Create Detail part 2 Descriptor Start */
-                            aasDescriptor aasDsecritpor = Program.creatAASDescriptor(Program.env[j]);
+                            aasDescriptor aasDsecritpor = creatAASDescriptor(env[j]);
                             TransmitData aasDsecritporTData = new TransmitData
                             {
                                 source = connectNodeName
@@ -1013,11 +921,11 @@ namespace AasxServer
                             /* Create Detail part 2 Descriptor END */
 
 
-                            alp.idShort = Program.env[j].AasEnv.AdministrationShells[0].idShort;
-                            alp.identification = Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
-                            alp.fileName = Program.envFileName[j];
+                            alp.idShort = env[j].AasEnv.AdministrationShells[0].idShort;
+                            alp.identification = env[j].AasEnv.AdministrationShells[0].identification.ToString();
+                            alp.fileName = envFileName[j];
                             alp.assetId = "";
-                            var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AdministrationShells[0].assetRef);
+                            var asset = env[j].AasEnv.FindAsset(env[j].AasEnv.AdministrationShells[0].assetRef);
                             if (asset != null)
                                 alp.assetId = asset.identification.id;
                             alp.humanEndPoint = blazorHostPort;
@@ -1028,7 +936,7 @@ namespace AasxServer
                     }
 
                     string decriptorData = JsonConvert.SerializeObject(descriptortf, Formatting.Indented);
-                    Program.publishDescriptorData(decriptorData);
+                    publishDescriptorData(decriptorData);
 
                     td = new TransmitData
                     {
@@ -1109,7 +1017,7 @@ namespace AasxServer
                     {
                         if (sm != null && sm.idShort != null)
                         {
-                            bool toPublish = Program.submodelsToPublish.Contains(sm);
+                            bool toPublish = submodelsToPublish.Contains(sm);
                             if (!toPublish)
                             {
                                 int count = sm.qualifiers.Count;
@@ -1231,7 +1139,7 @@ namespace AasxServer
 
                                 dynamic res = new System.Dynamic.ExpandoObject();
 
-                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
+                                Byte[] binaryFile = File.ReadAllBytes(envFileName[aasIndex]);
                                 string binaryBase64 = Convert.ToBase64String(binaryFile);
 
                                 string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
@@ -1241,7 +1149,7 @@ namespace AasxServer
 
                                 if (fileToken.Length <= blockSize)
                                 {
-                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    res.fileName = Path.GetFileName(envFileName[aasIndex]);
                                     res.fileData = fileToken;
 
                                     string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
@@ -1257,7 +1165,7 @@ namespace AasxServer
                                 else
                                 {
                                     getaasxFile_destination = td2.source;
-                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    getaasxFile_fileName = Path.GetFileName(envFileName[aasIndex]);
                                     getaasxFile_fileData = fileToken;
                                     getaasxFile_fileType = "getaasxFileStream";
                                     getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
@@ -1272,12 +1180,12 @@ namespace AasxServer
 
                                 dynamic res = new System.Dynamic.ExpandoObject();
 
-                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
+                                Byte[] binaryFile = File.ReadAllBytes(envFileName[aasIndex]);
                                 string binaryBase64 = Convert.ToBase64String(binaryFile);
 
                                 if (binaryBase64.Length <= blockSize)
                                 {
-                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    res.fileName = Path.GetFileName(envFileName[aasIndex]);
                                     res.fileData = binaryBase64;
                                     Byte[] fileBytes = Convert.FromBase64String(binaryBase64);
 
@@ -1294,7 +1202,7 @@ namespace AasxServer
                                 else
                                 {
                                     getaasxFile_destination = td2.source;
-                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
+                                    getaasxFile_fileName = Path.GetFileName(envFileName[aasIndex]);
                                     getaasxFile_fileData = binaryBase64;
                                     getaasxFile_fileType = "getaasxFile";
                                     getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
@@ -1412,7 +1320,7 @@ namespace AasxServer
                                         var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
                                         if (existingSm != null)
                                         {
-                                            bool toSubscribe = Program.submodelsToSubscribe.Contains(existingSm);
+                                            bool toSubscribe = submodelsToSubscribe.Contains(existingSm);
                                             if (!toSubscribe)
                                             {
                                                 int eqcount = existingSm.qualifiers.Count;
@@ -1580,15 +1488,6 @@ namespace AasxServer
             // NewDataAvailable?.Invoke(null, EventArgs.Empty);
             NewDataAvailable?.Invoke(null, new NewDataAvailableArgs(mode));
         }
-
-        /*
-        public static int getSignalNewDataMode()
-        {
-            int mode = signalNewDataMode;
-            signalNewDataMode = 0;
-            return (mode);
-        }
-        */
 
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
@@ -1834,7 +1733,7 @@ namespace AasxServer
             if (env == null)
                 return false;
 
-            lock (Program.changeAasxFile)
+            lock (changeAasxFile)
             {
                 int i = 0;
                 while (env[i] != null)
@@ -1901,7 +1800,7 @@ namespace AasxServer
 
                                 // try to get the client from dictionary, else create and add it
                                 SampleClient.UASampleClient client;
-                                lock (Program.opcclientAddLock)
+                                lock (opcclientAddLock)
                                 {
                                     if (!OPCClients.TryGetValue(URL, out client))
                                     {
@@ -1972,17 +1871,12 @@ namespace AasxServer
             return true;
         }
 
-        static int countRunScript = 0;
-
-        static async void RunScript(bool init)
+        static void RunScript(bool init)
         {
             if (env == null)
                 return;
 
-            // if (countRunScript++ > 1)
-            //    return;
-
-            lock (Program.changeAasxFile)
+            lock (changeAasxFile)
             {
                 int i = 0;
                 while (env[i] != null)
@@ -2020,60 +1914,12 @@ namespace AasxServer
                                             continue;
                                         }
 
-                                        if (qq.type == "GetValue")
-                                        {
-                                            /*
-                                            if (!(sme1 is AdminShell.ReferenceElement))
-                                            {
-                                                continue;
-                                            }
-
-                                            string url = qq.value;
-                                            string username = "";
-                                            string password = "";
-
-                                            if (sme1.qualifiers.Count == 3)
-                                            {
-                                                qq = sme1.qualifiers[1] as AdminShell.Qualifier;
-                                                if (qq.type != "Username")
-                                                    continue;
-                                                username = qq.value;
-                                                qq = sme1.qualifiers[2] as AdminShell.Qualifier;
-                                                if (qq.type != "Password")
-                                                    continue;
-                                                password = qq.value;
-                                            }
-
-                                            var handler = new HttpClientHandler();
-                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                                            var client = new HttpClient(handler);
-
-                                            if (username != "" && password != "")
-                                            {
-                                                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                                                        Convert.ToBase64String(authToken));
-                                            }
-
-                                            string response = await client.GetStringAsync(url);
-
-                                            var r12 = sme1 as AdminShell.ReferenceElement;
-                                            var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
-                                            if (ref12 is AdminShell.Property)
-                                            {
-                                                var p1 = ref12 as AdminShell.Property;
-                                                p1.value = response;
-                                            }
-                                            continue;
-                                            */
-                                        }
-
                                         if (qq.type == "GetJSON")
                                         {
                                             if (init)
                                                 return;
 
-                                            if (Program.isLoading)
+                                            if (isLoading)
                                                 return;
 
                                             if (!(sme1 is AdminShell.ReferenceElement))
@@ -2262,7 +2108,7 @@ namespace AasxServer
                 }
             }
 
-            Program.signalNewData(newMode);
+            signalNewData(newMode);
         }
 
         private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)

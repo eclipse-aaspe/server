@@ -205,21 +205,5 @@ namespace AdminShellEvents
             return res;
         }
 #endif
-
-        //
-        // Payloads
-        //
-
-        /// <summary>
-        /// Get Payloads of a specific type.
-        /// </summary>
-        public IEnumerable<T> GetPayloads<T>() where T : AasPayloadBase
-        {
-            if (Payloads == null)
-                yield break;
-            foreach (var pl in Payloads)
-                if (pl is T)
-                    yield return pl as T;
-        }
     }
 }

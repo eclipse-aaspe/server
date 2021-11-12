@@ -2,7 +2,7 @@
  * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
- * 
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -11,7 +11,7 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -27,12 +27,10 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
-using System;
-using System.IdentityModel.Selectors;
-using System.Security.Cryptography.X509Certificates;
-using System.Xml;
 using Opc.Ua;
 using Opc.Ua.Server;
+using System;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AasOpcUaServer
 {
@@ -174,7 +172,7 @@ namespace AasOpcUaServer
         #endregion
 
         #region Private Fields
-        private X509CertificateValidator m_certificateValidator;
-        #endregion 
+        private ICertificateValidator m_certificateValidator;
+        #endregion
     }
 }

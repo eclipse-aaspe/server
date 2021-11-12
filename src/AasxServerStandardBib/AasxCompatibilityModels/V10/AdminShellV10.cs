@@ -26,7 +26,7 @@ The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www
 namespace AasxCompatibilityModels
 {
     #region Utils
-    // 
+    //
     // Utils
     //
 
@@ -1715,10 +1715,10 @@ namespace AasxCompatibilityModels
             public List<LangStr> sourceOfDefinition = new List<LangStr>();
             public string symbol = null;
             public string dataType = "";
-            // public List<LangStr> definition = new List<LangStr>();    
+            // public List<LangStr> definition = new List<LangStr>();
             public LangStringIEC61360 definition = new LangStringIEC61360();
 
-            // getter / setters 
+            // getter / setters
 
             // constructors
 
@@ -2143,7 +2143,7 @@ namespace AasxCompatibilityModels
                     if (a.identification.idType.ToLower().Trim() == key.idType.ToLower().Trim()
                         && a.identification.id.ToLower().Trim() == key.value.ToLower().Trim())
                         return a;
-                // uups 
+                // uups
                 return null;
             }
 
@@ -2174,7 +2174,7 @@ namespace AasxCompatibilityModels
                     if (sm.identification.idType.ToLower().Trim() == key.idType.ToLower().Trim()
                         && sm.identification.id.ToLower().Trim() == key.value.ToLower().Trim())
                         return sm;
-                // uups 
+                // uups
                 return null;
             }
 
@@ -2268,7 +2268,7 @@ namespace AasxCompatibilityModels
                     if (cd.identification.idType.ToLower().Trim() == key.idType.ToLower().Trim()
                         && cd.identification.id.ToLower().Trim() == key.value.ToLower().Trim())
                         return cd;
-                // uups 
+                // uups
                 return null;
             }
 
@@ -2958,7 +2958,7 @@ namespace AasxCompatibilityModels
             [XmlArrayItem("qualifier")]
             public List<Qualifier> qualifiers = null;
 
-            // from this very class     
+            // from this very class
             [JsonIgnore]
             public List<SubmodelElementWrapper> submodelElements = null;
             [XmlIgnore]
@@ -3706,7 +3706,7 @@ namespace AasxCompatibilityModels
 
         /// <summary>
         /// This converter is used for reading JSON files; it claims to be responsible for "SubmodelElements" (the base class)
-        /// and decides, which sub-class of the base class shall be populated. 
+        /// and decides, which sub-class of the base class shall be populated.
         /// The decision, shich special sub-class to create is done in a factory AdminShell.SubmodelElementWrapper.CreateAdequateType(),
         /// in order to have all sub-class specific decisions in one place (SubmodelElementWrapper)
         /// Remark: There is a NuGet package JsonSubTypes, which could have done the job, except the fact of having
@@ -4193,7 +4193,7 @@ namespace AasxCompatibilityModels
                             // try find an existing part for that file ..
                             var found = false;
 
-                            // normal files 
+                            // normal files
                             xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
                             foreach (var x in xs)
                                 if (x.TargetUri == psfDel.uri)

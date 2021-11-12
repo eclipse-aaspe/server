@@ -11,16 +11,16 @@
     <div class="col-12 row">
         <br />
         <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
-            @updateVisibleTree(Items, selectedNode)
             @if (Program.isLoading)
-            {<span style="color:white;background-color:blue;">Loading...</span>}
+            {
+                <span style="color:white;background-color:blue;">Loading...</span>
+            }
+            @updateVisibleTree(Items, selectedNode)
             <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
                   @bind-SelectedNode="SelectedNode"
                   @bind-ExpandedNodes="ExpandedNodes"
                   HasChildNodes="@(item => item.Childs?.Any() == true)">
                 <TitleTemplate>
-                    @{ //// SubmodelService.syncSubTree(context);
-                    }
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                     @ViewNodeID(context)@ViewNodeInfo(context)
                     <strong><span style="color:blue">@getSymbols(context)</span></strong>
@@ -53,11 +53,7 @@
                             }
                         }
                     }
-                    // if (selectedNode != null && hasDownloadFile(selectedNode))
-                    // {
-                    //     <button @onclick="DownloadFile">Download File</button><br>
-                    //     <img src="test.jpg" alt="Thumbnail" />
-                    // }
+
                     bool externalLink = false;
                     string link = getLink(selectedNode, out externalLink);
                     if (selectedNode != null && link != "")
@@ -91,7 +87,7 @@
                             {
                                 <button @onclick="setSubmodelToSubscribe">Subscribe</button>
                             }
-                            // <button onclick="window.location.href = '@link';">Subscribe</button><br>
+
                             @code {
                                 private void resetSubmodelToPublish()
                                 {
@@ -118,7 +114,6 @@
                     }
                     if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                     {
-                        // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
                         <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
                         @code { private string CurrentValue { get; set; } }
                         if (CurrentValue != null && CurrentValue != "")
@@ -210,14 +205,6 @@
         {
             try
             {
-                /*
-                string data;
-                using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
-                {
-                    data = reader.ReadToEnd();
-                }
-                */
-                //
                 byte[] data;
                 using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
                 {
@@ -234,28 +221,8 @@
         }
     }
     async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    // async Task SaveAs(IJSRuntime js, string filename, string data)
     {
-        ; await js.InvokeAsync<object>(
-     "saveAsFile",
-     filename,
-     data
-     );
-        /*
-        await js.InvokeAsync<object>(
-            "saveAsFile",
-            filename,
-            Convert.ToBase64String(data)
-            );
-        */
-        /*
-        await js.InvokeAsync<object>(
-            "download",
-            data,
-            filename,
-            "application/pdf"
-            );
-        */
+        await js.InvokeAsync<object>("saveAsFile", filename, data);
     }
 
     public class Item
@@ -263,7 +230,6 @@
         public string Text { get; set; }
         public IEnumerable<Item> Childs { get; set; }
         public object parent { get; set; }
-        // public List<Item> Childs { get; set; }
         public string Type { get; set; }
         public object Tag { get; set; }
         public int envIndex { get; set; }
@@ -279,7 +245,6 @@
         set
         {
             selectedNode = value;
-            // OnSelectNode(selectedNode);
         }
     }
 
@@ -290,7 +255,6 @@
         if (Program.getDataVersion() != dataVersion)
         {
             dataVersion = Program.getDataVersion();
-            // TreePage.StateHasChanged();
         }
     }
 
@@ -300,30 +264,8 @@
 
     protected override void OnInitialized()
     {
-        // OnInitialized() allways called twice
-        // if (hack++ == 0)
-        //    return;
-
-        // hack = 0;
-        // SubmodelService.buildTree();
-        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-        // newDataMode = 1;
-        // StateHasChanged();
-
-        //ExpandedNodes.Add(Items.Skip(1).First());
-        //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
-
         SubmodelService.NewDataAvailable += NewData;
         Program.signalNewData(1);
-
-        /*
-        refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
-        {
-            // Note that the following line is necessary because otherwise
-            // Blazor would not recognize the state change and not refresh the UI
-            // InvokeAsync(() => this.StateHasChanged());
-        }), null, 5000, 5000);
-        */
     }
 
     public void Dispose()
@@ -335,21 +277,14 @@
 
     void NewData(object source, EventArgs args)
     {
-        // update = true;
         if (newDataMode == 0)
         {
             if (args is Program.NewDataAvailableArgs newArgs)
             {
                 newDataMode = newArgs.signalNewDataMode;
-                // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                 InvokeAsync(() => this.StateHasChanged());
             }
         }
-        // newDataMode = Program.getSignalNewDataMode();
-        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-
-        // InvokeAsync(() => this.StateHasChanged());
-        // this.StateHasChanged();
     }
 
     bool update = true;
@@ -407,8 +342,6 @@
                     break;
             }
             SelectedNode = selectedNode;
-            // update = false;
-            // updateNode(viewItems[0]);
         }
         return "";
     }

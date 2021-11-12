@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AasxServerBlazor.Data;
+﻿using AasxServerBlazor.Data;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.Extensions.Configuration;
@@ -44,20 +39,16 @@ namespace AasxServerBlazor
                 app.UseExceptionHandler("/Error");
             }
 
-            // app.UseHttpsRedirection();
-
             app.UseStaticFiles();
 
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
-                // OZ
                 endpoints.MapBlazorHub(options =>
                 {
-                    // NO Websockets
+                    // turn off Websocket transport
                     options.Transports =
-                        // HttpTransportType.WebSockets |
                         HttpTransportType.ServerSentEvents |
                         HttpTransportType.LongPolling;
                 });

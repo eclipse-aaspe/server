@@ -1154,8 +1154,8 @@ namespace AdminShellNS
         }
 #else
         // Note: In versions prior to V2.0.1, the SDK has "HasDataSpecification" containing only a Reference.
-        // Iv 2.0.1, theoretically each entity with HasDataSpecification could also conatin a 
-        // EmbeddedDataSpecification. 
+        // Iv 2.0.1, theoretically each entity with HasDataSpecification could also conatin a
+        // EmbeddedDataSpecification.
 
         [XmlType(TypeName = "hasDataSpecification")]
         public class HasDataSpecification : List<EmbeddedDataSpecification>
@@ -1182,7 +1182,7 @@ namespace AdminShellNS
             }
 #endif
 
-            // make some explicit and easy to use getter, setters            
+            // make some explicit and easy to use getter, setters
 
             [XmlIgnore]
             [JsonIgnore]
@@ -3294,7 +3294,7 @@ namespace AdminShellNS
         public EmbeddedDataSpecification embeddedDataSpecification = new EmbeddedDataSpecification();
 #else
             // According to Spec V2.0.1, a ConceptDescription might feature alos multiple data specifications
-            /* TODO (MIHO, 2020-08-30): align wording of the member ("embeddedDataSpecification") with the 
+            /* TODO (MIHO, 2020-08-30): align wording of the member ("embeddedDataSpecification") with the
                 * wording of the other entities ("hasDataSpecification") */
             [XmlElement(ElementName = "embeddedDataSpecification")]
             [JsonIgnore]
@@ -3602,7 +3602,7 @@ namespace AdminShellNS
 
             public IEnumerable<Reference> FindAllReferences()
             {
-                yield break;
+                return new List<Reference>();
             }
         }
 
@@ -3845,18 +3845,26 @@ namespace AdminShellNS
             public IEnumerable<AdministrationShell> FindAllAAS(
                 Predicate<AdministrationShell> p = null)
             {
+                List<AdministrationShell> shells = new List<AdministrationShell>();
+
                 if (this.administrationShells == null)
-                    yield break;
+                    return shells;
+
                 foreach (var x in this.administrationShells)
                     if (p == null || p(x))
-                        yield return x;
+                        shells.Add(x);
+
+                return shells;
             }
 
             public IEnumerable<Submodel> FindAllSubmodelGroupedByAAS(
                 Func<AdministrationShell, Submodel, bool> p = null)
             {
+                List<Submodel> submodels = new List<Submodel>();
+
                 if (this.administrationShells == null || this.submodels == null)
-                    yield break;
+                    return submodels;
+
                 foreach (var aas in this.administrationShells)
                 {
                     if (aas?.submodelRefs == null)
@@ -3865,9 +3873,11 @@ namespace AdminShellNS
                     {
                         var sm = this.FindSubmodel(smref);
                         if (sm != null && (p == null || p(aas, sm)))
-                            yield return sm;
+                            submodels.Add(sm);
                     }
                 }
+
+                return submodels;
             }
 
             public Asset FindAsset(Identification id)
@@ -3949,24 +3959,18 @@ namespace AdminShellNS
             public IEnumerable<Submodel> FindAllSubmodelBySemanticId(
                 Key semId, Key.MatchMode matchMode = Key.MatchMode.Strict)
             {
+                List<Submodel> submodels = new List<Submodel>();
+
                 // access
                 if (semId == null)
-                    yield break;
+                    return submodels;
 
                 // brute force
                 foreach (var sm in this.Submodels)
                     if (true == sm.semanticId?.MatchesExactlyOneKey(semId, matchMode))
-                        yield return sm;
-            }
+                        submodels.Add(sm);
 
-            public IEnumerable<Referable> FindAllReferable(Predicate<Referable> p)
-            {
-                if (p == null)
-                    yield break;
-
-                foreach (var r in this.FindAllReferable())
-                    if (r != null && p(r))
-                        yield return r;
+                return submodels;
             }
 
             public IEnumerable<Referable> FindAllReferable()
@@ -4163,17 +4167,20 @@ namespace AdminShellNS
             public IEnumerable<T> FindAllSubmodelElements<T>(
                 Predicate<T> match = null, AdministrationShell onlyForAAS = null) where T : SubmodelElement
             {
+                List<T> temps = new List<T>();
+
                 // more or less two different schemes
                 if (onlyForAAS != null)
                 {
                     if (onlyForAAS.submodelRefs == null)
-                        yield break;
+                        return temps;
+
                     foreach (var smr in onlyForAAS.submodelRefs)
                     {
                         var sm = this.FindSubmodel(smr);
                         if (sm?.submodelElements != null)
                             foreach (var x in sm.submodelElements.FindDeep<T>(match))
-                                yield return x;
+                                temps.Add(x);
                     }
                 }
                 else
@@ -4182,8 +4189,10 @@ namespace AdminShellNS
                         foreach (var sm in this.Submodels)
                             if (sm?.submodelElements != null)
                                 foreach (var x in sm.submodelElements.FindDeep<T>(match))
-                                    yield return x;
+                                    temps.Add(x);
                 }
+
+                return temps;
             }
 
             public ConceptDescription FindConceptDescription(Key key)
@@ -4628,7 +4637,7 @@ namespace AdminShellNS
                 int res = 0;
                 foreach (var rec in records)
                 {
-                    // access 
+                    // access
                     if (rec == null || rec.Fix == null || rec.Source == null)
                         continue;
 
@@ -5041,13 +5050,15 @@ namespace AdminShellNS
                 Predicate<Referable> p,
                 bool includeThis = false, bool includeSubmodel = false)
             {
+                List<Referable> refs = new List<Referable>();
+
                 // call for this?
                 if (includeThis)
                 {
                     if (p == null || p.Invoke(this))
-                        yield return this;
+                        refs.Add(this);
                     else
-                        yield break;
+                        return refs;
                 }
 
                 // daisy chain all parents ..
@@ -5056,14 +5067,16 @@ namespace AdminShellNS
                     if (this.parent is SubmodelElement psme)
                     {
                         foreach (var q in psme.FindAllParents(p, includeThis: true))
-                            yield return q;
+                            refs.Add(q);
                     }
                     else if (includeSubmodel && this.parent is Submodel psm)
                     {
                         if (p == null || p.Invoke(psm))
-                            yield return this;
+                            refs.Add(this);
                     }
                 }
+
+                return refs;
             }
 
             public Tuple<string, string> ToCaptionInfo()
@@ -5565,8 +5578,10 @@ namespace AdminShellNS
                 bool invertAllowed = false)
                 where T : SubmodelElement
             {
+                List<T> temps = new List<T>();
+
                 if (allowedSemId == null || allowedSemId.Length < 1)
-                    yield break;
+                    return temps;
 
                 foreach (var smw in this)
                 {
@@ -5576,7 +5591,7 @@ namespace AdminShellNS
                     if (smw.submodelElement.semanticId == null || smw.submodelElement.semanticId.Count < 1)
                     {
                         if (invertAllowed)
-                            yield return smw.submodelElement as T;
+                            temps.Add(smw.submodelElement as T);
                         continue;
                     }
 
@@ -5592,8 +5607,10 @@ namespace AdminShellNS
                         found = !found;
 
                     if (found)
-                        yield return smw.submodelElement as T;
+                        temps.Add(smw.submodelElement as T);
                 }
+
+                return temps;
             }
 
             public T FindFirstAnySemanticId<T>(
@@ -5824,7 +5841,7 @@ namespace AdminShellNS
                     // set default?
                     setDefault?.Invoke(dflt);
 
-                    // return 
+                    // return
                     return dflt;
                 }
 
@@ -6165,10 +6182,15 @@ namespace AdminShellNS
 
             public IEnumerable<T> FindDeep<T>(Predicate<T> match = null) where T : SubmodelElement
             {
+                List<T> temps = new List<T>();
+
                 if (this.submodelElements == null)
-                    yield break;
+                    return temps;
+
                 foreach (var x in this.submodelElements.FindDeep<T>(match))
-                    yield return x;
+                    temps.Add(x);
+
+                return temps;
             }
 
             public Tuple<string, string> ToCaptionInfo()
@@ -7037,7 +7059,7 @@ namespace AdminShellNS
                     annotations.Remove(sme);
             }
 
-            // further 
+            // further
 
             public new void Set(Reference first = null, Reference second = null)
             {

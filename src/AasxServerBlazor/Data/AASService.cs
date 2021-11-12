@@ -1,9 +1,8 @@
-﻿using System;
+﻿using AasxServer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using AasxServer;
-using AdminShellNS;
+using System.Threading;
 using static AasxServerBlazor.Pages.TreePage;
 using static AdminShellNS.AdminShellV20;
 
@@ -19,15 +18,12 @@ namespace AasxServerBlazor.Data
 
         public AASService()
         {
-            // buildTree();
-            // NewDataAvailable?.Invoke(this, EventArgs.Empty);
-
             Program.NewDataAvailable += (s, a) =>
             {
-                // buildTree();
                 NewDataAvailable?.Invoke(this, a);
             };
         }
+
         public event EventHandler NewDataAvailable;
 
         public static List<Item> items = null;
@@ -35,30 +31,15 @@ namespace AasxServerBlazor.Data
 
         public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
         {
-            // buildTree();
-            // Item.updateVisibleTree(viewItems, selectedNode, ExpandedNodes);
             return viewItems;
         }
 
-        public void updateVisibleTree()
-        {
-
-        }
-
-        public void syncSubTree(Item item)
-        {
-            if (item.Tag is SubmodelElementCollection)
-            {
-                var smec = item.Tag as SubmodelElementCollection;
-                if (item.Childs.Count() != smec.value.Count)
-                {
-                    createSMECItems(item, smec, item.envIndex);
-                }
-            }
-        }
         public void buildTree()
         {
-            while (Program.isLoading) ;
+            while (Program.isLoading)
+            {
+                Thread.Sleep(1000);
+            }
 
             lock (Program.changeAasxFile)
             {

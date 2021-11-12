@@ -1,4 +1,10 @@
-﻿using System;
+﻿using AdminShellNS;
+using IdentityModel;
+using IdentityModel.Client;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -7,14 +13,6 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Helpers;
-using AasxServer;
-using AdminShellNS;
-using IdentityModel;
-using IdentityModel.Client;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace AasxServer
 {
@@ -565,13 +563,17 @@ namespace AasxServer
             while (true)
             {
                 tasksCyclic();
+                Thread.Sleep(100);
             }
         }
 
         public static void tasksCyclic()
         {
             if (Program.isLoading)
+            {
+                Thread.Sleep(1000);
                 return;
+            }
 
             foreach (var t in taskList)
             {

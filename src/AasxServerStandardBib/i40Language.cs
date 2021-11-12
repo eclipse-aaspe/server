@@ -60,6 +60,7 @@ namespace AasxServer
         public static List<i40LanguageAutomaton> automatons = new List<i40LanguageAutomaton> { };
         public static Thread i40LanguageThread;
         public static ThreadStart threadDelegate;
+
         static public void initialize()
         {
             int aascount = Program.env.Length;
@@ -255,13 +256,14 @@ namespace AasxServer
 
         static bool treeChanged = false;
 
-        //        public static string debugAutomaton = "";
         public static string debugAutomaton = "automatonServiceRequester";
-        //        public static string debugAutomaton = "automatonServiceProvider";
+
         public static void nextTick()
         {
             while (true)
             {
+                Thread.Sleep(1000);
+
                 foreach (var auto in automatons)
                 {
                     // if (auto.name != "automatonServiceRequester")
@@ -613,7 +615,6 @@ namespace AasxServer
                 if (treeChanged)
                     mode = 2;
                 Program.signalNewData(mode);
-                Thread.Sleep(1000);
             }
         }
 
