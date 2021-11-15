@@ -258,10 +258,6 @@
         }
     }
 
-    static int hack = 0;
-
-    System.Threading.Timer refresh = null;
-
     protected override void OnInitialized()
     {
         SubmodelService.NewDataAvailable += NewData;
@@ -546,7 +542,6 @@
             return "";
         }
 
-        string prefix = "http://";
         string hostPort = Program.hostPort;
 
         string[] split = Program.hostPort.Split(':');
@@ -604,7 +599,6 @@
             return;
         }
 
-        string prefix = "http://";
         string hostPort = Program.hostPort;
 
         string[] split = Program.hostPort.Split(':');
@@ -650,8 +644,6 @@
 
     bool hasDownloadFile(Item item)
     {
-        return false;
-
         if (item == null)
         {
             return false;
@@ -684,13 +676,11 @@
             return "";
         }
 
-        string prefix = "http://";
         string hostPort = Program.hostPort;
 
         string[] split = Program.hostPort.Split(':');
         if (split[0].ToLower() == "admin-shell-io.com")
         {
-            prefix = "https://";
             hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
         }
 
@@ -1062,8 +1052,6 @@
 
         if (o is AdministrationShell)
         {
-            string subjectIssuer = null;
-
             ret = "";
             var aas = o as AdministrationShell;
 

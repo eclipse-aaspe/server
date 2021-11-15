@@ -272,7 +272,7 @@ namespace AasxServer
 
                     if (auto.name == debugAutomaton)
                     {
-                        int i = 0; // set breakpoint here to debug specific automaton
+                        // set breakpoint here to debug specific automaton
                     }
 
                     // get actual automaton data from AAS
@@ -326,7 +326,7 @@ namespace AasxServer
                     {
                         if (auto.name == debugAutomaton)
                         {
-                            int i = 0; // set breakpoint here to debug specific automaton
+                            // set breakpoint here to debug specific automaton
                         }
 
                         auto.tick = 0;
@@ -408,7 +408,7 @@ namespace AasxServer
                                             {
                                                 if (auto.name == debugAutomaton)
                                                 {
-                                                    int i = 0; // set breakpoint here to debug specific automaton
+                                                    // set breakpoint here to debug specific automaton
                                                 }
 
                                                 var op = sme2 as AdminShell.Operation;
@@ -466,7 +466,7 @@ namespace AasxServer
                                             {
                                                 if (auto.name == debugAutomaton)
                                                 {
-                                                    int i = 0; // set breakpoint here to debug specific automaton
+                                                    // set breakpoint here to debug specific automaton
                                                 }
 
                                                 var op = sme2 as AdminShell.Operation;
@@ -704,7 +704,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.inputVariable.Count != 3 && op.outputVariable.Count != 4)
@@ -788,7 +788,7 @@ namespace AasxServer
                     {
                         if (auto.name == debugAutomaton)
                         {
-                            int i = 0; // set breakpoint here to debug specific automaton
+                            // set breakpoint here to debug specific automaton
                         }
 
                         JObject parsed = JObject.Parse(receivedFrame);
@@ -848,7 +848,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.inputVariable.Count != 3 && op.outputVariable.Count != 1)
@@ -953,7 +953,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.outputVariable.Count == 0)
@@ -993,7 +993,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.inputVariable.Count != 2 && op.outputVariable.Count != 0)

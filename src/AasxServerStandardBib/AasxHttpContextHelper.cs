@@ -3444,8 +3444,7 @@ namespace AasxRestServerLibrary
         public void EvalAssetId(IHttpContext context, int assetId)
         {
             dynamic res = new ExpandoObject();
-            int index = -1;
-
+            
             Console.WriteLine("Test Asset ID");
 
             string headers = context.Request.Headers.ToString();
@@ -3916,8 +3915,6 @@ namespace AasxRestServerLibrary
 
         public static void serverCertsInit()
         {
-            return;
-
             if (Directory.Exists("./authservercerts"))
             {
                 serverCertfileNames = Directory.GetFiles("./authservercerts", "*.cer");

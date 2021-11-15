@@ -279,7 +279,6 @@ namespace AasxTimeSeries
             // test
             if (test)
             {
-                dummy = 0;
                 for (int i = 0; i < 500; i++)
                 {
                     timeSeriesSampling(false);
@@ -296,8 +295,6 @@ namespace AasxTimeSeries
         static bool test = false;
 
         static Thread timeSeriesThread;
-
-        static int dummy = 0;
 
         public static void timeSeriesSamplingLoop()
         {

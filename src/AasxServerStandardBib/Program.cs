@@ -1528,14 +1528,10 @@ namespace AasxServer
             restTimer.Enabled = true;
         }
 
-        static bool RESTalreadyRunning = false;
         static long countGetPut = 0;
 
         private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
         {
-
-            RESTalreadyRunning = true;
-
             string GETSUBMODEL = "";
             string GETURL = "";
             string PUTSUBMODEL = "";
@@ -1665,8 +1661,6 @@ namespace AasxServer
                     }
                 }
             }
-
-            RESTalreadyRunning = false;
 
             // start MQTT Client as a worker (will start in the background)
             var worker = new BackgroundWorker();

@@ -33,8 +33,8 @@ namespace AasxMqttClient
         }
 
         static int lastAASEnv = 0;
-        static int lastAAS = 0;
         static int lastSubmodel = 0;
+
         public static async Task StartAsync(AdminShellPackageEnv[] package, GrapevineLoggerSuper logger = null)
         {
             // Create TCP based options using the builder.
