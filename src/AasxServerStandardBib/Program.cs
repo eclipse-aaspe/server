@@ -637,7 +637,7 @@ namespace AasxServer
 
                 defaults.Add("--rest");
                 defaults.Add("--port");
-                defaults.Add("51710");
+                defaults.Add("51310");
                 defaults.Add("--data-path");
                 defaults.Add(".");
                 defaults.Add("--edit");

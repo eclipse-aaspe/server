@@ -2,11 +2,11 @@
   "profiles": {
     "AasxServerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --port 51710 --data-path . --no-security"
+      "commandLineArgs": "--rest --port 51310 --data-path . --no-security"
     },
     "Docker": {
       "commandName": "Docker",
-      "commandLineArgs": "--rest --port 51710 --data-path . --no-security"
+      "commandLineArgs": "--rest --port 51310 --data-path . --no-security"
     }
   }
 }
