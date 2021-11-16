@@ -1,9 +1,13 @@
-﻿using System;
+﻿using AasxRestServerLibrary;
+using AdminShellNS;
+using Jose;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -14,20 +18,9 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
-using AasOpcUaServer;
-using AasxMqttServer;
-using AasxRestServerLibrary;
-using AdminShellNS;
-using Jose;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using Opc.Ua.Configuration;
-using Opc.Ua.Server;
 using static AasxDemonstration.EnergyModel;
 using Formatting = Newtonsoft.Json.Formatting;
 
@@ -73,13 +66,6 @@ namespace AasxServer
 
         public static void changeDataVersion() { dataVersion++; }
         public static ulong getDataVersion() { return (dataVersion); }
-
-        static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
-        static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
-
-        static MqttServer AASMqttServer = new MqttServer();
-
-        static bool runOPC = false;
 
         public static string connectServer = "";
         static string connectNodeName = "";
@@ -207,7 +193,7 @@ namespace AasxServer
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
             }
-            runOPC = a.Opc;
+
             noSecurity = a.NoSecurity;
             edit = a.Edit;
 
@@ -399,18 +385,6 @@ namespace AasxServer
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
             AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
 
-            Console.WriteLine();
-            Console.WriteLine("Please wait for the servers to start...");
-
-            if (a.Rest)
-            {
-                Console.WriteLine("Connect to REST by: {0}:{1}", a.Host, a.Port);
-
-                AasxRestServer.Start(env, a.Host, a.Port, a.Https); // without Logger
-
-                Console.WriteLine("REST Server started.");
-            }
-
             i40LanguageRuntime.initialize();
 
             // MICHA MICHA
@@ -433,32 +407,6 @@ namespace AasxServer
             RunScript(true);
 
             isLoading = false;
-
-            if (a.Mqtt)
-            {
-                AASMqttServer.MqttSeverStartAsync().Wait();
-                Console.WriteLine("MQTT Publisher started.");
-            }
-
-            MySampleServer server = null;
-            if (a.Opc)
-            {
-                server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
-                Console.WriteLine("OPC UA Server started..");
-            }
-
-            if (a.OpcClientRate != null) // read data by OPC UA
-            {
-                // Initial read of OPC values, will quit the program if it returns false
-                if (!ReadOPCClient(true))
-                {
-                    Console.Error.WriteLine("Failed to read from the OPC client.");
-                    return 1;
-                }
-
-                Console.WriteLine($"OPC client will be updating every: {a.OpcClientRate} milliseconds");
-                SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
-            }
 
             SetScriptTimer(1000); // also updates balzor view
 
@@ -503,30 +451,22 @@ namespace AasxServer
                 }
             }
 
-            if (a.Opc && server != null)
+            Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
+            ManualResetEvent quitEvent = new ManualResetEvent(false);
+            try
             {
-                server.Run(); // wait for CTRL-C
+                Console.CancelKeyPress += (sender, eArgs) =>
+                {
+                    quitEvent.Set();
+                    eArgs.Cancel = true;
+                };
             }
-            else
+            catch
             {
-                // no OPC UA: wait only for CTRL-C
-                Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
-                ManualResetEvent quitEvent = new ManualResetEvent(false);
-                try
-                {
-                    Console.CancelKeyPress += (sender, eArgs) =>
-                    {
-                        quitEvent.Set();
-                        eArgs.Cancel = true;
-                    };
-                }
-                catch
-                {
-                }
+            }
 
-                // wait for timeout or Ctrl-C
-                quitEvent.WaitOne(Timeout.Infinite);
-            }
+            // wait for timeout or Ctrl-C
+            quitEvent.WaitOne(Timeout.Infinite);
 
             // wait for RETURN
 
@@ -537,13 +477,6 @@ namespace AasxServer
                     connectLoop = false;
                 }
             }
-
-            if (a.Mqtt)
-            {
-                AASMqttServer.MqttSeverStopAsync().Wait();
-            }
-
-            AasxRestServer.Stop();
 
             return 0;
         }
@@ -603,10 +536,7 @@ namespace AasxServer
                     new[] {"--connect"},
                     "If set, connects to AAS connect server. " +
                     "Given as a comma-separated-values (server, node name, period in milliseconds) or " +
-                    "as a flag (in which case it connects to a default server).")
-                {
-                    Argument = new Argument<string[]>{ Arity = ArgumentArity.ZeroOrOne }
-                },
+                    "as a flag (in which case it connects to a default server)."),
 
                 new Option<string>(
                     new[] {"--proxy-file"},
@@ -1495,8 +1425,6 @@ namespace AasxServer
 
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
-            ReadOPCClient(false);
-            // RunScript(false);
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
@@ -1661,212 +1589,6 @@ namespace AasxServer
                     }
                 }
             }
-
-            // start MQTT Client as a worker (will start in the background)
-            var worker = new BackgroundWorker();
-            worker.DoWork += async (s1, e1) =>
-            {
-
-                try
-                {
-                    await AasxMqttClient.MqttClient.StartAsync(env);
-                }
-                catch (Exception)
-                {
-                }
-            };
-            worker.RunWorkerCompleted += (s1, e1) =>
-            {
-
-            };
-            worker.RunWorkerAsync();
-        }
-
-        private static Boolean OPCWrite(string nodeId, object value)
-        /// <summary>
-        /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
-        /// </summary>
-        {
-            if (!runOPC)
-            {
-                return true;
-            }
-
-            AasOpcUaServer.AasModeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
-
-            if (nodeMgr == null)
-            {
-                // if Server has not started yet, the AasNodeManager is null
-                Console.WriteLine("OPC NodeManager not initialized.");
-                return false;
-            }
-
-            // Find node in Core3OPC Server to update it
-            BaseVariableState bvs = nodeMgr.Find(nodeId) as BaseVariableState;
-
-            if (bvs == null)
-            {
-                Console.WriteLine("node {0} does not exist in server!", nodeId);
-                return false;
-            }
-            var convertedValue = Convert.ChangeType(value, bvs.Value.GetType());
-            if (!object.Equals(bvs.Value, convertedValue))
-            {
-                bvs.Value = convertedValue;
-                // TODO: timestamp UtcNow okay or get this internally from the Server?
-                bvs.Timestamp = DateTime.UtcNow;
-                bvs.ClearChangeMasks(null, false);
-            }
-            return true;
-        }
-
-        static Boolean ReadOPCClient(bool initial)
-        /// <summary>
-        /// Update AAS property values from external OPC servers.
-        /// Only submodels which have the appropriate qualifier are affected.
-        /// However, this will attempt to get values for all properties of the submodel.
-        /// TODO: Possilby add a qualifier to specifiy which values to get? Or NodeIds per alue?
-        /// </summary>
-        {
-            if (env == null)
-                return false;
-
-            lock (changeAasxFile)
-            {
-                int i = 0;
-                while (env[i] != null)
-                {
-                    foreach (var sm in env[i].AasEnv.Submodels)
-                    {
-                        if (sm != null && sm.idShort != null)
-                        {
-                            int count = sm.qualifiers.Count;
-                            if (count != 0)
-                            {
-                                int stopTimeout = Timeout.Infinite;
-                                bool autoAccept = true;
-                                // Variablen aus AAS Qualifiern
-                                string Username = "";
-                                string Password = "";
-                                string URL = "";
-                                int Namespace = 0;
-                                string Path = "";
-
-                                int j = 0;
-
-                                while (j < count) // URL, Username, Password, Namespace, Path
-                                {
-                                    var p = sm.qualifiers[j] as AdminShell.Qualifier;
-
-                                    switch (p.type)
-                                    {
-                                        case "OPCURL": // URL
-                                            URL = p.value;
-                                            break;
-                                        case "OPCUsername": // Username
-                                            Username = p.value;
-                                            break;
-                                        case "OPCPassword": // Password
-                                            Password = p.value;
-                                            break;
-                                        case "OPCNamespace": // Namespace
-                                            // TODO: if not int, currently throws nondescriptive error
-                                            if (int.TryParse(p.value, out int tmpI))
-                                                Namespace = tmpI;
-                                            break;
-                                        case "OPCPath": // Path
-                                            Path = p.value;
-                                            break;
-                                    }
-                                    j++;
-                                }
-
-                                if (URL == "")
-                                {
-                                    continue;
-                                }
-
-                                if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
-                                {
-                                    Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
-                                    return false;
-                                }
-                                if (Username == "" && Password == "")
-                                {
-                                    Console.WriteLine("Using Anonymous to login ...");
-                                }
-
-                                // try to get the client from dictionary, else create and add it
-                                SampleClient.UASampleClient client;
-                                lock (opcclientAddLock)
-                                {
-                                    if (!OPCClients.TryGetValue(URL, out client))
-                                    {
-                                        try
-                                        {
-                                            // make OPC UA client
-                                            client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                            client.ConsoleSampleClient().Wait();
-                                            // add it to the dictionary under this submodels idShort
-                                            OPCClients.Add(URL, client);
-                                        }
-                                        catch (AggregateException ae)
-                                        {
-                                            bool cantconnect = false;
-                                            ae.Handle((x) =>
-                                            {
-                                                if (x is ServiceResultException)
-                                                {
-                                                    cantconnect = true;
-                                                    return true; // this exception handled
-                                                }
-                                                return false; // others not handled, will cause unhandled exception
-                                            }
-                                            );
-                                            if (cantconnect)
-                                            {
-                                                // stop processing OPC read because we couldnt connect
-                                                // but return true as this shouldn't stop the main loop
-                                                Console.WriteLine(ae.Message);
-                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
-                                    }
-                                }
-                                Console.WriteLine("==================================================");
-                                Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
-                                Console.WriteLine("==================================================");
-
-                                // over all SMEs
-                                count = sm.submodelElements.Count;
-                                for (j = 0; j < count; j++)
-                                {
-                                    var sme = sm.submodelElements[j].submodelElement;
-                                    // some preparations for multiple AAS below
-                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
-
-                                    string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
-                                    string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
-                                    string nodePath = Path; // generally starts with Submodel idShort
-                                    WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
-                                }
-                            }
-                        }
-                    }
-                    i++;
-                }
-            }
-            if (!initial)
-            {
-                changeDataVersion();
-            }
-            return true;
         }
 
         static void RunScript(bool init)
@@ -2108,291 +1830,6 @@ namespace AasxServer
 
             signalNewData(newMode);
         }
-
-        private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
-        {
-            if (sme is AdminShell.Property)
-            {
-                var p = sme as AdminShell.Property;
-                string clientNodeName = nodePath + p.idShort;
-                string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.idShort);
-                NodeId clientNode = new NodeId(clientNodeName, (ushort)clientNamespace);
-                UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
-            }
-            else if (sme is AdminShell.SubmodelElementCollection)
-            {
-                var collection = sme as AdminShell.SubmodelElementCollection;
-                for (int i = 0; i < collection.value.Count; i++)
-                {
-                    string newNodeIdBase = nodePath + "." + collection.idShort;
-                    WalkSubmodelElement(collection.value[i].submodelElement, newNodeIdBase, serverNodePrefix, client, clientNamespace);
-                }
-            }
-        }
-
-        private static void UpdatePropertyFromOPCClient(AdminShell.Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
-        {
-            string value = "";
-
-            bool write = (p.HasQualifierOfType("OPCWRITE") != null);
-            if (write)
-                value = p.value;
-
-            try
-            {
-                // ns=#;i=#
-                string[] split = (clientNodeId.ToString()).Split('#');
-                if (split.Length == 2)
-                {
-                    uint i = Convert.ToUInt16(split[1]);
-                    split = clientNodeId.ToString().Split('=');
-                    split = split[1].Split(';');
-                    ushort ns = Convert.ToUInt16(split[0]);
-                    clientNodeId = new NodeId(i, ns);
-                    Console.WriteLine("New node id: ", clientNodeId.ToString());
-                }
-                Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
-                if (write)
-                {
-                    short i = Convert.ToInt16(value);
-                    client.WriteSubmodelElementValue(clientNodeId, i);
-                }
-                else
-                    value = client.ReadSubmodelElementValue(clientNodeId);
-            }
-            catch (ServiceResultException ex)
-            {
-                Console.WriteLine(string.Format("OPC ServiceResultException ({0}) trying to read {1}", ex.Message, clientNodeId.ToString()));
-                return;
-            }
-
-            // update in AAS env
-            if (!write)
-            {
-                p.Set(p.valueType, value);
-
-                // update in OPC
-                if (!OPCWrite(serverNodeId, value))
-                    Console.WriteLine("OPC write not successful.");
-            }
-        }
-    }
-
-    public class ApplicationMessageDlg : IApplicationMessageDlg
-    {
-        private string message = string.Empty;
-        private bool ask = false;
-
-        public override void Message(string text, bool ask)
-        {
-            this.message = text;
-            this.ask = ask;
-        }
-
-        public override async Task<bool> ShowAsync()
-        {
-            if (ask)
-            {
-                message += " (y/n, default y): ";
-                Console.Write(message);
-            }
-            else
-            {
-                Console.WriteLine(message);
-            }
-            if (ask)
-            {
-                try
-                {
-                    ConsoleKeyInfo result = Console.ReadKey();
-                    Console.WriteLine();
-                    return await Task.FromResult((result.KeyChar == 'y') || (result.KeyChar == 'Y') || (result.KeyChar == '\r'));
-                }
-                catch
-                {
-                    // intentionally fall through
-                }
-            }
-            return await Task.FromResult(true);
-        }
-    }
-
-    public enum ExitCode : int
-    {
-        Ok = 0,
-        ErrorServerNotStarted = 0x80,
-        ErrorServerRunning = 0x81,
-        ErrorServerException = 0x82,
-        ErrorInvalidCommandLine = 0x100
-    };
-
-    public class MySampleServer
-    {
-        SampleServer server;
-        Task status;
-        DateTime lastEventTime;
-        int serverRunTime = Timeout.Infinite;
-        static bool autoAccept = false;
-        static ExitCode exitCode;
-        static AdminShellPackageEnv[] aasxEnv = null;
-        // OZ
-        public static ManualResetEvent quitEvent;
-
-        public MySampleServer(bool _autoAccept, int _stopTimeout, AdminShellPackageEnv[] _aasxEnv)
-        {
-            autoAccept = _autoAccept;
-            aasxEnv = _aasxEnv;
-            serverRunTime = _stopTimeout == 0 ? Timeout.Infinite : _stopTimeout * 1000;
-        }
-
-        public void Run()
-        {
-
-            try
-            {
-                exitCode = ExitCode.ErrorServerNotStarted;
-                ConsoleSampleServer().Wait();
-                Console.WriteLine("Servers succesfully started. Press Ctrl-C to exit...");
-                exitCode = ExitCode.ErrorServerRunning;
-            }
-            catch (Exception ex)
-            {
-                Utils.Trace("ServiceResultException:" + ex.Message);
-                Console.WriteLine("Exception: {0}", ex.Message);
-                exitCode = ExitCode.ErrorServerException;
-                return;
-            }
-
-            quitEvent = new ManualResetEvent(false);
-            try
-            {
-                Console.CancelKeyPress += (sender, eArgs) =>
-                {
-                    quitEvent.Set();
-                    eArgs.Cancel = true;
-                };
-            }
-            catch
-            {
-            }
-
-            // wait for timeout or Ctrl-C
-            quitEvent.WaitOne(serverRunTime);
-
-            if (server != null)
-            {
-                Console.WriteLine("Server stopped. Waiting for exit...");
-
-                using (SampleServer _server = server)
-                {
-                    // Stop status thread
-                    server = null;
-                    status.Wait();
-                    // Stop server and dispose
-                    _server.Stop();
-                }
-            }
-
-            exitCode = ExitCode.Ok;
-        }
-
-        public static ExitCode ExitCode { get => exitCode; }
-
-        private static void CertificateValidator_CertificateValidation(CertificateValidator validator, CertificateValidationEventArgs e)
-        {
-            if (e.Error.StatusCode == StatusCodes.BadCertificateUntrusted)
-            {
-                e.Accept = autoAccept;
-                if (autoAccept)
-                {
-                }
-                else
-                {
-                }
-            }
-        }
-
-        private async Task ConsoleSampleServer()
-        {
-            ApplicationInstance.MessageDlg = new ApplicationMessageDlg();
-            ApplicationInstance application = new ApplicationInstance();
-
-            application.ApplicationName = "UA Core Sample Server";
-            application.ApplicationType = ApplicationType.Server;
-            application.ConfigSectionName = Utils.IsRunningOnMono() ? "Opc.Ua.MonoSampleServer" : "Opc.Ua.SampleServer";
-
-            // load the application configuration.
-            ApplicationConfiguration config = await application.LoadApplicationConfiguration(true);
-
-            // check the application certificate.
-            bool haveAppCertificate = await application.CheckApplicationInstanceCertificate(true, 0);
-
-            if (!haveAppCertificate)
-            {
-                throw new Exception("Application instance certificate invalid!");
-            }
-
-            if (!config.SecurityConfiguration.AutoAcceptUntrustedCertificates)
-            {
-                config.CertificateValidator.CertificateValidation += new CertificateValidationEventHandler(CertificateValidator_CertificateValidation);
-            }
-
-            // start the server.
-            server = new SampleServer(aasxEnv);
-            await application.Start(server);
-
-            // start the status thread
-            status = Task.Run(new Action(StatusThread));
-
-            // print notification on session events
-            server.CurrentInstance.SessionManager.SessionActivated += EventStatus;
-            server.CurrentInstance.SessionManager.SessionClosing += EventStatus;
-            server.CurrentInstance.SessionManager.SessionCreated += EventStatus;
-
-        }
-
-        private void EventStatus(Opc.Ua.Server.Session session, SessionEventReason reason)
-        {
-            lastEventTime = DateTime.UtcNow;
-            PrintSessionStatus(session, reason.ToString());
-        }
-
-        void PrintSessionStatus(Opc.Ua.Server.Session session, string reason, bool lastContact = false)
-        {
-            lock (session.DiagnosticsLock)
-            {
-                string item = String.Format("{0,9}:{1,20}:", reason, session.SessionDiagnostics.SessionName);
-                if (lastContact)
-                {
-                    item += String.Format("Last Event:{0:HH:mm:ss}", session.SessionDiagnostics.ClientLastContactTime.ToLocalTime());
-                }
-                else
-                {
-                    if (session.Identity != null)
-                    {
-                        item += String.Format(":{0,20}", session.Identity.DisplayName);
-                    }
-                    item += String.Format(":{0}", session.Id);
-                }
-            }
-        }
-
-        private async void StatusThread()
-        {
-            while (server != null)
-            {
-                if (DateTime.UtcNow - lastEventTime > TimeSpan.FromMilliseconds(6000))
-                {
-                    IList<Opc.Ua.Server.Session> sessions = server.CurrentInstance.SessionManager.GetSessions();
-                    for (int ii = 0; ii < sessions.Count; ii++)
-                    {
-                        Opc.Ua.Server.Session session = sessions[ii];
-                        PrintSessionStatus(session, "-Status-", true);
-                    }
-                    lastEventTime = DateTime.UtcNow;
-                }
-                await Task.Delay(1000);
-            }
-        }
     }
 }
+

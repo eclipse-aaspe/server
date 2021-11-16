@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using AasxIntegrationBase;
+﻿using AasxIntegrationBase;
 using AdminShellNS;
-using Grapevine;
-using Grapevine.Client;
-using Grapevine.Shared;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 
 namespace AasxRestServerLibrary
 {
@@ -19,15 +14,14 @@ namespace AasxRestServerLibrary
         // Instance management
 
         private Uri uri = null;
-        private RestClient client = null;
+        private WebClient client = null;
         private WebProxy proxy = null;
 
         public AasxRestClient(string hostpart)
         {
             this.uri = new Uri(hostpart.TrimEnd('/'));
-            this.client = new RestClient();
-            this.client.Host = this.uri.Host;
-            this.client.Port = this.uri.Port;
+            this.client = new WebClient();
+            this.client.BaseAddress = this.uri.ToString();
             if (File.Exists("C:\\dat\\proxy.dat"))
             {
                 string proxyAddress = "";
@@ -70,21 +64,12 @@ namespace AasxRestServerLibrary
 
         public Stream GetThumbnailStream()
         {
-            var request = new RestRequest("/aas/id/thumbnail");
-            if (this.proxy != null)
-                request.Proxy = this.proxy;
-            var response = client.Execute(request);
-            if (response.StatusCode != Grapevine.Shared.HttpStatusCode.Ok)
-                throw new Exception($"REST {response.ResponseUri} response {response.StatusCode} with {response.StatusDescription}");
+            var request = "/aas/id/thumbnail";
 
-            // Note: the normal response.GetContent() internally reads ContentStream as a string and screws up binary data.
-            // Necessary to access the real implementing object
-            var rr = response as RestResponse;
-            if (rr != null)
-            {
-                return rr.Advanced.GetResponseStream();
-            }
-            return null;
+            if (this.proxy != null)
+                client.Proxy = this.proxy;
+
+            return new MemoryStream(client.DownloadData(request));
         }
 
         public string ReloadPropertyValue()
@@ -123,42 +108,38 @@ namespace AasxRestServerLibrary
 
         public AdminShellPackageEnv OpenPackageByAasEnv()
         {
-            var request = new RestRequest("/aas/id/aasenv");
+            var request = "/aas/id/aasenv";
+
             if (this.proxy != null)
-                request.Proxy = this.proxy;
-            var respose = client.Execute(request);
-            if (respose.StatusCode != Grapevine.Shared.HttpStatusCode.Ok)
-                throw new Exception($"REST {respose.ResponseUri} response {respose.StatusCode} with {respose.StatusDescription}");
+                client.Proxy = this.proxy;
+
+            var respose = client.DownloadString(request);
+
             var res = new AdminShellPackageEnv();
-            res.LoadFromAasEnvString(respose.GetContent());
+            res.LoadFromAasEnvString(respose);
             return res;
         }
 
         public string GetSubmodel(string name)
         {
             string fullname = "/aas/id/submodels/" + name + "/complete";
-            var request = new RestRequest(fullname);
+
             if (this.proxy != null)
-                request.Proxy = this.proxy;
-            var response = client.Execute(request);
-            if (response.StatusCode != Grapevine.Shared.HttpStatusCode.Ok)
-                throw new Exception($"REST {response.ResponseUri} response {response.StatusCode} with {response.StatusDescription}");
-            return response.GetContent();
+                client.Proxy = this.proxy;
+
+            return client.DownloadString(fullname);
         }
 
         public string PutSubmodel(string payload)
         {
             string fullname = "/aas/id/submodels/";
-            var request = new RestRequest(fullname);
-            request.HttpMethod = Grapevine.Shared.HttpMethod.PUT;
-            request.ContentType = Grapevine.Shared.ContentType.JSON;
-            request.Payload = payload;
+
+            client.Headers[HttpRequestHeader.ContentType] = "application/json";
+
             if (this.proxy != null)
-                request.Proxy = this.proxy;
-            var response = client.Execute(request);
-            if (response.StatusCode != Grapevine.Shared.HttpStatusCode.Ok)
-                throw new Exception($"REST {response.ResponseUri} response {response.StatusCode} with {response.StatusDescription}");
-            return response.GetContent();
+                client.Proxy = this.proxy;
+
+            return client.UploadString(fullname, "PUT", payload);
         }
 
         public string UpdatePropertyValue(AdminShell.AdministrationShellEnv env, AdminShell.Submodel submodel, AdminShell.SubmodelElement sme)
@@ -172,21 +153,17 @@ namespace AasxRestServerLibrary
             if (aas == null)
                 return null;
 
-            // build path         
+            // build path
             var aasId = aas.idShort;
             var submodelId = submodel.idShort;
             var elementId = sme.CollectIdShortByParent();
             var reqpath = "./aas/" + aasId + "/submodels/" + submodelId + "/elements/" + elementId + "/property";
 
-            // request
-            var request = new RestRequest(reqpath);
             if (this.proxy != null)
-                request.Proxy = this.proxy;
-            var respose = client.Execute(request);
-            if (respose.StatusCode != Grapevine.Shared.HttpStatusCode.Ok)
-                throw new Exception($"REST {respose.ResponseUri} response {respose.StatusCode} with {respose.StatusDescription}");
+                client.Proxy = this.proxy;
 
-            var json = respose.GetContent();
+            var json = client.DownloadString(reqpath);
+
             var parsed = JObject.Parse(json);
             var value = parsed.SelectToken("value").Value<string>();
             return value;

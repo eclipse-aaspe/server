@@ -1,5 +1,9 @@
 ﻿#define MICHA
 
+using AdminShellEvents;
+using AdminShellNS;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,23 +11,13 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using AasxMqttClient;
-using AdminShellEvents;
-using AdminShellNS;
-using Grapevine.Interfaces.Server;
-using Grapevine.Server;
-using Grapevine.Server.Attributes;
-using Grapevine.Shared;
-using Newtonsoft.Json;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
 The browser functionality is under the cefSharp license (see https://raw.githubusercontent.com/cefsharp/CefSharp/master/LICENSE).
 The JSON serialization is under the MIT license (see https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md).
 The QR code generation is under the MIT license (see https://github.com/codebude/QRCoder/blob/master/LICENSE.txt).
-The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0). 
+The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0).
 The Grapevine REST server framework is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0). */
 
 /* Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the
@@ -33,7 +27,6 @@ namespace AasxRestServerLibrary
 {
     public class AasxRestServer
     {
-        [RestResource]
         public class TestResource
         {
             // test data server
@@ -48,21 +41,17 @@ namespace AasxRestServerLibrary
                 public float varFloat3;
             }
 
-            void sendJson(IHttpContext context, object o)
+            void sendJson(HttpContext context, object o)
             {
-                var json = JsonConvert.SerializeObject(o, Formatting.Indented);
-                var buffer = context.Request.ContentEncoding.GetBytes(json);
-                var length = buffer.Length;
-
-                context.Response.ContentType = ContentType.JSON;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = length;
-                context.Response.SendResponse(buffer);
+                string json = JsonConvert.SerializeObject(o, Formatting.Indented);
+                context.Response.ContentType = "application/json";
+                context.Response.ContentLength = json.Length;
+                context.Response.WriteAsync(json);
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/data4(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/data4(/|)$")]
 
-            public IHttpContext GetData4(IHttpContext context)
+            public HttpContext GetData4(HttpContext context)
             {
                 varInt1++;
                 if (varInt1 > 100)
@@ -175,31 +164,31 @@ namespace AasxRestServerLibrary
 
             private static bool _setAllParentsExecuted = false;
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/deltasecs/(\\d+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/values(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/time/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/deltasecs/(\\d+)(/|)$")]
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/deltasecs/(\\d+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/aas/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/aas/([^/]+)/values(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/aas/([^/]+)/time/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/geteventmessages/aas/([^/]+)/deltasecs/(\\d+)(/|)$")]
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/deltasecs/(\\d+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/([^/]+)/geteventmessages(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/([^/]+)/geteventmessages/values(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/([^/]+)/geteventmessages/time/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/([^/]+)/geteventmessages/deltasecs/(\\d+)(/|)$")]
 
-            public IHttpContext GetEventMessages(IHttpContext context)
+            public HttpContext GetEventMessages(HttpContext context)
             {
-                // 
+                //
                 // Configuration of operation mode
                 //
 
                 DateTime minimumDate = new DateTime();
                 bool doUpdate = true;
                 bool doCreateDelete = true;
-                string restPath = context.Request.PathInfo;
+                string restPath = context.Request.Path;
                 int aasIndex = -1;
 
                 if (restPath.Contains("/aas/"))
@@ -594,7 +583,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
+            public static void SendJsonResponse(HttpContext context, object obj)
             {
                 // make JSON
                 var settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(
@@ -603,35 +592,22 @@ namespace AasxRestServerLibrary
                 settings.Formatting = Formatting.Indented;
                 var json = JsonConvert.SerializeObject(obj, settings);
 
-                // build buffer
-                var buffer = context.Request.ContentEncoding.GetBytes(json);
-                var length = buffer.Length;
-
-                var queryString = context.Request.QueryString;
-                string refresh = queryString["refresh"];
-                if (refresh != null && refresh != "")
-                {
-                    context.Response.Headers.Remove("Refresh");
-                    context.Response.Headers.Add("Refresh", refresh);
-                }
-
-                context.Response.ContentType = ContentType.JSON;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = length;
-                context.Response.SendResponse(buffer);
+                context.Response.ContentType = "application/json";
+                context.Response.ContentLength = json.Length;
+                context.Response.WriteAsync(json);
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/update(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/update/([^/]+)(/|)$")]
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/aas/([^/]+)/time/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/aas/([^/]+)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/aas/([^/]+)/update(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/diff/aas/([^/]+)/update/([^/]+)(/|)$")]
 
-            public IHttpContext GetDiff(IHttpContext context)
+            public HttpContext GetDiff(HttpContext context)
             {
                 DateTime minimumDate = new DateTime();
                 bool updateOnly = false;
@@ -639,15 +615,8 @@ namespace AasxRestServerLibrary
                 string searchPath = "";
 
                 var queryString = context.Request.QueryString;
-                string refresh = queryString["refresh"];
-                if (refresh != null && refresh != "")
-                {
-                    context.Response.Headers.Remove("Refresh");
-                    context.Response.Headers.Add("Refresh", refresh);
-                }
-
-                string auto = queryString["auto"];
-                if (auto != null && auto != "")
+                string auto = queryString.Value;
+                if (auto != null && auto == "auto")
                 {
                     try
                     {
@@ -657,7 +626,7 @@ namespace AasxRestServerLibrary
                     catch { }
                 }
 
-                string restPath = context.Request.PathInfo;
+                string restPath = context.Request.Path;
 
                 int aasIndex = -1;
 
@@ -809,10 +778,9 @@ namespace AasxRestServerLibrary
 
                 diffText += "</tbody></table>";
 
-                context.Response.ContentType = ContentType.HTML;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = diffText.Length;
-                context.Response.SendResponse(diffText);
+                context.Response.ContentType = "application/html";
+                context.Response.ContentLength = diffText.Length;
+                context.Response.WriteAsync(diffText);
 
                 return context;
             }
@@ -891,99 +859,87 @@ namespace AasxRestServerLibrary
 
             // get authserver
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authserver(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/authserver(/|)$")]
 
-            public IHttpContext GetAuthserver(IHttpContext context)
+            public HttpContext GetAuthserver(HttpContext context)
             {
                 var txt = AasxServer.Program.redirectServer;
 
-                context.Response.ContentType = ContentType.TEXT;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = txt.Length;
-                context.Response.SendResponse(txt);
+                context.Response.ContentType = "application/text";
+                context.Response.ContentLength = txt.Length;
+                context.Response.WriteAsync(txt);
 
                 return context;
             }
 
-            // Basic AAS + Asset 
+            // Basic AAS + Asset
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv)(/|)$")]
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv)(/|)$")]
 
-            public IHttpContext GetAasAndAsset(IHttpContext context)
+            public HttpContext GetAasAndAsset(HttpContext context)
             {
-                if (context.Request.PathInfo.Contains("geteventmessages"))
+                if (context.Request.Path.Value.Contains("geteventmessages"))
                 {
                     return GetEventMessages(context);
                 }
 
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
+                if (helper.PathEndsWith(context, "thumbnail"))
                 {
-                    if (helper.PathEndsWith(context, "thumbnail"))
-                    {
-                        helper.EvalGetAasThumbnail(context, m.Groups[1].ToString());
-                    }
-                    else
-                    if (helper.PathEndsWith(context, "aasenv"))
-                    {
-                        helper.EvalGetAasEnv(context, m.Groups[1].ToString());
-                    }
-                    else
-                    {
-                        var complete = helper.PathEndsWith(context, "complete");
-                        helper.EvalGetAasAndAsset(context, m.Groups[1].ToString(), complete: complete);
-                    }
+                    helper.EvalGetAasThumbnail(context, m.Groups[1].ToString());
                 }
+                else
+                if (helper.PathEndsWith(context, "aasenv"))
+                {
+                    helper.EvalGetAasEnv(context, m.Groups[1].ToString());
+                }
+                else
+                {
+                    var complete = helper.PathEndsWith(context, "complete");
+                    helper.EvalGetAasAndAsset(context, m.Groups[1].ToString(), complete: complete);
+                }
+
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas(/|)$")]
-            public IHttpContext PutAas(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aas(/|)$")]
+            public HttpContext PutAas(HttpContext context)
             {
                 helper.EvalPutAas(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/server(/|)$")]
-            public IHttpContext PutAasxOnServer(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aasx/server(/|)$")]
+            public HttpContext PutAasxOnServer(HttpContext context)
             {
                 helper.EvalPutAasxOnServer(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/filesystem/([^/]+)(/|)$")]
-            public IHttpContext PutAasxToFileSystem(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aasx/filesystem/([^/]+)(/|)$")]
+            public HttpContext PutAasxToFileSystem(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalPutAasxToFilesystem(context, m.Groups[1].ToString());
-                }
+                helper.EvalPutAasxToFilesystem(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/([^/]+)(/|)$")]
-            public IHttpContext DeleteAasAndAsset(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.DELETE, Path = "^/aas/([^/]+)(/|)$")]
+            public HttpContext DeleteAasAndAsset(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalDeleteAasAndAsset(context, m.Groups[1].ToString(), deleteAsset: true);
-                }
+                helper.EvalDeleteAasAndAsset(context, m.Groups[1].ToString(), deleteAsset: true);
                 return context;
             }
 
             // Handles
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/handles/identification(/|)$")]
-            public IHttpContext GetHandlesIdentification(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/handles/identification(/|)$")]
+            public HttpContext GetHandlesIdentification(HttpContext context)
             {
                 helper.EvalGetHandlesIdentification(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/handles/identification(/|)$")]
-            public IHttpContext PostHandlesIdentification(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.POST, Path = "^/handles/identification(/|)$")]
+            public HttpContext PostHandlesIdentification(HttpContext context)
             {
                 helper.EvalPostHandlesIdentification(context);
                 return context;
@@ -991,8 +947,8 @@ namespace AasxRestServerLibrary
 
             // Authenticate
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authenticateGuest(/|)$")]
-            public IHttpContext GetAuthenticate(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/authenticateGuest(/|)$")]
+            public HttpContext GetAuthenticate(HttpContext context)
             {
                 helper.EvalGetAuthenticateGuest(context);
                 return context;
@@ -1000,22 +956,22 @@ namespace AasxRestServerLibrary
 
             // Authenticate User
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateUser(/|)$")]
-            public IHttpContext PostAuthenticateUser(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.POST, Path = "^/authenticateUser(/|)$")]
+            public HttpContext PostAuthenticateUser(HttpContext context)
             {
                 helper.EvalPostAuthenticateUser(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert1(/|)$")]
-            public IHttpContext PostAuthenticateCert1(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.POST, Path = "^/authenticateCert1(/|)$")]
+            public HttpContext PostAuthenticateCert1(HttpContext context)
             {
                 helper.EvalPostAuthenticateCert1(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert2(/|)$")]
-            public IHttpContext PostAuthenticateCert2(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.POST, Path = "^/authenticateCert2(/|)$")]
+            public HttpContext PostAuthenticateCert2(HttpContext context)
             {
                 helper.EvalPostAuthenticateCert2(context);
                 return context;
@@ -1023,104 +979,63 @@ namespace AasxRestServerLibrary
 
             // Server
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/profile(/|)$")]
-            public IHttpContext GetServerProfile(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/server/profile(/|)$")]
+            public HttpContext GetServerProfile(HttpContext context)
             {
                 helper.EvalGetServerProfile(context);
                 return context;
             }
 
             // OZ
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listaas(/|)$")]
-            public IHttpContext GetServerAASX(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/server/listaas(/|)$")]
+            public HttpContext GetServerAASX(HttpContext context)
             {
                 helper.EvalGetListAAS(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$")]
-            public IHttpContext AssetId(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = @"^/assetid/(\d+)(/|)$")]
+            public HttpContext AssetId(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalAssetId(context, Int32.Parse(m.Groups[1].ToString()));
-                }
-
+                helper.EvalAssetId(context, Int32.Parse(m.Groups[1].ToString()));
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
-            public IHttpContext GetAASX(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = @"^/server/getaasx/(\d+)(/|)$")]
+            public HttpContext GetAASX(HttpContext context)
             {
-
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalGetAASX(context, Int32.Parse(m.Groups[1].ToString()));
-                    return context;
-                }
+                helper.EvalGetAASX(context, Int32.Parse(m.Groups[1].ToString()));
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
-            public IHttpContext PutAASX(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = @"^/server/getaasx/(\d+)(/|)$")]
+            public HttpContext PutAASX(HttpContext context)
             {
-
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    // TODO (MIHO/AO, 2021-01-07): enable productive code instead of dump test code
-                    // bool test = true;
-                    bool test = false;
-                    if (test)
-                    {
-                        // very dump test code
-                        var req = context.Request;
-                        if (req.ContentLength64 > 0
-                            && req.Payload != null)
-                        {
-                            var ba = Convert.FromBase64String(req.Payload);
-                            File.WriteAllBytes("test.aasx", ba);
-                        }
-                    }
-                    else
-                    {
-                        // here goes the official code
-                        helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
-                    }
-                    return context;
-                }
+                helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasxbyassetid/([^/]+)(/|)$")]
-            public IHttpContext GetAASX2ByAssetId(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = @"^/server/getaasxbyassetid/([^/]+)(/|)$")]
+            public HttpContext GetAASX2ByAssetId(HttpContext context)
             {
                 helper.EvalGetAasxByAssetId(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx2/(\d+)(/|)$")]
-            public IHttpContext GetAASX2(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = @"^/server/getaasx2/(\d+)(/|)$")]
+            public HttpContext GetAASX2(HttpContext context)
             {
-
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalGetAASX2(context, Int32.Parse(m.Groups[1].ToString()));
-                    return context;
-                }
+                helper.EvalGetAASX2(context, Int32.Parse(m.Groups[1].ToString()));
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getfile/(\d+)/aasx/(([^/]+)/){0,99}([^/]+)$")]
-            public IHttpContext GetFile(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = @"^/server/getfile/(\d+)/aasx/(([^/]+)/){0,99}([^/]+)$")]
+            public HttpContext GetFile(HttpContext context)
             {
                 int index = -1;
                 string path = "/aasx";
 
-                string[] split = context.Request.PathInfo.Split(new Char[] { '/' });
+                string[] split = context.Request.Path.Value.Split(new Char[] { '/' });
                 if (split[1].ToLower() == "server" && split[2].ToLower() == "getfile")
                 {
                     index = Int32.Parse(split[3]);
@@ -1137,308 +1052,204 @@ namespace AasxRestServerLibrary
 
             // Assets
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/assets/([^/]+)(/|)$")]
-            public IHttpContext GetAssets(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/assets/([^/]+)(/|)$")]
+            public HttpContext GetAssets(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalGetAssetLinks(context, m.Groups[1].ToString());
-                }
+                helper.EvalGetAssetLinks(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/assets(/|)$")]
-            public IHttpContext PutAssets(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/assets(/|)$")]
+            public HttpContext PutAssets(HttpContext context)
             {
                 helper.EvalPutAsset(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/asset(/|)$")]
-            public IHttpContext PutAssetsToAas(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aas/(id|([^/]+))/asset(/|)$")]
+            public HttpContext PutAssetsToAas(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalPutAssetToAas(context, m.Groups[1].ToString());
-                }
+                helper.EvalPutAssetToAas(context, m.Groups[1].ToString());
                 return context;
             }
 
             // List of Submodels
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels(/|)$")]
-            public IHttpContext GetSubmodels(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/submodels(/|)$")]
+            public HttpContext GetSubmodels(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalGetSubmodels(context, m.Groups[1].ToString());
-                }
+                helper.EvalGetSubmodels(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/submodels(/|)$")]
-            public IHttpContext PutSubmodel(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aas/(id|([^/]+))/submodels(/|)$")]
+            public HttpContext PutSubmodel(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalPutSubmodel(context, m.Groups[1].ToString());
-                }
+                helper.EvalPutSubmodel(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(/|)$")]
-            public IHttpContext DeleteSubmodel(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.DELETE, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)(/|)$")]
+            public HttpContext DeleteSubmodel(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 4)
-                {
-                    helper.EvalDeleteSubmodel(context, m.Groups[1].ToString(), m.Groups[3].ToString());
-                }
+                helper.EvalDeleteSubmodel(context, m.Groups[1].ToString(), m.Groups[3].ToString());
                 return context;
             }
 
             // Contents of a Submodel
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/values)(/|)$")]
-            public IHttpContext GetSubmodelContents(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/values)(/|)$")]
+            public HttpContext GetSubmodelContents(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 4)
-                {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
+                var aasid = m.Groups[1].ToString();
+                var smid = m.Groups[3].ToString();
 
-                    if (helper.PathEndsWith(context, "values"))
-                    {
-                        helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids: null);
-                    }
-                    else
-                    {
-                        var deep = helper.PathEndsWith(context, "deep");
-                        var complete = helper.PathEndsWith(context, "complete");
-                        helper.EvalGetSubmodelContents(context, aasid, smid, deep: deep || complete, complete: complete);
-                    }
+                if (helper.PathEndsWith(context, "values"))
+                {
+                    helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids: null);
                 }
+                else
+                {
+                    var deep = helper.PathEndsWith(context, "deep");
+                    var complete = helper.PathEndsWith(context, "complete");
+                    helper.EvalGetSubmodelContents(context, aasid, smid, deep: deep || complete, complete: complete);
+                }
+
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/table(/|)$")]
-            public IHttpContext GetSubmodelContentsAsTable(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)/table(/|)$")]
+            public HttpContext GetSubmodelContentsAsTable(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 4)
-                {
-                    helper.EvalGetSubmodelContentsAsTable(context, m.Groups[1].ToString(), m.Groups[3].ToString());
-                }
+                helper.EvalGetSubmodelContentsAsTable(context, m.Groups[1].ToString(), m.Groups[3].ToString());
                 return context;
             }
 
             // Contents of SubmodelElements
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
-            public IHttpContext GetSubmodelElementsContents(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
+            public HttpContext GetSubmodelElementsContents(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo.Replace("submodel/submodelElements", "elements"));
-                if (m.Success && m.Groups.Count >= 6 && m.Groups[5].Captures != null && m.Groups[5].Captures.Count >= 1)
+                var aasid = m.Groups[1].ToString();
+                var smid = m.Groups[3].ToString();
+                var elemids = new List<string>();
+                for (int i = 0; i < m.Groups[5].Captures.Count; i++)
+                    elemids.Add(m.Groups[5].Captures[i].ToString());
+
+                // special case??
+                if (helper.PathEndsWith(context, "file"))
                 {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
-                    var elemids = new List<string>();
+                    helper.EvalGetSubmodelElementsFile(context, aasid, smid, elemids.ToArray());
+                }
+                else
+                if (helper.PathEndsWith(context, "blob"))
+                {
+                    helper.EvalGetSubmodelElementsBlob(context, aasid, smid, elemids.ToArray());
+                }
+                else
+                if (helper.PathEndsWith(context, "values") || helper.PathEndsWith(context, "value"))
+                {
+                    helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids.ToArray());
+                }
+                else
+                if (helper.PathEndsWith(context, "events"))
+                {
+                    context.Response.StatusCode = (int) HttpStatusCode.NotImplemented;
+                }
+                else
+                {
+                    // more options
+                    bool complete = false, deep = false;
+                    if (helper.PathEndsWith(context, "deep"))
+                        deep = true;
+                    if (helper.PathEndsWith(context, "complete"))
+                    {
+                        deep = true;
+                        complete = true;
+                    }
+
+                    helper.EvalGetSubmodelElementContents(context, aasid, smid, elemids.ToArray(), deep, complete);
+                }
+            }
+
+            //[RestRoute(HttpMethod = HttpMethod.POST, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?/invoke(/|)$")]
+            public HttpContext PostSubmodelElementsContents(HttpContext context)
+            {
+                var aasid = m.Groups[1].ToString();
+                var smid = m.Groups[3].ToString();
+                var elemids = new List<string>();
+                for (int i = 0; i < m.Groups[5].Captures.Count; i++)
+                    elemids.Add(m.Groups[5].Captures[i].ToString());
+
+                // special case??
+                if (helper.PathEndsWith(context, "invoke"))
+                {
+                    helper.EvalInvokeSubmodelElementOperation(context, aasid, smid, elemids.ToArray());
+                }
+
+                return context;
+            }
+
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            public HttpContext PutSubmodelElementsContents(HttpContext context)
+            {
+                var aasid = m.Groups[1].ToString();
+                var smid = m.Groups[3].ToString();
+                var elemids = new List<string>();
+                if (m.Groups[5].Captures != null)
                     for (int i = 0; i < m.Groups[5].Captures.Count; i++)
                         elemids.Add(m.Groups[5].Captures[i].ToString());
 
-                    // special case??
-                    if (helper.PathEndsWith(context, "file"))
-                    {
-                        helper.EvalGetSubmodelElementsFile(context, aasid, smid, elemids.ToArray());
-                    }
-                    else
-                    if (helper.PathEndsWith(context, "blob"))
-                    {
-                        helper.EvalGetSubmodelElementsBlob(context, aasid, smid, elemids.ToArray());
-                    }
-                    else
-                    if (helper.PathEndsWith(context, "values") || helper.PathEndsWith(context, "value"))
-                    {
-                        helper.EvalGetSubmodelAllElementsProperty(context, aasid, smid, elemids.ToArray());
-                    }
-                    else
-                    if (helper.PathEndsWith(context, "events"))
-                    {
-                        context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.NotImplemented, $"Events currently not implented.");
-                    }
-                    else
-                    {
-                        // more options
-                        bool complete = false, deep = false;
-                        if (helper.PathEndsWith(context, "deep"))
-                            deep = true;
-                        if (helper.PathEndsWith(context, "complete"))
-                        {
-                            deep = true;
-                            complete = true;
-                        }
+                helper.EvalPutSubmodelElementContents(context, aasid, smid, elemids.ToArray());
 
-                        helper.EvalGetSubmodelElementContents(context, aasid, smid, elemids.ToArray(), deep, complete);
-                    }
-                }
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?/invoke(/|)$")]
-            public IHttpContext PostSubmodelElementsContents(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.DELETE, Path = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            public HttpContext DeleteSubmodelElementsContents(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 6 && m.Groups[5].Captures != null && m.Groups[5].Captures.Count >= 1)
-                {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
-                    var elemids = new List<string>();
+                var aasid = m.Groups[1].ToString();
+                var smid = m.Groups[3].ToString();
+                var elemids = new List<string>();
+                if (m.Groups[5].Captures != null)
                     for (int i = 0; i < m.Groups[5].Captures.Count; i++)
                         elemids.Add(m.Groups[5].Captures[i].ToString());
 
-                    // special case??
-                    if (helper.PathEndsWith(context, "invoke"))
-                    {
-                        helper.EvalInvokeSubmodelElementOperation(context, aasid, smid, elemids.ToArray());
-                    }
-                }
-                return context;
-            }
+                helper.EvalDeleteSubmodelElementContents(context, aasid, smid, elemids.ToArray());
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
-            public IHttpContext PutSubmodelElementsContents(IHttpContext context)
-            {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 6)
-                {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
-                    var elemids = new List<string>();
-                    if (m.Groups[5].Captures != null)
-                        for (int i = 0; i < m.Groups[5].Captures.Count; i++)
-                            elemids.Add(m.Groups[5].Captures[i].ToString());
-
-                    helper.EvalPutSubmodelElementContents(context, aasid, smid, elemids.ToArray());
-                }
-                return context;
-            }
-
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
-            public IHttpContext DeleteSubmodelElementsContents(IHttpContext context)
-            {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 6)
-                {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
-                    var elemids = new List<string>();
-                    if (m.Groups[5].Captures != null)
-                        for (int i = 0; i < m.Groups[5].Captures.Count; i++)
-                            elemids.Add(m.Groups[5].Captures[i].ToString());
-
-                    helper.EvalDeleteSubmodelElementContents(context, aasid, smid, elemids.ToArray());
-                }
                 return context;
             }
 
             // concept descriptions
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/cds(/|)$")]
-            public IHttpContext GetCds(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/cds(/|)$")]
+            public HttpContext GetCds(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalGetAllCds(context, m.Groups[1].ToString());
-                }
+                helper.EvalGetAllCds(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/cds(/|)$")]
-            public IHttpContext PutConceptDescription(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.PUT, Path = "^/aas/(id|([^/]+))/cds(/|)$")]
+            public HttpContext PutConceptDescription(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 2)
-                {
-                    helper.EvalPutCd(context, m.Groups[1].ToString());
-                }
+                helper.EvalPutCd(context, m.Groups[1].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$")]
-            public IHttpContext GetSpecificCd(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$")]
+            public HttpContext GetSpecificCd(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 4)
-                {
-                    helper.EvalGetCdContents(context, m.Groups[1].ToString(), m.Groups[3].ToString());
-                }
+                helper.EvalGetCdContents(context, m.Groups[1].ToString(), m.Groups[3].ToString());
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$")]
-            public IHttpContext DeleteSpecificCd(IHttpContext context)
+            //[RestRoute(HttpMethod = HttpMethod.DELETE, Path = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$")]
+            public HttpContext DeleteSpecificCd(HttpContext context)
             {
-                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 4)
-                {
-                    helper.EvalDeleteSpecificCd(context, m.Groups[1].ToString(), m.Groups[3].ToString());
-                }
+                helper.EvalDeleteSpecificCd(context, m.Groups[1].ToString(), m.Groups[3].ToString());
                 return context;
             }
-
-        }
-
-        private static RestServer startedRestServer = null;
-
-        public static void Start(AdminShellPackageEnv[] packages, string host, string port, bool https, GrapevineLoggerSuper logger = null)
-        {
-            // if running, stop old server
-            Stop();
-
-            var helper = new AasxHttpContextHelper();
-            helper.Packages = packages;
-            TestResource.helper = helper;
-
-            var serverSettings = new ServerSettings();
-            serverSettings.Host = host;
-            serverSettings.Port = port;
-            serverSettings.UseHttps = https;
-
-            if (logger != null)
-                logger.Warn("Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the" +
-                    "specification Details of the Administration Shell. The hereby stated approach is solely the opinion of its author(s).");
-
-
-            startedRestServer = new RestServer(serverSettings);
-            {
-                if (logger != null)
-                    startedRestServer.Logger = logger;
-                startedRestServer.Start();
-                Console.WriteLine(startedRestServer.ListenerPrefix);
-            }
-
-            // tail of the messages, again
-            if (logger != null)
-                logger.Warn("Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the" +
-                    "specification Details of the Administration Shell. The hereby stated approach is solely the opinion of its author(s).");
-        }
-
-        public static void Stop()
-        {
-            if (startedRestServer != null)
-                try
-                {
-                    startedRestServer.Stop();
-                    startedRestServer = null;
-                }
-                catch { }
         }
     }
 }

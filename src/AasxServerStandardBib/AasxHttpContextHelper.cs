@@ -1,12 +1,8 @@
 ﻿using AasxServer;
 using AdminShellNS;
-using Grapevine.Interfaces.Server;
-using Grapevine.Server;
-using Grapevine.Server.Attributes;
-using Grapevine.Shared;
 using Jose;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -14,6 +10,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -49,54 +46,36 @@ namespace AasxRestServerLibrary
             return path.Trim().ToLower().TrimEnd(new char[] { '/' }).EndsWith(tag);
         }
 
-        public bool PathEndsWith(Grapevine.Interfaces.Server.IHttpContext context, string tag)
+        public bool PathEndsWith(HttpContext context, string tag)
         {
-            return PathEndsWith(context.Request.PathInfo, tag);
+            return PathEndsWith(context.Request.Path.Value, tag);
         }
 
         // see also: https://stackoverflow.com/questions/33619469/how-do-i-write-a-regular-expression-to-route-traffic-with-grapevine-when-my-requ
 
-        public Match PathInfoRegexMatch(MethodBase methodWithRestRoute, string input)
-        {
-            if (methodWithRestRoute == null)
-                return null;
-            string piRegex = null;
-            foreach (var attr in methodWithRestRoute.GetCustomAttributes<RestRoute>())
-                if (attr.PathInfo != null)
-                    piRegex = attr.PathInfo;
-            if (piRegex == null)
-                return null;
-            var m = Regex.Match(input, piRegex);
-            return m;
-        }
-
-        public List<AasxHttpHandleIdentification> CreateHandlesFromQueryString(System.Collections.Specialized.NameValueCollection queryStrings)
+        public List<AasxHttpHandleIdentification> CreateHandlesFromQueryString(string queryString)
         {
             // start
             var res = new List<AasxHttpHandleIdentification>();
-            if (queryStrings == null)
+            if (queryString == null)
                 return res;
 
-            // over all query strings
-            foreach (var kr in queryStrings.AllKeys)
+            try
             {
-                try
+                var k = queryString.Trim().ToLower();
+                var v = k;
+                if (k.StartsWith("q") && k.Length > 1 && v.Contains(','))
                 {
-                    var k = kr.Trim().ToLower();
-                    var v = queryStrings[k];
-                    if (k.StartsWith("q") && k.Length > 1 && v.Contains(','))
+                    var vl = v.Split(',');
+                    if (vl.Length == 2)
                     {
-                        var vl = v.Split(',');
-                        if (vl.Length == 2)
-                        {
-                            var id = new AdminShell.Identification(vl[0], vl[1]);
-                            var h = new AasxHttpHandleIdentification(id, "@" + k);
-                            res.Add(h);
-                        }
+                        var id = new AdminShell.Identification(vl[0], vl[1]);
+                        var h = new AasxHttpHandleIdentification(id, "@" + k);
+                        res.Add(h);
                     }
                 }
-                catch { }
             }
+            catch { }
 
             // done
             return res;
@@ -144,7 +123,7 @@ namespace AasxRestServerLibrary
 
         #region // Access package structures
 
-        public FindAasReturn FindAAS(string aasid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public FindAasReturn FindAAS(string aasid, string queryString = null, string rawUrl = null)
         {
             FindAasReturn findAasReturn = new FindAasReturn();
 
@@ -192,29 +171,9 @@ namespace AasxRestServerLibrary
             }
 
             return findAasReturn;
-
-
-            // trivial
-            /*
-            if (Packages[0] == null || Packages[0].AasEnv == null || Packages[0].AasEnv.AdministrationShells == null || Packages[0].AasEnv.AdministrationShells.Count < 1)
-                return null;
-
-            // default aas?
-            if (aasid == null || aasid.Trim() == "" || aasid.Trim().ToLower() == "id")
-                return Packages[0].AasEnv.AdministrationShells[0];
-
-
-            var specialHandles = this.CreateHandlesFromRawUrl(rawUrl);
-            var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(aasid, specialHandles);
-            if (handleId != null && handleId.identification != null)
-                return Packages[0].AasEnv.FindAAS(handleId.identification);
-
-            // no, iterate over idShort
-            return Packages[0].AasEnv.FindAAS(aasid);
-            */
         }
 
-        public AdminShell.SubmodelRef FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.SubmodelRef FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, string queryString = null, string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
@@ -244,7 +203,7 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public AdminShell.Submodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.Submodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, string queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
@@ -270,7 +229,7 @@ namespace AasxRestServerLibrary
         }
 
 
-        public AdminShell.Submodel FindSubmodelWithinAas(string aasid, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.Submodel FindSubmodelWithinAas(string aasid, string smid, string queryStrings = null, string rawUrl = null)
         {
             AdminShell.AdministrationShell aas = null;
             int iPackage = -1;
@@ -336,7 +295,7 @@ namespace AasxRestServerLibrary
 
 
 
-        public AdminShell.Submodel FindSubmodelWithoutAas(string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.Submodel FindSubmodelWithoutAas(string smid, string queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[0] == null || Packages[0].AasEnv == null || smid == null || smid.Trim() == "")
@@ -359,7 +318,7 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public AdminShell.ConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public AdminShell.ConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, string queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || cdid == null || cdid.Trim() == "")
@@ -500,71 +459,52 @@ namespace AasxRestServerLibrary
             }
         }
 
-        protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
+        protected static void SendJsonResponse(HttpContext context, object obj, IContractResolver contractResolver = null)
         {
             var settings = new JsonSerializerSettings();
             if (contractResolver != null)
                 settings.ContractResolver = contractResolver;
             var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-            var buffer = context.Request.ContentEncoding.GetBytes(json);
-            var length = buffer.Length;
-
-            var queryString = context.Request.QueryString;
-            string refresh = queryString["refresh"];
-            if (refresh != null && refresh != "")
-            {
-                context.Response.Headers.Remove("Refresh");
-                context.Response.Headers.Add("Refresh", refresh);
-            }
 
             context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
             context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
             context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
             context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
-            context.Response.ContentType = ContentType.JSON;
-            context.Response.ContentEncoding = Encoding.UTF8;
-            context.Response.ContentLength64 = length;
-            context.Response.SendResponse(buffer);
+            context.Response.ContentType = "application/json";
+
+            context.Response.ContentLength = json.Length;
+            context.Response.WriteAsync(json);
         }
 
-        protected static void SendTextResponse(Grapevine.Interfaces.Server.IHttpContext context, string txt, string mimeType = null)
+        protected static void SendTextResponse(HttpContext context, string txt, string mimeType = null)
         {
-            var queryString = context.Request.QueryString;
-            string refresh = queryString["refresh"];
-            if (refresh != null && refresh != "")
-            {
-                context.Response.Headers.Remove("Refresh");
-                context.Response.Headers.Add("Refresh", refresh);
-            }
+            context.Response.ContentType = "application/text";
 
-            context.Response.ContentType = ContentType.TEXT;
             if (mimeType != null)
-                context.Response.Advanced.ContentType = mimeType;
-            context.Response.ContentEncoding = Encoding.UTF8;
-            context.Response.ContentLength64 = txt.Length;
-            context.Response.SendResponse(txt);
+                context.Response.ContentType = mimeType;
+
+            context.Response.ContentLength = txt.Length;
+            context.Response.WriteAsync(txt);
         }
 
-        protected static void SendStreamResponse(IHttpContext context, Stream stream,
+        protected static void SendStreamResponse(HttpContext context, Stream stream,
             string headerAttachmentFileName = null)
         {
-            context.Response.ContentType = ContentType.APPLICATION;
-            //// context.Response.SendChunked = true;
-            context.Response.ContentLength64 = stream.Length;
+            context.Response.ContentType = "application";
+            context.Response.ContentLength = stream.Length;
 
             if (headerAttachmentFileName != null)
-                context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
+                context.Response.Headers.Add("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
 
-            stream.CopyTo(context.Response.Advanced.OutputStream);
-            context.Response.Advanced.Close();
+            stream.CopyTo(context.Response.Body);
+            stream.Close();
         }
 
-        protected static void SendRedirectResponse(Grapevine.Interfaces.Server.IHttpContext context, string redirectUrl)
+        protected static void SendRedirectResponse(HttpContext context, string redirectUrl)
         {
-            context.Response.AppendHeader("redirectInfo", "URL");
+            context.Response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
             context.Response.Redirect(redirectUrl);
-            context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, redirectUrl);
         }
 
 
@@ -572,7 +512,7 @@ namespace AasxRestServerLibrary
 
         #region AAS and Asset
 
-        public void EvalGetAasAndAsset(IHttpContext context, string aasid, bool deep = false, bool complete = false)
+        public void EvalGetAasAndAsset(HttpContext context, string aasid, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -593,10 +533,10 @@ namespace AasxRestServerLibrary
             }
 
             // access the first AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with id '{aasid}' found.");
                 return;
             }
 
@@ -609,11 +549,11 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res, cr);
         }
 
-        public void EvalGetAasEnv(IHttpContext context, string aasid)
+        public void EvalGetAasEnv(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -633,15 +573,15 @@ namespace AasxRestServerLibrary
 
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
             // access the first AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with id '{aasid}' found.");
                 return;
             }
 
@@ -651,9 +591,9 @@ namespace AasxRestServerLibrary
             {
                 copyenv = AdminShell.AdministrationShellEnv.CreateFromExistingEnv(this.Packages[findAasReturn.iPackage].AasEnv, filterForAas: new List<AdminShell.AdministrationShell>(new AdminShell.AdministrationShell[] { findAasReturn.aas }));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.BadRequest, $"Cannot filter aas envioronment: {ex.Message}.");
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;//, $"Cannot filter aas envioronment: {ex.Message}.");
                 return;
             }
 
@@ -675,16 +615,16 @@ namespace AasxRestServerLibrary
                     jsonwriter.Close();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot serialize and send aas envioronment: {ex.Message}.");
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;//, $"Cannot serialize and send aas envioronment: {ex.Message}.");
                 return;
             }
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
         }
 
 
-        public void EvalGetAasThumbnail(IHttpContext context, string aasid)
+        public void EvalGetAasThumbnail(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -704,15 +644,15 @@ namespace AasxRestServerLibrary
 
             if (this.Packages[0] == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
             // access the first AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with id '{aasid}' found.");
                 return;
             }
 
@@ -722,17 +662,17 @@ namespace AasxRestServerLibrary
             var thumbStream = this.Packages[findAasReturn.iPackage].GetLocalThumbnailStream(ref thumbUri);
             if (thumbStream == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No thumbnail available in package.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No thumbnail available in package.");
                 return;
             }
 
             // return as FILE
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendStreamResponse(context, thumbStream, Path.GetFileName(thumbUri.ToString() ?? ""));
             thumbStream.Close();
         }
 
-        public void EvalPutAas(IHttpContext context)
+        public void EvalPutAas(HttpContext context)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -751,9 +691,9 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
@@ -761,23 +701,23 @@ namespace AasxRestServerLibrary
             AdminShell.AdministrationShell aas = null;
             try
             {
-                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>(context.Request.Payload);
+                aas = JsonConvert.DeserializeObject<AdminShell.AdministrationShell>(context.Request.Body);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                 return;
             }
 
             // need id for idempotent behaviour
             if (aas.identification == null)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Identification of entity is (null); PUT cannot be performed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Identification of entity is (null); PUT cannot be performed.");
                 return;
             }
 
             // datastructure update
-            context.Server.Logger.Debug($"Putting AdministrationShell with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
+            Console.WriteLine($"Putting AdministrationShell with idShort {aas.idShort ?? "--"} and id {aas.identification?.ToString() ?? "--"}");
 
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
@@ -812,11 +752,11 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "Error: not added since datastructure completely filled already");
         }
 
-        public void EvalPutAasxOnServer(IHttpContext context)
+        public void EvalPutAasxOnServer(HttpContext context)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -834,18 +774,18 @@ namespace AasxRestServerLibrary
                 res.confirm = "Authorization = " + accessrights;
             }
 
-            Console.WriteLine("EvalPutAasxOnServer: " + context.Request.Payload);
+            Console.WriteLine("EvalPutAasxOnServer: " + context.Request.Body);
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
-            AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
+            AasxFileInfo file = JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Body);
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;//, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
                 return;
             }
 
@@ -854,9 +794,9 @@ namespace AasxRestServerLibrary
             {
                 aasEnv = new AdminShellPackageEnv(file.path, true);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot open {file.path}. Aborting... {ex.Message}");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot open {file.path}. Aborting... {ex.Message}");
                 return;
             }
 
@@ -864,7 +804,7 @@ namespace AasxRestServerLibrary
             {
                 if (file.instancesIdentificationSuffix == null)
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Received no identification suffix. Aborting...");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Received no identification suffix. Aborting...");
                     return;
                 }
                 else
@@ -910,13 +850,13 @@ namespace AasxRestServerLibrary
             {
                 aasIdShort = aasEnv.AasEnv.AdministrationShells[0].idShort;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot find idShort in {file.path}. Aborting... {ex.Message}");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot find idShort in {file.path}. Aborting... {ex.Message}");
                 return;
             }
 
-            var findAasReturn = this.FindAAS(aasIdShort, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasIdShort, context.Request.QueryString.Value, context.Request.Path.Value);
             Console.WriteLine("FindAAS() with idShort \"" + aasIdShort + "\" yields package-index " + findAasReturn.iPackage);
 
             if (findAasReturn.aas == null)
@@ -927,12 +867,12 @@ namespace AasxRestServerLibrary
                     {
                         this.Packages[envi] = aasEnv;
                         Program.envFileName[envi] = file.path;
-                        context.Response.StatusCode = HttpStatusCode.Ok;
+                        context.Response.StatusCode = (int) HttpStatusCode.OK;
                         SendTextResponse(context, "OK (new, index=" + envi + ")");
                         return;
                     }
                 }
-                context.Response.StatusCode = HttpStatusCode.NotFound;
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;
                 SendTextResponse(context, "Failed: Server used to capacity.");
                 return;
             }
@@ -940,13 +880,13 @@ namespace AasxRestServerLibrary
             {
                 Packages[findAasReturn.iPackage] = aasEnv;
                 Program.envFileName[findAasReturn.iPackage] = file.path;
-                context.Response.StatusCode = HttpStatusCode.Ok;
+                context.Response.StatusCode = (int) HttpStatusCode.OK;
                 SendTextResponse(context, "OK (update, index=" + findAasReturn.iPackage + ")");
                 return;
             }
         }
 
-        public void EvalPutAasxToFilesystem(IHttpContext context, string aasid)
+        public void EvalPutAasxToFilesystem(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -966,26 +906,26 @@ namespace AasxRestServerLibrary
 
             Console.WriteLine("EvalPutAasxToFilesystem");
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
-            AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
+            AasxFileInfo file = JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Body);
             Console.WriteLine("EvalPutAasxToFilesystem: " + JsonConvert.SerializeObject(file.path));
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
                 return;
             }
 
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             Console.WriteLine("FindAAS() with idShort \"" + aasid + "\" yields package-index " + findAasReturn.iPackage);
 
             if (findAasReturn.aas == null)
             {
-                context.Response.StatusCode = HttpStatusCode.NotFound;
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;
                 SendTextResponse(context, "Failed: AAS not found.");
                 return;
             }
@@ -995,25 +935,25 @@ namespace AasxRestServerLibrary
                 {
                     Packages[findAasReturn.iPackage].SaveAs(file.path, false, AdminShellPackageEnv.PreferredFormat.Json, null);
                     Program.envFileName[findAasReturn.iPackage] = file.path;
-                    context.Response.StatusCode = HttpStatusCode.Ok;
+                    context.Response.StatusCode = (int) HttpStatusCode.OK;
                     SendTextResponse(context, "OK (saved)");
                     return;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save in {file.path}. Aborting... {ex.Message}");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot save in {file.path}. Aborting... {ex.Message}");
                     return;
                 }
             }
         }
 
-        public void EvalPutAasxReplacePackage(IHttpContext context, string aasid)
+        public void EvalPutAasxReplacePackage(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
             string accessrights = null;
 
-            var aasInfo = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var aasInfo = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             // check authentication
             if (withAuthentification)
@@ -1030,9 +970,9 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentLength64 < 1)
+            if (context.Request.Body == null || context.Request.ContentLength < 1)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload for replace AASX.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body for replace AASX.");
                 return;
             }
 
@@ -1041,23 +981,9 @@ namespace AasxRestServerLibrary
             var packIndex = aasInfo.iPackage;
             if (packIndex < 0 || packIndex >= Packages.Length)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"AASX package to be replaced not found. Aborting!");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"AASX package to be replaced not found. Aborting!");
                 return;
             }
-
-            /*
-            if (withAuthentification)
-            {
-                string idshort = AasxServer.Program.env[packIndex].AasEnv.AdministrationShells[0].idShort;
-                string aasRights = "NONE";
-                if (securityRightsAAS.Count != 0)
-                    aasRights = securityRightsAAS[idshort];
-                if (!checkAccessRights(context, accessrights, aasRights))
-                {
-                    return;
-                }
-            }
-            */
 
             var packFn = Packages[packIndex].Filename;
             Console.WriteLine($"Will replace AASX package on server: {packFn}");
@@ -1066,12 +992,12 @@ namespace AasxRestServerLibrary
             var tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
             try
             {
-                var ba = Convert.FromBase64String(context.Request.Payload);
+                var ba = Convert.FromBase64String(context.Request.Body);
                 File.WriteAllBytes(tempFn, ba);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot save AASX temporarily in {tempFn}. Aborting... {ex.Message}");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot save AASX temporarily in {tempFn}. Aborting... {ex.Message}");
                 return;
             }
 
@@ -1086,9 +1012,9 @@ namespace AasxRestServerLibrary
                     // copy to back (rename experienced to be more error-prone)
                     File.Copy(packFn, packFn + ".bak", overwrite: true);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot close/ backup old AASX {packFn}. Aborting... {ex.Message}");
                     return;
                 }
 
@@ -1104,13 +1030,13 @@ namespace AasxRestServerLibrary
                         Packages[packIndex] = newAasx;
                     else
                     {
-                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                        context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
                         return;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot replace AASX {packFn} with new {tempFn}. Aborting... {ex.Message}");
                     return;
                 }
 
@@ -1121,13 +1047,13 @@ namespace AasxRestServerLibrary
             }
 
             Program.signalNewData(2);
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK (saved)");
         }
 
-        public void EvalGetAasxByAssetId(IHttpContext context)
+        public void EvalGetAasxByAssetId(HttpContext context)
         {
-            string path = context.Request.PathInfo;
+            string path = context.Request.Path.Value;
             string[] split = path.Split('/');
             string node = split[2];
             string assetId = split[3].ToUpper();
@@ -1147,7 +1073,7 @@ namespace AasxRestServerLibrary
                                 if (assetId == url)
                                 {
                                     string headers = context.Request.Headers.ToString();
-                                    string token = context.Request.Headers.Get("accept");
+                                    string token = context.Request.Headers["accept"];
                                     if (token == null || token != "application/aas")
                                     {
                                         // Human by browser
@@ -1197,9 +1123,8 @@ namespace AasxRestServerLibrary
                                             link + "</a>" + "<br>" +
                                         "and set Headers / Accept application/aas" + "<br><br>";
 
-                                        context.Response.ContentType = ContentType.HTML;
-                                        context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-                                        context.Response.SendResponse(text);
+                                        context.Response.ContentType = "application/text";
+                                        context.Response.WriteAsync(text);
                                         return;
                                     }
 
@@ -1211,10 +1136,10 @@ namespace AasxRestServerLibrary
                     }
                 }
             }
-            context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with assetId '{assetId}' found.");
+            context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with assetId '{assetId}' found.");
         }
 
-        public void EvalDeleteAasAndAsset(IHttpContext context, string aasid, bool deleteAsset = false)
+        public void EvalDeleteAasAndAsset(HttpContext context, string aasid, bool deleteAsset = false)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1235,15 +1160,15 @@ namespace AasxRestServerLibrary
             // datastructure update
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.AdministrationShells == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
@@ -1251,7 +1176,7 @@ namespace AasxRestServerLibrary
             var asset = this.Packages[findAasReturn.iPackage].AasEnv.FindAsset(findAasReturn.aas.assetRef);
 
             // delete
-            context.Server.Logger.Debug($"Deleting AdministrationShell with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
+            Console.WriteLine($"Deleting AdministrationShell with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
             this.Packages[findAasReturn.iPackage].AasEnv.AdministrationShells.Remove(findAasReturn.aas);
 
             if (this.Packages[findAasReturn.iPackage].AasEnv.AdministrationShells.Count == 0)
@@ -1262,13 +1187,13 @@ namespace AasxRestServerLibrary
             {
                 if (deleteAsset && asset != null)
                 {
-                    context.Server.Logger.Debug($"Deleting Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
+                    Console.WriteLine($"Deleting Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
                     this.Packages[findAasReturn.iPackage].AasEnv.Assets.Remove(asset);
                 }
             }
 
             // simple OK
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK");
         }
 
@@ -1276,7 +1201,7 @@ namespace AasxRestServerLibrary
 
         #region // Asset links
 
-        public void EvalGetAssetLinks(IHttpContext context, string assetid)
+        public void EvalGetAssetLinks(HttpContext context, string assetid)
         {
             dynamic res1 = new ExpandoObject();
             int index = -1;
@@ -1297,13 +1222,13 @@ namespace AasxRestServerLibrary
             // trivial
             if (assetid == null)
             {
-                context.Response.StatusCode = HttpStatusCode.NotFound;
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;
                 return;
             }
 
             // do a manual search
             var res = new List<ExpandoObject>();
-            var specialHandles = this.CreateHandlesFromQueryString(context.Request.QueryString);
+            var specialHandles = this.CreateHandlesFromQueryString(context.Request.QueryString.Value);
             var handle = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(assetid, specialHandles);
             if (handle != null && handle.identification != null)
             {
@@ -1329,11 +1254,11 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalPutAsset(IHttpContext context)
+        public void EvalPutAsset(HttpContext context)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1352,9 +1277,9 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
@@ -1362,39 +1287,39 @@ namespace AasxRestServerLibrary
             AdminShell.Asset asset = null;
             try
             {
-                asset = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Payload);
+                asset = JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Body);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                 return;
             }
 
             // need id for idempotent behaviour
             if (asset.identification == null)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Identification of entity is (null); PUT cannot be performed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Identification of entity is (null); PUT cannot be performed.");
                 return;
             }
 
             // datastructure update
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.Assets == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
-            context.Server.Logger.Debug($"Adding Asset with idShort {asset.idShort ?? "--"}");
+            Console.WriteLine($"Adding Asset with idShort {asset.idShort ?? "--"}");
             var existingAsset = this.Packages[0].AasEnv.FindAsset(asset.identification);
             if (existingAsset != null)
                 this.Packages[0].AasEnv.Assets.Remove(existingAsset);
             this.Packages[0].AasEnv.Assets.Add(asset);
 
             // simple OK
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
 
-        public void EvalPutAssetToAas(IHttpContext context, string aasid)
+        public void EvalPutAssetToAas(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1413,18 +1338,18 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
-                Console.WriteLine("ERROR PUT: No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
+                Console.WriteLine("ERROR PUT: No Body or content type is not JSON.");
                 return;
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
                 return;
             }
@@ -1433,18 +1358,18 @@ namespace AasxRestServerLibrary
             AdminShell.Asset asset = null;
             try
             {
-                asset = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Payload);
+                asset = JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Body);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                 return;
             }
 
             // need id for idempotent behaviour
             if (asset.identification == null)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Identification of entity is (null); PUT cannot be performed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Identification of entity is (null); PUT cannot be performed.");
                 Console.WriteLine("ERROR PUT: Identification of entity is (null); PUT cannot be performed.");
                 return;
             }
@@ -1452,12 +1377,12 @@ namespace AasxRestServerLibrary
             // datastructure update
             if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null || this.Packages[findAasReturn.iPackage].AasEnv.Assets == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
             // add Asset
-            context.Server.Logger.Debug($"Adding Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
+            Console.WriteLine($"Adding Asset with idShort {asset.idShort ?? "--"} and id {asset.identification?.ToString() ?? "--"}");
             var existingAsset = this.Packages[findAasReturn.iPackage].AasEnv.FindAsset(asset.identification);
             if (existingAsset != null)
                 this.Packages[findAasReturn.iPackage].AasEnv.Assets.Remove(existingAsset);
@@ -1469,7 +1394,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.idShort);
 
             // simple OK
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
         #endregion
@@ -1499,7 +1424,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        public void EvalGetSubmodels(IHttpContext context, string aasid)
+        public void EvalGetSubmodels(HttpContext context, string aasid)
         {
             dynamic res1 = new ExpandoObject();
             int index = -1;
@@ -1518,10 +1443,10 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
@@ -1539,12 +1464,12 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
         static long countPut = 0;
-        public void EvalPutSubmodel(IHttpContext context, string aasid)
+        public void EvalPutSubmodel(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1563,18 +1488,18 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
-                Console.WriteLine("ERROR PUT: No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
+                Console.WriteLine("ERROR PUT: No Body or content type is not JSON.");
                 return;
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
                 return;
             }
@@ -1583,24 +1508,24 @@ namespace AasxRestServerLibrary
             AdminShell.Submodel submodel = null;
             try
             {
-                using (TextReader reader = new StringReader(context.Request.Payload))
+                using (TextReader reader = new StringReader(context.Request.Body))
                 {
                     JsonSerializer serializer = new JsonSerializer();
                     serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                     submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
-                Console.WriteLine("ERROR PUT: Cannot deserialize payload.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
+                Console.WriteLine("ERROR PUT: Cannot deserialize Body.");
                 return;
             }
 
             // need id for idempotent behaviour
             if (submodel.identification == null)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Identification of entity is (null); PUT cannot be performed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Identification of entity is (null); PUT cannot be performed.");
                 Console.WriteLine("ERROR PUT: Identification of entity is (null); PUT cannot be performed.");
                 return;
             }
@@ -1608,12 +1533,12 @@ namespace AasxRestServerLibrary
             // datastructure update
             if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null || this.Packages[findAasReturn.iPackage].AasEnv.Assets == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
             // add Submodel
-            context.Server.Logger.Debug($"Adding Submodel with idShort {submodel.idShort ?? "--"} and id {submodel.identification?.ToString() ?? "--"}");
+            Console.WriteLine($"Adding Submodel with idShort {submodel.idShort ?? "--"} and id {submodel.identification?.ToString() ?? "--"}");
             var existingSm = this.Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(submodel.identification);
             if (existingSm != null)
             {
@@ -1631,7 +1556,7 @@ namespace AasxRestServerLibrary
             var existsmr = findAasReturn.aas.HasSubmodelRef(newsmr);
             if (!existsmr)
             {
-                context.Server.Logger.Debug($"Adding SubmodelRef to AAS with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
+                Console.WriteLine($"Adding SubmodelRef to AAS with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
                 findAasReturn.aas.AddSubmodelRef(newsmr);
             }
 
@@ -1639,11 +1564,11 @@ namespace AasxRestServerLibrary
 
             // simple OK
             Program.signalNewData(2);
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }
 
-        public void EvalDeleteSubmodel(IHttpContext context, string aasid, string smid)
+        public void EvalDeleteSubmodel(HttpContext context, string aasid, string smid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1662,33 +1587,33 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
             // access the AAS (absolutely mandatory)
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
             // delete SubmodelRef 1st
-            var smref = this.FindSubmodelRefWithinAas(findAasReturn, smid, context.Request.QueryString, context.Request.RawUrl);
+            var smref = this.FindSubmodelRefWithinAas(findAasReturn, smid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (smref != null)
             {
-                context.Server.Logger.Debug($"Removing SubmodelRef {smid} from AAS with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
+                Console.WriteLine($"Removing SubmodelRef {smid} from AAS with idShort {findAasReturn.aas.idShort ?? "--"} and id {findAasReturn.aas.identification?.ToString() ?? "--"}");
                 findAasReturn.aas.submodelRefs.Remove(smref);
             }
 
             // delete Submodel 2nd
-            var sm = this.FindSubmodelWithoutAas(smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithoutAas(smid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (sm != null)
             {
-                context.Server.Logger.Debug($"Removing Submodel {smid} from data structures.");
+                Console.WriteLine($"Removing Submodel {smid} from data structures.");
                 this.Packages[findAasReturn.iPackage].AasEnv.Submodels.Remove(sm);
             }
 
@@ -1697,7 +1622,7 @@ namespace AasxRestServerLibrary
             if (smref == null && sm == null)
                 cmt += " (nothing deleted)";
             cmt += ((smref != null) ? " (SubmodelRef deleted)" : "") + ((sm != null) ? " (Submodel deleted)" : "");
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + cmt);
         }
 
@@ -1706,7 +1631,7 @@ namespace AasxRestServerLibrary
         #region // Submodel Complete
         static long countGet = 0;
 
-        public void EvalGetSubmodelContents(IHttpContext context, string aasid, string smid, bool deep = false, bool complete = false)
+        public void EvalGetSubmodelContents(HttpContext context, string aasid, string smid, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1725,10 +1650,10 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -1736,11 +1661,11 @@ namespace AasxRestServerLibrary
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, sm, cr);
         }
 
-        public void EvalGetSubmodelContentsAsTable(IHttpContext context, string aasid, string smid)
+        public void EvalGetSubmodelContentsAsTable(HttpContext context, string aasid, string smid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1759,18 +1684,18 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
             // AAS ENV
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
@@ -1865,7 +1790,7 @@ namespace AasxRestServerLibrary
             });
 
             // return as JSON
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, table);
         }
 
@@ -1873,7 +1798,7 @@ namespace AasxRestServerLibrary
 
         #region // Submodel Elements
 
-        public void EvalGetSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids, bool deep = false, bool complete = false)
+        public void EvalGetSubmodelElementContents(HttpContext context, string aasid, string smid, string[] elemids, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1898,11 +1823,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -1910,17 +1835,17 @@ namespace AasxRestServerLibrary
             var sme = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
             if (sme == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching element in Submodel found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching element in Submodel found.");
                 return;
             }
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, sme, cr);
         }
 
-        public void EvalGetSubmodelElementsBlob(IHttpContext context, string aasid, string smid, string[] elemids)
+        public void EvalGetSubmodelElementsBlob(HttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -1939,11 +1864,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -1952,12 +1877,12 @@ namespace AasxRestServerLibrary
             var smeb = fse?.elem as AdminShell.Blob;
             if (smeb == null || smeb.value == null || smeb.value == "")
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Blob element in Submodel found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching Blob element in Submodel found.");
                 return;
             }
 
             // return as TEXT
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
         }
 
@@ -2014,7 +1939,7 @@ namespace AasxRestServerLibrary
             return res;
         }
 
-        public void EvalGetSubmodelAllElementsProperty(IHttpContext context, string aasid, string smid, string[] elemids)
+        public void EvalGetSubmodelAllElementsProperty(HttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2033,11 +1958,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -2064,18 +1989,17 @@ namespace AasxRestServerLibrary
                 }
                 else
                 {
-                    context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Property element(s) " +
-                        $"in Submodel found.");
+                    context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching Property element(s) " + $"in Submodel found.");
                     return;
                 }
             }
 
             // just send the result
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalGetSubmodelElementsFile(IHttpContext context, string aasid, string smid, string[] elemids)
+        public void EvalGetSubmodelElementsFile(HttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2094,11 +2018,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -2107,7 +2031,7 @@ namespace AasxRestServerLibrary
             var smef = fse?.elem as AdminShell.File;
             if (smef == null || smef.value == null || smef.value == "")
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching File element in Submodel found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching File element in Submodel found.");
                 return;
             }
 
@@ -2115,17 +2039,17 @@ namespace AasxRestServerLibrary
             var packageStream = this.Packages[0].GetLocalStreamFromPackage(smef.value);
             if (packageStream == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No file contents available in package.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No file contents available in package.");
                 return;
             }
 
             // return as FILE
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendStreamResponse(context, packageStream, Path.GetFileName(smef.value));
             packageStream.Close();
         }
 
-        public void EvalPutSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
+        public void EvalPutSubmodelElementContents(HttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2144,9 +2068,9 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
@@ -2154,27 +2078,27 @@ namespace AasxRestServerLibrary
             AdminShell.SubmodelElement sme = null;
             try
             {
-                sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(context.Request.Payload, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                sme = JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(context.Request.Body, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                 return;
             }
 
             // need id for idempotent behaviour
             if (sme.idShort == null)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"idShort of entity is (null); PUT cannot be performed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"idShort of entity is (null); PUT cannot be performed.");
                 return;
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -2186,14 +2110,14 @@ namespace AasxRestServerLibrary
                 if (existsmw != null)
                 {
                     updated = true;
-                    context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from Submodel {smid}.");
+                    Console.WriteLine($"Removing old SubmodelElement {sme.idShort} from Submodel {smid}.");
                     int indexOfExistingSmw = sm.submodelElements.IndexOf(existsmw);
                     sm.submodelElements.RemoveAt(indexOfExistingSmw);
                     sm.Insert(indexOfExistingSmw, sme);
                 }
                 else
                 {
-                    context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
+                    Console.WriteLine($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
                     sm.Add(sme);
                 }
             }
@@ -2203,7 +2127,7 @@ namespace AasxRestServerLibrary
                 var parent = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
                 if (parent == null)
                 {
-                    context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching element in Submodel found.");
+                    context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching element in Submodel found.");
                     return;
                 }
 
@@ -2214,31 +2138,31 @@ namespace AasxRestServerLibrary
                     if (existsmw != null)
                     {
                         updated = true;
-                        context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from SubmodelCollection.");
+                        Console.WriteLine($"Removing old SubmodelElement {sme.idShort} from SubmodelCollection.");
                         int indexOfExistingSmw = parentsmc.value.IndexOf(existsmw);
                         parentsmc.value.RemoveAt(indexOfExistingSmw);
                         parentsmc.Insert(indexOfExistingSmw, sme);
                     }
                     else
                     {
-                        context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
+                        Console.WriteLine($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
                         parentsmc.Add(sme);
                     }
                 }
                 else
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Matching SubmodelElement in Submodel {smid} is not suitable to add childs.");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Matching SubmodelElement in Submodel {smid} is not suitable to add childs.");
                     return;
                 }
 
             }
 
             // simple OK
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
         }
 
-        public void EvalDeleteSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
+        public void EvalDeleteSubmodelElementContents(HttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2257,11 +2181,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null || elemids == null || elemids.Length < 1)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found or no elements to delete specified.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found or no elements to delete specified.");
                 return;
             }
 
@@ -2269,7 +2193,7 @@ namespace AasxRestServerLibrary
             var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
             if (fse == null || fse.elem == null || fse.parent == null || fse.wrapper == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching element in Submodel found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching element in Submodel found.");
                 return;
             }
 
@@ -2278,7 +2202,7 @@ namespace AasxRestServerLibrary
             var elinfo = string.Join(".", elemids);
             if (fse.parent == sm)
             {
-                context.Server.Logger.Debug($"Deleting specified SubmodelElement {elinfo} from Submodel {smid}.");
+                Console.WriteLine($"Deleting specified SubmodelElement {elinfo} from Submodel {smid}.");
                 sm.submodelElements.Remove(fse.wrapper);
                 deleted = true;
             }
@@ -2286,17 +2210,17 @@ namespace AasxRestServerLibrary
             if (fse.parent is AdminShell.SubmodelElementCollection)
             {
                 var smc = fse.parent as AdminShell.SubmodelElementCollection;
-                context.Server.Logger.Debug($"Deleting specified SubmodelElement {elinfo} from SubmodelElementCollection {smc.idShort}.");
+                Console.WriteLine($"Deleting specified SubmodelElement {elinfo} from SubmodelElementCollection {smc.idShort}.");
                 smc.value.Remove(fse.wrapper);
                 deleted = true;
             }
 
             // simple OK
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
 
-        public void EvalInvokeSubmodelElementOperation(IHttpContext context, string aasid, string smid, string[] elemids)
+        public void EvalInvokeSubmodelElementOperation(HttpContext context, string aasid, string smid, string[] elemids)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2315,11 +2239,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (sm == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
             }
 
@@ -2328,7 +2252,7 @@ namespace AasxRestServerLibrary
             var smep = fse?.elem as AdminShell.Operation;
             if (smep == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Operation element in Submodel found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching Operation element in Submodel found.");
                 return;
             }
 
@@ -2339,14 +2263,14 @@ namespace AasxRestServerLibrary
             var inputArguments = (new int[numExpectedInputArgs]).Select(x => "").ToList();
             var outputArguments = (new int[numExpectedOutputArgs]).Select(x => "my value").ToList();
 
-            // is a payload required? Always, if at least one input argument required
+            // is a Body required? Always, if at least one input argument required
 
             if (smep.inputVariable != null && smep.inputVariable.Count > 0)
             {
-                // payload present
-                if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+                // Body present
+                if (context.Request.Body == null || context.Request.ContentType != "application/json")
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload for Operation input argument or content type is not JSON.");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body for Operation input argument or content type is not JSON.");
                     return;
                 }
 
@@ -2354,7 +2278,7 @@ namespace AasxRestServerLibrary
                 try
                 {
                     // serialize
-                    var input = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(context.Request.Payload);
+                    var input = JsonConvert.DeserializeObject<List<string>>(context.Request.Body);
 
                     // set inputs
                     if (input != null && input.Count > 0)
@@ -2364,9 +2288,9 @@ namespace AasxRestServerLibrary
                             inputArguments[i] = input[i];
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                    context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                     return;
                 }
             }
@@ -2374,7 +2298,7 @@ namespace AasxRestServerLibrary
             // do a check
             if (numExpectedInputArgs != numGivenInputArgs)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Number of input arguments in payload does not fit expected input arguments of Operation.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Number of input arguments in Body does not fit expected input arguments of Operation.");
                 return;
             }
 
@@ -2386,11 +2310,11 @@ namespace AasxRestServerLibrary
             }
 
             // return as little dynamic object
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, outputArguments);
         }
 
-        public void EvalGetAllCds(IHttpContext context, string aasid)
+        public void EvalGetAllCds(HttpContext context, string aasid)
         {
             dynamic res1 = new ExpandoObject();
             int index = -1;
@@ -2409,10 +2333,10 @@ namespace AasxRestServerLibrary
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
@@ -2438,11 +2362,11 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalGetCdContents(IHttpContext context, string aasid, string cdid)
+        public void EvalGetCdContents(HttpContext context, string aasid, string cdid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2461,21 +2385,21 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and CD
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
+            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString.Value, context.Request.Path.Value);
 
             if (cd == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
                 return;
             }
 
             // return as JSON
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, cd);
         }
 
-        public void EvalDeleteSpecificCd(IHttpContext context, string aasid, string cdid)
+        public void EvalDeleteSpecificCd(HttpContext context, string aasid, string cdid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -2494,11 +2418,11 @@ namespace AasxRestServerLibrary
             }
 
             // access AAS and CD
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
+            var cd = this.FindCdWithoutAas(findAasReturn, cdid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (cd == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no ConceptDescription with id '{cdid}' found.");
                 return;
             }
 
@@ -2511,7 +2435,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
 
@@ -2519,7 +2443,7 @@ namespace AasxRestServerLibrary
 
         #region // GET + POST handles/identification
 
-        public void EvalGetHandlesIdentification(IHttpContext context)
+        public void EvalGetHandlesIdentification(HttpContext context)
         {
             dynamic res1 = new ExpandoObject();
             int index = -1;
@@ -2541,11 +2465,11 @@ namespace AasxRestServerLibrary
             var res = IdRefHandleStore.FindAll<AasxHttpHandleIdentification>();
 
             // return this list
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalPostHandlesIdentification(IHttpContext context)
+        public void EvalPostHandlesIdentification(HttpContext context)
         {
             dynamic res1 = new ExpandoObject();
             int index = -1;
@@ -2564,9 +2488,9 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
@@ -2574,16 +2498,16 @@ namespace AasxRestServerLibrary
             List<AdminShell.Identification> ids = null;
             try
             {
-                ids = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AdminShell.Identification>>(context.Request.Payload);
+                ids = JsonConvert.DeserializeObject<List<AdminShell.Identification>>(context.Request.Body);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                 return;
             }
             if (ids == null || ids.Count < 1)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No Identification entities in payload.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Identification entities in Body.");
                 return;
             }
 
@@ -2600,7 +2524,7 @@ namespace AasxRestServerLibrary
             }
 
             // return this list
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
@@ -2608,7 +2532,7 @@ namespace AasxRestServerLibrary
 
         #region // Server profile ..
 
-        public void EvalGetServerProfile(IHttpContext context)
+        public void EvalGetServerProfile(HttpContext context)
         {
             dynamic res1 = new ExpandoObject();
             int index = -1;
@@ -2637,7 +2561,7 @@ namespace AasxRestServerLibrary
             res.capabilities = capabilities;
 
             // return this list
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
@@ -2656,7 +2580,7 @@ namespace AasxRestServerLibrary
         public static string[] sessionRandom = new string[100];
         public static string[] sessionChallenge = new string[100];
 
-        public void EvalGetAuthenticateGuest(IHttpContext context)
+        public void EvalGetAuthenticateGuest(HttpContext context)
         {
             Console.WriteLine();
             Console.WriteLine("AuthenticateGuest"); // GET
@@ -2667,14 +2591,14 @@ namespace AasxRestServerLibrary
             sessionRandom[sessionCount] = Convert.ToBase64String(barray);
 
             dynamic res = new ExpandoObject();
-            var payload = new Dictionary<string, object>()
+            var Body = new Dictionary<string, object>()
             {
                 { "sessionID", sessionCount },
                 { "sessionRandom", sessionRandom[sessionCount] }
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            GuestToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            GuestToken = JWT.Encode(Body, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
             Console.WriteLine("SessionID: " + sessionCount);
             Console.WriteLine("sessionRandom: " + GuestToken);
@@ -2692,11 +2616,11 @@ namespace AasxRestServerLibrary
 
             res.token = GuestToken;
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalPostAuthenticateUser(IHttpContext context)
+        public void EvalPostAuthenticateUser(HttpContext context)
         {
             Console.WriteLine();
             Console.WriteLine("AuthenticateUser"); // POST User, Password
@@ -2706,7 +2630,7 @@ namespace AasxRestServerLibrary
 
             dynamic res = new ExpandoObject();
 
-            var parsed = JObject.Parse(context.Request.Payload);
+            var parsed = JObject.Parse(context.Request.Body);
 
             string user = null;
             string password = null;
@@ -2746,14 +2670,14 @@ namespace AasxRestServerLibrary
             rngCsp.GetBytes(barray);
             sessionRandom[sessionCount] = Convert.ToBase64String(barray);
 
-            var payload = new Dictionary<string, object>()
+            var Body = new Dictionary<string, object>()
             {
                 { "sessionID", sessionCount },
                 { "sessionRandom", sessionRandom[sessionCount] }
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            string token = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            string token = JWT.Encode(Body, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
             Console.WriteLine("SessionID: " + sessionCount);
             Console.WriteLine("sessionRandom: " + token);
@@ -2771,11 +2695,11 @@ namespace AasxRestServerLibrary
 
             res.token = token;
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalPostAuthenticateCert1(IHttpContext context)
+        public void EvalPostAuthenticateCert1(HttpContext context)
         {
             Console.WriteLine();
             Console.WriteLine("Security 2 Server: /AuthenticateCert1"); // POST token with user
@@ -2795,17 +2719,17 @@ namespace AasxRestServerLibrary
 
             try
             {
-                var parsed = JObject.Parse(context.Request.Payload);
+                var parsed = JObject.Parse(context.Request.Body);
                 token = parsed.SelectToken("token").Value<string>();
 
-                var headers = Jose.JWT.Headers(token);
+                var headers = JWT.Headers(token);
                 string x5c = headers["x5c"].ToString();
 
                 if (x5c != "")
                 {
                     Console.WriteLine("Security 2.1a Server: x5c with certificate chain received");
 
-                    parsed = JObject.Parse(Jose.JWT.Payload(token));
+                    parsed = JObject.Parse(JWT.Payload(token));
                     user = parsed.SelectToken("user").Value<string>();
 
                     X509Store storeCA = new X509Store("CA", StoreLocation.CurrentUser);
@@ -2858,7 +2782,7 @@ namespace AasxRestServerLibrary
                 }
                 else
                 {
-                    parsed = JObject.Parse(Jose.JWT.Payload(token));
+                    parsed = JObject.Parse(JWT.Payload(token));
                     user = parsed.SelectToken("user").Value<string>();
 
                     string fileCert = "./user/" + user + ".cer";
@@ -2903,7 +2827,7 @@ namespace AasxRestServerLibrary
                 {
                     publicKey = x509.GetRSAPublicKey();
 
-                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
+                    JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
                     Console.WriteLine("Security 2.2 Server: Validate signature with publicKey");
                 }
                 catch
@@ -2942,11 +2866,11 @@ namespace AasxRestServerLibrary
 
             res.challenge = sessionChallenge[sessionCount];
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalPostAuthenticateCert2(IHttpContext context)
+        public void EvalPostAuthenticateCert2(HttpContext context)
         {
             Console.WriteLine();
             Console.WriteLine("Security 3 Server: /AuthenticateCert2"); // POST token with user
@@ -2962,10 +2886,10 @@ namespace AasxRestServerLibrary
 
             try
             {
-                var parsed = JObject.Parse(context.Request.Payload);
+                var parsed = JObject.Parse(context.Request.Body);
                 token = parsed.SelectToken("token").Value<string>();
 
-                parsed = JObject.Parse(Jose.JWT.Payload(token));
+                parsed = JObject.Parse(JWT.Payload(token));
                 challenge = parsed.SelectToken("challenge").Value<string>();
             }
             catch
@@ -2985,7 +2909,7 @@ namespace AasxRestServerLibrary
                 {
                     publicKey = sessionUserPulicKey[sessionCount];
 
-                    Jose.JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
+                    JWT.Decode(token, publicKey, JwsAlgorithm.RS256); // signed by user key?
                     Console.WriteLine("Security 3.1 Server: Validate challenge signature with publicKey");
                 }
                 catch
@@ -3004,7 +2928,7 @@ namespace AasxRestServerLibrary
                 Console.WriteLine("Security 3.2 Server: Create session unique bearerToken signed by real random");
                 sessionRandom[sessionCount] = Convert.ToBase64String(barray);
 
-                var payload = new Dictionary<string, object>()
+                var Body = new Dictionary<string, object>()
                 {
                     { "sessionID", sessionCount },
                 };
@@ -3012,7 +2936,7 @@ namespace AasxRestServerLibrary
                 try
                 {
                     var enc = new System.Text.ASCIIEncoding();
-                    token = Jose.JWT.Encode(payload, enc.GetBytes(sessionRandom[sessionCount]), JwsAlgorithm.HS256);
+                    token = JWT.Encode(Body, enc.GetBytes(sessionRandom[sessionCount]), JwsAlgorithm.HS256);
                     Console.WriteLine("Security 3.3 Server: Sign sessionID by server sessionRandom");
                 }
                 catch
@@ -3043,7 +2967,7 @@ namespace AasxRestServerLibrary
 
             res.token = token;
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
@@ -3122,7 +3046,7 @@ namespace AasxRestServerLibrary
             return false;
         }
 
-        public bool checkAccessRights(IHttpContext context, string currentRole, string operation, string neededRights,
+        public bool checkAccessRights(HttpContext context, string currentRole, string operation, string neededRights,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             if (checkAccessLevel(currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel))
@@ -3132,7 +3056,7 @@ namespace AasxRestServerLibrary
             {
                 if (AasxServer.Program.redirectServer != "")
                 {
-                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                    string queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
                     string originalRequest = context.Request.Url.ToString();
                     queryString.Add("OriginalRequest", originalRequest);
                     Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
@@ -3145,12 +3069,12 @@ namespace AasxRestServerLibrary
 
             dynamic res = new ExpandoObject();
             res.error = "You are not authorized for this operation!";
-            context.Response.StatusCode = HttpStatusCode.Unauthorized;
+            context.Response.StatusCode = (int) HttpStatusCode.Unauthorized;
             SendJsonResponse(context, res);
 
             return false;
         }
-        public string SecurityCheck(IHttpContext context, ref int index)
+        public string SecurityCheck(HttpContext context, ref int index)
         {
             bool error = false;
             string accessrights = null;
@@ -3174,7 +3098,7 @@ namespace AasxRestServerLibrary
             string headers = context.Request.Headers.ToString();
 
             // Check bearer token
-            token = context.Request.Headers.Get("Authorization");
+            token = context.Request.Headers["Authorization"];
             if (token != null)
             {
                 split = token.Split(new Char[] { ' ', '\t' });
@@ -3202,7 +3126,7 @@ namespace AasxRestServerLibrary
                 error = true;
 
                 // Check email token
-                token = context.Request.Headers.Get("Email");
+                token = context.Request.Headers["Email"];
                 if (token != null)
                 {
                     Console.WriteLine("Received Email token = " + token);
@@ -3212,7 +3136,7 @@ namespace AasxRestServerLibrary
             }
 
             // Check email token
-            token = context.Request.Headers.Get("Email");
+            token = context.Request.Headers["Email"];
             if (token != null)
             {
                 Console.WriteLine("Received Email token = " + token);
@@ -3231,7 +3155,7 @@ namespace AasxRestServerLibrary
                         string serverName = "";
                         string email = "";
 
-                        parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
+                        parsed2 = JObject.Parse(JWT.Payload(bearerToken));
 
                         try
                         {
@@ -3266,7 +3190,7 @@ namespace AasxRestServerLibrary
 
                             try
                             {
-                                Jose.JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
+                                JWT.Decode(bearerToken, cert.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by auth server cert?
                             }
                             catch
                             {
@@ -3340,7 +3264,7 @@ namespace AasxRestServerLibrary
             {
                 try
                 {
-                    string payload = null;
+                    string Body = null;
 
                     switch (sessionUserType[id])
                     {
@@ -3348,7 +3272,7 @@ namespace AasxRestServerLibrary
                         case 'U':
                         case 'T':
                             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-                            payload = Jose.JWT.Decode(bearerToken, enc.GetBytes(random), JwsAlgorithm.HS256); // correctly signed by session token?
+                            Body = JWT.Decode(bearerToken, enc.GetBytes(random), JwsAlgorithm.HS256); // correctly signed by session token?
                             break;
                     }
                 }
@@ -3358,34 +3282,6 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            /*
-            if (!error)
-            {
-                switch (sessionUserType[id])
-                {
-                    case 'G':
-                        accessrights = "GUEST";
-                        break;
-                    case 'U':
-                    case 'T':
-                        if (securityRightsName != null)
-                        {
-                            int rightsCount = securityRightsName.Length;
-
-                            for (int i = 0; i < rightsCount; i++)
-                            {
-                                if (user == securityRightsName[i])
-                                {
-                                    accessrights = securityRightsValue[i];
-                                    break;
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-            */
-
             if (!error)
             {
                 index = id;
@@ -3393,7 +3289,7 @@ namespace AasxRestServerLibrary
             return accessrights;
         }
 
-        public void EvalGetListAAS(IHttpContext context)
+        public void EvalGetListAAS(HttpContext context)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -3437,25 +3333,24 @@ namespace AasxRestServerLibrary
             res.aaslist = aaslist;
 
             // return this list
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
 
-        public void EvalAssetId(IHttpContext context, int assetId)
+        public void EvalAssetId(HttpContext context, int assetId)
         {
             dynamic res = new ExpandoObject();
-            
+
             Console.WriteLine("Test Asset ID");
 
             string headers = context.Request.Headers.ToString();
-            string token = context.Request.Headers.Get("accept");
+            string token = context.Request.Headers["accept"];
             if (token != null)
             {
                 if (token == "application/aas")
                 {
                     Console.WriteLine("Received Accept header = " + token);
-                    // context.Response.ContentType = ContentType.JSON;
-                    context.Response.AddHeader("Content-Type", "application/aas");
+                     context.Response.ContentType = "application/aas";
                     res.client = "I40 IT client";
                     res.assetID = assetId;
                     res.humanEndpoint = "https://admin-shell-io.com:5001";
@@ -3465,13 +3360,10 @@ namespace AasxRestServerLibrary
                     // if (contractResolver != null)
                     //    settings.ContractResolver = contractResolver;
                     var json = JsonConvert.SerializeObject(res, Formatting.Indented, settings);
-                    var buffer = context.Request.ContentEncoding.GetBytes(json);
-                    var length = buffer.Length;
 
-                    context.Response.ContentEncoding = Encoding.UTF8;
-                    context.Response.ContentLength64 = length;
-                    context.Response.StatusCode = HttpStatusCode.Ok;
-                    context.Response.SendResponse(buffer);
+                    context.Response.ContentLength = json.Length;
+                    context.Response.StatusCode = (int) HttpStatusCode.OK;
+                    context.Response.WriteAsync(json);
 
                     return;
                 }
@@ -3481,7 +3373,7 @@ namespace AasxRestServerLibrary
             SendRedirectResponse(context, "https://admin-shell-io.com:5001");
         }
 
-        public void EvalGetAASX(IHttpContext context, int fileIndex)
+        public void EvalGetAASX(HttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -3530,7 +3422,7 @@ namespace AasxRestServerLibrary
 
                 // return as FILE
                 FileStream packageStream = File.OpenRead(fname);
-                context.Response.StatusCode = HttpStatusCode.Ok;
+                context.Response.StatusCode = (int) HttpStatusCode.OK;
                 SendStreamResponse(context, packageStream,
                     Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
                 packageStream.Close();
@@ -3540,7 +3432,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        public void EvalGetAASX2(IHttpContext context, int fileIndex)
+        public void EvalGetAASX2(HttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -3593,20 +3485,20 @@ namespace AasxRestServerLibrary
             Byte[] binaryFile = File.ReadAllBytes(AasxServer.Program.envFileName[fileIndex]);
             string binaryBase64 = Convert.ToBase64String(binaryFile);
 
-            string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
+            string Body = "{ \"file\" : \" " + binaryBase64 + " \" }";
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(secretString), JwsAlgorithm.HS256);
+            string fileToken = JWT.Encode(Body, enc.GetBytes(secretString), JwsAlgorithm.HS256);
 
             res.fileName = Path.GetFileName(AasxServer.Program.envFileName[fileIndex]);
             res.fileData = fileToken;
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendJsonResponse(context, res);
         }
         #endregion
 
-        public void EvalGetFile(IHttpContext context, int envIndex, string filePath)
+        public void EvalGetFile(HttpContext context, int envIndex, string filePath)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -3624,7 +3516,7 @@ namespace AasxRestServerLibrary
                 res.confirm = "Authorization = " + accessrights;
             }
 
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
         }
 
@@ -3947,7 +3839,7 @@ namespace AasxRestServerLibrary
 
         #region // Concept Descriptions
 
-        public void EvalPutCd(IHttpContext context, string aasid)
+        public void EvalPutCd(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -3966,17 +3858,17 @@ namespace AasxRestServerLibrary
             }
 
             // first check
-            if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
+            if (context.Request.Body == null || context.Request.ContentType != "application/json")
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"No Body or content type is not JSON.");
                 return;
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
@@ -3984,37 +3876,37 @@ namespace AasxRestServerLibrary
             AdminShell.ConceptDescription cd = null;
             try
             {
-                cd = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.ConceptDescription>(context.Request.Payload);
+                cd = JsonConvert.DeserializeObject<AdminShell.ConceptDescription>(context.Request.Body);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Cannot deserialize Body: {ex.Message}.");
                 return;
             }
 
             // need id for idempotent behaviour
             if (cd.identification == null)
             {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Identification of entity is (null); PUT cannot be performed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;//, $"Identification of entity is (null); PUT cannot be performed.");
                 return;
             }
 
             // datastructure update
             if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null || this.Packages[findAasReturn.iPackage].AasEnv.Assets == null)
             {
-                context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
+                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
                 return;
             }
 
             // add Submodel
-            context.Server.Logger.Debug($"Adding ConceptDescription with idShort {cd.idShort ?? "--"} and id {cd.identification?.ToString() ?? "--"}");
+            Console.WriteLine($"Adding ConceptDescription with idShort {cd.idShort ?? "--"} and id {cd.identification?.ToString() ?? "--"}");
             var existingCd = this.Packages[findAasReturn.iPackage].AasEnv.FindConceptDescription(cd.identification);
             if (existingCd != null)
                 this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Remove(existingCd);
             this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
-            context.Response.StatusCode = HttpStatusCode.Ok;
+            context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
         }
 

@@ -276,23 +276,9 @@ namespace AasxTimeSeries
                 }
             }
 
-            // test
-            if (test)
-            {
-                for (int i = 0; i < 500; i++)
-                {
-                    timeSeriesSampling(false);
-                }
-                timeSeriesSampling(true);
-            }
-            else
-            {
-                timeSeriesThread = new Thread(new ThreadStart(timeSeriesSamplingLoop));
-                timeSeriesThread.Start();
-            }
+            timeSeriesThread = new Thread(new ThreadStart(timeSeriesSamplingLoop));
+            timeSeriesThread.Start();
         }
-
-        static bool test = false;
 
         static Thread timeSeriesThread;
 
@@ -400,32 +386,12 @@ namespace AasxTimeSeries
                                 }
                             }
                         }
-                        if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
-                        {
-                            GetHistory(tsb);
-                            valueCount = 0;
-                            if (table != null)
-                                valueCount = table.Count;
-                        }
-                        if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
-                        {
-                            valueCount = GetDAData(tsb);
-                        }
 
                         DateTime dt;
                         int valueIndex = 0;
                         while (valueIndex < valueCount)
                         {
-                            if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
-                            {
-                                dt = (DateTime)table[valueIndex][0];
-                                Console.WriteLine(valueIndex + " " + dt + " " + table[valueIndex][1] + " " + table[valueIndex][2]);
-                            }
-                            else
-                            {
-                                dt = DateTime.Now;
-                            }
-
+                            dt = DateTime.Now;
                             if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                             {
                                 var t = dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
@@ -452,34 +418,15 @@ namespace AasxTimeSeries
                                     tsb.samplesValues[i] += ",";
                                 }
 
-                                if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda") && tsb.sourceAddress != "")
+                                var p = tsb.samplesProperties[i];
+
+                                if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                 {
-                                    if (tsb.sourceType == "opchd")
-                                    {
-                                        string value = "";
-                                        if (table[valueIndex] != null && table[valueIndex][i + 1] != null)
-                                            value = table[valueIndex][i + 1].ToString();
-                                        tsb.samplesValues[i] += value;
-                                    }
-                                    if (tsb.sourceType == "opcda")
-                                    {
-                                        tsb.samplesValues[i] += opcDAValues[i];
-                                        Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
-                                    }
+                                    tsb.samplesValues[i] += $"[{tsb.totalSamples}, {p.value}]";
                                 }
                                 else
                                 {
-                                    var p = tsb.samplesProperties[i];
-
-                                    if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                    {
-                                        tsb.samplesValues[i] += $"[{tsb.totalSamples}, {p.value}]";
-                                    }
-                                    else
-                                    {
-                                        tsb.samplesValues[i] += p.value;
-                                    }
-                                    // tsb.samplesValues[i] += dummy++;
+                                    tsb.samplesValues[i] += p.value;
                                 }
                             }
                             tsb.samplesValuesCount++;
@@ -700,153 +647,6 @@ namespace AasxTimeSeries
             } catch (Exception ex)
             {
                 Console.WriteLine("GetJSON() expection: " + ex.Message);
-            }
-        }
-
-        static List<List<object>> table = null;
-        static string ErrorMessage { get; set; }
-        static UASampleClient opc = null;
-        static Opc.Ua.Client.Session session = null;
-        static DateTime startTime;
-        static DateTime endTime;
-        static List<string> opcDAValues = null;
-
-        public static int GetDAData(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Read OPC DA Data:");
-            try
-            {
-                ErrorMessage = "";
-                if (session == null)
-                    Connect(tsb);
-                if (session != null)
-                {
-                    opcDAValues = new List<string>();
-                    for (int i = 0; i < tsb.opcNodes.Count; i++)
-                    {
-                        string[] split = tsb.opcNodes[i].Split(',');
-                        string value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
-                        opcDAValues.Add(value);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                return 0;
-            }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
-
-            return 1;
-        }
-
-        public static void GetHistory(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Read OPC UA Historical Data:");
-            try
-            {
-                ErrorMessage = "";
-                startTime = tsb.opcLastTimeStamp;
-                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
-                tsb.opcLastTimeStamp = endTime;
-                if (session == null)
-                    Connect(tsb);
-                GetData(tsb);
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                session?.Close();
-                session?.Dispose();
-                session = null;
-                opc = null;
-            }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
-        }
-        public static void Connect(TimeSeriesBlock tsb)
-        {
-            if (opc == null)
-                opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
-            opc.ConsoleSampleClient().Wait();
-            session = opc.session;
-        }
-        public static void GetData(TimeSeriesBlock tsb)
-        {
-            if (session != null)
-            {
-                ReadRawModifiedDetails details = new ReadRawModifiedDetails();
-                details.StartTime = startTime;
-                details.EndTime = endTime;
-                details.NumValuesPerNode = 0;
-                details.IsReadModified = false;
-                details.ReturnBounds = true;
-
-                var nodesToRead = new HistoryReadValueIdCollection();
-                for (int i = 0; i < tsb.opcNodes.Count; i++)
-                {
-                    var nodeToRead = new HistoryReadValueId();
-                    string[] split = tsb.opcNodes[i].Split(',');
-                    nodeToRead.NodeId = new NodeId(split[1], (ushort)Convert.ToInt32(split[0]));
-                    nodesToRead.Add(nodeToRead);
-                }
-
-                table = new List<List<object>>();
-
-                HistoryReadResultCollection results = null;
-                DiagnosticInfoCollection diagnosticInfos = null;
-
-                bool loop = true;
-                while (loop)
-                {
-                    session.HistoryRead(
-                        null,
-                        new ExtensionObject(details),
-                        TimestampsToReturn.Both,
-                        false,
-                        nodesToRead,
-                        out results,
-                        out diagnosticInfos);
-
-                    ClientBase.ValidateResponse(results, nodesToRead);
-                    ClientBase.ValidateDiagnosticInfos(diagnosticInfos, nodesToRead);
-
-                    foreach (var res in results)
-                    {
-                        if (StatusCode.IsBad(res.StatusCode))
-                        {
-                            throw new ServiceResultException(res.StatusCode);
-                        }
-                    }
-
-                    var historyData1 = ExtensionObject.ToEncodeable(results[0].HistoryData) as HistoryData;
-                    var historyData2 = ExtensionObject.ToEncodeable(results[1].HistoryData) as HistoryData;
-                    for (int i = 0; i < historyData1.DataValues.Count; i++)
-                    {
-                        var row = new List<object>();
-                        row.Add(historyData1.DataValues[i].SourceTimestamp);
-                        row.Add(historyData1.DataValues[i].Value);
-                        row.Add(historyData2.DataValues[i].Value);
-                        table.Add(row);
-                    }
-
-                    for (int i = 0; i < results.Count; i++)
-                    {
-                        if (results[i].ContinuationPoint == null || results[i].ContinuationPoint.Length == 0)
-                        {
-                            loop = false;
-                            break;
-                        }
-                        nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
-                    }
-                }
             }
         }
     }

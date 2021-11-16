@@ -11,18 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grapevine" Version="4.2.2" />
     <PackageReference Include="IdentityModel" Version="5.2.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
     <PackageReference Include="jose-jwt" Version="3.2.0" />
     <PackageReference Include="Microsoft.Azure.Kusto.Data" Version="9.4.1" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.14.1" />
-    <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NJsonSchema" Version="10.5.2" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.367.42" />
     <PackageReference Include="QRCoder" Version="1.4.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21308.1" />
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.14.1" />
     <PackageReference Include="System.IO.Packaging" Version="6.0.0" />
@@ -34,9 +32,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Opc.Ua.SampleClient.Config.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Opc.Ua.SampleServer.Config.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

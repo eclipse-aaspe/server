@@ -4,8 +4,10 @@ namespace UA_CloudLibrary.Controllers
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
+    using Swashbuckle.AspNetCore.Annotations;
+    using System;
+    using System.Collections.Generic;
     using System.Net;
-    using System.Threading.Tasks;
 
     [Authorize]
     [ApiController]
@@ -20,21 +22,34 @@ namespace UA_CloudLibrary.Controllers
         }
 
         [HttpGet("listaas")]
-        public Task<HttpStatusCode> ListAAS()
+        [SwaggerResponse((int) HttpStatusCode.OK, Type = typeof(List<string>))]
+        public IActionResult ListAAS()
         {
-            return Task.FromResult(HttpStatusCode.NotImplemented);
+            return new OkObjectResult(new List<string>());
         }
 
-        [HttpGet("download")]
-        public Task<HttpStatusCode> Download(string aasName)
+        [HttpGet("download/{aasName}")]
+        [SwaggerResponse((int) HttpStatusCode.OK, Type = typeof(AssetAdminShell))]
+        [SwaggerResponse((int) HttpStatusCode.InternalServerError, Type = typeof(string))]
+        public IActionResult Download(string aasName)
         {
-            return Task.FromResult(HttpStatusCode.NotImplemented);
+            try
+            {
+                // TODO: retrieve AAS
+            }
+            catch (Exception ex)
+            {
+                return new ObjectResult(ex.Message) { StatusCode = (int) HttpStatusCode.InternalServerError };
+            }
+
+            return new ObjectResult(new AssetAdminShell());
         }
 
-        [HttpPut("upload")]
-        public Task<HttpStatusCode> Upload(string base64EncodedAAS)
+        [HttpPut("upload/{base64EncodedAAS}")]
+        [SwaggerResponse((int) HttpStatusCode.NotImplemented)]
+        public IActionResult Upload(string base64EncodedAAS)
         {
-            return Task.FromResult(HttpStatusCode.NotImplemented);
+            return new StatusCodeResult((int) HttpStatusCode.NotImplemented);
         }
     }
 }
