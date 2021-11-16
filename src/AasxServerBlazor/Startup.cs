@@ -32,9 +32,9 @@ namespace AasxServerBlazor
             services.AddAuthentication("BasicAuthentication")
                 .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerGen(options =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo
+                options.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "AASX Server REST Service",
                     Version = "v1",
@@ -47,7 +47,7 @@ namespace AasxServerBlazor
                     },
                 });
 
-                c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
+                options.AddSecurityDefinition("basic", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
                     Type = SecuritySchemeType.Http,
@@ -56,7 +56,7 @@ namespace AasxServerBlazor
                     Description = "Basic Authorization header using the Bearer scheme."
                 });
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
                           new OpenApiSecurityScheme
@@ -70,6 +70,8 @@ namespace AasxServerBlazor
                             new string[] {}
                     }
                 });
+
+                options.CustomSchemaIds(type => type.ToString());
             });
 
             services.AddRazorPages();

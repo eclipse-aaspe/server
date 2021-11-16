@@ -606,7 +606,7 @@ namespace AdminShellNS
                         // try find an existing part for that file ..
                         var found = false;
 
-                        // normal files 
+                        // normal files
                         xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
                         foreach (var x in xs)
                             if (x.TargetUri == psfDel.uri)
@@ -684,7 +684,7 @@ namespace AdminShellNS
                                     // see: https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                                     mimeType = "application/octet-stream";
 
-                                // create new part and link                                    
+                                // create new part and link
                                 filePart = package.CreatePart(psfAdd.uri, mimeType, CompressionOption.Maximum);
                                 if (psfAdd.specialHandling == AdminShellPackageSupplementaryFile.SpecialHandlingType.None)
                                     specPart.CreateRelationship(filePart.Uri, TargetMode.Internal, "http://www.admin-shell.io/aasx/relationships/aas-suppl");

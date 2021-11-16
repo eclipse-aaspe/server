@@ -2,7 +2,9 @@
 using AdminShellNS;
 using Jose;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -50,8 +52,6 @@ namespace AasxRestServerLibrary
         {
             return PathEndsWith(context.Request.Path.Value, tag);
         }
-
-        // see also: https://stackoverflow.com/questions/33619469/how-do-i-write-a-regular-expression-to-route-traffic-with-grapevine-when-my-requ
 
         public List<AasxHttpHandleIdentification> CreateHandlesFromQueryString(string queryString)
         {
@@ -701,7 +701,12 @@ namespace AasxRestServerLibrary
             AdminShell.AdministrationShell aas = null;
             try
             {
-                aas = JsonConvert.DeserializeObject<AdminShell.AdministrationShell>(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                aas = JsonConvert.DeserializeObject<AdminShell.AdministrationShell>(jsonTxt);
             }
             catch (Exception)
             {
@@ -782,7 +787,12 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            AasxFileInfo file = JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Body);
+            string jsonTxt = null;
+            using (var streamReader = new StreamReader(context.Request.Body))
+            {
+                jsonTxt = streamReader.ReadToEnd();
+            }
+            AasxFileInfo file = JsonConvert.DeserializeObject<AasxFileInfo>(jsonTxt);
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;//, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
@@ -912,7 +922,12 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            AasxFileInfo file = JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Body);
+            string jsonTxt = null;
+            using (var streamReader = new StreamReader(context.Request.Body))
+            {
+                jsonTxt = streamReader.ReadToEnd();
+            }
+            AasxFileInfo file = JsonConvert.DeserializeObject<AasxFileInfo>(jsonTxt);
             Console.WriteLine("EvalPutAasxToFilesystem: " + JsonConvert.SerializeObject(file.path));
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
@@ -992,7 +1007,12 @@ namespace AasxRestServerLibrary
             var tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
             try
             {
-                var ba = Convert.FromBase64String(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                var ba = Convert.FromBase64String(jsonTxt);
                 File.WriteAllBytes(tempFn, ba);
             }
             catch (Exception)
@@ -1139,37 +1159,35 @@ namespace AasxRestServerLibrary
             context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with assetId '{assetId}' found.");
         }
 
-        public void EvalDeleteAasAndAsset(HttpContext context, string aasid, bool deleteAsset = false)
+        public ObjectResult EvalDeleteAasAndAsset(string aasid, bool deleteAsset = false)
         {
             dynamic res = new ExpandoObject();
-            int index = -1;
+            //int index = -1;
 
             // check authentication
-            if (withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
+            //if (withAuthentification)
+            //{
+            //    string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/aas", "DELETE"))
-                {
-                    return;
-                }
+            //    if (!checkAccessRights(context, accessrights, "/aas", "DELETE"))
+            //    {
+            //        return new ObjectResult($"Access Denied.") { StatusCode = (int)HttpStatusCode.Unauthorized }; ;
+            //    }
 
-                res.confirm = "Authorization = " + accessrights;
-            }
+            //    res.confirm = "Authorization = " + accessrights;
+            //}
 
             // datastructure update
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.AdministrationShells == null)
             {
-                context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;//, $"Error accessing internal data structures.");
-                return;
+                return new ObjectResult($"Error accessing internal data structures.") { StatusCode = (int)HttpStatusCode.InternalServerError };
             }
 
             // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
+            var findAasReturn = this.FindAAS(aasid);
             if (findAasReturn.aas == null)
             {
-                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
-                return;
+                return new ObjectResult($"No AAS with idShort '{aasid}' found.") { StatusCode = (int)HttpStatusCode.NotFound };
             }
 
             // find the asset
@@ -1192,9 +1210,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            // simple OK
-            context.Response.StatusCode = (int) HttpStatusCode.OK;
-            SendTextResponse(context, "OK");
+            return new ObjectResult(string.Empty) { StatusCode = (int)HttpStatusCode.OK };
         }
 
         #endregion
@@ -1287,7 +1303,12 @@ namespace AasxRestServerLibrary
             AdminShell.Asset asset = null;
             try
             {
-                asset = JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                asset = JsonConvert.DeserializeObject<AdminShell.Asset>(jsonTxt);
             }
             catch (Exception)
             {
@@ -1358,7 +1379,12 @@ namespace AasxRestServerLibrary
             AdminShell.Asset asset = null;
             try
             {
-                asset = JsonConvert.DeserializeObject<AdminShell.Asset>(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                asset = JsonConvert.DeserializeObject<AdminShell.Asset>(jsonTxt);
             }
             catch (Exception)
             {
@@ -1508,7 +1534,7 @@ namespace AasxRestServerLibrary
             AdminShell.Submodel submodel = null;
             try
             {
-                using (TextReader reader = new StringReader(context.Request.Body))
+                using (TextReader reader = new StreamReader(context.Request.Body))
                 {
                     JsonSerializer serializer = new JsonSerializer();
                     serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
@@ -2078,7 +2104,12 @@ namespace AasxRestServerLibrary
             AdminShell.SubmodelElement sme = null;
             try
             {
-                sme = JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(context.Request.Body, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                sme = JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(jsonTxt, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
             }
             catch (Exception)
             {
@@ -2277,8 +2308,12 @@ namespace AasxRestServerLibrary
                 // de-serialize SubmodelElement
                 try
                 {
-                    // serialize
-                    var input = JsonConvert.DeserializeObject<List<string>>(context.Request.Body);
+                    string jsonTxt = null;
+                    using (var streamReader = new StreamReader(context.Request.Body))
+                    {
+                        jsonTxt = streamReader.ReadToEnd();
+                    }
+                    var input = JsonConvert.DeserializeObject<List<string>>(jsonTxt);
 
                     // set inputs
                     if (input != null && input.Count > 0)
@@ -2498,7 +2533,12 @@ namespace AasxRestServerLibrary
             List<AdminShell.Identification> ids = null;
             try
             {
-                ids = JsonConvert.DeserializeObject<List<AdminShell.Identification>>(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                ids = JsonConvert.DeserializeObject<List<AdminShell.Identification>>(jsonTxt);
             }
             catch (Exception)
             {
@@ -2630,7 +2670,12 @@ namespace AasxRestServerLibrary
 
             dynamic res = new ExpandoObject();
 
-            var parsed = JObject.Parse(context.Request.Body);
+            string jsonTxt = null;
+            using (var streamReader = new StreamReader(context.Request.Body))
+            {
+                jsonTxt = streamReader.ReadToEnd();
+            }
+            var parsed = JObject.Parse(jsonTxt);
 
             string user = null;
             string password = null;
@@ -2719,7 +2764,12 @@ namespace AasxRestServerLibrary
 
             try
             {
-                var parsed = JObject.Parse(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                var parsed = JObject.Parse(jsonTxt);
                 token = parsed.SelectToken("token").Value<string>();
 
                 var headers = JWT.Headers(token);
@@ -2886,7 +2936,12 @@ namespace AasxRestServerLibrary
 
             try
             {
-                var parsed = JObject.Parse(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                var parsed = JObject.Parse(jsonTxt);
                 token = parsed.SelectToken("token").Value<string>();
 
                 parsed = JObject.Parse(JWT.Payload(token));
@@ -3056,9 +3111,9 @@ namespace AasxRestServerLibrary
             {
                 if (AasxServer.Program.redirectServer != "")
                 {
-                    string queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                    string originalRequest = context.Request.Url.ToString();
-                    queryString.Add("OriginalRequest", originalRequest);
+                    string queryString = string.Empty;
+                    string originalRequest = context.Request.Path.ToString();
+                    //queryString.Add("OriginalRequest", originalRequest);
                     Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
                     string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
                     Console.WriteLine("Redirect Response: " + response + "\n");
@@ -3113,7 +3168,7 @@ namespace AasxRestServerLibrary
             }
             else // check query string for bearer token
             {
-                split = context.Request.Url.ToString().Split(new char[] { '?' });
+                split = context.Request.Path.ToString().Split(new char[] { '?' });
                 if (split != null && split.Length > 1 && split[1] != null)
                 {
                     Console.WriteLine("Received query string = " + split[1]);
@@ -3337,42 +3392,6 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public void EvalAssetId(HttpContext context, int assetId)
-        {
-            dynamic res = new ExpandoObject();
-
-            Console.WriteLine("Test Asset ID");
-
-            string headers = context.Request.Headers.ToString();
-            string token = context.Request.Headers["accept"];
-            if (token != null)
-            {
-                if (token == "application/aas")
-                {
-                    Console.WriteLine("Received Accept header = " + token);
-                     context.Response.ContentType = "application/aas";
-                    res.client = "I40 IT client";
-                    res.assetID = assetId;
-                    res.humanEndpoint = "https://admin-shell-io.com:5001";
-                    res.restEndpoint = "http://" + AasxServer.Program.hostPort;
-
-                    var settings = new JsonSerializerSettings();
-                    // if (contractResolver != null)
-                    //    settings.ContractResolver = contractResolver;
-                    var json = JsonConvert.SerializeObject(res, Formatting.Indented, settings);
-
-                    context.Response.ContentLength = json.Length;
-                    context.Response.StatusCode = (int) HttpStatusCode.OK;
-                    context.Response.WriteAsync(json);
-
-                    return;
-                }
-            }
-
-            // SendJsonResponse(context, res);
-            SendRedirectResponse(context, "https://admin-shell-io.com:5001");
-        }
-
         public void EvalGetAASX(HttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
@@ -3384,33 +3403,11 @@ namespace AasxRestServerLibrary
             {
                 accessrights = SecurityCheck(context, ref index);
 
-                /*
-                if (accessrights == null)
-                {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-                */
-
                 var aas = Program.env[fileIndex].AasEnv.AdministrationShells[0];
                 if (!checkAccessRights(context, accessrights, "/aasx", "READ", "", "aas", aas))
                 {
                     return;
                 }
-
-                /*
-                string idshort = AasxServer.Program.env[fileIndex].AasEnv.AdministrationShells[0].idShort;
-                string aasRights = "NONE";
-                if (securityRightsAAS.Count != 0)
-                    aasRights = securityRightsAAS[idshort];
-                if (!checkAccessRights(context, accessrights, aasRights))
-                {
-                    return;
-                }
-                */
             }
 
             // save actual data as file
@@ -3426,9 +3423,6 @@ namespace AasxRestServerLibrary
                 SendStreamResponse(context, packageStream,
                     Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
                 packageStream.Close();
-
-                // Reload
-                // Program.env[fileIndex] = new AdminShellPackageEnv(fname);
             }
         }
 
@@ -3442,17 +3436,6 @@ namespace AasxRestServerLibrary
             if (withAuthentification)
             {
                 accessrights = SecurityCheck(context, ref index);
-
-                /*
-                if (accessrights == null)
-                {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-                */
             }
             else
             {
@@ -3460,18 +3443,6 @@ namespace AasxRestServerLibrary
             }
 
             Console.WriteLine("Security 5 Server: /server/getaasx2/" + fileIndex);
-
-            // check authentication
-            /*
-            if (!withAuthentification)
-            {
-                res.error = "You are not authorized for this operation!";
-                SendJsonResponse(context, res);
-                return;
-            }
-            string accessrights = SecurityCheck(context, ref index);
-            */
-
             Console.WriteLine("Security 5.1 Server: Check bearer token and access rights");
             Console.WriteLine("Security 5.2 Server: Validate that bearer token is signed by session unique random");
 
@@ -3876,7 +3847,12 @@ namespace AasxRestServerLibrary
             AdminShell.ConceptDescription cd = null;
             try
             {
-                cd = JsonConvert.DeserializeObject<AdminShell.ConceptDescription>(context.Request.Body);
+                string jsonTxt = null;
+                using (var streamReader = new StreamReader(context.Request.Body))
+                {
+                    jsonTxt = streamReader.ReadToEnd();
+                }
+                cd = JsonConvert.DeserializeObject<AdminShell.ConceptDescription>(jsonTxt);
             }
             catch (Exception)
             {

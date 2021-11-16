@@ -45,10 +45,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="erich-repo.aasx" />
+    <Compile Remove="temp\**" />
+    <Content Remove="temp\**" />
+    <EmbeddedResource Remove="temp\**" />
+    <None Remove="temp\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
+    <None Remove="erich-repo.aasx" />
   </ItemGroup>
 </Project>

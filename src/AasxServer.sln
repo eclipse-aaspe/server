@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		..\.github\workflows\docker-image.yml = ..\.github\workflows\docker-image.yml
-		README.md = README.md
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerBlazor", "AasxServerBlazor\AasxServerBlazor.csproj", "{53165247-64F7-4151-A1DA-347780E0A538}"

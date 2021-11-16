@@ -961,7 +961,7 @@ namespace AasxDemonstration
                         samplesCollectionsCount++;
 
                         // state initial creation as event .. updates need to follow
-                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.Add(
                                         newSeg, "Add", _submodel, (ulong)timeStamp.Ticks);
                     }
                     else
@@ -988,7 +988,7 @@ namespace AasxDemonstration
                         // remove
                         _data.Remove(first);
                         _data.setTimeStamp(timeStamp);
-                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.Add(
                                             first, "Remove", _submodel, (ulong)timeStamp.Ticks);
                     }
 
