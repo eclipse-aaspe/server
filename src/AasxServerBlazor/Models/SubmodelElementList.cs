@@ -116,7 +116,6 @@ namespace IO.Swagger.Models
                 ) &&
                 (
                     ValueTypeValues == other.ValueTypeValues ||
-                    ValueTypeValues != null &&
                     ValueTypeValues.Equals(other.ValueTypeValues)
                 );
         }
@@ -130,15 +129,18 @@ namespace IO.Swagger.Models
             unchecked // Overflow is fine, just wrap
             {
                 var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                    if (SemanticIdValues != null)
+
+                if (SemanticIdValues != null)
                     hashCode = hashCode * 59 + SemanticIdValues.GetHashCode();
-                    if (SubmodelElementTypeValues != null)
+
+                if (SubmodelElementTypeValues != null)
                     hashCode = hashCode * 59 + SubmodelElementTypeValues.GetHashCode();
-                    if (Value != null)
+
+                if (Value != null)
                     hashCode = hashCode * 59 + Value.GetHashCode();
-                    if (ValueTypeValues != null)
-                    hashCode = hashCode * 59 + ValueTypeValues.GetHashCode();
+
+                hashCode = hashCode * 59 + ValueTypeValues.GetHashCode();
+
                 return hashCode;
             }
         }

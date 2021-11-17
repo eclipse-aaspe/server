@@ -103,7 +103,6 @@ namespace IO.Swagger.Models
             return
                 (
                     EntityType == other.EntityType ||
-                    EntityType != null &&
                     EntityType.Equals(other.EntityType)
                 ) &&
                 (
@@ -132,15 +131,18 @@ namespace IO.Swagger.Models
             unchecked // Overflow is fine, just wrap
             {
                 var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                    if (EntityType != null)
-                    hashCode = hashCode * 59 + EntityType.GetHashCode();
-                    if (GlobalAssetId != null)
+
+                hashCode = hashCode * 59 + EntityType.GetHashCode();
+
+                if (GlobalAssetId != null)
                     hashCode = hashCode * 59 + GlobalAssetId.GetHashCode();
-                    if (SpecificAssetIds != null)
+
+                if (SpecificAssetIds != null)
                     hashCode = hashCode * 59 + SpecificAssetIds.GetHashCode();
-                    if (Statements != null)
+
+                if (Statements != null)
                     hashCode = hashCode * 59 + Statements.GetHashCode();
+
                 return hashCode;
             }
         }

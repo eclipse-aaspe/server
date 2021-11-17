@@ -124,7 +124,6 @@ namespace IO.Swagger.Models
                 ) &&
                 (
                     Kind == other.Kind ||
-                    Kind != null &&
                     Kind.Equals(other.Kind)
                 ) &&
                 (
@@ -143,17 +142,21 @@ namespace IO.Swagger.Models
             unchecked // Overflow is fine, just wrap
             {
                 var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                    if (EmbeddedDataSpecifications != null)
+
+                if (EmbeddedDataSpecifications != null)
                     hashCode = hashCode * 59 + EmbeddedDataSpecifications.GetHashCode();
-                    if (Qualifiers != null)
+
+                if (Qualifiers != null)
                     hashCode = hashCode * 59 + Qualifiers.GetHashCode();
-                    if (SemanticId != null)
+
+                if (SemanticId != null)
                     hashCode = hashCode * 59 + SemanticId.GetHashCode();
-                    if (Kind != null)
-                    hashCode = hashCode * 59 + Kind.GetHashCode();
-                    if (SubmodelElements != null)
+
+                hashCode = hashCode * 59 + Kind.GetHashCode();
+
+                if (SubmodelElements != null)
                     hashCode = hashCode * 59 + SubmodelElements.GetHashCode();
+
                 return hashCode;
             }
         }

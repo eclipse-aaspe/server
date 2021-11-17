@@ -77,7 +77,6 @@ namespace IO.Swagger.Models
             return
                 (
                     Name == other.Name ||
-                    Name != null &&
                     Name.Equals(other.Name)
                 );
         }
@@ -91,9 +90,8 @@ namespace IO.Swagger.Models
             unchecked // Overflow is fine, just wrap
             {
                 var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                    if (Name != null)
-                    hashCode = hashCode * 59 + Name.GetHashCode();
+                hashCode = hashCode * 59 + Name.GetHashCode();
+
                 return hashCode;
             }
         }

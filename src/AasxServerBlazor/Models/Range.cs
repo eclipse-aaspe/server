@@ -103,7 +103,6 @@ namespace IO.Swagger.Models
                 ) &&
                 (
                     ValueType == other.ValueType ||
-                    ValueType != null &&
                     ValueType.Equals(other.ValueType)
                 );
         }
@@ -117,13 +116,15 @@ namespace IO.Swagger.Models
             unchecked // Overflow is fine, just wrap
             {
                 var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                    if (Max != null)
+
+                if (Max != null)
                     hashCode = hashCode * 59 + Max.GetHashCode();
-                    if (Min != null)
+
+                if (Min != null)
                     hashCode = hashCode * 59 + Min.GetHashCode();
-                    if (ValueType != null)
-                    hashCode = hashCode * 59 + ValueType.GetHashCode();
+
+                hashCode = hashCode * 59 + ValueType.GetHashCode();
+
                 return hashCode;
             }
         }

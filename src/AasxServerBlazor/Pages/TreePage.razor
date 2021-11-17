@@ -58,15 +58,9 @@
                     string link = getLink(selectedNode, out externalLink);
                     if (selectedNode != null && link != "")
                     {
-                        // if (externalLink)
-                        if (true)
-                        {
-                            <a href="@link" target="_blank">@link</a><br>
-                        }
-                        else
-                        {
-                            <button onclick="window.location.href = '@link'; ">Download</button><br>
-                        }
+
+                        <a href="@link" target="_blank">@link</a><br>
+
                         if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
                         {
                             bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);

@@ -5,6 +5,7 @@ namespace AasxServerBlazor
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
+    using Microsoft.Extensions.Primitives;
     using System;
     using System.Linq;
     using System.Net.Http.Headers;
@@ -43,6 +44,11 @@ namespace AasxServerBlazor
             string username = null;
             try
             {
+                if (StringValues.IsNullOrEmpty(Request.Headers["Authorization"]))
+                {
+                    throw new ArgumentException("Authentication header missing in request!");
+                }
+
                 AuthenticationHeaderValue authHeader = AuthenticationHeaderValue.Parse(Request.Headers["Authorization"]);
                 string[] credentials = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader.Parameter)).Split(':');
                 username = credentials.FirstOrDefault();
@@ -50,7 +56,7 @@ namespace AasxServerBlazor
 
                 if (!_userService.ValidateCredentials(username, password))
                 {
-                    throw new ArgumentException("Invalid credentials");
+                    throw new ArgumentException("Invalid credentials!");
                 }
             }
             catch (Exception ex)
