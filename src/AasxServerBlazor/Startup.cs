@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,7 +45,7 @@ namespace AasxServerBlazor
                         Name = "Plattform Industrie 4.0",
                         Email = string.Empty,
                         Url = new Uri("https://www.plattform-i40.de"),
-                    },
+                    }
                 });
 
                 options.AddSecurityDefinition("basic", new OpenApiSecurityScheme
@@ -72,6 +73,8 @@ namespace AasxServerBlazor
                 });
 
                 options.CustomSchemaIds(type => type.ToString());
+
+                options.EnableAnnotations();
             });
 
             services.AddRazorPages();
@@ -81,6 +84,16 @@ namespace AasxServerBlazor
             services.AddSingleton<AASService>();
 
             services.AddCors();
+
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+            });
+
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -108,7 +121,8 @@ namespace AasxServerBlazor
 
             app.UseRouting();
 
-            app.UseAuthentication();
+            // Disable auth for now as Package Explorer can't do basic auth
+            //app.UseAuthentication();
 
             app.UseAuthorization();
 

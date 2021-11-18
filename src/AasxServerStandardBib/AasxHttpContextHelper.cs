@@ -488,14 +488,15 @@ namespace AasxRestServerLibrary
             context.Response.WriteAsync(txt);
         }
 
-        protected static void SendStreamResponse(HttpContext context, Stream stream,
-            string headerAttachmentFileName = null)
+        protected static void SendStreamResponse(HttpContext context, Stream stream, string headerAttachmentFileName = null)
         {
             context.Response.ContentType = "application";
             context.Response.ContentLength = stream.Length;
 
             if (headerAttachmentFileName != null)
+            {
                 context.Response.Headers.Add("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
+            }
 
             stream.CopyTo(context.Response.Body);
             stream.Close();

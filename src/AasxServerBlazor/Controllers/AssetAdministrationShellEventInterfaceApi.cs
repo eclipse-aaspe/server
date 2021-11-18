@@ -1,37 +1,28 @@
-﻿using AasxRestServerLibrary;
-using AdminShellEvents;
+﻿using AdminShellEvents;
 using AdminShellNS;
 using IO.Swagger.Attributes;
-using IO.Swagger.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using static AasxRestServerLibrary.AasxRestServer;
 
 namespace IO.Swagger.Controllers
 {
     /// <summary>
     /// Returns Event Messages for the specified Asset Admin Shell
-    /// geteventmessages
-    /// geteventmessages/values
-    /// geteventmessages/time
-    /// geteventmessages/deltasecs/{secs}
-    /// diff
-    /// diff/update
-    /// diff/time
     /// </summary>
-    [Authorize]
+    //[Authorize]
     [ApiController]
     public class AssetAdministrationShellEventInterfaceApi : ControllerBase
     {
         private bool _setAllParentsExecuted = false;
 
         [HttpGet]
-        [Route("/geteventmessages/{aasIndex}")]
+        [Route("/aas/{aasIndex}/geteventmessages")]
         [ValidateModelState]
         [SwaggerOperation("GetEventMessages")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages")]
@@ -41,7 +32,7 @@ namespace IO.Swagger.Controllers
         }
 
         [HttpGet]
-        [Route("/geteventmessages/values/{aasIndex}")]
+        [Route("/aas/{aasIndex}/geteventmessages/values")]
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesValues")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested values of event messages")]
@@ -51,7 +42,7 @@ namespace IO.Swagger.Controllers
         }
 
         [HttpGet]
-        [Route("/geteventmessages/time/{aasIndex}/{minimumDate}")]
+        [Route("/aas/{aasIndex}/geteventmessages/time/{minimumDate}")]
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesTime")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested timestamps of event messages")]
@@ -61,7 +52,7 @@ namespace IO.Swagger.Controllers
         }
 
         [HttpGet]
-        [Route("/geteventmessages/time/{aasIndex}/{secs}")]
+        [Route("/aas/{aasIndex}/geteventmessages/deltasecs/{secs}")]
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesTimeSecs")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages for the specified seconds")]
@@ -72,31 +63,31 @@ namespace IO.Swagger.Controllers
         }
 
         [HttpGet]
-        [Route("/diff/{aasIndex}")]
+        [Route("/aas/{aasIndex}/diff")]
         [ValidateModelState]
         [SwaggerOperation("Diff")]
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
-        public IActionResult Diff([FromRoute][Required] int aasIndex)
+        public virtual IActionResult Diff([FromRoute][Required] int aasIndex)
         {
             return DiffInternal(aasIndex, false, DateTime.Now);
         }
 
         [HttpGet]
-        [Route("/diff/update/{aasIndex}")]
+        [Route("/aas/{aasIndex}/diff/update")]
         [ValidateModelState]
         [SwaggerOperation("DiffUpdate")]
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
-        public IActionResult DiffUpdate([FromRoute][Required] int aasIndex)
+        public virtual IActionResult DiffUpdate([FromRoute][Required] int aasIndex)
         {
             return DiffInternal(aasIndex, true, DateTime.Now);
         }
 
         [HttpGet]
-        [Route("/diff/time/{aasIndex}/{minimumDate}")]
+        [Route("/aas/{aasIndex}/diff/time/{minimumDate}")]
         [ValidateModelState]
         [SwaggerOperation("DiffTime")]
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
-        public IActionResult DiffTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
+        public virtual IActionResult DiffTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
         {
             return DiffInternal(aasIndex, false, minimumDate);
         }
@@ -287,7 +278,7 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            return new ObjectResult(envelopes.ToArray());
+            return new ObjectResult(envelopes.ToArray()) { StatusCode = (int)HttpStatusCode.OK };
         }
 
         static void GetEventMsgRecurseDiff(
