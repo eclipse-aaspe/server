@@ -49,7 +49,7 @@
                         @code {
                             private void setTimeStamp()
                             {
-                                (selectedNode.Tag as Referable).setTimeStamp(DateTime.Now);
+                                (selectedNode.Tag as Referable).setTimeStamp(DateTime.UtcNow);
                             }
                         }
                     }
@@ -115,7 +115,7 @@
                             if (selectedNode.Tag is Property)
                             {
                                 (selectedNode.Tag as Property).value = CurrentValue;
-                                (selectedNode.Tag as Property).setTimeStamp(DateTime.Now);
+                                (selectedNode.Tag as Property).setTimeStamp(DateTime.UtcNow);
                                 this.StateHasChanged();
                             }
                             CurrentValue = "";

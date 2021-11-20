@@ -28,6 +28,9 @@
       "commandName": "Docker",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "ADX_PASSWORD": "kF17Q~ldc0CBvT1NFL1W5Og818vF2JLCkw6de"
+      },
       "publishAllPorts": true
     }
   }

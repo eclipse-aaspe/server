@@ -545,7 +545,7 @@ namespace AasxServer
                             var sme1 = smw1.submodelElement;
                             if (sme1 is AdminShell.Property && sme1.idShort == "getActualTime")
                             {
-                                (sme1 as AdminShell.Property).value = DateTime.Now.ToString();
+                                (sme1 as AdminShell.Property).value = DateTime.UtcNow.ToString();
                             }
                             if (sme1 is AdminShell.Property && sme1.idShort == "getStatus")
                             {
@@ -671,7 +671,7 @@ namespace AasxServer
                 return false;
             var p2 = ref2 as AdminShell.Property;
 
-            DateTime localTime = DateTime.Now;
+            DateTime localTime = DateTime.UtcNow;
             if (p2.value == "") // start
             {
                 var endTime = localTime.AddSeconds(waitingTime);

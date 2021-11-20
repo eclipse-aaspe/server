@@ -28,7 +28,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages")]
         public virtual IActionResult GetEventMessages([FromRoute][Required] int aasIndex)
         {
-            return GenerateMessagesInternal(aasIndex, DateTime.Now, true, true);
+            return GenerateMessagesInternal(aasIndex, DateTime.UtcNow, true, true);
         }
 
         [HttpGet]
@@ -38,7 +38,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested values of event messages")]
         public virtual IActionResult GetEventMessagesValues([FromRoute][Required] int aasIndex)
         {
-            return GenerateMessagesInternal(aasIndex, DateTime.Now, true, false);
+            return GenerateMessagesInternal(aasIndex, DateTime.UtcNow, true, false);
         }
 
         [HttpGet]
@@ -58,7 +58,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages for the specified seconds")]
         public virtual IActionResult GetEventMessagesTimeSecs([FromRoute][Required] int aasIndex, [FromRoute][Required] int secs)
         {
-            DateTime minimumDate = DateTime.Now.AddSeconds(-1.0 * secs);
+            DateTime minimumDate = DateTime.UtcNow.AddSeconds(-1.0 * secs);
             return GenerateMessagesInternal(aasIndex, minimumDate, true, true);
         }
 
@@ -69,7 +69,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
         public virtual IActionResult Diff([FromRoute][Required] int aasIndex)
         {
-            return DiffInternal(aasIndex, false, DateTime.Now);
+            return DiffInternal(aasIndex, false, DateTime.UtcNow);
         }
 
         [HttpGet]
@@ -79,7 +79,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
         public virtual IActionResult DiffUpdate([FromRoute][Required] int aasIndex)
         {
-            return DiffInternal(aasIndex, true, DateTime.Now);
+            return DiffInternal(aasIndex, true, DateTime.UtcNow);
         }
 
         [HttpGet]
