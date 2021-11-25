@@ -29,7 +29,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages")]
         public virtual void GetEventMessages([FromRoute][Required] int aasIndex)
         {
-            GenerateMessagesInternal(aasIndex, DateTime.UtcNow, true, true);
+            GenerateMessagesInternal(aasIndex, DateTime.MinValue, true, true);
         }
 
         [HttpGet]
@@ -39,7 +39,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested values of event messages")]
         public virtual void GetEventMessagesValues([FromRoute][Required] int aasIndex)
         {
-            GenerateMessagesInternal(aasIndex, DateTime.UtcNow, true, false);
+            GenerateMessagesInternal(aasIndex, DateTime.MinValue, true, false);
         }
 
         [HttpGet]
