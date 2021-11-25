@@ -587,7 +587,7 @@
             if (f.value != "")
             {
                 string[] split = f.value.Split(new Char[] { '/' });
-                if (split[1].ToLower() == "aasx")
+                if (split.Length > 1 && split[1].ToLower() == "aasx")
                 {
                     split = f.value.Split(new Char[] { '.' });
                     switch (split.Last().ToLower())
@@ -595,7 +595,12 @@
                         case "jpg":
                         case "bmp":
                         case "png":
-                            var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
+                            System.IO.Stream s = null;
+                            try
+                            {
+                                s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
+                            }
+                            catch { }
                             if (s != null)
                             {
                                 using (var m = new System.IO.MemoryStream())
