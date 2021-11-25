@@ -901,7 +901,7 @@ namespace AasxDemonstration
                 // access
                 if (_sourceSystem == null || _dataPoint == null)
                     return;
-                var timeStamp = DateTime.Now;
+                var timeStamp = DateTime.UtcNow;
 
                 // simply iterate
                 foreach (var dp in _dataPoint)
@@ -924,7 +924,7 @@ namespace AasxDemonstration
                 // access
                 if (_sourceSystem == null || _trackSegment == null)
                     return;
-                var timeStamp = DateTime.Now;
+                var timeStamp = DateTime.UtcNow;
 
                 // something to be done?
                 if (!_trackSegment.IsTrigger(_sourceSystem))

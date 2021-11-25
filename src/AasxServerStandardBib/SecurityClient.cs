@@ -579,7 +579,7 @@ namespace AasxServer
             {
                 if (t.taskType?.value.ToLower() == "cyclic")
                 {
-                    if (t.nextExecution > DateTime.Now)
+                    if (t.nextExecution > DateTime.UtcNow)
                         continue;
                     if (t.cycleCount != null)
                     {
@@ -587,7 +587,7 @@ namespace AasxServer
                             t.cycleCount.value = "0";
                         t.cycleCount.value = (Convert.ToInt32(t.cycleCount.value) + 1).ToString();
                     }
-                    t.nextExecution = DateTime.Now.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
+                    t.nextExecution = DateTime.UtcNow.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
                     if (t.nextCycle != null)
                         t.nextCycle.value = t.nextExecution.ToString();
                     Program.signalNewData(0);

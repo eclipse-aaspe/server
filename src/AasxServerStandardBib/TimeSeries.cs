@@ -56,7 +56,7 @@ namespace AasxTimeSeries
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()
         {
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
 
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
@@ -322,7 +322,7 @@ namespace AasxTimeSeries
 
             // ulong newChangeNumber = ChangeNumber + 1;
             // bool useNewChangeNumber = false;
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
 
             foreach (var tsb in timeSeriesBlockList)
             {
@@ -391,7 +391,7 @@ namespace AasxTimeSeries
                         int valueIndex = 0;
                         while (valueIndex < valueCount)
                         {
-                            dt = DateTime.Now;
+                            dt = DateTime.UtcNow;
                             if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                             {
                                 var t = dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ");

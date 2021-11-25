@@ -59,7 +59,7 @@ namespace AasxRestServerLibrary
 
                 if (op == "Remove")
                 {
-                    o.TimeStamp = DateTime.Now;
+                    o.TimeStamp = DateTime.UtcNow;
                     AdminShell.Referable x = o;
 
                     DeletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o });
