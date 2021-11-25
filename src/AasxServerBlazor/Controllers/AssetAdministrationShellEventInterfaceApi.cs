@@ -1,4 +1,5 @@
-﻿using AdminShellEvents;
+﻿using AasxRestServerLibrary;
+using AdminShellEvents;
 using AdminShellNS;
 using IO.Swagger.Attributes;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +27,9 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessages")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages")]
-        public virtual IActionResult GetEventMessages([FromRoute][Required] int aasIndex)
+        public virtual void GetEventMessages([FromRoute][Required] int aasIndex)
         {
-            return GenerateMessagesInternal(aasIndex, DateTime.Now, true, true);
+            GenerateMessagesInternal(aasIndex, DateTime.Now, true, true);
         }
 
         [HttpGet]
@@ -36,9 +37,9 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesValues")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested values of event messages")]
-        public virtual IActionResult GetEventMessagesValues([FromRoute][Required] int aasIndex)
+        public virtual void GetEventMessagesValues([FromRoute][Required] int aasIndex)
         {
-            return GenerateMessagesInternal(aasIndex, DateTime.Now, true, false);
+            GenerateMessagesInternal(aasIndex, DateTime.Now, true, false);
         }
 
         [HttpGet]
@@ -46,9 +47,9 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesTime")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested timestamps of event messages")]
-        public virtual IActionResult GetEventMessagesTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
+        public virtual void GetEventMessagesTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
         {
-            return GenerateMessagesInternal(aasIndex, minimumDate, true, true);
+            GenerateMessagesInternal(aasIndex, minimumDate, true, true);
         }
 
         [HttpGet]
@@ -56,10 +57,10 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesTimeSecs")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages for the specified seconds")]
-        public virtual IActionResult GetEventMessagesTimeSecs([FromRoute][Required] int aasIndex, [FromRoute][Required] int secs)
+        public virtual void GetEventMessagesTimeSecs([FromRoute][Required] int aasIndex, [FromRoute][Required] int secs)
         {
             DateTime minimumDate = DateTime.Now.AddSeconds(-1.0 * secs);
-            return GenerateMessagesInternal(aasIndex, minimumDate, true, true);
+            GenerateMessagesInternal(aasIndex, minimumDate, true, true);
         }
 
         [HttpGet]
@@ -86,13 +87,13 @@ namespace IO.Swagger.Controllers
         [Route("/aas/{aasIndex}/diff/time/{minimumDate}")]
         [ValidateModelState]
         [SwaggerOperation("DiffTime")]
-        [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
+        //[SwaggerResponse(statusCode: 200, type: typeof(string), description: "Differences for specified Asset Admin Shell")]
         public virtual IActionResult DiffTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
         {
             return DiffInternal(aasIndex, false, minimumDate);
         }
 
-        private IActionResult GenerateMessagesInternal(int aasIndex, DateTime minimumDate, bool doUpdate, bool doCreateDelete)
+        private void GenerateMessagesInternal(int aasIndex, DateTime minimumDate, bool doUpdate, bool doCreateDelete)
         {
             // Set parents for all childs.
             // Note: this has to be done only once for AASX Server, therefore a better place than
@@ -278,7 +279,9 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            return new ObjectResult(envelopes.ToArray()) { StatusCode = (int)HttpStatusCode.OK };
+            AasxHttpContextHelper.SendJsonResponse2(HttpContext, envelopes.ToArray());
+            //var result = new ObjectResult(envelopes.ToArray()) { StatusCode = (int)HttpStatusCode.OK };
+            //return result ;
         }
 
         static void GetEventMsgRecurseDiff(
