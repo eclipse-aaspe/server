@@ -74,6 +74,7 @@ namespace AasxServerBlazor.Data
                         if (Program.envSymbols[i] != "L")
                         {
                             List<Item> childs = new List<Item>();
+                            if (Program.env[i].AasEnv.Submodels != null)
                             foreach (var sm in Program.env[i].AasEnv.Submodels)
                             {
                                 if (sm != null && sm.idShort != null)
@@ -84,6 +85,7 @@ namespace AasxServerBlazor.Data
                                     smItem.Tag = sm;
                                     childs.Add(smItem);
                                     List<Item> smChilds = new List<Item>();
+                                    if (sm.submodelElements != null)
                                     foreach (var sme in sm.submodelElements)
                                     {
                                         var smeItem = new Item();

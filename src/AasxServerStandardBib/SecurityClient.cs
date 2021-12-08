@@ -296,22 +296,32 @@ namespace AasxServer
                             Console.WriteLine(disco.Raw);
 
                             var serverCert = new X509Certificate2();
-                            var s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.value);
-                            if (s != null)
+                            Stream s = null;
+                            try
                             {
-                                using (var m = new System.IO.MemoryStream())
-                                {
-                                    s.CopyTo(m);
-                                    var b = m.GetBuffer();
-                                    serverCert = new X509Certificate2(b);
-                                    Console.WriteLine("Auth server certificate: " + authServerCertificate.value);
-                                }
+                                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.value);
+                            }
+                            catch { }
+                            if (s == null) return;
+
+                            using (var m = new System.IO.MemoryStream())
+                            {
+                                s.CopyTo(m);
+                                var b = m.GetBuffer();
+                                serverCert = new X509Certificate2(b);
+                                Console.WriteLine("Auth server certificate: " + authServerCertificate.value);
                             }
 
                             string[] x5c = null;
                             X509Certificate2 certificate = null;
                             string certificatePassword = clientCertificatePassWord.value;
-                            var s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.value);
+                            Stream s2 = null;
+                            try
+                            {
+                                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.value);
+                            }
+                            catch { }
+                            if (s2 == null) return;
                             if (s2 != null)
                             {
                                 X509Certificate2Collection xc = new X509Certificate2Collection();
