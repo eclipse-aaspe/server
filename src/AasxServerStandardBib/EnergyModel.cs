@@ -1,4 +1,5 @@
-﻿using AasxTimeSeries;
+﻿using AasxServer;
+using AasxTimeSeries;
 using AdminShellNS;
 using Kusto.Data;
 using Kusto.Data.Common;
@@ -997,8 +998,9 @@ namespace AasxDemonstration
                     totalSamples += _trackSegment.TimeStamps.Count;
                     _trackSegment.ClearRuntime();
                 }
-            }
 
+                Program.signalNewData(0);
+            }
         }
     }
 }
