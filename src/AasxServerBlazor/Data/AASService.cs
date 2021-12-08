@@ -75,45 +75,45 @@ namespace AasxServerBlazor.Data
                         {
                             List<Item> childs = new List<Item>();
                             if (Program.env[i].AasEnv.Submodels != null)
-                            foreach (var sm in Program.env[i].AasEnv.Submodels)
-                            {
-                                if (sm != null && sm.idShort != null)
+                                foreach (var sm in Program.env[i].AasEnv.Submodels)
                                 {
-                                    var smItem = new Item();
-                                    smItem.envIndex = i;
-                                    smItem.Text = sm.idShort;
-                                    smItem.Tag = sm;
-                                    childs.Add(smItem);
-                                    List<Item> smChilds = new List<Item>();
-                                    if (sm.submodelElements != null)
-                                    foreach (var sme in sm.submodelElements)
+                                    if (sm != null && sm.idShort != null)
                                     {
-                                        var smeItem = new Item();
-                                        smeItem.envIndex = i;
-                                        smeItem.Text = sme.submodelElement.idShort;
-                                        smeItem.Tag = sme.submodelElement;
-                                        smChilds.Add(smeItem);
-                                        if (sme.submodelElement is SubmodelElementCollection)
-                                        {
-                                            var smec = sme.submodelElement as SubmodelElementCollection;
-                                            createSMECItems(smeItem, smec, i);
-                                        }
-                                        if (sme.submodelElement is Operation)
-                                        {
-                                            var o = sme.submodelElement as Operation;
-                                            createOperationItems(smeItem, o, i);
-                                        }
-                                        if (sme.submodelElement is Entity)
-                                        {
-                                            var e = sme.submodelElement as Entity;
-                                            createEntityItems(smeItem, e, i);
-                                        }
+                                        var smItem = new Item();
+                                        smItem.envIndex = i;
+                                        smItem.Text = sm.idShort;
+                                        smItem.Tag = sm;
+                                        childs.Add(smItem);
+                                        List<Item> smChilds = new List<Item>();
+                                        if (sm.submodelElements != null)
+                                            foreach (var sme in sm.submodelElements)
+                                            {
+                                                var smeItem = new Item();
+                                                smeItem.envIndex = i;
+                                                smeItem.Text = sme.submodelElement.idShort;
+                                                smeItem.Tag = sme.submodelElement;
+                                                smChilds.Add(smeItem);
+                                                if (sme.submodelElement is SubmodelElementCollection)
+                                                {
+                                                    var smec = sme.submodelElement as SubmodelElementCollection;
+                                                    createSMECItems(smeItem, smec, i);
+                                                }
+                                                if (sme.submodelElement is Operation)
+                                                {
+                                                    var o = sme.submodelElement as Operation;
+                                                    createOperationItems(smeItem, o, i);
+                                                }
+                                                if (sme.submodelElement is Entity)
+                                                {
+                                                    var e = sme.submodelElement as Entity;
+                                                    createEntityItems(smeItem, e, i);
+                                                }
+                                            }
+                                        smItem.Childs = smChilds;
+                                        foreach (var c in smChilds)
+                                            c.parent = smItem;
                                     }
-                                    smItem.Childs = smChilds;
-                                    foreach (var c in smChilds)
-                                        c.parent = smItem;
                                 }
-                            }
                             root.Childs = childs;
                             foreach (var c in childs)
                                 c.parent = root;
