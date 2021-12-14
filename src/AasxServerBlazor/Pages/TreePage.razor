@@ -6,218 +6,186 @@
 @using System.Net;
 @using QRCoder;
 @using System.Drawing;
+@using AasxServer;
 @implements IDisposable
 
-    <div class="col-12 row">
-        <br />
-        <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
-            @if (Program.isLoading)
-            {
-                <span style="color:white;background-color:blue;">Loading...</span>
-            }
-            @updateVisibleTree(Items, selectedNode)
-            <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
-                  @bind-SelectedNode="SelectedNode"
-                  @bind-ExpandedNodes="ExpandedNodes"
-                  HasChildNodes="@(item => item.Childs?.Any() == true)">
-                <TitleTemplate>
-                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                    @ViewNodeID(context)@ViewNodeInfo(context)
-                    <strong><span style="color:blue">@getSymbols(context)</span></strong>
-                    <span style="color:lightgray;">@ViewTimeStamp(context)</span>
-                </TitleTemplate>
-            </Tree>
-        </div>
-        <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
-            <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
-                @{
-                    <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
-                    for (int line = 0; line < 6; line++)
+<div class="col-12 row">
+    <br />
+    <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
+        @if (Program.isLoading)
+        {
+            <span style="color:white;background-color:blue;">Loading...</span>
+        }
+
+        @updateVisibleTree(Items, SelectedNode)
+
+        <Tree Nodes="Items" ChildSelector="@(item => item.Childs)" @bind-SelectedNode="SelectedNode" @bind-ExpandedNodes="ExpandedNodes" HasChildNodes="@(item => item.Childs?.Any() == true)">
+            <TitleTemplate>
+                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                @ViewNodeID(context)
+                @ViewNodeInfo(context)
+                <strong><span style="color:blue">@getSymbols(context)</span></strong>
+                <span style="color:lightgray;">@ViewTimeStamp(context)</span>
+            </TitleTemplate>
+        </Tree>
+    </div>
+    <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
+        <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+            @{
+                <span style="color:white;background-color:blue;">@ViewNodeType(SelectedNode)</span> @ViewNodeID(SelectedNode)<br>
+                for (int line = 0; line < 6; line++)
+                {
+                    string nodeDetails0 = ViewNodeDetails(SelectedNode, line, 0);
+                    string nodeDetails1 = ViewNodeDetails(SelectedNode, line, 1);
+                    if (nodeDetails0 != string.Empty && nodeDetails1 != string.Empty)
                     {
-                        string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
-                        string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
-                        if (nodeDetails0 != "" && nodeDetails1 != "")
+                        <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
+                    }
+                }
+                if (SelectedNode != null && SelectedNode.Tag is Referable r)
+                {
+                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    <button style="background-color:lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
+                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    @code{
+                        private void setTimeStamp()
                         {
-                            <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
+                            (SelectedNode.Tag as Referable).setTimeStamp(DateTime.UtcNow);
                         }
                     }
-                    if (selectedNode != null && selectedNode.Tag is Referable r)
+                }
+
+                bool externalLink = false;
+                string link = getLink(SelectedNode, out externalLink);
+                if (SelectedNode != null && link != string.Empty)
+                {
+
+                    <a href="@link" target="_blank">@link</a><br>
+
+                    if (SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != string.Empty)
                     {
-                        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                        <button style="background-color:lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
-                        <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        bool toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+                        bool toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+                        if (toPublish)
+                        {
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                        }
+                        else
+                        {
+                            <button @onclick="setSubmodelToPublish">Publish</button>
+                        }
+                        if (toSubscribe)
+                        {
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                        }
+                        else
+                        {
+                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                        }
+
                         @code {
-                            private void setTimeStamp()
+                            private void resetSubmodelToPublish()
                             {
-                                (selectedNode.Tag as Referable).setTimeStamp(DateTime.UtcNow);
+                                Program.submodelsToPublish.Remove(SelectedNode.Tag);
                             }
-                        }
-                    }
-
-                    bool externalLink = false;
-                    string link = getLink(selectedNode, out externalLink);
-                    if (selectedNode != null && link != "")
-                    {
-
-                        <a href="@link" target="_blank">@link</a><br>
-
-                        if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
-                        {
-                            bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                            bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                            if (toPublish)
+                            private void setSubmodelToPublish()
                             {
-                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                                bool toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+                                if (!toSubscribe)
+                                    Program.submodelsToPublish.Add(SelectedNode.Tag);
                             }
-                            else
+                            private void resetSubmodelToSubscribe()
                             {
-                                <button @onclick="setSubmodelToPublish">Publish</button>
+                                Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
                             }
-                            if (toSubscribe)
+                            private void setSubmodelToSubscribe()
                             {
-                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
-                            }
-                            else
-                            {
-                                <button @onclick="setSubmodelToSubscribe">Subscribe</button>
-                            }
-
-                            @code {
-                                private void resetSubmodelToPublish()
-                                {
-                                    Program.submodelsToPublish.Remove(selectedNode.Tag);
-                                }
-                                private void setSubmodelToPublish()
-                                {
-                                    bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                                    if (!toSubscribe)
-                                        Program.submodelsToPublish.Add(selectedNode.Tag);
-                                }
-                                private void resetSubmodelToSubscribe()
-                                {
-                                    Program.submodelsToSubscribe.Remove(selectedNode.Tag);
-                                }
-                                private void setSubmodelToSubscribe()
-                                {
-                                    bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                                    if (!toPublish)
-                                        Program.submodelsToSubscribe.Add(selectedNode.Tag);
-                                }
-                            }
-                        }
-                    }
-                    if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
-                    {
-                        <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                        @code { private string CurrentValue { get; set; } }
-                        if (CurrentValue != null && CurrentValue != "")
-                        {
-                            if (selectedNode.Tag is Property)
-                            {
-                                (selectedNode.Tag as Property).value = CurrentValue;
-                                (selectedNode.Tag as Property).setTimeStamp(DateTime.UtcNow);
-                                this.StateHasChanged();
-                            }
-                            CurrentValue = "";
-                        }
-                    }
-                    if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is File))
-                    {
-                        if (selectedNode.Tag is AdministrationShell)
-                        {
-                            <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
-                            string qrcodeLink = getQRCodeLink(selectedNode);
-                            if (Program.generatedQrCodes.ContainsKey(selectedNode))
-                            {
-                                string qrcodeImage = getQRCodeImage(selectedNode);
-                                if (qrcodeImage != "")
-                                {
-                                    <a href="@qrcodeLink" target="_blank">
-                                        <div>
-                                            <img src=data:image;base64,@qrcodeImage style="max-width: 40%;" alt="Qrcode Image" />
-                                        </div>
-                                    </a>
-                                }
-                            }
-                            else
-                            {
-                                <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
-                            }
-                            @code {
-                                private void runCreateQRCodeImage()
-                                {
-                                    createQRCodeImage(selectedNode);
-                                }
-                            }
-
-                        }
-
-                        string detailsImage = createDetailsImage(selectedNode);
-                        if (detailsImage != "")
-                        {
-                            <br />
-                            <div>
-                                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
-                            </div>
-                        }
-                    }
-                    if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
-                    {
-                        if (be.observed != null)
-                        {
-                            string okey = be.observed.GetAsExactlyOneKey().ToString();
-                            <span style="color:white;background-color:blue;">Observed</span>
-                            <span>@(" " + okey)</span><br />
-                            var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
-                            if (refsme != null)
-                            {
-                                <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                                <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            }
-                            else
-                            {
-                                <span>Referenced element does not exist!</span><br />
+                                bool toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+                                if (!toPublish)
+                                    Program.submodelsToSubscribe.Add(SelectedNode.Tag);
                             }
                         }
                     }
                 }
-            </div>
+                if (SelectedNode != null && SelectedNode.Tag is Property && Program.edit)
+                {
+                    <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    @code { private string CurrentValue { get; set; } }
+                    if (CurrentValue != null && CurrentValue != string.Empty)
+                    {
+                        if (SelectedNode.Tag is Property)
+                        {
+                            (SelectedNode.Tag as Property).value = CurrentValue;
+                            (SelectedNode.Tag as Property).setTimeStamp(DateTime.UtcNow);
+                            this.StateHasChanged();
+                        }
+                        CurrentValue = string.Empty;
+                    }
+                }
+                if (SelectedNode != null && (SelectedNode.Tag is AdministrationShell || SelectedNode.Tag is File))
+                {
+                    if (SelectedNode.Tag is AdministrationShell)
+                    {
+                        <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
+                        string qrcodeLink = getQRCodeLink(SelectedNode);
+                        if (Program.generatedQrCodes.ContainsKey(SelectedNode))
+                        {
+                            string qrcodeImage = getQRCodeImage(SelectedNode);
+                            if (qrcodeImage != string.Empty)
+                            {
+                                <a href="@qrcodeLink" target="_blank">
+                                    <div>
+                                        <img src=data:image;base64,@qrcodeImage style="max-width: 40%;" alt="Qrcode Image" />
+                                    </div>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
+                        }
+                        @code {
+                            private void runCreateQRCodeImage()
+                            {
+                                createQRCodeImage(SelectedNode);
+                            }
+                        }
+                    }
+
+                    string detailsImage = createDetailsImage(SelectedNode);
+                    if (detailsImage != string.Empty)
+                    {
+                        <br />
+                        <div>
+                            <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+                        </div>
+                    }
+                }
+                if (SelectedNode != null && (SelectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
+                {
+                    if (be.observed != null)
+                    {
+                        string okey = be.observed.GetAsExactlyOneKey().ToString();
+                        <span style="color:white;background-color:blue;">Observed</span>
+                        <span>@(" " + okey)</span><br />
+                        var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
+                        if (refsme != null)
+                        {
+                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        }
+                        else
+                        {
+                            <span>Referenced element does not exist!</span><br />
+                        }
+                    }
+                }
+            }
+        </div>
     </div>
 </div>
 
-
-@inject IJSRuntime js
-@using AasxServer;
-
 @code {
-    async Task DownloadFile()
-    {
-        this.StateHasChanged();
-        var f = selectedNode.Tag as File;
-        var fileName = System.IO.Path.GetFileName(f.value);
-        if (fileName != "")
-        {
-            try
-            {
-                byte[] data;
-                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-                {
-                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
-                    data = ms.ToArray();
-                }
-                //
-                await SaveAs(js, fileName, data);
-            }
-            catch
-            {
-            }
-
-        }
-    }
-    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    {
-        await js.InvokeAsync<object>("saveAsFile", filename, data);
-    }
 
     public class Item
     {
@@ -232,15 +200,8 @@
     List<Item> Items = null;
 
     IList<Item> ExpandedNodes = new List<Item>();
-    Item selectedNode;
-    Item SelectedNode
-    {
-        get { return selectedNode; }
-        set
-        {
-            selectedNode = value;
-        }
-    }
+
+    Item SelectedNode { get; set; }
 
     static ulong dataVersion = 0;
 
@@ -277,63 +238,59 @@
         }
     }
 
-    bool update = true;
-
-    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+    string updateVisibleTree(List<Item> viewItems, Item SelectedNode)
     {
-        if (update)
+        switch (newDataMode)
         {
-            switch (newDataMode)
-            {
-                // 0 == same tree, only values changed
-                case 0:
-                    break;
-                // 1 == same tree, structure may change
-                // 2 == build new tree, keep open nodes
-                case 1:
-                case 2:
-                    bool isSelected = selectedNode != null;
-                    bool isExpanded = ExpandedNodes.Count != 0;
-                    List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                    List<string> selectedNodePath = getPath(selectedNode);
-                    if (isExpanded)
+            // 0 == same tree, only values changed
+            case 0:
+                break;
+            // 1 == same tree, structure may change
+            // 2 == build new tree, keep open nodes
+            case 1:
+            case 2:
+                bool isSelected = SelectedNode != null;
+                bool isExpanded = ExpandedNodes.Count != 0;
+                List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
+                List<string> selectedNodePath = getPath(SelectedNode);
+                if (isExpanded)
+                {
+                    for (int j = 0; j < ExpandedNodes.Count; j++)
                     {
-                        for (int j = 0; j < ExpandedNodes.Count; j++)
-                        {
-                            expandedNodesPath[j] = getPath(ExpandedNodes[j]);
-                        }
+                        expandedNodesPath[j] = getPath(ExpandedNodes[j]);
                     }
-                    SubmodelService.buildTree();
-                    Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                    ExpandedNodes.Clear();
-                    selectedNode = null;
-                    if (isSelected)
+                }
+                SubmodelService.buildTree();
+                Items = SubmodelService.GetTree(SelectedNode, ExpandedNodes);
+                ExpandedNodes.Clear();
+                SelectedNode = null;
+                if (isSelected)
+                {
+                    SelectedNode = findPath(selectedNodePath);
+                }
+                if (isExpanded)
+                {
+                    foreach (var path in expandedNodesPath)
                     {
-                        selectedNode = findPath(selectedNodePath);
+                        Item p = findPath(path);
+                        if (p != null)
+                            ExpandedNodes.Add(p);
                     }
-                    if (isExpanded)
-                    {
-                        foreach (var path in expandedNodesPath)
-                        {
-                            Item p = findPath(path);
-                            if (p != null)
-                                ExpandedNodes.Add(p);
-                        }
-                    }
-                    newDataMode = 0;
-                    break;
-                // 3 == build new tree, all nodes closed
-                case 3:
-                    SubmodelService.buildTree();
-                    Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                    ExpandedNodes.Clear();
-                    selectedNode = null;
-                    newDataMode = 0;
-                    break;
-            }
-            SelectedNode = selectedNode;
+                }
+                newDataMode = 0;
+                break;
+            // 3 == build new tree, all nodes closed
+            case 3:
+                SubmodelService.buildTree();
+                Items = SubmodelService.GetTree(SelectedNode, ExpandedNodes);
+                ExpandedNodes.Clear();
+                SelectedNode = null;
+                newDataMode = 0;
+                break;
         }
-        return "";
+
+        SelectedNode = SelectedNode;
+        return string.Empty;
     }
 
     List<string> getPath(Item i)
@@ -472,7 +429,7 @@
 
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
         object o = item.Tag;
@@ -526,14 +483,14 @@
             }
         }
 
-        return "";
+        return string.Empty;
     }
 
     string getQRCodeLink(Item item)
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
         string hostPort = Program.hostPort;
@@ -561,14 +518,14 @@
             }
         }
 
-        return "";
+        return string.Empty;
     }
 
     string getQRCodeImage(Item item)
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
         object o = item.Tag;
@@ -581,7 +538,7 @@
                 return image;
         }
 
-        return "";
+        return string.Empty;
     }
 
     void createQRCodeImage(Item item)
@@ -667,7 +624,7 @@
 
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
         string hostPort = Program.hostPort;
@@ -682,19 +639,19 @@
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
         }
 
         if (o is AdministrationShell)
         {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
         }
 
         if (o is File || o is Property)
         {
-            string value = "";
+            string value = string.Empty;
 
             if (o is File)
             {
@@ -718,23 +675,22 @@
             {
                 if (split[1].ToLower() == "aasx")
                 {
-                    // return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
                     return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;
                 }
             }
         }
 
-        return "";
+        return string.Empty;
     }
 
     string getSymbols(Item item)
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        string ret = "";
+        string ret = string.Empty;
         object o = item.Tag;
 
         if (o is AdministrationShell)
@@ -770,10 +726,10 @@
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        string ret = "";
+        string ret = string.Empty;
 
         if (item.Type != null)
         {
@@ -858,10 +814,10 @@
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        string ret = "";
+        string ret = string.Empty;
 
         object o = item.Tag;
 
@@ -876,7 +832,7 @@
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
         string ret = "NULL";
@@ -896,7 +852,7 @@
         if (o is Submodel)
         {
             var sm = o as Submodel;
-            ret = "";
+            ret = string.Empty;
             if (sm.kind != null && sm.kind.IsTemplate)
                 ret += "<T> ";
             ret += sm.idShort;
@@ -904,7 +860,7 @@
         if (o is SubmodelElement)
         {
             var sme = o as SubmodelElement;
-            ret = "";
+            ret = string.Empty;
             if (sme.kind != null && sme.kind.IsTemplate)
                 ret += "<T> ";
             ret += sme.idShort;
@@ -912,7 +868,7 @@
         if (o is File)
         {
             var f = o as File;
-            ret = "";
+            ret = string.Empty;
             if (f.kind != null && f.kind.IsTemplate)
                 ret += "<T> ";
             ret += f.idShort;
@@ -920,7 +876,7 @@
         if (o is Blob)
         {
             var b = o as Blob;
-            ret = "";
+            ret = string.Empty;
             if (b.kind != null && b.kind.IsTemplate)
                 ret += "<T> ";
             ret += b.idShort;
@@ -928,7 +884,7 @@
         if (o is AdminShellNS.AdminShellV20.Range)
         {
             var r = o as AdminShellNS.AdminShellV20.Range;
-            ret = "";
+            ret = string.Empty;
             if (r.kind != null && r.kind.IsTemplate)
                 ret += "<T> ";
             ret += r.idShort;
@@ -936,7 +892,7 @@
         if (o is MultiLanguageProperty)
         {
             var mlp = o as MultiLanguageProperty;
-            ret = "";
+            ret = string.Empty;
             if (mlp.kind != null && mlp.kind.IsTemplate)
                 ret += "<T> ";
             ret += mlp.idShort;
@@ -948,10 +904,10 @@
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        string ret = "";
+        string ret = string.Empty;
 
         object o = item.Tag;
 
@@ -983,7 +939,7 @@
             if (o is Property)
             {
                 var prop = o as Property;
-                if (prop.value != "")
+                if (prop.value != string.Empty)
                 {
                     ret = " = " + prop.value;
                 }
@@ -1032,22 +988,22 @@
     {
         if (item == null)
         {
-            return "";
+            return string.Empty;
         }
 
         string ret = "NULL";
 
-        object o = item.Tag;
+        object tag = item.Tag;
 
-        if (o == null)
+        if (tag == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        if (o is AdministrationShell)
+        if (tag is AdministrationShell)
         {
-            ret = "";
-            var aas = o as AdministrationShell;
+            ret = string.Empty;
+            var aas = tag as AdministrationShell;
 
             var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
 
@@ -1056,7 +1012,7 @@
                 case 0:
                     ret = "ID";
                     if (col == 1)
-                        ret = aas.identification + "";
+                        ret = aas.identification + string.Empty;
                     break;
                 case 1:
                     if (asset != null)
@@ -1071,7 +1027,7 @@
                     {
                         ret = "ASSETID";
                         if (col == 1)
-                            ret = asset.identification + "";
+                            ret = asset.identification + string.Empty;
                     }
                     break;
                 case 3:
@@ -1085,54 +1041,22 @@
                         }
                     }
                     break;
-                /*
-                case 3:
-                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                    if (subjectIssuer != null)
-                    {
-                        string[] s = subjectIssuer.Split(';');
-                        if (s.Length > 0 && s[0] != "")
-                        {
-                            ret = "SUBJECT";
-                            if (col == 1)
-                                ret = s[0];
-                        }
-                    }
-                    break;
-                case 4:
-                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                    if (subjectIssuer != null)
-                    {
-                        string[] s = subjectIssuer.Split(';');
-                        if (s.Length > 1 && s[1] != "")
-                        {
-                            ret = "ISSUER";
-                            if (col == 1)
-                                ret = s[1];
-                        }
-                    }
-                    break;
-                */
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is Submodel)
+        if (tag is Submodel)
         {
-            var sm = o as Submodel;
+            var sm = tag as Submodel;
             switch (line)
             {
                 case 0:
                     ret = "ID";
                     if (col == 1)
-                        ret = sm.identification + "";
+                        ret = sm.identification + string.Empty;
                     break;
                 case 1:
                     ret = "Semantic ID";
@@ -1149,22 +1073,16 @@
                 case 2:
                     ret = getQualifiers(sm.qualifiers, col);
                     break;
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is Property)
+        if (tag is Property)
         {
-            var prop = o as Property;
+            var prop = tag as Property;
             ret += ", " + prop.value;
             switch (line)
             {
@@ -1183,12 +1101,12 @@
                 case 1:
                     ret = "Value Type";
                     if (col == 1)
-                        ret = prop.valueType + "";
+                        ret = prop.valueType + string.Empty;
                     break;
                 case 2:
                     ret = "Value";
                     if (col == 1)
-                        ret = prop.value + "";
+                        ret = prop.value + string.Empty;
                     break;
                 case 3:
                     ret = getQualifiers(prop.qualifiers, col);
@@ -1196,20 +1114,16 @@
                 case 4:
                     ret = getUnit(item, prop, col);
                     break;
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+               default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is Entity)
+        if (tag is Entity)
         {
-            var e = o as Entity;
+            var e = tag as Entity;
             ret += ", " + e.entityType;
             switch (line)
             {
@@ -1228,10 +1142,10 @@
                 case 1:
                     ret = "Entity Type";
                     if (col == 1)
-                        ret = e.entityType + "";
+                        ret = e.entityType + string.Empty;
                     break;
                 case 2:
-                    ret = "";
+                    ret = string.Empty;
                     if (e.GetEntityType() == Entity.EntityTypeEnum.SelfManagedEntity)
                     {
                         if (e.assetRef != null)
@@ -1251,21 +1165,16 @@
                 case 3:
                     ret = getQualifiers(e.qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is File)
+        if (tag is File)
         {
-            var f = o as File;
+            var f = tag as File;
             ret += ", " + f.value;
             switch (line)
             {
@@ -1289,22 +1198,16 @@
                 case 2:
                     ret = getQualifiers(f.qualifiers, col);
                     break;
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is Blob)
+        if (tag is Blob)
         {
-            var b = o as Blob;
+            var b = tag as Blob;
             switch (line)
             {
                 case 0:
@@ -1332,21 +1235,16 @@
                 case 3:
                     ret = getQualifiers(b.qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is AdminShellNS.AdminShellV20.Range)
+        if (tag is AdminShellNS.AdminShellV20.Range)
         {
-            var r = o as AdminShellNS.AdminShellV20.Range;
+            var r = tag as AdminShellNS.AdminShellV20.Range;
             ret = r.idShort;
             switch (line)
             {
@@ -1365,12 +1263,12 @@
                 case 1:
                     ret = "Min";
                     if (col == 1)
-                        ret = r.min + "";
+                        ret = r.min + string.Empty;
                     break;
                 case 2:
                     ret = "Max";
                     if (col == 1)
-                        ret = r.max + "";
+                        ret = r.max + string.Empty;
                     break;
                 case 3:
                     ret = getQualifiers(r.qualifiers, col);
@@ -1378,20 +1276,16 @@
                 case 4:
                     ret = getUnit(item, r, col);
                     break;
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is Operation)
+        if (tag is Operation)
         {
-            var op = o as Operation;
+            var op = tag as Operation;
             ret = op.idShort;
             switch (line)
             {
@@ -1414,7 +1308,7 @@
                         ret = "0";
                         if (op.inputVariable != null)
                         {
-                            ret = op.inputVariable.Count + "";
+                            ret = op.inputVariable.Count + string.Empty;
                         }
                     }
                     break;
@@ -1425,28 +1319,23 @@
                         ret = "0";
                         if (op.outputVariable != null)
                         {
-                            ret = op.outputVariable.Count + "";
+                            ret = op.outputVariable.Count + string.Empty;
                         }
                     }
                     break;
                 case 3:
                     ret = getQualifiers(op.qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is RelationshipElement)
+        if (tag is RelationshipElement)
         {
-            var r = o as RelationshipElement;
+            var r = tag as RelationshipElement;
             ret = r.idShort;
             switch (line)
             {
@@ -1489,21 +1378,16 @@
                 case 3:
                     ret = getQualifiers(r.qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is ReferenceElement)
+        if (tag is ReferenceElement)
         {
-            var r = o as ReferenceElement;
+            var r = tag as ReferenceElement;
             ret = r.idShort;
             switch (line)
             {
@@ -1537,22 +1421,16 @@
                 case 2:
                     ret = getQualifiers(r.qualifiers, col);
                     break;
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is MultiLanguageProperty)
+        if (tag is MultiLanguageProperty)
         {
-            var mlp = o as MultiLanguageProperty;
+            var mlp = tag as MultiLanguageProperty;
             var ls = mlp.value;
             for (int i = 0; i < ls.Count; i++)
             {
@@ -1576,30 +1454,27 @@
                 case 2:
                 case 3:
                 case 4:
-                    ret = "";
+                    ret = string.Empty;
                     if (ls.Count > line - 1)
                     {
                         ret = ls.langString[line - 1].lang;
                         if (col == 1)
-                            ret = ls.langString[line - 1].str + "";
+                            ret = ls.langString[line - 1].str + string.Empty;
                     }
                     break;
                 case 5:
                     ret = getQualifiers(mlp.qualifiers, col);
                     break;
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
         }
 
-        if (o is SubmodelElement)
+        if (tag is SubmodelElement)
         {
-            var sme = o as SubmodelElement;
+            var sme = tag as SubmodelElement;
             ret = sme.idShort + ", " + sme.semanticId;
             switch (line)
             {
@@ -1618,15 +1493,8 @@
                 case 1:
                     ret = getQualifiers(sme.qualifiers, col);
                     break;
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
+                default:
+                    ret = string.Empty;
                     break;
             }
             return ret;
@@ -1637,20 +1505,20 @@
 
     static string getQualifiers(QualifierCollection q, int col)
     {
-        string ret = "";
+        string ret = string.Empty;
 
         if (q != null && q.Count > 0)
         {
             ret = "Qualifiers";
             if (col == 1)
             {
-                ret = "";
+                ret = string.Empty;
                 for (int i = 0; i < q.Count; i++)
                 {
                     if (i != 0)
                         ret += ", ";
                     ret += q[i].type + " ";
-                    if (q[i].value != "")
+                    if (q[i].value != string.Empty)
                     {
                         ret += "= " + q[i].value;
                     }
@@ -1662,7 +1530,7 @@
 
     public string getUnit(Item item, SubmodelElement se, int col)
     {
-        string ret = "";
+        string ret = string.Empty;
         if (se.semanticId == null || se.semanticId.Keys == null)
         {
             return ret;

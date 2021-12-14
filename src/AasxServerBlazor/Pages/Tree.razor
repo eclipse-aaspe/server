@@ -11,11 +11,10 @@
     {
         var nodeExpanded = ExpandedNodes.Contains(node);
         var nodeSelected = node.Equals(SelectedNode);
-        var hasChilds = HasChildNodes(node);
-        // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
+        var hasChildren = HasChildNodes(node);
 
         <div>
-            @if (hasChilds)
+            @if (hasChildren)
             {
                 <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))">
                     <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
@@ -28,7 +27,7 @@
                 </span>
             </div>
 
-            @if (hasChilds)
+            @if (hasChildren)
             {
                 if (nodeExpanded)
                 {
