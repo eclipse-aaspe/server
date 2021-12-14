@@ -644,7 +644,8 @@ namespace AasxTimeSeries
             {
                 ErrorMessage = "";
                 startTime = tsb.opcLastTimeStamp;
-                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
+                // endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
+                endTime = DateTime.UtcNow;
                 tsb.opcLastTimeStamp = endTime;
                 if (session == null)
                     Connect(tsb);
