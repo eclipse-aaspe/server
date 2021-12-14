@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --port 51410 --data-path \"C:\\Development\\TimeSeries2\\Client Get\" --edit",
+      "commandLineArgs": "--rest --port 51410 --no-security --data-path \"C:\\Development\\Firmware\\Laptop\" --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

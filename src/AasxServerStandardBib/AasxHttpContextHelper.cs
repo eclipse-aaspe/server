@@ -2142,9 +2142,15 @@ namespace AasxRestServerLibrary
             // check authentication
             if (withAuthentification)
             {
+                string objPath = smid;
+                foreach (var el in elemids)
+                {
+                    objPath += "." + el;
+                }
+
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE"))
+                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE", objPath))
                 {
                     return;
                 }
@@ -3066,6 +3072,13 @@ namespace AasxRestServerLibrary
             if (currentRole == null)
                 currentRole = "isNotAuthenticated";
 
+            Console.WriteLine("checkAccessLevel: " +
+                " currentRole = " + currentRole +
+                " operation = " + operation +
+                " neededRights = " + neededRights +
+                " objPath = " + objPath
+                );
+
             int iRole = 0;
             while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
             {
@@ -3082,7 +3095,8 @@ namespace AasxRestServerLibrary
                             return false;
                     }
                 }
-                if (securityRole[iRole].name == currentRole && securityRole[iRole].objType == "api")
+                if (securityRole[iRole].name == currentRole && securityRole[iRole].objType == "api" &&
+                    securityRole[iRole].permission == neededRights)
                 {
                     if (securityRole[iRole].apiOperation == "*" || securityRole[iRole].apiOperation == operation)
                     {
@@ -3102,7 +3116,8 @@ namespace AasxRestServerLibrary
                 string deepestAllow = "";
                 foreach (var role in securityRole)
                 {
-                    if (role.objType == "submodelElement")
+                    if ((role.objType == "sm" || role.objType == "submodelElement") &&
+                        role.permission == neededRights)
                     {
                         if (role.kind == "deny")
                         {
@@ -3127,7 +3142,7 @@ namespace AasxRestServerLibrary
                         }
                     }
                 }
-                if (deepestDeny.Length > deepestAllow.Length)
+                if (deepestAllow == "" || (deepestDeny.Length > deepestAllow.Length))
                     return false;
                 return true;
             }
@@ -3165,6 +3180,7 @@ namespace AasxRestServerLibrary
         }
         public string SecurityCheck(IHttpContext context, ref int index)
         {
+            Console.WriteLine("SecurityCheck");
             bool error = false;
             string accessrights = null;
 
@@ -3896,7 +3912,10 @@ namespace AasxRestServerLibrary
                                                         if (aasObject is AdminShell.AdministrationShell)
                                                             src.objType = "aas";
                                                         if (aasObject is AdminShell.Submodel)
+                                                        {
                                                             src.objType = "sm";
+                                                            src.objPath = (aasObject as AdminShell.Submodel).idShort;
+                                                        }
                                                         if (aasObject is AdminShell.SubmodelElement smep)
                                                         {
                                                             AdminShell.Referable rp = smep;

@@ -582,26 +582,35 @@
         if (o is File)
         {
             var f = o as File;
+
             // Test for /aasx/
-            string[] split = f.value.Split(new Char[] { '/' });
-            if (split[1].ToLower() == "aasx")
+            if (f.value != "")
             {
-                split = f.value.Split(new Char[] { '.' });
-                switch(split.Last().ToLower())
+                string[] split = f.value.Split(new Char[] { '/' });
+                if (split.Length > 1 && split[1].ToLower() == "aasx")
                 {
-                    case "jpg":
-                    case "bmp":
-                    case "png":
-                        var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
-                        if (s != null)
-                        {
-                            using (var m = new System.IO.MemoryStream())
+                    split = f.value.Split(new Char[] { '.' });
+                    switch (split.Last().ToLower())
+                    {
+                        case "jpg":
+                        case "bmp":
+                        case "png":
+                            System.IO.Stream s = null;
+                            try
                             {
-                                s.CopyTo(m);
-                                return System.Convert.ToBase64String(m.ToArray());
+                                s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
                             }
-                        }
-                        break;
+                            catch { }
+                            if (s != null)
+                            {
+                                using (var m = new System.IO.MemoryStream())
+                                {
+                                    s.CopyTo(m);
+                                    return System.Convert.ToBase64String(m.ToArray());
+                                }
+                            }
+                            break;
+                    }
                 }
             }
         }
