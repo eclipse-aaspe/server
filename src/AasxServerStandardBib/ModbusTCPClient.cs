@@ -27,7 +27,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace PVMonitor
+namespace Modbus
 {
     public class ApplicationDataUnit
     {
@@ -54,14 +54,14 @@ namespace PVMonitor
                 throw new ArgumentException("buffer must be at least " + maxADU.ToString() + " bytes long");
             }
 
-            buffer[0] = (byte) (TransactionID >> 8);
-            buffer[1] = (byte) (TransactionID & 0x00FF);
+            buffer[0] = (byte)(TransactionID >> 8);
+            buffer[1] = (byte)(TransactionID & 0x00FF);
 
-            buffer[2] = (byte) (ProtocolID >> 8);
-            buffer[3] = (byte) (ProtocolID & 0x00FF);
+            buffer[2] = (byte)(ProtocolID >> 8);
+            buffer[3] = (byte)(ProtocolID & 0x00FF);
 
-            buffer[4] = (byte) (Length >> 8);
-            buffer[5] = (byte) (Length & 0x00FF);
+            buffer[4] = (byte)(Length >> 8);
+            buffer[5] = (byte)(Length & 0x00FF);
 
             buffer[6] = UnitID;
 
@@ -164,12 +164,12 @@ namespace PVMonitor
             aduRequest.TransactionID = transactionID++;
             aduRequest.Length = 6;
             aduRequest.UnitID = unitID;
-            aduRequest.FunctionCode = (byte) function;
+            aduRequest.FunctionCode = (byte)function;
 
-            aduRequest.Payload[0] = (byte) (registerBaseAddress >> 8);
-            aduRequest.Payload[1] = (byte) (registerBaseAddress & 0x00FF);
-            aduRequest.Payload[2] = (byte) (count >> 8);
-            aduRequest.Payload[3] = (byte) (count & 0x00FF);
+            aduRequest.Payload[0] = (byte)(registerBaseAddress >> 8);
+            aduRequest.Payload[1] = (byte)(registerBaseAddress & 0x00FF);
+            aduRequest.Payload[2] = (byte)(count >> 8);
+            aduRequest.Payload[3] = (byte)(count & 0x00FF);
 
             byte[] buffer = new byte[ApplicationDataUnit.maxADU];
             aduRequest.CopyADUToNetworkBuffer(buffer);
@@ -198,7 +198,7 @@ namespace PVMonitor
                 }
                 else
                 {
-                    HandlerError((byte) errorCode);
+                    HandlerError((byte)errorCode);
                 }
             }
 
@@ -232,21 +232,21 @@ namespace PVMonitor
 
             ApplicationDataUnit aduRequest = new ApplicationDataUnit();
             aduRequest.TransactionID = transactionID++;
-            aduRequest.Length = (ushort) (7 + (values.Length * 2));
+            aduRequest.Length = (ushort)(7 + (values.Length * 2));
             aduRequest.UnitID = unitID;
             aduRequest.FunctionCode = (byte)FunctionCode.PresetMultipleRegisters;
 
-            aduRequest.Payload[0] = (byte) (registerBaseAddress >> 8);
-            aduRequest.Payload[1] = (byte) (registerBaseAddress & 0x00FF);
-            aduRequest.Payload[2] = (byte) (((ushort) values.Length) >> 8);
-            aduRequest.Payload[3] = (byte) (((ushort) values.Length) & 0x00FF);
-            aduRequest.Payload[4] = (byte) (values.Length * 2);
+            aduRequest.Payload[0] = (byte)(registerBaseAddress >> 8);
+            aduRequest.Payload[1] = (byte)(registerBaseAddress & 0x00FF);
+            aduRequest.Payload[2] = (byte)(((ushort)values.Length) >> 8);
+            aduRequest.Payload[3] = (byte)(((ushort)values.Length) & 0x00FF);
+            aduRequest.Payload[4] = (byte)(values.Length * 2);
 
             int payloadIndex = 5;
-            foreach(ushort value in values)
+            foreach (ushort value in values)
             {
-                aduRequest.Payload[payloadIndex++] = (byte) (value >> 8);
-                aduRequest.Payload[payloadIndex++] = (byte) (value & 0x00FF);
+                aduRequest.Payload[payloadIndex++] = (byte)(value >> 8);
+                aduRequest.Payload[payloadIndex++] = (byte)(value & 0x00FF);
             }
 
             byte[] buffer = new byte[ApplicationDataUnit.maxADU];
@@ -288,8 +288,8 @@ namespace PVMonitor
             }
 
             // check number of registers written
-            if ((buffer[10] != (((ushort) values.Length) >> 8))
-             && (buffer[11] != (((ushort) values.Length) & 0x00FF)))
+            if ((buffer[10] != (((ushort)values.Length) >> 8))
+             && (buffer[11] != (((ushort)values.Length) & 0x00FF)))
             {
                 throw new Exception("Incorrect number of registers written returned");
             }
