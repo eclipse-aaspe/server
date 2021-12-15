@@ -47,7 +47,7 @@ namespace AasxServerBlazor.Data
                 for (int i = 0; i < Program.envimax; i++)
                 {
                     Item root = new Item();
-                    root.envIndex = i;
+                    root.EnvIndex = i;
                     if (Program.env[i] != null)
                     {
                         root.Text = Program.env[i].AasEnv.AdministrationShells[0].idShort;
@@ -60,7 +60,7 @@ namespace AasxServerBlazor.Data
                                 if (sm != null && sm.idShort != null)
                                 {
                                     var smItem = new Item();
-                                    smItem.envIndex = i;
+                                    smItem.EnvIndex = i;
                                     smItem.Text = sm.idShort;
                                     smItem.Tag = sm;
                                     childs.Add(smItem);
@@ -68,7 +68,7 @@ namespace AasxServerBlazor.Data
                                     foreach (var sme in sm.submodelElements)
                                     {
                                         var smeItem = new Item();
-                                        smeItem.envIndex = i;
+                                        smeItem.EnvIndex = i;
                                         smeItem.Text = sme.submodelElement.idShort;
                                         smeItem.Tag = sme.submodelElement;
                                         smChilds.Add(smeItem);
@@ -88,14 +88,14 @@ namespace AasxServerBlazor.Data
                                             createEntityItems(smeItem, e, i);
                                         }
                                     }
-                                    smItem.Childs = smChilds;
+                                    smItem.Children = smChilds;
                                     foreach (var c in smChilds)
-                                        c.parent = smItem;
+                                        c.Parent = smItem;
                                 }
                             }
-                            root.Childs = childs;
+                            root.Children = childs;
                             foreach (var c in childs)
-                                c.parent = root;
+                                c.Parent = root;
                             items.Add(root);
                         }
                     }
@@ -117,7 +117,7 @@ namespace AasxServerBlazor.Data
                 if (sme != null && sme.submodelElement != null)
                 {
                     var smeItem = new Item();
-                    smeItem.envIndex = i;
+                    smeItem.EnvIndex = i;
                     smeItem.Text = sme.submodelElement.idShort;
                     smeItem.Tag = sme.submodelElement;
                     smChilds.Add(smeItem);
@@ -138,9 +138,9 @@ namespace AasxServerBlazor.Data
                     }
                 }
             }
-            smeRootItem.Childs = smChilds;
+            smeRootItem.Children = smChilds;
             foreach (var c in smChilds)
-                c.parent = smeRootItem;
+                c.Parent = smeRootItem;
         }
 
         void createOperationItems(Item smeRootItem, Operation op, int i)
@@ -149,7 +149,7 @@ namespace AasxServerBlazor.Data
             foreach (var v in op.inputVariable)
             {
                 var smeItem = new Item();
-                smeItem.envIndex = i;
+                smeItem.EnvIndex = i;
                 smeItem.Text = v.value.submodelElement.idShort;
                 smeItem.Type = "In";
                 smeItem.Tag = v.value.submodelElement;
@@ -158,7 +158,7 @@ namespace AasxServerBlazor.Data
             foreach (var v in op.outputVariable)
             {
                 var smeItem = new Item();
-                smeItem.envIndex = i;
+                smeItem.EnvIndex = i;
                 smeItem.Text = v.value.submodelElement.idShort;
                 smeItem.Type = "Out";
                 smeItem.Tag = v.value.submodelElement;
@@ -167,15 +167,15 @@ namespace AasxServerBlazor.Data
             foreach (var v in op.inoutputVariable)
             {
                 var smeItem = new Item();
-                smeItem.envIndex = i;
+                smeItem.EnvIndex = i;
                 smeItem.Text = v.value.submodelElement.idShort;
                 smeItem.Type = "InOut";
                 smeItem.Tag = v.value.submodelElement;
                 smChilds.Add(smeItem);
             }
-            smeRootItem.Childs = smChilds;
+            smeRootItem.Children = smChilds;
             foreach (var c in smChilds)
-                c.parent = smeRootItem;
+                c.Parent = smeRootItem;
         }
 
         void createEntityItems(Item smeRootItem, Entity e, int i)
@@ -186,16 +186,16 @@ namespace AasxServerBlazor.Data
                 if (s != null && s.submodelElement != null)
                 {
                     var smeItem = new Item();
-                    smeItem.envIndex = i;
+                    smeItem.EnvIndex = i;
                     smeItem.Text = s.submodelElement.idShort;
                     smeItem.Type = "In";
                     smeItem.Tag = s.submodelElement;
                     smChilds.Add(smeItem);
                 }
             }
-            smeRootItem.Childs = smChilds;
+            smeRootItem.Children = smChilds;
             foreach (var c in smChilds)
-                c.parent = smeRootItem;
+                c.Parent = smeRootItem;
         }
 
         public List<Submodel> GetSubmodels()

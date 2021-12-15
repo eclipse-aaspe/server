@@ -19,7 +19,7 @@
 
         @updateVisibleTree(Items, SelectedNode)
 
-        <Tree Nodes="Items" ChildSelector="@(item => item.Childs)" @bind-SelectedNode="SelectedNode" @bind-ExpandedNodes="ExpandedNodes" HasChildNodes="@(item => item.Childs?.Any() == true)">
+        <Tree Nodes="Items" ChildSelector="@(item => item.Children)" @bind-SelectedNode="SelectedNode" @bind-ExpandedNodes="ExpandedNodes" HasChildNodes="@(item => item.Children?.Any() == true)">
             <TitleTemplate>
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)
@@ -190,11 +190,11 @@
     public class Item
     {
         public string Text { get; set; }
-        public IEnumerable<Item> Childs { get; set; }
-        public object parent { get; set; }
+        public IEnumerable<Item> Children { get; set; }
+        public object Parent { get; set; }
         public string Type { get; set; }
         public object Tag { get; set; }
-        public int envIndex { get; set; }
+        public int EnvIndex { get; set; }
     }
 
     List<Item> Items = null;
@@ -238,7 +238,7 @@
         }
     }
 
-    string updateVisibleTree(List<Item> viewItems, Item SelectedNode)
+    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
     {
         switch (newDataMode)
         {
@@ -249,10 +249,10 @@
             // 2 == build new tree, keep open nodes
             case 1:
             case 2:
-                bool isSelected = SelectedNode != null;
+                bool isSelected = selectedNode != null;
                 bool isExpanded = ExpandedNodes.Count != 0;
                 List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                List<string> selectedNodePath = getPath(SelectedNode);
+                List<string> selectedNodePath = getPath(selectedNode);
                 if (isExpanded)
                 {
                     for (int j = 0; j < ExpandedNodes.Count; j++)
@@ -261,12 +261,12 @@
                     }
                 }
                 SubmodelService.buildTree();
-                Items = SubmodelService.GetTree(SelectedNode, ExpandedNodes);
+                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                 ExpandedNodes.Clear();
-                SelectedNode = null;
+                selectedNode = null;
                 if (isSelected)
                 {
-                    SelectedNode = findPath(selectedNodePath);
+                    selectedNode = findPath(selectedNodePath);
                 }
                 if (isExpanded)
                 {
@@ -282,14 +282,14 @@
             // 3 == build new tree, all nodes closed
             case 3:
                 SubmodelService.buildTree();
-                Items = SubmodelService.GetTree(SelectedNode, ExpandedNodes);
+                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                 ExpandedNodes.Clear();
-                SelectedNode = null;
+                selectedNode = null;
                 newDataMode = 0;
                 break;
         }
 
-        SelectedNode = SelectedNode;
+        SelectedNode = selectedNode;
         return string.Empty;
     }
 
@@ -300,9 +300,9 @@
 
         List<string> upPath = new List<string>();
         upPath.Add(i.Text);
-        while (i.parent != null)
+        while (i.Parent != null)
         {
-            i = (Item)i.parent;
+            i = (Item)i.Parent;
             upPath.Add(i.Text);
         }
         List<string> downPath = new List<string>();
@@ -332,10 +332,10 @@
                 found = i;
                 while (++j < path.Count)
                 {
-                    if (i.Childs != null)
+                    if (i.Children != null)
                     {
                         found = null;
-                        foreach (var c in i.Childs)
+                        foreach (var c in i.Children)
                         {
                             if (c.Text == path[j])
                             {
@@ -359,7 +359,7 @@
 
     void updateNode(Item i)
     {
-        var clist = i.Childs as List<Item>;
+        var clist = i.Children as List<Item>;
         List<string> listIdshort = new List<string>();
         bool done = false;
         if (!done && i.Tag is Submodel sm)
@@ -406,10 +406,10 @@
             }
             foreach (var c in toDelete)
             {
-                var parent = c.parent as Item;
+                var parent = c.Parent as Item;
                 if (parent != null)
                 {
-                    (parent.Childs as List<Item>).Remove(c);
+                    (parent.Children as List<Item>).Remove(c);
                 }
             }
         }
@@ -442,7 +442,7 @@
                 System.IO.Stream s = null;
                 try
                 {
-                    s = Program.env[item.envIndex].GetLocalThumbnailStream();
+                    s = Program.env[item.EnvIndex].GetLocalThumbnailStream();
                 }
                 catch { }
                 if (s != null)
@@ -469,7 +469,7 @@
                     case "jpg":
                     case "bmp":
                     case "png":
-                        var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
+                        var s = Program.env[item.EnvIndex].GetLocalStreamFromPackage(f.value);
                         if (s != null)
                         {
                             using (var m = new System.IO.MemoryStream())
@@ -507,7 +507,7 @@
         if (o is AdministrationShell)
         {
             var aas = o as AdministrationShell;
-            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            var asset = Program.env[item.EnvIndex].AasEnv.FindAsset(aas.assetRef);
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
@@ -570,7 +570,7 @@
             }
 
             var aas = o as AdministrationShell;
-            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            var asset = Program.env[item.EnvIndex].AasEnv.FindAsset(aas.assetRef);
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
@@ -637,16 +637,16 @@
 
         object o = item.Tag;
 
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        if (o == null && Program.envSymbols[item.EnvIndex] == "L")
         {
             // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvIndex);
         }
 
         if (o is AdministrationShell)
         {
             // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvIndex);
         }
 
         if (o is File || o is Property)
@@ -675,7 +675,7 @@
             {
                 if (split[1].ToLower() == "aasx")
                 {
-                    return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;
+                    return Program.externalRest + "/server/getfile/" + item.EnvIndex.ToString() + value;
                 }
             }
         }
@@ -695,7 +695,7 @@
 
         if (o is AdministrationShell)
         {
-            string symbols = Program.envSymbols[item.envIndex];
+            string symbols = Program.envSymbols[item.EnvIndex];
 
             if (symbols != null)
             {
@@ -746,7 +746,7 @@
         }
         */
 
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        if (o == null && Program.envSymbols[item.EnvIndex] == "L")
         {
             ret += "AASX2";
         }
@@ -839,7 +839,7 @@
 
         object o = item.Tag;
 
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        if (o == null && Program.envSymbols[item.EnvIndex] == "L")
         {
             ret = item.Text;
         }
@@ -1005,7 +1005,7 @@
             ret = string.Empty;
             var aas = tag as AdministrationShell;
 
-            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            var asset = Program.env[item.EnvIndex].AasEnv.FindAsset(aas.assetRef);
 
             switch (line)
             {
@@ -1535,7 +1535,7 @@
         {
             return ret;
         }
-        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescription(se.semanticId.Keys);
+        var cd = Program.env[item.EnvIndex].AasEnv.FindConceptDescription(se.semanticId.Keys);
         if (cd != null)
         {
             var iec = cd.GetIEC61360();
