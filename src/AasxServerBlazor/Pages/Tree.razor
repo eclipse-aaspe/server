@@ -17,35 +17,31 @@
             @if (hasChildren)
             {
                 <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))">
-                    <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
+                    <i class="@(nodeExpanded? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"/>
                 </span>
             }
 
             <div class="uic-tree__title">
                 <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))">
-                    @TitleTemplate(node) @{ /* @(" " + node.GetHashCode() + " ") */ }
+                    @TitleTemplate(node)
                 </span>
             </div>
 
-            @if (hasChildren)
-            {
-                if (nodeExpanded)
-                {
-                    <Tree Nodes="ChildSelector(node)"
-                          TitleTemplate="TitleTemplate"
-                          ChildSelector="ChildSelector"
-                          ExpandedNodes="ExpandedNodes"
-                          ExpandedNodesChanged="ExpandedNodesChanged"
-                          SelectedNode="SelectedNode"
-                          SelectedNodeChanged="SelectedNodeChanged"
-                          Visible="nodeExpanded"
-                          HasChildNodes="HasChildNodes" />
-                }
+            @if (hasChildren && nodeExpanded)
+			{
+                <Tree Nodes="ChildSelector(node)"
+                        TitleTemplate="TitleTemplate"
+                        ChildSelector="ChildSelector"
+                        ExpandedNodes="ExpandedNodes"
+                        ExpandedNodesChanged="ExpandedNodesChanged"
+                        SelectedNode="SelectedNode"
+                        SelectedNodeChanged="SelectedNodeChanged"
+                        Visible="nodeExpanded"
+                        HasChildNodes="HasChildNodes" />
             }
 
         </div>
     }
-
 </div>
 
 @code {
