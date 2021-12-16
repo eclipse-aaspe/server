@@ -37,6 +37,7 @@ namespace AasxTimeSeries
             public string sourceAddress = "";
             public string username = "";
             public string password = "";
+            public int minDiffPercent = 0;
             public int samplesCollectionsCount = 0;
             public List<AdminShell.Property> samplesProperties = null;
             public List<string> samplesValues = null;
@@ -153,6 +154,12 @@ namespace AasxTimeSeries
                                                         var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).value);
                                                         if (refElement is AdminShell.SubmodelElementCollection)
                                                             tsb.data = refElement as AdminShell.SubmodelElementCollection;
+                                                    }
+                                                    break;
+                                                case "minDiffPercent":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.minDiffPercent = Convert.ToInt32((sme2 as AdminShell.Property).value);
                                                     }
                                                     break;
                                                 case "sampleStatus":
@@ -691,9 +698,14 @@ namespace AasxTimeSeries
                         bool keep = false;
                         for (int i = 0; i < modbusValues.Count; i++)
                         {
-                            int delta = Math.Abs(Convert.ToInt32(modbusValues[i]) - Convert.ToInt32(lastModbusValues[i]));
-                            if (delta * 100 > Math.Abs(Convert.ToInt32(modbusValues[i])))
-                                keep = true;
+                            int v = Convert.ToInt32(modbusValues[i]);
+                            int lastv = Convert.ToInt32(lastModbusValues[i]);
+                            if (v != lastv)
+                            {
+                                int delta = Math.Abs(v - lastv);
+                                if (delta > lastv * tsb.minDiffPercent / 100)
+                                    keep = true;
+                            }
                         }
                         if (keep)
                         {
