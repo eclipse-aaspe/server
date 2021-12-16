@@ -31,6 +31,7 @@ namespace AasxTimeSeries
             public AdminShell.Property actualSamplesInCollection = null;
             public AdminShell.Property maxCollections = null;
             public AdminShell.Property actualCollections = null;
+            public AdminShell.Property minDiffPercent = null;
 
             public int threadCounter = 0;
             public string sourceType = "";
@@ -44,6 +45,7 @@ namespace AasxTimeSeries
             public int samplesValuesCount = 0;
 
             public List<string> opcNodes = null;
+            public List<string> modbusNodes = null;
             public DateTime opcLastTimeStamp;
         }
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
@@ -115,7 +117,8 @@ namespace AasxTimeSeries
                                             var idShort = sme2.idShort;
                                             if (idShort.Contains("opcNode"))
                                                 idShort = "opcNode";
-                                            switch (idShort)
+                                            if (idShort.Contains("modbusNode"))
+                                                idShort = "modbusNode"; switch (idShort)
                                             {
                                                 case "sourceType":
                                                     if (sme2 is AdminShell.Property)
@@ -151,6 +154,12 @@ namespace AasxTimeSeries
                                                         var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).value);
                                                         if (refElement is AdminShell.SubmodelElementCollection)
                                                             tsb.data = refElement as AdminShell.SubmodelElementCollection;
+                                                    }
+                                                    break;
+                                                case "minDiffPercent":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.minDiffPercent = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                                 case "sampleStatus":
@@ -238,6 +247,21 @@ namespace AasxTimeSeries
                                                         tsb.samplesValues.Add("");
                                                     }
                                                     break;
+                                                case "modbusNode":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        string node = (sme2 as AdminShell.Property).value;
+                                                        string[] split = node.Split(',');
+                                                        if (tsb.modbusNodes == null)
+                                                            tsb.modbusNodes = new List<string>();
+                                                        tsb.modbusNodes.Add(split[1] + "," + split[2] + "," + split[3] + "," + split[4]);
+                                                        var p = AdminShell.Property.CreateNew(split[0]);
+                                                        tsb.samplesProperties.Add(p);
+                                                        p.TimeStampCreate = timeStamp;
+                                                        p.setTimeStamp(timeStamp);
+                                                        tsb.samplesValues.Add("");
+                                                    }
+                                                    break;
                                             }
                                             if (tsb.sourceType == "aas" && sme2 is AdminShell.ReferenceElement r)
                                             {
@@ -315,6 +339,19 @@ namespace AasxTimeSeries
             return true;
         }
         */
+
+        static void modbusByteSwap(Byte[] bytes)
+        {
+            int len = bytes.Length;
+            int i = 0;
+            while (i < len - 1)
+            {
+                byte b = bytes[i + 1];
+                bytes[i + 1] = bytes[i];
+                bytes[i] = b;
+                i += 2;
+            }
+        }
 
         public static bool timeSeriesSampling(bool final)
         {
@@ -395,6 +432,10 @@ namespace AasxTimeSeries
                         {
                             valueCount = GetDAData(tsb);
                         }
+                        if (tsb.sourceType == "modbus" && tsb.sourceAddress != "")
+                        {
+                            valueCount = GetModbus(tsb);
+                        }
 
                         DateTime dt;
                         int valueIndex = 0;
@@ -425,7 +466,8 @@ namespace AasxTimeSeries
                                     tsb.samplesValues[i] += ",";
                                 }
 
-                                if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda") && tsb.sourceAddress != "")
+                                if ((tsb.sourceType == "opchd" || tsb.sourceType == "opcda" || tsb.sourceType == "modbus")
+                                    && tsb.sourceAddress != "")
                                 {
                                     if (tsb.sourceType == "opchd")
                                     {
@@ -438,6 +480,11 @@ namespace AasxTimeSeries
                                     {
                                         tsb.samplesValues[i] += opcDAValues[i];
                                         Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
+                                    }
+                                    if (tsb.sourceType == "modbus")
+                                    {
+                                        tsb.samplesValues[i] += modbusValues[i];
+                                        Console.WriteLine(tsb.modbusNodes[i] + " " + modbusValues[i]);
                                     }
                                 }
                                 else
@@ -603,6 +650,86 @@ namespace AasxTimeSeries
         static DateTime startTime;
         static DateTime endTime;
         static List<string> opcDAValues = null;
+        static List<string> modbusValues = null;
+        static List<string> lastModbusValues = null;
+        static Modbus.ModbusTCPClient mbClient = null;
+
+        public static int GetModbus(TimeSeriesBlock tsb)
+        {
+            int minDiffPercent = Convert.ToInt32(tsb.minDiffPercent.value);
+
+            Console.WriteLine("Read Modbus Data:");
+            try
+            {
+                ErrorMessage = "";
+                if (mbClient == null)
+                {
+                    mbClient = new Modbus.ModbusTCPClient();
+                    string[] hostPort = tsb.sourceAddress.Split(':');
+                    mbClient.Connect(hostPort[0], Convert.ToInt32(hostPort[1]));
+                }
+
+                if (mbClient != null)
+                {
+                    modbusValues = new List<string>();
+                    for (int i = 0; i < tsb.modbusNodes.Count; i++)
+                    {
+                        string[] split = tsb.modbusNodes[i].Split(',');
+                        byte[] modbusValue = mbClient.Read(
+                            (byte)Convert.ToInt32(split[0]),
+                            Modbus.ModbusTCPClient.FunctionCode.ReadHoldingRegisters,
+                            (ushort)Convert.ToInt32(split[1]),
+                            (ushort)Convert.ToInt32(split[2]));
+                        modbusByteSwap(modbusValue);
+                        switch (split[3])
+                        {
+                            case "float":
+                                float f = BitConverter.ToSingle(modbusValue, 0);
+                                string value = Convert.ToInt32(f).ToString();
+                                modbusValues.Add(value);
+                                break;
+                        }
+                    }
+                    if (lastModbusValues == null)
+                    {
+                        lastModbusValues = new List<string>(modbusValues);
+                    }
+                    else
+                    {
+                        // only collect changes if at least one value changed at least 1%
+                        bool keep = false;
+                        for (int i = 0; i < modbusValues.Count; i++)
+                        {
+                            int v = Convert.ToInt32(modbusValues[i]);
+                            int lastv = Convert.ToInt32(lastModbusValues[i]);
+                            if (v != lastv)
+                            {
+                                int delta = Math.Abs(v - lastv);
+                                if (delta > lastv * minDiffPercent / 100)
+                                    keep = true;
+                            }
+                        }
+                        if (keep)
+                        {
+                            lastModbusValues = new List<string>(modbusValues);
+                        }
+                        else
+                        {
+                            modbusValues = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+                return 0;
+            }
+
+            if (modbusValues == null)
+                return 0;
+            return 1;
+        }
 
         public static int GetDAData(TimeSeriesBlock tsb)
         {
@@ -644,7 +771,8 @@ namespace AasxTimeSeries
             {
                 ErrorMessage = "";
                 startTime = tsb.opcLastTimeStamp;
-                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
+                // endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
+                endTime = DateTime.UtcNow;
                 tsb.opcLastTimeStamp = endTime;
                 if (session == null)
                     Connect(tsb);
