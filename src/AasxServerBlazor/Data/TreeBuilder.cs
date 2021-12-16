@@ -1,7 +1,5 @@
 ﻿using AasxServer;
-using System;
 using System.Collections.Generic;
-using System.Threading;
 using static AasxServerBlazor.Pages.TreePage;
 using static AdminShellNS.AdminShellV20;
 
@@ -9,22 +7,17 @@ namespace AasxServerBlazor.Data
 {
     public class TreeBuilder
     {
-        private List<Item> Items = null;
-        public List<Item> ViewItems = null;
+        public List<TreeNodeData> ViewItems = new List<TreeNodeData>();
 
-        public void buildTree()
+        public void BuildTree()
         {
-            while (Program.isLoading)
-            {
-                Thread.Sleep(1000);
-            }
-
             lock (Program.changeAasxFile)
             {
-                Items = new List<Item>();
+                ViewItems.Clear();
+
                 for (int i = 0; i < Program.envimax; i++)
                 {
-                    Item root = new Item();
+                    TreeNodeData root = new TreeNodeData();
                     root.EnvIndex = i;
                     if (Program.env[i] != null)
                     {
@@ -32,153 +25,185 @@ namespace AasxServerBlazor.Data
                         root.Tag = Program.env[i].AasEnv.AdministrationShells[0];
                         if (Program.envSymbols[i] != "L")
                         {
-                            List<Item> childs = new List<Item>();
-                            foreach (var sm in Program.env[i].AasEnv.Submodels)
-                            {
-                                if (sm != null && sm.idShort != null)
-                                {
-                                    var smItem = new Item();
-                                    smItem.EnvIndex = i;
-                                    smItem.Text = sm.idShort;
-                                    smItem.Tag = sm;
-                                    childs.Add(smItem);
-                                    List<Item> smChilds = new List<Item>();
-                                    foreach (var sme in sm.submodelElements)
-                                    {
-                                        var smeItem = new Item();
-                                        smeItem.EnvIndex = i;
-                                        smeItem.Text = sme.submodelElement.idShort;
-                                        smeItem.Tag = sme.submodelElement;
-                                        smChilds.Add(smeItem);
-                                        if (sme.submodelElement is SubmodelElementCollection)
-                                        {
-                                            var smec = sme.submodelElement as SubmodelElementCollection;
-                                            createSMECItems(smeItem, smec, i);
-                                        }
-                                        if (sme.submodelElement is Operation)
-                                        {
-                                            var o = sme.submodelElement as Operation;
-                                            createOperationItems(smeItem, o, i);
-                                        }
-                                        if (sme.submodelElement is Entity)
-                                        {
-                                            var e = sme.submodelElement as Entity;
-                                            createEntityItems(smeItem, e, i);
-                                        }
-                                    }
-                                    smItem.Children = smChilds;
-                                    foreach (var c in smChilds)
-                                        c.Parent = smItem;
-                                }
-                            }
-                            root.Children = childs;
-                            foreach (var c in childs)
-                                c.Parent = root;
-                            Items.Add(root);
+                            CreateViewFromAASEnv(root, Program.env[i].AasEnv, i);
+                            ViewItems.Add(root);
                         }
                     }
+
                     if (Program.envSymbols[i] == "L")
                     {
                         root.Text = System.IO.Path.GetFileName(Program.envFileName[i]);
-                        Items.Add(root);
+                        ViewItems.Add(root);
                     }
                 }
             }
-            ViewItems = Items;
         }
 
-        void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)
+        private void CreateViewFromAASEnv(TreeNodeData root, AdministrationShellEnv aasEnv, int i)
         {
-            List<Item> smChilds = new List<Item>();
-            foreach (var sme in smec.value)
+            List<TreeNodeData> subModelTreeNodeDataList = new List<TreeNodeData>();
+            foreach (Submodel subModel in aasEnv.Submodels)
             {
-                if (sme != null && sme.submodelElement != null)
+                if (subModel != null && subModel.idShort != null)
                 {
-                    var smeItem = new Item();
+                    TreeNodeData subModelTreeNodeData = new TreeNodeData();
+                    subModelTreeNodeData.EnvIndex = i;
+                    subModelTreeNodeData.Text = subModel.idShort;
+                    subModelTreeNodeData.Tag = subModel;
+                    subModelTreeNodeDataList.Add(subModelTreeNodeData);
+                    CreateViewFromSubModel(subModelTreeNodeData, subModel, i);
+                }
+            }
+
+            root.Children = subModelTreeNodeDataList;
+            foreach (TreeNodeData nodeData in subModelTreeNodeDataList)
+            {
+                nodeData.Parent = root;
+            }
+        }
+
+        private void CreateViewFromSubModel(TreeNodeData rootItem, Submodel subModel, int i)
+        {
+            List<TreeNodeData> subModelElementTreeNodeDataList = new List<TreeNodeData>();
+            foreach (SubmodelElementWrapper subModelElementWrapper in subModel.submodelElements)
+            {
+                TreeNodeData subModelElementTreeNodeData = new TreeNodeData();
+                subModelElementTreeNodeData.EnvIndex = i;
+                subModelElementTreeNodeData.Text = subModelElementWrapper.submodelElement.idShort;
+                subModelElementTreeNodeData.Tag = subModelElementWrapper.submodelElement;
+                subModelElementTreeNodeDataList.Add(subModelElementTreeNodeData);
+
+                if (subModelElementWrapper.submodelElement is SubmodelElementCollection)
+                {
+                    SubmodelElementCollection submodelElementCollection = subModelElementWrapper.submodelElement as SubmodelElementCollection;
+                    CreateViewFromSubModelElementCollection(subModelElementTreeNodeData, submodelElementCollection, i);
+                }
+
+                if (subModelElementWrapper.submodelElement is Operation)
+                {
+                    Operation operation = subModelElementWrapper.submodelElement as Operation;
+                    CreateViewFromOperation(subModelElementTreeNodeData, operation, i);
+                }
+
+                if (subModelElementWrapper.submodelElement is Entity)
+                {
+                    Entity entity = subModelElementWrapper.submodelElement as Entity;
+                    CreateViewFromEntity(subModelElementTreeNodeData, entity, i);
+                }
+            }
+
+            rootItem.Children = subModelElementTreeNodeDataList;
+
+            foreach (TreeNodeData nodeData in subModelElementTreeNodeDataList)
+            {
+                nodeData.Parent = rootItem;
+            }
+        }
+
+        private void CreateViewFromSubModelElementCollection(TreeNodeData rootItem, SubmodelElementCollection subModelElementCollection, int i)
+        {
+            List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
+            foreach (SubmodelElementWrapper subModelElementWrapper in subModelElementCollection.value)
+            {
+                if (subModelElementWrapper != null && subModelElementWrapper.submodelElement != null)
+                {
+                    var smeItem = new TreeNodeData();
                     smeItem.EnvIndex = i;
-                    smeItem.Text = sme.submodelElement.idShort;
-                    smeItem.Tag = sme.submodelElement;
-                    smChilds.Add(smeItem);
-                    if (sme.submodelElement is SubmodelElementCollection)
+                    smeItem.Text = subModelElementWrapper.submodelElement.idShort;
+                    smeItem.Tag = subModelElementWrapper.submodelElement;
+                    treeNodeDataList.Add(smeItem);
+
+                    if (subModelElementWrapper.submodelElement is SubmodelElementCollection)
                     {
-                        var smecNext = sme.submodelElement as SubmodelElementCollection;
-                        createSMECItems(smeItem, smecNext, i);
+                        SubmodelElementCollection smecNext = subModelElementWrapper.submodelElement as SubmodelElementCollection;
+                        CreateViewFromSubModelElementCollection(smeItem, smecNext, i);
                     }
-                    if (sme.submodelElement is Operation)
+
+                    if (subModelElementWrapper.submodelElement is Operation)
                     {
-                        var o = sme.submodelElement as Operation;
-                        createOperationItems(smeItem, o, i);
+                        Operation operation = subModelElementWrapper.submodelElement as Operation;
+                        CreateViewFromOperation(smeItem, operation, i);
                     }
-                    if (sme.submodelElement is Entity)
+
+                    if (subModelElementWrapper.submodelElement is Entity)
                     {
-                        var e = sme.submodelElement as Entity;
-                        createEntityItems(smeItem, e, i);
+                        Entity entity = subModelElementWrapper.submodelElement as Entity;
+                        CreateViewFromEntity(smeItem, entity, i);
                     }
                 }
             }
-            smeRootItem.Children = smChilds;
-            foreach (var c in smChilds)
-                c.Parent = smeRootItem;
+
+            rootItem.Children = treeNodeDataList;
+
+            foreach (TreeNodeData nodeData in treeNodeDataList)
+            {
+                nodeData.Parent = rootItem;
+            }
         }
 
-        void createOperationItems(Item smeRootItem, Operation op, int i)
+        private void CreateViewFromOperation(TreeNodeData rootItem, Operation operation, int i)
         {
-            List<Item> smChilds = new List<Item>();
-            foreach (var v in op.inputVariable)
+            List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
+            foreach (var v in operation.inputVariable)
             {
-                var smeItem = new Item();
+                TreeNodeData smeItem = new TreeNodeData();
                 smeItem.EnvIndex = i;
                 smeItem.Text = v.value.submodelElement.idShort;
                 smeItem.Type = "In";
                 smeItem.Tag = v.value.submodelElement;
-                smChilds.Add(smeItem);
+                treeNodeDataList.Add(smeItem);
             }
-            foreach (var v in op.outputVariable)
+
+            foreach (var v in operation.outputVariable)
             {
-                var smeItem = new Item();
+                TreeNodeData smeItem = new TreeNodeData();
                 smeItem.EnvIndex = i;
                 smeItem.Text = v.value.submodelElement.idShort;
                 smeItem.Type = "Out";
                 smeItem.Tag = v.value.submodelElement;
-                smChilds.Add(smeItem);
+                treeNodeDataList.Add(smeItem);
             }
-            foreach (var v in op.inoutputVariable)
+
+            foreach (var v in operation.inoutputVariable)
             {
-                var smeItem = new Item();
+                TreeNodeData smeItem = new TreeNodeData();
                 smeItem.EnvIndex = i;
                 smeItem.Text = v.value.submodelElement.idShort;
                 smeItem.Type = "InOut";
                 smeItem.Tag = v.value.submodelElement;
-                smChilds.Add(smeItem);
+                treeNodeDataList.Add(smeItem);
             }
-            smeRootItem.Children = smChilds;
-            foreach (var c in smChilds)
-                c.Parent = smeRootItem;
+
+            rootItem.Children = treeNodeDataList;
+
+            foreach (TreeNodeData nodeData in treeNodeDataList)
+            {
+                nodeData.Parent = rootItem;
+            }
         }
 
-        void createEntityItems(Item smeRootItem, Entity e, int i)
+        private void CreateViewFromEntity(TreeNodeData rootItem, Entity entity, int i)
         {
-            List<Item> smChilds = new List<Item>();
-            foreach (var s in e.statements)
+            List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
+            foreach (SubmodelElementWrapper statement in entity.statements)
             {
-                if (s != null && s.submodelElement != null)
+                if (statement != null && statement.submodelElement != null)
                 {
-                    var smeItem = new Item();
+                    TreeNodeData smeItem = new TreeNodeData();
                     smeItem.EnvIndex = i;
-                    smeItem.Text = s.submodelElement.idShort;
+                    smeItem.Text = statement.submodelElement.idShort;
                     smeItem.Type = "In";
-                    smeItem.Tag = s.submodelElement;
-                    smChilds.Add(smeItem);
+                    smeItem.Tag = statement.submodelElement;
+                    treeNodeDataList.Add(smeItem);
                 }
             }
-            smeRootItem.Children = smChilds;
-            foreach (var c in smChilds)
-                c.Parent = smeRootItem;
-        }
 
-        public List<Submodel> GetSubmodels()
-        {
-            return Program.env[0].AasEnv.Submodels;
+            rootItem.Children = treeNodeDataList;
+
+            foreach (TreeNodeData nodeData in treeNodeDataList)
+            {
+                nodeData.Parent = rootItem;
+            }
         }
     }
 }

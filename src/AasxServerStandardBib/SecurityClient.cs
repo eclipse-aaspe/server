@@ -591,7 +591,7 @@ namespace AasxServer
                     t.nextExecution = DateTime.UtcNow.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
                     if (t.nextCycle != null)
                         t.nextCycle.value = t.nextExecution.ToString();
-                    Program.SignalNewData(0);
+                    Program.SignalNewData(Program.TreeUpdateMode.ValuesOnly);
 
                     runOperations(t.def, t.envIndex);
                 }

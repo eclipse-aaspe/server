@@ -62,10 +62,6 @@ namespace AasxServer
 
         public static string hostPort = "";
         public static string blazorHostPort = "";
-        public static ulong dataVersion = 0;
-
-        public static void changeDataVersion() { dataVersion++; }
-        public static ulong getDataVersion() { return (dataVersion); }
 
         public static string connectServer = "";
         static string connectNodeName = "";

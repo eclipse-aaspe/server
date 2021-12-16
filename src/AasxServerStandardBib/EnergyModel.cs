@@ -999,7 +999,7 @@ namespace AasxDemonstration
                     _trackSegment.ClearRuntime();
                 }
 
-                Program.SignalNewData(0);
+                Program.SignalNewData(Program.TreeUpdateMode.ValuesOnly);
             }
         }
     }

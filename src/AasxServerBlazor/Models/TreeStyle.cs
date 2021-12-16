@@ -1,5 +1,5 @@
 ﻿
-namespace MW.Blazor
+namespace AasxServerBlazor
 {
     public class TreeStyle
     {
@@ -12,8 +12,11 @@ namespace MW.Blazor
         };
 
         public string ExpandNodeIconClass { get; set; }
+
         public string CollapseNodeIconClass { get; set; }
+
         public string NodeTitleClass { get; set; }
+
         public string NodeTitleSelectedClass { get; set; }
     }
 }
