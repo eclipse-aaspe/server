@@ -9,9 +9,9 @@
 <div class="uic-tree @(Visible ? "" : "uic-tree--hidden")">
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
-        var nodeExpanded = ExpandedNodes.Contains(node);
-        var nodeSelected = node.Equals(SelectedNode);
-        var hasChildren = HasChildNodes(node);
+        bool nodeExpanded = ExpandedNodes.Contains(node);
+        bool nodeSelected = node.Equals(SelectedNode);
+        bool hasChildren = HasChildNodes(node);
 
         <div>
             @if (hasChildren)
@@ -29,7 +29,7 @@
 
             @if (hasChildren && nodeExpanded)
 			{
-                <Tree Nodes="ChildSelector(node)"
+                <TreeNode Nodes="ChildSelector(node)"
                     TitleTemplate="TitleTemplate"
                     ChildSelector="ChildSelector"
                     ExpandedNodes="ExpandedNodes"
@@ -39,7 +39,6 @@
                     Visible="nodeExpanded"
                     HasChildNodes="HasChildNodes" />
             }
-
         </div>
     }
 </div>
@@ -97,5 +96,4 @@
         SelectedNode = node;
         SelectedNodeChanged.InvokeAsync(node);
     }
-
 }

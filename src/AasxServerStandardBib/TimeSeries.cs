@@ -1,16 +1,14 @@
-﻿using System;
+﻿using AasxServer;
+using AdminShellNS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
-using AasxServer;
-using AdminShellNS;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using SampleClient;
+using static AasxServer.Program;
 
 namespace AasxTimeSeries
 {
@@ -356,7 +354,7 @@ namespace AasxTimeSeries
 
                 if (final || actualSamples < maxSamples)
                 {
-                    int updateMode = 0;
+                    TreeUpdateMode updateMode = TreeUpdateMode.ValuesOnly;
                     if (!final)
                     {
                         int valueCount = 1;
@@ -459,7 +457,7 @@ namespace AasxTimeSeries
                                         tsb.data.setTimeStamp(timeStamp);
                                         tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
                                         tsb.lowDataIndex.setTimeStamp(timeStamp);
-                                        updateMode = 1;
+                                        updateMode = TreeUpdateMode.Rebuild;
                                     }
                                 }
                             }
@@ -561,7 +559,7 @@ namespace AasxTimeSeries
                                     actualSamplesInCollection = 0;
                                     tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
                                     tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
-                                    updateMode = 1;
+                                    updateMode = TreeUpdateMode.Rebuild;
                                     var json = JsonConvert.SerializeObject(nextCollection, Newtonsoft.Json.Formatting.Indented,
                                                                         new JsonSerializerSettings
                                                                         {
@@ -608,11 +606,14 @@ namespace AasxTimeSeries
                             actualSamplesInCollection = 0;
                             tsb.actualSamplesInCollection.value = "" + actualSamplesInCollection;
                             tsb.actualSamplesInCollection.setTimeStamp(timeStamp);
-                            updateMode = 1;
+                            updateMode = TreeUpdateMode.Rebuild;
                         }
                     }
+
                     if (updateMode != 0)
-                        Program.signalNewData(updateMode);
+                    {
+                        Program.SignalNewData(updateMode);
+                    }
                 }
             }
 

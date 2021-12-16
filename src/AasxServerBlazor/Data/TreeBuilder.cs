@@ -1,38 +1,16 @@
 ﻿using AasxServer;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using static AasxServerBlazor.Pages.TreePage;
 using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerBlazor.Data
 {
-    public class SubmodelText
+    public class TreeBuilder
     {
-        public string text { get; set; }
-    }
-
-    public class AASService
-    {
-
-        public AASService()
-        {
-            Program.NewDataAvailable += (s, a) =>
-            {
-                NewDataAvailable?.Invoke(this, a);
-            };
-        }
-
-        public event EventHandler NewDataAvailable;
-
-        public static List<Item> items = null;
-        public static List<Item> viewItems = null;
-
-        public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
-        {
-            return viewItems;
-        }
+        private List<Item> Items = null;
+        public List<Item> ViewItems = null;
 
         public void buildTree()
         {
@@ -43,7 +21,7 @@ namespace AasxServerBlazor.Data
 
             lock (Program.changeAasxFile)
             {
-                items = new List<Item>();
+                Items = new List<Item>();
                 for (int i = 0; i < Program.envimax; i++)
                 {
                     Item root = new Item();
@@ -96,17 +74,17 @@ namespace AasxServerBlazor.Data
                             root.Children = childs;
                             foreach (var c in childs)
                                 c.Parent = root;
-                            items.Add(root);
+                            Items.Add(root);
                         }
                     }
                     if (Program.envSymbols[i] == "L")
                     {
                         root.Text = System.IO.Path.GetFileName(Program.envFileName[i]);
-                        items.Add(root);
+                        Items.Add(root);
                     }
                 }
             }
-            viewItems = items;
+            ViewItems = Items;
         }
 
         void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)

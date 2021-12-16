@@ -1193,7 +1193,8 @@ namespace AasxServer
                                                                     tsb.data.value[0].submodelElement.idShort.Substring("data".Length);
                                                                 tsb.highDataIndex.value =
                                                                     tsb.data.value[tsb.data.value.Count - 1].submodelElement.idShort.Substring("data".Length);
-                                                                signalNewData(1);
+
+                                                                SignalNewData(TreeUpdateMode.Rebuild);
                                                             }
                                                         }
                                                     }
@@ -1364,12 +1365,14 @@ namespace AasxServer
                             }
                         }
                     }
-                    catch
+                    catch (Exception)
                     {
+                        // do nothing
                     }
+
                     if (newConnectData)
                     {
-                        NewDataAvailable?.Invoke(null, EventArgs.Empty);
+                        SignalNewData(TreeUpdateMode.Rebuild);
                     }
                 }
 
@@ -1382,57 +1385,27 @@ namespace AasxServer
             }
         }
 
-        private static System.Timers.Timer OPCClientTimer;
-        static bool timerSet = false;
-        private static void SetOPCClientTimer(double value)
-        {
-            if (!timerSet)
-            {
-                // Create a timer with an specified interval.
-                OPCClientTimer = new System.Timers.Timer(value);
-                // Hook up the Elapsed event for the timer.
-                OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
-                OPCClientTimer.AutoReset = true;
-                OPCClientTimer.Enabled = true;
-
-                timerSet = true;
-            }
-        }
-
         public static event EventHandler NewDataAvailable;
 
-        public class NewDataAvailableArgs : EventArgs
+        public enum TreeUpdateMode
         {
-            public int signalNewDataMode;
-
-            public NewDataAvailableArgs(int mode = 2)
-            {
-                signalNewDataMode = mode;
-            }
+            ValuesOnly = 0,
+            Rebuild,
+            RebuildAndCollapse
         }
 
-        // 0 == same tree, only values changed
-        // 1 == same tree, structure may change
-        // 2 == build new tree, keep open nodes
-        // 3 == build new tree, all nodes closed
-        // public static int signalNewDataMode = 2;
-        public static void signalNewData(int mode)
+        public static void SignalNewData(TreeUpdateMode mode)
         {
-            // signalNewDataMode = mode;
-            // NewDataAvailable?.Invoke(null, EventArgs.Empty);
-            NewDataAvailable?.Invoke(null, new NewDataAvailableArgs(mode));
-        }
-
-        private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+            NewDataAvailable?.Invoke(mode, EventArgs.Empty);
         }
 
         private static System.Timers.Timer scriptTimer;
+
         private static void SetScriptTimer(double value)
         {
             // Create a timer with a two second interval.
             scriptTimer = new System.Timers.Timer(value);
+
             // Hook up the Elapsed event for the timer.
             scriptTimer.Elapsed += OnScriptTimedEvent;
             scriptTimer.AutoReset = true;
@@ -1442,7 +1415,6 @@ namespace AasxServer
         private static void OnScriptTimedEvent(Object source, ElapsedEventArgs e)
         {
             RunScript(false);
-            // NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
         private static System.Timers.Timer restTimer;
@@ -1761,7 +1733,7 @@ namespace AasxServer
 
         public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
         {
-            int newMode = 0;
+            TreeUpdateMode newMode = TreeUpdateMode.ValuesOnly;
             DateTime timeStamp = DateTime.UtcNow;
 
             foreach (JProperty jp1 in (JToken)o)
@@ -1777,7 +1749,7 @@ namespace AasxServer
                             c.Add(c2);
                             c2.TimeStampCreate = timeStamp;
                             c2.setTimeStamp(timeStamp);
-                            newMode = 1;
+                            newMode = TreeUpdateMode.Rebuild;
                         }
                         int count = 1;
                         foreach (JObject el in jp1.Value)
@@ -1791,7 +1763,7 @@ namespace AasxServer
                                 c2.Add(c3);
                                 c3.TimeStampCreate = timeStamp;
                                 c3.setTimeStamp(timeStamp);
-                                newMode = 1;
+                                newMode = TreeUpdateMode.Rebuild;
                             }
                             parseJson(c3, el);
                         }
@@ -1804,7 +1776,7 @@ namespace AasxServer
                             c.Add(c2);
                             c2.TimeStampCreate = timeStamp;
                             c2.setTimeStamp(timeStamp);
-                            newMode = 1;
+                            newMode = TreeUpdateMode.Rebuild;
                         }
                         foreach (JObject el in jp1.Value)
                         {
@@ -1819,7 +1791,7 @@ namespace AasxServer
                             c.Add(p);
                             p.TimeStampCreate = timeStamp;
                             p.setTimeStamp(timeStamp);
-                            newMode = 1;
+                            newMode = TreeUpdateMode.Rebuild;
                         }
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874
                         p.value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
@@ -1828,7 +1800,7 @@ namespace AasxServer
                 }
             }
 
-            signalNewData(newMode);
+            SignalNewData(newMode);
         }
     }
 }

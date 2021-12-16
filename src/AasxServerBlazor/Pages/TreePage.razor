@@ -1,5 +1,5 @@
 ﻿@page "/"
-@inject AASService SubmodelService
+@inject TreeBuilder treeBuilder
 @using AasxServerBlazor.Data
 @using static AdminShellNS.AdminShellV20;
 @using System
@@ -17,9 +17,9 @@
             <span style="color:white;background-color:blue;">Loading...</span>
         }
 
-        @updateVisibleTree(Items, SelectedNode)
+        @UpdateVisibleTree(Items, SelectedNode)
 
-        <Tree Nodes="Items" ChildSelector="@(item => item.Children)" @bind-SelectedNode="SelectedNode" @bind-ExpandedNodes="ExpandedNodes" HasChildNodes="@(item => item.Children?.Any() == true)">
+        <TreeNode Nodes="Items" ChildSelector="@(item => item.Children)" @bind-SelectedNode="SelectedNode" @bind-ExpandedNodes="ExpandedNodes" HasChildNodes="@(item => item.Children?.Any() == true)">
             <TitleTemplate>
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)
@@ -27,7 +27,7 @@
                 <strong><span style="color:blue">@getSymbols(context)</span></strong>
                 <span style="color:lightgray;">@ViewTimeStamp(context)</span>
             </TitleTemplate>
-        </Tree>
+        </TreeNode>
     </div>
     <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
@@ -215,146 +215,46 @@
 
     protected override void OnInitialized()
     {
-        SubmodelService.NewDataAvailable += NewData;
-        Program.signalNewData(1);
+        Program.NewDataAvailable += NewData;
     }
 
     public void Dispose()
     {
-        SubmodelService.NewDataAvailable -= NewData;
+        Program.NewDataAvailable -= NewData;
     }
 
-    int newDataMode = 0;
+    Program.TreeUpdateMode CurrentTreeUpdateMode = Program.TreeUpdateMode.RebuildAndCollapse;
 
-    void NewData(object source, EventArgs args)
+    private void NewData(object source, EventArgs args)
     {
-        if (newDataMode == 0)
+        if (CurrentTreeUpdateMode == Program.TreeUpdateMode.ValuesOnly)
         {
-            if (args is Program.NewDataAvailableArgs newArgs)
-            {
-                newDataMode = newArgs.signalNewDataMode;
-                InvokeAsync(() => this.StateHasChanged());
-            }
+            CurrentTreeUpdateMode = (Program.TreeUpdateMode) source;
+            InvokeAsync(() => this.StateHasChanged());
         }
     }
 
-    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+    string UpdateVisibleTree(List<Item> viewItems, Item selectedNode)
     {
-        switch (newDataMode)
+        if (CurrentTreeUpdateMode == Program.TreeUpdateMode.ValuesOnly)
         {
-            // 0 == same tree, only values changed
-            case 0:
-                break;
-            // 1 == same tree, structure may change
-            // 2 == build new tree, keep open nodes
-            case 1:
-            case 2:
-                bool isSelected = selectedNode != null;
-                bool isExpanded = ExpandedNodes.Count != 0;
-                List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                List<string> selectedNodePath = getPath(selectedNode);
-                if (isExpanded)
-                {
-                    for (int j = 0; j < ExpandedNodes.Count; j++)
-                    {
-                        expandedNodesPath[j] = getPath(ExpandedNodes[j]);
-                    }
-                }
-                SubmodelService.buildTree();
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                ExpandedNodes.Clear();
-                selectedNode = null;
-                if (isSelected)
-                {
-                    selectedNode = findPath(selectedNodePath);
-                }
-                if (isExpanded)
-                {
-                    foreach (var path in expandedNodesPath)
-                    {
-                        Item p = findPath(path);
-                        if (p != null)
-                            ExpandedNodes.Add(p);
-                    }
-                }
-                newDataMode = 0;
-                break;
-            // 3 == build new tree, all nodes closed
-            case 3:
-                SubmodelService.buildTree();
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                ExpandedNodes.Clear();
-                selectedNode = null;
-                newDataMode = 0;
-                break;
+            return string.Empty;
         }
 
+        treeBuilder.buildTree();
+
+        Items = treeBuilder.ViewItems;
+
+        if (CurrentTreeUpdateMode == Program.TreeUpdateMode.RebuildAndCollapse)
+        {
+            ExpandedNodes.Clear();
+            selectedNode = null;
+        }
+
+        CurrentTreeUpdateMode = 0;
         SelectedNode = selectedNode;
+
         return string.Empty;
-    }
-
-    List<string> getPath(Item i)
-    {
-        if (i == null)
-            return null;
-
-        List<string> upPath = new List<string>();
-        upPath.Add(i.Text);
-        while (i.Parent != null)
-        {
-            i = (Item)i.Parent;
-            upPath.Add(i.Text);
-        }
-        List<string> downPath = new List<string>();
-        int j = upPath.Count - 1;
-        while (j >= 0)
-        {
-            downPath.Add(upPath[j--]);
-        }
-        return downPath;
-    }
-
-    Item findPath(List<string> path)
-    {
-        if (path != null && path.Count > 0)
-        {
-            Item found = null;
-            int k = 0;
-            while (k < Items.Count)
-            {
-                Item i = Items[k];
-                if (i.Text != path[0])
-                {
-                    k++;
-                    continue;
-                }
-                int j = 0;
-                found = i;
-                while (++j < path.Count)
-                {
-                    if (i.Children != null)
-                    {
-                        found = null;
-                        foreach (var c in i.Children)
-                        {
-                            if (c.Text == path[j])
-                            {
-                                found = c;
-                                break;
-                            }
-                        }
-                    }
-                    if (found == null)
-                    {
-                        return null;
-                    }
-                    i = found;
-                }
-                if (found != null)
-                    return found;
-            }
-        }
-        return null;
     }
 
     void updateNode(Item i)
@@ -425,8 +325,6 @@
 
     string createDetailsImage(Item item)
     {
-        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
-
         if (item == null)
         {
             return string.Empty;
@@ -496,11 +394,6 @@
         string hostPort = Program.hostPort;
 
         string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            // prefix = "https://";
-            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
 
         object o = item.Tag;
 
@@ -511,7 +404,6 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
 
                 return link;
@@ -543,21 +435,12 @@
 
     void createQRCodeImage(Item item)
     {
-        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
-
         if (item == null)
         {
             return;
         }
 
         string hostPort = Program.hostPort;
-
-        string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            // prefix = "https://";
-            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
 
         object o = item.Tag;
 
@@ -574,7 +457,6 @@
             if (asset != null)
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
-                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
 
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
@@ -639,13 +521,11 @@
 
         if (o == null && Program.envSymbols[item.EnvIndex] == "L")
         {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
             return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvIndex);
         }
 
         if (o is AdministrationShell)
         {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
             return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvIndex);
         }
 

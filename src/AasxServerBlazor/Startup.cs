@@ -81,7 +81,7 @@ namespace AasxServerBlazor
 
             services.AddServerSideBlazor();
 
-            services.AddSingleton<AASService>();
+            services.AddSingleton<TreeBuilder>();
 
             services.AddCors();
 

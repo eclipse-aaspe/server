@@ -532,7 +532,8 @@ namespace AasxServer
                 {
                     return;
                 }
-                Program.signalNewData(1);
+
+                Program.SignalNewData(Program.TreeUpdateMode.Rebuild);
             }
             if (opName == "put")
             {
@@ -590,7 +591,7 @@ namespace AasxServer
                     t.nextExecution = DateTime.UtcNow.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
                     if (t.nextCycle != null)
                         t.nextCycle.value = t.nextExecution.ToString();
-                    Program.signalNewData(0);
+                    Program.SignalNewData(0);
 
                     runOperations(t.def, t.envIndex);
                 }

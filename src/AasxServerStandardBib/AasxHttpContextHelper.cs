@@ -1081,7 +1081,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            Program.signalNewData(2);
+            Program.SignalNewData(Program.TreeUpdateMode.Rebuild);
             context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK (saved)");
         }
@@ -1604,7 +1604,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.idShort);
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(Program.TreeUpdateMode.Rebuild);
             context.Response.StatusCode = (int) HttpStatusCode.OK;
             SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }

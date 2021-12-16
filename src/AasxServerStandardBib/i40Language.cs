@@ -1,14 +1,12 @@
-﻿using System;
+﻿using AdminShellNS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using AdminShellNS;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using Opc.Ua.Server;
+using static AasxServer.Program;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -611,10 +609,12 @@ namespace AasxServer
                     auto.tick++;
                 }
 
-                int mode = 0;
+                TreeUpdateMode mode = TreeUpdateMode.ValuesOnly;
                 if (treeChanged)
-                    mode = 2;
-                Program.signalNewData(mode);
+                {
+                    mode = TreeUpdateMode.Rebuild;
+                }
+                Program.SignalNewData(mode);
             }
         }
 
