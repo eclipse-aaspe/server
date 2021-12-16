@@ -1,5 +1,7 @@
 ﻿using AasxServer;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using static AasxServerBlazor.Pages.TreePage;
 using static AdminShellNS.AdminShellV20;
 
@@ -28,7 +30,7 @@ namespace AasxServerBlazor.Data
 
                 if (Program.envSymbols[i] == "L")
                 {
-                    root.Text = System.IO.Path.GetFileName(Program.envFileName[i]);
+                    root.Text = Path.GetFileName(Program.envFileName[i]);
                     viewItems.Add(root);
                 }
             }
@@ -53,6 +55,7 @@ namespace AasxServerBlazor.Data
             }
 
             root.Children = subModelTreeNodeDataList;
+
             foreach (TreeNodeData nodeData in subModelTreeNodeDataList)
             {
                 nodeData.Parent = root;
@@ -104,7 +107,7 @@ namespace AasxServerBlazor.Data
             {
                 if (subModelElementWrapper != null && subModelElementWrapper.submodelElement != null)
                 {
-                    var smeItem = new TreeNodeData();
+                    TreeNodeData smeItem = new TreeNodeData();
                     smeItem.EnvIndex = i;
                     smeItem.Text = subModelElementWrapper.submodelElement.idShort;
                     smeItem.Tag = subModelElementWrapper.submodelElement;
@@ -127,6 +130,12 @@ namespace AasxServerBlazor.Data
                         Entity entity = subModelElementWrapper.submodelElement as Entity;
                         CreateViewFromEntity(smeItem, entity, i);
                     }
+
+                    if ((subModelElementWrapper.submodelElement.idShort == "NODESET2_XML")
+                    && Uri.IsWellFormedUriString(subModelElementWrapper.submodelElement.ValueAsText(), UriKind.Absolute))
+                    {
+                        CreateViewFromUACloudLibraryNodeset(smeItem, new Uri(subModelElementWrapper.submodelElement.ValueAsText()), i);
+                    }
                 }
             }
 
@@ -138,10 +147,29 @@ namespace AasxServerBlazor.Data
             }
         }
 
+        private void CreateViewFromUACloudLibraryNodeset(TreeNodeData rootItem, Uri uri, int i)
+        {
+            List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
+
+            TreeNodeData smeItem = new TreeNodeData();
+            smeItem.EnvIndex = i;
+            smeItem.Text = "hi!";
+            smeItem.Type = "UANode";
+            smeItem.Tag = new object();
+            treeNodeDataList.Add(smeItem);
+            
+            rootItem.Children = treeNodeDataList;
+
+            foreach (TreeNodeData nodeData in treeNodeDataList)
+            {
+                nodeData.Parent = rootItem;
+            }
+        }
+
         private void CreateViewFromOperation(TreeNodeData rootItem, Operation operation, int i)
         {
             List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
-            foreach (var v in operation.inputVariable)
+            foreach (OperationVariable v in operation.inputVariable)
             {
                 TreeNodeData smeItem = new TreeNodeData();
                 smeItem.EnvIndex = i;
@@ -151,7 +179,7 @@ namespace AasxServerBlazor.Data
                 treeNodeDataList.Add(smeItem);
             }
 
-            foreach (var v in operation.outputVariable)
+            foreach (OperationVariable v in operation.outputVariable)
             {
                 TreeNodeData smeItem = new TreeNodeData();
                 smeItem.EnvIndex = i;
@@ -161,7 +189,7 @@ namespace AasxServerBlazor.Data
                 treeNodeDataList.Add(smeItem);
             }
 
-            foreach (var v in operation.inoutputVariable)
+            foreach (OperationVariable v in operation.inoutputVariable)
             {
                 TreeNodeData smeItem = new TreeNodeData();
                 smeItem.EnvIndex = i;
