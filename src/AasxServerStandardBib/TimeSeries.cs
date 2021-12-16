@@ -31,13 +31,13 @@ namespace AasxTimeSeries
             public AdminShell.Property actualSamplesInCollection = null;
             public AdminShell.Property maxCollections = null;
             public AdminShell.Property actualCollections = null;
+            public AdminShell.Property minDiffPercent = null;
 
             public int threadCounter = 0;
             public string sourceType = "";
             public string sourceAddress = "";
             public string username = "";
             public string password = "";
-            public int minDiffPercent = 0;
             public int samplesCollectionsCount = 0;
             public List<AdminShell.Property> samplesProperties = null;
             public List<string> samplesValues = null;
@@ -159,7 +159,7 @@ namespace AasxTimeSeries
                                                 case "minDiffPercent":
                                                     if (sme2 is AdminShell.Property)
                                                     {
-                                                        tsb.minDiffPercent = Convert.ToInt32((sme2 as AdminShell.Property).value);
+                                                        tsb.minDiffPercent = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                                 case "sampleStatus":
@@ -656,6 +656,8 @@ namespace AasxTimeSeries
 
         public static int GetModbus(TimeSeriesBlock tsb)
         {
+            int minDiffPercent = Convert.ToInt32(tsb.minDiffPercent.value);
+
             Console.WriteLine("Read Modbus Data:");
             try
             {
@@ -703,7 +705,7 @@ namespace AasxTimeSeries
                             if (v != lastv)
                             {
                                 int delta = Math.Abs(v - lastv);
-                                if (delta > lastv * tsb.minDiffPercent / 100)
+                                if (delta > lastv * minDiffPercent / 100)
                                     keep = true;
                             }
                         }
