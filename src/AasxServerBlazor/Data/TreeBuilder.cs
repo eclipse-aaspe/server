@@ -7,36 +7,33 @@ namespace AasxServerBlazor.Data
 {
     public class TreeBuilder
     {
-        public List<TreeNodeData> ViewItems = new List<TreeNodeData>();
-
-        public void BuildTree()
+        public List<TreeNodeData> BuildTree()
         {
-            lock (Program.changeAasxFile)
+            List<TreeNodeData> viewItems = new List<TreeNodeData>();
+
+            for (int i = 0; i < Program.envimax; i++)
             {
-                ViewItems.Clear();
-
-                for (int i = 0; i < Program.envimax; i++)
+                TreeNodeData root = new TreeNodeData();
+                root.EnvIndex = i;
+                if (Program.env[i] != null)
                 {
-                    TreeNodeData root = new TreeNodeData();
-                    root.EnvIndex = i;
-                    if (Program.env[i] != null)
+                    root.Text = Program.env[i].AasEnv.AdministrationShells[0].idShort;
+                    root.Tag = Program.env[i].AasEnv.AdministrationShells[0];
+                    if (Program.envSymbols[i] != "L")
                     {
-                        root.Text = Program.env[i].AasEnv.AdministrationShells[0].idShort;
-                        root.Tag = Program.env[i].AasEnv.AdministrationShells[0];
-                        if (Program.envSymbols[i] != "L")
-                        {
-                            CreateViewFromAASEnv(root, Program.env[i].AasEnv, i);
-                            ViewItems.Add(root);
-                        }
-                    }
-
-                    if (Program.envSymbols[i] == "L")
-                    {
-                        root.Text = System.IO.Path.GetFileName(Program.envFileName[i]);
-                        ViewItems.Add(root);
+                        CreateViewFromAASEnv(root, Program.env[i].AasEnv, i);
+                        viewItems.Add(root);
                     }
                 }
+
+                if (Program.envSymbols[i] == "L")
+                {
+                    root.Text = System.IO.Path.GetFileName(Program.envFileName[i]);
+                    viewItems.Add(root);
+                }
             }
+
+            return viewItems;
         }
 
         private void CreateViewFromAASEnv(TreeNodeData root, AdministrationShellEnv aasEnv, int i)

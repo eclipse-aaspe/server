@@ -240,9 +240,7 @@
             return string.Empty;
         }
 
-        treeBuilder.BuildTree();
-
-        Nodes = treeBuilder.ViewItems;
+        Nodes = treeBuilder.BuildTree();
 
         if (CurrentTreeUpdateMode == Program.TreeUpdateMode.RebuildAndCollapse)
         {
