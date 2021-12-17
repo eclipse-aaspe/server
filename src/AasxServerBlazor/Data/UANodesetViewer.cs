@@ -287,9 +287,6 @@ namespace AasxServerBlazor.Data
             {
                 try
                 {
-                    Stopwatch stopwatch = new Stopwatch();
-                    stopwatch.Start();
-
                     try
                     {
                         if (session.Disposed)
@@ -315,8 +312,6 @@ namespace AasxServerBlazor.Data
                         Trace.TraceError(ex.Message);
                     }
 
-                    Trace.TraceInformation("Browsing node '{0}' data took {0} ms", node.ToString(), stopwatch.ElapsedMilliseconds);
-
                     if (references != null)
                     {
                         var idList = new List<string>();
@@ -337,8 +332,6 @@ namespace AasxServerBlazor.Data
 
                             ReferenceDescriptionCollection childReferences = null;
                             Byte[] childContinuationPoint;
-
-                            Trace.TraceInformation("Browse '{0}' count: {1}", nodeReference.NodeId, nodes.Count);
 
                             INode currentNode = null;
                             try
@@ -466,9 +459,6 @@ namespace AasxServerBlazor.Data
                             }
                         }
                     }
-
-                    stopwatch.Stop();
-                    Trace.TraceInformation("Browsing all child infos of node '{0}' took {0} ms", node, stopwatch.ElapsedMilliseconds);
 
                     return nodes;
                 }

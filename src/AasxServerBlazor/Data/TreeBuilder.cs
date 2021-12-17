@@ -150,8 +150,6 @@ namespace AasxServerBlazor.Data
 
         private void CreateViewFromUACloudLibraryNodeset(TreeNodeData rootItem, Uri uri, int i)
         {
-            List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
-
             try
             {
                 UANodesetViewer viewer = new UANodesetViewer();
@@ -160,23 +158,7 @@ namespace AasxServerBlazor.Data
                 NodesetViewerNode rootNode = viewer.GetRootNode().GetAwaiter().GetResult();
                 if (rootNode.Children)
                 {
-                    List<NodesetViewerNode> children = viewer.GetChildren(rootNode.Id).GetAwaiter().GetResult();
-                    foreach (NodesetViewerNode node in children)
-                    {
-                        TreeNodeData smeItem = new TreeNodeData();
-                        smeItem.EnvIndex = i;
-                        smeItem.Text = node.Text;
-                        smeItem.Type = "UANode";
-                        smeItem.Tag = new SubmodelElement() { idShort = node.Text };
-                        treeNodeDataList.Add(smeItem);
-                    }
-
-                    rootItem.Children = treeNodeDataList;
-
-                    foreach (TreeNodeData nodeData in treeNodeDataList)
-                    {
-                        nodeData.Parent = rootItem;
-                    }
+                    CreateViewFromUANode(rootItem, viewer, rootNode, i);
                 }
 
                 viewer.Disconnect();
@@ -184,6 +166,40 @@ namespace AasxServerBlazor.Data
             catch (Exception)
             {
                 // ignore this part of the AAS
+            }
+        }
+
+        private void CreateViewFromUANode(TreeNodeData rootItem, UANodesetViewer viewer, NodesetViewerNode rootNode, int i)
+        {
+            try
+            {
+                List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
+                List<NodesetViewerNode> children = viewer.GetChildren(rootNode.Id).GetAwaiter().GetResult();
+                foreach (NodesetViewerNode node in children)
+                {
+                    TreeNodeData smeItem = new TreeNodeData();
+                    smeItem.EnvIndex = i;
+                    smeItem.Text = node.Text;
+                    smeItem.Type = "UANode";
+                    smeItem.Tag = new SubmodelElement() { idShort = node.Text };
+                    treeNodeDataList.Add(smeItem);
+
+                    if (node.Children)
+                    {
+                        CreateViewFromUANode(smeItem, viewer, node, i);
+                    }
+                }
+
+                rootItem.Children = treeNodeDataList;
+
+                foreach (TreeNodeData nodeData in treeNodeDataList)
+                {
+                    nodeData.Parent = rootItem;
+                }
+            }
+            catch (Exception)
+            {
+                // ignore this node
             }
         }
 
