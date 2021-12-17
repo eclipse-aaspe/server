@@ -1,6 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using AasxServerBlazor.Models;
 using Newtonsoft.Json;
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -25,7 +23,7 @@ namespace AasxServerBlazor.Data
 
         private ApplicationInstance _application = new ApplicationInstance();
 
-        private Session _session;
+        private string _sessionID = new Guid().ToString();
 
         private Dictionary<string, string> _namespacesInCloudLibrary = new Dictionary<string, string>();
 
@@ -51,8 +49,8 @@ namespace AasxServerBlazor.Data
             AddressSpace addressSpace = JsonConvert.DeserializeObject<AddressSpace>(response);
 
             // store the file locally
-            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "NodeSets", "nodeset2.xml");
-            System.IO.File.WriteAllText(filePath, addressSpace.Nodeset.NodesetXml);
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "nodeset2.xml");
+            File.WriteAllText(filePath, addressSpace.Nodeset.NodesetXml);
             _nodeSetFilenames.Add(filePath);
 
             ValidateNamespacesAndModels(true);
@@ -62,12 +60,7 @@ namespace AasxServerBlazor.Data
             {
                 _application.Stop();
             }
-
             StartServerAsync().GetAwaiter().GetResult();
-
-            // start the UA client
-            string endpointURL = "opc.tcp://localhost:4840/";
-            _session = OpcSessionHelper.Instance.GetSessionAsync(_application.ApplicationConfiguration, null, endpointURL, true).GetAwaiter().GetResult();
         }
 
         private string ValidateNamespacesAndModels(bool autodownloadreferences)
@@ -167,8 +160,8 @@ namespace AasxServerBlazor.Data
                             AddressSpace addressSpace = JsonConvert.DeserializeObject<AddressSpace>(response);
 
                             // store the file on the webserver
-                            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "NodeSets", addressSpace.Category.Name + ".nodeset2.xml");
-                            System.IO.File.WriteAllText(filePath, addressSpace.Nodeset.NodesetXml);
+                            string filePath = Path.Combine(Directory.GetCurrentDirectory(), addressSpace.Category.Name + ".nodeset2.xml");
+                            File.WriteAllText(filePath, addressSpace.Nodeset.NodesetXml);
                             _nodeSetFilenames.Add(filePath);
                         }
                         catch (Exception ex)
@@ -213,7 +206,7 @@ namespace AasxServerBlazor.Data
         {
             try
             {
-                OpcSessionHelper.Instance.Disconnect(_session.SessionId.ToString());
+                OpcSessionHelper.Instance.Disconnect(_sessionID);
             }
             catch (Exception ex)
             {
@@ -226,18 +219,20 @@ namespace AasxServerBlazor.Data
             }
         }
 
-        public async Task<List<object>> GetRootNode()
+        public async Task<NodesetViewerNode> GetRootNode()
         {
             ReferenceDescriptionCollection references;
             Byte[] continuationPoint;
-            var jsonTree = new List<object>();
+            NodesetViewerNode node;
 
             bool lastRetry = false;
+            string endpointURL = "opc.tcp://localhost:4840/";
+            Session session = null;
             while (!lastRetry)
             {
                 try
                 {
-                    Session session = await OpcSessionHelper.Instance.GetSessionAsync(_application.ApplicationConfiguration, _session.SessionId.ToString(), null).ConfigureAwait(false);
+                    session = await OpcSessionHelper.Instance.GetSessionAsync(_application.ApplicationConfiguration, _sessionID, endpointURL).ConfigureAwait(false);
 
                     session.Browse(
                         null,
@@ -250,13 +245,13 @@ namespace AasxServerBlazor.Data
                         0,
                         out continuationPoint,
                         out references);
-                    jsonTree.Add(new { id = ObjectIds.RootFolder.ToString(), text = "Root", children = (references?.Count != 0) });
+                    node = new NodesetViewerNode() { Id = ObjectIds.RootFolder.ToString(), Text = "Root", Children = (references?.Count != 0) };
 
-                    return jsonTree;
+                    return node;
                 }
                 catch (Exception)
                 {
-                    OpcSessionHelper.Instance.Disconnect(_session.SessionId.ToString());
+                    OpcSessionHelper.Instance.Disconnect(session.SessionId.ToString());
                     lastRetry = true;
                 }
             }
@@ -264,22 +259,20 @@ namespace AasxServerBlazor.Data
             return null;
         }
 
-        public async Task<List<object>> GetChildren(string jstreeNode)
+        public async Task<List<NodesetViewerNode>> GetChildren(string jstreeNode)
         {
-            // This delimiter is used to allow the storing of the OPC UA parent node ID together with the OPC UA child node ID in jstree data structures and provide it as parameter to
-            // Ajax calls.
-            var node = OpcSessionHelper.GetNodeIdFromJsTreeNode(jstreeNode);
+            string node = OpcSessionHelper.GetNodeIdFromJsTreeNode(jstreeNode);
 
             ReferenceDescriptionCollection references = null;
             Byte[] continuationPoint;
-            var jsonTree = new List<object>();
+            var nodes = new List<NodesetViewerNode>();
 
             // read the currently published nodes
             Session session = null;
-            string endpointUrl = null;
+            string endpointUrl = "opc.tcp://localhost:4840/";
             try
             {
-                session = await OpcSessionHelper.Instance.GetSessionAsync(_application.ApplicationConfiguration, _session.SessionId.ToString(), null).ConfigureAwait(false);
+                session = await OpcSessionHelper.Instance.GetSessionAsync(_application.ApplicationConfiguration, _sessionID, endpointUrl).ConfigureAwait(false);
                 endpointUrl = session.ConfiguredEndpoint.EndpointUrl.AbsoluteUri;
             }
             catch (Exception ex)
@@ -345,7 +338,7 @@ namespace AasxServerBlazor.Data
                             ReferenceDescriptionCollection childReferences = null;
                             Byte[] childContinuationPoint;
 
-                            Trace.TraceInformation("Browse '{0}' count: {1}", nodeReference.NodeId, jsonTree.Count);
+                            Trace.TraceInformation("Browse '{0}' count: {1}", nodeReference.NodeId, nodes.Count);
 
                             INode currentNode = null;
                             try
@@ -406,22 +399,17 @@ namespace AasxServerBlazor.Data
                                 currentNodeExecutable = methodNode.UserExecutable;
                             }
 
-                            jsonTree.Add(new
+                            nodes.Add(new NodesetViewerNode()
                             {
-                                id = ("__" + node + OpcSessionHelper.Delimiter + nodeReference.NodeId.ToString()),
-                                text = nodeReference.DisplayName.ToString() + " (ns=" + session.NamespaceUris.ToArray()[nodeReference.NodeId.NamespaceIndex] + ";" + nodeReference.NodeId.ToString() + ")",
-                                nodeClass = nodeReference.NodeClass.ToString(),
-                                accessLevel = currentNodeAccessLevel.ToString(),
-                                eventNotifier = currentNodeEventNotifier.ToString(),
-                                executable = currentNodeExecutable.ToString(),
-                                children = (childReferences.Count == 0) ? false : true,
-                                publishedNode = false
+                                Id = ("__" + node + OpcSessionHelper.Delimiter + nodeReference.NodeId.ToString()),
+                                Text = nodeReference.DisplayName.ToString() + " (ns=" + session.NamespaceUris.ToArray()[nodeReference.NodeId.NamespaceIndex] + ";" + nodeReference.NodeId.ToString() + ")",
+                                Children = (childReferences.Count == 0) ? false : true
                             });
                             idList.Add(nodeReference.NodeId.ToString());
                         }
 
                         // If there are no children, then this is a call to read the properties of the node itself.
-                        if (jsonTree.Count == 0)
+                        if (nodes.Count == 0)
                         {
                             INode currentNode = null;
 
@@ -469,15 +457,11 @@ namespace AasxServerBlazor.Data
                                     currentNodeExecutable = methodNode.UserExecutable;
                                 }
 
-                                jsonTree.Add(new
+                                nodes.Add(new NodesetViewerNode()
                                 {
-                                    id = jstreeNode,
-                                    text = currentNode.DisplayName.ToString() + " (ns=" + session.NamespaceUris.ToArray()[currentNode.NodeId.NamespaceIndex] + ";" + currentNode.NodeId.ToString() + ")",
-                                    nodeClass = currentNode.NodeClass.ToString(),
-                                    accessLevel = currentNodeAccessLevel.ToString(),
-                                    eventNotifier = currentNodeEventNotifier.ToString(),
-                                    executable = currentNodeExecutable.ToString(),
-                                    children = false
+                                    Id = jstreeNode,
+                                    Text = currentNode.DisplayName.ToString() + " (ns=" + session.NamespaceUris.ToArray()[currentNode.NodeId.NamespaceIndex] + ";" + currentNode.NodeId.ToString() + ")",
+                                    Children = false
                                 });
                             }
                         }
@@ -486,11 +470,11 @@ namespace AasxServerBlazor.Data
                     stopwatch.Stop();
                     Trace.TraceInformation("Browsing all child infos of node '{0}' took {0} ms", node, stopwatch.ElapsedMilliseconds);
 
-                    return jsonTree;
+                    return nodes;
                 }
                 catch (Exception)
                 {
-                    OpcSessionHelper.Instance.Disconnect(_session.SessionId.ToString());
+                    OpcSessionHelper.Instance.Disconnect(session.SessionId.ToString());
                     lastRetry = true;
                 }
             }

@@ -1,4 +1,5 @@
 ﻿using AasxServer;
+using AasxServerBlazor.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -151,18 +152,38 @@ namespace AasxServerBlazor.Data
         {
             List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
 
-            TreeNodeData smeItem = new TreeNodeData();
-            smeItem.EnvIndex = i;
-            smeItem.Text = "hi!";
-            smeItem.Type = "UANode";
-            smeItem.Tag = new object();
-            treeNodeDataList.Add(smeItem);
-            
-            rootItem.Children = treeNodeDataList;
-
-            foreach (TreeNodeData nodeData in treeNodeDataList)
+            try
             {
-                nodeData.Parent = rootItem;
+                UANodesetViewer viewer = new UANodesetViewer();
+                viewer.Login(uri.AbsoluteUri, Environment.GetEnvironmentVariable("UACLUsername"), Environment.GetEnvironmentVariable("UACLPassword"));
+
+                NodesetViewerNode rootNode = viewer.GetRootNode().GetAwaiter().GetResult();
+                if (rootNode.Children)
+                {
+                    List<NodesetViewerNode> children = viewer.GetChildren(rootNode.Id).GetAwaiter().GetResult();
+                    foreach (NodesetViewerNode node in children)
+                    {
+                        TreeNodeData smeItem = new TreeNodeData();
+                        smeItem.EnvIndex = i;
+                        smeItem.Text = node.Text;
+                        smeItem.Type = "UANode";
+                        smeItem.Tag = new SubmodelElement() { idShort = node.Text };
+                        treeNodeDataList.Add(smeItem);
+                    }
+
+                    rootItem.Children = treeNodeDataList;
+
+                    foreach (TreeNodeData nodeData in treeNodeDataList)
+                    {
+                        nodeData.Parent = rootItem;
+                    }
+                }
+
+                viewer.Disconnect();
+            }
+            catch (Exception)
+            {
+                // ignore this part of the AAS
             }
         }
 

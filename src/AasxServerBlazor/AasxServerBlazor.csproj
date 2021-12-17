@@ -26,6 +26,9 @@
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>
 
   <ItemGroup>
+    <Content Include="Application.Config.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="erich-repo.aasx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -52,6 +55,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Application.Config.xml" />
     <None Remove="erich-repo.aasx" />
   </ItemGroup>
 </Project>

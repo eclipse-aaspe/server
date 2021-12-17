@@ -389,3 +389,5 @@ healthchecksdb
 /content-for-demo/aasxs/erich-repo
 /src/AasxServerBlazor/temp/erich-repo.aasx
 /src/AasxServerBlazor/erich-repo
+/src/AasxServerBlazor/OPC Foundation/CertificateStores/UA Applications/certs
+/src/AasxServerBlazor/nodeset2.xml
