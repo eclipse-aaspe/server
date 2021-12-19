@@ -1,5 +1,6 @@
 ﻿using AasxServer;
 using AasxServerBlazor.Models;
+using Aml.Engine.CAEX;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -137,6 +138,12 @@ namespace AasxServerBlazor.Data
                     {
                         CreateViewFromUACloudLibraryNodeset(smeItem, new Uri(subModelElementWrapper.submodelElement.ValueAsText()), i);
                     }
+
+                    if (subModelElementWrapper.submodelElement.idShort == "CAEX")
+
+                    {
+                        CreateViewFromAMLCAEXFile(smeItem, subModelElementWrapper.submodelElement.ValueAsText(), i);
+                    }
                 }
             }
 
@@ -145,6 +152,130 @@ namespace AasxServerBlazor.Data
             foreach (TreeNodeData nodeData in treeNodeDataList)
             {
                 nodeData.Parent = rootItem;
+            }
+        }
+
+        private void CreateViewFromAMLCAEXFile(TreeNodeData rootItem, string filename, int i)
+        {
+            try
+            {
+                CAEXDocument doc = CAEXDocument.LoadFromFile(Path.Combine(Directory.GetCurrentDirectory(), filename));
+                List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
+
+                foreach (var instanceHirarchy in doc.CAEXFile.InstanceHierarchy)
+                {
+                    TreeNodeData smeItem = new TreeNodeData();
+                    smeItem.EnvIndex = i;
+                    smeItem.Text = instanceHirarchy.ID;
+                    smeItem.Type = "AML";
+                    smeItem.Tag = new SubmodelElement() { idShort = instanceHirarchy.Name };
+                    smeItem.Children = new List<TreeNodeData>();
+                    treeNodeDataList.Add(smeItem);
+
+                    foreach (var internalElement in instanceHirarchy.InternalElement)
+                    {
+                        CreateViewFromInternalElement(smeItem, (List<TreeNodeData>)smeItem.Children, internalElement, i);
+                    }
+                }
+
+                foreach (var roleclassLib in doc.CAEXFile.RoleClassLib)
+                {
+                    TreeNodeData smeItem = new TreeNodeData();
+                    smeItem.EnvIndex = i;
+                    smeItem.Text = roleclassLib.ID;
+                    smeItem.Type = "AML";
+                    smeItem.Tag = new SubmodelElement() { idShort = roleclassLib.Name };
+                    smeItem.Children = new List<TreeNodeData>();
+                    treeNodeDataList.Add(smeItem);
+
+                    foreach (RoleFamilyType roleClass in roleclassLib.RoleClass)
+                    {
+                        CreateViewFromRoleClasses(smeItem, (List<TreeNodeData>)smeItem.Children, roleClass, i);
+                    }
+                }
+
+                foreach (var systemUnitClassLib in doc.CAEXFile.SystemUnitClassLib)
+                {
+                    TreeNodeData smeItem = new TreeNodeData();
+                    smeItem.EnvIndex = i;
+                    smeItem.Text = systemUnitClassLib.ID;
+                    smeItem.Type = "AML";
+                    smeItem.Tag = new SubmodelElement() { idShort = systemUnitClassLib.Name };
+                    smeItem.Children = new List<TreeNodeData>();
+                    treeNodeDataList.Add(smeItem);
+
+                    foreach (SystemUnitFamilyType systemUnitClass in systemUnitClassLib.SystemUnitClass)
+                    {
+                        CreateViewFromSystemUnitClasses(smeItem, (List<TreeNodeData>)smeItem.Children, systemUnitClass, i);
+                    }
+                }
+
+                rootItem.Children = treeNodeDataList;
+
+                foreach (TreeNodeData nodeData in treeNodeDataList)
+                {
+                    nodeData.Parent = rootItem;
+                }
+            }
+            catch (Exception)
+            {
+                // ignore this node
+            }
+        }
+
+        private void CreateViewFromInternalElement(TreeNodeData rootItem, List<TreeNodeData> rootItemChildren, InternalElementType internalElement, int i)
+        {
+            TreeNodeData smeItem = new TreeNodeData();
+            smeItem.EnvIndex = i;
+            smeItem.Text = internalElement.ID;
+            smeItem.Type = "AML";
+            smeItem.Tag = new SubmodelElement() { idShort = internalElement.Name };
+            smeItem.Parent = rootItem;
+            smeItem.Children = new List<TreeNodeData>();
+            rootItemChildren.Add(smeItem);
+
+            foreach (InternalElementType childInternalElement in internalElement.InternalElement)
+            {
+                CreateViewFromInternalElement(smeItem, (List<TreeNodeData>)smeItem.Children, childInternalElement, i);
+            }
+        }
+
+        private void CreateViewFromRoleClasses(TreeNodeData rootItem, List<TreeNodeData> rootItemChildren, RoleFamilyType roleClass, int i)
+        {
+            TreeNodeData smeItem = new TreeNodeData();
+            smeItem.EnvIndex = i;
+            smeItem.Text = roleClass.ID;
+            smeItem.Type = "AML";
+            smeItem.Tag = new SubmodelElement() { idShort = roleClass.Name };
+            smeItem.Parent = rootItem;
+            smeItem.Children = new List<TreeNodeData>();
+            rootItemChildren.Add(smeItem);
+
+            foreach (RoleFamilyType childRoleClass in roleClass.RoleClass)
+            {
+                CreateViewFromRoleClasses(smeItem, (List<TreeNodeData>)smeItem.Children, childRoleClass, i);
+            }
+        }
+
+        private void CreateViewFromSystemUnitClasses(TreeNodeData rootItem, List<TreeNodeData> rootItemChildren, SystemUnitFamilyType systemUnitClass, int i)
+        {
+            TreeNodeData smeItem = new TreeNodeData();
+            smeItem.EnvIndex = i;
+            smeItem.Text = systemUnitClass.ID;
+            smeItem.Type = "AML";
+            smeItem.Tag = new SubmodelElement() { idShort = systemUnitClass.Name };
+            smeItem.Parent = rootItem;
+            smeItem.Children = new List<TreeNodeData>();
+            rootItemChildren.Add(smeItem);
+
+            foreach (InternalElementType childInternalElement in systemUnitClass.InternalElement)
+            {
+                CreateViewFromInternalElement(smeItem, (List<TreeNodeData>)smeItem.Children, childInternalElement, i);
+            }
+
+            foreach (SystemUnitFamilyType childSystemUnitClass in systemUnitClass.SystemUnitClass)
+            {
+                CreateViewFromSystemUnitClasses(smeItem, (List<TreeNodeData>)smeItem.Children, childSystemUnitClass, i);
             }
         }
 
