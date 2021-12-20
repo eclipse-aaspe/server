@@ -20,6 +20,7 @@ namespace AasxTimeSeries
             public AdminShell.Submodel submodel = null;
             public AdminShell.SubmodelElementCollection block = null;
             public AdminShell.SubmodelElementCollection data = null;
+            public AdminShell.SubmodelElementCollection latestData = null;
             public AdminShell.Property sampleStatus = null;
             public AdminShell.Property sampleMode = null;
             public AdminShell.Property sampleRate = null;
@@ -31,6 +32,7 @@ namespace AasxTimeSeries
             public AdminShell.Property actualSamplesInCollection = null;
             public AdminShell.Property maxCollections = null;
             public AdminShell.Property actualCollections = null;
+            public AdminShell.Property minDiffAbsolute = null;
             public AdminShell.Property minDiffPercent = null;
 
             public int threadCounter = 0;
@@ -160,6 +162,12 @@ namespace AasxTimeSeries
                                                     if (sme2 is AdminShell.Property)
                                                     {
                                                         tsb.minDiffPercent = sme2 as AdminShell.Property;
+                                                    }
+                                                    break;
+                                                case "minDiffAbsolute":
+                                                    if (sme2 is AdminShell.Property)
+                                                    {
+                                                        tsb.minDiffAbsolute = sme2 as AdminShell.Property;
                                                     }
                                                     break;
                                                 case "sampleStatus":
@@ -656,7 +664,12 @@ namespace AasxTimeSeries
 
         public static int GetModbus(TimeSeriesBlock tsb)
         {
-            int minDiffPercent = Convert.ToInt32(tsb.minDiffPercent.value);
+            int minDiffAbsolute = 1;
+            int minDiffPercent = 0;
+            if (tsb.minDiffAbsolute != null)
+                minDiffAbsolute = Convert.ToInt32(tsb.minDiffAbsolute.value);
+            if (tsb.minDiffPercent != null)
+                minDiffPercent = Convert.ToInt32(tsb.minDiffPercent.value);
 
             Console.WriteLine("Read Modbus Data:");
             try
@@ -705,7 +718,7 @@ namespace AasxTimeSeries
                             if (v != lastv)
                             {
                                 int delta = Math.Abs(v - lastv);
-                                if (delta > lastv * minDiffPercent / 100)
+                                if (delta > minDiffAbsolute && delta > lastv * minDiffPercent / 100)
                                     keep = true;
                             }
                         }
