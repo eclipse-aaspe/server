@@ -49,9 +49,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="OPC Foundation\**" />
     <Compile Remove="temp\**" />
+    <Content Remove="OPC Foundation\**" />
     <Content Remove="temp\**" />
+    <EmbeddedResource Remove="OPC Foundation\**" />
     <EmbeddedResource Remove="temp\**" />
+    <None Remove="OPC Foundation\**" />
     <None Remove="temp\**" />
   </ItemGroup>
 

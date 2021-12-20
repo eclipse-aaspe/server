@@ -159,7 +159,8 @@ namespace AasxServerBlazor.Data
         {
             try
             {
-                CAEXDocument doc = CAEXDocument.LoadFromFile(Path.Combine(Directory.GetCurrentDirectory(), filename));
+                Stream packagePartStream = Program.env[i].GetLocalStreamFromPackage(filename);
+                CAEXDocument doc = CAEXDocument.LoadFromStream(packagePartStream);
                 List<TreeNodeData> treeNodeDataList = new List<TreeNodeData>();
 
                 foreach (var instanceHirarchy in doc.CAEXFile.InstanceHierarchy)
@@ -217,9 +218,10 @@ namespace AasxServerBlazor.Data
                     nodeData.Parent = rootItem;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore this node
+                Console.WriteLine(ex);
             }
         }
 
@@ -294,9 +296,10 @@ namespace AasxServerBlazor.Data
 
                 viewer.Disconnect();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore this part of the AAS
+                Console.WriteLine(ex);
             }
         }
 
@@ -328,9 +331,10 @@ namespace AasxServerBlazor.Data
                     nodeData.Parent = rootItem;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore this node
+                Console.WriteLine(ex);
             }
         }
 
