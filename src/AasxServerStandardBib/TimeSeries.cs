@@ -113,173 +113,188 @@ namespace AasxTimeSeries
                                         tsb.samplesValues = new List<string>();
                                         tsb.opcLastTimeStamp = DateTime.UtcNow - TimeSpan.FromMinutes(1) + TimeSpan.FromMinutes(120);
 
-                                        for (int iSmec = 0; iSmec < countSmec; iSmec++)
+                                        for (int dataSections = 0; dataSections < 2; dataSections++)
                                         {
-                                            var sme2 = smec.value[iSmec].submodelElement;
-                                            var idShort = sme2.idShort;
-                                            if (idShort.Contains("opcNode"))
-                                                idShort = "opcNode";
-                                            if (idShort.Contains("modbusNode"))
-                                                idShort = "modbusNode"; switch (idShort)
+                                            for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                             {
-                                                case "sourceType":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sourceType = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "sourceAddress":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sourceAddress = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "username":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.username = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "password":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.password = (sme2 as AdminShell.Property).value;
-                                                    }
-                                                    break;
-                                                case "data":
-                                                    if (sme2 is AdminShell.SubmodelElementCollection)
-                                                    {
-                                                        tsb.data = sme2 as AdminShell.SubmodelElementCollection;
-                                                    }
-                                                    if (sme2 is AdminShell.ReferenceElement)
-                                                    {
-                                                        var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).value);
-                                                        if (refElement is AdminShell.SubmodelElementCollection)
-                                                            tsb.data = refElement as AdminShell.SubmodelElementCollection;
-                                                    }
-                                                    break;
-                                                case "minDiffPercent":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.minDiffPercent = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "minDiffAbsolute":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.minDiffAbsolute = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "sampleStatus":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sampleStatus = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "sampleMode":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sampleMode = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "sampleRate":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.sampleRate = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "maxSamples":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.maxSamples = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "actualSamples":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.actualSamples = sme2 as AdminShell.Property;
-                                                        tsb.actualSamples.value = "0";
-                                                    }
-                                                    break;
-                                                case "maxSamplesInCollection":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.maxSamplesInCollection = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "actualSamplesInCollection":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.actualSamplesInCollection = sme2 as AdminShell.Property;
-                                                        tsb.actualSamplesInCollection.value = "0";
-                                                    }
-                                                    break;
-                                                case "maxCollections":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.maxCollections = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "actualCollections":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.actualCollections = sme2 as AdminShell.Property;
-                                                        tsb.actualCollections.value = "0";
-                                                    }
-                                                    break;
-                                                case "lowDataIndex":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.lowDataIndex = sme2 as AdminShell.Property;
-                                                        tsb.lowDataIndex.value = "0";
-                                                    }
-                                                    break;
-                                                case "highDataIndex":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        tsb.highDataIndex = sme2 as AdminShell.Property;
-                                                    }
-                                                    break;
-                                                case "opcNode":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        string node = (sme2 as AdminShell.Property).value;
-                                                        string[] split = node.Split(',');
-                                                        if (tsb.opcNodes == null)
-                                                            tsb.opcNodes = new List<string>();
-                                                        tsb.opcNodes.Add(split[1] + "," + split[2]);
-                                                        var p = AdminShell.Property.CreateNew(split[0]);
-                                                        tsb.samplesProperties.Add(p);
-                                                        p.TimeStampCreate = timeStamp;
-                                                        p.setTimeStamp(timeStamp);
-                                                        tsb.samplesValues.Add("");
-                                                    }
-                                                    break;
-                                                case "modbusNode":
-                                                    if (sme2 is AdminShell.Property)
-                                                    {
-                                                        string node = (sme2 as AdminShell.Property).value;
-                                                        string[] split = node.Split(',');
-                                                        if (tsb.modbusNodes == null)
-                                                            tsb.modbusNodes = new List<string>();
-                                                        tsb.modbusNodes.Add(split[1] + "," + split[2] + "," + split[3] + "," + split[4]);
-                                                        var p = AdminShell.Property.CreateNew(split[0]);
-                                                        tsb.samplesProperties.Add(p);
-                                                        p.TimeStampCreate = timeStamp;
-                                                        p.setTimeStamp(timeStamp);
-                                                        tsb.samplesValues.Add("");
-                                                    }
-                                                    break;
-                                            }
-                                            if (tsb.sourceType == "aas" && sme2 is AdminShell.ReferenceElement r)
-                                            {
-                                                var el = env.AasEnv.FindReferableByReference(r.value);
-                                                if (el is AdminShell.Property p)
+                                                var sme2 = smec.value[iSmec].submodelElement;
+                                                var idShort = sme2.idShort;
+                                                if (idShort.Contains("opcNode"))
+                                                    idShort = "opcNode";
+                                                if (idShort.Contains("modbusNode"))
+                                                    idShort = "modbusNode"; switch (idShort)
                                                 {
-                                                    tsb.samplesProperties.Add(p);
-                                                    tsb.samplesValues.Add("");
+                                                    case "sourceType":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.sourceType = (sme2 as AdminShell.Property).value;
+                                                        }
+                                                        break;
+                                                    case "sourceAddress":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.sourceAddress = (sme2 as AdminShell.Property).value;
+                                                        }
+                                                        break;
+                                                    case "username":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.username = (sme2 as AdminShell.Property).value;
+                                                        }
+                                                        break;
+                                                    case "password":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.password = (sme2 as AdminShell.Property).value;
+                                                        }
+                                                        break;
+                                                    case "data":
+                                                        if (sme2 is AdminShell.SubmodelElementCollection)
+                                                        {
+                                                            tsb.data = sme2 as AdminShell.SubmodelElementCollection;
+                                                        }
+                                                        if (sme2 is AdminShell.ReferenceElement)
+                                                        {
+                                                            var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).value);
+                                                            if (refElement is AdminShell.SubmodelElementCollection)
+                                                                tsb.data = refElement as AdminShell.SubmodelElementCollection;
+                                                        }
+                                                        break;
+                                                    case "minDiffPercent":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.minDiffPercent = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "minDiffAbsolute":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.minDiffAbsolute = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "sampleStatus":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.sampleStatus = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "sampleMode":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.sampleMode = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "sampleRate":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.sampleRate = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "maxSamples":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.maxSamples = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "actualSamples":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.actualSamples = sme2 as AdminShell.Property;
+                                                            tsb.actualSamples.value = "0";
+                                                        }
+                                                        break;
+                                                    case "maxSamplesInCollection":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.maxSamplesInCollection = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "actualSamplesInCollection":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.actualSamplesInCollection = sme2 as AdminShell.Property;
+                                                            tsb.actualSamplesInCollection.value = "0";
+                                                        }
+                                                        break;
+                                                    case "maxCollections":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.maxCollections = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "actualCollections":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.actualCollections = sme2 as AdminShell.Property;
+                                                            tsb.actualCollections.value = "0";
+                                                        }
+                                                        break;
+                                                    case "lowDataIndex":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.lowDataIndex = sme2 as AdminShell.Property;
+                                                            tsb.lowDataIndex.value = "0";
+                                                        }
+                                                        break;
+                                                    case "highDataIndex":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.highDataIndex = sme2 as AdminShell.Property;
+                                                        }
+                                                        break;
+                                                    case "opcNode":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            string node = (sme2 as AdminShell.Property).value;
+                                                            string[] split = node.Split(',');
+                                                            if (tsb.opcNodes == null)
+                                                                tsb.opcNodes = new List<string>();
+                                                            tsb.opcNodes.Add(split[1] + "," + split[2]);
+                                                            var p = AdminShell.Property.CreateNew(split[0]);
+                                                            tsb.samplesProperties.Add(p);
+                                                            p.TimeStampCreate = timeStamp;
+                                                            p.setTimeStamp(timeStamp);
+                                                            tsb.samplesValues.Add("");
+                                                        }
+                                                        break;
+                                                    case "modbusNode":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            string node = (sme2 as AdminShell.Property).value;
+                                                            string[] split = node.Split(',');
+                                                            if (tsb.modbusNodes == null)
+                                                                tsb.modbusNodes = new List<string>();
+                                                            tsb.modbusNodes.Add(split[1] + "," + split[2] + "," + split[3] + "," + split[4]);
+                                                            var p = AdminShell.Property.CreateNew(split[0]);
+                                                            tsb.samplesProperties.Add(p);
+                                                            p.TimeStampCreate = timeStamp;
+                                                            p.setTimeStamp(timeStamp);
+                                                            tsb.samplesValues.Add("");
+                                                        }
+                                                        break;
+                                                }
+                                                if (tsb.sourceType == "aas" && sme2 is AdminShell.ReferenceElement r)
+                                                {
+                                                    var el = env.AasEnv.FindReferableByReference(r.value);
+                                                    if (el is AdminShell.Property p)
+                                                    {
+                                                        tsb.samplesProperties.Add(p);
+                                                        tsb.samplesValues.Add("");
+                                                    }
                                                 }
                                             }
+                                            if (dataSections == 0)
+                                            {
+                                                if (tsb.data != null)
+                                                    smec = tsb.data;
+                                                countSmec = smec.value.Count;
+                                            }
+                                        }
+                                        if (tsb.data != null)
+                                        {
+                                            tsb.latestData = AdminShell.SubmodelElementCollection.CreateNew("latestData");
+                                            tsb.latestData.setTimeStamp(timeStamp);
+                                            tsb.data.Add(tsb.latestData);
                                         }
                                         if (tsb.sampleRate != null)
                                             tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.value);
@@ -458,17 +473,29 @@ namespace AasxTimeSeries
                             {
                                 dt = DateTime.Now;
                             }
+                            string latestTimeStamp = "";
                             if (tsb.samplesTimeStamp == "")
                             {
-                                tsb.samplesTimeStamp += dt.ToString("yy-MM-dd HH:mm:ss.fff");
+                                latestTimeStamp = dt.ToString("yy-MM-dd HH:mm:ss.fff");
+                                tsb.samplesTimeStamp += latestTimeStamp;
                             }
                             else
                             {
-                                tsb.samplesTimeStamp += "," + dt.ToString("HH:mm:ss.fff");
+                                latestTimeStamp = dt.ToString("HH:mm:ss.fff");
+                                tsb.samplesTimeStamp += "," + latestTimeStamp;
                             }
 
+                            tsb.latestData.value.Clear();
+                            AdminShell.Property latestDataProperty = AdminShell.Property.CreateNew("timeStamp");
+                            latestDataProperty.value = dt.ToString("yy-MM-dd HH:mm:ss.fff");
+                            latestDataProperty.setTimeStamp(timeStamp);
+                            tsb.latestData.Add(latestDataProperty);
+                            updateMode = 1;
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
+                                string latestDataName = tsb.samplesProperties[i].idShort;
+                                string latestDataValue = "";
+
                                 if (tsb.samplesValues[i] != "")
                                 {
                                     tsb.samplesValues[i] += ",";
@@ -479,28 +506,33 @@ namespace AasxTimeSeries
                                 {
                                     if (tsb.sourceType == "opchd")
                                     {
-                                        string value = "";
                                         if (table[valueIndex] != null && table[valueIndex][i + 1] != null)
-                                            value = table[valueIndex][i + 1].ToString();
-                                        tsb.samplesValues[i] += value;
+                                            latestDataValue = table[valueIndex][i + 1].ToString();
+                                        tsb.samplesValues[i] += latestDataValue;
                                     }
                                     if (tsb.sourceType == "opcda")
                                     {
-                                        tsb.samplesValues[i] += opcDAValues[i];
+                                        latestDataValue = opcDAValues[i];
+                                        tsb.samplesValues[i] += latestDataValue;
                                         Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
                                     }
                                     if (tsb.sourceType == "modbus")
                                     {
-                                        tsb.samplesValues[i] += modbusValues[i];
+                                        latestDataValue = modbusValues[i];
+                                        tsb.samplesValues[i] += latestDataValue;
                                         Console.WriteLine(tsb.modbusNodes[i] + " " + modbusValues[i]);
                                     }
                                 }
                                 else
                                 {
                                     var p = tsb.samplesProperties[i];
-                                    tsb.samplesValues[i] += p.value;
-                                    // tsb.samplesValues[i] += dummy++;
+                                    latestDataValue = p.value;
+                                    tsb.samplesValues[i] += latestDataValue;
                                 }
+                                latestDataProperty = AdminShell.Property.CreateNew(latestDataName);
+                                latestDataProperty.value = latestDataValue;
+                                latestDataProperty.setTimeStamp(timeStamp);
+                                tsb.latestData.Add(latestDataProperty);
                             }
                             tsb.samplesValuesCount++;
                             actualSamples++;
@@ -715,12 +747,9 @@ namespace AasxTimeSeries
                         {
                             int v = Convert.ToInt32(modbusValues[i]);
                             int lastv = Convert.ToInt32(lastModbusValues[i]);
-                            if (v != lastv)
-                            {
-                                int delta = Math.Abs(v - lastv);
-                                if (delta > minDiffAbsolute && delta > lastv * minDiffPercent / 100)
-                                    keep = true;
-                            }
+                            int delta = Math.Abs(v - lastv);
+                            if (delta >= minDiffAbsolute && delta >= lastv * minDiffPercent / 100)
+                                keep = true;
                         }
                         if (keep)
                         {
