@@ -1,4 +1,5 @@
-﻿using AasxServer;
+﻿using AasxRestServerLibrary;
+using AasxServer;
 using AasxTimeSeries;
 using AdminShellNS;
 using Kusto.Data;
@@ -21,8 +22,10 @@ namespace AasxDemonstration
     /// It consists of Properties, which shall be synchronized with Azure Data Explorer. It
     /// includes a time series (according the SM template spec) as well.
     /// </summary>
-    public static class EnergyModel
+    public class EnergyModel
     {
+        public static EventMessage eventMessage = new EventMessage();
+
         /// <summary>
         /// Associated class can release trigger events
         /// </summary>
@@ -962,8 +965,7 @@ namespace AasxDemonstration
                         samplesCollectionsCount++;
 
                         // state initial creation as event .. updates need to follow
-                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.Add(
-                                        newSeg, "Add", _submodel, (ulong)timeStamp.Ticks);
+                        eventMessage.Add(newSeg, "Add", _submodel, (ulong)timeStamp.Ticks);
                     }
                     else
                     {
@@ -989,8 +991,7 @@ namespace AasxDemonstration
                         // remove
                         _data.Remove(first);
                         _data.setTimeStamp(timeStamp);
-                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.Add(
-                                            first, "Remove", _submodel, (ulong)timeStamp.Ticks);
+                        eventMessage.Add(first, "Remove", _submodel, (ulong)timeStamp.Ticks);
                     }
 
                     // commit und clear -> will make a new collection

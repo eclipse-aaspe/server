@@ -1,4 +1,5 @@
-﻿using AasxRestServerLibrary;
+﻿using AasxDemonstration;
+using AasxRestServerLibrary;
 using AdminShellEvents;
 using AdminShellNS;
 using IO.Swagger.Attributes;
@@ -8,7 +9,6 @@ using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using static AasxRestServerLibrary.AasxRestServer;
 
 namespace IO.Swagger.Controllers
 {
@@ -169,7 +169,7 @@ namespace IO.Swagger.Controllers
 
                             if (doCreateDelete)
                             {
-                                foreach (var d in TestResource.eventMessage.DeletedList)
+                                foreach (var d in EnergyModel.eventMessage.DeletedList)
                                 {
                                     if (d.rf == null || d.sm != sm)
                                         continue;

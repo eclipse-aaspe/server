@@ -205,8 +205,7 @@ namespace AasxServer
                 if (penv != null)
                 {
                     EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
-                    _energyModelInstances.AddRange(
-                        EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
+                    _energyModelInstances.AddRange(EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
                 }
             }
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
@@ -387,21 +386,6 @@ namespace AasxServer
             {
                 data = new List<TransmitData> { };
             }
-        }
-
-        static List<TransmitData> tdPending = new List<TransmitData> { };
-
-        public static void connectPublish(string type, string json)
-        {
-            if (connectServer == "")
-                return;
-
-            TransmitData tdp = new TransmitData();
-
-            tdp.source = connectNodeName;
-            tdp.type = type;
-            tdp.publish.Add(json);
-            tdPending.Add(tdp);
         }
 
         public static event EventHandler NewDataAvailable;
