@@ -52,6 +52,7 @@ namespace AasxTimeSeries
         }
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
+
         public static void timeSeriesInit()
         {
             DateTime timeStamp = DateTime.UtcNow;

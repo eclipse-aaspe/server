@@ -19,18 +19,6 @@ namespace AasxRestServerLibrary
         public class TestResource
         {
             public static EventMessage eventMessage = new EventMessage();
-
-            //[RestRoute(HttpMethod = HttpMethod.GET, Path = "^/authserver(/|)$")]
-            public HttpContext GetAuthserver(HttpContext context)
-            {
-                var txt = AasxServer.Program.redirectServer;
-
-                context.Response.ContentType = "application/text";
-                context.Response.ContentLength = txt.Length;
-                context.Response.WriteAsync(txt);
-
-                return context;
-            }
         }
     }
 }
