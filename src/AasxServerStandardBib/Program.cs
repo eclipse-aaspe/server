@@ -37,9 +37,6 @@ namespace AasxServer
         public static string hostPort = "";
         public static string blazorHostPort = "";
 
-        public static string connectServer = "";
-        static string connectNodeName = "";
-
         public static WebProxy proxy = null;
         public static HttpClientHandler clientHandler = null;
 
