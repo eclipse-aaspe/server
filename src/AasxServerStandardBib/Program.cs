@@ -211,8 +211,6 @@ namespace AasxServer
             }
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
 
-            AasxTask.taskInit();
-
             RunScript(true);
 
             isLoading = false;
