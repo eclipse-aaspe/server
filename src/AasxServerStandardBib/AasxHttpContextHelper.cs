@@ -9,7 +9,6 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -38,90 +37,6 @@ namespace AasxRestServerLibrary
         public static String DataPath = ".";
 
         public AdminShellPackageEnv[] Packages = null;
-
-        public AasxHttpHandleStore IdRefHandleStore = new AasxHttpHandleStore();
-
-        #region // Path helpers
-
-        public bool PathEndsWith(string path, string tag)
-        {
-            return path.Trim().ToLower().TrimEnd(new char[] { '/' }).EndsWith(tag);
-        }
-
-        public bool PathEndsWith(HttpContext context, string tag)
-        {
-            return PathEndsWith(context.Request.Path.Value, tag);
-        }
-
-        public List<AasxHttpHandleIdentification> CreateHandlesFromQueryString(string queryString)
-        {
-            // start
-            var res = new List<AasxHttpHandleIdentification>();
-            if (queryString == null)
-                return res;
-
-            try
-            {
-                var k = queryString.Trim().ToLower();
-                var v = k;
-                if (k.StartsWith("q") && k.Length > 1 && v.Contains(','))
-                {
-                    var vl = v.Split(',');
-                    if (vl.Length == 2)
-                    {
-                        var id = new AdminShell.Identification(vl[0], vl[1]);
-                        var h = new AasxHttpHandleIdentification(id, "@" + k);
-                        res.Add(h);
-                    }
-                }
-            }
-            catch { }
-
-            // done
-            return res;
-        }
-
-        public List<AasxHttpHandleIdentification> CreateHandlesFromRawUrl(string rawUrl)
-        {
-            // start
-            var res = new List<AasxHttpHandleIdentification>();
-            if (rawUrl == null)
-                return res;
-
-            // un-escape
-            var url = System.Uri.UnescapeDataString(rawUrl);
-
-            // split for query string traditional
-            var i = url.IndexOf('?');
-            if (i < 0 || i == url.Length - 1)
-                return res;
-            var query = url.Substring(i + 1);
-
-            // try make a Regex wonder, again
-            var m = Regex.Match(query, @"(\s*([^&]+)(&|))+");
-            if (m.Success && m.Groups.Count >= 3 && m.Groups[2].Captures != null)
-                foreach (var cp in m.Groups[2].Captures)
-                {
-                    var m2 = Regex.Match(cp.ToString(), @"\s*(\w+)\s*=\s*([^,]+),(.+)$");
-                    if (m2.Success && m2.Groups.Count >= 4)
-                    {
-                        var k = m2.Groups[1].ToString();
-                        var idt = m2.Groups[2].ToString();
-                        var ids = m2.Groups[3].ToString();
-
-                        var id = new AdminShell.Identification(idt, ids);
-                        var h = new AasxHttpHandleIdentification(id, "@" + k);
-                        res.Add(h);
-                    }
-                }
-
-            // done
-            return res;
-        }
-
-        #endregion
-
-        #region // Access package structures
 
         public FindAasReturn FindAAS(string aasid, string queryString = null, string rawUrl = null)
         {
@@ -301,10 +216,6 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        #endregion
-
-        #region // Generate responses
-
         public class AdaptiveFilterContractResolver : DefaultContractResolver
         {
             public bool AasHasViews = true;
@@ -405,11 +316,6 @@ namespace AasxRestServerLibrary
             context.Response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
             context.Response.Redirect(redirectUrl);
         }
-
-
-        #endregion
-
-        #region AAS and Asset
 
         public void EvalGetAasAndAsset(HttpContext context, string aasid, bool deep = false, bool complete = false)
         {
@@ -744,7 +650,6 @@ namespace AasxRestServerLibrary
                 {
                     string queryString = string.Empty;
                     string originalRequest = context.Request.Path.ToString();
-                    //queryString.Add("OriginalRequest", originalRequest);
                     Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
                     string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
                     Console.WriteLine("Redirect Response: " + response + "\n");
@@ -1057,8 +962,7 @@ namespace AasxRestServerLibrary
                 packageStream.Close();
             }
         }
-        #endregion
-
+  
         public static string[] securityUserName = null;
         public static string[] securityUserPassword = null;
 
@@ -1073,6 +977,7 @@ namespace AasxRestServerLibrary
             public string value = null;
             public string role = null;
         }
+
         public static List<securityRightsClass> securityRights = null;
 
         public class securityRoleClass
@@ -1085,8 +990,10 @@ namespace AasxRestServerLibrary
             public string objPath = "";
             public string permission = null;
             public string kind = null;
+
             public securityRoleClass() { }
         }
+
         public static List<securityRoleClass> securityRole = null;
 
         public static void securityInit()

@@ -99,35 +99,6 @@ namespace AdminShellEvents
             res += " -> " + Reason.ToString();
             return res;
         }
-
-#if UseMarkup
-        public MiniMarkupBase ToMarkup()
-        {
-            var left = "  MsgUpdateValueItem: {Observable}";
-            if (Path != null)
-                foreach (var k in Path)
-                    left += "/" + k.value;
-
-            var right = "";
-            right += " -> " + Reason.ToString();
-
-            return new MiniMarkupLine(
-                new MiniMarkupRun(left, isMonospaced: true, padsize: 80),
-                new MiniMarkupRun(right));
-        }
-#endif
-
-#if NOT
-        public AdminShell.Referable GetDataAsReferable()
-        {
-            // access
-            if (Data == null)
-                return null;
-
-            // try deserialize
-            return AdminShellSerializationHelper.DeserializeFromJSON<AdminShell.Referable>(Data);
-        }
-#endif
     }
 
     /// <summary>
