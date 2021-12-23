@@ -212,6 +212,23 @@ namespace AasxServer
 
             SetScriptTimer(1000); // also updates balzor view
 
+            if (env != null)
+            {
+                foreach (var e in env)
+                {
+                    if (e?.AasEnv?.Submodels != null)
+                    {
+                        foreach (var sm in e.AasEnv.Submodels)
+                        {
+                            if (sm != null)
+                            {
+                                sm.SetAllParents();
+                            }
+                        }
+                    }
+                }
+            }
+
             Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
             ManualResetEvent quitEvent = new ManualResetEvent(false);
             try

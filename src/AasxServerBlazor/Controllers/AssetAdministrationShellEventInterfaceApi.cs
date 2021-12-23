@@ -9,6 +9,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace IO.Swagger.Controllers
 {
@@ -19,8 +20,6 @@ namespace IO.Swagger.Controllers
     [ApiController]
     public class AssetAdministrationShellEventInterfaceApi : ControllerBase
     {
-        private bool _setAllParentsExecuted = false;
-
         [HttpGet]
         [Route("/aas/{aasIndex}/geteventmessages")]
         [ValidateModelState]
@@ -64,21 +63,6 @@ namespace IO.Swagger.Controllers
 
         private void GenerateMessagesInternal(int aasIndex, DateTime minimumDate, bool doUpdate, bool doCreateDelete)
         {
-            // Set parents for all childs.
-            // Note: this has to be done only once for AASX Server, therefore a better place than
-            // here could be figured out
-            if (!_setAllParentsExecuted)
-            {
-                _setAllParentsExecuted = true;
-
-                if (AasxServer.Program.env != null)
-                    foreach (var e in AasxServer.Program.env)
-                        if (e?.AasEnv?.Submodels != null)
-                            foreach (var sm in e.AasEnv.Submodels)
-                                if (sm != null)
-                                    sm.SetAllParents();
-            }
-
             var envelopes = new List<AasEventMsgEnvelope>();
 
             int aascount = AasxServer.Program.env.Length;
@@ -145,10 +129,7 @@ namespace IO.Swagger.Controllers
                             if (obs is AdminShell.SubmodelElement obssme)
                                 obsSemId = obssme.semanticId;
 
-                            //
                             // Create event outer message
-                            //
-
                             var eventsOuter = new AasEventMsgEnvelope(
                                     DateTime.UtcNow,
                                     source: bev.GetReference(),
@@ -157,16 +138,12 @@ namespace IO.Swagger.Controllers
                                     observableSemanticId: obsSemId);
 
                             // directly create lists of update value and structural change events
-
                             var plStruct = new AasPayloadStructuralChange();
                             var plUpdate = new AasPayloadUpdateValue();
 
                             string[] modes = { "CREATE", "UPDATE" };
 
-                            //
                             // Check for deletes
-                            //
-
                             if (doCreateDelete)
                             {
                                 foreach (var d in EnergyModel.eventMessage.DeletedList)
@@ -204,12 +181,7 @@ namespace IO.Swagger.Controllers
                             {
                             }
 
-                            //
                             // Create & update
-                            //
-
-                            //for (int imode = 0; imode < modes.Length; imode++)
-                            //{
                             if ((doCreateDelete || doUpdate) == false)
                                 throw new Exception("invalid flags");
 
@@ -222,7 +194,6 @@ namespace IO.Swagger.Controllers
                             if (strMode != "")
                                 if (diffTimeStamp > minimumDate)
                                 {
-                                    ;
                                     foreach (var sme in sm.submodelElements)
                                         GetEventMsgRecurseDiff(
                                             strMode,
@@ -231,10 +202,8 @@ namespace IO.Swagger.Controllers
                                             minimumDate, doUpdate, doCreateDelete,
                                             bev.observed?.Keys);
                                 }
-                            //}
 
                             // prepare message envelope and remember
-
                             if (plStruct.Changes.Count > 0)
                                 eventsOuter.Payloads.Add(plStruct);
 
@@ -249,8 +218,15 @@ namespace IO.Swagger.Controllers
             }
 
             AasxHttpContextHelper.SendJsonResponse2(HttpContext, envelopes.ToArray());
-            //var result = new ObjectResult(envelopes.ToArray()) { StatusCode = (int)HttpStatusCode.OK };
-            //return result ;
+
+            //var settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(
+            //    new[] { typeof(AasEventMsgEnvelope) });
+            //settings.TypeNameHandling = TypeNameHandling.Auto;
+            //settings.Formatting = Formatting.Indented;
+
+            //JsonResult result = new JsonResult(envelopes.ToArray(), settings) { StatusCode = (int)HttpStatusCode.OK };
+            //result.ContentType = "application/json";
+            //return result;
         }
 
         static void GetEventMsgRecurseDiff(
