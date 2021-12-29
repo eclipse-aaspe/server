@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
-using System.Linq;
 using AasxServer;
 using AasxTimeSeries;
 using AdminShellNS;
@@ -52,7 +52,8 @@ namespace AasxDemonstration
         /// Base class for the source system and its context. Can be used to transport 
         /// context and global status data w.r.t to the online connect to a source system
         /// </summary>
-        public class SourceSystemBase {
+        public class SourceSystemBase
+        {
 
             public static SourceSystemBase FactoryNewSystem(
                 string sourceType,
@@ -88,7 +89,7 @@ namespace AasxDemonstration
         /// Implements a source system, which gets data from Azure IoTHub 
         /// </summary>
         public class SourceSystemAzureHub : SourceSystemBase
-        {            
+        {
             public SourceSystemAzureHub() : base() { }
 
             public SourceSystemAzureHub(
@@ -420,7 +421,7 @@ namespace AasxDemonstration
                 // build
                 return string.Join(", ", TimeStamps.Select(
                     dt => String.Format(
-                        CultureInfo.InvariantCulture, "[{0}, {1}]", 
+                        CultureInfo.InvariantCulture, "[{0}, {1}]",
                         totalSamples++, dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
                 ));
             }
@@ -528,7 +529,7 @@ namespace AasxDemonstration
 
             protected TrackInstanceTimeSeriesSegment _trackSegment = null;
 
-            protected List<AdminShell.SubmodelElementCollection> _existingSegements 
+            protected List<AdminShell.SubmodelElementCollection> _existingSegements
                 = new List<AdminShell.SubmodelElementCollection>();
 
             protected int threadCounter = 0;
@@ -584,7 +585,7 @@ namespace AasxDemonstration
 
                     // need no results
                     return false;
-                }));
+                })) ;
             }
 
             public static IEnumerable<EnergyModelInstance> FindAllSmInstances(
@@ -738,7 +739,7 @@ namespace AasxDemonstration
             public static void StartAllAsOneThread(IEnumerable<EnergyModelInstance> instances)
             {
                 if (instances == null)
-                    return;                
+                    return;
 
                 var t = new Thread(() =>
                 {
@@ -781,8 +782,8 @@ namespace AasxDemonstration
                     // adopt new value & set
                     var val = dp.GetValue(_sourceSystem);
                     UpdateSME(
-                        dp.Sme, 
-                        string.Format(CultureInfo.InvariantCulture, "{0}", val), 
+                        dp.Sme,
+                        string.Format(CultureInfo.InvariantCulture, "{0}", val),
                         timeStamp);
                 }
             }
@@ -825,7 +826,7 @@ namespace AasxDemonstration
                         // create new segment
                         var newSeg = _trackSegment.CreateSegmentSmc(
                             _sourceSystem, _data, samplesCollectionsCount, totalSamples, timeStamp);
-                        
+
                         samplesCollectionsCount++;
 
                         // state initial creation as event .. updates need to follow

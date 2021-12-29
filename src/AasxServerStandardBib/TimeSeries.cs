@@ -15,7 +15,7 @@ using SampleClient;
 namespace AasxTimeSeries
 {
     public enum TimeSeriesDestFormat { Plain, TimeSeries10 }
-   
+
     public static class TimeSeries
     {
         public class TimeSeriesBlock
@@ -334,7 +334,7 @@ namespace AasxTimeSeries
 
         private static T AddToSMC<T>(
             DateTime timestamp,
-            AdminShell.SubmodelElementCollection smc, 
+            AdminShell.SubmodelElementCollection smc,
             string idShort,
             AdminShell.Key semanticIdKey,
             string smeValue = null) where T : AdminShell.SubmodelElement
@@ -557,7 +557,7 @@ namespace AasxTimeSeries
                                     {
                                         nextCollection = AddToSMC<AdminShell.SubmodelElementCollection>(
                                             timeStamp, null,
-                                            "Segment_" + tsb.samplesCollectionsCount++, 
+                                            "Segment_" + tsb.samplesCollectionsCount++,
                                             semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
 
                                         var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
@@ -612,7 +612,7 @@ namespace AasxTimeSeries
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedFloat);
                                             else
                                                 AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                                    "" + tsb.samplesProperties[i].idShort, 
+                                                    "" + tsb.samplesProperties[i].idShort,
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedInteger);
 
                                             AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
@@ -724,7 +724,8 @@ namespace AasxTimeSeries
                     JObject parsed = JObject.Parse(response);
                     Program.parseJson(c, parsed);
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine("GetJSON() expection: " + ex.Message);
             }
