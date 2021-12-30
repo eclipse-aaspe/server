@@ -2,7 +2,7 @@
   "profiles": {
     "AasxServerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --rest --data-path .\\data"
+      "commandLineArgs": "--rest --port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --no-security"
     }
   }
 }

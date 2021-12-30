@@ -149,6 +149,7 @@ namespace AasxServer
             }
 
             tasksThread = new Thread(new ThreadStart(tasksSamplingLoop));
+            // MICHA
             tasksThread.Start();
         }
 

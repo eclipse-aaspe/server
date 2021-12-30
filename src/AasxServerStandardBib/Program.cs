@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -26,6 +27,7 @@ using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
+using static AasxDemonstration.EnergyModel;
 using Formatting = Newtonsoft.Json.Formatting;
 
 /*
@@ -478,7 +480,19 @@ namespace AasxServer
             }
 
             i40LanguageRuntime.initialize();
+
+            // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
+
+            var _energyModelInstances = new List<EnergyModelInstance>();
+            foreach (var penv in AasxServer.Program.env)
+            {
+                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.Now);
+                _energyModelInstances.AddRange(
+                    EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
+            }
+            EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
+
             AasxTask.taskInit();
 
             RunScript(true);
@@ -545,7 +559,8 @@ namespace AasxServer
                 if (content == "OK")
                 {
                     connectThread = new Thread(new ThreadStart(connectThreadLoop));
-                    connectThread.Start();
+                    // MICHA
+                    // connectThread.Start();
                     connectLoop = true;
                 }
                 else
@@ -2241,7 +2256,8 @@ namespace AasxServer
                             p.setTimeStamp(timeStamp);
                             newMode = 1;
                         }
-                        p.value = jp1.Value.ToString();
+                        // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
+                        p.value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
                         p.setTimeStamp(timeStamp);
                         break;
                 }
