@@ -418,7 +418,7 @@ namespace AasxTimeSeries
                 i += 2;
             }
         }
-          
+
         public static bool timeSeriesSampling(bool final)
         {
             if (Program.isLoading)
