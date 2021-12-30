@@ -130,7 +130,7 @@ namespace AasxServer
         static bool runOPC = false;
 
         public static string connectServer = "";
-        static string connectNodeName = "";
+        public static string connectNodeName = "";
         static int connectUpdateRate = 1000;
         static Thread connectThread;
         static bool connectLoop = false;
@@ -151,6 +151,7 @@ namespace AasxServer
         public static string authType = "";
 
         public static bool isLoading = true;
+        public static int count = 0;
 
         public static object changeAasxFile = new object();
 
@@ -1974,7 +1975,7 @@ namespace AasxServer
 
         static int countRunScript = 0;
 
-        static async void RunScript(bool init)
+        static void RunScript(bool init)
         {
             if (env == null)
                 return;

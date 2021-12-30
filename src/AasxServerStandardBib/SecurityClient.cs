@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Helpers;
 using AasxServer;
 using AdminShellNS;
 using IdentityModel;
@@ -30,8 +30,50 @@ namespace AasxServer
 
         public static List<AasxTask> taskList = null;
 
+        public static WebProxy proxy = null;
+
         public static void taskInit()
         {
+            // Test for proxy
+            Console.WriteLine("Test: ../proxy.dat");
+
+            if (File.Exists("../proxy.dat"))
+            {
+                bool error = false;
+                Console.WriteLine("Found: ../proxy.dat");
+                string proxyAddress = "";
+                string username = "";
+                string password = "";
+                try
+                {   // Open the text file using a stream reader.
+                    using (StreamReader sr = new StreamReader("../proxy.dat"))
+                    {
+                        proxyAddress = sr.ReadLine();
+                        username = sr.ReadLine();
+                        password = sr.ReadLine();
+                    }
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine("The file ../proxy.dat could not be read:");
+                    Console.WriteLine(e.Message);
+                    error = true;
+                }
+                if (!error)
+                {
+                    Console.WriteLine("Proxy: " + proxyAddress);
+                    Console.WriteLine("Username: " + username);
+                    Console.WriteLine("Password: " + password);
+                    proxy = new WebProxy();
+                    Uri newUri = new Uri(proxyAddress);
+                    proxy.Address = newUri;
+                    if (username != "" && password != "")
+                        proxy.Credentials = new NetworkCredential(username, password);
+                }
+            }
+
+
+            DateTime timeStamp = DateTime.Now;
             taskList = new List<AasxTask>();
 
             int aascount = AasxServer.Program.env.Length;
@@ -49,6 +91,7 @@ namespace AasxServer
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.idShort != null && sm.idShort.ToLower().Contains("tasks"))
                             {
+                                sm.setTimeStamp(timeStamp);
                                 int countSme = sm.submodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
@@ -96,7 +139,7 @@ namespace AasxServer
                                         }
 
                                         if (nextTask.taskType?.value.ToLower() == "init")
-                                            runOperations(nextTask.def, nextTask.envIndex);
+                                            runOperations(nextTask.def, nextTask.envIndex, timeStamp);
                                     }
                                 }
                             }
@@ -110,7 +153,7 @@ namespace AasxServer
             tasksThread.Start();
         }
 
-        static void runOperations(AdminShell.SubmodelElementCollection smec, int envIndex)
+        static void runOperations(AdminShell.SubmodelElementCollection smec, int envIndex, DateTime timeStamp)
         {
             int countSmec = smec.value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
@@ -123,18 +166,18 @@ namespace AasxServer
                     switch (idShort)
                     {
                         case "authenticate":
-                            operation_authenticate(op, envIndex);
+                            operation_authenticate(op, envIndex, timeStamp);
                             break;
                         case "get":
                         case "put":
-                            operation_get_put(op, envIndex);
+                            operation_get_put(op, envIndex, timeStamp);
                             break;
                     }
                 }
             }
         }
 
-        static void operation_authenticate(AdminShell.Operation op, int envIndex)
+        static void operation_authenticate(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
 
@@ -240,7 +283,10 @@ namespace AasxServer
                             }
 
                             var handler = new HttpClientHandler();
-                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                            if (proxy != null)
+                                handler.Proxy = proxy;
+                            else
+                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                             var client = new HttpClient(handler);
                             DiscoveryDocumentResponse disco = null;
 
@@ -251,22 +297,32 @@ namespace AasxServer
                             Console.WriteLine(disco.Raw);
 
                             var serverCert = new X509Certificate2();
-                            var s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.value);
-                            if (s != null)
+                            Stream s = null;
+                            try
                             {
-                                using (var m = new System.IO.MemoryStream())
-                                {
-                                    s.CopyTo(m);
-                                    var b = m.GetBuffer();
-                                    serverCert = new X509Certificate2(b);
-                                    Console.WriteLine("Auth server certificate: " + authServerCertificate.value);
-                                }
+                                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.value);
+                            }
+                            catch { }
+                            if (s == null) return;
+
+                            using (var m = new System.IO.MemoryStream())
+                            {
+                                s.CopyTo(m);
+                                var b = m.GetBuffer();
+                                serverCert = new X509Certificate2(b);
+                                Console.WriteLine("Auth server certificate: " + authServerCertificate.value);
                             }
 
                             string[] x5c = null;
                             X509Certificate2 certificate = null;
                             string certificatePassword = clientCertificatePassWord.value;
-                            var s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.value);
+                            Stream s2 = null;
+                            try
+                            {
+                                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.value);
+                            }
+                            catch { }
+                            if (s2 == null) return;
                             if (s2 != null)
                             {
                                 X509Certificate2Collection xc = new X509Certificate2Collection();
@@ -346,6 +402,7 @@ namespace AasxServer
                                 if (response.IsError) return;
 
                                 accessToken.value = response.AccessToken;
+                                accessToken.setTimeStamp(timeStamp);
                             }
                         }
                         break;
@@ -353,7 +410,7 @@ namespace AasxServer
             }
         }
 
-        static void operation_get_put(AdminShell.Operation op, int envIndex)
+        static void operation_get_put(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
             // inputVariable sourceEndPoint: property
@@ -467,7 +524,10 @@ namespace AasxServer
             }
 
             var handler = new HttpClientHandler();
-            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            if (proxy != null)
+                handler.Proxy = proxy;
+            else
+                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
             var client = new HttpClient(handler);
             if (accessToken != null)
                 client.SetBearerToken(accessToken.value);
@@ -505,6 +565,7 @@ namespace AasxServer
                                 receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
                                     text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                 elementCollection.value = receiveCollection.value;
+                                elementCollection.setTimeStamp(timeStamp);
                             }
                         }
                     }
@@ -512,6 +573,8 @@ namespace AasxServer
                     {
                         receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Submodel>(
                             json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                        receiveSubmodel.setTimeStamp(timeStamp);
+                        receiveSubmodel.SetAllParents(timeStamp);
 
                         // need id for idempotent behaviour
                         if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
@@ -573,24 +636,30 @@ namespace AasxServer
             if (Program.isLoading)
                 return;
 
+            DateTime timeStamp = DateTime.Now;
+
             foreach (var t in taskList)
             {
                 if (t.taskType?.value.ToLower() == "cyclic")
                 {
-                    if (t.nextExecution > DateTime.Now)
+                    if (t.nextExecution > timeStamp)
                         continue;
                     if (t.cycleCount != null)
                     {
                         if (t.cycleCount.value == "")
                             t.cycleCount.value = "0";
                         t.cycleCount.value = (Convert.ToInt32(t.cycleCount.value) + 1).ToString();
+                        t.cycleCount.setTimeStamp(timeStamp);
                     }
-                    t.nextExecution = DateTime.Now.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
+                    t.nextExecution = timeStamp.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
                     if (t.nextCycle != null)
+                    {
                         t.nextCycle.value = t.nextExecution.ToString();
+                        t.nextCycle.setTimeStamp(timeStamp);
+                    }
                     Program.signalNewData(0);
 
-                    runOperations(t.def, t.envIndex);
+                    runOperations(t.def, t.envIndex, timeStamp);
                 }
             }
         }
