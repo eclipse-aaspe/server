@@ -2211,6 +2211,7 @@ namespace AasxRestServerLibrary
                     context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
                     sm.Add(sme);
                 }
+                sm.SetAllParents(DateTime.Now);
             }
             else
             {
@@ -2239,6 +2240,7 @@ namespace AasxRestServerLibrary
                         context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
                         parentsmc.Add(sme);
                     }
+                    sme.setTimeStamp(DateTime.Now);
                 }
                 else
                 {
