@@ -60,7 +60,7 @@ namespace AasxTimeSeries
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()
         {
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
 
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
@@ -426,7 +426,7 @@ namespace AasxTimeSeries
 
             // ulong newChangeNumber = ChangeNumber + 1;
             // bool useNewChangeNumber = false;
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
 
             foreach (var tsb in timeSeriesBlockList)
             {
@@ -517,7 +517,7 @@ namespace AasxTimeSeries
                             }
                             else
                             {
-                                dt = DateTime.Now;
+                                dt = DateTime.UtcNow;
                             }
 
                             string latestTimeStamp = "";
@@ -679,6 +679,7 @@ namespace AasxTimeSeries
                                         p.setTimeStamp(timeStamp);
                                         p.TimeStampCreate = timeStamp;
 
+                                        nextCollection.Add(p);
                                         nextCollection.setTimeStamp(timeStamp);
                                         nextCollection.TimeStampCreate = timeStamp;
                                     }

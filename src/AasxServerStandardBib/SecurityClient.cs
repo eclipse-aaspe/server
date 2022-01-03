@@ -73,7 +73,7 @@ namespace AasxServer
             }
 
 
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
             taskList = new List<AasxTask>();
 
             int aascount = AasxServer.Program.env.Length;
@@ -636,7 +636,7 @@ namespace AasxServer
             if (Program.isLoading)
                 return;
 
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
 
             foreach (var t in taskList)
             {

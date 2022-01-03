@@ -148,7 +148,7 @@ namespace AasxRestServerLibrary
 
                         if (op == "Remove")
                         {
-                            o.TimeStamp = DateTime.Now;
+                            o.TimeStamp = DateTime.UtcNow;
                             AdminShell.Referable x = o;
                             /*
                             string path = x.idShort;
@@ -268,7 +268,7 @@ namespace AasxRestServerLibrary
                         {
                             var secs = restPath.Substring("/geteventmessages/deltasecs/".Length);
                             if (int.TryParse(secs, out int i))
-                                minimumDate = DateTime.Now.AddSeconds(-1.0 * i);
+                                minimumDate = DateTime.UtcNow.AddSeconds(-1.0 * i);
                         }
                         catch { }
                     }
@@ -652,7 +652,7 @@ namespace AasxRestServerLibrary
                     try
                     {
                         seconds = Convert.ToInt32(auto);
-                        minimumDate = DateTime.Now - new TimeSpan(0, 0, seconds);
+                        minimumDate = DateTime.UtcNow - new TimeSpan(0, 0, seconds);
                     }
                     catch { }
                 }

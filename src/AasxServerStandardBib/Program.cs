@@ -487,7 +487,7 @@ namespace AasxServer
             var _energyModelInstances = new List<EnergyModelInstance>();
             foreach (var penv in AasxServer.Program.env)
             {
-                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.Now);
+                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
                 _energyModelInstances.AddRange(
                     EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
             }
@@ -2197,7 +2197,7 @@ namespace AasxServer
         public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
         {
             int newMode = 0;
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTime.UtcNow;
 
             foreach (JProperty jp1 in (JToken)o)
             {
