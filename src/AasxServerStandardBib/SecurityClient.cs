@@ -170,6 +170,7 @@ namespace AasxServer
                             break;
                         case "get":
                         case "put":
+                        case "putdiff":
                             operation_get_put(op, envIndex, timeStamp);
                             break;
                     }
@@ -433,6 +434,7 @@ namespace AasxServer
             AdminShell.Property path = null;
             AdminShell.SubmodelElementCollection elementCollection = null;
             AdminShell.Submodel elementSubmodel = null;
+            AdminShell.Property lastDiff = null;
 
             AdminShell.SubmodelElementCollection smec = null;
             AdminShell.Submodel sm = null;
@@ -474,6 +476,32 @@ namespace AasxServer
                             elementCollection = smec;
                         if (sm != null)
                             elementSubmodel = sm;
+                        break;
+                }
+            }
+            foreach (var output in op.outputVariable)
+            {
+                smec = null;
+                sm = null;
+                p = null;
+                var outputRef = output.value.submodelElement;
+                if (outputRef is AdminShell.Property)
+                {
+                    p = (outputRef as AdminShell.Property);
+                }
+                if (outputRef is AdminShell.ReferenceElement)
+                {
+                    var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                    if (refElement is AdminShell.SubmodelElementCollection)
+                        smec = refElement as AdminShell.SubmodelElementCollection;
+                    if (refElement is AdminShell.Submodel)
+                        sm = refElement as AdminShell.Submodel;
+                }
+                switch (outputRef.idShort.ToLower())
+                {
+                    case "lastdiff":
+                        if (p != null)
+                            lastDiff = p;
                         break;
                 }
             }
@@ -599,25 +627,67 @@ namespace AasxServer
                 }
                 Program.signalNewData(1);
             }
-            if (opName == "put")
+            if (opName == "put" || opName == "putdiff")
             {
-                string json = "";
-                if (elementCollection != null)
-                    json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
-                if (elementSubmodel != null)
-                    json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
-                if (json != "")
+                AdminShell.SubmodelElementCollection diffCollection = null;
+                DateTime last = new DateTime();
+                string diffPath = "";
+                int count = 1;
+                if (opName == "putdiff")
                 {
-                    try
-                    {
-                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                        task = Task.Run(async () => { response = await client.PutAsync(requestPath, content); });
-                        task.Wait();
-                    }
-                    catch
-                    {
+                    if (lastDiff == null)
                         return;
+                    if (elementCollection == null)
+                        return;
+                    diffCollection = elementCollection;
+                    count = elementCollection.value.Count;
+                    if (lastDiff.value == "")
+                    {
+                        opName = "put";
+                        lastDiff.value = "" + DateTime.UtcNow;
                     }
+                    else
+                    {
+                        last = DateTime.Parse(lastDiff.value);
+                    }
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    if (opName == "putdiff")
+                    {
+                        var sme = diffCollection.value[i].submodelElement;
+                        if (!(sme is AdminShell.SubmodelElementCollection))
+                            return;
+                        elementCollection = sme as AdminShell.SubmodelElementCollection;
+                        diffPath = "/" + diffCollection.idShort;
+                        if (elementCollection.TimeStamp <= last)
+                            elementCollection = null;
+                    }
+                    string json = "";
+                    if (elementCollection != null)
+                        json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
+                    if (elementSubmodel != null)
+                        json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
+                    if (json != "")
+                    {
+                        try
+                        {
+                            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                            task = Task.Run(async () => { response = await client.PutAsync(
+                                requestPath + diffPath, content); });
+                            task.Wait();
+                        }
+                        catch
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                if (opName == "putdiff")
+                {
+                    lastDiff.value = "" + DateTime.UtcNow;
                 }
             }
         }

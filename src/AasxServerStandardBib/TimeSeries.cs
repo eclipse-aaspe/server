@@ -27,8 +27,6 @@ namespace AasxTimeSeries
             public AdminShell.Property sampleStatus = null;
             public AdminShell.Property sampleMode = null;
             public AdminShell.Property sampleRate = null;
-            public AdminShell.Property lowDataIndex = null;
-            public AdminShell.Property highDataIndex = null;
             public AdminShell.Property maxSamples = null;
             public AdminShell.Property actualSamples = null;
             public AdminShell.Property maxSamplesInCollection = null;
@@ -51,6 +49,8 @@ namespace AasxTimeSeries
             public string samplesTimeStamp = "";
             public int samplesValuesCount = 0;
             public int totalSamples = 0;
+            public int lowDataIndex = 0;
+            public int highDataIndex = -1;
 
             public List<string> opcNodes = null;
             public List<string> modbusNodes = null;
@@ -249,19 +249,6 @@ namespace AasxTimeSeries
                                                         {
                                                             tsb.actualCollections = sme2 as AdminShell.Property;
                                                             tsb.actualCollections.value = "0";
-                                                        }
-                                                        break;
-                                                    case "lowDataIndex":
-                                                        if (sme2 is AdminShell.Property)
-                                                        {
-                                                            tsb.lowDataIndex = sme2 as AdminShell.Property;
-                                                            tsb.lowDataIndex.value = "0";
-                                                        }
-                                                        break;
-                                                    case "highDataIndex":
-                                                        if (sme2 is AdminShell.Property)
-                                                        {
-                                                            tsb.highDataIndex = sme2 as AdminShell.Property;
                                                         }
                                                         break;
                                                     case "opcNode":
@@ -544,7 +531,16 @@ namespace AasxTimeSeries
                             }
 
                             tsb.latestData.value.Clear();
-                            AdminShell.Property latestDataProperty = AdminShell.Property.CreateNew("timeStamp");
+                            tsb.latestData.setTimeStamp(timeStamp);
+                            AdminShell.Property latestDataProperty = AdminShell.Property.CreateNew("lowDataIndex");
+                            latestDataProperty.value = "" + tsb.lowDataIndex;
+                            latestDataProperty.setTimeStamp(timeStamp);
+                            tsb.latestData.Add(latestDataProperty);
+                            latestDataProperty = AdminShell.Property.CreateNew("highDataIndex");
+                            latestDataProperty.value = "" + tsb.highDataIndex;
+                            latestDataProperty.setTimeStamp(timeStamp);
+                            tsb.latestData.Add(latestDataProperty);
+                            latestDataProperty = AdminShell.Property.CreateNew("timeStamp");
                             latestDataProperty.value = dt.ToString("yy-MM-dd HH:mm:ss.fff");
                             latestDataProperty.setTimeStamp(timeStamp);
                             tsb.latestData.Add(latestDataProperty);
@@ -613,9 +609,9 @@ namespace AasxTimeSeries
                             {
                                 if (tsb.sampleMode.value == "continuous")
                                 {
-                                    var firstName = "data" + tsb.lowDataIndex.value;
+                                    var firstName = "data" + tsb.lowDataIndex;
                                     if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                        firstName = "Segment_" + tsb.lowDataIndex.value;
+                                        firstName = "Segment_" + tsb.lowDataIndex;
 
                                     var first =
                                         tsb.data.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(
@@ -629,8 +625,7 @@ namespace AasxTimeSeries
                                             first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Remove(first);
                                         tsb.data.setTimeStamp(timeStamp);
-                                        tsb.lowDataIndex.value = "" + (Convert.ToInt32(tsb.lowDataIndex.value) + 1);
-                                        tsb.lowDataIndex.setTimeStamp(timeStamp);
+                                        tsb.lowDataIndex++;
                                         updateMode = 1;
                                     }
                                 }
@@ -639,11 +634,7 @@ namespace AasxTimeSeries
                             {
                                 if (actualSamplesInCollection > 0)
                                 {
-                                    if (tsb.highDataIndex != null)
-                                    {
-                                        tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                                        tsb.highDataIndex.setTimeStamp(timeStamp);
-                                    }
+                                    tsb.highDataIndex = tsb.samplesCollectionsCount;
 
                                     AdminShell.SubmodelElementCollection nextCollection = null;
 
@@ -750,11 +741,7 @@ namespace AasxTimeSeries
                     {
                         if (actualSamplesInCollection > 0)
                         {
-                            if (tsb.highDataIndex != null)
-                            {
-                                tsb.highDataIndex.value = "" + tsb.samplesCollectionsCount;
-                                tsb.highDataIndex.setTimeStamp(timeStamp);
-                            }
+                            tsb.highDataIndex = tsb.samplesCollectionsCount;
                             var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
                             var p = AdminShell.Property.CreateNew("timeStamp");
                             p.value = tsb.samplesTimeStamp;

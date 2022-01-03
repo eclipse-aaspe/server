@@ -1741,6 +1741,21 @@ namespace AdminShellNS
                 while (r != null);
             }
 
+            public void SetAllTimeStamps(DateTime timeStamp)
+            {
+                TimeStamp = timeStamp;
+                TimeStampCreate = timeStamp;
+
+                // via interface enumaration
+                if (this is IEnumerateChildren)
+                {
+                    var childs = (this as IEnumerateChildren).EnumerateChildren();
+                    if (childs != null)
+                        foreach (var c in childs)
+                            c.submodelElement.SetAllTimeStamps(timeStamp);
+                }
+            }
+
             // members
 
             [MetaModelName("Referable.IdShort")]
