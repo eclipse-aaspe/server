@@ -674,8 +674,11 @@ namespace AasxServer
                         try
                         {
                             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                            task = Task.Run(async () => { response = await client.PutAsync(
-                                requestPath + diffPath, content); });
+                            task = Task.Run(async () =>
+                            {
+                                response = await client.PutAsync(
+                                    requestPath + diffPath, content);
+                            });
                             task.Wait();
                         }
                         catch
