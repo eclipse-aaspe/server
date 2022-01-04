@@ -258,7 +258,7 @@ namespace AasxRestServerLibrary
                     {
                         try
                         {
-                            minimumDate = DateTime.Parse(restPath.Substring("/geteventmessages/time/".Length));
+                            minimumDate = DateTime.Parse(restPath.Substring("/geteventmessages/time/".Length)).ToUniversalTime();
                         }
                         catch { }
                     }
@@ -705,7 +705,7 @@ namespace AasxRestServerLibrary
                     {
                         try
                         {
-                            minimumDate = DateTime.Parse(restPath.Substring("/diff/time/".Length));
+                            minimumDate = DateTime.Parse(restPath.Substring("/diff/time/".Length)).ToUniversalTime();
                         }
                         catch { }
                     }
