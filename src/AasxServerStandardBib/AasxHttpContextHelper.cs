@@ -2240,6 +2240,7 @@ namespace AasxRestServerLibrary
                         context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
                         parentsmc.Add(sme);
                     }
+                    sme.setTimeStamp(DateTime.UtcNow);
                     sme.SetAllTimeStamps(DateTime.UtcNow);
                 }
                 else
