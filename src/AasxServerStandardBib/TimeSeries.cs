@@ -83,6 +83,7 @@ namespace AasxTimeSeries
                             if (sm != null && sm.idShort != null)
                             {
                                 sm.TimeStampCreate = timeStamp;
+                                sm.setTimeStamp(timeStamp);
                                 sm.SetAllParents(timeStamp);
                                 int countSme = sm.submodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
