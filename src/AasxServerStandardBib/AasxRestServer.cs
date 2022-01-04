@@ -748,6 +748,8 @@ namespace AasxRestServerLibrary
 
                 for (int imode = 0; imode < modes.Length; imode++)
                 {
+                    string mode = modes[imode];
+
                     for (int i = 0; i < aascount; i++)
                     {
                         if (aasIndex >= 0 && i != aasIndex)
@@ -760,10 +762,9 @@ namespace AasxRestServerLibrary
                             if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                             {
                                 DateTime diffTimeStamp = new DateTime();
-                                diffTimeStamp = aas.TimeStamp;
+                                diffTimeStamp = aas.TimeStampCreate;
                                 if (diffTimeStamp > minimumDate)
                                 {
-                                    string mode = modes[imode];
                                     if (mode == "CREATE" || aas.TimeStamp != aas.TimeStampCreate)
                                     {
                                         if (searchPath == "" || aas.idShort.Contains(searchPath))
@@ -781,11 +782,9 @@ namespace AasxRestServerLibrary
                                     var sm = env.AasEnv.FindSubmodel(smr);
                                     if (sm != null && sm.idShort != null)
                                     {
-                                        diffTimeStamp = sm.TimeStamp;
-                                        if (diffTimeStamp > minimumDate)
+                                        if (sm.TimeStamp > minimumDate)
                                         {
-                                            string mode = modes[imode];
-                                            if (mode == "CREATE" || sm.TimeStamp != sm.TimeStampCreate)
+                                            if (mode == "CREATE" && sm.TimeStampCreate > minimumDate)
                                             {
                                                 if (searchPath == "" || (aas.idShort + "." + sm.idShort).Contains(searchPath))
                                                 {
@@ -797,7 +796,7 @@ namespace AasxRestServerLibrary
                                             }
 
                                             foreach (var sme in sm.submodelElements)
-                                                diffText += checkDiff(modes[imode], aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
+                                                diffText += checkDiff(mode, aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
                                                     minimumDate, updateOnly, searchPath);
                                         }
                                     }
@@ -820,43 +819,38 @@ namespace AasxRestServerLibrary
             static string checkDiff(string mode, string path, AdminShell.SubmodelElement sme,
                 DateTime minimumDate, bool updateOnly, string searchPath)
             {
-                DateTime diffTimeStamp;
-
                 if (!(sme is AdminShell.SubmodelElementCollection))
                 {
-                    if (mode == "CREATE")
-                        diffTimeStamp = sme.TimeStampCreate;
-                    else // UPDATE
-                        diffTimeStamp = sme.TimeStamp;
-                    if (diffTimeStamp > minimumDate)
+                    if ((mode == "CREATE" && sme.TimeStampCreate > minimumDate) ||
+                        (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
                     {
-                        if (mode == "CREATE" || sme.TimeStamp != sme.TimeStampCreate)
+                        if (searchPath != "")
                         {
-                            if (searchPath != "")
-                            {
-                                if (!(path + sme.idShort).Contains(searchPath))
-                                    return "";
-                            }
-                            string text = "<tr><td>" + mode + "</td><td><b>" + path + sme.idShort + "</b></td><td>SME</td><td>" +
-                                sme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
-                            if (updateOnly)
-                                text += "<td><b>" + sme.ValueAsText() + "</b></td>";
-                            text += "</tr>";
-                            return text;
+                            if (!(path + sme.idShort).Contains(searchPath))
+                                return "";
                         }
+                        string text = "<tr><td>" + mode + "</td><td><b>" + path + sme.idShort + "</b></td><td>SME</td><td>" +
+                            sme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
+                        if (updateOnly)
+                            text += "<td><b>" + sme.ValueAsText() + "</b></td>";
+                        text += "</tr>";
+                        return text;
                     }
 
                     return "";
                 }
 
                 var smec = sme as AdminShell.SubmodelElementCollection;
-                diffTimeStamp = smec.TimeStamp;
-                if (smec.TimeStamp > minimumDate)
+                if (mode == "CREATE" || sme.TimeStamp > minimumDate)
                 {
-                    if (mode == "CREATE" || smec.TimeStamp != smec.TimeStampCreate)
+                    bool deeper = false;
+                    if (updateOnly)
                     {
-                        bool deeper = false;
-                        if (updateOnly)
+                        deeper = true;
+                    }
+                    else
+                    {
+                        if (smec.value.Count == 1)
                         {
                             deeper = true;
                         }
@@ -869,18 +863,28 @@ namespace AasxRestServerLibrary
                                     break;
                                 }
                         }
+                    }
 
-                        if (deeper)
+                    if (deeper)
+                    {
+                        string text = "";
+                        foreach (var sme2 in smec.value)
+                            text += checkDiff(mode, path + sme.idShort + ".", sme2.submodelElement,
+                                minimumDate, updateOnly, searchPath);
+                        return text;
+                    }
+
+                    if ((mode == "CREATE" && sme.TimeStampCreate > minimumDate) ||
+                        (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
+                    {
+                        if (searchPath != "")
                         {
-                            string text = "";
-                            foreach (var sme2 in smec.value)
-                                text += checkDiff(mode, path + sme.idShort + ".", sme2.submodelElement,
-                                    minimumDate, updateOnly, searchPath);
-                            return text;
+                            if (!(path + sme.idShort).Contains(searchPath))
+                                return "";
                         }
 
                         return "<tr><td>" + mode + "</td><td><b>" + path + smec.idShort + "</b></td><td>SMEC</td><td>" +
-                            smec.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
+                        smec.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
                     }
                 }
 
