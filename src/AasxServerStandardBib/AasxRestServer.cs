@@ -387,7 +387,6 @@ namespace AasxRestServerLibrary
                                 //
                                 // Check for deletes
                                 //
-
                                 if (doCreateDelete)
                                 {
                                     foreach (var d in deletedList)
@@ -486,15 +485,10 @@ namespace AasxRestServerLibrary
                 bool doUpdate, bool doCreateDelete,
                 AdminShell.KeyList observablePath = null)
             {
-                DateTime diffTimeStamp;
-
                 if (!(sme is AdminShell.SubmodelElementCollection))
                 {
-                    if (mode == "CREATE")
-                        diffTimeStamp = sme.TimeStampCreate;
-                    else // UPDATE
-                        diffTimeStamp = sme.TimeStamp;
-                    if (diffTimeStamp > minimumDate)
+                    if ((mode == "CREATE" && sme.TimeStampCreate > minimumDate) ||
+                        (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
                     {
                         // prepare p2 to be relative path to observable
                         var p2 = sme.GetReference()?.Keys;
@@ -513,7 +507,6 @@ namespace AasxRestServerLibrary
                                     data: JsonConvert.SerializeObject(sme)));
                         }
                         else
-                        if (sme.TimeStamp != sme.TimeStampCreate)
                         {
                             if (/* doUpdate && */ plUpdate != null)
                             {
@@ -532,64 +525,80 @@ namespace AasxRestServerLibrary
                 }
 
                 var smec = sme as AdminShell.SubmodelElementCollection;
-                diffTimeStamp = smec.TimeStamp;
-                if (smec.TimeStamp > minimumDate)
+                if (mode == "CREATE" || smec.TimeStamp > minimumDate)
                 {
-                    // TODO: check if to modify to send serializations of whole SMCs on CREATE
-                    if (mode == "CREATE" || smec.TimeStamp != smec.TimeStampCreate)
+                    bool deeper = false;
+                    //
+                    if (doUpdate)
                     {
-                        bool deeper = false;
-                        if (doUpdate /* && !doCreateDelete */)
+                        deeper = true;
+                    }
+                    else
+                    //
+                    {
+                        if (smec.value.Count == 1)
                         {
                             deeper = true;
                         }
                         else
                         {
-                            foreach (var sme2 in smec.value)
+                            // replace foreach by explicit loop for multiple threads
+                            int i = 0;
+                            while (i < smec.value.Count)
+                            {
+                                var sme2 = smec.value[i];
                                 if (sme2.submodelElement.TimeStamp != smec.TimeStamp)
                                 {
                                     deeper = true;
                                     break;
                                 }
-                        }
-
-                        if (deeper)
-                        {
-                            foreach (var sme2 in smec.value)
-                                GetEventMsgRecurseDiff(
-                                    mode,
-                                    plStruct, plUpdate,
-                                    sme2.submodelElement, minimumDate, doUpdate, doCreateDelete, observablePath);
-                            return;
-                        }
-
-                        // prepare p2 to be relative path to observable
-                        var p2 = sme.GetReference()?.Keys;
-                        if (true == p2?.StartsWith(observablePath, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
-                            p2.RemoveRange(0, observablePath.Count);
-
-                        if (mode == "CREATE")
-                        {
-                            if (sme.TimeStampCreate > minimumDate)
-                            {
-                                if (/* doCreateDelete && */ plStruct != null)
-                                    plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
-                                        count: 1,
-                                        timeStamp: sme.TimeStamp,
-                                        AasPayloadStructuralChangeItem.ChangeReason.Create,
-                                        path: p2,
-                                        // Assumption: models will be serialized correctly
-                                        data: JsonConvert.SerializeObject(sme)));
+                                i++;
                             }
                         }
-                        else
-                        if (sme.TimeStamp != sme.TimeStampCreate)
+                    }
+
+                    if (deeper)
+                    {
+                        // replace foreach by explicit loop for multiple threads
+                        int i = 0;
+                        while (i < smec.value.Count)
                         {
-                            if (/* doUpdate && */ plUpdate != null)
-                                plUpdate.Values.Add(new AasPayloadUpdateValueItem(
-                                    path: p2,
-                                    sme.ValueAsText()));
+                            var sme2 = smec.value[i];
+                            GetEventMsgRecurseDiff(
+                                mode,
+                                plStruct, plUpdate,
+                                sme2.submodelElement, minimumDate, doUpdate, doCreateDelete, observablePath);
+                            i++;
                         }
+                        return;
+                    }
+
+                    // prepare p2 to be relative path to observable
+                    var p2 = sme.GetReference()?.Keys;
+                    if (true == p2?.StartsWith(observablePath, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                        p2.RemoveRange(0, observablePath.Count);
+
+                    if (mode == "CREATE")
+                    {
+                        if (sme.TimeStampCreate > minimumDate)
+                        {
+                            if (/* doCreateDelete && */ plStruct != null)
+                                plStruct.Changes.Add(new AasPayloadStructuralChangeItem(
+                                    count: 1,
+                                    timeStamp: sme.TimeStamp,
+                                    AasPayloadStructuralChangeItem.ChangeReason.Create,
+                                    path: p2,
+                                    // Assumption: models will be serialized correctly
+                                    data: JsonConvert.SerializeObject(sme)));
+                        }
+                    }
+                    else
+                    if (sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate)
+                    {
+                        if (/* doUpdate && */ plUpdate != null)
+                            plUpdate.Values.Add(new AasPayloadUpdateValueItem(
+                                path: p2,
+                                sme.ValueAsText()));
                     }
                 }
             }

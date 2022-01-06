@@ -2194,6 +2194,7 @@ namespace AasxRestServerLibrary
             }
 
             // special case: parent is Submodel itself
+            var timeStamp = DateTime.UtcNow;
             var updated = false;
             if (elemids == null || elemids.Length < 1)
             {
@@ -2201,6 +2202,7 @@ namespace AasxRestServerLibrary
                 if (existsmw != null)
                 {
                     updated = true;
+                    sme.TimeStampCreate = existsmw.submodelElement.TimeStampCreate;
                     context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from Submodel {smid}.");
                     int indexOfExistingSmw = sm.submodelElements.IndexOf(existsmw);
                     sm.submodelElements.RemoveAt(indexOfExistingSmw);
@@ -2211,7 +2213,8 @@ namespace AasxRestServerLibrary
                     context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
                     sm.Add(sme);
                 }
-                sm.SetAllParents(DateTime.UtcNow);
+                sme.SetAllParentsAndTimestamps(sm, timeStamp, sme.TimeStampCreate);
+                sme.setTimeStamp(timeStamp);
             }
             else
             {
@@ -2230,6 +2233,7 @@ namespace AasxRestServerLibrary
                     if (existsmw != null)
                     {
                         updated = true;
+                        sme.TimeStampCreate = existsmw.submodelElement.TimeStampCreate;
                         context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from SubmodelCollection.");
                         int indexOfExistingSmw = parentsmc.value.IndexOf(existsmw);
                         parentsmc.value.RemoveAt(indexOfExistingSmw);
@@ -2237,18 +2241,18 @@ namespace AasxRestServerLibrary
                     }
                     else
                     {
+                        sme.TimeStampCreate = timeStamp;
                         context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
                         parentsmc.Add(sme);
                     }
-                    sme.setTimeStamp(DateTime.UtcNow);
-                    sme.SetAllTimeStamps(DateTime.UtcNow);
+                    sme.SetAllParentsAndTimestamps(parentsmc, timeStamp, sme.TimeStampCreate);
+                    sme.setTimeStamp(timeStamp);
                 }
                 else
                 {
                     context.Response.SendResponse(HttpStatusCode.BadRequest, $"Matching SubmodelElement in Submodel {smid} is not suitable to add childs.");
                     return;
                 }
-
             }
 
             // simple OK

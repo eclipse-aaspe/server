@@ -1741,6 +1741,21 @@ namespace AdminShellNS
                 while (r != null);
             }
 
+            public void SetAllTimeStamps(DateTime timeStamp, DateTime timeStampCreate)
+            {
+                TimeStamp = timeStamp;
+                TimeStampCreate = timeStampCreate;
+
+                // via interface enumaration
+                if (this is IEnumerateChildren)
+                {
+                    var childs = (this as IEnumerateChildren).EnumerateChildren();
+                    if (childs != null)
+                        foreach (var c in childs)
+                            c.submodelElement.SetAllTimeStamps(timeStamp, timeStampCreate);
+                }
+            }
+
             public void SetAllTimeStamps(DateTime timeStamp)
             {
                 TimeStamp = timeStamp;
@@ -1753,6 +1768,44 @@ namespace AdminShellNS
                     if (childs != null)
                         foreach (var c in childs)
                             c.submodelElement.SetAllTimeStamps(timeStamp);
+                }
+            }
+
+            public void SetAllParents(Referable parent, DateTime timeStamp)
+            {
+                if (parent == null)
+                    return;
+
+                this.parent = parent;
+                this.TimeStamp = timeStamp;
+                this.TimeStampCreate = timeStamp;
+
+                // via interface enumaration
+                if (this is IEnumerateChildren)
+                {
+                    var childs = (this as IEnumerateChildren).EnumerateChildren();
+                    if (childs != null)
+                        foreach (var c in childs)
+                            c.submodelElement.SetAllParents(this, timeStamp);
+                }
+            }
+
+            public void SetAllParentsAndTimestamps(Referable parent, DateTime timeStamp, DateTime timeStampCreate)
+            {
+                if (parent == null)
+                    return;
+
+                this.parent = parent;
+                this.TimeStamp = timeStamp;
+                this.TimeStampCreate = timeStampCreate;
+
+                // via interface enumaration
+                if (this is IEnumerateChildren)
+                {
+                    var childs = (this as IEnumerateChildren).EnumerateChildren();
+                    if (childs != null)
+                        foreach (var c in childs)
+                            c.submodelElement.SetAllParentsAndTimestamps(this, timeStamp, timeStampCreate);
                 }
             }
 
