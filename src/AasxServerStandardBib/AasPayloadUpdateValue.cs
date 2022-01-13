@@ -76,26 +76,6 @@ namespace AdminShellEvents
                 res += " = " + ValueId.ToString();
             return res;
         }
-
-#if UseMarkup
-        public MiniMarkupBase ToMarkup()
-        {
-            var left = "  MsgUpdateValueItem: {Observable}";
-            if (Path != null)
-                foreach (var k in Path)
-                    left += "/" + k.value;
-
-            var right = "";
-            if (Value != null)
-                right += " = " + Value;
-            if (ValueId != null)
-                right += " = " + ValueId.ToString();
-
-            return new MiniMarkupLine(
-                new MiniMarkupRun(left, isMonospaced: true, padsize: 80),
-                new MiniMarkupRun(right));
-        }
-#endif
     }
 
     /// <summary>
