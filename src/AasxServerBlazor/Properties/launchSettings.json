@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --no-security --data-path \"C:\\Development\\PCF\" --edit",
+      "commandLineArgs": "--rest --no-security --data-path \"C:\\Development\\AASX\" --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

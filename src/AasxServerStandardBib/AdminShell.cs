@@ -4916,6 +4916,7 @@ namespace AdminShellNS
             // ReSharper enable RedundantArgumentDefaultValue
         }
 
+        [JsonConverter(typeof(AdminShellConverters.JsonAasxConverter))]
         public class SubmodelElement : Referable, System.IDisposable, IGetReference, IGetSemanticId
         {
             // constants

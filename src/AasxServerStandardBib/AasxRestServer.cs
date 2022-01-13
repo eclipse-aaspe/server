@@ -1041,7 +1041,7 @@ namespace AasxRestServerLibrary
             }
 
             // Basic AAS + Asset 
-
+            //TODO:Imp
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv)(/|)$")]
 
             public IHttpContext GetAasAndAsset(IHttpContext context)
