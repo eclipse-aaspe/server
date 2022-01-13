@@ -11,7 +11,7 @@ namespace AasxTimeSeries
         {
             DateTime timeStamp = DateTime.UtcNow;
 
-            for (int i = 0; i < Program.env.Length; i++)
+            for (int i = 0; i < Program.env.Count; i++)
             {
                 var env = Program.env[i];
                 if (env != null)

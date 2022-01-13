@@ -61,7 +61,7 @@ namespace AasxServer
 
         static public void initialize()
         {
-            int aascount = Program.env.Length;
+            int aascount = Program.env.Count;
 
             for (int envi = 0; envi < aascount; envi++)
             {

@@ -15,7 +15,7 @@ namespace AasxServerBlazor.Data
         {
             List<TreeNodeData> viewItems = new List<TreeNodeData>();
 
-            for (int i = 0; i < Program.envimax; i++)
+            for (int i = 0; i < Program.env.Count; i++)
             {
                 TreeNodeData root = new TreeNodeData();
                 root.EnvIndex = i;
@@ -23,16 +23,7 @@ namespace AasxServerBlazor.Data
                 {
                     root.Text = Program.env[i].AasEnv.AdministrationShells[0].idShort;
                     root.Tag = Program.env[i].AasEnv.AdministrationShells[0];
-                    if (Program.envSymbols[i] != "L")
-                    {
-                        CreateViewFromAASEnv(root, Program.env[i].AasEnv, i);
-                        viewItems.Add(root);
-                    }
-                }
-
-                if (Program.envSymbols[i] == "L")
-                {
-                    root.Text = Path.GetFileName(Program.envFileName[i]);
+                    CreateViewFromAASEnv(root, Program.env[i].AasEnv, i);
                     viewItems.Add(root);
                 }
             }

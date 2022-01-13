@@ -26,11 +26,8 @@ namespace AasxServer
 {
     public static class Program
     {
-        public static int envimax = 100;
-        public static AdminShellPackageEnv[] env = Enumerable.Repeat<AdminShellPackageEnv>(null, 100).ToArray();
-        public static string[] envFileName = Enumerable.Repeat<string>(null, 100).ToArray();
-        public static string[] envSymbols = Enumerable.Repeat<string>(null, 100).ToArray();
-        public static string[] envSubjectIssuer = Enumerable.Repeat<string>(null, 100).ToArray();
+        public static List<AdminShellPackageEnv> env = new List<AdminShellPackageEnv>();
+        public static List<string> envFileName = new List<string>();
 
 
         public static string hostPort = "";
@@ -125,7 +122,6 @@ namespace AasxServer
             Directory.CreateDirectory("./temp");
 
             string fn = null;
-
             int envi = 0;
 
             string[] fileNames = null;
@@ -138,51 +134,15 @@ namespace AasxServer
                 {
                     fn = fileNames[envi];
 
-                    if (fn != "" && envi < envimax)
+                    Console.WriteLine("Loading {0}...", fn);
+                    envFileName.Add(fn);
+                    env.Add(new AdminShellPackageEnv(fn, true));
+                    if (env[envi] == null)
                     {
-                        Console.WriteLine("Loading {0}...", fn);
-                        envFileName[envi] = fn;
-                        env[envi] = new AdminShellPackageEnv(fn, true);
-                        if (env[envi] == null)
-                        {
-                            Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                            return 1;
-                        }
-                        // check if signed
-                        string name = Path.GetFileName(fn);
-                        string fileCert = "./user/" + name + ".cer";
-                        if (File.Exists(fileCert))
-                        {
-                            X509Certificate2 x509 = new X509Certificate2(fileCert);
-                            envSymbols[envi] = "S";
-                            envSubjectIssuer[envi] = x509.Subject;
-
-                            X509Chain chain = new X509Chain();
-                            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                            bool isValid = chain.Build(x509);
-                            if (isValid)
-                            {
-                                envSymbols[envi] += ";V";
-                                envSubjectIssuer[envi] += ";" + x509.Issuer;
-                            }
-                        }
-
+                        Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                        return 1;
                     }
-                    envi++;
-                }
 
-                fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
-                Array.Sort(fileNames);
-
-                for (int j = 0; j < fileNames.Length; j++)
-                {
-                    fn = fileNames[j];
-
-                    if (fn != "" && envi < envimax)
-                    {
-                        envFileName[envi] = fn;
-                        envSymbols[envi] = "L"; // Show lock
-                    }
                     envi++;
                 }
             }
@@ -441,7 +401,7 @@ namespace AasxServer
             lock (changeAasxFile)
             {
                 int i = 0;
-                while (env[i] != null)
+                while ((env.Count < i) && (env[i] != null))
                 {
                     foreach (var sm in env[i].AasEnv.Submodels)
                     {

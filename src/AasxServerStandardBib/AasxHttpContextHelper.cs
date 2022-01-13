@@ -88,70 +88,6 @@ namespace AasxRestServerLibrary
             return findAasReturn;
         }
 
-        public AdminShell.Submodel FindSubmodelWithinAas(string aasid, string smid, string queryStrings = null, string rawUrl = null)
-        {
-            AdminShell.AdministrationShell aas = null;
-            int iPackage = -1;
-
-            if (Packages == null)
-                return null;
-
-            if (Regex.IsMatch(aasid, @"^\d+$")) // only number, i.e. index
-            {
-                // Index
-                int i = Convert.ToInt32(aasid);
-
-                if (i > Packages.Length)
-                    return null;
-
-                if (Packages[i] == null || Packages[i].AasEnv == null || Packages[i].AasEnv.AdministrationShells == null
-                    || Packages[i].AasEnv.AdministrationShells.Count < 1)
-                    return null;
-
-                aas = Packages[i].AasEnv.AdministrationShells[0];
-                iPackage = i;
-            }
-            else
-            {
-                // Name
-                if (aasid == "id")
-                {
-                    aas = Packages[0].AasEnv.AdministrationShells[0];
-                    iPackage = 0;
-                }
-                else
-                {
-                    for (int i = 0; i < Packages.Length; i++)
-                    {
-                        if (Packages[i] != null)
-                        {
-                            if (Packages[i].AasEnv.AdministrationShells[0].idShort == aasid)
-                            {
-                                aas = Packages[i].AasEnv.AdministrationShells[0];
-                                iPackage = i;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (aas == null)
-                return null;
-
-            // no, iterate & find
-
-            foreach (var smref in aas.submodelRefs)
-            {
-                var sm = this.Packages[iPackage].AasEnv.FindSubmodel(smref);
-                if (sm != null && sm.idShort != null && sm.idShort.Trim().ToLower() == smid.Trim().ToLower())
-                    return sm;
-            }
-
-            // no
-            return null;
-        }
-
         public class FindSubmodelElementResult
         {
             public AdminShell.Referable elem = null;
@@ -384,162 +320,9 @@ namespace AasxRestServerLibrary
             return new ObjectResult(string.Empty) { StatusCode = (int)HttpStatusCode.OK };
         }
 
-        public class GetSubmodelsItem
-        {
-            public AdminShell.Identification id = new AdminShell.Identification();
-            public string idShort = "";
-            public string kind = "";
-
-            public GetSubmodelsItem() { }
-
-            public GetSubmodelsItem(AdminShell.Identification id, string idShort, string kind)
-            {
-                this.id = id;
-                this.idShort = idShort;
-                this.kind = kind;
-            }
-
-            public GetSubmodelsItem(AdminShell.Identifiable idi, string kind)
-            {
-                this.id = idi.identification;
-                this.idShort = idi.idShort;
-                this.kind = kind;
-            }
-        }
-
-        public void EvalGetSubmodels(HttpContext context, string aasid)
-        {
-            dynamic res1 = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/submodels", "READ"))
-                {
-                    return;
-                }
-
-                res1.confirm = "Authorization = " + accessrights;
-            }
-
-            // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
-            if (findAasReturn.aas == null)
-            {
-                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with idShort '{aasid}' found.");
-                return;
-            }
-
-            // build a list of results
-            var res = new List<GetSubmodelsItem>();
-
-            // get all submodels
-            foreach (var smref in findAasReturn.aas.submodelRefs)
-            {
-                var sm = this.Packages[findAasReturn.iPackage].AasEnv.FindSubmodel(smref);
-                if (sm != null)
-                {
-                    res.Add(new GetSubmodelsItem(sm, sm.kind.kind));
-                }
-            }
-
-            // return as JSON
-            context.Response.StatusCode = (int) HttpStatusCode.OK;
-            SendJsonResponse(context, res);
-        }
-
-        static long countGet = 0;
-
-        public void EvalGetSubmodelContents(HttpContext context, string aasid, string smid, bool deep = false, bool complete = false)
-        {
-            dynamic res = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/submodels", "READ"))
-                {
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-            }
-
-            // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
-            if (sm == null)
-            {
-                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
-                return;
-            }
-
-            Console.WriteLine("{0} Received GET Submodel {1}", countGet++, sm.idShort);
-
-            // return as JSON
-            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            context.Response.StatusCode = (int) HttpStatusCode.OK;
-            SendJsonResponse(context, sm, cr);
-        }
-
-        public void EvalGetSubmodelElementContents(HttpContext context, string aasid, string smid, string[] elemids, bool deep = false, bool complete = false)
-        {
-            dynamic res = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (withAuthentification)
-            {
-                string objPath = smid;
-                foreach (var el in elemids)
-                {
-                    objPath += "." + el;
-                }
-
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/submodelelements", "READ", objPath))
-                {
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-            }
-
-            // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString.Value, context.Request.Path.Value);
-
-            if (sm == null)
-            {
-                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
-                return;
-            }
-
-            // find the right SubmodelElement
-            var sme = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
-            if (sme == null)
-            {
-                context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No matching element in Submodel found.");
-                return;
-            }
-
-            // return as JSON
-            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            context.Response.StatusCode = (int) HttpStatusCode.OK;
-            SendJsonResponse(context, sme, cr);
-        }
-
         public static bool withAuthentification = false;
-
         public static string GuestToken = null;
-
         public static string secretString = "Industrie4.0-Asset-Administration-Shell";
-
         private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
 
         public int sessionCount = 0;
@@ -879,7 +662,7 @@ namespace AasxRestServerLibrary
             // get the list
             var aaslist = new List<string>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {
@@ -988,7 +771,7 @@ namespace AasxRestServerLibrary
 
             securityRole = new List<securityRoleClass>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {

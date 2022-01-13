@@ -23,7 +23,7 @@ namespace IO.Swagger.Controllers
 
         public AASXPackageExplorerInterfaceApiController()
         {
-            _helper.Packages = AasxServer.Program.env;
+            _helper.Packages = AasxServer.Program.env.ToArray();
         }
 
         [HttpGet]
@@ -48,30 +48,6 @@ namespace IO.Swagger.Controllers
         public virtual void GetAASInfo([FromRoute][Required] int id)
         {
             _helper.EvalGetAasAndAsset(HttpContext, id.ToString(), complete: false);
-        }
-
-        [HttpGet]
-        [Route("/submodels/{id}/values")]
-        [ValidateModelState]
-        public virtual void GetSubmodelValues([FromRoute][Required] int id)
-        {
-            _helper.EvalGetSubmodels(HttpContext, id.ToString());
-        }
-
-        [HttpGet]
-        [Route("/submodels/{id}/elements/{path}/values")]
-        [ValidateModelState]
-        public virtual void GetSubmodelElements([FromRoute][Required] int id, [FromRoute][Required]int path)
-        {
-            _helper.EvalGetSubmodelContents(HttpContext, id.ToString(),path.ToString());
-        }
-
-        [HttpGet]
-        [Route("/aas/{id}/submodels/{submodelname}/elements/{elementnames}/values")]
-        [ValidateModelState]
-        public virtual void GetSubmodelElementValues([FromRoute][Required] int id, [FromRoute][Required] string submodelname, [FromRoute][Required] string[] elementnames)
-        {
-            _helper.EvalGetSubmodelElementContents(HttpContext, id.ToString(), submodelname, elementnames);
         }
     }
 }

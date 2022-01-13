@@ -28,7 +28,6 @@
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)
                 @ViewNodeInfo(context)
-                <strong><span style="color:blue">@getSymbols(context)</span></strong>
                 <span style="color:lightgray;">@ViewTimeStamp(context)</span>
             </TitleTemplate>
         </TreeNode>
@@ -470,11 +469,6 @@
 
         object o = item.Tag;
 
-        if (o == null && Program.envSymbols[item.EnvIndex] == "L")
-        {
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvIndex);
-        }
-
         if (o is AdministrationShell)
         {
             return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvIndex);
@@ -514,45 +508,6 @@
         return string.Empty;
     }
 
-    string getSymbols(TreeNodeData item)
-    {
-        if (item == null)
-        {
-            return string.Empty;
-        }
-
-        string ret = string.Empty;
-        object o = item.Tag;
-
-        if (o is AdministrationShell)
-        {
-            string symbols = Program.envSymbols[item.EnvIndex];
-
-            if (symbols != null)
-            {
-                string[] s = symbols.Split(';');
-
-                for (int i = 0; i < s.Length; i++)
-                {
-                    switch (s[i])
-                    {
-                        case "L":
-                            ret += "ENCRYPTED ";
-                            break;
-                        case "S":
-                            ret += "SIGNED ";
-                            break;
-                        case "V":
-                            ret += "VALIDATED ";
-                            break;
-                    }
-                }
-            }
-        }
-
-        return ret;
-    }
-
     string ViewNodeType(TreeNodeData item)
     {
         if (item == null)
@@ -568,19 +523,6 @@
         }
 
         object o = item.Tag;
-
-        /*
-        if (o is Referable)
-        {
-            ret = (o as Referable).GetElementName();
-            return (ret);
-        }
-        */
-
-        if (o == null && Program.envSymbols[item.EnvIndex] == "L")
-        {
-            ret += "AASX2";
-        }
 
         if (o is AdministrationShell)
         {
@@ -669,11 +611,6 @@
         string ret = "NULL";
 
         object o = item.Tag;
-
-        if (o == null && Program.envSymbols[item.EnvIndex] == "L")
-        {
-            ret = item.Text;
-        }
 
         if (o is AdministrationShell)
         {
