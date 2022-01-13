@@ -25,9 +25,9 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessages")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages")]
-        public virtual void GetEventMessages([FromRoute][Required] int aasIndex)
+        public virtual IActionResult GetEventMessages([FromRoute][Required] int aasIndex)
         {
-            GenerateMessagesInternal(aasIndex, DateTime.MinValue, true, true);
+            return GenerateMessagesInternal(aasIndex, DateTime.MinValue, true, true);
         }
 
         [HttpGet]
@@ -35,9 +35,9 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesValues")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested values of event messages")]
-        public virtual void GetEventMessagesValues([FromRoute][Required] int aasIndex)
+        public virtual IActionResult GetEventMessagesValues([FromRoute][Required] int aasIndex)
         {
-            GenerateMessagesInternal(aasIndex, DateTime.MinValue, true, false);
+            return GenerateMessagesInternal(aasIndex, DateTime.MinValue, true, false);
         }
 
         [HttpGet]
@@ -45,9 +45,9 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesTime")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested timestamps of event messages")]
-        public virtual void GetEventMessagesTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
+        public virtual IActionResult GetEventMessagesTime([FromRoute][Required] int aasIndex, [FromRoute][Required] DateTime minimumDate)
         {
-            GenerateMessagesInternal(aasIndex, minimumDate, true, true);
+            return GenerateMessagesInternal(aasIndex, minimumDate, true, true);
         }
 
         [HttpGet]
@@ -55,13 +55,13 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetEventMessagesTimeSecs")]
         [SwaggerResponse(statusCode: 200, type: typeof(AasEventMsgEnvelope[]), description: "Requested event messages for the specified seconds")]
-        public virtual void GetEventMessagesTimeSecs([FromRoute][Required] int aasIndex, [FromRoute][Required] int secs)
+        public virtual IActionResult GetEventMessagesTimeSecs([FromRoute][Required] int aasIndex, [FromRoute][Required] int secs)
         {
             DateTime minimumDate = DateTime.UtcNow.AddSeconds(-1.0 * secs);
-            GenerateMessagesInternal(aasIndex, minimumDate, true, true);
+            return GenerateMessagesInternal(aasIndex, minimumDate, true, true);
         }
 
-        private void GenerateMessagesInternal(int aasIndex, DateTime minimumDate, bool doUpdate, bool doCreateDelete)
+        private IActionResult GenerateMessagesInternal(int aasIndex, DateTime minimumDate, bool doUpdate, bool doCreateDelete)
         {
             var envelopes = new List<AasEventMsgEnvelope>();
 
@@ -217,16 +217,10 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            AasxHttpContextHelper.SendJsonResponse2(HttpContext, envelopes.ToArray());
-
-            //var settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(
-            //    new[] { typeof(AasEventMsgEnvelope) });
-            //settings.TypeNameHandling = TypeNameHandling.Auto;
-            //settings.Formatting = Formatting.Indented;
-
-            //JsonResult result = new JsonResult(envelopes.ToArray(), settings) { StatusCode = (int)HttpStatusCode.OK };
-            //result.ContentType = "application/json";
-            //return result;
+            JsonSerializerSettings settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(new[] { typeof(AasEventMsgEnvelope) });
+            settings.TypeNameHandling = TypeNameHandling.Auto;
+            settings.Formatting = Formatting.Indented;
+            return new JsonResult(envelopes.ToArray(), settings) { StatusCode = (int)HttpStatusCode.OK };
         }
 
         static void GetEventMsgRecurseDiff(

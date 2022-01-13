@@ -283,20 +283,6 @@ namespace AasxRestServerLibrary
             context.Response.WriteAsync(json);
         }
 
-        public static void SendJsonResponse2(HttpContext context, object obj, IContractResolver contractResolver = null)
-        {
-            var settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(
-                new[] { typeof(AdminShellEvents.AasEventMsgEnvelope) });
-
-            settings.TypeNameHandling = TypeNameHandling.Auto;
-            settings.Formatting = Formatting.Indented;
-            var json = JsonConvert.SerializeObject(obj, settings);
-            context.Response.ContentType = "application/json";
-
-            //context.Response.ContentLength = json.Length;
-            context.Response.WriteAsync(json);
-        }
-
         protected static void SendStreamResponse(HttpContext context, Stream stream, string headerAttachmentFileName = null)
         {
             context.Response.ContentType = "application";
@@ -962,7 +948,7 @@ namespace AasxRestServerLibrary
                 packageStream.Close();
             }
         }
-  
+
         public static string[] securityUserName = null;
         public static string[] securityUserPassword = null;
 
