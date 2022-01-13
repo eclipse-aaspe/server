@@ -495,7 +495,7 @@ packaged as web and desktop font files.
 
 Code — MIT License
 
-In the Font Awesome Free download, the MIT license applies to all non-font and non-icon files. 
+In the Font Awesome Free download, the MIT license applies to all non-font and non-icon files.
 
 
 With respect to JetBrains.Annotations
@@ -554,7 +554,7 @@ With respect to OPC Foundation
  * Copyright (c) 2005-2019 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
- * 
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -563,7 +563,7 @@ With respect to OPC Foundation
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -577,7 +577,7 @@ With respect to OPC Foundation
  *
  * The complete license agreement can be found here:
  * http://opcfoundation.org/License/MIT/1.00/
- 
+
 With respect to OPC Foundation
 ==============================
 

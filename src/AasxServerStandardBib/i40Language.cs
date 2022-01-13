@@ -1,14 +1,12 @@
-﻿using System;
+﻿using AdminShellNS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using AdminShellNS;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using Opc.Ua.Server;
+using static AasxServer.Program;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -63,7 +61,7 @@ namespace AasxServer
 
         static public void initialize()
         {
-            int aascount = Program.env.Length;
+            int aascount = Program.env.Count;
 
             for (int envi = 0; envi < aascount; envi++)
             {
@@ -272,7 +270,7 @@ namespace AasxServer
 
                     if (auto.name == debugAutomaton)
                     {
-                        int i = 0; // set breakpoint here to debug specific automaton
+                        // set breakpoint here to debug specific automaton
                     }
 
                     // get actual automaton data from AAS
@@ -326,7 +324,7 @@ namespace AasxServer
                     {
                         if (auto.name == debugAutomaton)
                         {
-                            int i = 0; // set breakpoint here to debug specific automaton
+                            // set breakpoint here to debug specific automaton
                         }
 
                         auto.tick = 0;
@@ -408,7 +406,7 @@ namespace AasxServer
                                             {
                                                 if (auto.name == debugAutomaton)
                                                 {
-                                                    int i = 0; // set breakpoint here to debug specific automaton
+                                                    // set breakpoint here to debug specific automaton
                                                 }
 
                                                 var op = sme2 as AdminShell.Operation;
@@ -466,7 +464,7 @@ namespace AasxServer
                                             {
                                                 if (auto.name == debugAutomaton)
                                                 {
-                                                    int i = 0; // set breakpoint here to debug specific automaton
+                                                    // set breakpoint here to debug specific automaton
                                                 }
 
                                                 var op = sme2 as AdminShell.Operation;
@@ -545,7 +543,7 @@ namespace AasxServer
                             var sme1 = smw1.submodelElement;
                             if (sme1 is AdminShell.Property && sme1.idShort == "getActualTime")
                             {
-                                (sme1 as AdminShell.Property).value = DateTime.Now.ToString();
+                                (sme1 as AdminShell.Property).value = DateTime.UtcNow.ToString();
                             }
                             if (sme1 is AdminShell.Property && sme1.idShort == "getStatus")
                             {
@@ -611,10 +609,12 @@ namespace AasxServer
                     auto.tick++;
                 }
 
-                int mode = 0;
+                TreeUpdateMode mode = TreeUpdateMode.ValuesOnly;
                 if (treeChanged)
-                    mode = 2;
-                Program.signalNewData(mode);
+                {
+                    mode = TreeUpdateMode.Rebuild;
+                }
+                Program.SignalNewData(mode);
             }
         }
 
@@ -671,7 +671,7 @@ namespace AasxServer
                 return false;
             var p2 = ref2 as AdminShell.Property;
 
-            DateTime localTime = DateTime.Now;
+            DateTime localTime = DateTime.UtcNow;
             if (p2.value == "") // start
             {
                 var endTime = localTime.AddSeconds(waitingTime);
@@ -704,7 +704,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.inputVariable.Count != 3 && op.outputVariable.Count != 4)
@@ -788,7 +788,7 @@ namespace AasxServer
                     {
                         if (auto.name == debugAutomaton)
                         {
-                            int i = 0; // set breakpoint here to debug specific automaton
+                            // set breakpoint here to debug specific automaton
                         }
 
                         JObject parsed = JObject.Parse(receivedFrame);
@@ -848,7 +848,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.inputVariable.Count != 3 && op.outputVariable.Count != 1)
@@ -953,7 +953,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.outputVariable.Count == 0)
@@ -993,7 +993,7 @@ namespace AasxServer
 
             if (auto.name == debugAutomaton)
             {
-                int i = 0; // set breakpoint here to debug specific automaton
+                // set breakpoint here to debug specific automaton
             }
 
             if (op.inputVariable.Count != 2 && op.outputVariable.Count != 0)

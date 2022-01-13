@@ -10,22 +10,19 @@ This source code may use other Open Source software components (see LICENSE.txt)
 // to be disabled for AASX Server
 // #define UseMarkup
 
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AasxIntegrationBase;
 using AdminShellNS;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace AdminShellEvents
 {
     /// <summary>
     /// Outer class for any AAS event. AAS events shall interoperably exchage asynchronous information between
     /// different execution environments "operating" AASes. This basic event class is described in AASiD Part 1.
-    /// 
+    ///
     /// Note: This envelope is able to carry one or multiple even payloads.
     /// </summary>
     [DisplayName("AasEventMsgEnvelope")]
@@ -42,18 +39,18 @@ namespace AdminShellEvents
         public AdminShell.SemanticId SourceSemanticId { get; set; }
 
         /// <summary>
-        /// Reference  to  the  Referable,  which  defines  the scope  of  the  event.  Can  be  AAS,  Submodel, 
-        /// SubmodelElementCollection  or SubmodelElement. 
+        /// Reference  to  the  Referable,  which  defines  the scope  of  the  event.  Can  be  AAS,  Submodel,
+        /// SubmodelElementCollection  or SubmodelElement.
         /// </summary>
         public AdminShell.Reference ObservableReference { get; set; }
 
         /// <summary>
-        /// SemanticId  of  the  Referable,  which  defines  the scope of the event, if available. 
+        /// SemanticId  of  the  Referable,  which  defines  the scope of the event, if available.
         /// </summary>
         public AdminShell.SemanticId ObservableSemanticId { get; set; }
 
         /// <summary>
-        /// Information for the outer message infrastructure for  scheduling the  event to the  respective 
+        /// Information for the outer message infrastructure for  scheduling the  event to the  respective
         /// communication channel.
         /// </summary>
         public string Topic { get; set; }
