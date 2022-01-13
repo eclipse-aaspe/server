@@ -3,16 +3,12 @@ using AdminShellNS;
 using Jose;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -20,13 +16,7 @@ using System.Text.RegularExpressions;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 This software is licensed under the Eclipse Public License 2.0 (EPL-2.0) (see https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt).
-The browser functionality is under the cefSharp license (see https://raw.githubusercontent.com/cefsharp/CefSharp/master/LICENSE).
-The JSON serialization is under the MIT license (see https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md).
-The QR code generation is under the MIT license (see https://github.com/codebude/QRCoder/blob/master/LICENSE.txt).
-The Dot Matrix Code (DMC) generation is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0).
-The Grapevine REST server framework is under Apache license v.2 (see http://www.apache.org/licenses/LICENSE-2.0). */
-
-/* Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the
+Please notice: the API and REST routes implemented in this version of the source code are not specified and standardised by the
 specification Details of the Administration Shell. The hereby stated approach is solely the opinion of its author(s). */
 
 namespace AasxRestServerLibrary
@@ -152,119 +142,16 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public class AdaptiveFilterContractResolver : DefaultContractResolver
-        {
-            public bool AasHasViews = true;
-            public bool BlobHasValue = true;
-            public bool SubmodelHasElements = true;
-            public bool SmcHasValue = true;
-            public bool OpHasVariables = true;
-
-            public AdaptiveFilterContractResolver() { }
-
-            public AdaptiveFilterContractResolver(bool deep = true, bool complete = true)
-            {
-                if (!deep)
-                {
-                    this.SubmodelHasElements = false;
-                    this.SmcHasValue = false;
-                    this.OpHasVariables = false;
-                }
-                if (!complete)
-                {
-                    this.AasHasViews = false;
-                    this.BlobHasValue = false;
-                }
-
-            }
-
-            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-            {
-                JsonProperty property = base.CreateProperty(member, memberSerialization);
-
-                if (!BlobHasValue && property.DeclaringType == typeof(AdminShell.Blob) && property.PropertyName == "value")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!SubmodelHasElements && property.DeclaringType == typeof(AdminShell.Submodel) && property.PropertyName == "submodelElements")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!SmcHasValue && property.DeclaringType == typeof(AdminShell.SubmodelElementCollection) && property.PropertyName == "value")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!OpHasVariables && property.DeclaringType == typeof(AdminShell.Operation) && (property.PropertyName == "in" || property.PropertyName == "out"))
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!AasHasViews && property.DeclaringType == typeof(AdminShell.AdministrationShell) && property.PropertyName == "views")
-                    property.ShouldSerialize = instance => { return false; };
-
-                return property;
-            }
-        }
-
-        protected static void SendJsonResponse(HttpContext context, object obj, IContractResolver contractResolver = null)
-        {
-            var settings = new JsonSerializerSettings();
-            if (contractResolver != null)
-                settings.ContractResolver = contractResolver;
-            var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-
-            context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-            context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
-
-            context.Response.ContentType = "application/json";
-
-            context.Response.ContentLength = json.Length;
-            context.Response.WriteAsync(json);
-        }
-
-        protected static void SendStreamResponse(HttpContext context, Stream stream, string headerAttachmentFileName = null)
-        {
-            context.Response.ContentType = "application";
-            context.Response.ContentLength = stream.Length;
-
-            if (headerAttachmentFileName != null)
-            {
-                context.Response.Headers.Add("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
-            }
-
-            stream.CopyTo(context.Response.Body);
-            stream.Close();
-        }
-
-        protected static void SendRedirectResponse(HttpContext context, string redirectUrl)
-        {
-            context.Response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
-            context.Response.Redirect(redirectUrl);
-        }
-
-        public void EvalGetAasAndAsset(HttpContext context, string aasid, bool deep = false, bool complete = false)
+        public ExpandoObject EvalGetAasAndAsset(HttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (false && withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (accessrights == null)
-                {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-            }
 
             // access the first AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
+            var findAasReturn = FindAAS(aasid, context.Request.QueryString.Value, context.Request.Path.Value);
             if (findAasReturn.aas == null)
             {
                 context.Response.StatusCode = (int) HttpStatusCode.NotFound;//, $"No AAS with id '{aasid}' found.");
-                return;
+                return null;
             }
 
             // try to get the asset as well
@@ -274,15 +161,12 @@ namespace AasxRestServerLibrary
             res.AAS = findAasReturn.aas;
             res.Asset = asset;
 
-            // return as JSON
-            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
-            context.Response.StatusCode = (int) HttpStatusCode.OK;
-            SendJsonResponse(context, res, cr);
+            return res;
         }
 
         public ObjectResult EvalDeleteAasAndAsset(string aasid, bool deleteAsset = false)
         {
-            dynamic res = new ExpandoObject();
+            ExpandoObject res = new ExpandoObject();
 
             // datastructure update
             if (this.Packages[0] == null || this.Packages[0].AasEnv == null || this.Packages[0].AasEnv.AdministrationShells == null)
@@ -415,22 +299,18 @@ namespace AasxRestServerLibrary
 
             if (currentRole == null)
             {
-                if (AasxServer.Program.redirectServer != "")
+                if (Program.redirectServer != "")
                 {
                     string queryString = string.Empty;
                     string originalRequest = context.Request.Path.ToString();
                     Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                    string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
-                    Console.WriteLine("Redirect Response: " + response + "\n");
-                    SendRedirectResponse(context, response);
+                    string redirectUrl = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
+                    Console.WriteLine("Redirect Response: " + redirectUrl + "\n");
+                    context.Response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
+                    context.Response.Redirect(redirectUrl);
                     return false;
                 }
             }
-
-            dynamic res = new ExpandoObject();
-            res.error = "You are not authorized for this operation!";
-            context.Response.StatusCode = (int) HttpStatusCode.Unauthorized;
-            SendJsonResponse(context, res);
 
             return false;
         }
@@ -650,30 +530,28 @@ namespace AasxRestServerLibrary
             return accessrights;
         }
 
-        public void EvalGetListAAS(HttpContext context)
+        public ExpandoObject EvalGetListAAS(HttpContext context)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
-
-            Console.WriteLine("Security 4 Server: /server/listaas");
-
             string accessrights = SecurityCheck(context, ref index);
 
             // get the list
             var aaslist = new List<string>();
 
-            int aascount = AasxServer.Program.env.Count;
+            int aascount = Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {
-                if (AasxServer.Program.env[i] != null)
+                if (Program.env[i] != null)
                 {
-                    var aas = AasxServer.Program.env[i].AasEnv.AdministrationShells[0];
+                    var aas = Program.env[i].AasEnv.AdministrationShells[0];
                     string idshort = aas.idShort;
                     string aasRights = "NONE";
                     if (securityRightsAAS != null && securityRightsAAS.Count != 0)
+                    {
                         securityRightsAAS.TryGetValue(idshort, out aasRights);
-                    // aasRights = securityRightsAAS[idshort];
+                    }
 
                     bool addEntry = false;
                     if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ", "", "aas", aas))
@@ -686,25 +564,22 @@ namespace AasxRestServerLibrary
                         aaslist.Add(i.ToString() + " : "
                             + idshort + " : "
                             + aas.identification + " : "
-                            + AasxServer.Program.envFileName[i]);
+                            + Program.envFileName[i]);
                     }
                 }
             }
 
             res.aaslist = aaslist;
-
-            // return this list
-            context.Response.StatusCode = (int) HttpStatusCode.OK;
-            SendJsonResponse(context, res);
+            return res;
         }
 
-        public void EvalGetAASX(HttpContext context, int fileIndex)
+        public Stream EvalGetAASX(HttpContext context, int fileIndex)
         {
             dynamic res = new ExpandoObject();
-            int index = -1;
-            string accessrights = null;
 
             // check authentication
+            int index = -1;
+            string accessrights = null;
             if (withAuthentification)
             {
                 accessrights = SecurityCheck(context, ref index);
@@ -712,23 +587,18 @@ namespace AasxRestServerLibrary
                 var aas = Program.env[fileIndex].AasEnv.AdministrationShells[0];
                 if (!checkAccessRights(context, accessrights, "/aasx", "READ", "", "aas", aas))
                 {
-                    return;
+                    return null;
                 }
             }
 
             // save actual data as file
-
             lock (Program.changeAasxFile)
             {
                 string fname = "./temp/" + Path.GetFileName(Program.envFileName[fileIndex]);
                 Program.env[fileIndex].SaveAs(fname);
 
                 // return as FILE
-                FileStream packageStream = File.OpenRead(fname);
-                context.Response.StatusCode = (int) HttpStatusCode.OK;
-                SendStreamResponse(context, packageStream,
-                    Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
-                packageStream.Close();
+                return File.OpenRead(fname);
             }
         }
 

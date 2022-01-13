@@ -9,9 +9,14 @@
  */
 
 using AasxRestServerLibrary;
+using AdminShellNS;
 using IO.Swagger.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Dynamic;
+using System.IO;
+using System.Net;
 
 namespace IO.Swagger.Controllers
 {
@@ -29,25 +34,38 @@ namespace IO.Swagger.Controllers
         [HttpGet]
         [Route("/server/listaas")]
         [ValidateModelState]
-        public virtual void ListAAS()
+        public virtual IActionResult ListAAS()
         {
-            _helper.EvalGetListAAS(HttpContext);
+            ExpandoObject result = _helper.EvalGetListAAS(HttpContext);
+            return new JsonResult(result) { StatusCode = (int)HttpStatusCode.OK };
         }
 
         [HttpGet]
         [Route("/server/getaasx/{id}")]
         [ValidateModelState]
-        public virtual void GetAASX([FromRoute][Required] int id)
+        public virtual IActionResult GetAASX([FromRoute][Required] int id)
         {
-            _helper.EvalGetAASX(HttpContext, id);
+            Stream fileStream = _helper.EvalGetAASX(HttpContext, id);
+            if (fileStream != null)
+            {
+                return new FileStreamResult(fileStream, "application/octet-stream");
+            }
+            else
+            {
+                return new StatusCodeResult((int)HttpStatusCode.Unauthorized);
+            }
         }
 
         [HttpGet]
         [Route("/aas/{id}/core")]
         [ValidateModelState]
-        public virtual void GetAASInfo([FromRoute][Required] int id)
+        public virtual IActionResult GetAASInfo([FromRoute][Required] int id)
         {
-            _helper.EvalGetAasAndAsset(HttpContext, id.ToString(), complete: false);
+            ExpandoObject result = _helper.EvalGetAasAndAsset(HttpContext, id.ToString());
+
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.ContractResolver = new AdminShellConverters.AdaptiveFilterContractResolver(false, false);
+            return new JsonResult(result, settings) { StatusCode = (int)HttpStatusCode.OK };
         }
     }
 }
