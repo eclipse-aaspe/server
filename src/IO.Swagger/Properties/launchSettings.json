@@ -18,13 +18,13 @@
     },
     "web": {
       "commandName": "Project",
+      "commandLineArgs": "--rest --no-security --data-path \"C:\\Development\\AASX\" --edit",
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "commandLineArgs": "--rest --no-security --data-path \"C:\\Users\\tikjui\\source\\repos\\IDTA Project\\aasx-server\\content-for-demo\\aasxs\" --edit",
-      "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
     },
     "Docker": {
       "commandName": "Docker",
