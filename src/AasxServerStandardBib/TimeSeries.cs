@@ -618,6 +618,17 @@ namespace AasxTimeSeries
                                 {
                                     latestDataProperty = AdminShell.Property.CreateNew(latestDataName);
                                     latestDataProperty.TimeStampCreate = timeStamp;
+                                    AdminShell.Qualifier q = new AdminShell.Qualifier();
+                                    q.type = "Plotting.Args";
+                                    q.value =
+                                        "{ grp:1, src: \"Event\"," +
+                                        "title: \"" + latestDataName + "\"," +
+                                        "fmt: \"F0\"," +
+                                        "row: " + i + "," +
+                                        "col: 0, rowspan: 1, colspan:1, unit: \"\", linewidth: 1.0 }";
+                                    if (latestDataProperty.qualifiers == null)
+                                        latestDataProperty.qualifiers = new AdminShellV20.QualifierCollection();
+                                    latestDataProperty.qualifiers.Add(q);
                                     tsb.latestData.Add(latestDataProperty);
                                 }
                                 (latestDataProperty as AdminShell.Property).value = latestDataValue;
