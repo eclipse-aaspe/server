@@ -1,7 +1,7 @@
-﻿using AdminShellNS;
+﻿using System.Reflection;
+using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System.Reflection;
 
 namespace IO.Swagger.Helpers
 {
