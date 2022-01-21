@@ -1,9 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 
 namespace IO.Swagger.Attributes
 {

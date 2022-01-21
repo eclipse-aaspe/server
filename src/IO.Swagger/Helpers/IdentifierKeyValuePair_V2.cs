@@ -1,8 +1,8 @@
-﻿using IO.Swagger.Models;
-using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using System.Text;
+using IO.Swagger.Models;
+using Newtonsoft.Json;
 
 namespace IO.Swagger.Helpers
 {
