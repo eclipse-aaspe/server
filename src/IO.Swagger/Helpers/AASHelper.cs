@@ -2,9 +2,8 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Threading;
 using static AdminShellNS.AdminShellV20;
 
 namespace IO.Swagger.Helpers
@@ -15,6 +14,10 @@ namespace IO.Swagger.Helpers
     public class AASHelper
     {
         private static AdminShellPackageEnv[] Packages;
+        /// <summary>
+        /// HandleId to operation result mapping for InvokeAsyncResult
+        /// </summary>
+        private static Dictionary<string, Models.OperationResult> opResultAsyncDict;
 
         /// <summary>
         /// Constructor
@@ -22,6 +25,7 @@ namespace IO.Swagger.Helpers
         public AASHelper()
         {
             Packages = AasxServer.Program.env;
+            opResultAsyncDict = new Dictionary<string, Models.OperationResult>();
         }
 
         internal Submodel FindSubmodelWithinAAS(string aasIdentifier, string submodelIdentifier)
@@ -102,7 +106,7 @@ namespace IO.Swagger.Helpers
         {
             bool deleted = false;
             var conceptDescription = FindConceptDescription(cdIdentifier, out int packageIndex);
-            if(conceptDescription != null)
+            if (conceptDescription != null)
             {
                 Packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 deleted = true;
@@ -116,12 +120,12 @@ namespace IO.Swagger.Helpers
         {
             if (Packages != null)
             {
-                for(int i=0; i< Packages.Length;i++)
+                for (int i = 0; i < Packages.Length; i++)
                 {
                     var env = Packages[i];
                     if (env != null)
                     {
-                        foreach(var cd in env.AasEnv.ConceptDescriptions)
+                        foreach (var cd in env.AasEnv.ConceptDescriptions)
                         {
                             if (cd.identification.id != null && cd.identification.id.Trim().ToLower() == cdIdentifier.Trim().ToLower())
                             {
@@ -143,7 +147,7 @@ namespace IO.Swagger.Helpers
             bool success = false;
             // find the AAS
             var aasReturn = FindAas(aasIdentifier);
-            if(aasReturn.AAS != null)
+            if (aasReturn.AAS != null)
             {
                 // find the asset
                 var asset = FindAssetwithReference(aasReturn.AAS.assetRef);
@@ -169,7 +173,7 @@ namespace IO.Swagger.Helpers
 
         internal bool DeleteSubmodelElementByPath(SubmodelElement submodelElement, SubmodelElement parent)
         {
-            if(parent is SubmodelElementCollection parentColl)
+            if (parent is SubmodelElementCollection parentColl)
             {
                 parentColl.value.Remove(submodelElement);
                 return true;
@@ -187,7 +191,7 @@ namespace IO.Swagger.Helpers
                     if (env != null)
                     {
                         Asset asset = env.AasEnv.FindAsset(assetRef);
-                        if(asset != null)
+                        if (asset != null)
                         {
                             return asset;
                         }
@@ -202,14 +206,14 @@ namespace IO.Swagger.Helpers
         {
             FindAasReturn aasReturn = FindAas(aasIdentifier);
 
-            if (aasReturn.AAS!= null)
+            if (aasReturn.AAS != null)
             {
                 SubmodelRef submodelRef = FindSubmodelRefWithinAAS(aasReturn, submodelIdentifier);
                 if (submodelRef != null)
                 {
                     aasReturn.AAS.submodelRefs.Remove(submodelRef);
                     return true;
-                } 
+                }
             }
 
             return false;
@@ -224,7 +228,7 @@ namespace IO.Swagger.Helpers
                     var submodel = Packages[aasReturn.IPackage].AasEnv.FindSubmodel(submodelRef);
                     if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
                         return submodelRef;
-                } 
+                }
             }
 
             return null;
@@ -349,7 +353,7 @@ namespace IO.Swagger.Helpers
                         {
                             outputShells.Add(aas);
                         }
-                    } 
+                    }
                 }
             }
 
@@ -360,7 +364,7 @@ namespace IO.Swagger.Helpers
         {
             List<AdministrationShell> outputShells = new List<AdministrationShell>();
 
-            foreach(IdentifierKeyValuePair_V2 assetId in assetIdList)
+            foreach (IdentifierKeyValuePair_V2 assetId in assetIdList)
             {
                 outputShells.AddRange(FindAasByAssetId(assetId.Value));
             }
@@ -381,7 +385,7 @@ namespace IO.Swagger.Helpers
                         {
                             outputShells.Add(aas);
                         }
-                    } 
+                    }
                 }
             }
 
@@ -395,9 +399,9 @@ namespace IO.Swagger.Helpers
             {
                 if (env != null)
                 {
-                    foreach(ConceptDescription conceptDescription in env.AasEnv.ConceptDescriptions)
+                    foreach (ConceptDescription conceptDescription in env.AasEnv.ConceptDescriptions)
                     {
-                        if(conceptDescription.idShort.Equals(idShort))
+                        if (conceptDescription.idShort.Equals(idShort))
                         {
                             outputCds.Add(conceptDescription);
                         }
@@ -417,16 +421,16 @@ namespace IO.Swagger.Helpers
                 {
                     foreach (ConceptDescription conceptDescription in env.AasEnv.ConceptDescriptions)
                     {
-                        if (conceptDescription.embeddedDataSpecification != null )
+                        if (conceptDescription.embeddedDataSpecification != null)
                         {
-                            foreach(EmbeddedDataSpecification embDataSpec in conceptDescription.embeddedDataSpecification)
+                            foreach (EmbeddedDataSpecification embDataSpec in conceptDescription.embeddedDataSpecification)
                             {
-                                if(embDataSpec.dataSpecification.Matches(dataSpecRefReq))
+                                if (embDataSpec.dataSpecification.Matches(dataSpecRefReq))
                                 {
                                     outputCds.Add(conceptDescription);
                                 }
                             }
-                            
+
                         }
                     }
                 }
@@ -444,7 +448,7 @@ namespace IO.Swagger.Helpers
                 {
                     foreach (ConceptDescription conceptDescription in env.AasEnv.ConceptDescriptions)
                     {
-                        if ((conceptDescription.IsCaseOf != null) && CompareIsCaseOf(conceptDescription.IsCaseOf, isCaseOfObj)) 
+                        if ((conceptDescription.IsCaseOf != null) && CompareIsCaseOf(conceptDescription.IsCaseOf, isCaseOfObj))
                         {
                             outputCds.Add(conceptDescription);
                         }
@@ -457,19 +461,19 @@ namespace IO.Swagger.Helpers
 
         private bool CompareIsCaseOf(List<Reference> isCaseOf1, List<Reference> isCaseOf2)
         {
-            foreach(Reference isCaseOf1_Ref in isCaseOf1)
+            foreach (Reference isCaseOf1_Ref in isCaseOf1)
             {
-                bool found=false;
-                foreach(Reference isCaseOf2_Ref in isCaseOf2)
+                bool found = false;
+                foreach (Reference isCaseOf2_Ref in isCaseOf2)
                 {
-                    if(isCaseOf1_Ref.Matches(isCaseOf2_Ref))
+                    if (isCaseOf1_Ref.Matches(isCaseOf2_Ref))
                     {
                         found = true;
                         break;
                     }
                 }
 
-                if(!found)
+                if (!found)
                 {
                     return false;
                 }
@@ -480,23 +484,60 @@ namespace IO.Swagger.Helpers
 
         internal object HandleOutputModifiers(object obj, string level = "deep", string content = "normal", string extent = "withoutBlobValue")
         {
+            //TODO: Better way to use default values when null
+            if (string.IsNullOrEmpty(level))
+            {
+                level = "deep";
+            }
+
+            if (string.IsNullOrEmpty(content))
+            {
+                content = "normal";
+            }
+
+            if (string.IsNullOrEmpty(extent))
+            {
+                extent = "withoutBlobValue";
+            }
+
+            if (content.Equals("reference", StringComparison.OrdinalIgnoreCase))
+            {
+                obj = GetObjectReference(obj);
+            }
             //Handle Level
             var json = ApplyLevelModifier(level, obj);
             return json;
         }
 
+        private object GetObjectReference(object obj)
+        {
+            if (obj is AdminShellV20.AdministrationShell aas)
+                return aas.GetReference();
+            else if (obj is Submodel submodel)
+                return submodel.GetReference();
+            else if (obj is SubmodelElement submodelElement)
+                return submodelElement.GetReference();
+            else
+            {
+                Console.WriteLine("Error: Object not handled for the Reference type modifier.");
+                return obj;
+            }
+        }
+
         private object ApplyLevelModifier(string level, object obj)
         {
-            if(level.Equals("deep", StringComparison.OrdinalIgnoreCase))
+            OutputModifierContractResolver contractResolver = new OutputModifierContractResolver();
+
+            if (level.Equals("core", StringComparison.OrdinalIgnoreCase))
             {
-                var contractResolver = new OutputModifierContractResolver(true);
-                var settings = new JsonSerializerSettings();
-                if (contractResolver != null)
-                    settings.ContractResolver = contractResolver;
-                var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-                return json;
+                contractResolver.Deep = false;
             }
-            return null;
+
+            var settings = new JsonSerializerSettings();
+            if (contractResolver != null)
+                settings.ContractResolver = contractResolver;
+            var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
+            return json;
         }
 
         internal bool AddSubmodel(Submodel submodel)
@@ -544,12 +585,12 @@ namespace IO.Swagger.Helpers
             if (submodelRef.Count != 1)
                 return null;
 
-            foreach(var env in Packages)
+            foreach (var env in Packages)
             {
-                if(env != null)
+                if (env != null)
                 {
                     var submodel = env.AasEnv.FindSubmodel(new Identification(submodelRef.First.idType, submodelRef.First.value));
-                    if(submodel != null)
+                    if (submodel != null)
                     {
                         return submodel;
                     }
@@ -603,12 +644,12 @@ namespace IO.Swagger.Helpers
                             return FindSubmodelElementByPath(collection, idShorts[1], out parent);
                         }
                     }
-                } 
+                }
             }
             else
             {
                 var smeWrapper = submodel.FindSubmodelElementWrapper(idShortPath);
-                if(smeWrapper != null)
+                if (smeWrapper != null)
                     return smeWrapper.submodelElement;
             }
 
@@ -644,7 +685,7 @@ namespace IO.Swagger.Helpers
                 {
                     foreach (Submodel submodel in env.AasEnv.Submodels)
                     {
-                        if(submodel.idShort.Equals(idShort))
+                        if (submodel.idShort.Equals(idShort))
                         {
                             outputSubmodels.Add(submodel);
                         }
@@ -680,9 +721,71 @@ namespace IO.Swagger.Helpers
             return null;
         }
 
-        internal object InvokeOperation(SubmodelElement submodelElement)
+        internal object InvokeOperationSync(Operation operation, Models.OperationRequest operationRequest)
         {
-            throw new NotImplementedException();
+            Models.OperationResult opResult = new Models.OperationResult();
+            //Check the qualifier for demo
+            if (operation.HasQualifierOfType("Demo") != null)
+            {
+                opResult.OutputArguments = new List<Models.OperationVariable>();
+                opResult.OutputArguments.Add(new Models.OperationVariable());
+                opResult.ExecutionState = Models.OperationResult.ExecutionStateEnum.CompletedEnum;
+                Models.Result result = new Models.Result();
+                result.Success = true;
+                opResult.ExecutionResult = result;
+                opResult.RequestId = operationRequest.RequestId;
+            }
+
+            return opResult;
+        }
+
+        internal Models.OperationHandle InvokeOperationAsync(Operation operation, Models.OperationRequest body)
+        {
+            Models.OperationHandle opHandle = new Models.OperationHandle();
+            //Check the qualifier for demo
+            if (operation.HasQualifierOfType("Demo") != null)
+            {
+                opHandle.RequestId = body.RequestId;
+                opHandle.HandleId = Guid.NewGuid().ToString();
+            }
+
+            return opHandle;
+        }
+
+
+        //TestOperation invokation for demo
+        private void InvokeTestOperation(Models.OperationHandle opHandle)
+        {
+            //First invokation
+            Models.OperationResult opResult = new Models.OperationResult();
+            opResult.OutputArguments = new List<Models.OperationVariable>
+            {
+                new Models.OperationVariable()
+            };
+            opResult.ExecutionState = Models.OperationResult.ExecutionStateEnum.InitiatedEnum;
+            Models.Message message = new Models.Message
+            {
+                Code = "xxx",
+                MessageType = Models.Message.MessageTypeEnum.InfoEnum,
+                Text = "Initiated the operation",
+                Timestamp = DateTime.UtcNow.ToString()
+            };
+            Models.Result result = new Models.Result
+            {
+                Messages = new List<Models.Message>() { message }
+            };
+            opResult.ExecutionResult = result;
+            opResult.RequestId = opHandle.RequestId;
+
+            opResultAsyncDict.Add(opHandle.HandleId, opResult);
+
+            Thread.Sleep(120000); // Sleep for two min
+            //Running
+            opResult.ExecutionState = Models.OperationResult.ExecutionStateEnum.RunningEnum;
+
+            Thread.Sleep(120000); // Sleep for two min
+            //Running
+            opResult.ExecutionState = Models.OperationResult.ExecutionStateEnum.CompletedEnum;
         }
 
         /// <summary>
@@ -693,7 +796,7 @@ namespace IO.Swagger.Helpers
         /// <returns></returns>
         internal bool AddSubmodelElement(SubmodelElement parentSME, SubmodelElement submodelElement)
         {
-            
+
             if (parentSME is SubmodelElementCollection parentSMEColl)
             {
                 var existingSmEle = parentSMEColl.FindFirstIdShort(submodelElement.idShort);
@@ -707,7 +810,7 @@ namespace IO.Swagger.Helpers
                 else
                 {
                     parentSMEColl.Add(submodelElement);
-                    
+
                 }
 
                 submodelElement.SetAllTimeStamps(DateTime.UtcNow);
@@ -716,6 +819,23 @@ namespace IO.Swagger.Helpers
 
             return false;
         }
+
+        internal bool AddAsset(Asset body, FindAasReturn aasReturn)
+        {
+            var existingAsset = Packages[aasReturn.IPackage].AasEnv.FindAsset(body.identification);
+            //asset is already present // Ideal case
+            if (existingAsset != null)
+            {
+                Packages[aasReturn.IPackage].AasEnv.Assets.Remove(existingAsset);
+            }
+            Packages[aasReturn.IPackage].AasEnv.Assets.Add(body);
+
+            //Change the assetRef in AAS
+            aasReturn.AAS.assetRef = new AssetRef(new Reference(new Key("Asset", true, body.identification.idType, body.identification.id)));
+            return true;
+        }
+
+
     }
 
     /// <summary>
