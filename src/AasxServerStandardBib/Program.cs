@@ -2124,7 +2124,7 @@ namespace AasxServer
                                                     {
                                                         // dynamic model = JObject.Parse(response);
                                                         JObject parsed = JObject.Parse(response);
-                                                        parseJson(c1, parsed);
+                                                        parseJson(c1, parsed, null);
                                                     }
                                                 }
                                             }
@@ -2194,13 +2194,19 @@ namespace AasxServer
             return;
         }
 
-        public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o)
+        public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o, List<string> filter)
         {
             int newMode = 0;
             DateTime timeStamp = DateTime.UtcNow;
 
             foreach (JProperty jp1 in (JToken)o)
             {
+                if (filter != null && filter.Count != 0)
+                {
+                    if (!filter.Contains(jp1.Name))
+                        continue;
+                }
+
                 AdminShell.SubmodelElementCollection c2;
                 switch (jp1.Value.Type)
                 {
@@ -2228,7 +2234,7 @@ namespace AasxServer
                                 c3.setTimeStamp(timeStamp);
                                 newMode = 1;
                             }
-                            parseJson(c3, el);
+                            parseJson(c3, el, filter);
                         }
                         break;
                     case JTokenType.Object:
@@ -2243,7 +2249,7 @@ namespace AasxServer
                         }
                         foreach (JObject el in jp1.Value)
                         {
-                            parseJson(c2, el);
+                            parseJson(c2, el, filter);
                         }
                         break;
                     default:

@@ -41,6 +41,7 @@ namespace AasxTimeSeries
             public int threadCounter = 0;
             public string sourceType = "";
             public string sourceAddress = "";
+            public List<string> sourceNames = new List<string>();
             public string username = "";
             public string password = "";
             public int samplesCollectionsCount = 0;
@@ -142,6 +143,17 @@ namespace AasxTimeSeries
                                                         if (sme2 is AdminShell.Property)
                                                         {
                                                             tsb.sourceAddress = (sme2 as AdminShell.Property).value;
+                                                        }
+                                                        break;
+                                                    case "sourceNames":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            string[] split = (sme2 as AdminShell.Property).value.Split(',');
+                                                            if (split.Length != 0)
+                                                            {
+                                                                foreach (string s in split)
+                                                                    tsb.sourceNames.Add(s);
+                                                            }
                                                         }
                                                         break;
                                                     case "destFormat":
@@ -465,7 +477,7 @@ namespace AasxTimeSeries
                                 tsb.block.Add(c);
                                 c.setTimeStamp(timeStamp);
                             }
-                            parseJSON(tsb.sourceAddress, "", "", c);
+                            parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames);
 
                             foreach (var el in c.value)
                             {
@@ -819,7 +831,7 @@ namespace AasxTimeSeries
             return !final;
         }
 
-        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c)
+        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c, List<string> filter)
         {
             var handler = new HttpClientHandler();
             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
@@ -836,13 +848,12 @@ namespace AasxTimeSeries
             try
             {
                 string response = client.GetStringAsync(url).Result;
-
                 Console.WriteLine(response);
 
                 if (response != "")
                 {
                     JObject parsed = JObject.Parse(response);
-                    Program.parseJson(c, parsed);
+                    Program.parseJson(c, parsed, filter);
                 }
             }
             catch (Exception ex)
