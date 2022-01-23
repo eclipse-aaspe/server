@@ -44,6 +44,7 @@ namespace AasxTimeSeries
             public List<string> sourceNames = new List<string>();
             public string username = "";
             public string password = "";
+            public int plotRowOffset = 0;
             public int samplesCollectionsCount = 0;
             public List<AdminShell.Property> samplesProperties = null;
             public List<string> samplesValues = null;
@@ -131,7 +132,8 @@ namespace AasxTimeSeries
                                                 if (idShort.Contains("opcNode"))
                                                     idShort = "opcNode";
                                                 if (idShort.Contains("modbusNode"))
-                                                    idShort = "modbusNode"; switch (idShort)
+                                                    idShort = "modbusNode";
+                                                switch (idShort)
                                                 {
                                                     case "sourceType":
                                                         if (sme2 is AdminShell.Property)
@@ -181,6 +183,12 @@ namespace AasxTimeSeries
                                                         if (sme2 is AdminShell.Property)
                                                         {
                                                             tsb.password = (sme2 as AdminShell.Property).value;
+                                                        }
+                                                        break;
+                                                    case "plotRowOffset":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.plotRowOffset = Convert.ToInt32((sme2 as AdminShell.Property).value);
                                                         }
                                                         break;
                                                     case "data":
@@ -636,7 +644,7 @@ namespace AasxTimeSeries
                                         "{ grp:1, src: \"Event\"," +
                                         "title: \"" + latestDataName + "\"," +
                                         "fmt: \"F0\"," +
-                                        "row: " + i + "," +
+                                        "row: " + (tsb.plotRowOffset + i) + "," +
                                         "col: 0, rowspan: 1, colspan:1, unit: \"\", linewidth: 1.0 }";
                                     if (latestDataProperty.qualifiers == null)
                                         latestDataProperty.qualifiers = new AdminShellV20.QualifierCollection();
