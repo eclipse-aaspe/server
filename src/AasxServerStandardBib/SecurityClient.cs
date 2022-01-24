@@ -728,6 +728,7 @@ namespace AasxServer
             while (true)
             {
                 tasksCyclic();
+                Thread.Sleep(100);
             }
         }
 
