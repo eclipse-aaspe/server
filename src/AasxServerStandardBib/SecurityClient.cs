@@ -435,6 +435,7 @@ namespace AasxServer
             AdminShell.SubmodelElementCollection elementCollection = null;
             AdminShell.Submodel elementSubmodel = null;
             AdminShell.Property lastDiff = null;
+            AdminShell.Property status = null;
 
             AdminShell.SubmodelElementCollection smec = null;
             AdminShell.Submodel sm = null;
@@ -503,6 +504,10 @@ namespace AasxServer
                         if (p != null)
                             lastDiff = p;
                         break;
+                    case "status":
+                        if (p != null)
+                            status = p;
+                        break;
                 }
             }
 
@@ -564,13 +569,24 @@ namespace AasxServer
             HttpResponseMessage response = null;
             Task task = null;
 
+            if (status != null)
+                status.value = "OK";
             if (opName == "get")
             {
                 try
                 {
                     task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
                     task.Wait();
-                    if (!response.IsSuccessStatusCode) return;
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        if (status != null)
+                        {
+                            status.value = response.StatusCode.ToString() + " ; " +
+                                response.Content.ReadAsStringAsync().Result;
+                            Program.signalNewData(1);
+                        }
+                        return;
+                    }
                 }
                 catch
                 {
@@ -671,6 +687,7 @@ namespace AasxServer
                         json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
                     if (json != "")
                     {
+                        bool error = false;
                         try
                         {
                             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -683,6 +700,16 @@ namespace AasxServer
                         }
                         catch
                         {
+                            error = true;
+                        }
+                        if (error || !response.IsSuccessStatusCode)
+                        {
+                            if (status != null)
+                            {
+                                status.value = response.StatusCode.ToString() + " ; " +
+                                    response.Content.ReadAsStringAsync().Result;
+                                Program.signalNewData(1);
+                            }
                             return;
                         }
                     }
