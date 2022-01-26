@@ -670,24 +670,35 @@ namespace AasxServer
 
                 for (int i = 0; i < count; i++)
                 {
-                    if (opName == "putdiff")
-                    {
-                        var sme = diffCollection.value[i].submodelElement;
-                        if (!(sme is AdminShell.SubmodelElementCollection))
-                            return;
-                        elementCollection = sme as AdminShell.SubmodelElementCollection;
-                        diffPath = "/" + diffCollection.idShort;
-                        if (elementCollection.TimeStamp <= last)
-                            elementCollection = null;
-                    }
+                    bool error = false;
+                    string statusValue = "";
                     string json = "";
-                    if (elementCollection != null)
-                        json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
-                    if (elementSubmodel != null)
-                        json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
+                    try
+                    {
+                        if (opName == "putdiff")
+                        {
+                            var sme = diffCollection.value[i].submodelElement;
+                            if (!(sme is AdminShell.SubmodelElementCollection))
+                                return;
+                            elementCollection = sme as AdminShell.SubmodelElementCollection;
+                            diffPath = "/" + diffCollection.idShort;
+                            if (elementCollection.TimeStamp <= last)
+                                elementCollection = null;
+                        }
+                        if (elementCollection != null)
+                            json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
+                        if (elementSubmodel != null)
+                            json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
+                    }
+                    catch
+                    {
+                        statusValue = "error PUTDIFF index: " + i + " old " + count +
+                            " new " + diffCollection.value.Count;
+                        Console.WriteLine(statusValue);
+                        error = true;
+                    }
                     if (json != "")
                     {
-                        bool error = false;
                         try
                         {
                             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -704,14 +715,19 @@ namespace AasxServer
                         }
                         if (error || !response.IsSuccessStatusCode)
                         {
-                            if (status != null)
-                            {
-                                status.value = response.StatusCode.ToString() + " ; " +
-                                    response.Content.ReadAsStringAsync().Result;
-                                Program.signalNewData(1);
-                            }
-                            return;
+                            statusValue = response.StatusCode.ToString() + " ; " +
+                                response.Content.ReadAsStringAsync().Result;
+                            error = true;
                         }
+                    }
+                    if (error)
+                    {
+                        if (status != null)
+                        {
+                            status.value = statusValue;
+                            Program.signalNewData(1);
+                        }
+                        return;
                     }
                 }
 
