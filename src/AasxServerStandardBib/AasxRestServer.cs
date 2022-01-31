@@ -630,6 +630,73 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(buffer);
             }
 
+            private class diffEntry
+            {
+                public string mode = "";
+                public string path = "";
+                public string type = "";
+                public DateTime timeStamp = new DateTime();
+                public string value = "";
+            }
+            private static void addEntry(bool diffJson, ref string diffText, ref List<diffEntry> diffList,
+                string mode = "", string path = "", string type = "", DateTime timeStamp = new DateTime(), string value = "")
+            {
+                if (!diffJson)
+                {
+                    switch (mode)
+                    {
+                        case "OPEN":
+                            diffText += "<table border=1 cellpadding=4><tbody>";
+                            break;
+                        case "CLOSE":
+                            diffText += "</tbody></table>";
+                            break;
+                        case "DELETE":
+                            if (type == "")
+                            {
+                                diffText += "<tr><td>DELETE</td><td><b>***Deleted_items_before***</b></td><td>ERROR</td><td>" +
+                                    timeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
+
+                            }
+                            else
+                            {
+                                diffText += "<tr><td>DELETE</td><td><b>" + path + "</b></td><td>" + type + "</td><td>" +
+                                    timeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
+                            }
+                            break;
+                        case "CREATE":
+                        case "UPDATE":
+                            diffText += "<tr><td>" + mode + "</td><td><b>" + path +
+                                "</b></td><td>" + type + "</td><td>" +
+                                timeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
+                            if (value != "")
+                                diffText += "<td>" + value + "</td>";
+                            diffText += "</tr>";
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (mode)
+                    {
+                        case "OPEN":
+                        case "CLOSE":
+                            break;
+                        case "DELETE":
+                        case "CREATE":
+                        case "UPDATE":
+                            var entry = new diffEntry();
+                            entry.mode = mode;
+                            entry.path = path;
+                            entry.type = type;
+                            entry.timeStamp = timeStamp;
+                            entry.value = value;
+                            diffList.Add(entry);
+                            break;
+                    }
+                }
+            }
+
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update(/|)$")]
@@ -640,12 +707,25 @@ namespace AasxRestServerLibrary
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update/([^/]+)(/|)$")]
 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/update(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/update/([^/]+)(/|)$")]
+
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/time/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/update(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/update/([^/]+)(/|)$")]
+
             public IHttpContext GetDiff(IHttpContext context)
             {
+                string[] modes = { "DELETE", "CREATE", "UPDATE" };
                 DateTime minimumDate = new DateTime();
-                bool updateOnly = false;
+                bool deep = false;
                 int seconds = 0;
                 string searchPath = "";
+                int searchPathLen = 0;
+                bool diffJson = false;
 
                 var queryString = context.Request.QueryString;
                 string refresh = queryString["refresh"];
@@ -653,6 +733,26 @@ namespace AasxRestServerLibrary
                 {
                     context.Response.Headers.Remove("Refresh");
                     context.Response.Headers.Add("Refresh", refresh);
+                }
+
+                string m = queryString["mode"];
+                if (m != null && m != "")
+                {
+                    try
+                    {
+                        modes = m.Split(',');
+                    }
+                    catch { }
+                }
+
+                string time = queryString["time"];
+                if (time != null && time != "")
+                {
+                    try
+                    {
+                        minimumDate = DateTime.Parse(time).ToUniversalTime();
+                    }
+                    catch { }
                 }
 
                 string auto = queryString["auto"];
@@ -666,7 +766,27 @@ namespace AasxRestServerLibrary
                     catch { }
                 }
 
+                string dd = queryString["deep"];
+                if (dd != null && dd != "")
+                {
+                    deep = true;
+                }
+
+                {
+                    string path = queryString["path"];
+                    if (path != null && path != "")
+                    {
+                        searchPath = path;
+                        searchPathLen = searchPath.Length;
+                    }
+                }
+
                 string restPath = context.Request.PathInfo;
+                if (restPath.Contains("/diffjson/"))
+                {
+                    diffJson = true;
+                    restPath = restPath.Replace("/diffjson/", "/diff/");
+                }
 
                 int aasIndex = -1;
 
@@ -696,68 +816,48 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                if (restPath.Contains("/diff/update"))
-                {
-                    updateOnly = true;
-                    if (restPath.Contains("/diff/update/"))
-                    {
-                        try
-                        {
-                            searchPath = restPath.Substring("/diff/update/".Length);
-                        }
-                        catch { }
-                    }
-                }
-                else
-                {
-                    if (restPath.Contains("/diff/time/"))
-                    {
-                        try
-                        {
-                            minimumDate = DateTime.Parse(restPath.Substring("/diff/time/".Length)).ToUniversalTime();
-                        }
-                        catch { }
-                    }
-                }
+                string diffText = "";
+                List<diffEntry> diffList = new List<diffEntry>();
 
-                string diffText = "<table border=1 cellpadding=4><tbody>";
-                string[] modes = { "CREATE", "UPDATE" };
-
-                if (!updateOnly)
-                {
-                    if (olderDeletedTimeStamp > minimumDate)
-                        diffText += "<tr><td>DELETE</td><td><b>***Deleted_items_before***</b></td><td>ERROR</td><td>" +
-                                olderDeletedTimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
-
-                    foreach (var d in deletedList)
-                    {
-                        if (d.rf == null)
-                            continue;
-                        if (d.rf.TimeStamp > minimumDate)
-                        {
-                            var x = d.rf;
-                            string path = x.idShort;
-                            while (x.parent != null && x != x.parent)
-                            {
-                                x = x.parent;
-                                path = x.idShort + "." + path;
-                            }
-                            diffText += "<tr><td>DELETE</td><td><b>" + path + "</b></td><td>SMEC</td><td>" +
-                                d.rf.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
-                        }
-                    }
-                }
-                else
-                {
-                    string[] modesUpdate = { "UPDATE" };
-                    modes = modesUpdate;
-                }
+                addEntry(diffJson, ref diffText, ref diffList, "OPEN");
 
                 int aascount = AasxServer.Program.env.Length;
 
                 for (int imode = 0; imode < modes.Length; imode++)
                 {
                     string mode = modes[imode];
+
+                    if (mode == "DELETE")
+                    {
+                        if (olderDeletedTimeStamp > minimumDate)
+                        {
+                            addEntry(diffJson, ref diffText, ref diffList,
+                                "DELETE", "***Deleted_items_before***", "", olderDeletedTimeStamp);
+                        }
+
+                        foreach (var d in deletedList)
+                        {
+                            if (d.rf == null)
+                                continue;
+                            if (d.rf.TimeStamp > minimumDate)
+                            {
+                                var x = d.rf;
+                                string path = x.idShort;
+                                while (x.parent != null && x != x.parent)
+                                {
+                                    x = x.parent;
+                                    path = x.idShort + "." + path;
+                                }
+
+                                if (searchPath == "" || path == searchPath.Substring(0, path.Length))
+                                {
+                                    addEntry(diffJson, ref diffText, ref diffList,
+                                        "DELETE", path, "SMEC", d.rf.TimeStamp);
+                                }
+                            }
+                        }
+                        continue;
+                    }
 
                     for (int i = 0; i < aascount; i++)
                     {
@@ -776,12 +876,11 @@ namespace AasxRestServerLibrary
                                 {
                                     if (mode == "CREATE" || aas.TimeStamp != aas.TimeStampCreate)
                                     {
-                                        if (searchPath == "" || aas.idShort.Contains(searchPath))
+                                        string p = aas.idShort;
+                                        if (searchPath == "" || (p.Length <= searchPath.Length && p == searchPath.Substring(0, p.Length)))
                                         {
-                                            diffText += "<tr><td>" + mode + "</td><td><b>" + aas.idShort +
-                                                "</b></td><td>AAS</td><td>" +
-                                                    aas.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
-                                            diffText += "</tr>";
+                                            addEntry(diffJson, ref diffText, ref diffList,
+                                            mode, aas.idShort, "AAS", aas.TimeStamp);
                                         }
                                     }
                                 }
@@ -795,18 +894,18 @@ namespace AasxRestServerLibrary
                                         {
                                             if (mode == "CREATE" && sm.TimeStampCreate > minimumDate)
                                             {
-                                                if (searchPath == "" || (aas.idShort + "." + sm.idShort).Contains(searchPath))
+                                                string p = aas.idShort + "." + sm.idShort;
+                                                if (searchPath == "" || (p.Length <= searchPath.Length && p == searchPath.Substring(0, p.Length)))
                                                 {
-                                                    diffText += "<tr><td>" + mode + "</td><td><b>" + aas.idShort + "." + sm.idShort +
-                                                        "</b></td><td>SM</td><td>" +
-                                                            sm.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
-                                                    diffText += "</tr>";
+                                                    addEntry(diffJson, ref diffText, ref diffList,
+                                                        mode, aas.idShort + "." + sm.idShort, "SM", sm.TimeStamp);
                                                 }
                                             }
 
                                             foreach (var sme in sm.submodelElements)
-                                                diffText += checkDiff(mode, aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
-                                                    minimumDate, updateOnly, searchPath);
+                                                checkDiff(diffJson, ref diffText, ref diffList,
+                                                    mode, aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
+                                                    minimumDate, deep, searchPath);
                                         }
                                     }
                                 }
@@ -815,18 +914,26 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                diffText += "</tbody></table>";
+                addEntry(diffJson, ref diffText, ref diffList, "CLOSE");
 
-                context.Response.ContentType = ContentType.HTML;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = diffText.Length;
-                context.Response.SendResponse(diffText);
+                if (!diffJson)
+                {
+                    context.Response.ContentType = ContentType.HTML;
+                    context.Response.ContentEncoding = Encoding.UTF8;
+                    context.Response.ContentLength64 = diffText.Length;
+                    context.Response.SendResponse(diffText);
+                }
+                else
+                {
+                    SendJsonResponse(context, diffList);
+                }
 
                 return context;
             }
 
-            static string checkDiff(string mode, string path, AdminShell.SubmodelElement sme,
-                DateTime minimumDate, bool updateOnly, string searchPath)
+            static void checkDiff(bool diffJson, ref string diffText, ref List<diffEntry> diffList,
+                string mode, string path, AdminShell.SubmodelElement sme,
+                DateTime minimumDate, bool deep, string searchPath)
             {
                 if (!(sme is AdminShell.SubmodelElementCollection))
                 {
@@ -835,25 +942,26 @@ namespace AasxRestServerLibrary
                     {
                         if (searchPath != "")
                         {
-                            if (!(path + sme.idShort).Contains(searchPath))
-                                return "";
+                            string p = path + sme.idShort;
+                            if (!(searchPath.Length <= p.Length && searchPath == p.Substring(0, searchPath.Length)))
+                                return;
                         }
-                        string text = "<tr><td>" + mode + "</td><td><b>" + path + sme.idShort + "</b></td><td>SME</td><td>" +
-                            sme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td>";
-                        if (updateOnly)
-                            text += "<td><b>" + sme.ValueAsText() + "</b></td>";
-                        text += "</tr>";
-                        return text;
+                        string value = "";
+                        if (mode != "CREATE")
+                            value = sme.ValueAsText();
+                        addEntry(diffJson, ref diffText, ref diffList,
+                            mode, path + sme.idShort, "SME", sme.TimeStamp, value);
+                        return;
                     }
 
-                    return "";
+                    return;
                 }
 
                 var smec = sme as AdminShell.SubmodelElementCollection;
                 if (mode == "CREATE" || sme.TimeStamp > minimumDate)
                 {
                     bool deeper = false;
-                    if (updateOnly)
+                    if (deep)
                     {
                         deeper = true;
                     }
@@ -876,28 +984,29 @@ namespace AasxRestServerLibrary
 
                     if (deeper)
                     {
-                        string text = "";
                         foreach (var sme2 in smec.value)
-                            text += checkDiff(mode, path + sme.idShort + ".", sme2.submodelElement,
-                                minimumDate, updateOnly, searchPath);
-                        return text;
+                            checkDiff(diffJson, ref diffText, ref diffList,
+                                mode, path + sme.idShort + ".", sme2.submodelElement,
+                                minimumDate, deep, searchPath);
+                        return;
                     }
 
                     if ((mode == "CREATE" && sme.TimeStampCreate > minimumDate) ||
-                        (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
+                            (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
                     {
                         if (searchPath != "")
                         {
-                            if (!(path + sme.idShort).Contains(searchPath))
-                                return "";
+                            string p = path + sme.idShort;
+                            if (!(searchPath.Length <= p.Length && searchPath == p.Substring(0, searchPath.Length)))
+                                return;
                         }
 
-                        return "<tr><td>" + mode + "</td><td><b>" + path + smec.idShort + "</b></td><td>SMEC</td><td>" +
-                        smec.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + "</td></tr>";
+                        addEntry(diffJson, ref diffText, ref diffList,
+                            mode, path + smec.idShort, "SMEC", smec.TimeStamp);
                     }
                 }
 
-                return "";
+                return;
             }
 
             public static AasxHttpContextHelper helper = null;
