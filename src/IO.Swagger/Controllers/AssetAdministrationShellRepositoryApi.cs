@@ -25,7 +25,7 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
-    [Authorize]
+    //[Authorize]
     [ApiController]
     public class AssetAdministrationShellRepositoryApiController : ControllerBase
     {
