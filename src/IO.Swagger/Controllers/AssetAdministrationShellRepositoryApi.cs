@@ -14,6 +14,7 @@ using AdminShellNS;
 using IO.Swagger.Attributes;
 using IO.Swagger.Helpers;
 using IO.Swagger.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
@@ -24,6 +25,7 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
+    [Authorize]
     [ApiController]
     public class AssetAdministrationShellRepositoryApiController : ControllerBase
     {
@@ -196,15 +198,27 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested serialization based on SerializationFormat")]
         public virtual IActionResult GenerateSerializationByIds([FromQuery][Required()] List<string> aasIds, [FromQuery][Required()] List<string> submodelIds, [FromQuery][Required()] bool? includeConceptDescriptions)
         {
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(byte[]));
-            string exampleJson = null;
-            exampleJson = "\"\"";
+            List<object> payload = new List<object>();
+            foreach (string aasId in aasIds)
+            {
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasId));
+                if (aasReturn != null)
+                {
+                    payload.Add(aasReturn.AAS);
+                }
+            }
 
-            var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<byte[]>(exampleJson)
-            : default(byte[]);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //TODO: NotSure
+            foreach (string submodelId in submodelIds)
+            {
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelId));
+                if (submodel != null)
+                {
+                    payload.Add(submodel);
+                }
+            }
+
+            return new ObjectResult(payload);
         }
 
         /// <summary>
@@ -463,10 +477,8 @@ namespace IO.Swagger.Controllers
                 {
                     return new ObjectResult(aasReturn.AAS);
                 }
-                else if (content.Equals("reference", StringComparison.OrdinalIgnoreCase))
-                {
-                    return new ObjectResult(aasHelper.HandleOutputModifiers(aasReturn.AAS, content: content));
-                }
+
+                return new ObjectResult(aasHelper.HandleOutputModifiers(aasReturn.AAS, content: content));
             }
 
             return NotFound();
@@ -558,15 +570,38 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         public virtual IActionResult GetOperationAsyncResult([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromRoute][Required] string handleId, [FromQuery] string content)
         {
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(OperationResult));
-            string exampleJson = null;
-            exampleJson = "{\n  \"outputArguments\" : [ null, null ],\n  \"requestId\" : \"requestId\",\n  \"executionResult\" : \"{}\",\n  \"executionState\" : \"Initiated\",\n  \"inoutputArguments\" : [ {\n    \"value\" : \"\"\n  }, {\n    \"value\" : \"\"\n  } ]\n}";
+            if (string.IsNullOrEmpty(handleId))
+            {
+                return BadRequest($"Invalid HandleId.");
+            }
+            //Check if aas exists
+            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+            if (aasReturn.AAS == null)
+            {
+                return NotFound($"AAS not found");
+            }
 
-            var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<OperationResult>(exampleJson)
-            : default(OperationResult);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //Check if submodel exists
+            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+            if (submodel == null)
+            {
+                return NotFound($"Submodel not found.");
+            }
+
+            //Find the operation from the idShortpath
+            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+            if (submodelElement == null)
+            {
+                return NotFound($"Operation {idShortPath} not found.");
+            }
+
+            var opResult = aasHelper.GetOperationAsyncResult(Base64UrlEncoder.Decode(handleId));
+            if (opResult != null)
+            {
+                return new ObjectResult(opResult);
+            }
+
+            return NotFound($"Operation with the handle id not found");
         }
 
         /// <summary>
@@ -584,15 +619,32 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         public virtual IActionResult GetOperationAsyncResultSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromRoute][Required] string handleId, [FromQuery] string content)
         {
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(OperationResult));
-            string exampleJson = null;
-            exampleJson = "{\n  \"outputArguments\" : [ null, null ],\n  \"requestId\" : \"requestId\",\n  \"executionResult\" : \"{}\",\n  \"executionState\" : \"Initiated\",\n  \"inoutputArguments\" : [ {\n    \"value\" : \"\"\n  }, {\n    \"value\" : \"\"\n  } ]\n}";
+            if (string.IsNullOrEmpty(handleId))
+            {
+                return BadRequest($"Invalid HandleId.");
+            }
 
-            var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<OperationResult>(exampleJson)
-            : default(OperationResult);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //Check if submodel exists
+            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+            if (submodel == null)
+            {
+                return NotFound($"Submodel not found.");
+            }
+
+            //Find the operation from the idShortpath
+            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+            if (submodelElement == null)
+            {
+                return NotFound($"Operation {idShortPath} not found.");
+            }
+
+            var opResult = aasHelper.GetOperationAsyncResult(Base64UrlEncoder.Decode(handleId));
+            if (opResult != null)
+            {
+                return new ObjectResult(opResult);
+            }
+
+            return NotFound($"Operation with the handle id not found");
         }
 
         /// <summary>
