@@ -10,6 +10,7 @@ This source code may use other Open Source software components (see LICENSE.txt)
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -5115,6 +5116,11 @@ namespace AdminShellNS
                 ModelingKind.Validate(results, kind, this);
                 KeyList.Validate(results, semanticId?.Keys, this);
             }
+
+            public virtual object ToValueOnlySerialization()
+            {
+                throw new NotImplementedException();
+            }
         }
 
         [XmlType(TypeName = "submodelElement")]
@@ -6378,6 +6384,7 @@ namespace AdminShellNS
             }
         }
 
+        //[JsonConverter(typeof(IO.Swagger.Helpers.ValueOnlyJsonConverter))]
         public class Property : DataElement
         {
             // for JSON only
@@ -6497,6 +6504,14 @@ namespace AdminShellNS
                 return null;
             }
 
+            public override object ToValueOnlySerialization()
+            {
+                var valueObject = new Dictionary<string, string>
+                {
+                    { idShort, value }
+                };
+                return valueObject;
+            }
         }
 
         public class MultiLanguageProperty : DataElement
@@ -6576,6 +6591,18 @@ namespace AdminShellNS
                 return "" + value?.GetDefaultStr(defaultLang);
             }
 
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, Dictionary<string, string>>();
+                var valueDict = new Dictionary<string, string>();
+                foreach (LangStr langStr in value.langString)
+                {
+                    valueDict.Add(langStr.lang, langStr.str);
+                }
+
+                output.Add(idShort, valueDict);
+                return output;
+            }
         }
 
         public class Range : DataElement
@@ -6650,6 +6677,18 @@ namespace AdminShellNS
                 return "" + min + " .. " + max;
             }
 
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, Dictionary<string, string>>();
+                var valueDict = new Dictionary<string, string>
+                {
+                    { "min", min },
+                    { "max", max }
+                };
+
+                output.Add(idShort, valueDict);
+                return output;
+            }
         }
 
         public class Blob : DataElement
@@ -6808,6 +6847,19 @@ namespace AdminShellNS
             {
                 return "" + value;
             }
+
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, Dictionary<string, string>>();
+                var valueDict = new Dictionary<string, string>
+                {
+                    { "mimeType", mimeType },
+                    { "value", value }
+                };
+
+                output.Add(idShort, valueDict);
+                return output;
+            }
         }
 
         public class ReferenceElement : DataElement
@@ -6868,6 +6920,24 @@ namespace AdminShellNS
                 return new AasElementSelfDescription("ReferenceElement", "Ref");
             }
 
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, List<Dictionary<string, string>>>();
+
+                var list = new List<Dictionary<string, string>>();
+                foreach (var key in value.Keys)
+                {
+                    var valueDict = new Dictionary<string, string>
+                    {
+                        { "type", key.type },
+                        { "value", key.value }
+                    };
+                    list.Add(valueDict);
+                }
+
+                output.Add(idShort, list);
+                return output;
+            }
         }
 
         public class RelationshipElement : DataElement
@@ -6936,6 +7006,7 @@ namespace AdminShellNS
             {
                 return new AasElementSelfDescription("RelationshipElement", "Rel");
             }
+
         }
 
         public class AnnotatedRelationshipElement : RelationshipElement, IManageSubmodelElements, IEnumerateChildren

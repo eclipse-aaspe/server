@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AdminShellNS;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using static AdminShellNS.AdminShellV20;
 
 namespace IO.Swagger.Helpers
@@ -14,10 +18,7 @@ namespace IO.Swagger.Helpers
     public class AASHelper
     {
         private static AdminShellPackageEnv[] Packages;
-        /// <summary>
-        /// HandleId to operation result mapping for InvokeAsyncResult
-        /// </summary>
-        private static Dictionary<string, Models.OperationResult> opResultAsyncDict;
+        private Timer m_simulationTimer;
 
         /// <summary>
         /// Constructor
@@ -25,7 +26,6 @@ namespace IO.Swagger.Helpers
         public AASHelper()
         {
             Packages = AasxServer.Program.env;
-            opResultAsyncDict = new Dictionary<string, Models.OperationResult>();
         }
 
         internal Submodel FindSubmodelWithinAAS(string aasIdentifier, string submodelIdentifier)
@@ -500,13 +500,123 @@ namespace IO.Swagger.Helpers
                 extent = "withoutBlobValue";
             }
 
+            OutputModifierContractResolver contractResolver = new OutputModifierContractResolver();
+
+            if (level.Equals("core", StringComparison.OrdinalIgnoreCase))
+            {
+                contractResolver.Deep = false;
+            }
+
+            contractResolver.Content = content;
+            contractResolver.Extent = extent;
+
             if (content.Equals("reference", StringComparison.OrdinalIgnoreCase))
             {
                 obj = GetObjectReference(obj);
             }
-            //Handle Level
-            var json = ApplyLevelModifier(level, obj);
+
+            if (content.Equals("path", StringComparison.OrdinalIgnoreCase))
+            {
+                List<string> idShortPath = new List<string>();
+                GetIdShortPath(obj, level, idShortPath);
+                return idShortPath;
+            }
+
+            var settings = new JsonSerializerSettings();
+            if (content.Equals("value", StringComparison.OrdinalIgnoreCase))
+            {
+                //settings.Converters.Add(new ValueOnlyJsonConverter(true, obj));
+                //var jsonTest = JsonConvert.SerializeObject(obj, settings);
+                object output = GetValueOnly(obj, level);
+                var jsonOutput = JsonConvert.SerializeObject(output, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() });
+                return jsonOutput;
+            }
+
+            if (contractResolver != null)
+                settings.ContractResolver = contractResolver;
+            var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
+
             return json;
+        }
+
+        private object GetValueOnly(object obj, string level)
+        {
+            try
+            {
+                if (obj is Submodel submodel)
+                {
+                    List<object> values = new List<object>();
+                    foreach (var smElement in submodel.submodelElements)
+                    {
+                        object value = GetValueOnly(smElement.submodelElement, level);
+                        values.Add(value);
+                    }
+                    return values;
+                }
+                else if (obj is SubmodelElementCollection collection)
+                {
+                    if (level.Equals("deep", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<object> values = new List<object>();
+                        foreach (var smElement in collection.value)
+                        {
+                            object value = GetValueOnly(smElement.submodelElement, level);
+                            values.Add(value);
+                        }
+                        return values;
+                    }
+                }
+                else if (obj is SubmodelElement submodelElement)
+                {
+                    return submodelElement.ToValueOnlySerialization();
+                }
+                else
+                {
+                    Console.WriteLine("Not supported");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+            }
+            return null;
+        }
+
+        private void GetIdShortPath(object obj, string level, List<string> idShortPath)
+        {
+            if (obj is Submodel submodel)
+            {
+                idShortPath.Add(submodel.idShort);
+                foreach (var smElement in submodel.submodelElements)
+                {
+                    GetIdShortPath(smElement.submodelElement, level, idShortPath);
+                }
+            }
+            else if (obj is SubmodelElementCollection collection)
+            {
+                idShortPath.Add(idShortPath.Last() + "." + collection.idShort);
+                if (level.Equals("deep", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (var smEle in collection.value)
+                    {
+                        GetIdShortPath(smEle.submodelElement, level, idShortPath);
+                    }
+                }
+            }
+            else if (obj is Entity entity)
+            {
+                idShortPath.Add(idShortPath.Last() + "." + entity.idShort);
+                //TODO: look for definition and children*
+            }
+            else if (obj is SubmodelElement smEle)
+            {
+                idShortPath.Add(idShortPath.Last() + "." + smEle.idShort);
+            }
+            else
+            {
+                Console.WriteLine($"Outout modifier pathis not applicable to {obj.GetType()}");
+            }
         }
 
         private object GetObjectReference(object obj)
@@ -522,22 +632,6 @@ namespace IO.Swagger.Helpers
                 Console.WriteLine("Error: Object not handled for the Reference type modifier.");
                 return obj;
             }
-        }
-
-        private object ApplyLevelModifier(string level, object obj)
-        {
-            OutputModifierContractResolver contractResolver = new OutputModifierContractResolver();
-
-            if (level.Equals("core", StringComparison.OrdinalIgnoreCase))
-            {
-                contractResolver.Deep = false;
-            }
-
-            var settings = new JsonSerializerSettings();
-            if (contractResolver != null)
-                settings.ContractResolver = contractResolver;
-            var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-            return json;
         }
 
         internal bool AddSubmodel(Submodel submodel)
@@ -676,6 +770,12 @@ namespace IO.Swagger.Helpers
             return outputSubmodels;
         }
 
+        internal object GetOperationAsyncResult(string handleId)
+        {
+            AsyncOperationResultStorage.opResultAsyncDict.TryGetValue(handleId, out Models.OperationResult opResult);
+            return opResult;
+        }
+
         internal List<Submodel> FindAllSubmodelsByIdShort(string idShort)
         {
             var outputSubmodels = new List<AdminShellV20.Submodel>();
@@ -747,6 +847,7 @@ namespace IO.Swagger.Helpers
             {
                 opHandle.RequestId = body.RequestId;
                 opHandle.HandleId = Guid.NewGuid().ToString();
+                InvokeTestOperation(opHandle);
             }
 
             return opHandle;
@@ -777,15 +878,21 @@ namespace IO.Swagger.Helpers
             opResult.ExecutionResult = result;
             opResult.RequestId = opHandle.RequestId;
 
-            opResultAsyncDict.Add(opHandle.HandleId, opResult);
+            AsyncOperationResultStorage.opResultAsyncDict.Add(opHandle.HandleId, opResult);
 
-            Thread.Sleep(120000); // Sleep for two min
-            //Running
-            opResult.ExecutionState = Models.OperationResult.ExecutionStateEnum.RunningEnum;
+            m_simulationTimer = new Timer(DoSimulation, null, 5000, 5000);
+        }
 
-            Thread.Sleep(120000); // Sleep for two min
-            //Running
-            opResult.ExecutionState = Models.OperationResult.ExecutionStateEnum.CompletedEnum;
+        private void DoSimulation(object state)
+        {
+            var random = new Random();
+            var values = Enum.GetValues(typeof(Models.OperationResult.ExecutionStateEnum));
+
+            foreach (var handleId in AsyncOperationResultStorage.opResultAsyncDict.Keys)
+            {
+                var value = (Models.OperationResult.ExecutionStateEnum)values.GetValue(random.Next(values.Length));
+                AsyncOperationResultStorage.opResultAsyncDict[handleId].ExecutionState = value;
+            }
         }
 
         /// <summary>
@@ -845,5 +952,16 @@ namespace IO.Swagger.Helpers
     {
         public AdminShell.AdministrationShell AAS { get; set; } = null;
         public int IPackage { get; set; } = -1;
+    }
+
+    /// <summary>
+    /// Test class to store handle id and operation execution results
+    /// </summary>
+    public static class AsyncOperationResultStorage
+    {
+        /// <summary>
+        /// HandleId vs Operation Result of the corresponding Opration
+        /// </summary>
+        public static Dictionary<string, Models.OperationResult> opResultAsyncDict = new Dictionary<string, Models.OperationResult>();
     }
 }
