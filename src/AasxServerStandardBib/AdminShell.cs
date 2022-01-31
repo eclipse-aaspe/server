@@ -7068,6 +7068,38 @@ namespace AdminShellNS
                 return new AasElementSelfDescription("RelationshipElement", "Rel");
             }
 
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, List<Dictionary<string, string>>>();
+
+                var listFirst = new List<Dictionary<string, string>>();
+                foreach (var key in first.Keys)
+                {
+                    var valueDict = new Dictionary<string, string>
+                    {
+                        { "type", key.type },
+                        { "value", key.value }
+                    };
+                    listFirst.Add(valueDict);
+                }
+
+                var listSecond = new List<Dictionary<string, string>>();
+                foreach (var key in second.Keys)
+                {
+                    var valueDict = new Dictionary<string, string>
+                    {
+                        { "type", key.type },
+                        { "value", key.value }
+                    };
+                    listSecond.Add(valueDict);
+                }
+
+                dynamic relObj = new ExpandoObject();
+                relObj.first = listFirst;
+                relObj.second = listSecond;
+                output.Add(idShort, relObj);
+                return output;
+            }
         }
 
         public class AnnotatedRelationshipElement : RelationshipElement, IManageSubmodelElements, IEnumerateChildren
@@ -7191,6 +7223,40 @@ namespace AdminShellNS
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("AnnotatedRelationshipElement", "RelA");
+            }
+
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, List<Dictionary<string, string>>>();
+
+                var listFirst = new List<Dictionary<string, string>>();
+                foreach (var key in first.Keys)
+                {
+                    var valueDict = new Dictionary<string, string>
+                    {
+                        { "type", key.type },
+                        { "value", key.value }
+                    };
+                    listFirst.Add(valueDict);
+                }
+
+                var listSecond = new List<Dictionary<string, string>>();
+                foreach (var key in second.Keys)
+                {
+                    var valueDict = new Dictionary<string, string>
+                    {
+                        { "type", key.type },
+                        { "value", key.value }
+                    };
+                    listSecond.Add(valueDict);
+                }
+
+                dynamic relObj = new ExpandoObject();
+                relObj.first = listFirst;
+                relObj.second = listSecond;
+                relObj.annotation = annotations;
+                output.Add(idShort, relObj);
+                return output;
             }
         }
 

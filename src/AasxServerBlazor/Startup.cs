@@ -63,11 +63,11 @@ namespace AasxServerBlazor
                 })
                 .AddXmlSerializerFormatters();
 
-            // configure DI for application services
-            services.AddScoped<IUserService, UserService>();
-            // configure basic authentication 
-            services.AddAuthentication("BasicAuthentication")
-                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null); services.AddAuthentication();
+            //// configure DI for application services
+            //services.AddScoped<IUserService, UserService>();
+            //// configure basic authentication 
+            //services.AddAuthentication("BasicAuthentication")
+            //    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null); services.AddAuthentication();
 
 
             services
@@ -87,29 +87,29 @@ namespace AasxServerBlazor
                         TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
                     });
 
-                    c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
-                    {
-                        Name = "Authorization",
-                        Type = SecuritySchemeType.Http,
-                        Scheme = "basic",
-                        In = ParameterLocation.Header,
-                        Description = "Basic Authorization header using the Bearer scheme."
-                    });
+                    //c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
+                    //{
+                    //    Name = "Authorization",
+                    //    Type = SecuritySchemeType.Http,
+                    //    Scheme = "basic",
+                    //    In = ParameterLocation.Header,
+                    //    Description = "Basic Authorization header using the Bearer scheme."
+                    //});
 
-                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                    {
-                        {
-                              new OpenApiSecurityScheme
-                                {
-                                    Reference = new OpenApiReference
-                                    {
-                                        Type = ReferenceType.SecurityScheme,
-                                        Id = "basic"
-                                    }
-                                },
-                                new string[] {}
-                        }
-                    });
+                    //c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    //{
+                    //    {
+                    //          new OpenApiSecurityScheme
+                    //            {
+                    //                Reference = new OpenApiReference
+                    //                {
+                    //                    Type = ReferenceType.SecurityScheme,
+                    //                    Id = "basic"
+                    //                }
+                    //            },
+                    //            new string[] {}
+                    //    }
+                    //});
 
                     c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
@@ -138,8 +138,8 @@ namespace AasxServerBlazor
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
+            //app.UseAuthentication();
+            //app.UseAuthorization();
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
