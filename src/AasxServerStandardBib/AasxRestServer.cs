@@ -630,7 +630,7 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(buffer);
             }
 
-            private class diffEntry
+            public class diffEntry
             {
                 public string mode = "";
                 public string path = "";

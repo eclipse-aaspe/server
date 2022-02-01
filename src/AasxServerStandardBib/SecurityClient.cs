@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using AasxRestServerLibrary;
 using AasxServer;
 using AdminShellNS;
 using IdentityModel;
@@ -169,6 +170,7 @@ namespace AasxServer
                             operation_authenticate(op, envIndex, timeStamp);
                             break;
                         case "get":
+                        case "getdiff":
                         case "put":
                         case "putdiff":
                             operation_get_put(op, envIndex, timeStamp);
@@ -568,11 +570,42 @@ namespace AasxServer
             string requestPath = endPoint.value + "/" + path.value;
             HttpResponseMessage response = null;
             Task task = null;
+            string diffPath = "";
 
             if (status != null)
                 status.value = "OK";
-            if (opName == "get")
+            if (opName == "get" || opName == "getdiff")
             {
+                AdminShell.SubmodelElementCollection diffCollection = null;
+                DateTime last = new DateTime();
+                if (opName == "getdiff")
+                {
+                    if (lastDiff == null)
+                        return;
+                    if (elementCollection == null)
+                        return;
+                    var splitPath = path.value.Split('.');
+                    if (splitPath.Length < 4)
+                        return;
+                    if (lastDiff.value == "")
+                    {
+                        opName = "get";
+                        lastDiff.value = "" + DateTime.UtcNow;
+                        requestPath = endPoint.value + "/aas/" + splitPath[0] +
+                            "/submodels/" + splitPath[1] + "/elements/" + splitPath[2] +
+                            "/" + splitPath[3] + "/deep";
+                    }
+                    else
+                    {
+                        last = DateTime.Parse(lastDiff.value);
+                        requestPath = endPoint.value +
+                            "/diffjson/aas/" + splitPath[0] +
+                            "?mode=CREATE,UPDATE&path=" + path.value +
+                            "&time=" + last;
+                    }
+
+                }
+
                 try
                 {
                     task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
@@ -598,43 +631,131 @@ namespace AasxServer
                 AdminShell.Submodel receiveSubmodel = null;
                 try
                 {
-                    if (elementCollection != null)
+                    if (opName == "get")
                     {
-                        JObject parsed = JObject.Parse(json);
-                        foreach (JProperty jp1 in (JToken)parsed)
+                        if (elementCollection != null)
                         {
-                            if (jp1.Name == "elem")
+                            JObject parsed = JObject.Parse(json);
+                            foreach (JProperty jp1 in (JToken)parsed)
                             {
-                                string text = jp1.Value.ToString();
-                                receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
-                                    text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                elementCollection.value = receiveCollection.value;
-                                elementCollection.setTimeStamp(timeStamp);
+                                if (jp1.Name == "elem")
+                                {
+                                    string text = jp1.Value.ToString();
+                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                        text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                    elementCollection.value = receiveCollection.value;
+                                    elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
+                                    elementCollection.setTimeStamp(timeStamp);
+                                }
                             }
                         }
+                        if (elementSubmodel != null)
+                        {
+                            receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Submodel>(
+                                json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                            receiveSubmodel.setTimeStamp(timeStamp);
+                            receiveSubmodel.SetAllParents(timeStamp);
+
+                            // need id for idempotent behaviour
+                            if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
+                                return;
+
+                            var aas = Program.env[0].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
+
+                            // datastructure update
+                            if (Program.env == null || Program.env[0].AasEnv == null || Program.env[0].AasEnv.Assets == null)
+                                return;
+
+                            // add Submodel
+                            var existingSm = Program.env[0].AasEnv.FindSubmodel(receiveSubmodel.identification);
+                            if (existingSm != null)
+                                Program.env[0].AasEnv.Submodels.Remove(existingSm);
+                            Program.env[0].AasEnv.Submodels.Add(receiveSubmodel);
+                        }
                     }
-                    if (elementSubmodel != null)
+                    if (opName == "getdiff")
                     {
-                        receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Submodel>(
-                            json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                        receiveSubmodel.setTimeStamp(timeStamp);
-                        receiveSubmodel.SetAllParents(timeStamp);
+                        List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
+                        diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
+                        foreach (var d in diffList)
+                        {
+                            if (d.type == "SMEC")
+                            {
+                                if (d.path.Length > path.value.Length && path.value == d.path.Substring(0, path.value.Length))
+                                {
+                                    var splitPath = d.path.Split('.');
+                                    if (splitPath.Length != 5)
+                                        return;
+                                    requestPath = endPoint.value + "/aas/" + splitPath[0] +
+                                        "/submodels/" + splitPath[1] + "/elements/" + splitPath[2] +
+                                        "/" + splitPath[3] + "/" + splitPath[4] + "/deep";
+                                    try
+                                    {
+                                        task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                                        task.Wait();
+                                        if (!response.IsSuccessStatusCode)
+                                        {
+                                            if (status != null)
+                                            {
+                                                status.value = response.StatusCode.ToString() + " ; " +
+                                                    response.Content.ReadAsStringAsync().Result;
+                                                Program.signalNewData(1);
+                                            }
+                                            return;
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        return;
+                                    }
 
-                        // need id for idempotent behaviour
-                        if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
-                            return;
-
-                        var aas = Program.env[0].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
-
-                        // datastructure update
-                        if (Program.env == null || Program.env[0].AasEnv == null || Program.env[0].AasEnv.Assets == null)
-                            return;
-
-                        // add Submodel
-                        var existingSm = Program.env[0].AasEnv.FindSubmodel(receiveSubmodel.identification);
-                        if (existingSm != null)
-                            Program.env[0].AasEnv.Submodels.Remove(existingSm);
-                        Program.env[0].AasEnv.Submodels.Add(receiveSubmodel);
+                                    json = response.Content.ReadAsStringAsync().Result;
+                                    JObject parsed = JObject.Parse(json);
+                                    foreach (JProperty jp1 in (JToken)parsed)
+                                    {
+                                        if (jp1.Name == "elem")
+                                        {
+                                            string text = jp1.Value.ToString();
+                                            receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                                text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                            break;
+                                        }
+                                    }
+                                    switch (d.mode)
+                                    {
+                                        case "CREATE":
+                                        case "UPDATE":
+                                            bool found = false;
+                                            foreach (var smew in elementCollection.value)
+                                            {
+                                                var sme = smew.submodelElement;
+                                                if (sme.idShort == receiveCollection.idShort)
+                                                {
+                                                    if (sme is AdminShell.SubmodelElementCollection smc)
+                                                    {
+                                                        if (d.mode == "UPDATE")
+                                                        {
+                                                            smc.value = receiveCollection.value;
+                                                            smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
+                                                            smc.setTimeStamp(timeStamp);
+                                                        }
+                                                        found = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            if (!found && d.mode == "CREATE")
+                                            {
+                                                elementCollection.value.Add(receiveCollection);
+                                                receiveCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, timeStamp);
+                                                receiveCollection.setTimeStamp(timeStamp);
+                                                Program.signalNewData(2);
+                                            }
+                                            break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 catch
@@ -647,7 +768,6 @@ namespace AasxServer
             {
                 AdminShell.SubmodelElementCollection diffCollection = null;
                 DateTime last = new DateTime();
-                string diffPath = "";
                 int count = 1;
                 if (opName == "putdiff")
                 {
