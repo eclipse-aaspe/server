@@ -141,6 +141,7 @@ namespace IO.Swagger.Helpers
             return null;
         }
 
+        //One of the open Questions
         //TODO: Check if asset needs to be deleted? an asset can be referenced in many shells.
         internal bool DeleteAASAndAsset(string aasIdentifier)
         {
@@ -171,11 +172,16 @@ namespace IO.Swagger.Helpers
             return success;
         }
 
-        internal bool DeleteSubmodelElementByPath(SubmodelElement submodelElement, SubmodelElement parent)
+        internal bool DeleteSubmodelElementByPath(SubmodelElement submodelElement, object parent)
         {
             if (parent is SubmodelElementCollection parentColl)
             {
                 parentColl.value.Remove(submodelElement);
+                return true;
+            }
+            else if (parent is Submodel parentSm)
+            {
+                parentSm.Remove(submodelElement);
                 return true;
             }
 
@@ -212,6 +218,7 @@ namespace IO.Swagger.Helpers
                 if (submodelRef != null)
                 {
                     aasReturn.AAS.submodelRefs.Remove(submodelRef);
+                    AasxServer.Program.signalNewData(1);
                     return true;
                 }
             }
@@ -239,14 +246,6 @@ namespace IO.Swagger.Helpers
             if (Packages[0] == null || Packages[0].AasEnv == null || string.IsNullOrEmpty(submodelIdentifier))
                 return null;
 
-            //TODO: Check again
-            // via handle
-            //var specialHandles = CreateHandlesFromRawUrl(rawUrl);
-            //var handleId = IdRefHandleStore.ResolveSpecific<AasxHttpHandleIdentification>(smid, specialHandles);
-            //if (handleId != null && handleId.identification != null)
-            //    return Packages[0].AasEnv.FindSubmodel(handleId.identification);
-
-            // no, iterate & find
             foreach (var submodel in Packages[0].AasEnv.Submodels)
             {
                 if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
@@ -263,7 +262,7 @@ namespace IO.Swagger.Helpers
         /// </summary>
         /// <param name="aas"></param>
         /// <returns></returns>
-        internal bool AddAas(AdministrationShell aas)
+        internal bool AddAas(AdministrationShell aas, string aasIdentifier = null)
         {
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
@@ -271,11 +270,13 @@ namespace IO.Swagger.Helpers
             {
                 if (Packages[envi] != null)
                 {
-                    var existingAas = Packages[envi].AasEnv.FindAAS(aas.identification);
-                    if (existingAas != null)
+                    aasIdentifier ??= aas.identification.id;
+                    var existingAas = FindAas(aasIdentifier);
+                    if (existingAas.AAS != null)
                     {
-                        Packages[envi].AasEnv.AdministrationShells.Remove(existingAas);
+                        Packages[envi].AasEnv.AdministrationShells.Remove(existingAas.AAS);
                         Packages[envi].AasEnv.AdministrationShells.Add(aas);
+                        AasxServer.Program.signalNewData(1);
                         return true;
                     }
                 }
@@ -295,25 +296,27 @@ namespace IO.Swagger.Helpers
             {
                 Packages[emptyPackageIndex] = new AdminShellPackageEnv();
                 Packages[emptyPackageIndex].AasEnv.AdministrationShells.Add(aas);
+                AasxServer.Program.signalNewData(1);
                 return true;
             }
 
             return false;
         }
 
-        internal bool AddConceptDescription(ConceptDescription conceptDescription)
+        internal bool AddConceptDescription(ConceptDescription conceptDescription, string cdIdentifier = null)
         {
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
+            cdIdentifier ??= conceptDescription.identification.id;
             for (int envi = 0; envi < Packages.Length; envi++)
             {
                 if (Packages[envi] != null)
                 {
-                    var existingCD = Packages[envi].AasEnv.FindConceptDescription(conceptDescription.identification);
+                    var existingCD = FindConceptDescription(cdIdentifier, out int packageIndex);
                     if (existingCD != null)
                     {
-                        Packages[envi].AasEnv.ConceptDescriptions.Remove(existingCD);
-                        Packages[envi].AasEnv.ConceptDescriptions.Add(conceptDescription);
+                        Packages[packageIndex].AasEnv.ConceptDescriptions.Remove(existingCD);
+                        Packages[packageIndex].AasEnv.ConceptDescriptions.Add(conceptDescription);
                         return true;
                     }
                 }
@@ -459,7 +462,23 @@ namespace IO.Swagger.Helpers
             return outputCds;
         }
 
-        private bool CompareIsCaseOf(List<Reference> isCaseOf1, List<Reference> isCaseOf2)
+        internal bool CompareDataSpecification(HasDataSpecification embeddedDataSpecification, DataSpecificationRef dataSpecRefReq)
+        {
+            if (embeddedDataSpecification != null)
+            {
+                foreach (EmbeddedDataSpecification embDataSpec in embeddedDataSpecification)
+                {
+                    if (embDataSpec.dataSpecification.Matches(dataSpecRefReq))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        internal bool CompareIsCaseOf(List<Reference> isCaseOf1, List<Reference> isCaseOf2)
         {
             foreach (Reference isCaseOf1_Ref in isCaseOf1)
             {
@@ -570,6 +589,16 @@ namespace IO.Swagger.Helpers
                 {
                     return submodelElement.ToValueOnlySerialization();
                 }
+                else if (obj is List<AdminShellV20.SubmodelElement> smEleList)
+                {
+                    List<object> values = new List<object>();
+                    foreach (var smElement in smEleList)
+                    {
+                        object value = GetValueOnly(smElement, level);
+                        values.Add(value);
+                    }
+                    return values;
+                }
                 else
                 {
                     Console.WriteLine("Not supported");
@@ -627,6 +656,16 @@ namespace IO.Swagger.Helpers
                 return submodel.GetReference();
             else if (obj is SubmodelElement submodelElement)
                 return submodelElement.GetReference();
+            else if (obj is List<AdminShellV20.SubmodelElement> smEleList)
+            {
+                List<object> values = new List<object>();
+                foreach (var smElement in smEleList)
+                {
+                    object value = GetObjectReference(smElement);
+                    values.Add(value);
+                }
+                return values;
+            }
             else
             {
                 Console.WriteLine("Error: Object not handled for the Reference type modifier.");
@@ -634,15 +673,16 @@ namespace IO.Swagger.Helpers
             }
         }
 
-        internal bool AddSubmodel(Submodel submodel)
+        internal bool AddSubmodel(Submodel submodel, string submodelIdentifier = null)
         {
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
+            submodelIdentifier ??= submodel.identification.id;
             for (int envi = 0; envi < Packages.Length; envi++)
             {
                 if (Packages[envi] != null)
                 {
-                    var existingSubmodel = Packages[envi].AasEnv.FindSubmodel(submodel.identification);
+                    var existingSubmodel = FindSubmodel(submodelIdentifier);
                     if (existingSubmodel != null)
                     {
                         Packages[envi].AasEnv.Submodels.Remove(existingSubmodel);
@@ -722,7 +762,7 @@ namespace IO.Swagger.Helpers
         /// <param name="idShortPath">e.g. SMEColl_idShort.SME_idShort</param>
         /// <param name="parent">Parent of SME, bzw. SMEColl</param>
         /// <returns></returns>
-        internal SubmodelElement FindSubmodelElementByPath(Submodel submodel, string idShortPath, out SubmodelElement parent)
+        internal SubmodelElement FindSubmodelElementByPath(Submodel submodel, string idShortPath, out object parent)
         {
             parent = null;
             if (idShortPath.Contains('.'))
@@ -735,7 +775,7 @@ namespace IO.Swagger.Helpers
                     {
                         if (submodelElement is SubmodelElementCollection collection)
                         {
-                            return FindSubmodelElementByPath(collection, idShorts[1], out parent);
+                            return FindSubmodelElementByPathFromColl(collection, idShorts[1], out parent);
                         }
                     }
                 }
@@ -744,7 +784,11 @@ namespace IO.Swagger.Helpers
             {
                 var smeWrapper = submodel.FindSubmodelElementWrapper(idShortPath);
                 if (smeWrapper != null)
+                {
+                    parent = submodel;
                     return smeWrapper.submodelElement;
+                }
+
             }
 
             return null;
@@ -796,7 +840,7 @@ namespace IO.Swagger.Helpers
             return outputSubmodels;
         }
 
-        internal SubmodelElement FindSubmodelElementByPath(SubmodelElementCollection smeColl, string idShortPath, out SubmodelElement parent)
+        internal SubmodelElement FindSubmodelElementByPathFromColl(SubmodelElementCollection smeColl, string idShortPath, out object parent)
         {
             parent = null;
             string[] idShorts = idShortPath.Split('.', 2);
@@ -808,7 +852,7 @@ namespace IO.Swagger.Helpers
                     if (submodelElement is SubmodelElementCollection collection)
                     {
                         parent = collection;
-                        FindSubmodelElementByPath(collection, idShorts[1], out parent);
+                        FindSubmodelElementByPathFromColl(collection, idShorts[1], out parent);
                     }
                     else if (submodelElement is SubmodelElement)
                     {

@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using AdminShellNS;
 using IO.Swagger.Attributes;
 using IO.Swagger.Helpers;
@@ -49,14 +50,21 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("DeleteAssetAdministrationShellById")]
         public virtual IActionResult DeleteAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
         {
-            var deleted = aasHelper.DeleteAASAndAsset(Base64UrlEncoder.Decode(aasIdentifier));
-            if (deleted)
+            try
             {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
+                var deleted = aasHelper.DeleteAASAndAsset(Base64UrlEncoder.Decode(aasIdentifier));
+                if (deleted)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return NoContent();
+                }
 
-            return NotFound($"Could not delete the AAS");
+                return NotFound($"AAS not ");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -70,14 +78,21 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("DeleteConceptDescriptionById")]
         public virtual IActionResult DeleteConceptDescriptionById([FromRoute][Required] string cdIdentifier)
         {
-            bool deleted = aasHelper.DeleteConceptDescription(Base64UrlEncoder.Decode(cdIdentifier));
-            if (deleted)
+            try
             {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
+                bool deleted = aasHelper.DeleteConceptDescription(Base64UrlEncoder.Decode(cdIdentifier));
+                if (deleted)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return NoContent();
+                }
 
-            return NotFound($"Could not delete the concept description {cdIdentifier}");
+                return NotFound($"Could not delete the concept description. Please check the identifier again.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -93,34 +108,41 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("DeleteSubmodelElementByPath")]
         public virtual IActionResult DeleteSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
-            //Check if AAS exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+            try
             {
-                return NotFound($"AAS {aasIdentifier} not found");
-            }
+                //Check if AAS exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS {aasIdentifier} not found");
+                }
 
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel {submodelIdentifier} not found");
+                }
+
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out object parent);
+                if (submodelElement == null)
+                {
+                    return NotFound($"Requested submodel element not found.");
+                }
+
+                var deleted = aasHelper.DeleteSubmodelElementByPath(submodelElement, parent);
+                if (deleted)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return NoContent();
+                }
+
+                return StatusCode(500, $"Could not delete Submodelelement. Please check the logs for more details.");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Submodel {submodelIdentifier} not found");
+                return BadRequest(ex.Message);
             }
-
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out AdminShellV20.SubmodelElement parent);
-            if (submodelElement == null)
-            {
-                return NotFound($"Requested submodel element not found.");
-            }
-
-            var deleted = aasHelper.DeleteSubmodelElementByPath(submodelElement, parent);
-            if (deleted)
-            {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
-
-            return StatusCode(500, $"Could not delete Submodelelement. Please check the logs for more details.");
         }
 
         /// <summary>
@@ -135,28 +157,34 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("DeleteSubmodelElementByPathSubmodelRepo")]
         public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
-            submodelIdentifier = Base64UrlEncoder.Decode(submodelIdentifier);
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel {submodelIdentifier} not found");
-            }
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel {submodelIdentifier} not found");
+                }
 
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, Base64UrlEncoder.Decode(idShortPath), out AdminShellV20.SubmodelElement parent);
-            if (submodelElement != null)
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out object parent);
+                if (submodelElement == null)
+                {
+                    return NotFound($"Requested submodel element not found.");
+                }
+
+                var deleted = aasHelper.DeleteSubmodelElementByPath(submodelElement, parent);
+                if (deleted)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return NoContent();
+                }
+
+                return StatusCode(500, $"Could not delete Submodelelement. Please check the logs for more details.");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Requested submodel element not found.");
+                return BadRequest(ex.Message);
             }
-
-            var deleted = aasHelper.DeleteSubmodelElementByPath(submodelElement, parent);
-            if (deleted)
-            {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
-
-            return StatusCode(500, $"Could not delete Submodelelement. Please check the logs for more details.");
         }
 
         /// <summary>
@@ -171,17 +199,21 @@ namespace IO.Swagger.Controllers
         [SwaggerOperation("DeleteSubmodelReferenceById")]
         public virtual IActionResult DeleteSubmodelReferenceById([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier)
         {
-            aasIdentifier = Base64UrlEncoder.Decode(aasIdentifier);
-            submodelIdentifier = Base64UrlEncoder.Decode(submodelIdentifier);
-
-            bool deleted = aasHelper.DeleteSubmodelReferenceFromAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (deleted)
+            try
             {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
+                bool deleted = aasHelper.DeleteSubmodelReferenceFromAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (deleted)
+                {
 
-            return NotFound($"Could not delete the submodel reference {submodelIdentifier} from AAS {aasIdentifier}");
+                    return NoContent();
+                }
+
+                return NotFound($"Could not delete the submodel reference from AAS");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -198,27 +230,34 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested serialization based on SerializationFormat")]
         public virtual IActionResult GenerateSerializationByIds([FromQuery][Required()] List<string> aasIds, [FromQuery][Required()] List<string> submodelIds, [FromQuery][Required()] bool? includeConceptDescriptions)
         {
-            List<object> payload = new List<object>();
-            foreach (string aasId in aasIds)
+            try
             {
-                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasId));
-                if (aasReturn != null)
+                //TODO: One of the open questions
+                List<object> payload = new List<object>();
+                foreach (string aasId in aasIds)
                 {
-                    payload.Add(aasReturn.AAS);
+                    var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasId));
+                    if (aasReturn != null)
+                    {
+                        payload.Add(aasReturn.AAS);
+                    }
                 }
-            }
 
-            //TODO: NotSure
-            foreach (string submodelId in submodelIds)
+                foreach (string submodelId in submodelIds)
+                {
+                    var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelId));
+                    if (submodel != null)
+                    {
+                        payload.Add(submodel);
+                    }
+                }
+
+                return new ObjectResult(payload);
+            }
+            catch (Exception ex)
             {
-                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelId));
-                if (submodel != null)
-                {
-                    payload.Add(submodel);
-                }
+                return BadRequest(ex.Message);
             }
-
-            return new ObjectResult(payload);
         }
 
         /// <summary>
@@ -235,10 +274,10 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult GetAllAssetAdministrationShells([FromQuery]List<IdentifierKeyValuePair> assetIds, [FromQuery]string idShort)
         public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] string assetIds, [FromQuery] string idShort)
         {
-            //TODO: Consider a case where both assetIds and idShort are present.
-            var aasList = new List<AdminShellV20.AdministrationShell>();
-            if (string.IsNullOrEmpty(assetIds) && string.IsNullOrEmpty(idShort))
+            try
             {
+                var aasList = new List<AdminShellV20.AdministrationShell>();
+
                 foreach (AdminShellPackageEnv env in AasxServer.Program.env)
                 {
                     if (env != null)
@@ -247,23 +286,26 @@ namespace IO.Swagger.Controllers
                     }
                 }
 
+                //Filter w.r.t assetIds
+                if (!string.IsNullOrEmpty(assetIds))
+                {
+                    assetIds = Base64UrlEncoder.Decode(assetIds);
+                    var assetIdList = JsonConvert.DeserializeObject<List<IdentifierKeyValuePair_V2>>(assetIds);
+                    aasList = aasHelper.FindAllAasByAssetIds(assetIdList);
+                }
+
+                //Filter w.r.t idShort
+                if (!string.IsNullOrEmpty(idShort))
+                {
+                    aasList = aasList.Where(x => (x.idShort != null) && x.idShort.Equals(idShort)).ToList();
+                }
+
                 return new ObjectResult(aasList);
             }
-
-            if (!string.IsNullOrEmpty(assetIds))
+            catch (Exception ex)
             {
-                assetIds = Base64UrlEncoder.Decode(assetIds);
-                var assetIdList = JsonConvert.DeserializeObject<List<IdentifierKeyValuePair_V2>>(assetIds);
-                return new ObjectResult(aasHelper.FindAllAasByAssetIds(assetIdList));
+                return BadRequest(ex.Message);
             }
-
-            if (!string.IsNullOrEmpty(idShort))
-            {
-                return new ObjectResult(aasHelper.FindAllAasByIdShort(idShort));
-            }
-
-
-            return new ObjectResult(aasList);
         }
 
         /// <summary>
@@ -280,44 +322,44 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<ConceptDescription>), description: "Requested Concept Descriptions")]
         public virtual IActionResult GetAllConceptDescriptions([FromQuery] string idShort, [FromQuery] string isCaseOf, [FromQuery] string dataSpecificationRef)
         {
-            //Return all the concept-descriptions from the server, NO Filter
-            if (string.IsNullOrEmpty(idShort) && string.IsNullOrEmpty(isCaseOf) && string.IsNullOrEmpty(dataSpecificationRef))
+            try
             {
-                var cdList = new List<AdminShellV20.ConceptDescription>();
+                var output = new List<AdminShellV20.ConceptDescription>();
                 foreach (AdminShellPackageEnv env in AasxServer.Program.env)
                 {
                     if (env != null)
                     {
-                        cdList.AddRange(env.AasEnv.ConceptDescriptions);
+                        output.AddRange(env.AasEnv.ConceptDescriptions);
                     }
                 }
 
-                return new ObjectResult(cdList);
-            }
+                //Filter a list w.r.t. idShort
+                if (!string.IsNullOrEmpty(idShort))
+                {
+                    output = output.Where(x => x.idShort.Equals(idShort)).ToList();
+                }
 
-            //CDs filtered with idShort
-            if (!string.IsNullOrEmpty(idShort))
+                //Filter the list w.r.t. IsCaseOf
+                if (!string.IsNullOrEmpty(isCaseOf))
+                {
+                    var isCaseOfObj = JsonConvert.DeserializeObject<List<AdminShellV20.Reference>>(Base64UrlEncoder.Decode(isCaseOf));
+                    output = output.Where(x => (x.IsCaseOf != null) && aasHelper.CompareIsCaseOf(x.IsCaseOf, isCaseOfObj)).ToList();
+                }
+
+                //Filter the list w.r.t. dataSpecificationRef
+                if (!string.IsNullOrEmpty(dataSpecificationRef))
+                {
+                    var dataSpecRefReq = JsonConvert.DeserializeObject<AdminShellV20.DataSpecificationRef>(Base64UrlEncoder.Decode(dataSpecificationRef));
+                    output = output.Where(x => (x.embeddedDataSpecification != null) && aasHelper.CompareDataSpecification(x.embeddedDataSpecification, dataSpecRefReq)).ToList();
+                }
+
+                return new ObjectResult(output);
+
+            }
+            catch (Exception ex)
             {
-                return new ObjectResult(aasHelper.FindAllConceptDescriptionsByIdShort(idShort));
+                return BadRequest(ex.Message);
             }
-
-            //CDs filtered with isCaseOfReference
-            if (!string.IsNullOrEmpty(isCaseOf))
-            {
-                var isCaseOfObj = JsonConvert.DeserializeObject<List<AdminShellV20.Reference>>(Base64UrlEncoder.Decode(isCaseOf));
-                return new ObjectResult(aasHelper.FindAllConceptDescriptionsByIsCaseOf(isCaseOfObj));
-            }
-
-            //CDs filtered with isCaseOfReference
-            if (!string.IsNullOrEmpty(dataSpecificationRef))
-            {
-                var dataSpecRefReq = JsonConvert.DeserializeObject<AdminShellV20.DataSpecificationRef>(Base64UrlEncoder.Decode(dataSpecificationRef));
-                return new ObjectResult(aasHelper.FindAllConceptDescriptionsByDataSpecRef(dataSpecRefReq));
-            }
-
-
-            //TODO:Re-do
-            return NoContent();
 
         }
 
@@ -338,23 +380,30 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
 
-            // access AAS and Submodel
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel not found.");
-            }
+                // access AAS and Submodel
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
 
-            List<AdminShellV20.SubmodelElement> submodelElements = new List<AdminShellV20.SubmodelElement>();
-            foreach (var smeWrapper in submodel.submodelElements)
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel not found.");
+                }
+
+                List<AdminShellV20.SubmodelElement> submodelElements = new List<AdminShellV20.SubmodelElement>();
+                foreach (var smeWrapper in submodel.submodelElements)
+                {
+                    submodelElements.Add(smeWrapper.submodelElement);
+                }
+
+                var json = aasHelper.HandleOutputModifiers(submodelElements, level, content, extent);
+
+                return new ObjectResult(json);
+            }
+            catch (Exception ex)
             {
-                submodelElements.Add(smeWrapper.submodelElement);
+                return BadRequest(ex.Message);
             }
-
-            var json = aasHelper.HandleOutputModifiers(submodelElements, level, content, extent);
-
-            return new ObjectResult(json);
         }
 
         /// <summary>
@@ -372,19 +421,25 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelElement>), description: "List of found submodel elements")]
         public virtual IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel != null)
+            try
             {
-                List<AdminShellV20.SubmodelElement> submodelElements = new List<AdminShellV20.SubmodelElement>();
-                foreach (var smeWrapper in submodel.submodelElements)
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel != null)
                 {
-                    submodelElements.Add(smeWrapper.submodelElement);
+                    List<AdminShellV20.SubmodelElement> submodelElements = new List<AdminShellV20.SubmodelElement>();
+                    foreach (var smeWrapper in submodel.submodelElements)
+                    {
+                        submodelElements.Add(smeWrapper.submodelElement);
+                    }
+                    var json = aasHelper.HandleOutputModifiers(submodelElements, level, content, extent);
+
+                    return new ObjectResult(json);
                 }
-                return new ObjectResult(submodelElements);
-            }
-            else
-            {
                 return NotFound($"Submodel not found.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
 
@@ -400,14 +455,18 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<Reference>), description: "Requested submodel references")]
         public virtual IActionResult GetAllSubmodelReferences([FromRoute][Required] string aasIdentifier)
         {
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS != null)
+            try
             {
-                return new ObjectResult(aasReturn.AAS.submodelRefs);
-            }
-            else
-            {
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS != null)
+                {
+                    return new ObjectResult(aasReturn.AAS.submodelRefs);
+                }
                 return NotFound($"AAS not found.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
 
         }
@@ -425,34 +484,36 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<Submodel>), description: "Requested Submodels")]
         public virtual IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort)
         {
-            //Fetch all the submodels from the server
-            if (string.IsNullOrEmpty(idShort) && string.IsNullOrEmpty(semanticId))
+            try
             {
-                var submodelList = new List<AdminShellV20.Submodel>();
+                var output = new List<AdminShellV20.Submodel>();
                 foreach (AdminShellPackageEnv env in AasxServer.Program.env)
                 {
                     if (env != null)
                     {
-                        submodelList.AddRange(env.AasEnv.Submodels);
+                        output.AddRange(env.AasEnv.Submodels);
                     }
                 }
 
-                return new ObjectResult(submodelList);
-            }
+                //Filter w.r.t. semanticId
+                if (!string.IsNullOrEmpty(semanticId))
+                {
+                    var reqSemaniticId = JsonConvert.DeserializeObject<AdminShellV20.SemanticId>(Base64UrlEncoder.Decode(semanticId));
+                    output = output.Where(x => (x.semanticId != null) && x.semanticId.Matches(reqSemaniticId)).ToList();
+                }
 
-            if (!string.IsNullOrEmpty(idShort))
+                //Filter w.r.t. idShort
+                if (!string.IsNullOrEmpty(idShort))
+                {
+                    output = output.Where(x => x.idShort.Equals(idShort)).ToList();
+                }
+
+                return new ObjectResult(output);
+            }
+            catch (Exception ex)
             {
-                return new ObjectResult(aasHelper.FindAllSubmodelsByIdShort(idShort));
+                return BadRequest(ex.Message);
             }
-
-            if (!string.IsNullOrEmpty(semanticId))
-            {
-                var reqSemaniticId = JsonConvert.DeserializeObject<AdminShellV20.SemanticId>(Base64UrlEncoder.Decode(semanticId));
-                return new ObjectResult(aasHelper.FindAllSubmodelsBySemanticId(reqSemaniticId));
-            }
-
-            //TODO: Re-Do
-            return NoContent();
         }
 
         /// <summary>
@@ -468,20 +529,26 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
         public virtual IActionResult GetAssetAdministrationShell([FromRoute][Required] string aasIdentifier, [FromQuery] string content)
         {
-            //TODO: Content ??
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS != null)
+            try
             {
-                //If content is empty or Normal, return the object as it is
-                if (string.IsNullOrEmpty(content) || content.Equals("normal", StringComparison.OrdinalIgnoreCase))
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS != null)
                 {
-                    return new ObjectResult(aasReturn.AAS);
+                    //If content is empty or Normal, return the object as it is
+                    if (string.IsNullOrEmpty(content) || content.Equals("normal", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new ObjectResult(aasReturn.AAS);
+                    }
+
+                    return new ObjectResult(aasHelper.HandleOutputModifiers(aasReturn.AAS, content: content));
                 }
 
-                return new ObjectResult(aasHelper.HandleOutputModifiers(aasReturn.AAS, content: content));
+                return NotFound();
             }
-
-            return NotFound();
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -496,13 +563,21 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
         public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
         {
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS != null)
+            try
             {
-                return new ObjectResult(aasReturn.AAS);
-            }
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS != null)
+                {
+                    return new ObjectResult(aasReturn.AAS);
+                }
 
-            return NotFound();
+                return NotFound($"Please check aasIdentifier again.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -519,17 +594,24 @@ namespace IO.Swagger.Controllers
         {
             //TODO:Change to AssetInformation in V3
             //No AssetInformation in AAS_V2, hence returning Asset referenced by AAS
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS != null)
+            try
             {
-                var asset = aasHelper.FindAssetwithReference(aasReturn.AAS.assetRef);
-                if (asset != null)
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS != null)
                 {
-                    return new ObjectResult(asset);
+                    var asset = aasHelper.FindAssetwithReference(aasReturn.AAS.assetRef);
+                    if (asset != null)
+                    {
+                        return new ObjectResult(asset);
+                    }
                 }
-            }
 
-            return NotFound();
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
 
@@ -545,13 +627,21 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description")]
         public virtual IActionResult GetConceptDescriptionById([FromRoute][Required] string cdIdentifier)
         {
-            var conceptDescription = aasHelper.FindConceptDescription(Base64UrlEncoder.Decode(cdIdentifier), out _);
-            if (conceptDescription != null)
+            try
             {
-                return new ObjectResult(conceptDescription);
-            }
+                var conceptDescription = aasHelper.FindConceptDescription(Base64UrlEncoder.Decode(cdIdentifier), out _);
+                if (conceptDescription != null)
+                {
+                    return new ObjectResult(conceptDescription);
+                }
 
-            return NotFound($"Concept Description {cdIdentifier} not found");
+                return NotFound($"Could not delete the concept description. Please check the identifier again.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -570,38 +660,45 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         public virtual IActionResult GetOperationAsyncResult([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromRoute][Required] string handleId, [FromQuery] string content)
         {
-            if (string.IsNullOrEmpty(handleId))
+            try
             {
-                return BadRequest($"Invalid HandleId.");
-            }
-            //Check if aas exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
-            {
-                return NotFound($"AAS not found");
-            }
+                if (string.IsNullOrEmpty(handleId))
+                {
+                    return BadRequest($"Invalid HandleId.");
+                }
+                //Check if aas exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS not found");
+                }
 
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
-            {
-                return NotFound($"Submodel not found.");
-            }
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel not found.");
+                }
 
-            //Find the operation from the idShortpath
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (submodelElement == null)
-            {
-                return NotFound($"Operation {idShortPath} not found.");
-            }
+                //Find the operation from the idShortpath
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (submodelElement == null)
+                {
+                    return NotFound($"Operation {idShortPath} not found.");
+                }
 
-            var opResult = aasHelper.GetOperationAsyncResult(Base64UrlEncoder.Decode(handleId));
-            if (opResult != null)
-            {
-                return new ObjectResult(opResult);
-            }
+                var opResult = aasHelper.GetOperationAsyncResult(Base64UrlEncoder.Decode(handleId));
+                if (opResult != null)
+                {
+                    return new ObjectResult(opResult);
+                }
 
-            return NotFound($"Operation with the handle id not found");
+                return NotFound($"Operation with the handle id not found");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -619,32 +716,39 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         public virtual IActionResult GetOperationAsyncResultSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromRoute][Required] string handleId, [FromQuery] string content)
         {
-            if (string.IsNullOrEmpty(handleId))
+            try
             {
-                return BadRequest($"Invalid HandleId.");
-            }
+                if (string.IsNullOrEmpty(handleId))
+                {
+                    return BadRequest($"Invalid HandleId.");
+                }
 
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel not found.");
+                }
+
+                //Find the operation from the idShortpath
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (submodelElement == null)
+                {
+                    return NotFound($"Operation {idShortPath} not found.");
+                }
+
+                var opResult = aasHelper.GetOperationAsyncResult(Base64UrlEncoder.Decode(handleId));
+                if (opResult != null)
+                {
+                    return new ObjectResult(opResult);
+                }
+
+                return NotFound($"Operation with the handle id not found");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Submodel not found.");
+                return BadRequest(ex.Message);
             }
-
-            //Find the operation from the idShortpath
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (submodelElement == null)
-            {
-                return NotFound($"Operation {idShortPath} not found.");
-            }
-
-            var opResult = aasHelper.GetOperationAsyncResult(Base64UrlEncoder.Decode(handleId));
-            if (opResult != null)
-            {
-                return new ObjectResult(opResult);
-            }
-
-            return NotFound($"Operation with the handle id not found");
         }
 
         /// <summary>
@@ -663,21 +767,26 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //TODO: Consider other parameters súch as level, content, & extent
-
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Either AAS {aasIdentifier} or Submodel {submodelIdentifier} not found");
-            }
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Either AAS {aasIdentifier} or Submodel {submodelIdentifier} not found");
+                }
 
-            var json = aasHelper.HandleOutputModifiers(submodel, level, content, extent);
-            if (json != null)
+                var json = aasHelper.HandleOutputModifiers(submodel, level, content, extent);
+                if (json != null)
+                {
+                    return new ObjectResult(json);
+                }
+
+                return NotFound($"Either AAS or Submodel not found");
+            }
+            catch (Exception ex)
             {
-                return new ObjectResult(json);
+                return BadRequest(ex.Message);
             }
-
-            return NotFound($"Either AAS or Submodel not found");
         }
 
         /// <summary>
@@ -697,33 +806,40 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(SubmodelElement), description: "Requested submodel element")]
         public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //Check if AAS exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+            try
             {
-                return NotFound($"AAS {aasIdentifier} not found");
-            }
+                //Check if AAS exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS not found. Please check the identifier.");
+                }
 
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel not found. Please check the identifier.");
+                }
+
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (submodelElement == null)
+                {
+                    return NotFound($"Requested submodel element not found.");
+                }
+
+                var json = aasHelper.HandleOutputModifiers(submodelElement, level, content, extent);
+                if (json != null)
+                {
+                    return new ObjectResult(json);
+                }
+
+                return NotFound($"Submodel Element not found");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Submodel {submodelIdentifier} not found");
+                return BadRequest(ex.Message);
             }
-
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (submodelElement == null)
-            {
-                return NotFound($"Requested submodel element not found.");
-            }
-
-            var json = aasHelper.HandleOutputModifiers(submodelElement, level, content, extent);
-            if (json != null)
-            {
-                return new ObjectResult(json);
-            }
-
-            return NotFound($"Submodel Element not found");
         }
 
         /// <summary>
@@ -742,28 +858,33 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(SubmodelElement), description: "Requested submodel element")]
         public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //TODO: support for Content, extent and level
-
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel not found");
-            }
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel not found");
+                }
 
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (submodelElement == null)
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (submodelElement == null)
+                {
+                    return NotFound($"Requested submodel element not found.");
+                }
+
+                var json = aasHelper.HandleOutputModifiers(submodelElement, level, content, extent);
+                if (json != null)
+                {
+                    return new ObjectResult(json);
+                }
+
+                return NotFound($"Submodel Element not found");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Requested submodel element not found.");
+                return BadRequest(ex.Message);
             }
-
-            var json = aasHelper.HandleOutputModifiers(submodelElement, level, content, extent);
-            if (json != null)
-            {
-                return new ObjectResult(json);
-            }
-
-            return NotFound($"Submodel Element not found");
         }
 
         /// <summary>
@@ -781,20 +902,26 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         public virtual IActionResult GetSubmodelSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //TODO: Consider rest of the parameters i.e., level, content & extent
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"The Submodel {submodelIdentifier} not found");
-            }
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"The Submodel {submodelIdentifier} not found");
+                }
 
-            var json = aasHelper.HandleOutputModifiers(submodel, level, content, extent);
-            if (json != null)
+                var json = aasHelper.HandleOutputModifiers(submodel, level, content, extent);
+                if (json != null)
+                {
+                    return new ObjectResult(json);
+                }
+
+                return NotFound($"Submodel not found");
+            }
+            catch (Exception ex)
             {
-                return new ObjectResult(json);
+                return BadRequest(ex.Message);
             }
-
-            return NotFound($"Submodel not found");
         }
 
         /// <summary>
@@ -814,52 +941,59 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         public virtual IActionResult InvokeOperation([FromBody] OperationRequest body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] bool? _async, [FromQuery] string content)
         {
-            //Check if aas exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+            try
             {
-                return NotFound($"AAS not found");
-            }
-
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
-            {
-                return NotFound($"Submodel not found.");
-            }
-
-            //Find the operation from the idShortpath
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (submodelElement == null)
-            {
-                return NotFound($"Operation {idShortPath} not found.");
-            }
-
-            if (submodelElement is AdminShellV20.Operation operation)
-            {
-                //Primary checks for inout and input variables
-                if (operation.inputVariable.Count != body.InputArguments.Count)
+                //Check if aas exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
                 {
-                    return BadRequest($"Number of input arguments in payload does not fit expected input arguments of Operation.");
+                    return NotFound($"AAS not found");
                 }
 
-                if (operation.inoutputVariable.Count != body.InputArguments.Count)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
                 {
-                    return BadRequest($"Number of InOut arguments in payload does not fit expected InOut arguments of Operation.");
+                    return NotFound($"Submodel not found.");
                 }
 
-                if ((_async != null) && (!(bool)_async))
+                //Find the operation from the idShortpath
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (submodelElement == null)
                 {
-                    return new ObjectResult(aasHelper.InvokeOperationSync(operation, body));
+                    return NotFound($"Operation {idShortPath} not found.");
                 }
 
-                var opHandle = aasHelper.InvokeOperationAsync(operation, body);
-                var json = JsonConvert.SerializeObject(opHandle);
-                return new ObjectResult(json);
+                if (submodelElement is AdminShellV20.Operation operation)
+                {
+                    //Primary checks for inout and input variables
+                    if (operation.inputVariable.Count != body.InputArguments.Count)
+                    {
+                        return BadRequest($"Number of input arguments in payload does not fit expected input arguments of Operation.");
+                    }
+
+                    if (operation.inoutputVariable.Count != body.InputArguments.Count)
+                    {
+                        return BadRequest($"Number of InOut arguments in payload does not fit expected InOut arguments of Operation.");
+                    }
+
+                    if ((_async != null) && (!(bool)_async))
+                    {
+                        return new ObjectResult(aasHelper.InvokeOperationSync(operation, body));
+                    }
+
+                    var opHandle = aasHelper.InvokeOperationAsync(operation, body);
+                    var json = JsonConvert.SerializeObject(opHandle);
+                    return new ObjectResult(json);
+                }
+                else
+                {
+                    return NotFound($"Element in the IdShortPath is not an Operation.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return NotFound($"Element in the IdShortPath is not an Operation.");
+                return BadRequest(ex.Message);
             }
         }
 
@@ -879,45 +1013,52 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         public virtual IActionResult InvokeOperationSubmodelRepo([FromBody] OperationRequest body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] bool? _async, [FromQuery] string content)
         {
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel not found.");
-            }
-
-            //Find the operation from the idShortpath
-            var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (submodelElement == null)
-            {
-                return NotFound($"Operation {idShortPath} not found.");
-            }
-
-            if (submodelElement is AdminShellV20.Operation operation)
-            {
-                //Primary checks for inout and input variables
-                if (operation.inputVariable.Count != body.InputArguments.Count)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
                 {
-                    return BadRequest($"Number of input arguments in payload does not fit expected input arguments of Operation.");
+                    return NotFound($"Submodel not found.");
                 }
 
-                if (operation.inoutputVariable.Count != body.InputArguments.Count)
+                //Find the operation from the idShortpath
+                var submodelElement = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (submodelElement == null)
                 {
-                    return BadRequest($"Number of InOut arguments in payload does not fit expected InOut arguments of Operation.");
+                    return NotFound($"Operation {idShortPath} not found.");
                 }
 
-                if ((_async != null) && (!(bool)_async))
+                if (submodelElement is AdminShellV20.Operation operation)
                 {
-                    return new ObjectResult(aasHelper.InvokeOperationSync(operation, body));
-                }
+                    //Primary checks for inout and input variables
+                    if (operation.inputVariable.Count != body.InputArguments.Count)
+                    {
+                        return BadRequest($"Number of input arguments in payload does not fit expected input arguments of Operation.");
+                    }
 
-                var opHandle = aasHelper.InvokeOperationAsync(operation, body);
-                var json = JsonConvert.SerializeObject(opHandle);
-                return new ObjectResult(json);
+                    if (operation.inoutputVariable.Count != body.InputArguments.Count)
+                    {
+                        return BadRequest($"Number of InOut arguments in payload does not fit expected InOut arguments of Operation.");
+                    }
+
+                    if ((_async != null) && (!(bool)_async))
+                    {
+                        return new ObjectResult(aasHelper.InvokeOperationSync(operation, body));
+                    }
+
+                    var opHandle = aasHelper.InvokeOperationAsync(operation, body);
+                    var json = JsonConvert.SerializeObject(opHandle);
+                    return new ObjectResult(json);
+                }
+                else
+                {
+                    return NotFound($"Element in the IdShortPath is not an Operation.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return NotFound($"Element in the IdShortPath is not an Operation.");
+                return BadRequest(ex.Message);
             }
         }
 
@@ -931,29 +1072,37 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("PostAssetAdministrationShell")]
         [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShell), description: "Asset Administration Shell created successfully")]
-        //public virtual IActionResult PostAssetAdministrationShell([FromBody]AssetAdministrationShell body)
+        //public virtual IActionResult PostAssetAdministrationShell([FromBody] AssetAdministrationShell body)
         public virtual IActionResult PostAssetAdministrationShell([FromBody] AdminShellV20.AdministrationShell body)
         {
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in AAS.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in AAS.");
+                }
 
-            //Check if already exists
-            var aasReturn = aasHelper.FindAas(body.idShort);
-            if (aasReturn.AAS != null)
+                //Check if already exists
+                var aasReturn = aasHelper.FindAas(body.identification.id);
+                if (aasReturn.AAS != null)
+                {
+                    return Conflict($"Asset Administration Shell already exists.");
+                }
+
+                bool added = aasHelper.AddAas(body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return Created($"Asset Administration Shell {body.idShort} created successfully.", body);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return Conflict($"Asset Administration Shell {body.idShort} already exists.");
+                return BadRequest(ex.Message);
+                throw;
             }
-
-            bool added = aasHelper.AddAas(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                return Created($"Asset Administration Shell {body.idShort} created successfully.", body);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
 
@@ -970,26 +1119,34 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostConceptDescription([FromBody]ConceptDescription body)
         public virtual IActionResult PostConceptDescription([FromBody] AdminShellV20.ConceptDescription body)
         {
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in Concept Description.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in Concept Description.");
+                }
 
-            //Check if already exists
-            var conceptDescription = aasHelper.FindConceptDescription(body.idShort, out _);
-            if (conceptDescription != null)
+                //Check if already exists
+                var conceptDescription = aasHelper.FindConceptDescription(body.identification.id, out _);
+                if (conceptDescription != null)
+                {
+                    return Conflict($"Concept Description {body.idShort} already exists.");
+                }
+
+                bool added = aasHelper.AddConceptDescription(body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(1);
+                    return Created($"Concept Description {body.idShort} created successfully.", body);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return Conflict($"Concept Description {body.idShort} already exists.");
+                return BadRequest(ex.Message);
+                throw;
             }
-
-            bool added = aasHelper.AddConceptDescription(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                return Created($"Concept Description {body.idShort} created successfully.", body);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1005,26 +1162,33 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostSubmodel([FromBody]Submodel body)
         public virtual IActionResult PostSubmodel([FromBody] AdminShellV20.Submodel body)
         {
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in Submodel.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in Submodel.");
+                }
 
-            //Check if already exists
-            var submodel = aasHelper.FindSubmodel(body.idShort);
-            if (submodel != null)
+                //Check if already exists
+                var submodel = aasHelper.FindSubmodel(body.identification.id);
+                if (submodel != null)
+                {
+                    return Conflict($"Submodel {body.idShort} already exists.");
+                }
+
+                bool added = aasHelper.AddSubmodel(body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return Created($"Submodel created successfully.", body);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return Conflict($"Submodel {body.idShort} already exists.");
+                return BadRequest(ex.Message);
             }
-
-            bool added = aasHelper.AddSubmodel(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                return Created($"Submodel {body.idShort} created successfully.", body);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1045,44 +1209,48 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostSubmodelElement([FromBody]SubmodelElement body, [FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PostSubmodelElement([FromBody] AdminShellV20.SubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //TODO: Consider rest of the parameters, i.e., level, content & extent
-
-            //Check if AAS exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+            try
             {
-                return NotFound($"AAS {aasIdentifier} not found");
-            }
+                //Check if AAS exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS not found");
+                }
 
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel not found");
+                }
+
+                //Check for idShort in SubmodelElement
+                if (string.IsNullOrEmpty(body.idShort))
+                {
+                    return BadRequest($"No IdShort found in the submodel element");
+                }
+
+                //Check if submodel element already exists in the submodel
+                var submodelElement = submodel.FindSubmodelElementWrapper(body.idShort);
+                if (submodelElement != null)
+                {
+                    return Conflict($"Submodel element {body.idShort} already exists in submodel");
+                }
+
+                bool added = aasHelper.AddSubmodelElement(submodel, body);
+                if (added)
+                {
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel Element {body.idShort} created successfully.", output);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Submodel not found");
+                return BadRequest(ex.Message);
             }
-
-            //Check for idShort in SubmodelElement
-            if (string.IsNullOrEmpty(body.idShort))
-            {
-                return BadRequest($"No IdShort found in the submodel element");
-            }
-
-            //Check if submodel element already exists in the submodel
-            var submodelElement = submodel.FindSubmodelElementWrapper(body.idShort);
-            if (submodelElement != null)
-            {
-                return Conflict($"Submodel element {body.idShort} already exists in submodel {submodelIdentifier}");
-            }
-
-            bool added = aasHelper.AddSubmodelElement(submodel, body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel Element {body.idShort} created successfully.", output);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1104,52 +1272,60 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostSubmodelElementByPath([FromBody]SubmodelElement body, [FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PostSubmodelElementByPath([FromBody] AdminShellV20.SubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //Check if AAS exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+            try
             {
-                return NotFound($"AAS {aasIdentifier} not found");
-            }
-
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
-            {
-                return NotFound($"Submodel {submodelIdentifier} not found");
-            }
-
-            //IdShortPath is a path to the parent element
-            var parentSME = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (parentSME == null)
-            {
-                return NotFound($"Submodel element {idShortPath} not found in submodel {submodelIdentifier}.");
-            }
-
-            if (string.IsNullOrEmpty(body.idShort))
-            {
-                return BadRequest($"IdShort is not set in the submodel element.");
-            }
-
-            //Check if requested submodel element already exists in the parent SME
-            if (parentSME is AdminShellV20.SubmodelElementCollection parentSMEColl)
-            {
-                var existingSME = parentSMEColl.FindFirstIdShort(body.idShort);
-                if (existingSME != null)
+                //Check if AAS exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
                 {
-                    return Conflict($"SubmodelElement {body.idShort} already exists in {idShortPath}.");
+                    return NotFound($"AAS {aasIdentifier} not found");
                 }
-            }
 
-            bool added = aasHelper.AddSubmodelElement(parentSME, body);
-            if (added)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel {submodelIdentifier} not found");
+                }
+
+                //IdShortPath is a path to the parent element
+                var parentSME = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (parentSME == null)
+                {
+                    return NotFound($"Submodel element {idShortPath} not found in submodel {submodelIdentifier}.");
+                }
+
+                if (string.IsNullOrEmpty(body.idShort))
+                {
+                    return BadRequest($"IdShort is not set in the submodel element.");
+                }
+
+                //Check if requested submodel element already exists in the parent SME
+                if (parentSME is AdminShellV20.SubmodelElementCollection parentSMEColl)
+                {
+                    var existingSME = parentSMEColl.FindFirstIdShort(body.idShort);
+                    if (existingSME != null)
+                    {
+                        return Conflict($"SubmodelElement {body.idShort} already exists in {idShortPath}.");
+                    }
+                }
+
+                bool added = aasHelper.AddSubmodelElement(parentSME, body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel element created successfully", output);
+                }
+
+                //Re-do
+                return NotFound($"Requested submodel element not found.");
+            }
+            catch (Exception ex)
             {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel element created successfully", output);
+                return BadRequest(ex.Message);
+                throw;
             }
-
-            //Re-do
-            return NotFound($"Requested submodel element not found.");
         }
 
         /// <summary>
@@ -1170,45 +1346,52 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody]SubmodelElement body, [FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] AdminShellV20.SubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel {submodelIdentifier} not found");
-            }
-
-            //IdShortPath is a path to the parent element
-            var parentSME = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
-            if (parentSME == null)
-            {
-                return NotFound($"Submodel element {idShortPath} not found in submodel {submodelIdentifier}.");
-            }
-
-            if (string.IsNullOrEmpty(body.idShort))
-            {
-                return BadRequest($"IdShort is not set in the submodel element.");
-            }
-
-            //Check if requested submodel element already exists in the parent SME
-            if (parentSME is AdminShellV20.SubmodelElementCollection parentSMEColl)
-            {
-                var existingSME = parentSMEColl.FindFirstIdShort(body.idShort);
-                if (existingSME != null)
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
                 {
-                    return Conflict($"SubmodelElement {body.idShort} already exists in {idShortPath}.");
+                    return NotFound($"Submodel not found");
                 }
-            }
 
-            bool added = aasHelper.AddSubmodelElement(parentSME, body);
-            if (added)
+                //IdShortPath is a path to the parent element
+                var parentSME = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out _);
+                if (parentSME == null)
+                {
+                    return NotFound($"Submodel element {idShortPath} not found in submodel {submodelIdentifier}.");
+                }
+
+                if (string.IsNullOrEmpty(body.idShort))
+                {
+                    return BadRequest($"IdShort is not set in the submodel element.");
+                }
+
+                //Check if requested submodel element already exists in the parent SME
+                if (parentSME is AdminShellV20.SubmodelElementCollection parentSMEColl)
+                {
+                    var existingSME = parentSMEColl.FindFirstIdShort(body.idShort);
+                    if (existingSME != null)
+                    {
+                        return Conflict($"SubmodelElement {body.idShort} already exists in {idShortPath}.");
+                    }
+                }
+
+                bool added = aasHelper.AddSubmodelElement(parentSME, body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel element created successfully", output);
+                }
+
+                //Re-do
+                return NotFound($"Requested submodel element not found.");
+            }
+            catch (Exception ex)
             {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel element created successfully", output);
+                return BadRequest(ex.Message);
             }
-
-            //Re-do
-            return NotFound($"Requested submodel element not found.");
         }
 
         /// <summary>
@@ -1228,35 +1411,42 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody]SubmodelElement body, [FromRoute][Required]string submodelIdentifier, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] AdminShellV20.SubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel {submodelIdentifier} not found");
-            }
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel {submodelIdentifier} not found");
+                }
 
-            //Check for idShort in SubmodelElement
-            if (string.IsNullOrEmpty(body.idShort))
+                //Check for idShort in SubmodelElement
+                if (string.IsNullOrEmpty(body.idShort))
+                {
+                    return BadRequest($"No IdShort found in the submodel element");
+                }
+
+                //Check if submodel element already exists in the submodel
+                var submodelElement = submodel.FindSubmodelElementWrapper(body.idShort);
+                if (submodelElement != null)
+                {
+                    return Conflict($"Submodel element {body.idShort} already exists in submodel {submodelIdentifier}");
+                }
+
+                bool added = aasHelper.AddSubmodelElement(submodel, body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel Element {body.idShort} created successfully.", output);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return BadRequest($"No IdShort found in the submodel element");
+                return BadRequest(ex.Message);
             }
-
-            //Check if submodel element already exists in the submodel
-            var submodelElement = submodel.FindSubmodelElementWrapper(body.idShort);
-            if (submodelElement != null)
-            {
-                return Conflict($"Submodel element {body.idShort} already exists in submodel {submodelIdentifier}");
-            }
-
-            bool added = aasHelper.AddSubmodelElement(submodel, body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel Element {body.idShort} created successfully.", output);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1273,38 +1463,45 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PostSubmodelReference([FromBody]Reference body, [FromRoute][Required]string aasIdentifier)
         public virtual IActionResult PostSubmodelReference([FromBody] AdminShellV20.Reference body, [FromRoute][Required] string aasIdentifier)
         {
-            if (body.Count == 0)
+            try
             {
-                return BadRequest($"No references present in the request payload.");
-            }
-            else if (body.Count != 1)
-            {
-                return BadRequest($"More than one references present in the request payload.");
-            }
+                if (body.Count == 0)
+                {
+                    return BadRequest($"No references present in the request payload.");
+                }
+                else if (body.Count != 1)
+                {
+                    return BadRequest($"More than one references present in the request payload.");
+                }
 
-            //Check if AAS exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
-            {
-                return NotFound($"AAS {aasIdentifier} not found.");
-            }
+                //Check if AAS exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS not found.");
+                }
 
-            //Check if Submodel with this reference exists
-            var submodel = aasHelper.FindSubmodelWithReference(body);
-            if (submodel == null)
-            {
-                return BadRequest($"No Submodel with this reference present in the server");
-            }
+                //Check if Submodel with this reference exists
+                var submodel = aasHelper.FindSubmodelWithReference(body);
+                if (submodel == null)
+                {
+                    return BadRequest($"No Submodel with this reference present in the server");
+                }
 
-            //Check if reference already exists with the AAS
-            if (aasReturn.AAS.HasSubmodelRef(new AdminShellV20.SubmodelRef(body)))
-            {
-                return Conflict($"The Submodel Reference already exists in AAS {aasIdentifier}");
-            }
+                //Check if reference already exists with the AAS
+                if (aasReturn.AAS.HasSubmodelRef(new AdminShellV20.SubmodelRef(body)))
+                {
+                    return Conflict($"The Submodel Reference already exists in AAS");
+                }
 
-            aasReturn.AAS.AddSubmodelRef(new AdminShellV20.SubmodelRef(body));
-            AasxServer.Program.signalNewData(1);
-            return Created($"Submodel reference created successfully.", body);
+                aasReturn.AAS.AddSubmodelRef(new AdminShellV20.SubmodelRef(body));
+                AasxServer.Program.signalNewData(1);
+                return Created($"Submodel reference created successfully.", body);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
 
@@ -1322,26 +1519,27 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutAssetAdministrationShell([FromBody]AssetAdministrationShell body, [FromRoute][Required]string aasIdentifier, [FromQuery]string content)
         public virtual IActionResult PutAssetAdministrationShell([FromBody] AdminShellV20.AdministrationShell body, [FromRoute][Required] string aasIdentifier, [FromQuery] string content)
         {
-            //TODO: content??
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in AAS.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in AAS.");
+                }
 
-            if (!aasIdentifier.Equals(body.idShort))
+                bool added = aasHelper.AddAas(body, Base64UrlEncoder.Decode(aasIdentifier));
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, content: content);
+                    return Created($"AAS updated successfully.", output);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return BadRequest($"idShort {aasIdentifier} and payload do not match");
+                return BadRequest(ex.Message);
             }
-
-            bool added = aasHelper.AddAas(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, content: content);
-                return Created($"AAS {body.idShort} created successfully.", output);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1357,25 +1555,26 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]string aasIdentifier)
         public virtual IActionResult PutAssetAdministrationShellById([FromBody] AdminShellV20.AdministrationShell body, [FromRoute][Required] string aasIdentifier)
         {
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in AAS.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in AAS.");
+                }
 
-            //TODO: What if iDShort needs to be updated
-            if (!aasIdentifier.Equals(body.idShort))
+                bool added = aasHelper.AddAas(body, Base64UrlEncoder.Decode(aasIdentifier));
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(1);
+                    return NoContent();
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return BadRequest($"idShort {aasIdentifier} and payload do not match");
+                return BadRequest(ex.Message);
             }
-
-            bool added = aasHelper.AddAas(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1391,26 +1590,33 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutAssetInformation([FromBody]AssetInformation body, [FromRoute][Required]string aasIdentifier)
         public virtual IActionResult PutAssetInformation([FromBody] AdminShellV20.Asset body, [FromRoute][Required] string aasIdentifier)
         {
-            //Check if identification exists
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in Asset.");
-            }
+                //Check if identification exists
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in Asset.");
+                }
 
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS not found.");
+                }
+
+                bool added = aasHelper.AddAsset(body, aasReturn);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    return NoContent();
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return NotFound($"AAS not found.");
+                return BadRequest(ex.Message);
             }
-
-            bool added = aasHelper.AddAsset(body, aasReturn);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1426,24 +1632,26 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutConceptDescriptionById([FromBody]ConceptDescription body, [FromRoute][Required]string cdIdentifier)
         public virtual IActionResult PutConceptDescriptionById([FromBody] AdminShellV20.ConceptDescription body, [FromRoute][Required] string cdIdentifier)
         {
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in Concept Description.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in Concept Description.");
+                }
 
-            if (!cdIdentifier.Equals(body.idShort))
+                bool added = aasHelper.AddConceptDescription(body, Base64UrlEncoder.Decode(cdIdentifier));
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(1);
+                    return NoContent();
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return BadRequest($"idShort {cdIdentifier} and payload do not match");
+                return BadRequest(ex.Message);
             }
-
-            bool added = aasHelper.AddConceptDescription(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                return NoContent();
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
 
         /// <summary>
@@ -1463,39 +1671,39 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutSubmodel([FromBody]Submodel body, [FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PutSubmodel([FromBody] AdminShellV20.Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //TODO: Consider other parameters i.e., level, content, extent
-
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in Submodel.");
-            }
-
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
-            {
-                return NotFound($"AAS {aasIdentifier} not found.");
-            }
-
-            if (!submodelIdentifier.Equals(body.idShort))
-            {
-                return BadRequest($"idShort {submodelIdentifier} and payload do not match");
-            }
-
-            bool added = aasHelper.AddSubmodel(body);
-            if (added)
-            {
-                //Check if AAS has the submodelRef, if not create one.
-                var newsmRef = AdminShellV20.SubmodelRef.CreateNew("Submodel", true, body.identification.idType, body.identification.id);
-                if (!aasReturn.AAS.HasSubmodelRef(newsmRef))
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
                 {
-                    aasReturn.AAS.submodelRefs.Add(newsmRef);
+                    return BadRequest($"No Identification found in Submodel.");
                 }
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel updated successfully.", output);
-            }
 
-            return Ok($"Error: not added since datastructure completely filled already");
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS not found.");
+                }
+
+                bool added = aasHelper.AddSubmodel(body, Base64UrlEncoder.Decode(submodelIdentifier));
+                if (added)
+                {
+                    //Check if AAS has the submodelRef, if not create one.
+                    var newsmRef = AdminShellV20.SubmodelRef.CreateNew("Submodel", true, body.identification.idType, body.identification.id);
+                    if (!aasReturn.AAS.HasSubmodelRef(newsmRef))
+                    {
+                        aasReturn.AAS.submodelRefs.Add(newsmRef);
+                    }
+                    AasxServer.Program.signalNewData(1);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel updated successfully.", output);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -1516,42 +1724,54 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutSubmodelElementByPath([FromBody]SubmodelElement body, [FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PutSubmodelElementByPath([FromBody] AdminShellV20.SubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //Check if AAS exists
-            var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
-            if (aasReturn.AAS == null)
+            try
             {
-                return NotFound($"AAS {aasIdentifier} not found");
-            }
+                //Check if AAS exists
+                var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasIdentifier));
+                if (aasReturn.AAS == null)
+                {
+                    return NotFound($"AAS {aasIdentifier} not found");
+                }
 
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
-            {
-                return NotFound($"Submodel {submodelIdentifier} not found");
-            }
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodelWithinAAS(Base64UrlEncoder.Decode(aasIdentifier), Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel {submodelIdentifier} not found");
+                }
 
-            if (string.IsNullOrEmpty(body.idShort))
-            {
-                return BadRequest($"IdShort is not set in the submodel element.");
-            }
-            //IdShortPath is a path to this requested submodel element
-            string parentIdShortPath = idShortPath.Substring(0, idShortPath.IndexOf('.'));
-            var parentSME = aasHelper.FindSubmodelElementByPath(submodel, parentIdShortPath, out _);
-            if (parentSME == null)
-            {
-                return NotFound($"Parent Submodel element not found in submodel {submodelIdentifier}.");
-            }
+                if (string.IsNullOrEmpty(body.idShort))
+                {
+                    return BadRequest($"IdShort is not set in the submodel element.");
+                }
 
-            bool added = aasHelper.AddSubmodelElement(parentSME, body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel updated successfully.", output);
-            }
+                if (!idShortPath.Contains('.'))
+                {
+                    return BadRequest($"Please check the idShortPath again.");
+                }
+                //IdShortPath is a path to this requested submodel element
+                string parentIdShortPath = idShortPath.Substring(0, idShortPath.IndexOf('.'));
+                var parentSME = aasHelper.FindSubmodelElementByPath(submodel, parentIdShortPath, out _);
+                if (parentSME == null)
+                {
+                    return NotFound($"Parent Submodel element not found in submodel {submodelIdentifier}.");
+                }
 
-            //Re-do
-            return NotFound($"Requested submodel element not found.");
+                bool added = aasHelper.AddSubmodelElement(parentSME, body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel updated successfully.", output);
+                }
+
+                //Re-do
+                return NotFound($"Requested submodel element not found.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -1571,35 +1791,42 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody]SubmodelElement body, [FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] AdminShellV20.SubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            //Check if submodel exists
-            var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
-            if (submodel == null)
+            try
             {
-                return NotFound($"Submodel {submodelIdentifier} not found");
-            }
+                //Check if submodel exists
+                var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelIdentifier));
+                if (submodel == null)
+                {
+                    return NotFound($"Submodel {submodelIdentifier} not found");
+                }
 
-            if (string.IsNullOrEmpty(body.idShort))
-            {
-                return BadRequest($"IdShort is not set in the submodel element.");
-            }
-            //IdShortPath is a path to this requested submodel element
-            string parentIdShortPath = idShortPath.Substring(0, idShortPath.IndexOf('.'));
-            var parentSME = aasHelper.FindSubmodelElementByPath(submodel, parentIdShortPath, out _);
-            if (parentSME == null)
-            {
-                return NotFound($"Parent Submodel element not found in submodel {submodelIdentifier}.");
-            }
+                if (string.IsNullOrEmpty(body.idShort))
+                {
+                    return BadRequest($"IdShort is not set in the submodel element.");
+                }
+                //IdShortPath is a path to this requested submodel element
+                string parentIdShortPath = idShortPath.Substring(0, idShortPath.IndexOf('.'));
+                var parentSME = aasHelper.FindSubmodelElementByPath(submodel, parentIdShortPath, out _);
+                if (parentSME == null)
+                {
+                    return NotFound($"Parent Submodel element not found in submodel {submodelIdentifier}.");
+                }
 
-            bool added = aasHelper.AddSubmodelElement(parentSME, body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel element updated successfully.", output);
-            }
+                bool added = aasHelper.AddSubmodelElement(parentSME, body);
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel element updated successfully.", output);
+                }
 
-            //Re-do
-            return NotFound($"Requested submodel element not found.");
+                //Re-do
+                return NotFound($"Requested submodel element not found.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -1618,25 +1845,27 @@ namespace IO.Swagger.Controllers
         //public virtual IActionResult PutSubmodelSubmodelRepo([FromBody]Submodel body, [FromRoute][Required]string submodelIdentifier, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         public virtual IActionResult PutSubmodelSubmodelRepo([FromBody] AdminShellV20.Submodel body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
         {
-            if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+            try
             {
-                return BadRequest($"No Identification found in Submodel.");
-            }
+                if (body.identification == null || string.IsNullOrEmpty(body.identification.id))
+                {
+                    return BadRequest($"No Identification found in Submodel.");
+                }
 
-            if (!submodelIdentifier.Equals(body.idShort))
+                bool added = aasHelper.AddSubmodel(body, Base64UrlEncoder.Decode(submodelIdentifier));
+                if (added)
+                {
+                    AasxServer.Program.signalNewData(2);
+                    object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
+                    return Created($"Submodel updated successfully.", output);
+                }
+
+                return Ok($"Error: not added since datastructure completely filled already");
+            }
+            catch (Exception ex)
             {
-                return BadRequest($"idShort {submodelIdentifier} and payload do not match");
+                return BadRequest(ex.Message);
             }
-
-            bool added = aasHelper.AddSubmodel(body);
-            if (added)
-            {
-                AasxServer.Program.signalNewData(2);
-                object output = aasHelper.HandleOutputModifiers(body, level, content, extent);
-                return Created($"Submodel updated successfully.", output);
-            }
-
-            return Ok($"Error: not added since datastructure completely filled already");
         }
     }
 }
