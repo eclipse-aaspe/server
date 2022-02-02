@@ -85,7 +85,7 @@ Start ```startForDemo.bat``` or invoke the executable with the same name as the
 server variant. For example:
 
 ```
-AasxServerWindows.exe --opc --rest -data-path /path/to/aasxs
+AasxServerWindows.exe --opc --rest --data-path /path/to/aasxs
 ```
 
 You can see the AAS on the server with: http://localhost:51310/server/listaas.
