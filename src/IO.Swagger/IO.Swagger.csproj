@@ -19,6 +19,6 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\aasx-server\src\AasxServerStandardBib\AasxServerStandardBib.csproj" />
+    <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
   </ItemGroup>
 </Project>
