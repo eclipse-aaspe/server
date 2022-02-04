@@ -485,7 +485,7 @@ namespace AasxTimeSeries
                                 tsb.block.Add(c);
                                 c.setTimeStamp(timeStamp);
                             }
-                            parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames);
+                            parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames, tsb.minDiffAbsolute, tsb.minDiffPercent);
 
                             foreach (var el in c.value)
                             {
@@ -839,7 +839,8 @@ namespace AasxTimeSeries
             return !final;
         }
 
-        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c, List<string> filter)
+        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c,
+            List<string> filter, AdminShell.Property minDiffAbsolute, AdminShell.Property minDiffPercent)
         {
             var handler = new HttpClientHandler();
             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
@@ -861,7 +862,7 @@ namespace AasxTimeSeries
                 if (response != "")
                 {
                     JObject parsed = JObject.Parse(response);
-                    Program.parseJson(c, parsed, filter);
+                    Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent);
                 }
             }
             catch (Exception ex)

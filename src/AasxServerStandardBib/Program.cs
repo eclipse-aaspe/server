@@ -2194,10 +2194,18 @@ namespace AasxServer
             return;
         }
 
-        public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o, List<string> filter)
+        public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o, List<string> filter,
+            AdminShell.Property minDiffAbsolute = null, AdminShell.Property minDiffPercent = null)
         {
             int newMode = 0;
             DateTime timeStamp = DateTime.UtcNow;
+
+            int iMinDiffAbsolute = 1;
+            int iMinDiffPercent = 0;
+            if (minDiffAbsolute != null)
+                iMinDiffAbsolute = Convert.ToInt32(minDiffAbsolute.value);
+            if (minDiffPercent != null)
+                iMinDiffPercent = Convert.ToInt32(minDiffPercent.value);
 
             foreach (JProperty jp1 in (JToken)o)
             {
@@ -2263,8 +2271,23 @@ namespace AasxServer
                             newMode = 1;
                         }
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
-                        p.value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
-                        p.setTimeStamp(timeStamp);
+                        try
+                        {
+                            if (p.value == "")
+                                p.value = "0";
+                            string value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
+                            int v = Convert.ToInt32(value);
+                            int lastv = Convert.ToInt32(p.value);
+                            int delta = Math.Abs(v - lastv);
+                            if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
+                            {
+                                p.value = value;
+                                p.setTimeStamp(timeStamp);
+                            }
+                        }
+                        catch
+                        {
+                        }
                         break;
                 }
             }
