@@ -175,6 +175,9 @@ namespace AasxServer
                         case "putdiff":
                             operation_get_put(op, envIndex, timeStamp);
                             break;
+                        case "limitcount":
+                            operation_limitCount(op, envIndex, timeStamp);
+                            break;
                     }
                 }
             }
@@ -204,7 +207,7 @@ namespace AasxServer
                 var inputRef = input.value.submodelElement;
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
                 if (refElement is AdminShell.SubmodelElementCollection re)
                     smec = re;
             }
@@ -454,7 +457,7 @@ namespace AasxServer
                 }
                 if (inputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                     if (refElement is AdminShell.Submodel)
@@ -494,7 +497,7 @@ namespace AasxServer
                 }
                 if (outputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                     if (refElement is AdminShell.Submodel)
@@ -660,17 +663,17 @@ namespace AasxServer
                             if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
                                 return;
 
-                            var aas = Program.env[0].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
+                            var aas = Program.env[envIndex].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
 
                             // datastructure update
-                            if (Program.env == null || Program.env[0].AasEnv == null || Program.env[0].AasEnv.Assets == null)
+                            if (Program.env == null || Program.env[envIndex].AasEnv == null || Program.env[envIndex].AasEnv.Assets == null)
                                 return;
 
                             // add Submodel
-                            var existingSm = Program.env[0].AasEnv.FindSubmodel(receiveSubmodel.identification);
+                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodel(receiveSubmodel.identification);
                             if (existingSm != null)
-                                Program.env[0].AasEnv.Submodels.Remove(existingSm);
-                            Program.env[0].AasEnv.Submodels.Add(receiveSubmodel);
+                                Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
+                            Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
                         }
                     }
                     if (opName == "getdiff")
@@ -856,6 +859,89 @@ namespace AasxServer
                     lastDiff.value = "" + DateTime.UtcNow;
                 }
             }
+        }
+
+        static void operation_limitCount(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        {
+            // inputVariable reference collection: collection
+            // inputVariable limit: property
+            // inputVariable prefix: property
+
+            if (op.inputVariable.Count != 3)
+            {
+                return;
+            }
+            AdminShell.SubmodelElementCollection collection = null;
+            AdminShell.Property limit = null;
+            AdminShell.Property prefix = null;
+            AdminShell.SubmodelElementCollection smec = null;
+            AdminShell.Property p = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                smec = null;
+                p = null;
+                var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property)
+                {
+                    p = (inputRef as AdminShell.Property);
+                }
+                if (inputRef is AdminShell.ReferenceElement)
+                {
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                    if (refElement is AdminShell.SubmodelElementCollection)
+                        smec = refElement as AdminShell.SubmodelElementCollection;
+                }
+                switch (inputRef.idShort.ToLower())
+                {
+                    case "collection":
+                        if (smec != null)
+                            collection = smec;
+                        break;
+                    case "limit":
+                        if (p != null)
+                            limit = p;
+                        break;
+                    case "prefix":
+                        if (p != null)
+                            prefix = p;
+                        break;
+                }
+            }
+            try
+            {
+                int count = Convert.ToInt32(limit.value);
+                string pre = prefix.value;
+                int preCount = 0;
+                int i = 0;
+                while (i < collection.value.Count)
+                {
+                    if (pre == collection.value[i].submodelElement.idShort.Substring(0, pre.Length))
+                        preCount++;
+                    i++;
+                }
+                i = 0;
+                while (preCount > count && i < collection.value.Count)
+                {
+                    if (pre == collection.value[i].submodelElement.idShort.Substring(0, pre.Length))
+                    {
+                        AdminShell.Referable r = collection.value[i].submodelElement;
+                        var sm = r.getParentSubmodel();
+                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                            r, "Remove", sm, (ulong)timeStamp.Ticks);
+                        collection.value.RemoveAt(i);
+                        preCount--;
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                }
+            }
+            catch
+            {
+            }
+            Program.signalNewData(1);
         }
 
         static Thread tasksThread;
