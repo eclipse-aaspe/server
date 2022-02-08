@@ -2276,10 +2276,18 @@ namespace AasxServer
                             if (p.value == "")
                                 p.value = "0";
                             string value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
-                            int v = Convert.ToInt32(value);
-                            int lastv = Convert.ToInt32(p.value);
-                            int delta = Math.Abs(v - lastv);
-                            if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
+                            if (!value.Contains("."))
+                            {
+                                int v = Convert.ToInt32(value);
+                                int lastv = Convert.ToInt32(p.value);
+                                int delta = Math.Abs(v - lastv);
+                                if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
+                                {
+                                    p.value = value;
+                                    p.setTimeStamp(timeStamp);
+                                }
+                            }
+                            else
                             {
                                 p.value = value;
                                 p.setTimeStamp(timeStamp);
