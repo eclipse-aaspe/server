@@ -172,6 +172,7 @@ namespace IO.Swagger.Helpers
             return success;
         }
 
+
         internal bool DeleteSubmodelElementByPath(SubmodelElement submodelElement, object parent)
         {
             if (parent is SubmodelElementCollection parentColl)
@@ -261,6 +262,7 @@ namespace IO.Swagger.Helpers
         /// Similar to HTTP PUT
         /// </summary>
         /// <param name="aas"></param>
+        /// <param name="aasIdentifier"></param>
         /// <returns></returns>
         internal bool AddAas(AdministrationShell aas, string aasIdentifier = null)
         {
@@ -624,7 +626,14 @@ namespace IO.Swagger.Helpers
             }
             else if (obj is SubmodelElementCollection collection)
             {
-                idShortPath.Add(idShortPath.Last() + "." + collection.idShort);
+                if (idShortPath.Count == 0)
+                {
+                    idShortPath.Add(collection.idShort);
+                }
+                else
+                {
+                    idShortPath.Add(idShortPath.Last() + "." + collection.idShort);
+                }
                 if (level.Equals("deep", StringComparison.OrdinalIgnoreCase))
                 {
                     foreach (var smEle in collection.value)
@@ -635,7 +644,14 @@ namespace IO.Swagger.Helpers
             }
             else if (obj is Entity entity)
             {
-                idShortPath.Add(idShortPath.Last() + "." + entity.idShort);
+                if (idShortPath.Count == 0)
+                {
+                    idShortPath.Add(entity.idShort);
+                }
+                else
+                {
+                    idShortPath.Add(idShortPath.Last() + "." + entity.idShort);
+                }
                 //TODO: look for definition and children*
             }
             else if (obj is SubmodelElement smEle)
@@ -758,39 +774,53 @@ namespace IO.Swagger.Helpers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="submodel"></param>
+        /// <param name="parent"></param>
         /// <param name="idShortPath">e.g. SMEColl_idShort.SME_idShort</param>
-        /// <param name="parent">Parent of SME, bzw. SMEColl</param>
+        /// <param name="outParent">Parent of SME, bzw. SMEColl</param>
         /// <returns></returns>
-        internal SubmodelElement FindSubmodelElementByPath(Submodel submodel, string idShortPath, out object parent)
+
+        internal SubmodelElement FindSubmodelElementByPath(object parent, string idShortPath, out object outParent)
         {
-            parent = null;
+            outParent = parent;
             if (idShortPath.Contains('.'))
             {
                 string[] idShorts = idShortPath.Split('.', 2);
-                foreach (var smeWrapper in submodel.submodelElements)
+                if (parent is Submodel submodel)
                 {
-                    var submodelElement = smeWrapper.submodelElement;
-                    if (submodelElement.idShort.Equals(idShorts[0]))
+                    var submodelElement = submodel.FindSubmodelElementWrapper(idShorts[0]).submodelElement;
+                    if (submodelElement != null)
                     {
-                        if (submodelElement is SubmodelElementCollection collection)
-                        {
-                            return FindSubmodelElementByPathFromColl(collection, idShorts[1], out parent);
-                        }
+                        return FindSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                    }
+                }
+                else if (parent is SubmodelElementCollection collection)
+                {
+                    var submodelElement = collection.FindFirstIdShort(idShorts[0]).submodelElement;
+                    if (submodelElement != null)
+                    {
+                        return FindSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
                     }
                 }
             }
             else
             {
-                var smeWrapper = submodel.FindSubmodelElementWrapper(idShortPath);
-                if (smeWrapper != null)
+                if (parent is Submodel submodel)
                 {
-                    parent = submodel;
-                    return smeWrapper.submodelElement;
+                    var submodelElement = submodel.FindSubmodelElementWrapper(idShortPath).submodelElement;
+                    if (submodelElement != null)
+                    {
+                        return submodelElement;
+                    }
                 }
-
+                else if (parent is SubmodelElementCollection collection)
+                {
+                    var submodelElement = collection.FindFirstIdShort(idShortPath).submodelElement;
+                    if (submodelElement != null)
+                    {
+                        return submodelElement;
+                    }
+                }
             }
-
             return null;
         }
 
@@ -838,31 +868,6 @@ namespace IO.Swagger.Helpers
             }
 
             return outputSubmodels;
-        }
-
-        internal SubmodelElement FindSubmodelElementByPathFromColl(SubmodelElementCollection smeColl, string idShortPath, out object parent)
-        {
-            parent = null;
-            string[] idShorts = idShortPath.Split('.', 2); // idShortPath might be empty or without '.'
-            foreach (var smeWrapper in smeColl.value)
-            {
-                var submodelElement = smeWrapper.submodelElement;
-                if (submodelElement.idShort.Equals(idShorts[0]))
-                {
-                    if (submodelElement is SubmodelElementCollection collection)
-                    {
-                        parent = collection;
-                        FindSubmodelElementByPathFromColl(collection, idShorts[1], out parent);
-                    }
-                    else if (submodelElement is SubmodelElement)
-                    {
-                        parent = smeColl;
-                        return submodelElement;
-                    }
-                }
-            }
-
-            return null;
         }
 
         internal object InvokeOperationSync(Operation operation, Models.OperationRequest operationRequest)
