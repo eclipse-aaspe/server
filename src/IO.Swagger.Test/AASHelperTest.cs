@@ -29,8 +29,14 @@ namespace IO.Swagger.Test
             l2.Add(l3);
             l1.Add(l2);
             sm.Add(l1);
-            var found = _helper!.FindSubmodelElementByPath(sm, "level1.level2", out _);
+            var found = _helper!.FindSubmodelElementByPath(sm, "level1", out _);
+            Assert.AreEqual(found.idShort, "level1");
+            found = _helper!.FindSubmodelElementByPath(sm, "level1.level2", out _);
             Assert.AreEqual(found.idShort, "level2");
+            found = _helper!.FindSubmodelElementByPath(sm, "level1.level2.level3", out _);
+            Assert.AreEqual(found.idShort, "level3");
+            found = _helper!.FindSubmodelElementByPath(sm, "level1.level2.level3.level4", out _);
+            Assert.AreEqual(found.idShort, "level4");
         }
     }
 }
