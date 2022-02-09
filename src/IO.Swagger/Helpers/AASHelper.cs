@@ -843,7 +843,7 @@ namespace IO.Swagger.Helpers
         internal SubmodelElement FindSubmodelElementByPathFromColl(SubmodelElementCollection smeColl, string idShortPath, out object parent)
         {
             parent = null;
-            string[] idShorts = idShortPath.Split('.', 2);
+            string[] idShorts = idShortPath.Split('.', 2); // idShortPath might be empty or without '.'
             foreach (var smeWrapper in smeColl.value)
             {
                 var submodelElement = smeWrapper.submodelElement;
