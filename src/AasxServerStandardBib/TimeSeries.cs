@@ -485,18 +485,23 @@ namespace AasxTimeSeries
                                 tsb.block.Add(c);
                                 c.setTimeStamp(timeStamp);
                             }
-                            parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames, tsb.minDiffAbsolute, tsb.minDiffPercent);
-
-                            foreach (var el in c.value)
+                            if (parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames, tsb.minDiffAbsolute, tsb.minDiffPercent))
                             {
-                                if (el.submodelElement is AdminShell.Property p)
+                                foreach (var el in c.value)
                                 {
-                                    if (!tsb.samplesProperties.Contains(p))
+                                    if (el.submodelElement is AdminShell.Property p)
                                     {
-                                        tsb.samplesProperties.Add(p);
-                                        tsb.samplesValues.Add("");
+                                        if (!tsb.samplesProperties.Contains(p))
+                                        {
+                                            tsb.samplesProperties.Add(p);
+                                            tsb.samplesValues.Add("");
+                                        }
                                     }
                                 }
+                            }
+                            else
+                            {
+                                valueCount = 0;
                             }
                         }
                         if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
@@ -839,7 +844,7 @@ namespace AasxTimeSeries
             return !final;
         }
 
-        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c,
+        static bool parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c,
             List<string> filter, AdminShell.Property minDiffAbsolute, AdminShell.Property minDiffPercent)
         {
             var handler = new HttpClientHandler();
@@ -862,13 +867,15 @@ namespace AasxTimeSeries
                 if (response != "")
                 {
                     JObject parsed = JObject.Parse(response);
-                    Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent);
+                    if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                        return true;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("GetJSON() expection: " + ex.Message);
             }
+            return false;
         }
 
         static List<List<object>> table = null;
