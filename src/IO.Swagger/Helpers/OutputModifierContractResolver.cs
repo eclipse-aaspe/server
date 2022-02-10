@@ -158,10 +158,10 @@ namespace IO.Swagger.Helpers
                 {
                     if (property.PropertyName == propName)
                     {
+                        excluded = true;
                         property.ShouldSerialize =
                             instance =>
                             {
-                                excluded = true;
                                 return false;
                             };
                     }
@@ -169,7 +169,7 @@ namespace IO.Swagger.Helpers
             }
 
             //Encode the value
-            if (!excluded && property.DeclaringType == typeof(Blob))
+            if (!excluded && (property.DeclaringType == typeof(Blob)) && property.PropertyName.Equals("value"))
             {
                 property.ShouldSerialize =
                             instance =>
