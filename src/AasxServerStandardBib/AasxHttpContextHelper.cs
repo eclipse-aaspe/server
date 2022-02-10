@@ -1100,6 +1100,9 @@ namespace AasxRestServerLibrary
                 // replace exactly the file
                 try
                 {
+                    // replace loaded original when saving
+                    packFn = Program.envFileName[packIndex];
+
                     // copy into same location
                     File.Copy(tempFn, packFn, overwrite: true);
 

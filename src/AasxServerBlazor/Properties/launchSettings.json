@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --no-security --data-path \"C:\\Users\\7wrmhx\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\Daniel\\JSON\" --edit",
+      "commandLineArgs": "--rest --no-security --data-path \"C:\\Development\\AASX_DigTyp40\" --edit",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
