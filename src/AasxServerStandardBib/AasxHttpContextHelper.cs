@@ -1102,6 +1102,7 @@ namespace AasxRestServerLibrary
                 {
                     // replace loaded original when saving
                     packFn = Program.envFileName[packIndex];
+                    Console.WriteLine($"Replace original AASX package on server: {packFn}");
 
                     // copy into same location
                     File.Copy(tempFn, packFn, overwrite: true);
@@ -1112,7 +1113,7 @@ namespace AasxRestServerLibrary
                         Packages[packIndex] = newAasx;
                     else
                     {
-                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {packFn} for replacing via PUT. Aborting.");
                         return;
                     }
                 }
