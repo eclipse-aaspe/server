@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AdminShellNS;
+using IO.Swagger.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using static AdminShellNS.AdminShellV20;
@@ -101,18 +102,21 @@ namespace IO.Swagger.Helpers
             return findAasReturn;
         }
 
-        //TODO: delete the cd Ref from corresponding AAS
-        internal bool DeleteConceptDescription(string cdIdentifier)
+        /// <summary>
+        /// Deletes a concept description
+        /// </summary>
+        /// <param name="conceptDescription">Concept Description Object</param>
+        /// <param name="packageIndex">Package Index of the CD from the server</param>
+        /// <returns></returns>
+        internal bool DeleteConceptDescription(ConceptDescription conceptDescription, int packageIndex)
         {
-            bool deleted = false;
-            var conceptDescription = FindConceptDescription(cdIdentifier, out int packageIndex);
             if (conceptDescription != null)
             {
                 Packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
-                deleted = true;
+                return true;
             }
 
-            return deleted;
+            return false;
         }
 
 
@@ -137,7 +141,7 @@ namespace IO.Swagger.Helpers
                 }
             }
 
-            packageIndex = 0;
+            packageIndex = -1;
             return null;
         }
 
@@ -219,7 +223,7 @@ namespace IO.Swagger.Helpers
                 if (submodelRef != null)
                 {
                     aasReturn.AAS.submodelRefs.Remove(submodelRef);
-                    AasxServer.Program.signalNewData(1);
+
                     return true;
                 }
             }
@@ -242,15 +246,32 @@ namespace IO.Swagger.Helpers
             return null;
         }
 
-        internal Submodel FindSubmodel(string submodelIdentifier)
+        /// <summary>
+        /// Finds the submodel from the server
+        /// </summary>
+        /// <param name="submodelIdentifier">submodelIdentifier</param>
+        /// <param name="packageIndex">The Package index of the found submodel from the server</param>
+        /// <returns></returns>
+        internal Submodel FindSubmodel(string submodelIdentifier, out int packageIndex)
         {
+            packageIndex = -1;
             if (Packages[0] == null || Packages[0].AasEnv == null || string.IsNullOrEmpty(submodelIdentifier))
                 return null;
 
-            foreach (var submodel in Packages[0].AasEnv.Submodels)
+            for (int envi = 0; envi < Packages.Length; envi++)
             {
-                if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
-                    return submodel;
+                var env = Packages[envi];
+                if (env != null)
+                {
+                    foreach (var submodel in env.AasEnv.Submodels)
+                    {
+                        if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
+                        {
+                            packageIndex = envi;
+                            return submodel;
+                        }
+                    }
+                }
             }
 
             // no
@@ -258,39 +279,22 @@ namespace IO.Swagger.Helpers
         }
 
         /// <summary>
-        /// If AAS exists, it is updated. If not, added.
-        /// Similar to HTTP PUT
+        /// Creates a new Asset Administration Shell
         /// </summary>
-        /// <param name="aas"></param>
-        /// <param name="aasIdentifier"></param>
-        /// <returns></returns>
-        internal bool AddAas(AdministrationShell aas, string aasIdentifier = null)
+        /// <param name="aas">Requested AAS to be added in the server</param>
+        /// <returns>If AAS was successfully added</returns>
+        internal bool PostAAS(AdministrationShell aas)
         {
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
+
             for (int envi = 0; envi < Packages.Length; envi++)
             {
-                if (Packages[envi] != null)
+                if (Packages[envi] == null)
                 {
-                    aasIdentifier ??= aas.identification.id;
-                    var existingAas = FindAas(aasIdentifier);
-                    if (existingAas.AAS != null)
-                    {
-                        Packages[envi].AasEnv.AdministrationShells.Remove(existingAas.AAS);
-                        Packages[envi].AasEnv.AdministrationShells.Add(aas);
-                        AasxServer.Program.signalNewData(1);
-                        return true;
-                    }
-                }
-                else
-                {
-                    if (!emptyPackageAvailable)
-                    {
-                        emptyPackageAvailable = true;
-                        emptyPackageIndex = envi;
-                        break;      //Added to avoid unnecessary iterations
-                    }
-
+                    emptyPackageAvailable = true;
+                    emptyPackageIndex = envi;
+                    break;
                 }
             }
 
@@ -298,40 +302,46 @@ namespace IO.Swagger.Helpers
             {
                 Packages[emptyPackageIndex] = new AdminShellPackageEnv();
                 Packages[emptyPackageIndex].AasEnv.AdministrationShells.Add(aas);
-                AasxServer.Program.signalNewData(1);
                 return true;
             }
 
             return false;
         }
 
-        internal bool AddConceptDescription(ConceptDescription conceptDescription, string cdIdentifier = null)
+        /// <summary>
+        /// Updates the Asset Administration Shell
+        /// </summary>
+        /// <param name="aas">Requested AAS to be updated in the server</param>
+        /// <param name="aasReturn">Existing AAS from the server</param>
+        /// <returns>If AAS was successfully modified</returns>
+        internal bool PutAAS(AdministrationShell aas, FindAasReturn aasReturn)
+        {
+            if (aasReturn.AAS != null)
+            {
+                Packages[aasReturn.IPackage].AasEnv.AdministrationShells.Remove(aasReturn.AAS);
+                Packages[aasReturn.IPackage].AasEnv.AdministrationShells.Add(aas);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Creates a new Concept Description
+        /// </summary>
+        /// <param name="conceptDescription">Concept Description object</param>
+        /// <returns>If the concept description was successfully added</returns>
+        internal bool PostConceptDescription(ConceptDescription conceptDescription)
         {
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
-            cdIdentifier ??= conceptDescription.identification.id;
+
             for (int envi = 0; envi < Packages.Length; envi++)
             {
-                if (Packages[envi] != null)
+                if (Packages[envi] == null)
                 {
-                    var existingCD = FindConceptDescription(cdIdentifier, out int packageIndex);
-                    if (existingCD != null)
-                    {
-                        Packages[packageIndex].AasEnv.ConceptDescriptions.Remove(existingCD);
-                        Packages[packageIndex].AasEnv.ConceptDescriptions.Add(conceptDescription);
-                        return true;
-                    }
-                }
-                else
-                {
-                    //TODO: This logic is not in the old server.
-                    if (!emptyPackageAvailable)
-                    {
-                        emptyPackageAvailable = true;
-                        emptyPackageIndex = envi;
-                        break;      //Added to avoid unnecessary iterations
-                    }
-
+                    emptyPackageAvailable = true;
+                    emptyPackageIndex = envi;
+                    break;
                 }
             }
 
@@ -341,7 +351,25 @@ namespace IO.Swagger.Helpers
                 Packages[emptyPackageIndex].AasEnv.ConceptDescriptions.Add(conceptDescription);
                 return true;
             }
+            return false;
+        }
 
+        /// <summary>
+        /// Updates an existing Concept Description
+        /// </summary>
+        /// <param name="conceptDescription">Concept Description object</param>
+        /// <param name="existingCD">Existing Concept Description object from the server</param>
+        /// <param name="packageIndex">Package Index of the existingCD </param>
+        /// <returns></returns>
+        internal bool PutConceptDescription(ConceptDescription conceptDescription, ConceptDescription existingCD, int packageIndex)
+        {
+            if (packageIndex != -1)
+            {
+                int indexExistingCd = Packages[packageIndex].AasEnv.ConceptDescriptions.IndexOf(existingCD);
+                Packages[packageIndex].AasEnv.ConceptDescriptions.RemoveAt(indexExistingCd);
+                Packages[packageIndex].AasEnv.ConceptDescriptions.Insert(indexExistingCd, conceptDescription);
+                return true;
+            }
             return false;
         }
 
@@ -505,6 +533,9 @@ namespace IO.Swagger.Helpers
 
         internal object HandleOutputModifiers(object obj, string level = "deep", string content = "normal", string extent = "withoutBlobValue")
         {
+            //Validate requested modifiers against applicable modifiers as per specifications
+            ValidateOutputModifiers(obj, level, content, extent);
+
             //TODO: Better way to use default values when null
             if (string.IsNullOrEmpty(level))
             {
@@ -548,7 +579,7 @@ namespace IO.Swagger.Helpers
             {
                 //settings.Converters.Add(new ValueOnlyJsonConverter(true, obj));
                 //var jsonTest = JsonConvert.SerializeObject(obj, settings);
-                object output = GetValueOnly(obj, level);
+                object output = GetValueOnly(obj, level, extent);
                 var jsonOutput = JsonConvert.SerializeObject(output, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() });
                 return jsonOutput;
             }
@@ -560,35 +591,109 @@ namespace IO.Swagger.Helpers
             return json;
         }
 
-        private object GetValueOnly(object obj, string level)
+        /// <summary>
+        /// Validates the output modifiers as per specifications, (Refer Details of Asset Administration Shell Part 2, Section 9.3)
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="level"></param>
+        /// <param name="content"></param>
+        /// <param name="extent"></param>
+        private void ValidateOutputModifiers(object obj, string level, string content, string extent)
+        {
+            if (obj is AdministrationShell)
+            {
+                //No level or extent applicable, bzw., not even in the API
+                if ((content != null) && !content.CompareMultiple("normal", "reference", "trimmed"))
+                {
+                    throw new Exception($"Invalid Output Modifier {content}");
+                }
+            }
+            else if (obj is SubmodelElementCollection)
+            {
+                //Do nothing, everything is applicable. Added the clause, as SMEColl is also an SME, hence below conditions could have been applied
+            }
+            else if (obj is SubmodelElement)
+            {
+                //Level and extent are not applicable.
+                if (level != null)
+                {
+                    throw new Exception($"Invalid Output Modifier {level}");
+                }
+
+                //Conditions on Content
+                if (obj is Capability || obj is Operation)
+                {
+                    if ((content != null) && !content.CompareMultiple("normal", "reference"))
+                    {
+                        throw new Exception($"Invalid Output Modifier {content}");
+                    }
+                }
+
+                if ((content != null) && !content.CompareMultiple("normal", "reference", "value", "trimmed"))
+                {
+                    throw new Exception($"Invalid Output Modifier {content}");
+                }
+
+                //Conditions on Extent
+                if (extent != null)
+                {
+                    if (obj is Blob)
+                    {
+                        if (!extent.CompareMultiple("withoutBlobValue", "withBlobValue"))
+                        {
+                            throw new Exception($"Invalid Output Modifier {extent}");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception($"Invalid Output Modifier {extent}");
+                    }
+                }
+            }
+        }
+
+        private object GetValueOnly(object obj, string level, string extent)
         {
             try
             {
                 if (obj is Submodel submodel)
                 {
+                    //Submodel is serialized as an unnamed JSON object
                     List<object> values = new List<object>();
                     foreach (var smElement in submodel.submodelElements)
                     {
-                        object value = GetValueOnly(smElement.submodelElement, level);
+                        object value = GetValueOnly(smElement.submodelElement, level, extent);
                         values.Add(value);
                     }
                     return values;
                 }
                 else if (obj is SubmodelElementCollection collection)
                 {
-                    if (level.Equals("deep", StringComparison.OrdinalIgnoreCase))
+                    //SMECollection is serialized as named JSON Object
+                    Dictionary<string, List<object>> output = new Dictionary<string, List<object>>();
+                    List<object> values = new List<object>();
+                    foreach (var smElement in collection.value)
                     {
-                        List<object> values = new List<object>();
-                        foreach (var smElement in collection.value)
+                        //When core, should only include direct child elements. SMEs of child collection cannot be considered as direct child
+                        if ((smElement.submodelElement is SubmodelElementCollection) && level.Equals("core", StringComparison.OrdinalIgnoreCase))
                         {
-                            object value = GetValueOnly(smElement.submodelElement, level);
-                            values.Add(value);
+                            continue;
                         }
-                        return values;
+                        object value = GetValueOnly(smElement.submodelElement, level, extent);
+                        values.Add(value);
                     }
+                    output.Add(collection.idShort, values);
+                    return output;
                 }
                 else if (obj is SubmodelElement submodelElement)
                 {
+                    if (obj is Blob blob)
+                    {
+                        if (extent.Equals("withBlobValue", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return blob.ToWithBlobOnlyValue();
+                        }
+                    }
                     return submodelElement.ToValueOnlySerialization();
                 }
                 else if (obj is List<AdminShellV20.SubmodelElement> smEleList)
@@ -596,7 +701,7 @@ namespace IO.Swagger.Helpers
                     List<object> values = new List<object>();
                     foreach (var smElement in smEleList)
                     {
-                        object value = GetValueOnly(smElement, level);
+                        object value = GetValueOnly(smElement, level, extent);
                         values.Add(value);
                     }
                     return values;
@@ -689,33 +794,23 @@ namespace IO.Swagger.Helpers
             }
         }
 
-        internal bool AddSubmodel(Submodel submodel, string submodelIdentifier = null)
+        /// <summary>
+        /// Creates a new Submodel
+        /// </summary>
+        /// <param name="submodel">Submodel object</param>
+        /// <returns></returns>
+        internal bool PostSubmodel(Submodel submodel)
         {
             bool emptyPackageAvailable = false;
             int emptyPackageIndex = -1;
-            submodelIdentifier ??= submodel.identification.id;
+
             for (int envi = 0; envi < Packages.Length; envi++)
             {
-                if (Packages[envi] != null)
+                if (Packages[envi] == null)
                 {
-                    var existingSubmodel = FindSubmodel(submodelIdentifier);
-                    if (existingSubmodel != null)
-                    {
-                        Packages[envi].AasEnv.Submodels.Remove(existingSubmodel);
-                        Packages[envi].AasEnv.Submodels.Add(submodel);
-                        return true;
-                    }
-                }
-                else
-                {
-                    //TODO: This logic is not in the old server.
-                    if (!emptyPackageAvailable)
-                    {
-                        emptyPackageAvailable = true;
-                        emptyPackageIndex = envi;
-                        break;      //Added to avoid unnecessary iterations
-                    }
-
+                    emptyPackageAvailable = true;
+                    emptyPackageIndex = envi;
+                    break;
                 }
             }
 
@@ -726,6 +821,24 @@ namespace IO.Swagger.Helpers
                 return true;
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Updates the Submodel
+        /// </summary>
+        /// <param name="submodel">Submodel object</param>
+        /// <param name="existingSubmodel">Existing Submodel object from the server</param>
+        /// <param name="packageIndex">The package index of the existing Submodel object</param>
+        /// <returns></returns>
+        internal bool PutSubmodel(Submodel submodel, Submodel existingSubmodel, int packageIndex)
+        {
+            if (packageIndex != -1)
+            {
+                Packages[packageIndex].AasEnv.Submodels.Remove(existingSubmodel);
+                Packages[packageIndex].AasEnv.Submodels.Add(submodel);
+                return true;
+            }
             return false;
         }
 
@@ -750,25 +863,21 @@ namespace IO.Swagger.Helpers
             return null;
         }
 
-        internal bool AddSubmodelElement(Submodel submodel, SubmodelElement submodelElement)
+        /// <summary>
+        /// Creates a new submodel element
+        /// </summary>
+        /// <param name="submodel">Parent Submodel</param>
+        /// <param name="submodelElement">New Submodel Element to be added</param>
+        /// <returns></returns>
+        internal bool PostSubmodelElement(Submodel submodel, SubmodelElement submodelElement)
         {
-            var existingSmEle = submodel.FindSubmodelElementWrapper(submodelElement.idShort);
-            //Check if submodel element already exists in the submodel
-            if (existingSmEle != null)
-            {
-                int indexOfExistingSmw = submodel.submodelElements.IndexOf(existingSmEle);
-                submodel.submodelElements.RemoveAt(indexOfExistingSmw);
-                submodel.Insert(indexOfExistingSmw, submodelElement);
-                submodel.SetAllParents(DateTime.UtcNow);
-                return true;
-            }
-            else
+            if (submodel != null)
             {
                 submodel.Add(submodelElement);
                 submodel.SetAllParents(DateTime.UtcNow);
                 return true;
             }
-
+            return false;
         }
 
         /// <summary>
@@ -778,7 +887,6 @@ namespace IO.Swagger.Helpers
         /// <param name="idShortPath">e.g. SMEColl_idShort.SME_idShort</param>
         /// <param name="outParent">Parent of SME, bzw. SMEColl</param>
         /// <returns></returns>
-
         internal SubmodelElement FindSubmodelElementByPath(object parent, string idShortPath, out object outParent)
         {
             outParent = parent;
@@ -787,18 +895,18 @@ namespace IO.Swagger.Helpers
                 string[] idShorts = idShortPath.Split('.', 2);
                 if (parent is Submodel submodel)
                 {
-                    var submodelElement = submodel.FindSubmodelElementWrapper(idShorts[0]).submodelElement;
+                    var submodelElement = submodel.FindSubmodelElementWrapper(idShorts[0]);
                     if (submodelElement != null)
                     {
-                        return FindSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                        return FindSubmodelElementByPath(submodelElement.submodelElement, idShorts[1], out outParent);
                     }
                 }
                 else if (parent is SubmodelElementCollection collection)
                 {
-                    var submodelElement = collection.FindFirstIdShort(idShorts[0]).submodelElement;
+                    var submodelElement = collection.FindFirstIdShort(idShorts[0]);
                     if (submodelElement != null)
                     {
-                        return FindSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                        return FindSubmodelElementByPath(submodelElement.submodelElement, idShorts[1], out outParent);
                     }
                 }
             }
@@ -806,18 +914,18 @@ namespace IO.Swagger.Helpers
             {
                 if (parent is Submodel submodel)
                 {
-                    var submodelElement = submodel.FindSubmodelElementWrapper(idShortPath).submodelElement;
+                    var submodelElement = submodel.FindSubmodelElementWrapper(idShortPath);
                     if (submodelElement != null)
                     {
-                        return submodelElement;
+                        return submodelElement.submodelElement;
                     }
                 }
                 else if (parent is SubmodelElementCollection collection)
                 {
-                    var submodelElement = collection.FindFirstIdShort(idShortPath).submodelElement;
+                    var submodelElement = collection.FindFirstIdShort(idShortPath);
                     if (submodelElement != null)
                     {
-                        return submodelElement;
+                        return submodelElement.submodelElement;
                     }
                 }
             }
@@ -944,35 +1052,62 @@ namespace IO.Swagger.Helpers
             }
         }
 
-        /// <summary>
-        /// Adds the submodel element to the SMECollection
-        /// </summary>
-        /// <param name="parentSME"></param>
-        /// <param name="submodelElement"></param>
-        /// <returns></returns>
-        internal bool AddSubmodelElement(SubmodelElement parentSME, SubmodelElement submodelElement)
-        {
 
+        /// <summary>
+        /// Creates a new submodel element at a specified path within submodel elements hierarchy
+        /// </summary>
+        /// <param name="parentSME">Parent Submodel Element</param>
+        /// <param name="submodelElement">Requested Submodel Element to be added</param>
+        /// <returns>Returns true, if successfully added</returns>
+        internal bool PostSubmodelElementByPath(SubmodelElement parentSME, SubmodelElement submodelElement)
+        {
             if (parentSME is SubmodelElementCollection parentSMEColl)
             {
-                var existingSmEle = parentSMEColl.FindFirstIdShort(submodelElement.idShort);
-                //Check if submodel element already exists in the collection
-                if (existingSmEle != null)
-                {
-                    int indexOfExistingSmw = parentSMEColl.value.IndexOf(existingSmEle);
-                    parentSMEColl.value.RemoveAt(indexOfExistingSmw);
-                    parentSMEColl.Insert(indexOfExistingSmw, submodelElement);
-                }
-                else
-                {
-                    parentSMEColl.Add(submodelElement);
-
-                }
-
-                submodelElement.SetAllTimeStamps(DateTime.UtcNow);
+                parentSMEColl.Add(submodelElement);
                 return true;
             }
+            return false;
+        }
 
+        /// <summary>
+        /// Updates an existing submodel element at a specified path within submodel elements hierarchy
+        /// </summary>
+        /// <param name="parent">Parent SME or Submodel</param>
+        /// <param name="submodelElement">Submodel Element to be updated</param>
+        /// <param name="existingSME">Existing submodel element from the server, that needs to be updated</param>
+        /// <returns></returns>
+        internal bool PutSubmodelElementByPath(object parent, SubmodelElement submodelElement, SubmodelElement existingSME)
+        {
+            if (parent is SubmodelElementCollection parentSMEColl)
+            {
+                int indexOfExistingSME = -1;
+                for (int i = 0; i < parentSMEColl.value.Count; i++)
+                {
+                    if (existingSME.Equals(parentSMEColl.value[i].submodelElement))
+                    {
+                        indexOfExistingSME = i;
+                        break;
+                    }
+                }
+                parentSMEColl.value.RemoveAt(indexOfExistingSME);
+                parentSMEColl.Insert(indexOfExistingSME, submodelElement);
+                return true;
+            }
+            else if (parent is Submodel submodel)
+            {
+                int indexOfExistingSME = -1;
+                for (int i = 0; i < submodel.submodelElements.Count; i++)
+                {
+                    if (existingSME.Equals(submodel.submodelElements[i].submodelElement))
+                    {
+                        indexOfExistingSME = i;
+                        break;
+                    }
+                }
+                submodel.submodelElements.RemoveAt(indexOfExistingSME);
+                submodel.Insert(indexOfExistingSME, submodelElement);
+                return true;
+            }
             return false;
         }
 

@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
 namespace AdminShellNS
@@ -6757,6 +6758,30 @@ namespace AdminShellNS
                 return new AasElementSelfDescription("Blob", "Blob");
             }
 
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, Dictionary<string, string>>();
+                var valueDict = new Dictionary<string, string>
+                {
+                    { "mimeType", mimeType },
+                };
+
+                output.Add(idShort, valueDict);
+                return output;
+            }
+
+            public object ToWithBlobOnlyValue()
+            {
+                var output = new Dictionary<string, Dictionary<string, string>>();
+                var valueDict = new Dictionary<string, string>
+                {
+                    { "mimeType", mimeType },
+                    { "value", Base64UrlEncoder.Encode(value) }
+                };
+
+                output.Add(idShort, valueDict);
+                return output;
+            }
         }
 
         public class File : DataElement
@@ -7009,7 +7034,7 @@ namespace AdminShellNS
 
             public override object ToValueOnlySerialization()
             {
-                var output = new Dictionary<string, List<Dictionary<string, string>>>();
+                var output = new Dictionary<string, object>();
 
                 var listFirst = new List<Dictionary<string, string>>();
                 foreach (var key in first.Keys)
@@ -7166,7 +7191,7 @@ namespace AdminShellNS
 
             public override object ToValueOnlySerialization()
             {
-                var output = new Dictionary<string, List<Dictionary<string, string>>>();
+                var output = new Dictionary<string, object>();
 
                 var listFirst = new List<Dictionary<string, string>>();
                 foreach (var key in first.Keys)
@@ -7190,10 +7215,17 @@ namespace AdminShellNS
                     listSecond.Add(valueDict);
                 }
 
+                List<object> valueOnlyAnnotations = new List<object>();
+
+                foreach (var sme in annotations)
+                {
+                    valueOnlyAnnotations.Add(sme.submodelElement.ToValueOnlySerialization());
+                }
+
                 dynamic relObj = new ExpandoObject();
                 relObj.first = listFirst;
                 relObj.second = listSecond;
-                relObj.annotation = annotations;
+                relObj.annotation = valueOnlyAnnotations;
                 output.Add(idShort, relObj);
                 return output;
             }
@@ -7754,6 +7786,27 @@ namespace AdminShellNS
             {
                 return new AasElementSelfDescription("Entity", "Ent");
             }
+
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, object>();
+                List<object> valueOnlyStatements = new List<object>();
+
+                foreach (var sme in statements)
+                {
+                    valueOnlyStatements.Add(sme.submodelElement.ToValueOnlySerialization());
+                }
+
+                var valueDict = new Dictionary<string, object>
+                {
+                    { "statements", valueOnlyStatements },
+                    { "entityType",  entityType},
+                    { "assetId", assetRef.First.value },
+                };
+
+                output.Add(idShort, valueDict);
+                return output;
+            }
         }
 
         public class BasicEvent : SubmodelElement
@@ -7798,7 +7851,30 @@ namespace AdminShellNS
             {
                 return new AasElementSelfDescription("BasicEvent", "Evt");
             }
+
+            public override object ToValueOnlySerialization()
+            {
+                var output = new Dictionary<string, object>();
+                var list = new List<Dictionary<string, string>>();
+                foreach (var key in observed.Keys)
+                {
+                    var valueDict = new Dictionary<string, string>
+                    {
+                        { "type", key.type },
+                        { "value", key.value }
+                    };
+                    list.Add(valueDict);
+                }
+
+                var observedDict = new Dictionary<string, List<Dictionary<string, string>>>();
+                observedDict.Add("observed", list);
+                output.Add(idShort, observedDict);
+
+                return output;
+            }
         }
+
+
 
         //
         // Handling of packages

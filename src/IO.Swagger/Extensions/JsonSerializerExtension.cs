@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace IO.Swagger.Helpers
+namespace IO.Swagger.Extensions
 {
     public static class JsonSerializerExtension
     {
