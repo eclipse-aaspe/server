@@ -619,7 +619,14 @@ namespace AasxTimeSeries
                                     if (tsb.sourceType == "modbus")
                                     {
                                         latestDataValue = modbusValues[i];
-                                        tsb.samplesValues[i] += latestDataValue;
+                                        if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
+                                        {
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                        }
+                                        else
+                                        {
+                                            tsb.samplesValues[i] += latestDataValue;
+                                        }
                                         Console.WriteLine(tsb.modbusNodes[i] + " " + modbusValues[i]);
                                     }
                                 }
@@ -748,8 +755,8 @@ namespace AasxTimeSeries
                                                 semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
 
                                             // MICHA: bad hack
-                                            if (tsb.samplesProperties[i].idShort.ToLower().Contains("int2"))
-                                                smcvar.AddQualifier("TimeSeries.Args", "{ type: \"Bars\" }");
+                                            // if (tsb.samplesProperties[i].idShort.ToLower().Contains("int2"))
+                                            //    smcvar.AddQualifier("TimeSeries.Args", "{ type: \"Bars\" }");
 
                                             AddToSMC<AdminShell.Property>(timeStamp, smcvar,
                                                 "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
