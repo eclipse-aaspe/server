@@ -604,6 +604,14 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            public static void allowCORS(Grapevine.Interfaces.Server.IHttpContext context)
+            {
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+                context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+                context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+            }
+
             public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
             {
                 // make JSON
@@ -624,6 +632,8 @@ namespace AasxRestServerLibrary
                     context.Response.Headers.Remove("Refresh");
                     context.Response.Headers.Add("Refresh", refresh);
                 }
+
+                allowCORS(context);
 
                 context.Response.ContentType = ContentType.JSON;
                 context.Response.ContentEncoding = Encoding.UTF8;
@@ -1453,6 +1463,15 @@ namespace AasxRestServerLibrary
                 }
                 return context;
             }
+
+            //An OPTIONS preflight call is made by browser before calling actual PUT
+            [RestRoute(HttpMethod = HttpMethod.OPTIONS, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            public IHttpContext OptionsSubmodelElementsContents(IHttpContext context)
+            {
+                SendJsonResponse(context, new Object()); //returning just an empty object
+                return context;
+            }
+
 
             [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
             public IHttpContext DeleteSubmodelElementsContents(IHttpContext context)
