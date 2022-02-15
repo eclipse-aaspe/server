@@ -175,12 +175,12 @@ a workflow which is executed on each push to master branch.
 We provide pre-built docker images meant for demonstration purposes at the
 following DockerHub repositories:
 
-* `blazor` (linux/amd64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo
-* `blazor` (linux/arm32): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo-arm32
-* `blazor` (linux/arm64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-blazor-for-demo-arm64
-* `core` (linux/amd64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo
-* `core` (linux/arm32): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo-arm32
-* `core` (linux/arm64): https://hub.docker.com/repository/docker/adminshellio/aasx-server-core-for-demo-arm64
+* `blazor` [linux/amd64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
+* `blazor` [linux/arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)
+* `blazor` [linux/arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)
+* `core` [linux/amd64](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo)
+* `core` [linux/arm32](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo-arm32)
+* `core` [linux/arm64](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo-arm64)
 
 In case you want to deploy on Raspberry PI, you probably need to use ARM 32-bit.
 
