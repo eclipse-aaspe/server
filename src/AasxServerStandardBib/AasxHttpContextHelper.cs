@@ -522,10 +522,7 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Add("Refresh", refresh);
             }
 
-            context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-            context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+            AasxRestServer.TestResource.allowCORS(context);
 
             context.Response.ContentType = ContentType.JSON;
             context.Response.ContentEncoding = Encoding.UTF8;
@@ -542,6 +539,8 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Remove("Refresh");
                 context.Response.Headers.Add("Refresh", refresh);
             }
+
+            AasxRestServer.TestResource.allowCORS(context);
 
             context.Response.ContentType = ContentType.TEXT;
             if (mimeType != null)
