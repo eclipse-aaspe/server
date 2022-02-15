@@ -71,7 +71,7 @@ namespace AasxRestServerLibrary
                 if (varInt2 > 10)
                     varInt2 = 0;
                 // varFloat3 = Math.Sin(varInt1 * 180 / 100);
-                varFloat3 = Math.Sin((1.0 * varInt1 / 360.0) * 10);
+                varFloat3 = 100 * Math.Sin((1.0 * varInt1 / 360.0) * 10);
 
                 testData td = new testData();
                 td.varInt1 = varInt1;
@@ -860,7 +860,8 @@ namespace AasxRestServerLibrary
                                     path = x.idShort + "." + path;
                                 }
 
-                                if (searchPath == "" || path == searchPath.Substring(0, path.Length))
+                                if (searchPath == "" ||
+                                    (searchPath.Length <= path.Length && searchPath == path.Substring(0, searchPath.Length)))
                                 {
                                     addEntry(diffJson, ref diffText, ref diffList,
                                         "DELETE", path, "SMEC", d.rf.TimeStamp);
@@ -888,7 +889,7 @@ namespace AasxRestServerLibrary
                                     if (mode == "CREATE" || aas.TimeStamp != aas.TimeStampCreate)
                                     {
                                         string p = aas.idShort;
-                                        if (searchPath == "" || (p.Length <= searchPath.Length && p == searchPath.Substring(0, p.Length)))
+                                        if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                         {
                                             addEntry(diffJson, ref diffText, ref diffList,
                                             mode, aas.idShort, "AAS", aas.TimeStamp);
@@ -905,17 +906,17 @@ namespace AasxRestServerLibrary
                                         {
                                             if (mode == "CREATE" && sm.TimeStampCreate > minimumDate)
                                             {
-                                                string p = aas.idShort + "." + sm.idShort;
-                                                if (searchPath == "" || (p.Length <= searchPath.Length && p == searchPath.Substring(0, p.Length)))
+                                                // string p = aas.idShort + "." + sm.idShort;
+                                                if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                                 {
                                                     addEntry(diffJson, ref diffText, ref diffList,
-                                                        mode, aas.idShort + "." + sm.idShort, "SM", sm.TimeStamp);
+                                                        mode, p, "SM", sm.TimeStamp);
                                                 }
                                             }
 
                                             foreach (var sme in sm.submodelElements)
                                                 checkDiff(diffJson, ref diffText, ref diffList,
-                                                    mode, aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
+                                                    mode, p + ".", sme.submodelElement,
                                                     minimumDate, deep, searchPath);
                                         }
                                     }
