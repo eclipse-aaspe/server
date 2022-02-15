@@ -904,6 +904,7 @@ namespace AasxRestServerLibrary
                                     {
                                         if (sm.TimeStamp > minimumDate)
                                         {
+                                            string p = sm.idShort;
                                             if (mode == "CREATE" && sm.TimeStampCreate > minimumDate)
                                             {
                                                 // string p = aas.idShort + "." + sm.idShort;
