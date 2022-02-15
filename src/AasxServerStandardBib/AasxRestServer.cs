@@ -101,7 +101,8 @@ namespace AasxRestServerLibrary
 
                 public static void add(AdminShell.Referable o, string op, AdminShell.Submodel rootSubmodel, ulong changeCount)
                 {
-                    if (o is AdminShell.SubmodelElementCollection smec)
+                    // if (o is AdminShell.SubmodelElementCollection smec)
+                    if (o is AdminShell.SubmodelElement smec)
                     {
                         string json = "";
 

@@ -2306,6 +2306,8 @@ namespace AasxRestServerLibrary
             if (fse.parent == sm)
             {
                 context.Server.Logger.Debug($"Deleting specified SubmodelElement {elinfo} from Submodel {smid}.");
+                AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                    fse.wrapper.submodelElement, "Remove", sm, (ulong)DateTime.UtcNow.Ticks);
                 sm.submodelElements.Remove(fse.wrapper);
                 deleted = true;
             }
