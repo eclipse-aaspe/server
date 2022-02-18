@@ -574,6 +574,19 @@ namespace AasxServer
             HttpResponseMessage response = null;
             Task task = null;
             string diffPath = "";
+            var splitPath = path.value.Split('.');
+            if (splitPath.Length < 2)
+                return;
+            string aasPath = splitPath[0];
+            string subPath = "";
+            int i = 1;
+            string pre = "";
+            while (i < splitPath.Length)
+            {
+                subPath += pre + splitPath[i];
+                pre = ".";
+                i++;
+            }
 
             if (status != null)
                 status.value = "OK";
@@ -587,26 +600,30 @@ namespace AasxServer
                         return;
                     if (elementCollection == null)
                         return;
-                    var splitPath = path.value.Split('.');
-                    if (splitPath.Length < 4)
-                        return;
+
                     if (lastDiff.value == "")
                     {
                         opName = "get";
-                        lastDiff.value = "" + DateTime.UtcNow;
-                        requestPath = endPoint.value + "/aas/" + splitPath[0] +
-                            "/submodels/" + splitPath[1] + "/elements/" + splitPath[2] +
-                            "/" + splitPath[3] + "/deep";
+                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                        requestPath = endPoint.value + "/aas/" + aasPath +
+                            "/submodels/" + splitPath[1] + "/elements";
+                        i = 2;
+                        while (i < splitPath.Length)
+                        {
+                            requestPath += "/" + splitPath[i];
+                            i++;
+                        }
+                        requestPath += "/complete";
                     }
                     else
                     {
                         last = DateTime.Parse(lastDiff.value);
                         requestPath = endPoint.value +
                             "/diffjson/aas/" + splitPath[0] +
-                            "?mode=CREATE,UPDATE&path=" + path.value +
-                            "&time=" + last;
+                            "?path=" + subPath;
+                        requestPath += "."; // to avoid wrong data by prefix only
+                        requestPath += "&time=" + lastDiff.value;
                     }
-
                 }
 
                 try
@@ -678,20 +695,27 @@ namespace AasxServer
                     }
                     if (opName == "getdiff")
                     {
+                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
                         diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
                         foreach (var d in diffList)
                         {
                             if (d.type == "SMEC")
                             {
-                                if (d.path.Length > path.value.Length && path.value == d.path.Substring(0, path.value.Length))
+                                if (d.path.Length > subPath.Length && subPath == d.path.Substring(0, subPath.Length))
                                 {
-                                    var splitPath = d.path.Split('.');
-                                    if (splitPath.Length != 5)
+                                    splitPath = d.path.Split('.');
+                                    if (splitPath.Length < 2)
                                         return;
-                                    requestPath = endPoint.value + "/aas/" + splitPath[0] +
-                                        "/submodels/" + splitPath[1] + "/elements/" + splitPath[2] +
-                                        "/" + splitPath[3] + "/" + splitPath[4] + "/deep";
+                                    requestPath = endPoint.value + "/aas/" + aasPath +
+                                        "/submodels/" + splitPath[0] + "/elements";
+                                    i = 1;
+                                    while (i < splitPath.Length)
+                                    {
+                                        requestPath += "/" + splitPath[i];
+                                        i++;
+                                    }
+                                    requestPath += "/complete";
                                     try
                                     {
                                         task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
@@ -783,7 +807,7 @@ namespace AasxServer
                     if (lastDiff.value == "")
                     {
                         opName = "put";
-                        lastDiff.value = "" + DateTime.UtcNow;
+                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                     }
                     else
                     {
@@ -791,7 +815,7 @@ namespace AasxServer
                     }
                 }
 
-                for (int i = 0; i < count; i++)
+                for (i = 0; i < count; i++)
                 {
                     bool error = false;
                     string statusValue = "";

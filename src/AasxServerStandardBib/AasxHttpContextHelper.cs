@@ -2214,6 +2214,7 @@ namespace AasxRestServerLibrary
                 else
                 {
                     context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
+                    sme.TimeStampCreate = timeStamp;
                     sm.Add(sme);
                 }
                 sme.SetAllParentsAndTimestamps(sm, timeStamp, sme.TimeStampCreate);
