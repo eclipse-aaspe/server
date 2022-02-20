@@ -178,6 +178,10 @@ namespace AasxServer
                         case "limitcount":
                             operation_limitCount(op, envIndex, timeStamp);
                             break;
+                        case "calculatecfp":
+                        case "calculate_cfp":
+                            operation_calculate_cfp(op, envIndex, timeStamp);
+                            break;
                     }
                 }
             }
@@ -884,7 +888,6 @@ namespace AasxServer
                 }
             }
         }
-
         static void operation_limitCount(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference collection: collection
@@ -964,6 +967,148 @@ namespace AasxServer
             }
             catch
             {
+            }
+            Program.signalNewData(1);
+        }
+
+        static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        {
+            double cfpCradleToGateSum = 0.0;
+            double cfpProductionSum = 0.0;
+            double cfpDistributionSum = 0.0;
+            AdminShell.Property cfpCradleToGate = null;
+            AdminShell.Property cfpProduction = null;
+            AdminShell.Property cfpDistribution = null;
+            List<string> bomAssetId = new List<string>();
+
+            // get cfp property and list of asset ids
+            var env = AasxServer.Program.env[envIndex];
+            if (env != null)
+            {
+                var aas = env.AasEnv.AdministrationShells[0];
+                if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                {
+                    foreach (var smr in aas.submodelRefs)
+                    {
+                        var sm = env.AasEnv.FindSubmodel(smr);
+                        if (sm != null && sm.idShort != null)
+                        {
+                            if (sm.idShort == "ProductCarbonFootprint")
+                            {
+                                foreach (var v in sm.submodelElements)
+                                {
+                                    if (v.submodelElement is AdminShell.Property p)
+                                    {
+                                        switch (p.idShort)
+                                        {
+                                            case "CfpCradleToGate":
+                                                cfpCradleToGate = p;
+                                                break;
+                                            case "CfpProduction":
+                                                cfpProduction = p;
+                                                break;
+                                            case "CfpDistribution":
+                                                cfpDistribution = p;
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (sm.idShort == "BillOfMaterial")
+                            {
+                                foreach (var v in sm.submodelElements)
+                                {
+                                    if (v.submodelElement is AdminShell.Entity e)
+                                    {
+                                        string s = "";
+                                        s = e?.assetRef?.Keys?[0].value;
+                                        if (s != "")
+                                            bomAssetId.Add(s);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            int aascount = AasxServer.Program.env.Length;
+
+            for (int i = 0; i < aascount; i++)
+            {
+                env = AasxServer.Program.env[i];
+                if (i != envIndex && env != null)
+                {
+                    var aas = env.AasEnv.AdministrationShells[0];
+                    var assetId = aas.assetRef.Keys[0].value;
+                    if (!bomAssetId.Contains(assetId))
+                        continue;
+                    if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                    {
+                        foreach (var smr in aas.submodelRefs)
+                        {
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm != null && sm.idShort != null)
+                            {
+                                if (sm.idShort == "ProductCarbonFootprint")
+                                {
+                                    foreach (var v in sm.submodelElements)
+                                    {
+                                        if (v.submodelElement is AdminShell.Property p)
+                                        {
+                                            double value = 0.0;
+                                            try
+                                            {
+                                                value = Convert.ToDouble(p.value);
+                                            }
+                                            catch { }
+                                            switch (p.idShort)
+                                            {
+                                                case "CfpCradleToGate":
+                                                    cfpCradleToGateSum += value;
+                                                    break;
+                                                case "CfpProduction":
+                                                    cfpProductionSum += value;
+                                                    break;
+                                                case "CfpDistribution":
+                                                    cfpDistributionSum += value;
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (cfpCradleToGate != null)
+            {
+                string value = cfpCradleToGateSum.ToString("N8");
+                if (value != cfpCradleToGate.value)
+                {
+                    cfpCradleToGate.value = value;
+                    cfpCradleToGate.setTimeStamp(timeStamp);
+                }
+            }
+            if (cfpProduction != null)
+            {
+                string value = cfpProductionSum.ToString("N8");
+                if (value != cfpProduction.value)
+                {
+                    cfpProduction.value = value;
+                    cfpProduction.setTimeStamp(timeStamp);
+                }
+            }
+            if (cfpDistribution != null)
+            {
+                string value = cfpDistributionSum.ToString("N8");
+                if (value != cfpDistribution.value)
+                {
+                    cfpDistribution.value = value;
+                    cfpDistribution.setTimeStamp(timeStamp);
+                }
             }
             Program.signalNewData(1);
         }
