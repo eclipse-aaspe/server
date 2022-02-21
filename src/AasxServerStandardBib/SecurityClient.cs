@@ -175,6 +175,13 @@ namespace AasxServer
                         case "putdiff":
                             operation_get_put(op, envIndex, timeStamp);
                             break;
+                        case "limitcount":
+                            operation_limitCount(op, envIndex, timeStamp);
+                            break;
+                        case "calculatecfp":
+                        case "calculate_cfp":
+                            operation_calculate_cfp(op, envIndex, timeStamp);
+                            break;
                     }
                 }
             }
@@ -204,7 +211,7 @@ namespace AasxServer
                 var inputRef = input.value.submodelElement;
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
                 if (refElement is AdminShell.SubmodelElementCollection re)
                     smec = re;
             }
@@ -454,7 +461,7 @@ namespace AasxServer
                 }
                 if (inputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                     if (refElement is AdminShell.Submodel)
@@ -494,7 +501,7 @@ namespace AasxServer
                 }
                 if (outputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                     if (refElement is AdminShell.Submodel)
@@ -571,6 +578,19 @@ namespace AasxServer
             HttpResponseMessage response = null;
             Task task = null;
             string diffPath = "";
+            var splitPath = path.value.Split('.');
+            if (splitPath.Length < 2)
+                return;
+            string aasPath = splitPath[0];
+            string subPath = "";
+            int i = 1;
+            string pre = "";
+            while (i < splitPath.Length)
+            {
+                subPath += pre + splitPath[i];
+                pre = ".";
+                i++;
+            }
 
             if (status != null)
                 status.value = "OK";
@@ -584,26 +604,30 @@ namespace AasxServer
                         return;
                     if (elementCollection == null)
                         return;
-                    var splitPath = path.value.Split('.');
-                    if (splitPath.Length < 4)
-                        return;
+
                     if (lastDiff.value == "")
                     {
                         opName = "get";
-                        lastDiff.value = "" + DateTime.UtcNow;
-                        requestPath = endPoint.value + "/aas/" + splitPath[0] +
-                            "/submodels/" + splitPath[1] + "/elements/" + splitPath[2] +
-                            "/" + splitPath[3] + "/deep";
+                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                        requestPath = endPoint.value + "/aas/" + aasPath +
+                            "/submodels/" + splitPath[1] + "/elements";
+                        i = 2;
+                        while (i < splitPath.Length)
+                        {
+                            requestPath += "/" + splitPath[i];
+                            i++;
+                        }
+                        requestPath += "/complete";
                     }
                     else
                     {
                         last = DateTime.Parse(lastDiff.value);
                         requestPath = endPoint.value +
                             "/diffjson/aas/" + splitPath[0] +
-                            "?mode=CREATE,UPDATE&path=" + path.value +
-                            "&time=" + last;
+                            "?path=" + subPath;
+                        requestPath += "."; // to avoid wrong data by prefix only
+                        requestPath += "&time=" + lastDiff.value;
                     }
-
                 }
 
                 try
@@ -660,35 +684,42 @@ namespace AasxServer
                             if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
                                 return;
 
-                            var aas = Program.env[0].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
+                            var aas = Program.env[envIndex].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
 
                             // datastructure update
-                            if (Program.env == null || Program.env[0].AasEnv == null || Program.env[0].AasEnv.Assets == null)
+                            if (Program.env == null || Program.env[envIndex].AasEnv == null || Program.env[envIndex].AasEnv.Assets == null)
                                 return;
 
                             // add Submodel
-                            var existingSm = Program.env[0].AasEnv.FindSubmodel(receiveSubmodel.identification);
+                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodel(receiveSubmodel.identification);
                             if (existingSm != null)
-                                Program.env[0].AasEnv.Submodels.Remove(existingSm);
-                            Program.env[0].AasEnv.Submodels.Add(receiveSubmodel);
+                                Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
+                            Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
                         }
                     }
                     if (opName == "getdiff")
                     {
+                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
                         diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
                         foreach (var d in diffList)
                         {
                             if (d.type == "SMEC")
                             {
-                                if (d.path.Length > path.value.Length && path.value == d.path.Substring(0, path.value.Length))
+                                if (d.path.Length > subPath.Length && subPath == d.path.Substring(0, subPath.Length))
                                 {
-                                    var splitPath = d.path.Split('.');
-                                    if (splitPath.Length != 5)
+                                    splitPath = d.path.Split('.');
+                                    if (splitPath.Length < 2)
                                         return;
-                                    requestPath = endPoint.value + "/aas/" + splitPath[0] +
-                                        "/submodels/" + splitPath[1] + "/elements/" + splitPath[2] +
-                                        "/" + splitPath[3] + "/" + splitPath[4] + "/deep";
+                                    requestPath = endPoint.value + "/aas/" + aasPath +
+                                        "/submodels/" + splitPath[0] + "/elements";
+                                    i = 1;
+                                    while (i < splitPath.Length)
+                                    {
+                                        requestPath += "/" + splitPath[i];
+                                        i++;
+                                    }
+                                    requestPath += "/complete";
                                     try
                                     {
                                         task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
@@ -780,7 +811,7 @@ namespace AasxServer
                     if (lastDiff.value == "")
                     {
                         opName = "put";
-                        lastDiff.value = "" + DateTime.UtcNow;
+                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                     }
                     else
                     {
@@ -788,7 +819,7 @@ namespace AasxServer
                     }
                 }
 
-                for (int i = 0; i < count; i++)
+                for (i = 0; i < count; i++)
                 {
                     bool error = false;
                     string statusValue = "";
@@ -856,6 +887,230 @@ namespace AasxServer
                     lastDiff.value = "" + DateTime.UtcNow;
                 }
             }
+        }
+        static void operation_limitCount(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        {
+            // inputVariable reference collection: collection
+            // inputVariable limit: property
+            // inputVariable prefix: property
+
+            if (op.inputVariable.Count != 3)
+            {
+                return;
+            }
+            AdminShell.SubmodelElementCollection collection = null;
+            AdminShell.Property limit = null;
+            AdminShell.Property prefix = null;
+            AdminShell.SubmodelElementCollection smec = null;
+            AdminShell.Property p = null;
+
+            foreach (var input in op.inputVariable)
+            {
+                smec = null;
+                p = null;
+                var inputRef = input.value.submodelElement;
+                if (inputRef is AdminShell.Property)
+                {
+                    p = (inputRef as AdminShell.Property);
+                }
+                if (inputRef is AdminShell.ReferenceElement)
+                {
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                    if (refElement is AdminShell.SubmodelElementCollection)
+                        smec = refElement as AdminShell.SubmodelElementCollection;
+                }
+                switch (inputRef.idShort.ToLower())
+                {
+                    case "collection":
+                        if (smec != null)
+                            collection = smec;
+                        break;
+                    case "limit":
+                        if (p != null)
+                            limit = p;
+                        break;
+                    case "prefix":
+                        if (p != null)
+                            prefix = p;
+                        break;
+                }
+            }
+            try
+            {
+                int count = Convert.ToInt32(limit.value);
+                string pre = prefix.value;
+                int preCount = 0;
+                int i = 0;
+                while (i < collection.value.Count)
+                {
+                    if (pre == collection.value[i].submodelElement.idShort.Substring(0, pre.Length))
+                        preCount++;
+                    i++;
+                }
+                i = 0;
+                while (preCount > count && i < collection.value.Count)
+                {
+                    if (pre == collection.value[i].submodelElement.idShort.Substring(0, pre.Length))
+                    {
+                        AdminShell.Referable r = collection.value[i].submodelElement;
+                        var sm = r.getParentSubmodel();
+                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                            r, "Remove", sm, (ulong)timeStamp.Ticks);
+                        collection.value.RemoveAt(i);
+                        preCount--;
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                }
+            }
+            catch
+            {
+            }
+            Program.signalNewData(1);
+        }
+
+        static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        {
+            double cfpCradleToGateSum = 0.0;
+            double cfpProductionSum = 0.0;
+            double cfpDistributionSum = 0.0;
+            AdminShell.Property cfpCradleToGate = null;
+            AdminShell.Property cfpProduction = null;
+            AdminShell.Property cfpDistribution = null;
+            List<string> bomAssetId = new List<string>();
+
+            // get cfp property and list of asset ids
+            var env = AasxServer.Program.env[envIndex];
+            if (env != null)
+            {
+                var aas = env.AasEnv.AdministrationShells[0];
+                if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                {
+                    foreach (var smr in aas.submodelRefs)
+                    {
+                        var sm = env.AasEnv.FindSubmodel(smr);
+                        if (sm != null && sm.idShort != null)
+                        {
+                            if (sm.idShort == "ProductCarbonFootprint")
+                            {
+                                foreach (var v in sm.submodelElements)
+                                {
+                                    if (v.submodelElement is AdminShell.Property p)
+                                    {
+                                        switch (p.idShort)
+                                        {
+                                            case "CfpCradleToGate":
+                                                cfpCradleToGate = p;
+                                                break;
+                                            case "CfpProduction":
+                                                cfpProduction = p;
+                                                break;
+                                            case "CfpDistribution":
+                                                cfpDistribution = p;
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (sm.idShort == "BillOfMaterial")
+                            {
+                                foreach (var v in sm.submodelElements)
+                                {
+                                    if (v.submodelElement is AdminShell.Entity e)
+                                    {
+                                        string s = "";
+                                        s = e?.assetRef?.Keys?[0].value;
+                                        if (s != "")
+                                            bomAssetId.Add(s);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            int aascount = AasxServer.Program.env.Length;
+
+            for (int i = 0; i < aascount; i++)
+            {
+                env = AasxServer.Program.env[i];
+                if (i != envIndex && env != null)
+                {
+                    var aas = env.AasEnv.AdministrationShells[0];
+                    var assetId = aas.assetRef.Keys[0].value;
+                    if (!bomAssetId.Contains(assetId))
+                        continue;
+                    if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                    {
+                        foreach (var smr in aas.submodelRefs)
+                        {
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm != null && sm.idShort != null)
+                            {
+                                if (sm.idShort == "ProductCarbonFootprint")
+                                {
+                                    foreach (var v in sm.submodelElements)
+                                    {
+                                        if (v.submodelElement is AdminShell.Property p)
+                                        {
+                                            double value = 0.0;
+                                            try
+                                            {
+                                                value = Convert.ToDouble(p.value);
+                                            }
+                                            catch { }
+                                            switch (p.idShort)
+                                            {
+                                                case "CfpCradleToGate":
+                                                    cfpCradleToGateSum += value;
+                                                    break;
+                                                case "CfpProduction":
+                                                    cfpProductionSum += value;
+                                                    break;
+                                                case "CfpDistribution":
+                                                    cfpDistributionSum += value;
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (cfpCradleToGate != null)
+            {
+                string value = cfpCradleToGateSum.ToString("N8");
+                if (value != cfpCradleToGate.value)
+                {
+                    cfpCradleToGate.value = value;
+                    cfpCradleToGate.setTimeStamp(timeStamp);
+                }
+            }
+            if (cfpProduction != null)
+            {
+                string value = cfpProductionSum.ToString("N8");
+                if (value != cfpProduction.value)
+                {
+                    cfpProduction.value = value;
+                    cfpProduction.setTimeStamp(timeStamp);
+                }
+            }
+            if (cfpDistribution != null)
+            {
+                string value = cfpDistributionSum.ToString("N8");
+                if (value != cfpDistribution.value)
+                {
+                    cfpDistribution.value = value;
+                    cfpDistribution.setTimeStamp(timeStamp);
+                }
+            }
+            Program.signalNewData(1);
         }
 
         static Thread tasksThread;

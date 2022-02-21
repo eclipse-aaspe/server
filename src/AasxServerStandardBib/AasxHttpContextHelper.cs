@@ -522,10 +522,7 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Add("Refresh", refresh);
             }
 
-            context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-            context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+            AasxRestServer.TestResource.allowCORS(context);
 
             context.Response.ContentType = ContentType.JSON;
             context.Response.ContentEncoding = Encoding.UTF8;
@@ -542,6 +539,8 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Remove("Refresh");
                 context.Response.Headers.Add("Refresh", refresh);
             }
+
+            AasxRestServer.TestResource.allowCORS(context);
 
             context.Response.ContentType = ContentType.TEXT;
             if (mimeType != null)
@@ -1100,6 +1099,10 @@ namespace AasxRestServerLibrary
                 // replace exactly the file
                 try
                 {
+                    // replace loaded original when saving
+                    packFn = Program.envFileName[packIndex];
+                    Console.WriteLine($"Replace original AASX package on server: {packFn}");
+
                     // copy into same location
                     File.Copy(tempFn, packFn, overwrite: true);
 
@@ -1109,7 +1112,7 @@ namespace AasxRestServerLibrary
                         Packages[packIndex] = newAasx;
                     else
                     {
-                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {tempFn} for replacing via PUT. Aborting.");
+                        context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot load new package {packFn} for replacing via PUT. Aborting.");
                         return;
                     }
                 }
@@ -2211,6 +2214,7 @@ namespace AasxRestServerLibrary
                 else
                 {
                     context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
+                    sme.TimeStampCreate = timeStamp;
                     sm.Add(sme);
                 }
                 sme.SetAllParentsAndTimestamps(sm, timeStamp, sme.TimeStampCreate);
@@ -2302,6 +2306,8 @@ namespace AasxRestServerLibrary
             if (fse.parent == sm)
             {
                 context.Server.Logger.Debug($"Deleting specified SubmodelElement {elinfo} from Submodel {smid}.");
+                AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                    fse.wrapper.submodelElement, "Remove", sm, (ulong)DateTime.UtcNow.Ticks);
                 sm.submodelElements.Remove(fse.wrapper);
                 deleted = true;
             }

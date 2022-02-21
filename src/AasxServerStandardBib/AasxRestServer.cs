@@ -71,7 +71,7 @@ namespace AasxRestServerLibrary
                 if (varInt2 > 10)
                     varInt2 = 0;
                 // varFloat3 = Math.Sin(varInt1 * 180 / 100);
-                varFloat3 = Math.Sin((1.0 * varInt1 / 360.0) * 10);
+                varFloat3 = 100 * Math.Sin((1.0 * varInt1 / 360.0) * 10);
 
                 testData td = new testData();
                 td.varInt1 = varInt1;
@@ -101,7 +101,8 @@ namespace AasxRestServerLibrary
 
                 public static void add(AdminShell.Referable o, string op, AdminShell.Submodel rootSubmodel, ulong changeCount)
                 {
-                    if (o is AdminShell.SubmodelElementCollection smec)
+                    // if (o is AdminShell.SubmodelElementCollection smec)
+                    if (o is AdminShell.SubmodelElement smec)
                     {
                         string json = "";
 
@@ -603,6 +604,14 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            public static void allowCORS(Grapevine.Interfaces.Server.IHttpContext context)
+            {
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+                context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+                context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+            }
+
             public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
             {
                 // make JSON
@@ -623,6 +632,8 @@ namespace AasxRestServerLibrary
                     context.Response.Headers.Remove("Refresh");
                     context.Response.Headers.Add("Refresh", refresh);
                 }
+
+                allowCORS(context);
 
                 context.Response.ContentType = ContentType.JSON;
                 context.Response.ContentEncoding = Encoding.UTF8;
@@ -849,7 +860,8 @@ namespace AasxRestServerLibrary
                                     path = x.idShort + "." + path;
                                 }
 
-                                if (searchPath == "" || path == searchPath.Substring(0, path.Length))
+                                if (searchPath == "" ||
+                                    (searchPath.Length <= path.Length && searchPath == path.Substring(0, searchPath.Length)))
                                 {
                                     addEntry(diffJson, ref diffText, ref diffList,
                                         "DELETE", path, "SMEC", d.rf.TimeStamp);
@@ -877,7 +889,7 @@ namespace AasxRestServerLibrary
                                     if (mode == "CREATE" || aas.TimeStamp != aas.TimeStampCreate)
                                     {
                                         string p = aas.idShort;
-                                        if (searchPath == "" || (p.Length <= searchPath.Length && p == searchPath.Substring(0, p.Length)))
+                                        if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                         {
                                             addEntry(diffJson, ref diffText, ref diffList,
                                             mode, aas.idShort, "AAS", aas.TimeStamp);
@@ -892,19 +904,20 @@ namespace AasxRestServerLibrary
                                     {
                                         if (sm.TimeStamp > minimumDate)
                                         {
+                                            string p = sm.idShort;
                                             if (mode == "CREATE" && sm.TimeStampCreate > minimumDate)
                                             {
-                                                string p = aas.idShort + "." + sm.idShort;
-                                                if (searchPath == "" || (p.Length <= searchPath.Length && p == searchPath.Substring(0, p.Length)))
+                                                // string p = aas.idShort + "." + sm.idShort;
+                                                if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                                 {
                                                     addEntry(diffJson, ref diffText, ref diffList,
-                                                        mode, aas.idShort + "." + sm.idShort, "SM", sm.TimeStamp);
+                                                        mode, p, "SM", sm.TimeStamp);
                                                 }
                                             }
 
                                             foreach (var sme in sm.submodelElements)
                                                 checkDiff(diffJson, ref diffText, ref diffList,
-                                                    mode, aas.idShort + "." + sm.idShort + ".", sme.submodelElement,
+                                                    mode, p + ".", sme.submodelElement,
                                                     minimumDate, deep, searchPath);
                                         }
                                     }
@@ -1450,6 +1463,15 @@ namespace AasxRestServerLibrary
                 }
                 return context;
             }
+
+            //An OPTIONS preflight call is made by browser before calling actual PUT
+            [RestRoute(HttpMethod = HttpMethod.OPTIONS, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            public IHttpContext OptionsSubmodelElementsContents(IHttpContext context)
+            {
+                SendJsonResponse(context, new Object()); //returning just an empty object
+                return context;
+            }
+
 
             [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
             public IHttpContext DeleteSubmodelElementsContents(IHttpContext context)

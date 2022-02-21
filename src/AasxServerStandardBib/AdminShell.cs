@@ -1809,6 +1809,14 @@ namespace AdminShellNS
                 }
             }
 
+            public AdminShell.Submodel getParentSubmodel()
+            {
+                Referable parent = this;
+                while (!(parent is AdminShell.Submodel) && parent != null)
+                    parent = parent.parent;
+                return parent as AdminShell.Submodel;
+            }
+
             // members
 
             [MetaModelName("Referable.IdShort")]

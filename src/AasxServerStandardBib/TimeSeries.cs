@@ -485,18 +485,23 @@ namespace AasxTimeSeries
                                 tsb.block.Add(c);
                                 c.setTimeStamp(timeStamp);
                             }
-                            parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames);
-
-                            foreach (var el in c.value)
+                            if (parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames, tsb.minDiffAbsolute, tsb.minDiffPercent))
                             {
-                                if (el.submodelElement is AdminShell.Property p)
+                                foreach (var el in c.value)
                                 {
-                                    if (!tsb.samplesProperties.Contains(p))
+                                    if (el.submodelElement is AdminShell.Property p)
                                     {
-                                        tsb.samplesProperties.Add(p);
-                                        tsb.samplesValues.Add("");
+                                        if (!tsb.samplesProperties.Contains(p))
+                                        {
+                                            tsb.samplesProperties.Add(p);
+                                            tsb.samplesValues.Add("");
+                                        }
                                     }
                                 }
+                            }
+                            else
+                            {
+                                valueCount = 0;
                             }
                         }
                         if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
@@ -614,7 +619,14 @@ namespace AasxTimeSeries
                                     if (tsb.sourceType == "modbus")
                                     {
                                         latestDataValue = modbusValues[i];
-                                        tsb.samplesValues[i] += latestDataValue;
+                                        if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
+                                        {
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                        }
+                                        else
+                                        {
+                                            tsb.samplesValues[i] += latestDataValue;
+                                        }
                                         Console.WriteLine(tsb.modbusNodes[i] + " " + modbusValues[i]);
                                     }
                                 }
@@ -743,8 +755,8 @@ namespace AasxTimeSeries
                                                 semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
 
                                             // MICHA: bad hack
-                                            if (tsb.samplesProperties[i].idShort.ToLower().Contains("int2"))
-                                                smcvar.AddQualifier("TimeSeries.Args", "{ type: \"Bars\" }");
+                                            // if (tsb.samplesProperties[i].idShort.ToLower().Contains("int2"))
+                                            //    smcvar.AddQualifier("TimeSeries.Args", "{ type: \"Bars\" }");
 
                                             AddToSMC<AdminShell.Property>(timeStamp, smcvar,
                                                 "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
@@ -839,7 +851,8 @@ namespace AasxTimeSeries
             return !final;
         }
 
-        static void parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c, List<string> filter)
+        static bool parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c,
+            List<string> filter, AdminShell.Property minDiffAbsolute, AdminShell.Property minDiffPercent)
         {
             var handler = new HttpClientHandler();
             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
@@ -861,13 +874,15 @@ namespace AasxTimeSeries
                 if (response != "")
                 {
                     JObject parsed = JObject.Parse(response);
-                    Program.parseJson(c, parsed, filter);
+                    if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                        return true;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("GetJSON() expection: " + ex.Message);
             }
+            return false;
         }
 
         static List<List<object>> table = null;

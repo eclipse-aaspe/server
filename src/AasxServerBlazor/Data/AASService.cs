@@ -74,9 +74,12 @@ namespace AasxServerBlazor.Data
                         if (Program.envSymbols[i] != "L")
                         {
                             List<Item> childs = new List<Item>();
-                            if (Program.env[i].AasEnv.Submodels != null)
-                                foreach (var sm in Program.env[i].AasEnv.Submodels)
+                            var env = AasxServer.Program.env[i];
+                            var aas = env.AasEnv.AdministrationShells[0];
+                            if (env != null && aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                                foreach (var smr in aas.submodelRefs)
                                 {
+                                    var sm = env.AasEnv.FindSubmodel(smr);
                                     if (sm != null && sm.idShort != null)
                                     {
                                         var smItem = new Item();

@@ -2194,10 +2194,19 @@ namespace AasxServer
             return;
         }
 
-        public static void parseJson(AdminShell.SubmodelElementCollection c, JObject o, List<string> filter)
+        public static bool parseJson(AdminShell.SubmodelElementCollection c, JObject o, List<string> filter,
+            AdminShell.Property minDiffAbsolute = null, AdminShell.Property minDiffPercent = null)
         {
             int newMode = 0;
             DateTime timeStamp = DateTime.UtcNow;
+            bool ok = false;
+
+            int iMinDiffAbsolute = 1;
+            int iMinDiffPercent = 0;
+            if (minDiffAbsolute != null)
+                iMinDiffAbsolute = Convert.ToInt32(minDiffAbsolute.value);
+            if (minDiffPercent != null)
+                iMinDiffPercent = Convert.ToInt32(minDiffPercent.value);
 
             foreach (JProperty jp1 in (JToken)o)
             {
@@ -2234,7 +2243,7 @@ namespace AasxServer
                                 c3.setTimeStamp(timeStamp);
                                 newMode = 1;
                             }
-                            parseJson(c3, el, filter);
+                            ok |= parseJson(c3, el, filter);
                         }
                         break;
                     case JTokenType.Object:
@@ -2249,7 +2258,7 @@ namespace AasxServer
                         }
                         foreach (JObject el in jp1.Value)
                         {
-                            parseJson(c2, el, filter);
+                            ok |= parseJson(c2, el, filter);
                         }
                         break;
                     default:
@@ -2263,13 +2272,45 @@ namespace AasxServer
                             newMode = 1;
                         }
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
-                        p.value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
-                        p.setTimeStamp(timeStamp);
+                        try
+                        {
+                            if (p.value == "")
+                                p.value = "0";
+                            string value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
+                            if (!value.Contains("."))
+                            {
+                                int v = Convert.ToInt32(value);
+                                int lastv = Convert.ToInt32(p.value);
+                                int delta = Math.Abs(v - lastv);
+                                if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
+                                {
+                                    p.value = value;
+                                    p.setTimeStamp(timeStamp);
+                                    ok = true;
+                                }
+                            }
+                            else
+                            {
+                                double v = Convert.ToDouble(value, CultureInfo.InvariantCulture);
+                                double lastv = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
+                                double delta = Math.Abs(v - lastv);
+                                if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
+                                {
+                                    p.value = value;
+                                    p.setTimeStamp(timeStamp);
+                                    ok = true;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                        }
                         break;
                 }
             }
 
             Program.signalNewData(newMode);
+            return ok;
         }
 
         private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
