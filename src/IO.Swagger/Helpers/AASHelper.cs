@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using AdminShellNS;
 using IO.Swagger.Extensions;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using static AdminShellNS.AdminShellV20;
@@ -306,6 +307,192 @@ namespace IO.Swagger.Helpers
             }
 
             return false;
+        }
+
+        internal List<AdministrationShell> FindAllAasByAASIds(List<string> aasIds)
+        {
+            var aasList = new List<AdministrationShell>();
+            foreach (string aasId in aasIds)
+            {
+                string aasIdDecoded = Base64UrlEncoder.Decode(aasId);
+                var aasReturn = FindAas(aasIdDecoded);
+                if (aasReturn != null)
+                {
+                    aasList.Add(aasReturn.AAS);
+                }
+            }
+            return aasList;
+        }
+
+        internal void FindAllConceptDescriptionsInSubmodels(List<string> submodelIds, List<ConceptDescription> conceptDescriptionList)
+        {
+            foreach (string submodelId in submodelIds)
+            {
+                string submodelIdDecoded = Base64UrlEncoder.Decode(submodelId);
+                var submodel = FindSubmodel(submodelIdDecoded, out _);
+                FindAllConceptDescriptionsInSubmodel(submodel, conceptDescriptionList);
+            }
+        }
+
+        internal List<ConceptDescription> FindConceptDescriptionInAASs(List<string> aasIds)
+        {
+            var conceptDescriptionList = new List<ConceptDescription>();
+            foreach (var aasId in aasIds)
+            {
+                string aasIdDecoded = Base64UrlEncoder.Decode(aasId);
+                var aasReturn = FindAas(aasIdDecoded);
+                if (aasReturn != null)
+                {
+                    //Find direct concept descriptions
+                    foreach (ConceptDictionary conceptDictionary in aasReturn.AAS.conceptDictionaries)
+                    {
+                        var cds = FindConceptDescriptionByReference(conceptDictionary.conceptDescriptionsRefs);
+                        conceptDescriptionList.AddRange(cds);
+                    }
+
+                    //Find concept descriptions from the submodels of the AAS
+                    foreach (var submodelRef in aasReturn.AAS.submodelRefs)
+                    {
+                        var submodel = FindSubmodelWithReference(submodelRef);
+                        if (submodel != null)
+                        {
+                            var conceptDescriptions = new List<ConceptDescription>();
+                            FindAllConceptDescriptionsInSubmodel(submodel, conceptDescriptions);
+                            conceptDescriptionList.AddRange(conceptDescriptions);
+                        }
+                    }
+                }
+            }
+            return conceptDescriptionList;
+        }
+
+        /// <summary>
+        /// All the concept descriptions from the submodel, including submodel elements. The method is recursive.
+        /// </summary>
+        /// <param name="obj">Submodel or Submodel Element</param>
+        /// <param name="conceptDescriptions">A list of found concept descriptions</param>
+        public void FindAllConceptDescriptionsInSubmodel(object obj, List<ConceptDescription> conceptDescriptions)
+        {
+            //Concept description of the submodel
+            if (obj is Submodel submodel)
+            {
+                if (submodel.semanticId != null)
+                {
+                    var cd = FindConceptDescriptionByReference(submodel.semanticId);
+                    if (cd != null && !conceptDescriptions.Contains(cd))
+                    {
+                        conceptDescriptions.Add(cd);
+                    }
+
+                    //Also search recursively for all its submodel elements
+                    foreach (var submodelElement in submodel.submodelElements)
+                    {
+                        FindAllConceptDescriptionsInSubmodel(submodelElement.submodelElement, conceptDescriptions);
+                    }
+                }
+            }
+            else if (obj is SubmodelElementCollection collection)
+            {
+                if (collection.semanticId != null)
+                {
+                    var cd = FindConceptDescriptionByReference(collection.semanticId);
+                    if (cd != null && !conceptDescriptions.Contains(cd))
+                    {
+                        conceptDescriptions.Add(cd);
+                    }
+
+                    //Also search recursively for all its submodel elements
+                    foreach (var submodelElement in collection.value)
+                    {
+                        FindAllConceptDescriptionsInSubmodel(submodelElement.submodelElement, conceptDescriptions);
+                    }
+                }
+            }
+            else if (obj is Entity entity)
+            {
+                if (entity.semanticId != null)
+                {
+                    var cd = FindConceptDescriptionByReference(entity.semanticId);
+                    if (cd != null && !conceptDescriptions.Contains(cd))
+                    {
+                        conceptDescriptions.Add(cd);
+                    }
+
+                    //Also search recursively for all its submodel elements
+                    foreach (var submodelElement in entity.statements)
+                    {
+                        FindAllConceptDescriptionsInSubmodel(submodelElement.submodelElement, conceptDescriptions);
+                    }
+                }
+            }
+            else if (obj is SubmodelElement submodelElement)
+            {
+                var cd = FindConceptDescriptionByReference(submodelElement.semanticId);
+                if (cd != null && !conceptDescriptions.Contains(cd))
+                {
+                    conceptDescriptions.Add(cd);
+                }
+            }
+
+        }
+
+        private List<ConceptDescription> FindConceptDescriptionByReference(ConceptDescriptionRefs conceptDescriptionsRefs)
+        {
+            var conceptDescriptions = new List<ConceptDescription>();
+            if (conceptDescriptionsRefs != null && conceptDescriptionsRefs.conceptDescriptions != null)
+            {
+                foreach (var cdr in conceptDescriptionsRefs.conceptDescriptions)
+                {
+                    var cd = FindConceptDescriptionByReference(cdr);
+                    if (cd != null)
+                    {
+                        conceptDescriptions.Add(cd);
+                    }
+                }
+            }
+
+            return conceptDescriptions;
+        }
+
+        private ConceptDescription FindConceptDescriptionByReference(Reference cdr)
+        {
+            if (cdr == null)
+                return null;
+
+            var keys = cdr.Keys;
+
+            if (keys == null)
+                return null;
+
+            // can only refs with 1 key
+            if (keys.Count != 1)
+                return null;
+
+            var key = keys[0];
+            if (!key.local || key.type.ToLower().Trim() != "conceptdescription")
+                return null;
+
+            var conceptDescription = FindConceptDescription(key.value, out _);
+            if (conceptDescription != null)
+                return conceptDescription;
+
+            return null;
+        }
+
+        internal List<Submodel> FindAllSubmodelsBySubmodelIds(List<string> submodelIds)
+        {
+            var submodelList = new List<Submodel>();
+            foreach (string submodelId in submodelIds)
+            {
+                string submodelIdDecoded = Base64UrlEncoder.Decode(submodelId);
+                var submodel = FindSubmodel(submodelIdDecoded, out _);
+                if (submodel != null)
+                {
+                    submodelList.Add(submodel);
+                }
+            }
+
+            return submodelList;
         }
 
         /// <summary>
@@ -1134,7 +1321,13 @@ namespace IO.Swagger.Helpers
     /// </summary>
     public class FindAasReturn
     {
+        /// <summary>
+        /// Asset Administration Shell
+        /// </summary>
         public AdminShell.AdministrationShell AAS { get; set; } = null;
+        /// <summary>
+        /// The package index of the AAS
+        /// </summary>
         public int IPackage { get; set; } = -1;
     }
 

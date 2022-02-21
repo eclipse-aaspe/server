@@ -238,27 +238,26 @@ namespace IO.Swagger.Controllers
         {
             try
             {
-                //TODO: One of the open questions
-                List<object> payload = new List<object>();
-                foreach (string aasId in aasIds)
+                AdminShellV20.AdministrationShellEnv outputEnv = new AdminShellV20.AdministrationShellEnv();
+
+                //Fetch AASs for the requested aasIds
+                var aaslist = aasHelper.FindAllAasByAASIds(aasIds);
+                outputEnv.AdministrationShells = aaslist;
+
+                //Fetch Submodels for the requested submodelIds
+                var submodellist = aasHelper.FindAllSubmodelsBySubmodelIds(submodelIds);
+                outputEnv.Submodels = submodellist;
+
+                //Fetch Concept Descriptions used in AAS/Submodels
+                if ((bool)includeConceptDescriptions)
                 {
-                    var aasReturn = aasHelper.FindAas(Base64UrlEncoder.Decode(aasId));
-                    if (aasReturn != null)
-                    {
-                        payload.Add(aasReturn.AAS);
-                    }
+                    var conceptDescriptionList = aasHelper.FindConceptDescriptionInAASs(aasIds);
+                    aasHelper.FindAllConceptDescriptionsInSubmodels(submodelIds, conceptDescriptionList);
+                    outputEnv.ConceptDescriptions.AddRange(conceptDescriptionList);
                 }
 
-                foreach (string submodelId in submodelIds)
-                {
-                    var submodel = aasHelper.FindSubmodel(Base64UrlEncoder.Decode(submodelId), out _);
-                    if (submodel != null)
-                    {
-                        payload.Add(submodel);
-                    }
-                }
+                return new ObjectResult(outputEnv);
 
-                return new ObjectResult(payload);
             }
             catch (Exception ex)
             {
