@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29306.81
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerCore", "AasxServerCore\AasxServerCore.csproj", "{7C0704A8-85C7-4FC9-B12D-C7B9E63EF7B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasxServerWindows", "AasxServerWindows\AasxServerWindows.csproj", "{2315B8C5-B648-4730-8C2E-1346E4C4BADD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerWindows", "AasxServerWindows\AasxServerWindows.csproj", "{2315B8C5-B648-4730-8C2E-1346E4C4BADD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerStandardBib", "AasxServerStandardBib\AasxServerStandardBib.csproj", "{6D8FAFA1-0BA5-4E52-87D2-E4E37FC6D95F}"
 EndProject
@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerBlazor", "AasxServerBlazor\AasxServerBlazor.csproj", "{53165247-64F7-4151-A1DA-347780E0A538}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger", "IO.Swagger\IO.Swagger.csproj", "{478697A0-89E4-4039-902E-0F13EA4EAD72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Swagger.Test", "IO.Swagger.Test\IO.Swagger.Test.csproj", "{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +79,30 @@ Global
 		{53165247-64F7-4151-A1DA-347780E0A538}.Release|x64.Build.0 = Release|Any CPU
 		{53165247-64F7-4151-A1DA-347780E0A538}.Release|x86.ActiveCfg = Release|Any CPU
 		{53165247-64F7-4151-A1DA-347780E0A538}.Release|x86.Build.0 = Release|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Debug|x64.Build.0 = Debug|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Debug|x86.Build.0 = Debug|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Release|x64.ActiveCfg = Release|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Release|x64.Build.0 = Release|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Release|x86.ActiveCfg = Release|Any CPU
+		{478697A0-89E4-4039-902E-0F13EA4EAD72}.Release|x86.Build.0 = Release|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Debug|x64.Build.0 = Debug|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Debug|x86.Build.0 = Debug|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Release|x64.ActiveCfg = Release|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Release|x64.Build.0 = Release|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Release|x86.ActiveCfg = Release|Any CPU
+		{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
