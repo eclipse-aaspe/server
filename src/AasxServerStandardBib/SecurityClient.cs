@@ -597,7 +597,6 @@ namespace AasxServer
                 if (splitPath.Length < 2)
                     return;
 
-                AdminShell.SubmodelElementCollection diffCollection = null;
                 DateTime last = new DateTime();
                 if (opName == "getdiff")
                 {
