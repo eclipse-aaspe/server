@@ -3486,7 +3486,6 @@ namespace AasxRestServerLibrary
         public void EvalAssetId(IHttpContext context, int assetId)
         {
             dynamic res = new ExpandoObject();
-            int index = -1;
 
             Console.WriteLine("Test Asset ID");
 
