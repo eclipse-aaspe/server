@@ -596,7 +596,6 @@ namespace AasxServer
                 status.value = "OK";
             if (opName == "get" || opName == "getdiff")
             {
-                AdminShell.SubmodelElementCollection diffCollection = null;
                 DateTime last = new DateTime();
                 if (opName == "getdiff")
                 {
