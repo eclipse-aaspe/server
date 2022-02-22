@@ -935,6 +935,9 @@ namespace AasxServer
                         break;
                 }
             }
+            if (collection == null || limit == null || prefix == null)
+                return;
+
             try
             {
                 int count = Convert.ToInt32(limit.value);
