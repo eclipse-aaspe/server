@@ -19,8 +19,9 @@ jobs:
       with:
         node-version: 12.x
     - name: Install Newman and HTML Reporter
-      run: npm install -g newman
-      run: npm install -g newman-reporter-htmlextra@1.22.7
+      run: |
+       npm install -g newman@5.3.1
+       npm install -g newman-reporter-htmlextra@1.22.7
     - name: Restore dependencies
       run: dotnet restore ./src/AasxServerBlazor/AasxServerBlazor.csproj
     - name: Build
