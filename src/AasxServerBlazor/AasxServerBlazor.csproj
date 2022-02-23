@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <PackageReference Include="ScottPlot" Version="4.1.33" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,5 +37,9 @@
     <None Include="wwwroot\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\images\scottplot\" />
   </ItemGroup>
 </Project>

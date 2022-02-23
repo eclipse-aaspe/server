@@ -608,12 +608,26 @@ namespace AasxTimeSeries
                                     {
                                         if (table[valueIndex] != null && table[valueIndex][i + 1] != null)
                                             latestDataValue = table[valueIndex][i + 1].ToString();
-                                        tsb.samplesValues[i] += latestDataValue;
+                                        if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
+                                        {
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                        }
+                                        else
+                                        {
+                                            tsb.samplesValues[i] += latestDataValue;
+                                        }
                                     }
                                     if (tsb.sourceType == "opcda")
                                     {
                                         latestDataValue = opcDAValues[i];
-                                        tsb.samplesValues[i] += latestDataValue;
+                                        if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
+                                        {
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                        }
+                                        else
+                                        {
+                                            tsb.samplesValues[i] += latestDataValue;
+                                        }
                                         Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
                                     }
                                     if (tsb.sourceType == "modbus")
