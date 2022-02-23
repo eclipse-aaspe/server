@@ -5,7 +5,7 @@ on:
   #workflow_dispatch
 
 jobs:
-  build:
+  api-test:
 
     runs-on: ubuntu-latest
 
@@ -14,7 +14,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 3.1.x
     - name: Setup Node
       uses: actions/setup-node@v1
       with:
@@ -27,13 +27,14 @@ jobs:
       run: dotnet restore ./src/AasxServerBlazor/AasxServerBlazor.csproj
     - name: Build
       run: dotnet build ./src/AasxServerBlazor/AasxServerBlazor.csproj -c Release -o ./build
-    - name: RunServerAndTestScripts
+    - name: Start Test Server And Execute Test Scripts
       run: |
        dotnet ./build/AasxServerBlazor.dll --urls=https://localhost:7228/ &
        sleep 5
        newman run ./test/rest_api/postman/SubmodelElementTest.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
        kill -9 `lsof -i:7228 -t`
-    - uses: actions/upload-artifact@v2
+    - name: Upload Report
+      uses: actions/upload-artifact@v2
       if: always()
       with:
         name: report.html
