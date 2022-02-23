@@ -1,7 +1,7 @@
 name: newman_tests
 
 on:
-  push
+  workflow_dispatch
 
 jobs:
   build:
@@ -33,6 +33,7 @@ jobs:
        newman run ./test/rest_api/postman/SubmodelElementTest.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
        kill -9 `lsof -i:7228 -t`
     - uses: actions/upload-artifact@v2
+      if: always()
       with:
         name: report.html
         path: ./report.html
