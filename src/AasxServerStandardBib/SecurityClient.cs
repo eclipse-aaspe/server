@@ -579,8 +579,6 @@ namespace AasxServer
             Task task = null;
             string diffPath = "";
             var splitPath = path.value.Split('.');
-            if (splitPath.Length < 2)
-                return;
             string aasPath = splitPath[0];
             string subPath = "";
             int i = 1;
@@ -596,6 +594,9 @@ namespace AasxServer
                 status.value = "OK";
             if (opName == "get" || opName == "getdiff")
             {
+                if (splitPath.Length < 2)
+                    return;
+
                 AdminShell.SubmodelElementCollection diffCollection = null;
                 DateTime last = new DateTime();
                 if (opName == "getdiff")

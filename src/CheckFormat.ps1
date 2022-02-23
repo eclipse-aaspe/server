@@ -21,7 +21,7 @@ function Main
     New-Item -ItemType Directory -Force -Path $artefactsDir|Out-Null
 
     $reportPath = Join-Path $artefactsDir "dotnet-format-report.json"
-    dotnet format --check --report $reportPath --exclude "**/DocTest*.cs"
+    dotnet format --verify-no-changes --report $reportPath --exclude "**/DocTest*.cs"
     $formatReport = Get-Content $reportPath |ConvertFrom-Json
     if ($formatReport.Count -ge 1)
     {
