@@ -1,7 +1,8 @@
 name: newman_tests
 
 on:
-  workflow_dispatch
+  push
+  #workflow_dispatch
 
 jobs:
   build:
