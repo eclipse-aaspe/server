@@ -1,7 +1,7 @@
 name: newman_tests
 
-#on:
-#  push
+on:
+  push
 
 jobs:
   build:
