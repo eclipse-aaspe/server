@@ -9,6 +9,9 @@
 		<PackageId>IO.Swagger</PackageId>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Content Remove="appsettings.json" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="5.5.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="5.5.1" />
@@ -25,5 +28,10 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>IO.Swagger.Test</_Parameter1>
 		</AssemblyAttribute>
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="appsettings.json">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 </Project>
