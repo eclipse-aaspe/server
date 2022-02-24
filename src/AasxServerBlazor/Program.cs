@@ -19,14 +19,19 @@ namespace AasxServerBlazor
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
 
+            //TODO DELETE this piece of code make wrong assumptions about the current directory
+            /*
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json").Build();
+            */
 
-            //TODO it is not ensured that this is the actual endpoint
+            //TODO REFACTOR it is not ensured that this is the actual endpoint. Why is this information needed so early in the lifecycle?
+            /*
             string[] url = config["Kestrel:Endpoints:Http:Url"].Split(':');
             if (url[2] != null)
                 AasxServer.Program.blazorHostPort = url[2];
+            */
 
             CreateHostBuilder(args).Build().RunAsync();
 

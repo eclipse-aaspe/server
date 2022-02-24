@@ -697,6 +697,7 @@ namespace AasxServer
                     "If set, starts an OPC client and refreshes on the given period " +
                     "(in milliseconds)"),
 
+                //TODO CHECK is the connect feature legacy code from Package Explorer?
                 new Option<string[]>(
                     new[] {"--connect"},
                     "If set, connects to AAS connect server. " +
@@ -967,6 +968,7 @@ namespace AasxServer
 
         public static void connectThreadLoop()
         {
+            //TODO CHECK is this leagy code?
             bool newConnectData = false;
 
             while (connectLoop)
