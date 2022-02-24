@@ -29,10 +29,11 @@ jobs:
       run: dotnet build ./src/AasxServerBlazor/AasxServerBlazor.csproj -c Release -o ./build
     - name: Start Test Server And Execute Test Scripts
       run: |
-       dotnet ./build/AasxServerBlazor.dll --urls=https://localhost:7228/ &
+       cd build
+       dotnet ./AasxServerBlazor.dll --aspnet --datapath ../test/rest_api/data &
        sleep 5
-       newman run ./test/rest_api/postman/SubmodelElementTest.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
-       kill -9 `lsof -i:7228 -t`
+       newman run ../test/rest_api/postman/SubmodelElementTest.json.postman_collection -e ../test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
+       kill -9 `lsof -i:5001 -t`
     - name: Upload Report
       uses: actions/upload-artifact@v2
       if: always()
