@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
+    <ProjectReference Include="..\IO.Swagger\IO.Swagger.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>
