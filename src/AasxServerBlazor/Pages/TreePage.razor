@@ -162,75 +162,114 @@
                                     createQRCodeImage(selectedNode);
                                 }
                             }
-                        }
                     }
+                }
 
-                    if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
+                if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
+                {
+                    string semanticId = "";
+                    try
                     {
-                        string semanticId = "";
-                        try
+                        semanticId = smc.semanticId.Keys[0].value;
+                    }
+                    catch { }
+                    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
+                        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+                    {
+                        TimeSpan diff = smc.TimeStamp - timeStampPlot;
+
+                        if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
                         {
-                            semanticId = smc.semanticId.Keys[0].value;
-                        }
-                        catch { }
-                        if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-                            semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                        {
-                            TimeSpan diff = smc.TimeStamp - timeStampPlot;
-                            if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
+                            watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+
+                            collectionPlot = smc;
+                            timeStampPlot = smc.TimeStamp;
+
+                            ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
+                            _timeSeriesData.Clear();
+                            var mm = AdminShell.Key.MatchMode.Relaxed;
+
+                            // make initial data for time series
+                            var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
+                            _timeSeriesData.Add(tsd);
+
+                            // plot arguments for time series
+                            tsd.Args = PlotArguments.Parse(smc.HasQualifierOfType("TimeSeries.Args")?.value);
+
+                            // ! ZveiTimeSeriesDataV10 hardcoded
+                            var pcts = ZveiTimeSeriesDataV10.Static;
+
+                            var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
+                            //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
+                            //var tssReference = new Reference(k);
+                            //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+
+                            // is it a segment
+                            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
                             {
-                                collectionPlot = smc;
-                                timeStampPlot = smc.TimeStamp;
+                                TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
+                            }
+                            else
+                            {
+                                // search for segements on current level
+                                var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
 
-                                ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
-                                _timeSeriesData.Clear();
-                                var mm = AdminShell.Key.MatchMode.Relaxed;
-
-                                // make initial data for time series
-                                var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
-                                _timeSeriesData.Add(tsd);
-
-                                // plot arguments for time series
-                                tsd.Args = PlotArguments.Parse(smc.HasQualifierOfType("TimeSeries.Args")?.value);
-
-                                // ! ZveiTimeSeriesDataV10 hardcoded
-                                var pcts = ZveiTimeSeriesDataV10.Static;
-
-                                var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
-                                //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-                                //var tssReference = new Reference(k);
-                                //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
-
-                                // is it a segment
-                                if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+                                if (smcAllValues.Count() != 0)
                                 {
-                                    TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
-                                }
-                                else
-                                {
-                                    // search for segements on current level
-                                    var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
-
-                                    if (smcAllValues.Count() != 0)
+                                    foreach (var smcseg in smcAllValues)
                                     {
-                                        foreach (var smcseg in smcAllValues)
-                                        {
-                                            TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
-                                        }
+                                        TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
                                     }
                                 }
-
-                                _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en");
                             }
 
-                            byte[] imageArray = System.IO.File.ReadAllBytes("wwwroot/images/scottplot/smc_timeseries.png");
-                            string timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en");
+                            watchTimeToProcessImage.Stop();
+                        }
 
-                            {
-                                <img src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" class="mt-2" style="min-width:100%;" />
-                            }
+                        byte[] imageArray;
+                        string timeSeriesImageBase64 = "";
+                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png";
+
+                        if(System.IO.File.Exists(scottplotImgPath)) {
+                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+                        } 
+
+                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+
+                        @if(System.IO.File.Exists(scottplotImgPath))
+                        {
+                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="min-width:100%;cursor:zoom-in;" />
+                            <span class="text-muted" style="font-size:14px;">
+                                Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+                            </span>
+
+                            <div class="modal modal-fullscreen @(showImageModal ? "d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Visualization of time series</h5>
+                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        } 
+                        else
+                        {
+                            <div class="my-2">Rendering time series...</div>
                         }
                     }
+                } else {
+                    // Remove image file with the given client id (clean up) if an element is clicked which does not show ScottPlotRendering.
+                    System.IO.File.Delete(@"wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png");
+                }
 
                     string detailsImage = createDetailsImage(selectedNode);
                     if (detailsImage != "")
@@ -276,9 +315,12 @@
 @using ScottPlot;
 
 @code {
+    System.Diagnostics.Stopwatch watchTimeToProcessImage = new System.Diagnostics.Stopwatch();
     DateTime timeStampPlot = new DateTime();
     SubmodelElementCollection collectionPlot = null;
-
+    static int randomClientId = new Random().Next(10000, 99999);
+    bool showImageModal = false;
+    
     async Task DownloadFile()
     {
         this.StateHasChanged();
@@ -1940,7 +1982,7 @@
             //    return null;
             //panel.Children.Clear();
 
-            ScottPlot.Plot plt = new ScottPlot.Plot(1200, 600);
+            ScottPlot.Plot plt = new ScottPlot.Plot(1400, 700);
 
             // go over all groups                
             foreach (var tsd in this)
@@ -1989,7 +2031,7 @@
                     //double[] dataX = new double[] { 1, 2, 3, 4, 5 };
                     //double[] dataY = new double[] { 1, 4, 9, 16, 25 };
                     //plt.AddScatter(dataX, dataY);
-                    plt.SaveFig("wwwroot/images/scottplot/smc_timeseries.png");
+                    plt.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png");
 
                     //res.Add(plt); //TODO: Cannot use plt
                 }
@@ -2245,7 +2287,7 @@
                     //    pvc.DefaultButtonClicked(sender, ndx);
                     //};
                     //wpfPlot.Render();
-                    wpfPlot.SaveFig("wwwroot/images/scottplot/smc_timeseries.png");
+                    wpfPlot.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png");
                     //res.Add(pvc);
                 }
             }
@@ -3762,3 +3804,23 @@
 
 
 }
+
+<style>
+.modal-fullscreen {
+  padding: 0 !important;
+}
+.modal-fullscreen .modal-dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+}
+.modal-fullscreen .modal-content {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+.modal-fullscreen .modal-body {
+  overflow-y: auto;
+}
+</style>
