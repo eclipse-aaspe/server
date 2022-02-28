@@ -608,7 +608,6 @@ namespace AasxServer
                     if (lastDiff.value == "")
                     {
                         opName = "get";
-                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         requestPath = endPoint.value + "/aas/" + aasPath +
                             "/submodels/" + splitPath[1] + "/elements";
                         i = 2;
@@ -699,7 +698,7 @@ namespace AasxServer
                     }
                     if (opName == "getdiff")
                     {
-                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                        // lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
                         diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
                         foreach (var d in diffList)
@@ -793,6 +792,8 @@ namespace AasxServer
                 {
                     return;
                 }
+                if (lastDiff != null)
+                    lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                 Program.signalNewData(1);
             }
             if (opName == "put" || opName == "putdiff")
@@ -811,7 +812,6 @@ namespace AasxServer
                     if (lastDiff.value == "")
                     {
                         opName = "put";
-                        lastDiff.value = "" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                     }
                     else
                     {
@@ -882,10 +882,8 @@ namespace AasxServer
                     }
                 }
 
-                if (opName == "putdiff")
-                {
-                    lastDiff.value = "" + DateTime.UtcNow;
-                }
+                if (lastDiff != null)
+                    lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
         }
         static void operation_limitCount(AdminShell.Operation op, int envIndex, DateTime timeStamp)
