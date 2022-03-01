@@ -162,8 +162,8 @@
                                     createQRCodeImage(selectedNode);
                                 }
                             }
+                        }
                     }
-                }
 
                 if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
                 {
@@ -223,13 +223,13 @@
                                 }
                             }
 
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en");
+                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi);
                             watchTimeToProcessImage.Stop();
                         }
 
                         byte[] imageArray;
                         string timeSeriesImageBase64 = "";
-                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png";
+                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
 
                         if(System.IO.File.Exists(scottplotImgPath)) {
                             imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
@@ -266,46 +266,44 @@
                             <div class="my-2">Rendering time series...</div>
                         }
                     }
-                } else {
-                    // Remove image file with the given client id (clean up) if an element is clicked which does not show ScottPlotRendering.
-                    System.IO.File.Delete(@"wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png");
+                } 
+
+                string detailsImage = createDetailsImage(selectedNode);
+                if (detailsImage != "")
+                {
+                    <br />
+                    <div>
+                        <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+                    </div>
                 }
 
-                    string detailsImage = createDetailsImage(selectedNode);
-                    if (detailsImage != "")
+                if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
+                {
+                    if (be.observed != null)
                     {
-                        <br />
-                        <div>
-                            <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
-                        </div>
-                    }
-
-                    if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
-                    {
-                        if (be.observed != null)
+                        string okey = be.observed.GetAsExactlyOneKey().ToString();
+                        <span style="color:white;background-color:blue;">Observed</span>
+                        <span>@(" " + okey)</span><br />
+                        var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
+                        if (refsme != null)
                         {
-                            string okey = be.observed.GetAsExactlyOneKey().ToString();
-                            <span style="color:white;background-color:blue;">Observed</span>
-                            <span>@(" " + okey)</span><br />
-                            var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
-                            if (refsme != null)
-                            {
-                                <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                                <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            }
-                            else
-                            {
-                                <span>Referenced element does not exist!</span><br />
-                            }
+                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        }
+                        else
+                        {
+                            <span>Referenced element does not exist!</span><br />
                         }
                     }
                 }
+            }
             </div>
     </div>
 </div>
 
 
 @inject IJSRuntime js
+@inject BlazorSessionService bi;
 @using AasxServer;
 @using AdminShellNS;
 @using System.Globalization;
@@ -318,7 +316,6 @@
     System.Diagnostics.Stopwatch watchTimeToProcessImage = new System.Diagnostics.Stopwatch();
     DateTime timeStampPlot = new DateTime();
     SubmodelElementCollection collectionPlot = null;
-    static int randomClientId = new Random().Next(10000, 99999);
     bool showImageModal = false;
     
     async Task DownloadFile()
@@ -1974,7 +1971,7 @@
         //}
 
         public List<IWpfPlotViewControl> RenderTimeSeries(
-            /*StackPanel panel,*/ double defPlotHeight, string defaultLang/*, LogInstance log*/)
+            /*StackPanel panel,*/ double defPlotHeight, string defaultLang/*, LogInstance log*/, BlazorSessionService bi)
         {
             // first access
             var res = new List<IWpfPlotViewControl>();
@@ -2031,7 +2028,7 @@
                     //double[] dataX = new double[] { 1, 2, 3, 4, 5 };
                     //double[] dataY = new double[] { 1, 4, 9, 16, 25 };
                     //plt.AddScatter(dataX, dataY);
-                    plt.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png");
+                    plt.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png");
 
                     //res.Add(plt); //TODO: Cannot use plt
                 }
@@ -2287,7 +2284,7 @@
                     //    pvc.DefaultButtonClicked(sender, ndx);
                     //};
                     //wpfPlot.Render();
-                    wpfPlot.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + randomClientId + ".png");
+                    wpfPlot.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png");
                     //res.Add(pvc);
                 }
             }

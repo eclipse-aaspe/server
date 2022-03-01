@@ -47,6 +47,7 @@ namespace AasxServerBlazor
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
             services.AddCors();
+            services.AddScoped<BlazorSessionService>();
 
             services.AddControllers();
 
