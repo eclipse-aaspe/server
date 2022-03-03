@@ -620,7 +620,7 @@ namespace AasxServer
                     }
                     else
                     {
-                        last = DateTime.Parse(lastDiff.value);
+                        last = DateTime.Parse(lastDiff.value).ToUniversalTime();
                         requestPath = endPoint.value +
                             "/diffjson/aas/" + splitPath[0] +
                             "?path=" + subPath;
@@ -815,7 +815,7 @@ namespace AasxServer
                     }
                     else
                     {
-                        last = DateTime.Parse(lastDiff.value);
+                        last = DateTime.Parse(lastDiff.value).ToUniversalTime();
                     }
                 }
 
