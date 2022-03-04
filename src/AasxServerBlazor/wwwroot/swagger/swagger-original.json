@@ -1,0 +1,3437 @@
+{
+  "openapi" : "3.0.3",
+  "info" : {
+    "title" : "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository",
+    "description" : "An exemplary interface combination for the use case of an Asset Administration Shell Repository",
+    "termsOfService" : "https://github.com/admin-shell-io/aas-specs",
+    "contact" : {
+      "name" : "Michael Hoffmeister, Torben Miny, Andreas Orzelski, Manuel Sauer, Constantin Ziesche"
+    },
+    "version" : "Final-Draft"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "paths" : {
+    "/shells" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns all Asset Administration Shells",
+        "operationId" : "GetAllAssetAdministrationShells",
+        "parameters" : [ {
+          "name" : "assetIds",
+          "in" : "query",
+          "description" : "The key-value-pair of an Asset identifier",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "example" : "[{\"key\": \"globalAssetId\",\"value\": \"http://example.company/myAsset\"},{\"key\": \"myOwnInternalAssetId\",\"value\": \"12345ABC\"}]",
+            "items" : {
+              "$ref" : "#/components/schemas/IdentifierKeyValuePair"
+            }
+          }
+        }, {
+          "name" : "idShort",
+          "in" : "query",
+          "description" : "The Asset Administration Shell’s IdShort",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shells",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AssetAdministrationShell"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAssetAdministrationShells/1/0/RC02", "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellsByAssetId/1/0/RC02", "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellsByIdShort/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new Asset Administration Shell",
+        "operationId" : "PostAssetAdministrationShell",
+        "requestBody" : {
+          "description" : "Asset Administration Shell object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShell"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Asset Administration Shell created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShell"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostAssetAdministrationShell/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns a specific Asset Administration Shell",
+        "operationId" : "GetAssetAdministrationShellById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShell"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetAdministrationShellById/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates an existing Asset Administration Shell",
+        "operationId" : "PutAssetAdministrationShellById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Administration Shell object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShell"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetAdministrationShellById/1/0/RC02" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Deletes an Asset Administration Shell",
+        "operationId" : "DeleteAssetAdministrationShellById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell deleted successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteAssetAdministrationShellById/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns the Asset Administration Shell",
+        "operationId" : "GetAssetAdministrationShell",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShell"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetAdministrationShell/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates the Asset Administration Shell",
+        "operationId" : "PutAssetAdministrationShell",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Administration Shell object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShell"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetAdministrationShell/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/asset-information" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns the Asset Information",
+        "operationId" : "GetAssetInformation",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Information",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetInformation"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetInformation/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates the Asset Information",
+        "operationId" : "PutAssetInformation",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Information object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetInformation"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Information updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetInformation/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns all submodel references",
+        "operationId" : "GetAllSubmodelReferences",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested submodel references",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Reference"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelReferences/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a submodel reference at the Asset Administration Shell",
+        "operationId" : "PostSubmodelReference",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Reference to the Submodel",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel reference created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Reference"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelReference/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels/{submodelIdentifier}" : {
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Deletes the submodel reference from the Asset Administration Shell",
+        "operationId" : "DeleteSubmodelReferenceById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel reference deleted successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelReference/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels/{submodelIdentifier}/submodel" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns the Submodel",
+        "operationId" : "GetSubmodel",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Submodel"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodel/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates the Submodel",
+        "operationId" : "PutSubmodel",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Submodel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodel/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels/{submodelIdentifier}/submodel/submodel-elements" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns all submodel elements including their hierarchy",
+        "operationId" : "GetAllSubmodelElements",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "List of found submodel elements",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SubmodelElement"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelElements/1/0/RC02", "https://admin-shell.io/aas/API/GetAllSubmodelElementsBySemanticId/1/0/RC02", "https://admin-shell.io/aas/API/GetAllSubmodelElementsByParentPathAndSemanticId/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new submodel element",
+        "operationId" : "PostSubmodelElement",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel element created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelElement/1/0/RC02c" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns a specific submodel element from the Submodel at a specified path",
+        "operationId" : "GetSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested submodel element",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelElementByPath/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates an existing submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PutSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelElementByPath/1/0/RC02c", "https://admin-shell.io/aas/API/SetSubmodelElementValueByPath/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PostSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel element created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelElementByPath/1/0/RC02c" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Deletes a submodel element at a specified path within the submodel elements hierarchy",
+        "operationId" : "DeleteSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element deleted successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelElementByPath/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/invoke" : {
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Synchronously or asynchronously invokes an Operation at a specified path",
+        "operationId" : "InvokeOperation",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "async",
+          "in" : "query",
+          "description" : "Determines whether an operation invocation is performed asynchronously or synchronously",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated), in this case an operation",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Operation request object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OperationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Operation result object",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperationResult"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/InvokeOperationSync/1/0/RC02", "https://admin-shell.io/aas/API/InvokeOperationAsync/1/0/RC02" ]
+      }
+    },
+    "/shells/{aasIdentifier}/aas/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/operation-results/{handleId}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns the Operation result of an asynchronous invoked Operation",
+        "operationId" : "GetOperationAsyncResult",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "value" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated), in this case an operation",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "handleId",
+          "in" : "path",
+          "description" : "The returned handle id of an operation’s asynchronous invocation used to request the current state of the operation’s execution (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Operation result object",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperationResult"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetOperationAsyncResult/1/0/RC02" ]
+      }
+    },
+    "/submodels" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns all Submodels",
+        "operationId" : "GetAllSubmodels",
+        "parameters" : [ {
+          "name" : "semanticId",
+          "in" : "query",
+          "description" : "The value of the semantic id reference (BASE64-URL-encoded)",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "idShort",
+          "in" : "query",
+          "description" : "The Submodel’s idShort",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodels",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Submodel"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodels/1/0/RC02", "https://admin-shell.io/aas/API/GetAllSubmodelsBySemanticId/1/0/RC02", "https://admin-shell.io/aas/API/GetAllSubmodelsByIdShort/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new Submodel",
+        "operationId" : "PostSubmodel",
+        "requestBody" : {
+          "description" : "Submodel object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Submodel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Submodel"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodel/1/0/RC02" ]
+      }
+    },
+    "/submodels/{submodelIdentifier}/submodel" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns the Submodel",
+        "operationId" : "GetSubmodel_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Submodel"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodel/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates the Submodel",
+        "operationId" : "PutSubmodel_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Submodel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodel/1/0/RC02" ]
+      }
+    },
+    "/submodels/{submodelIdentifier}/submodel/submodel-elements" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns all submodel elements including their hierarchy",
+        "operationId" : "GetAllSubmodelElements_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "List of found submodel elements",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SubmodelElement"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelElements/1/0/RC02", "https://admin-shell.io/aas/API/GetAllSubmodelElementsBySemanticId/1/0/RC02", "https://admin-shell.io/aas/API/GetAllSubmodelElementsByParentPathAndSemanticId/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new submodel element",
+        "operationId" : "PostSubmodelElement_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel element created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelElement/1/0/RC02c" ]
+      }
+    },
+    "/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns a specific submodel element from the Submodel at a specified path",
+        "operationId" : "GetSubmodelElementByPath_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested submodel element",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelElementByPath/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates an existing submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PutSubmodelElementByPath_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelElementByPath/1/0/RC02c", "https://admin-shell.io/aas/API/SetSubmodelElementValueByPath/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PostSubmodelElementByPath_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "deep",
+            "enum" : [ "deep", "core" ]
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel element created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelElementByPath/1/0/RC02c" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Deletes a submodel element at a specified path within the submodel elements hierarchy",
+        "operationId" : "DeleteSubmodelElementByPath_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element deleted successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelElementByPath/1/0/RC02" ]
+      }
+    },
+    "/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/invoke" : {
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Synchronously or asynchronously invokes an Operation at a specified path",
+        "operationId" : "InvokeOperation_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "async",
+          "in" : "query",
+          "description" : "Determines whether an operation invocation is performed asynchronously or synchronously",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "trimmed", "value", "reference", "path" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated), in this case an operation",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Operation request object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OperationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Operation result object",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperationResult"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/InvokeOperationSync/1/0/RC02", "https://admin-shell.io/aas/API/InvokeOperationAsync/1/0/RC02" ]
+      }
+    },
+    "/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/operation-results/{handleId}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns the Operation result of an asynchronous invoked Operation",
+        "operationId" : "GetOperationAsyncResult_SubmodelRepo",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "default" : "normal",
+            "enum" : [ "normal", "value" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated), in this case an operation",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "handleId",
+          "in" : "path",
+          "description" : "The returned handle id of an operation’s asynchronous invocation used to request the current state of the operation’s execution (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Operation result object",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperationResult"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetOperationAsyncResult/1/0/RC02" ]
+      }
+    },
+    "/concept-descriptions" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns all Concept Descriptions",
+        "operationId" : "GetAllConceptDescriptions",
+        "parameters" : [ {
+          "name" : "idShort",
+          "in" : "query",
+          "description" : "The Concept Description’s IdShort",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "isCaseOf",
+          "in" : "query",
+          "description" : "IsCaseOf reference (BASE64-URL-encoded)",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "dataSpecificationRef",
+          "in" : "query",
+          "description" : "DataSpecification reference (BASE64-URL-encoded)",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Concept Descriptions",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ConceptDescription"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllConceptDescriptions/1/0/RC02", "https://admin-shell.io/aas/API/GetAllConceptDescriptionsByIdShort/1/0/RC02", "https://admin-shell.io/aas/API/GetAllConceptDescriptionsByIsCaseOf/1/0/RC02", "https://admin-shell.io/aas/API/GetAllConceptDescriptionsByDataSpecificationReference/1/0/RC02" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Creates a new Concept Description",
+        "operationId" : "PostConceptDescription",
+        "requestBody" : {
+          "description" : "Concept Description object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConceptDescription"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Concept Description created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConceptDescription"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostConceptDescription/1/0/RC02" ]
+      }
+    },
+    "/concept-descriptions/{cdIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns a specific Concept Description",
+        "operationId" : "GetConceptDescriptionById",
+        "parameters" : [ {
+          "name" : "cdIdentifier",
+          "in" : "path",
+          "description" : "The Concept Description’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Concept Description",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConceptDescription"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetConceptDescriptionById/1/0/RC02" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Updates an existing Concept Description",
+        "operationId" : "PutConceptDescriptionById",
+        "parameters" : [ {
+          "name" : "cdIdentifier",
+          "in" : "path",
+          "description" : "The Concept Description’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Concept Description object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConceptDescription"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Concept Description updated successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutConceptDescriptionById/1/0/RC02" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Deletes a Concept Description",
+        "operationId" : "DeleteConceptDescriptionById",
+        "parameters" : [ {
+          "name" : "cdIdentifier",
+          "in" : "path",
+          "description" : "The Concept Description’s unique id (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Concept Description deleted successfully"
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteConceptDescriptionById/1/0/RC02" ]
+      }
+    },
+    "/serialization" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository" ],
+        "summary" : "Returns an appropriate serialization based on the specified format (see SerializationFormat)",
+        "operationId" : "GenerateSerializationByIds",
+        "parameters" : [ {
+          "name" : "aasIds",
+          "in" : "query",
+          "description" : "The Asset Administration Shells' unique ids (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Identifier"
+            }
+          }
+        }, {
+          "name" : "submodelIds",
+          "in" : "query",
+          "description" : "The Submodels' unique ids (BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Identifier"
+            }
+          }
+        }, {
+          "name" : "includeConceptDescriptions",
+          "in" : "query",
+          "description" : "Include Concept Descriptions?",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "boolean",
+            "default" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested serialization based on SerializationFormat",
+            "content" : {
+              "application/asset-administration-shell-package+xml" : {
+                "schema" : {
+                  "type" : "string",
+                  "description" : "AASX package",
+                  "format" : "binary",
+                  "x-content-type" : "application/asset-administration-shell-package+xml"
+                }
+              },
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShellEnvironment"
+                }
+              },
+              "application/xml" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShellEnvironment"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GenerateSerializationByIds/1/0/RC02" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "IdentifierKeyValuePair" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "key", "subjectId", "value" ],
+          "properties" : {
+            "key" : {
+              "type" : "string"
+            },
+            "subjectId" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "HasSemantics" : {
+        "type" : "object",
+        "properties" : {
+          "semanticId" : {
+            "$ref" : "#/components/schemas/Reference"
+          }
+        }
+      },
+      "Reference" : {
+        "type" : "object",
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/GlobalReference"
+        }, {
+          "$ref" : "#/components/schemas/ModelReference"
+        } ]
+      },
+      "GlobalReference" : {
+        "required" : [ "value" ],
+        "properties" : {
+          "value" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Identifier"
+            }
+          }
+        },
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Reference"
+        } ]
+      },
+      "Identifier" : {
+        "type" : "string"
+      },
+      "ModelReference" : {
+        "required" : [ "keys" ],
+        "properties" : {
+          "referredSemanticId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "keys" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Key"
+            }
+          }
+        },
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Reference"
+        } ]
+      },
+      "Key" : {
+        "required" : [ "type", "value" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "$ref" : "#/components/schemas/KeyElements"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
+      "KeyElements" : {
+        "type" : "string",
+        "enum" : [ "AssetAdministrationShell", "AccessPermissionRule", "ConceptDescription", "Submodel", "AnnotatedRelationshipElement", "BasicEvent", "Blob", "Capability", "DataElement", "File", "Entity", "Event", "MultiLanguageProperty", "Operation", "Property", "Range", "ReferenceElement", "RelationshipElement", "SubmodelElement", "SubmodelElementList", "SubmodelElementStruct", "View", "FragmentReference" ]
+      },
+      "AssetAdministrationShell" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Identifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "required" : [ "assetInformation" ],
+          "properties" : {
+            "assetInformation" : {
+              "$ref" : "#/components/schemas/AssetInformation"
+            },
+            "derivedFrom" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "security" : {
+              "$ref" : "#/components/schemas/Security"
+            },
+            "submodels" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            },
+            "views" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/View"
+              }
+            }
+          }
+        } ]
+      },
+      "Identifiable" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "required" : [ "identification" ],
+          "properties" : {
+            "administration" : {
+              "$ref" : "#/components/schemas/AdministrativeInformation"
+            },
+            "identification" : {
+              "$ref" : "#/components/schemas/Identifier"
+            }
+          }
+        } ]
+      },
+      "Referable" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasExtensions"
+        }, {
+          "required" : [ "idShort", "modelType" ],
+          "properties" : {
+            "category" : {
+              "type" : "string"
+            },
+            "description" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "displayName" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "idShort" : {
+              "type" : "string"
+            },
+            "modelType" : {
+              "$ref" : "#/components/schemas/ModelType"
+            }
+          }
+        } ]
+      },
+      "HasExtensions" : {
+        "type" : "object",
+        "properties" : {
+          "extensions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Extension"
+            }
+          }
+        }
+      },
+      "Extension" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "name" ],
+          "properties" : {
+            "name" : {
+              "type" : "string"
+            },
+            "refersTo" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "value" : {
+              "type" : "string"
+            },
+            "valueType" : {
+              "$ref" : "#/components/schemas/ValueTypeEnum"
+            }
+          }
+        } ]
+      },
+      "ValueTypeEnum" : {
+        "type" : "string",
+        "enum" : [ "anyUri", "base64Binary", "boolean", "date", "dateTime", "dateTimeStamp", "decimal", "integer", "long", "int", "short", "byte", "nonNegativeInteger", "positiveInteger", "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "nonPositiveInteger", "negativeInteger", "double", "duration", "dayTimeDuration", "yearMonthDuration", "float", "gDay", "gMonth", "gMonthDay", "gYear", "gYearMonth", "hexBinary", "NOTATION", "QName", "string", "normalizedString", "token", "language", "Name", "NCName", "ENTITY", "ID", "IDREF", "NMTOKEN", "time" ]
+      },
+      "LangString" : {
+        "required" : [ "language", "text" ],
+        "type" : "object",
+        "properties" : {
+          "language" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ModelType" : {
+        "required" : [ "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "$ref" : "#/components/schemas/ModelTypes"
+          }
+        }
+      },
+      "ModelTypes" : {
+        "type" : "string",
+        "enum" : [ "AssetAdministrationShell", "ConceptDescription", "Submodel", "AnnotatedRelationshipElement", "BasicEvent", "Blob", "Capability", "DataElement", "File", "Entity", "Event", "ModelReference", "MultiLanguageProperty", "Operation", "Property", "Range", "ReferenceElement", "RelationshipElement", "SubmodelElement", "SubmodelElementList", "SubmodelElementStruct", "View", "GlobalReference", "FragmentReference", "Constraint", "Formula", "Qualifier" ]
+      },
+      "AdministrativeInformation" : {
+        "type" : "object",
+        "properties" : {
+          "revision" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HasDataSpecification" : {
+        "type" : "object",
+        "properties" : {
+          "embeddedDataSpecifications" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EmbeddedDataSpecification"
+            }
+          }
+        }
+      },
+      "EmbeddedDataSpecification" : {
+        "required" : [ "dataSpecification", "dataSpecificationContent" ],
+        "type" : "object",
+        "properties" : {
+          "dataSpecification" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "dataSpecificationContent" : {
+            "$ref" : "#/components/schemas/DataSpecificationContent"
+          }
+        }
+      },
+      "DataSpecificationContent" : {
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/DataSpecificationIEC61360Content"
+        }, {
+          "$ref" : "#/components/schemas/DataSpecificationPhysicalUnitContent"
+        } ]
+      },
+      "DataSpecificationIEC61360Content" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ValueObject"
+        }, {
+          "required" : [ "preferredName" ],
+          "type" : "object",
+          "properties" : {
+            "dataType" : {
+              "type" : "string",
+              "enum" : [ "DATE", "STRING", "STRING_TRANSLATABLE", "REAL_MEASURE", "REAL_COUNT", "REAL_CURRENCY", "BOOLEAN", "URL", "RATIONAL", "RATIONAL_MEASURE", "TIME", "TIMESTAMP", "INTEGER_COUNT", "INTEGER_MEASURE", "INTEGER_CURRENCY" ]
+            },
+            "definition" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "levelType" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LevelType"
+              }
+            },
+            "preferredName" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "shortName" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "sourceOfDefinition" : {
+              "type" : "string"
+            },
+            "symbol" : {
+              "type" : "string"
+            },
+            "unit" : {
+              "type" : "string"
+            },
+            "unitId" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "valueFormat" : {
+              "type" : "string"
+            },
+            "valueList" : {
+              "$ref" : "#/components/schemas/ValueList"
+            }
+          }
+        } ]
+      },
+      "ValueObject" : {
+        "type" : "object",
+        "properties" : {
+          "value" : {
+            "type" : "string"
+          },
+          "valueId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "valueType" : {
+            "$ref" : "#/components/schemas/ValueTypeEnum"
+          }
+        }
+      },
+      "LevelType" : {
+        "type" : "string",
+        "enum" : [ "Min", "Max", "Nom", "Typ" ]
+      },
+      "ValueList" : {
+        "required" : [ "valueReferencePairTypes" ],
+        "type" : "object",
+        "properties" : {
+          "valueReferencePairTypes" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ValueReferencePairType"
+            }
+          }
+        }
+      },
+      "ValueReferencePairType" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ValueObject"
+        } ]
+      },
+      "DataSpecificationPhysicalUnitContent" : {
+        "required" : [ "definition", "unitName", "unitSymbol" ],
+        "type" : "object",
+        "properties" : {
+          "conversionFactor" : {
+            "type" : "string"
+          },
+          "definition" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LangString"
+            }
+          },
+          "dinNotation" : {
+            "type" : "string"
+          },
+          "eceCode" : {
+            "type" : "string"
+          },
+          "eceName" : {
+            "type" : "string"
+          },
+          "nistName" : {
+            "type" : "string"
+          },
+          "registrationAuthorityId" : {
+            "type" : "string"
+          },
+          "siName" : {
+            "type" : "string"
+          },
+          "siNotation" : {
+            "type" : "string"
+          },
+          "sourceOfDefinition" : {
+            "type" : "string"
+          },
+          "supplier" : {
+            "type" : "string"
+          },
+          "unitName" : {
+            "type" : "string"
+          },
+          "unitSymbol" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AssetInformation" : {
+        "required" : [ "assetKind" ],
+        "properties" : {
+          "assetKind" : {
+            "$ref" : "#/components/schemas/AssetKind"
+          },
+          "billOfMaterial" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          },
+          "globalAssetId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "specificAssetIds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IdentifierKeyValuePair"
+            }
+          },
+          "thumbnail" : {
+            "$ref" : "#/components/schemas/File"
+          }
+        },
+        "example" : {
+          "thumbnail" : "",
+          "assetKind" : "Type",
+          "specificAssetIds" : [ "", "" ],
+          "billOfMaterial" : [ "", "" ],
+          "globalAssetId" : null
+        }
+      },
+      "AssetKind" : {
+        "type" : "string",
+        "enum" : [ "Type", "Instance" ]
+      },
+      "File" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "required" : [ "mimeType" ],
+          "properties" : {
+            "mimeType" : {
+              "type" : "string"
+            },
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "SubmodelElement" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "properties" : {
+            "kind" : {
+              "$ref" : "#/components/schemas/ModelingKind"
+            }
+          }
+        } ],
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/Blob"
+        }, {
+          "$ref" : "#/components/schemas/File"
+        }, {
+          "$ref" : "#/components/schemas/Capability"
+        }, {
+          "$ref" : "#/components/schemas/Entity"
+        }, {
+          "$ref" : "#/components/schemas/Event"
+        }, {
+          "$ref" : "#/components/schemas/BasicEvent"
+        }, {
+          "$ref" : "#/components/schemas/MultiLanguageProperty"
+        }, {
+          "$ref" : "#/components/schemas/Operation"
+        }, {
+          "$ref" : "#/components/schemas/Property"
+        }, {
+          "$ref" : "#/components/schemas/Range"
+        }, {
+          "$ref" : "#/components/schemas/ReferenceElement"
+        }, {
+          "$ref" : "#/components/schemas/AnnotatedRelationshipElement"
+        }, {
+          "$ref" : "#/components/schemas/RelationshipElement"
+        }, {
+          "$ref" : "#/components/schemas/SubmodelElementList"
+        }, {
+          "$ref" : "#/components/schemas/SubmodelElementStruct"
+        } ]
+      },
+      "Qualifiable" : {
+        "type" : "object",
+        "properties" : {
+          "qualifiers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Constraint"
+            }
+          }
+        }
+      },
+      "Constraint" : {
+        "required" : [ "modelType" ],
+        "properties" : {
+          "modelType" : {
+            "$ref" : "#/components/schemas/ModelType"
+          }
+        },
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/Qualifier"
+        }, {
+          "$ref" : "#/components/schemas/Formula"
+        } ]
+      },
+      "Qualifier" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "$ref" : "#/components/schemas/ValueObject"
+        }, {
+          "required" : [ "type" ],
+          "properties" : {
+            "type" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "Formula" : {
+        "allOf" : [ {
+          "properties" : {
+            "dependsOn" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          }
+        } ]
+      },
+      "ModelingKind" : {
+        "type" : "string",
+        "enum" : [ "Template", "Instance" ]
+      },
+      "Blob" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "required" : [ "mimeType" ],
+          "properties" : {
+            "mimeType" : {
+              "type" : "string"
+            },
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "Capability" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "properties" : {
+            "kind" : {
+              "$ref" : "#/components/schemas/ModelingKind"
+            }
+          }
+        } ],
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/Blob"
+        }, {
+          "$ref" : "#/components/schemas/File"
+        }, {
+          "$ref" : "#/components/schemas/Capability"
+        }, {
+          "$ref" : "#/components/schemas/Entity"
+        }, {
+          "$ref" : "#/components/schemas/Event"
+        }, {
+          "$ref" : "#/components/schemas/BasicEvent"
+        }, {
+          "$ref" : "#/components/schemas/MultiLanguageProperty"
+        }, {
+          "$ref" : "#/components/schemas/Operation"
+        }, {
+          "$ref" : "#/components/schemas/Property"
+        }, {
+          "$ref" : "#/components/schemas/Range"
+        }, {
+          "$ref" : "#/components/schemas/ReferenceElement"
+        }, {
+          "$ref" : "#/components/schemas/AnnotatedRelationshipElement"
+        }, {
+          "$ref" : "#/components/schemas/RelationshipElement"
+        }, {
+          "$ref" : "#/components/schemas/SubmodelElementList"
+        }, {
+          "$ref" : "#/components/schemas/SubmodelElementStruct"
+        } ]
+      },
+      "Entity" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "required" : [ "entityType" ],
+          "properties" : {
+            "entityType" : {
+              "$ref" : "#/components/schemas/EntityType"
+            },
+            "globalAssetId" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "specificAssetIds" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/IdentifierKeyValuePair"
+              }
+            },
+            "statements" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          }
+        } ]
+      },
+      "EntityType" : {
+        "type" : "string",
+        "enum" : [ "CoManagedEntity", "SelfManagedEntity" ]
+      },
+      "Event" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        } ]
+      },
+      "BasicEvent" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Event"
+        }, {
+          "required" : [ "observed" ],
+          "properties" : {
+            "observed" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "MultiLanguageProperty" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "properties" : {
+            "value" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "valueId" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "Operation" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "properties" : {
+            "inoutputVariable" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/OperationVariable"
+              }
+            },
+            "inputVariable" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/OperationVariable"
+              }
+            },
+            "outputVariable" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/OperationVariable"
+              }
+            }
+          }
+        } ]
+      },
+      "OperationVariable" : {
+        "required" : [ "value" ],
+        "type" : "object",
+        "properties" : {
+          "value" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/Blob"
+            }, {
+              "$ref" : "#/components/schemas/File"
+            }, {
+              "$ref" : "#/components/schemas/Capability"
+            }, {
+              "$ref" : "#/components/schemas/Entity"
+            }, {
+              "$ref" : "#/components/schemas/Event"
+            }, {
+              "$ref" : "#/components/schemas/BasicEvent"
+            }, {
+              "$ref" : "#/components/schemas/MultiLanguageProperty"
+            }, {
+              "$ref" : "#/components/schemas/Operation"
+            }, {
+              "$ref" : "#/components/schemas/Property"
+            }, {
+              "$ref" : "#/components/schemas/Range"
+            }, {
+              "$ref" : "#/components/schemas/ReferenceElement"
+            }, {
+              "$ref" : "#/components/schemas/AnnotatedRelationshipElement"
+            }, {
+              "$ref" : "#/components/schemas/RelationshipElement"
+            }, {
+              "$ref" : "#/components/schemas/SubmodelElementList"
+            }, {
+              "$ref" : "#/components/schemas/SubmodelElementStruct"
+            } ]
+          }
+        },
+        "example" : {
+          "value" : ""
+        }
+      },
+      "Property" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "$ref" : "#/components/schemas/ValueObject"
+        } ]
+      },
+      "Range" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "required" : [ "valueType" ],
+          "properties" : {
+            "max" : {
+              "type" : "string"
+            },
+            "min" : {
+              "type" : "string"
+            },
+            "valueType" : {
+              "$ref" : "#/components/schemas/ValueTypeEnum"
+            }
+          }
+        } ]
+      },
+      "ReferenceElement" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "properties" : {
+            "value" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "AnnotatedRelationshipElement" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/RelationshipElement"
+        }, {
+          "properties" : {
+            "annotation" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/DataElement"
+              }
+            }
+          }
+        } ]
+      },
+      "RelationshipElement" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "required" : [ "first", "second" ],
+          "properties" : {
+            "first" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "second" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "DataElement" : {
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/Blob"
+        }, {
+          "$ref" : "#/components/schemas/File"
+        }, {
+          "$ref" : "#/components/schemas/MultiLanguageProperty"
+        }, {
+          "$ref" : "#/components/schemas/Property"
+        }, {
+          "$ref" : "#/components/schemas/Range"
+        }, {
+          "$ref" : "#/components/schemas/ReferenceElement"
+        } ]
+      },
+      "SubmodelElementList" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        }, {
+          "properties" : {
+            "semanticIdValues" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "submodelElementTypeValues" : {
+              "$ref" : "#/components/schemas/ModelType"
+            },
+            "value" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            },
+            "valueTypeValues" : {
+              "$ref" : "#/components/schemas/ValueTypeEnum"
+            }
+          }
+        } ]
+      },
+      "SubmodelElementStruct" : {
+        "properties" : {
+          "value" : {
+            "$ref" : "#/components/schemas/SubmodelElement"
+          }
+        },
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/SubmodelElement"
+        } ]
+      },
+      "Security" : {
+        "required" : [ "accessControlPolicyPoints" ],
+        "type" : "object",
+        "properties" : {
+          "accessControlPolicyPoints" : {
+            "$ref" : "#/components/schemas/AccessControlPolicyPoints"
+          },
+          "certificate" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Certificate"
+            }
+          },
+          "requiredCertificateExtension" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "AccessControlPolicyPoints" : {
+        "required" : [ "policyAdministrationPoint", "policyDecisionPoint", "policyEnforcementPoint" ],
+        "type" : "object",
+        "properties" : {
+          "policyAdministrationPoint" : {
+            "$ref" : "#/components/schemas/PolicyAdministrationPoint"
+          },
+          "policyDecisionPoint" : {
+            "$ref" : "#/components/schemas/PolicyDecisionPoint"
+          },
+          "policyEnforcementPoint" : {
+            "$ref" : "#/components/schemas/PolicyEnforcementPoint"
+          },
+          "policyInformationPoints" : {
+            "$ref" : "#/components/schemas/PolicyInformationPoints"
+          }
+        }
+      },
+      "PolicyAdministrationPoint" : {
+        "required" : [ "externalAccessControl" ],
+        "type" : "object",
+        "properties" : {
+          "externalAccessControl" : {
+            "type" : "boolean"
+          },
+          "localAccessControl" : {
+            "$ref" : "#/components/schemas/AccessControl"
+          }
+        }
+      },
+      "AccessControl" : {
+        "type" : "object",
+        "properties" : {
+          "accessPermissionRule" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AccessPermissionRule"
+            }
+          },
+          "defaultEnvironmentAttributes" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "defaultPermissions" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "defaultSubjectAttributes" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "selectableEnvironmentAttributes" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "selectablePermissions" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "selectableSubjectAttributes" : {
+            "$ref" : "#/components/schemas/Reference"
+          }
+        }
+      },
+      "AccessPermissionRule" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "required" : [ "targetSubjectAttributes" ],
+          "properties" : {
+            "permissionsPerObject" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/PermissionsPerObject"
+              }
+            },
+            "targetSubjectAttributes" : {
+              "minItems" : 1,
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubjectAttributes"
+              }
+            }
+          }
+        } ]
+      },
+      "PermissionsPerObject" : {
+        "type" : "object",
+        "properties" : {
+          "object" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "permission" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Permission"
+            }
+          },
+          "targetObjectAttributes" : {
+            "$ref" : "#/components/schemas/ObjectAttributes"
+          }
+        }
+      },
+      "Permission" : {
+        "required" : [ "kindOfPermission", "permission" ],
+        "type" : "object",
+        "properties" : {
+          "kindOfPermission" : {
+            "type" : "string",
+            "enum" : [ "Allow", "Deny", "NotApplicable", "Undefined" ]
+          },
+          "permission" : {
+            "$ref" : "#/components/schemas/Reference"
+          }
+        }
+      },
+      "ObjectAttributes" : {
+        "type" : "object",
+        "properties" : {
+          "objectAttribute" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Property"
+            }
+          }
+        }
+      },
+      "SubjectAttributes" : {
+        "type" : "object",
+        "properties" : {
+          "subjectAttributes" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "PolicyDecisionPoint" : {
+        "required" : [ "externalPolicyDecisionPoints" ],
+        "type" : "object",
+        "properties" : {
+          "externalPolicyDecisionPoints" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PolicyEnforcementPoint" : {
+        "required" : [ "externalPolicyEnforcementPoint" ],
+        "type" : "object",
+        "properties" : {
+          "externalPolicyEnforcementPoint" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PolicyInformationPoints" : {
+        "required" : [ "externalInformationPoint" ],
+        "type" : "object",
+        "properties" : {
+          "externalInformationPoint" : {
+            "type" : "boolean"
+          },
+          "internalInformationPoint" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "Certificate" : {
+        "type" : "object",
+        "properties" : {
+          "blobCertificate" : {
+            "$ref" : "#/components/schemas/Blob"
+          },
+          "containedExtension" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          },
+          "lastCertificate" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "View" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "properties" : {
+            "containedElements" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          }
+        } ]
+      },
+      "Submodel" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Identifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "properties" : {
+            "kind" : {
+              "$ref" : "#/components/schemas/ModelingKind"
+            },
+            "submodelElements" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          }
+        } ]
+      },
+      "OperationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "inoutputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "inputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "timeout" : {
+            "type" : "integer"
+          }
+        }
+      },
+      "OperationResult" : {
+        "type" : "object",
+        "properties" : {
+          "executionResult" : {
+            "$ref" : "#/components/schemas/Result"
+          },
+          "executionState" : {
+            "type" : "string",
+            "enum" : [ "Initiated", "Running", "Completed", "Canceled", "Failed", "Timeout" ]
+          },
+          "inoutputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "outputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "requestId" : {
+            "type" : "string"
+          }
+        },
+        "example" : {
+          "outputArguments" : [ null, null ],
+          "requestId" : "requestId",
+          "executionResult" : {
+            "success" : true,
+            "messages" : [ {
+              "code" : "code",
+              "messageType" : "Undefined",
+              "text" : "text",
+              "timestamp" : "timestamp"
+            }, {
+              "code" : "code",
+              "messageType" : "Undefined",
+              "text" : "text",
+              "timestamp" : "timestamp"
+            } ]
+          },
+          "executionState" : "Initiated",
+          "inoutputArguments" : [ {
+            "value" : ""
+          }, {
+            "value" : ""
+          } ]
+        }
+      },
+      "Result" : {
+        "type" : "object",
+        "properties" : {
+          "messages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Message"
+            }
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "example" : {
+          "success" : true,
+          "messages" : [ {
+            "code" : "code",
+            "messageType" : "Undefined",
+            "text" : "text",
+            "timestamp" : "timestamp"
+          }, {
+            "code" : "code",
+            "messageType" : "Undefined",
+            "text" : "text",
+            "timestamp" : "timestamp"
+          } ]
+        }
+      },
+      "Message" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "messageType" : {
+            "type" : "string",
+            "enum" : [ "Undefined", "Info", "Warning", "Error", "Exception" ]
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "timestamp" : {
+            "type" : "string"
+          }
+        },
+        "example" : {
+          "code" : "code",
+          "messageType" : "Undefined",
+          "text" : "text",
+          "timestamp" : "timestamp"
+        }
+      },
+      "ConceptDescription" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Identifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "properties" : {
+            "isCaseOf" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          }
+        } ]
+      },
+      "AssetAdministrationShellEnvironment" : {
+        "type" : "object",
+        "properties" : {
+          "assetAdministrationShells" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AssetAdministrationShell"
+            }
+          },
+          "conceptDescriptions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConceptDescription"
+            }
+          },
+          "submodels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Submodel"
+            }
+          }
+        }
+      },
+      "BlobCertificate" : {
+        "type" : "object",
+        "properties" : {
+          "blobCertificate" : {
+            "$ref" : "#/components/schemas/Blob"
+          },
+          "containedExtension" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          },
+          "lastCertificate" : {
+            "type" : "boolean"
+          }
+        }
+      }
+    }
+  }
+}
