@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>..\IO.Swagger.Lib\IO.Swagger.Lib.xml</DocumentationFile>
+    <DocumentationFile>.\IO.Swagger.Lib.xml</DocumentationFile>
   </PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
