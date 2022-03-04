@@ -2123,7 +2123,7 @@
               },
               "application/xml" : {
                 "schema" : {
-                  "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schema/AssetAdministrationShellEnvironment"
+                  "$ref" : "#/components/schemas/AssetAdministrationShellEnvironment"
                 }
               }
             }
@@ -2157,7 +2157,7 @@
         "type" : "object",
         "properties" : {
           "semanticId" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           }
         }
       },
@@ -2190,7 +2190,7 @@
         "required" : [ "keys" ],
         "properties" : {
           "referredSemanticId" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "keys" : {
             "type" : "array",
@@ -2208,7 +2208,7 @@
         "type" : "object",
         "properties" : {
           "type" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/KeyElements"
+            "$ref" : "#/components/schemas/KeyElements"
           },
           "value" : {
             "type" : "string"
@@ -2282,7 +2282,10 @@
               }
             },
             "displayName" : {
-              "type" : "string"
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
             },
             "idShort" : {
               "type" : "string"
@@ -2346,7 +2349,7 @@
         "type" : "object",
         "properties" : {
           "name" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/ModelTypes"
+            "$ref" : "#/components/schemas/ModelTypes"
           }
         }
       },
@@ -2381,10 +2384,10 @@
         "type" : "object",
         "properties" : {
           "dataSpecification" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "dataSpecificationContent" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/DataSpecificationContent"
+            "$ref" : "#/components/schemas/DataSpecificationContent"
           }
         }
       },
@@ -2458,10 +2461,10 @@
             "type" : "string"
           },
           "valueId" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "valueType" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/ValueTypeEnum"
+            "$ref" : "#/components/schemas/ValueTypeEnum"
           }
         }
       },
@@ -2536,32 +2539,37 @@
         }
       },
       "AssetInformation" : {
-        "allOf" : [ {
-          "required" : [ "assetKind" ],
-          "properties" : {
-            "assetKind" : {
-              "$ref" : "#/components/schemas/AssetKind"
-            },
-            "billOfMaterial" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/components/schemas/Reference"
-              }
-            },
-            "globalAssetId" : {
+        "required" : [ "assetKind" ],
+        "properties" : {
+          "assetKind" : {
+            "$ref" : "#/components/schemas/AssetKind"
+          },
+          "billOfMaterial" : {
+            "type" : "array",
+            "items" : {
               "$ref" : "#/components/schemas/Reference"
-            },
-            "specificAssetIds" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/components/schemas/IdentifierKeyValuePair"
-              }
-            },
-            "thumbnail" : {
-              "$ref" : "#/components/schemas/File"
             }
+          },
+          "globalAssetId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "specificAssetIds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IdentifierKeyValuePair"
+            }
+          },
+          "thumbnail" : {
+            "$ref" : "#/components/schemas/File"
           }
-        } ]
+        },
+        "example" : {
+          "thumbnail" : "",
+          "assetKind" : "Type",
+          "specificAssetIds" : [ "", "" ],
+          "billOfMaterial" : [ "", "" ],
+          "globalAssetId" : null
+        }
       },
       "AssetKind" : {
         "type" : "string",
@@ -2645,7 +2653,7 @@
         "required" : [ "modelType" ],
         "properties" : {
           "modelType" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/ModelType"
+            "$ref" : "#/components/schemas/ModelType"
           }
         },
         "oneOf" : [ {
@@ -2701,7 +2709,50 @@
       },
       "Capability" : {
         "allOf" : [ {
-          "$ref" : "#/components/schemas/SubmodelElement"
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "properties" : {
+            "kind" : {
+              "$ref" : "#/components/schemas/ModelingKind"
+            }
+          }
+        } ],
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/Blob"
+        }, {
+          "$ref" : "#/components/schemas/File"
+        }, {
+          "$ref" : "#/components/schemas/Capability"
+        }, {
+          "$ref" : "#/components/schemas/Entity"
+        }, {
+          "$ref" : "#/components/schemas/Event"
+        }, {
+          "$ref" : "#/components/schemas/BasicEvent"
+        }, {
+          "$ref" : "#/components/schemas/MultiLanguageProperty"
+        }, {
+          "$ref" : "#/components/schemas/Operation"
+        }, {
+          "$ref" : "#/components/schemas/Property"
+        }, {
+          "$ref" : "#/components/schemas/Range"
+        }, {
+          "$ref" : "#/components/schemas/ReferenceElement"
+        }, {
+          "$ref" : "#/components/schemas/AnnotatedRelationshipElement"
+        }, {
+          "$ref" : "#/components/schemas/RelationshipElement"
+        }, {
+          "$ref" : "#/components/schemas/SubmodelElementList"
+        }, {
+          "$ref" : "#/components/schemas/SubmodelElementStruct"
         } ]
       },
       "Entity" : {
@@ -2943,7 +2994,7 @@
       "SubmodelElementStruct" : {
         "properties" : {
           "value" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/SubmodelElement"
+            "$ref" : "#/components/schemas/SubmodelElement"
           }
         },
         "allOf" : [ {
@@ -2955,7 +3006,7 @@
         "type" : "object",
         "properties" : {
           "accessControlPolicyPoints" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/AccessControlPolicyPoints"
+            "$ref" : "#/components/schemas/AccessControlPolicyPoints"
           },
           "certificate" : {
             "type" : "array",
@@ -2976,16 +3027,16 @@
         "type" : "object",
         "properties" : {
           "policyAdministrationPoint" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/PolicyAdministrationPoint"
+            "$ref" : "#/components/schemas/PolicyAdministrationPoint"
           },
           "policyDecisionPoint" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/PolicyDecisionPoint"
+            "$ref" : "#/components/schemas/PolicyDecisionPoint"
           },
           "policyEnforcementPoint" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/PolicyEnforcementPoint"
+            "$ref" : "#/components/schemas/PolicyEnforcementPoint"
           },
           "policyInformationPoints" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/PolicyInformationPoints"
+            "$ref" : "#/components/schemas/PolicyInformationPoints"
           }
         }
       },
@@ -2997,7 +3048,7 @@
             "type" : "boolean"
           },
           "localAccessControl" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/AccessControl"
+            "$ref" : "#/components/schemas/AccessControl"
           }
         }
       },
@@ -3011,22 +3062,22 @@
             }
           },
           "defaultEnvironmentAttributes" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "defaultPermissions" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "defaultSubjectAttributes" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "selectableEnvironmentAttributes" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "selectablePermissions" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "selectableSubjectAttributes" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           }
         }
       },
@@ -3058,7 +3109,7 @@
         "type" : "object",
         "properties" : {
           "object" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           },
           "permission" : {
             "type" : "array",
@@ -3067,7 +3118,7 @@
             }
           },
           "targetObjectAttributes" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/ObjectAttributes"
+            "$ref" : "#/components/schemas/ObjectAttributes"
           }
         }
       },
@@ -3080,7 +3131,7 @@
             "enum" : [ "Allow", "Deny", "NotApplicable", "Undefined" ]
           },
           "permission" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Reference"
+            "$ref" : "#/components/schemas/Reference"
           }
         }
       },
@@ -3143,14 +3194,9 @@
       },
       "Certificate" : {
         "type" : "object",
-        "oneOf" : [ {
-          "$ref" : "#/components/schemas/BlobCertificate"
-        } ]
-      },
-      "BlobCertificate" : {
         "properties" : {
           "blobCertificate" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Blob"
+            "$ref" : "#/components/schemas/Blob"
           },
           "containedExtension" : {
             "type" : "array",
@@ -3231,7 +3277,7 @@
         "type" : "object",
         "properties" : {
           "executionResult" : {
-            "$ref" : "https://api.swaggerhub.com/domains/Plattform_i40/Shared-Domain-Models/Final-Draft#/components/schemas/Result"
+            "$ref" : "#/components/schemas/Result"
           },
           "executionState" : {
             "type" : "string",
@@ -3256,7 +3302,20 @@
         "example" : {
           "outputArguments" : [ null, null ],
           "requestId" : "requestId",
-          "executionResult" : "{}",
+          "executionResult" : {
+            "success" : true,
+            "messages" : [ {
+              "code" : "code",
+              "messageType" : "Undefined",
+              "text" : "text",
+              "timestamp" : "timestamp"
+            }, {
+              "code" : "code",
+              "messageType" : "Undefined",
+              "text" : "text",
+              "timestamp" : "timestamp"
+            } ]
+          },
           "executionState" : "Initiated",
           "inoutputArguments" : [ {
             "value" : ""
@@ -3277,6 +3336,20 @@
           "success" : {
             "type" : "boolean"
           }
+        },
+        "example" : {
+          "success" : true,
+          "messages" : [ {
+            "code" : "code",
+            "messageType" : "Undefined",
+            "text" : "text",
+            "timestamp" : "timestamp"
+          }, {
+            "code" : "code",
+            "messageType" : "Undefined",
+            "text" : "text",
+            "timestamp" : "timestamp"
+          } ]
         }
       },
       "Message" : {
@@ -3295,6 +3368,12 @@
           "timestamp" : {
             "type" : "string"
           }
+        },
+        "example" : {
+          "code" : "code",
+          "messageType" : "Undefined",
+          "text" : "text",
+          "timestamp" : "timestamp"
         }
       },
       "ConceptDescription" : {
@@ -3333,6 +3412,23 @@
             "items" : {
               "$ref" : "#/components/schemas/Submodel"
             }
+          }
+        }
+      },
+      "BlobCertificate" : {
+        "type" : "object",
+        "properties" : {
+          "blobCertificate" : {
+            "$ref" : "#/components/schemas/Blob"
+          },
+          "containedExtension" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          },
+          "lastCertificate" : {
+            "type" : "boolean"
           }
         }
       }
