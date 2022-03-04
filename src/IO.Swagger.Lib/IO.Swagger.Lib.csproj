@@ -5,8 +5,8 @@
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>C:\Users\br\Documents\GitHub\aasx-server\src\IO.Swagger.Lib\IO.Swagger.Lib.xml</DocumentationFile>
+  <PropertyGroup>
+    <DocumentationFile>.\IO.Swagger.Lib.xml</DocumentationFile>
   </PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
