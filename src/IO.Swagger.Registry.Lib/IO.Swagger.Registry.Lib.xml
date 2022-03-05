@@ -462,11 +462,6 @@
             Gets or Sets Key
             </summary>
         </member>
-        <member name="P:IO.Swagger.Registry.Models.IdentifierKeyValuePair.SubjectId">
-            <summary>
-            Gets or Sets SubjectId
-            </summary>
-        </member>
         <member name="P:IO.Swagger.Registry.Models.IdentifierKeyValuePair.Value">
             <summary>
             Gets or Sets Value
