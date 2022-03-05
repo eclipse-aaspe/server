@@ -142,13 +142,16 @@ namespace IO.Swagger.Registry.Controllers
         /// Returns a list of Asset Administration Shell ids based on Asset identifier key-value-pairs
         /// </summary>
         /// <param name="assetIds">The key-value-pair of an Asset identifier</param>
+        /// <param name="assetId">An Asset identifier</param>
         /// <response code="200">Requested Asset Administration Shell ids</response>
         [HttpGet]
         [Route("/lookup/shells")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
-        public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink([FromQuery] List<IdentifierKeyValuePair> assetIds)
+        public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
+            [FromQuery] List<IdentifierKeyValuePair> assetIds,
+            [FromQuery] String assetId)
         {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<string>));
@@ -183,10 +186,14 @@ namespace IO.Swagger.Registry.Controllers
                 {
                     if (env != null)
                     {
-                        string asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
+                        string asset = "";
+                        var assetRef = env.AasEnv.AdministrationShells[0].assetRef;
+                        if (assetRef != null && assetRef.Count != 0)
+                            asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
 
-                        if (assetList.Count == 0 || asset == null ||
-                            assetList.Contains(asset))
+                        // if (assetList.Count == 0 || asset == null ||
+                        //    assetList.Contains(asset))
+                        if (assetId == "" || assetId == asset)
                         {
                             aasList.Add(env.AasEnv.AdministrationShells[0].identification.id);
                         }
