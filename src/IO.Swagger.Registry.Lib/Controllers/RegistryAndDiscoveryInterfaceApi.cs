@@ -14,6 +14,7 @@ using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -91,6 +92,7 @@ namespace IO.Swagger.Registry.Controllers
         {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<AssetAdministrationShellDescriptor>));
+            /*
             string exampleJson = null;
             exampleJson = "[ \"\", \"\" ]";
 
@@ -98,6 +100,42 @@ namespace IO.Swagger.Registry.Controllers
             ? JsonConvert.DeserializeObject<List<AssetAdministrationShellDescriptor>>(exampleJson)
             : default(List<AssetAdministrationShellDescriptor>);            //TODO: Change the data returned
             return new ObjectResult(example);
+            */
+            try
+            {
+                //collect aasetIds
+                var aasList = new List<AssetAdministrationShellDescriptor>();
+
+                foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
+                {
+                    if (env != null)
+                    {
+                        AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
+                        var aas = env.AasEnv.AdministrationShells[0];
+                        string assetId = aas.assetRef?[0].value;
+
+                        // ad.Administration.Version = aas.administration.version;
+                        // ad.Administration.Revision = aas.administration.revision;
+                        ad.IdShort = aas.idShort;
+                        ad.Identification = aas.identification.id;
+                        var e = new Endpoint();
+                        e.ProtocolInformation = new ProtocolInformation();
+                        e.ProtocolInformation.EndpointAddress =
+                            AasxServer.Program.blazorHostPort + "/shells/" +
+                            Base64UrlEncoder.Encode(ad.Identification) +
+                            "/aas";
+                        ad.Endpoints = new List<Endpoint>();
+                        ad.Endpoints.Add(e);
+                        aasList.Add(ad);
+                    }
+                }
+
+                return new ObjectResult(aasList);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
