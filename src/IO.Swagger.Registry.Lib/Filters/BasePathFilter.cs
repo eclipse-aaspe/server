@@ -1,8 +1,8 @@
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using Microsoft.OpenApi.Models;
 
 namespace IO.Swagger.Registry.Filters
 {
