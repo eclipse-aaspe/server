@@ -42,18 +42,19 @@
             <param name="submodelIdentifier">The Submodel’s unique id (BASE64-URL-encoded)</param>
             <response code="204">Submodel Descriptor deleted successfully</response>
         </member>
-        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetAdministrationShellDescriptors">
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetAdministrationShellDescriptors(System.String)">
             <summary>
             Returns all Asset Administration Shell Descriptors
             </summary>
             <response code="200">Requested Asset Administration Shell Descriptors</response>
+            <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
         </member>
         <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetAdministrationShellIdsByAssetLink(System.Collections.Generic.List{IO.Swagger.Registry.Models.IdentifierKeyValuePair},System.String)">
             <summary>
             Returns a list of Asset Administration Shell ids based on Asset identifier key-value-pairs
             </summary>
-            <param name="assetIds">The key-value-pair of an Asset identifier</param>
-            <param name="assetId">An Asset identifier</param>
+            <param name="assetIds">The key-value-pair of an Asset identifier (BASE64-URL-encoded JSON-serialized key-value-pairs)</param>
+            <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
             <response code="200">Requested Asset Administration Shell ids</response>
         </member>
         <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetLinksById(System.String)">
