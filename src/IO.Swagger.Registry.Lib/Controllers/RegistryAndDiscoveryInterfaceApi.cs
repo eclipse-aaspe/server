@@ -83,12 +83,14 @@ namespace IO.Swagger.Registry.Controllers
         /// Returns all Asset Administration Shell Descriptors
         /// </summary>
         /// <response code="200">Requested Asset Administration Shell Descriptors</response>
+        /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
         [HttpGet]
         [Route("/registry/shell-descriptors")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShellDescriptors")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Requested Asset Administration Shell Descriptors")]
-        public virtual IActionResult GetAllAssetAdministrationShellDescriptors()
+        public virtual IActionResult GetAllAssetAdministrationShellDescriptors(
+            [FromQuery] String assetId)
         {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<AssetAdministrationShellDescriptor>));
@@ -103,6 +105,21 @@ namespace IO.Swagger.Registry.Controllers
             */
             try
             {
+                //collect aasetIds from list
+                var assetList = new List<String>();
+                /*
+                foreach (var kv in assetIds)
+                {
+                    if (kv.Value != "")
+                        assetList.Add(kv.Value);
+                }
+                */
+                // single assetId
+                if (assetId != null && assetId != "")
+                {
+                    assetList.Add(Base64UrlEncoder.Decode(assetId));
+                }
+
                 //collect aasetIds
                 var aasList = new List<AssetAdministrationShellDescriptor>();
 
@@ -110,23 +127,44 @@ namespace IO.Swagger.Registry.Controllers
                 {
                     if (env != null)
                     {
-                        AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
-                        var aas = env.AasEnv.AdministrationShells[0];
-                        string assetId = aas.assetRef?[0].value;
+                        bool addEntry = false;
+                        if (assetList.Count == 0)
+                            addEntry = true;
+                        else
+                        {
+                            string asset = "";
+                            var assetRef = env.AasEnv.AdministrationShells[0].assetRef;
+                            if (assetRef != null && assetRef.Count != 0)
+                            {
+                                asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
+                                if (assetList.Contains(asset))
+                                    addEntry = true;
+                            }
+                        }
+                        if (addEntry)
+                        {
+                            AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
+                            var aas = env.AasEnv.AdministrationShells[0];
+                            string asset = aas.assetRef?[0].value;
 
-                        // ad.Administration.Version = aas.administration.version;
-                        // ad.Administration.Revision = aas.administration.revision;
-                        ad.IdShort = aas.idShort;
-                        ad.Identification = aas.identification.id;
-                        var e = new Endpoint();
-                        e.ProtocolInformation = new ProtocolInformation();
-                        e.ProtocolInformation.EndpointAddress =
-                            AasxServer.Program.externalBlazor + "/shells/" +
-                            Base64UrlEncoder.Encode(ad.Identification) +
-                            "/aas";
-                        ad.Endpoints = new List<Endpoint>();
-                        ad.Endpoints.Add(e);
-                        aasList.Add(ad);
+                            // ad.Administration.Version = aas.administration.version;
+                            // ad.Administration.Revision = aas.administration.revision;
+                            ad.IdShort = aas.idShort;
+                            ad.Identification = aas.identification.id;
+                            var e = new Endpoint();
+                            e.ProtocolInformation = new ProtocolInformation();
+                            e.ProtocolInformation.EndpointAddress =
+                                AasxServer.Program.externalBlazor + "/shells/" +
+                                Base64UrlEncoder.Encode(ad.Identification) +
+                                "/aas";
+                            ad.Endpoints = new List<Endpoint>();
+                            ad.Endpoints.Add(e);
+                            var gr = new GlobalReference();
+                            gr.Value = new List<string>();
+                            gr.Value.Add(asset);
+                            ad.GlobalAssetId = gr;
+                            aasList.Add(ad);
+                        }
                     }
                 }
 
@@ -141,8 +179,8 @@ namespace IO.Swagger.Registry.Controllers
         /// <summary>
         /// Returns a list of Asset Administration Shell ids based on Asset identifier key-value-pairs
         /// </summary>
-        /// <param name="assetIds">The key-value-pair of an Asset identifier</param>
-        /// <param name="assetId">An Asset identifier</param>
+        /// <param name="assetIds">The key-value-pair of an Asset identifier (BASE64-URL-encoded JSON-serialized key-value-pairs)</param>
+        /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
         /// <response code="200">Requested Asset Administration Shell ids</response>
         [HttpGet]
         [Route("/lookup/shells")]
@@ -172,12 +210,17 @@ namespace IO.Swagger.Registry.Controllers
 
             try
             {
-                //collect aasetIds
+                //collect aasetIds from list
                 var assetList = new List<String>();
                 foreach (var kv in assetIds)
                 {
                     if (kv.Value != "")
                         assetList.Add(kv.Value);
+                }
+                // single assetId
+                if (assetId != null && assetId != "")
+                {
+                    assetList.Add(Base64UrlEncoder.Decode(assetId));
                 }
 
                 var aasList = new List<String>();
@@ -186,14 +229,21 @@ namespace IO.Swagger.Registry.Controllers
                 {
                     if (env != null)
                     {
-                        string asset = "";
-                        var assetRef = env.AasEnv.AdministrationShells[0].assetRef;
-                        if (assetRef != null && assetRef.Count != 0)
-                            asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
-
-                        // if (assetList.Count == 0 || asset == null ||
-                        //    assetList.Contains(asset))
-                        if (assetId == "" || assetId == asset)
+                        bool addEntry = false;
+                        if (assetList.Count == 0)
+                            addEntry = true;
+                        else
+                        {
+                            string asset = "";
+                            var assetRef = env.AasEnv.AdministrationShells[0].assetRef;
+                            if (assetRef != null && assetRef.Count != 0)
+                            {
+                                asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
+                                if (assetList.Contains(asset))
+                                    addEntry = true;
+                            }
+                        }
+                        if (addEntry)
                         {
                             aasList.Add(env.AasEnv.AdministrationShells[0].identification.id);
                         }
