@@ -171,12 +171,15 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            public static string posttimeseriesPayload = "";
+
             [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/posttimeseries(/|)$")]
 
             public IHttpContext posttimeseries(IHttpContext context)
             {
                 Console.WriteLine("posttimeseries:");
-                Console.WriteLine(context.Request.Payload);
+                posttimeseriesPayload = context.Request.Payload;
+                Console.WriteLine(posttimeseriesPayload);
 
                 context.Response.ContentType = ContentType.HTML;
                 context.Response.ContentEncoding = System.Text.Encoding.UTF8;

@@ -868,6 +868,27 @@ namespace AasxTimeSeries
         static bool parseJSON(string url, string username, string password, AdminShell.SubmodelElementCollection c,
             List<string> filter, AdminShell.Property minDiffAbsolute, AdminShell.Property minDiffPercent)
         {
+            if (url == "posttimeseries")
+            {
+                string payload = AasxRestServerLibrary.AasxRestServer.TestResource.posttimeseriesPayload;
+                if (payload != "")
+                {
+                    AasxRestServerLibrary.AasxRestServer.TestResource.posttimeseriesPayload = "";
+                    try
+                    {
+                        JObject parsed = JObject.Parse(payload);
+                        if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                            return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("GetJSON() expection: " + ex.Message);
+                    }
+                    return false;
+                }
+                return false;
+            }
+
             var handler = new HttpClientHandler();
             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
             var client = new HttpClient(handler);
