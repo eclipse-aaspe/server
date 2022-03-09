@@ -171,12 +171,17 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/posttimesseries(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/posttimeseries(/|)$")]
 
             public IHttpContext posttimeseries(IHttpContext context)
             {
                 Console.WriteLine("posttimeseries:");
                 Console.WriteLine(context.Request.Payload);
+
+                context.Response.ContentType = ContentType.HTML;
+                context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+                context.Response.SendResponse("OK");
+                context.Response.StatusCode = Grapevine.Shared.HttpStatusCode.Ok;
                 return context;
             }
 
