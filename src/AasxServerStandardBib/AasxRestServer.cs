@@ -188,6 +188,41 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/calculatecfp/aas/([^/]+)(/|)$")]
+
+            public IHttpContext calculatecfp(IHttpContext context)
+            {
+                string restPath = context.Request.PathInfo;
+                int aasIndex = -1;
+                string result = "NONE";
+
+                if (restPath.Contains("/aas/"))
+                {
+                    // specific AAS
+                    string[] split = restPath.Split('/');
+                    if (split[2] == "aas")
+                    {
+                        try
+                        {
+                            if (!int.TryParse(split[3], out aasIndex))
+                                aasIndex = -1;
+                            if (aasIndex >= 0)
+                            {
+                                AasxServer.AasxTask.operation_calculate_cfp(null, aasIndex, DateTime.UtcNow);
+                                result = "OK";
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                context.Response.ContentType = ContentType.HTML;
+                context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+                context.Response.SendResponse(result);
+                context.Response.StatusCode = Grapevine.Shared.HttpStatusCode.Ok;
+                return context;
+            }
+
             public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
             // public static int eventsCount = 0;
 

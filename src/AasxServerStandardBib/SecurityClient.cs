@@ -972,7 +972,7 @@ namespace AasxServer
             Program.signalNewData(1);
         }
 
-        static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             double cfpCradleToGateSum = 0.0;
             double cfpProductionSum = 0.0;
