@@ -1056,6 +1056,11 @@ namespace AasxTimeSeries
                 opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
             opc.ConsoleSampleClient().Wait();
             session = opc.session;
+            if (session == null)
+            {
+                Console.WriteLine("ERROR: Session not connected "
+                    + tsb.sourceAddress + " " + tsb.username + " " + tsb.password);
+            }
         }
         public static void GetData(TimeSeriesBlock tsb)
         {
