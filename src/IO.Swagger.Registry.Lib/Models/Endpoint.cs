@@ -27,12 +27,12 @@ namespace IO.Swagger.Registry.Models
     public partial class Endpoint : IEquatable<Endpoint>
     {
         /// <summary>
-        /// Gets or Sets _Interface
+        /// Gets or Sets Interface
         /// </summary>
         [Required]
 
         [DataMember(Name = "interface")]
-        public string _Interface { get; set; }
+        public string Interface { get; set; }
 
         /// <summary>
         /// Gets or Sets ProtocolInformation
@@ -50,7 +50,7 @@ namespace IO.Swagger.Registry.Models
         {
             var sb = new StringBuilder();
             sb.Append("class Endpoint {\n");
-            sb.Append("  _Interface: ").Append(_Interface).Append("\n");
+            sb.Append("  Interface: ").Append(Interface).Append("\n");
             sb.Append("  ProtocolInformation: ").Append(ProtocolInformation).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
@@ -89,9 +89,9 @@ namespace IO.Swagger.Registry.Models
 
             return
                 (
-                    _Interface == other._Interface ||
-                    _Interface != null &&
-                    _Interface.Equals(other._Interface)
+                    Interface == other.Interface ||
+                    Interface != null &&
+                    Interface.Equals(other.Interface)
                 ) &&
                 (
                     ProtocolInformation == other.ProtocolInformation ||
@@ -110,8 +110,8 @@ namespace IO.Swagger.Registry.Models
             {
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
-                if (_Interface != null)
-                    hashCode = hashCode * 59 + _Interface.GetHashCode();
+                if (Interface != null)
+                    hashCode = hashCode * 59 + Interface.GetHashCode();
                 if (ProtocolInformation != null)
                     hashCode = hashCode * 59 + ProtocolInformation.GetHashCode();
                 return hashCode;

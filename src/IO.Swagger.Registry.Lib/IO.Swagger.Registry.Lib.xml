@@ -328,9 +328,9 @@
             
             </summary>
         </member>
-        <member name="P:IO.Swagger.Registry.Models.Endpoint._Interface">
+        <member name="P:IO.Swagger.Registry.Models.Endpoint.Interface">
             <summary>
-            Gets or Sets _Interface
+            Gets or Sets Interface
             </summary>
         </member>
         <member name="P:IO.Swagger.Registry.Models.Endpoint.ProtocolInformation">

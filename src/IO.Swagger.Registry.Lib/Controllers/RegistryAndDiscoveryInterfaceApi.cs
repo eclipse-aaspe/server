@@ -157,12 +157,39 @@ namespace IO.Swagger.Registry.Controllers
                                 AasxServer.Program.externalBlazor + "/shells/" +
                                 Base64UrlEncoder.Encode(ad.Identification) +
                                 "/aas";
+                            e.Interface = "AAS-1.0";
                             ad.Endpoints = new List<Endpoint>();
                             ad.Endpoints.Add(e);
                             var gr = new GlobalReference();
                             gr.Value = new List<string>();
                             gr.Value.Add(asset);
                             ad.GlobalAssetId = gr;
+                            // Submodels
+                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                            {
+                                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                                foreach (var smr in aas.submodelRefs)
+                                {
+                                    var sm = env.AasEnv.FindSubmodel(smr);
+                                    if (sm != null && sm.idShort != null)
+                                    {
+                                        SubmodelDescriptor sd = new SubmodelDescriptor();
+                                        sd.IdShort = sm.idShort;
+                                        sd.Identification = sm.identification.id;
+                                        var esm = new Endpoint();
+                                        esm.ProtocolInformation = new ProtocolInformation();
+                                        esm.ProtocolInformation.EndpointAddress =
+                                            AasxServer.Program.externalBlazor + "/shells/" +
+                                            Base64UrlEncoder.Encode(ad.Identification) + "/aas/submodels/" +
+                                            Base64UrlEncoder.Encode(sd.Identification) +
+                                            "/submodel/submodel-elements";
+                                        esm.Interface = "SUBMODEL-1.0";
+                                        sd.Endpoints = new List<Endpoint>();
+                                        sd.Endpoints.Add(esm);
+                                        ad.SubmodelDescriptors.Add(sd);
+                                    }
+                                }
+                            }
                             aasList.Add(ad);
                         }
                     }

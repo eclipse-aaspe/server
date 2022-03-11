@@ -579,6 +579,7 @@ namespace AasxServer
                     Console.WriteLine("********** Can not connect to: " + connectServer);
                 }
             }
+            Program.signalNewData(3);
 
             if (a.Opc && server != null)
             {
