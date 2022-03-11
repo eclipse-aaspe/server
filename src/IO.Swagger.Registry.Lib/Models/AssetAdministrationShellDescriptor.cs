@@ -90,7 +90,8 @@ namespace IO.Swagger.Registry.Models
             sb.Append("  IdShort: ").Append(IdShort).Append("\n");
             sb.Append("  Identification: ").Append(Identification).Append("\n");
             sb.Append("  SpecificAssetIds: ").Append(SpecificAssetIds).Append("\n");
-            sb.Append("  SubmodelDescriptors: ").Append(SubmodelDescriptors).Append("\n");
+            foreach (var sd in SubmodelDescriptors)
+                sb.Append("  SubmodelDescriptors: ").Append(sd.ToString()).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }

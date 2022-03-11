@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using AdminShellNS;
 
 namespace IO.Swagger.Registry.Controllers
 {
@@ -444,6 +445,39 @@ namespace IO.Swagger.Registry.Controllers
             return new ObjectResult(example);
         }
 
+        static AdminShell.Submodel aasRegistry = null;
+        static AdminShell.Submodel submodelRegistry = null;
+        static int aasRegistryCount = 0;
+        static int submodelRegistryCount = 0;
+
+        static void initRegistry()
+        {
+            if (aasRegistry == null || submodelRegistry == null)
+            {
+                foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
+                {
+                    if (env != null)
+                    {
+                        var aas = env.AasEnv.AdministrationShells[0];
+                        if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                        {
+                            foreach (var smr in aas.submodelRefs)
+                            {
+                                var sm = env.AasEnv.FindSubmodel(smr);
+                                if (sm != null && sm.idShort != null)
+                                {
+                                    if (sm.idShort == "AASREGISTRY")
+                                        aasRegistry = sm;
+                                    if (sm.idShort == "SUBMODELREGISTRY")
+                                        submodelRegistry = sm;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Creates a new Asset Administration Shell Descriptor, i.e. registers an AAS
         /// </summary>
@@ -458,13 +492,32 @@ namespace IO.Swagger.Registry.Controllers
         {
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(AssetAdministrationShellDescriptor));
+            /*
             string exampleJson = null;
             exampleJson = "\"\"";
 
             var example = exampleJson != null
             ? JsonConvert.DeserializeObject<AssetAdministrationShellDescriptor>(exampleJson)
             : default(AssetAdministrationShellDescriptor);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            */
+            initRegistry();
+
+            var c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
+            var p = AdminShell.Property.CreateNew("aasID");
+            p.value = body.Identification;
+            c.value.Add(p);
+            p = AdminShell.Property.CreateNew("assetID");
+            // p.value = body.GlobalAssetId[0].;
+            c.value.Add(p);
+            p = AdminShell.Property.CreateNew("descriptorJSON");
+            p.value = body.ToString();
+            c.value.Add(p);
+            aasRegistry?.submodelElements.Add(c);
+
+            AasxServer.Program.signalNewData(2);
+
+            // return new ObjectResult(example);
+            return new ObjectResult("ok");
         }
 
         /// <summary>
