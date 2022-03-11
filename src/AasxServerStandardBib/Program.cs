@@ -2291,6 +2291,7 @@ namespace AasxServer
                             }
                             else
                             {
+                                /*
                                 double v = Convert.ToDouble(value, CultureInfo.InvariantCulture);
                                 double lastv = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
                                 double delta = Math.Abs(v - lastv);
@@ -2300,6 +2301,10 @@ namespace AasxServer
                                     p.setTimeStamp(timeStamp);
                                     ok = true;
                                 }
+                                */
+                                p.value = value;
+                                p.setTimeStamp(timeStamp);
+                                ok = true;
                             }
                         }
                         catch
