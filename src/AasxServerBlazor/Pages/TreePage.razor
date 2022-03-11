@@ -826,7 +826,8 @@
             {
                 string url = WebUtility.UrlEncode(asset.identification.id);
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
-                string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
+                // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
+                string link = url;
 
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);

@@ -1219,9 +1219,17 @@ namespace AasxRestServerLibrary
 
             // OZ
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listaas(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listasset(/|)$")]
             public IHttpContext GetServerAASX(IHttpContext context)
             {
-                helper.EvalGetListAAS(context);
+                if (context.Request.PathInfo.Contains("listasset"))
+                {
+                    helper.EvalGetListAAS(context, true);
+                }
+                else
+                {
+                    helper.EvalGetListAAS(context);
+                }
                 return context;
             }
 
