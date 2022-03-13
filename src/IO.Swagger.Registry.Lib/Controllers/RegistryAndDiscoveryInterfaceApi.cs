@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using AdminShellNS;
 using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -18,7 +19,6 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using AdminShellNS;
 
 namespace IO.Swagger.Registry.Controllers
 {
@@ -450,7 +450,7 @@ namespace IO.Swagger.Registry.Controllers
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;
 
-        static void initRegistry()
+        static void initRegistry(DateTime timestamp)
         {
             if (aasRegistry == null || submodelRegistry == null)
             {
@@ -500,17 +500,27 @@ namespace IO.Swagger.Registry.Controllers
             ? JsonConvert.DeserializeObject<AssetAdministrationShellDescriptor>(exampleJson)
             : default(AssetAdministrationShellDescriptor);            //TODO: Change the data returned
             */
-            initRegistry();
+            var timestamp = DateTime.UtcNow;
+            initRegistry(timestamp);
 
             var c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
+            c.TimeStampCreate = timestamp;
+            c.TimeStamp = timestamp;
             var p = AdminShell.Property.CreateNew("aasID");
             p.value = body.Identification;
             c.value.Add(p);
             p = AdminShell.Property.CreateNew("assetID");
-            // p.value = body.GlobalAssetId[0].;
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            if (body.GlobalAssetId is GlobalReference gr)
+            {
+                p.value = gr.Value[0];
+            }
             c.value.Add(p);
             p = AdminShell.Property.CreateNew("descriptorJSON");
-            p.value = body.ToString();
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            p.value = JsonConvert.SerializeObject(body);
             c.value.Add(p);
             aasRegistry?.submodelElements.Add(c);
 
