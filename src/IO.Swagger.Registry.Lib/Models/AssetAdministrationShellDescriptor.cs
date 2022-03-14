@@ -45,7 +45,7 @@ namespace IO.Swagger.Registry.Models
         /// </summary>
 
         [DataMember(Name = "globalAssetId")]
-        public Reference GlobalAssetId { get; set; }
+        public GlobalReference GlobalAssetId { get; set; }
 
         /// <summary>
         /// Gets or Sets IdShort
