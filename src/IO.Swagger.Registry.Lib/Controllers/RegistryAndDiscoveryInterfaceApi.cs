@@ -106,95 +106,13 @@ namespace IO.Swagger.Registry.Controllers
             */
             try
             {
-                //collect aasetIds from list
                 var assetList = new List<String>();
-                /*
-                foreach (var kv in assetIds)
-                {
-                    if (kv.Value != "")
-                        assetList.Add(kv.Value);
-                }
-                */
-                // single assetId
                 if (assetId != null && assetId != "")
                 {
-                    assetList.Add(Base64UrlEncoder.Decode(assetId));
+                    assetList.Add(assetId);
                 }
 
-                //collect aasetIds
-                var aasList = new List<AssetAdministrationShellDescriptor>();
-
-                foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
-                {
-                    if (env != null)
-                    {
-                        bool addEntry = false;
-                        if (assetList.Count == 0)
-                            addEntry = true;
-                        else
-                        {
-                            string asset = "";
-                            var assetRef = env.AasEnv.AdministrationShells[0].assetRef;
-                            if (assetRef != null && assetRef.Count != 0)
-                            {
-                                asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
-                                if (assetList.Contains(asset))
-                                    addEntry = true;
-                            }
-                        }
-                        if (addEntry)
-                        {
-                            AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
-                            var aas = env.AasEnv.AdministrationShells[0];
-                            string asset = aas.assetRef?[0].value;
-
-                            // ad.Administration.Version = aas.administration.version;
-                            // ad.Administration.Revision = aas.administration.revision;
-                            ad.IdShort = aas.idShort;
-                            ad.Identification = aas.identification.id;
-                            var e = new Endpoint();
-                            e.ProtocolInformation = new ProtocolInformation();
-                            e.ProtocolInformation.EndpointAddress =
-                                AasxServer.Program.externalBlazor + "/shells/" +
-                                Base64UrlEncoder.Encode(ad.Identification) +
-                                "/aas";
-                            e.Interface = "AAS-1.0";
-                            ad.Endpoints = new List<Endpoint>();
-                            ad.Endpoints.Add(e);
-                            var gr = new GlobalReference();
-                            gr.Value = new List<string>();
-                            gr.Value.Add(asset);
-                            ad.GlobalAssetId = gr;
-                            // Submodels
-                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
-                            {
-                                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
-                                foreach (var smr in aas.submodelRefs)
-                                {
-                                    var sm = env.AasEnv.FindSubmodel(smr);
-                                    if (sm != null && sm.idShort != null)
-                                    {
-                                        SubmodelDescriptor sd = new SubmodelDescriptor();
-                                        sd.IdShort = sm.idShort;
-                                        sd.Identification = sm.identification.id;
-                                        var esm = new Endpoint();
-                                        esm.ProtocolInformation = new ProtocolInformation();
-                                        esm.ProtocolInformation.EndpointAddress =
-                                            AasxServer.Program.externalBlazor + "/shells/" +
-                                            Base64UrlEncoder.Encode(ad.Identification) + "/aas/submodels/" +
-                                            Base64UrlEncoder.Encode(sd.Identification) +
-                                            "/submodel/submodel-elements";
-                                        esm.Interface = "SUBMODEL-1.0";
-                                        sd.Endpoints = new List<Endpoint>();
-                                        sd.Endpoints.Add(esm);
-                                        ad.SubmodelDescriptors.Add(sd);
-                                    }
-                                }
-                            }
-                            aasList.Add(ad);
-                        }
-                    }
-                }
+                var aasList = getFromAasRegistry(null, assetList);
 
                 return new ObjectResult(aasList);
             }
@@ -332,6 +250,78 @@ namespace IO.Swagger.Registry.Controllers
             return new ObjectResult(example);
         }
 
+        List<AssetAdministrationShellDescriptor> getFromAasRegistry(
+            string getAasIdBase64 = null,
+            List<string> getAssetListBase64 = null)
+        {
+            List<AssetAdministrationShellDescriptor> result = new List<AssetAdministrationShellDescriptor>();
+
+            if (getAasIdBase64 != null && getAssetListBase64 != null)
+                return result;
+
+            if (aasRegistry != null)
+            {
+                AssetAdministrationShellDescriptor ad = null;
+                foreach (var sme in aasRegistry.submodelElements)
+                {
+                    if (sme.submodelElement is AdminShell.SubmodelElementCollection smc)
+                    {
+                        string aasID = "";
+                        string assetID = "";
+                        string descriptorJSON = "";
+                        foreach (var sme2 in smc.value)
+                        {
+                            if (sme2.submodelElement is AdminShell.Property p)
+                            {
+                                switch (p.idShort)
+                                {
+                                    case "aasID":
+                                        aasID = p.value;
+                                        break;
+                                    case "assetID":
+                                        assetID = p.value;
+                                        break;
+                                    case "descriptorJSON":
+                                        descriptorJSON = p.value;
+                                        break;
+                                }
+
+                            }
+                        }
+                        bool found = false;
+                        if (getAasIdBase64 == null && (getAssetListBase64 == null || getAssetListBase64.Count == 0))
+                            found = true;
+                        if (getAasIdBase64 != null)
+                        {
+                            if (aasID != "" && descriptorJSON != "")
+                            {
+                                if (getAasIdBase64 == Base64UrlEncoder.Encode(aasID))
+                                {
+                                    found = true;
+                                }
+                            }
+                        }
+                        if (getAssetListBase64 != null && getAssetListBase64.Count != 0)
+                        {
+                            if (assetID != "" && descriptorJSON != "")
+                            {
+                                if (getAssetListBase64.Contains(Base64UrlEncoder.Encode(assetID)))
+                                {
+                                    found = true;
+                                }
+                            }
+                        }
+                        if (found)
+                        {
+                            ad = JsonConvert.DeserializeObject<AssetAdministrationShellDescriptor>(descriptorJSON);
+                            result.Add(ad);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
         /// <summary>
         /// Returns a specific Asset Administration Shell Descriptor
         /// </summary>
@@ -355,39 +345,12 @@ namespace IO.Swagger.Registry.Controllers
             : default(AssetAdministrationShellDescriptor);            //TODO: Change the data returned
             return new ObjectResult(example);
             */
+            var timestamp = DateTime.UtcNow;
+            // InitRegistry(timestamp);
+
             try
             {
-                //collect aasetIds
-                var aasList = new List<AssetAdministrationShellDescriptor>();
-
-                foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
-                {
-                    if (env != null)
-                    {
-                        AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
-                        var aas = env.AasEnv.AdministrationShells[0];
-                        string assetId = aas.assetRef?[0].value;
-
-                        var aasId = Base64UrlEncoder.Encode(aas.identification.id);
-
-                        if (aasId == aasIdentifier)
-                        {
-                            // ad.Administration.Version = aas.administration.version;
-                            // ad.Administration.Revision = aas.administration.revision;
-                            ad.IdShort = aas.idShort;
-                            ad.Identification = aas.identification.id;
-                            var e = new Endpoint();
-                            e.ProtocolInformation = new ProtocolInformation();
-                            e.ProtocolInformation.EndpointAddress =
-                                AasxServer.Program.externalBlazor + "/shells/" +
-                                Base64UrlEncoder.Encode(ad.Identification) +
-                                "/aas";
-                            ad.Endpoints = new List<Endpoint>();
-                            ad.Endpoints.Add(e);
-                            aasList.Add(ad);
-                        }
-                    }
-                }
+                var aasList = getFromAasRegistry(aasIdentifier, null);
 
                 return new ObjectResult(aasList);
             }
@@ -445,13 +408,95 @@ namespace IO.Swagger.Registry.Controllers
             return new ObjectResult(example);
         }
 
+        static void addAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
+        {
+            var aas = env.AasEnv.AdministrationShells[0];
+
+            AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
+            string asset = aas.assetRef?[0].value;
+
+            // ad.Administration.Version = aas.administration.version;
+            // ad.Administration.Revision = aas.administration.revision;
+            ad.IdShort = aas.idShort;
+            ad.Identification = aas.identification.id;
+            var e = new Endpoint();
+            e.ProtocolInformation = new ProtocolInformation();
+            e.ProtocolInformation.EndpointAddress =
+                AasxServer.Program.externalBlazor + "/shells/" +
+                Base64UrlEncoder.Encode(ad.Identification) +
+                "/aas";
+            e.Interface = "AAS-1.0";
+            ad.Endpoints = new List<Endpoint>();
+            ad.Endpoints.Add(e);
+            var gr = new GlobalReference();
+            gr.Value = new List<string>();
+            gr.Value.Add(asset);
+            ad.GlobalAssetId = gr;
+            // Submodels
+            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+            {
+                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                foreach (var smr in aas.submodelRefs)
+                {
+                    var sm = env.AasEnv.FindSubmodel(smr);
+                    if (sm != null && sm.idShort != null)
+                    {
+                        SubmodelDescriptor sd = new SubmodelDescriptor();
+                        sd.IdShort = sm.idShort;
+                        sd.Identification = sm.identification.id;
+                        var esm = new Endpoint();
+                        esm.ProtocolInformation = new ProtocolInformation();
+                        esm.ProtocolInformation.EndpointAddress =
+                            AasxServer.Program.externalBlazor + "/shells/" +
+                            Base64UrlEncoder.Encode(ad.Identification) + "/aas/submodels/" +
+                            Base64UrlEncoder.Encode(sd.Identification) +
+                            "/submodel/submodel-elements";
+                        esm.Interface = "SUBMODEL-1.0";
+                        sd.Endpoints = new List<Endpoint>();
+                        sd.Endpoints.Add(esm);
+                        ad.SubmodelDescriptors.Add(sd);
+                    }
+                }
+            }
+            addAasDescriptorToRegistry(ad, timestamp);
+        }
+
+        static void addAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp)
+        {
+            var c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
+            c.TimeStampCreate = timestamp;
+            c.TimeStamp = timestamp;
+            var p = AdminShell.Property.CreateNew("aasID");
+            p.value = ad.Identification;
+            c.value.Add(p);
+            p = AdminShell.Property.CreateNew("assetID");
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            if (ad.GlobalAssetId is GlobalReference gr)
+            {
+                p.value = gr.Value[0];
+            }
+            c.value.Add(p);
+            p = AdminShell.Property.CreateNew("descriptorJSON");
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            p.value = JsonConvert.SerializeObject(ad);
+            c.value.Add(p);
+            aasRegistry?.submodelElements.Add(c);
+        }
+
         static AdminShell.Submodel aasRegistry = null;
         static AdminShell.Submodel submodelRegistry = null;
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;
 
-        static void initRegistry(DateTime timestamp)
+        static bool init = false;
+        public static void initRegistry(DateTime timestamp)
         {
+            if (init)
+                return;
+            init = true;
+
             if (aasRegistry == null || submodelRegistry == null)
             {
                 foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
@@ -459,23 +504,44 @@ namespace IO.Swagger.Registry.Controllers
                     if (env != null)
                     {
                         var aas = env.AasEnv.AdministrationShells[0];
-                        if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                        if (aas.idShort == "REGISTRY")
                         {
-                            foreach (var smr in aas.submodelRefs)
+                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                             {
-                                var sm = env.AasEnv.FindSubmodel(smr);
-                                if (sm != null && sm.idShort != null)
+                                foreach (var smr in aas.submodelRefs)
                                 {
-                                    if (sm.idShort == "AASREGISTRY")
-                                        aasRegistry = sm;
-                                    if (sm.idShort == "SUBMODELREGISTRY")
-                                        submodelRegistry = sm;
+                                    var sm = env.AasEnv.FindSubmodel(smr);
+                                    if (sm != null && sm.idShort != null)
+                                    {
+                                        if (sm.idShort == "AASREGISTRY")
+                                            aasRegistry = sm;
+                                        if (sm.idShort == "SUBMODELREGISTRY")
+                                            submodelRegistry = sm;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (aasRegistry != null)
+                {
+                    foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
+                    {
+                        if (env != null)
+                        {
+                            if (env != null)
+                            {
+                                var aas = env.AasEnv.AdministrationShells[0];
+                                if (aas.idShort != "REGISTRY")
+                                {
+                                    addAasToRegistry(env, timestamp);
                                 }
                             }
                         }
                     }
                 }
             }
+            AasxServer.Program.signalNewData(2);
         }
 
         /// <summary>
@@ -501,28 +567,9 @@ namespace IO.Swagger.Registry.Controllers
             : default(AssetAdministrationShellDescriptor);            //TODO: Change the data returned
             */
             var timestamp = DateTime.UtcNow;
-            initRegistry(timestamp);
+            // InitRegistry(timestamp);
 
-            var c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
-            c.TimeStampCreate = timestamp;
-            c.TimeStamp = timestamp;
-            var p = AdminShell.Property.CreateNew("aasID");
-            p.value = body.Identification;
-            c.value.Add(p);
-            p = AdminShell.Property.CreateNew("assetID");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
-            if (body.GlobalAssetId is GlobalReference gr)
-            {
-                p.value = gr.Value[0];
-            }
-            c.value.Add(p);
-            p = AdminShell.Property.CreateNew("descriptorJSON");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
-            p.value = JsonConvert.SerializeObject(body);
-            c.value.Add(p);
-            aasRegistry?.submodelElements.Add(c);
+            addAasDescriptorToRegistry(body, timestamp);
 
             AasxServer.Program.signalNewData(2);
 
