@@ -10,7 +10,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using AdminShellNS;
+using IdentityModel.Client;
 using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -459,6 +463,52 @@ namespace IO.Swagger.Registry.Controllers
                 }
             }
             addAasDescriptorToRegistry(ad, timestamp);
+            // POST Descriptor to Registry
+            /*
+            string accessToken = null;
+            string requestPath = AasxServer.Program.externalBlazor + "/registry/shell-descriptors";
+            string json = JsonConvert.SerializeObject(ad);
+
+            var handler = new HttpClientHandler();
+            
+            // if (AasxServer.AasxTask.proxy != null)
+            //     handler.Proxy = AasxServer.AasxTask.proxy;
+            // else
+            //    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            
+            var client = new HttpClient(handler);
+            if (accessToken != null)
+                client.SetBearerToken(accessToken);
+
+            if (json != "")
+            {
+                bool error = false;
+                HttpResponseMessage response = new HttpResponseMessage();
+                try
+                {
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    var task = Task.Run(async () =>
+                    {
+                        response = await client.PostAsync(
+                            requestPath, content);
+                    });
+                    task.Wait();
+                    error = !response.IsSuccessStatusCode;
+                }
+                catch
+                {
+                    error = true;
+                }
+                if (error)
+                {
+                    string r = "ERROR POST; " + response.StatusCode.ToString();
+                        r += " ; " + requestPath;
+                    if (response.Content != null)
+                        r += " ; " + response.Content.ReadAsStringAsync().Result;
+                    Console.WriteLine(r);
+                }
+            }
+            */
         }
 
         static void addAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp)
@@ -569,6 +619,7 @@ namespace IO.Swagger.Registry.Controllers
             var timestamp = DateTime.UtcNow;
             // InitRegistry(timestamp);
 
+            Console.WriteLine("/registry/shell-descriptors");
             addAasDescriptorToRegistry(body, timestamp);
 
             AasxServer.Program.signalNewData(2);
