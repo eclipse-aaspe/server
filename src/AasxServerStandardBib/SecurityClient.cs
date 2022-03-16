@@ -35,19 +35,21 @@ namespace AasxServer
 
         public static void taskInit()
         {
+            string proxyFile = "../proxy.dat";
+            // string proxyFile = "C:/dat/proxy.dat";
             // Test for proxy
-            Console.WriteLine("Test: ../proxy.dat");
+            Console.WriteLine("Test: " + proxyFile);
 
-            if (File.Exists("../proxy.dat"))
+            if (File.Exists(proxyFile))
             {
                 bool error = false;
-                Console.WriteLine("Found: ../proxy.dat");
+                Console.WriteLine("Found: " + proxyFile);
                 string proxyAddress = "";
                 string username = "";
                 string password = "";
                 try
                 {   // Open the text file using a stream reader.
-                    using (StreamReader sr = new StreamReader("../proxy.dat"))
+                    using (StreamReader sr = new StreamReader(proxyFile))
                     {
                         proxyAddress = sr.ReadLine();
                         username = sr.ReadLine();
@@ -56,7 +58,7 @@ namespace AasxServer
                 }
                 catch (IOException e)
                 {
-                    Console.WriteLine("The file ../proxy.dat could not be read:");
+                    Console.WriteLine("The file " + proxyFile + " could not be read:");
                     Console.WriteLine(e.Message);
                     error = true;
                 }
