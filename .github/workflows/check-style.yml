@@ -1,7 +1,14 @@
 name: Check-style-workflow
 
 on:
-  push
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened, edited]
+
+  push:
+    branches:
+      - master
 
 jobs:
   Check-style:
