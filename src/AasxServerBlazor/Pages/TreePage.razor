@@ -2,6 +2,7 @@
 @inject AASService SubmodelService
 @using AasxServerBlazor.Data
 @using static AdminShellNS.AdminShellV20;
+@using Microsoft.IdentityModel.Tokens;
 @using System
 @using System.Net;
 @using QRCoder;
@@ -15,7 +16,9 @@
         <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
             @updateVisibleTree(Items, selectedNode)
             @if (Program.isLoading)
-            {<span style="color:white;background-color:blue;">Loading...</span>}
+                {<span style="color:white;background-color:blue;">Loading...</span>}
+            else
+                { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
             <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
                   @bind-SelectedNode="SelectedNode"
                   @bind-ExpandedNodes="ExpandedNodes"
@@ -38,9 +41,10 @@
                     {
                         string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
                         string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
+                        string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
                         if (nodeDetails0 != "" && nodeDetails1 != "")
                         {
-                            <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1<br>
+                            <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1 @nodeDetails2<br>
                         }
                     }
                     if (selectedNode != null && selectedNode.Tag is Referable r)
@@ -165,138 +169,139 @@
                         }
                     }
 
-                if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
-                {
-                    string semanticId = "";
-                    try
+                    if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
                     {
-                        semanticId = smc.semanticId.Keys[0].value;
-                    }
-                    catch { }
-                    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-                        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                    {
-                        TimeSpan diff = smc.TimeStamp - timeStampPlot;
-
-                        if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
+                        string semanticId = "";
+                        try
                         {
-                            watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
-
-                            collectionPlot = smc;
-                            timeStampPlot = smc.TimeStamp;
-
-                            ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
-                            _timeSeriesData.Clear();
-                            var mm = AdminShell.Key.MatchMode.Relaxed;
-
-                            // make initial data for time series
-                            var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
-                            _timeSeriesData.Add(tsd);
-
-                            // plot arguments for time series
-                            tsd.Args = PlotArguments.Parse(smc.HasQualifierOfType("TimeSeries.Args")?.value);
-
-                            // ! ZveiTimeSeriesDataV10 hardcoded
-                            var pcts = ZveiTimeSeriesDataV10.Static;
-
-                            var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
-                            //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-                            //var tssReference = new Reference(k);
-                            //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
-
-                            // is it a segment
-                            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                            {
-                                TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
-                            }
-                            else
-                            {
-                                // search for segements on current level
-                                var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
-
-                                if (smcAllValues.Count() != 0)
-                                {
-                                    foreach (var smcseg in smcAllValues)
-                                    {
-                                        TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
-                                    }
-                                }
-                            }
-
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi);
-                            watchTimeToProcessImage.Stop();
+                            semanticId = smc.semanticId.Keys[0].value;
                         }
-
-                        byte[] imageArray;
-                        string timeSeriesImageBase64 = "";
-                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
-
-                        if(System.IO.File.Exists(scottplotImgPath)) {
-                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-                        } 
-
-                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
-
-                        @if(System.IO.File.Exists(scottplotImgPath))
+                        catch { }
+                        if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
+                            semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
                         {
-                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="min-width:100%;cursor:zoom-in;" />
-                            <span class="text-muted" style="font-size:14px;">
-                                Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
-                            </span>
+                            TimeSpan diff = smc.TimeStamp - timeStampPlot;
 
-                            <div class="modal modal-fullscreen @(showImageModal ? "d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Visualization of time series</h5>
-                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        } 
-                        else
-                        {
-                            <div class="my-2">Rendering time series...</div>
-                        }
-                    }
-                } 
+                            if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
+                            {
+                                watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
 
-                string detailsImage = createDetailsImage(selectedNode);
-                if (detailsImage != "")
+                                collectionPlot = smc;
+                                timeStampPlot = smc.TimeStamp;
+
+                                ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
+                                _timeSeriesData.Clear();
+                                var mm = AdminShell.Key.MatchMode.Relaxed;
+
+                                // make initial data for time series
+                                var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
+                                _timeSeriesData.Add(tsd);
+
+                                // plot arguments for time series
+                                tsd.Args = PlotArguments.Parse(smc.HasQualifierOfType("TimeSeries.Args")?.value);
+
+                                // ! ZveiTimeSeriesDataV10 hardcoded
+                                var pcts = ZveiTimeSeriesDataV10.Static;
+
+                                var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
+                                //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
+                                //var tssReference = new Reference(k);
+                                //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+
+                // is it a segment
+                if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
                 {
-                    <br />
-                    <div>
-                        <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
-                    </div>
+                    TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
                 }
-
-                if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
+                else
                 {
-                    if (be.observed != null)
+                    // search for segements on current level
+                    var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+
+                if (smcAllValues.Count() != 0)
+                {
+                    foreach (var smcseg in smcAllValues)
                     {
-                        string okey = be.observed.GetAsExactlyOneKey().ToString();
-                        <span style="color:white;background-color:blue;">Observed</span>
-                        <span>@(" " + okey)</span><br />
-                        var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
-                        if (refsme != null)
-                        {
-                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                        }
-                        else
-                        {
-                            <span>Referenced element does not exist!</span><br />
-                        }
+                        TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
                     }
                 }
             }
+
+            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi);
+            watchTimeToProcessImage.Stop();
+        }
+
+        byte[] imageArray;
+        string timeSeriesImageBase64 = "";
+        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+
+        if (System.IO.File.Exists(scottplotImgPath))
+        {
+            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+        }
+
+        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+
+            @if (System.IO.File.Exists(scottplotImgPath))
+            {
+                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="min-width:100%;cursor:zoom-in;" />
+                <span class="text-muted" style="font-size:14px;">
+                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+                </span>
+
+                <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Visualization of time series</h5>
+                                <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="my-2">Rendering time series...</div>
+            }
+        }
+    }
+
+    string detailsImage = createDetailsImage(selectedNode);
+    if (detailsImage != "")
+    {
+            <br />
+            <div>
+                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
+            </div>
+        }
+
+        if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
+        {
+            if (be.observed != null)
+            {
+                string okey = be.observed.GetAsExactlyOneKey().ToString();
+                <span style="color:white;background-color:blue;">Observed</span>
+                <span>@(" " + okey)</span><br />
+                var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
+                if (refsme != null)
+                {
+                    <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                }
+                else
+                {
+                    <span>Referenced element does not exist!</span><br />
+                }
+            }
+        }
+                }
             </div>
     </div>
 </div>
@@ -317,7 +322,7 @@
     DateTime timeStampPlot = new DateTime();
     SubmodelElementCollection collectionPlot = null;
     bool showImageModal = false;
-    
+
     async Task DownloadFile()
     {
         this.StateHasChanged();
@@ -1272,6 +1277,8 @@
                     ret = "ID";
                     if (col == 1)
                         ret = aas.identification + "";
+                    if (col == 2)
+                        ret = " ==> " + Base64UrlEncoder.Encode(aas.identification.id) + "";
                     break;
                 case 1:
                     if (asset != null)
@@ -1287,6 +1294,8 @@
                         ret = "ASSETID";
                         if (col == 1)
                             ret = asset.identification + "";
+                        if (col == 2)
+                            ret = " ==> " + Base64UrlEncoder.Encode(asset.identification.id) + "";
                     }
                     break;
                 case 3:
@@ -1348,6 +1357,8 @@
                     ret = "ID";
                     if (col == 1)
                         ret = sm.identification + "";
+                    if (col == 2)
+                        ret = " ==> " + Base64UrlEncoder.Encode(sm.identification.id) + "";
                     break;
                 case 1:
                     ret = "Semantic ID";

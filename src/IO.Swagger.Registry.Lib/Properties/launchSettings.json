@@ -3,28 +3,34 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:56189",
+      "applicationUrl": "http://localhost:50352/",
       "sslPort": 0
     }
   },
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--rest --port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --edit --no-security",
       "launchBrowser": true,
+      "launchUrl": "swagger/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "AasxServerBlazor": {
+    "web": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --no-security --data-path \"C:\\Development\\Swagger\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:5001",
-      "jsWebView2Debugging": true
+      }
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "publishAllPorts": true,
+      "useSSL": true
     }
   }
 }
