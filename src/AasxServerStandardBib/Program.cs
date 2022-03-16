@@ -116,6 +116,7 @@ namespace AasxServer
             };
 
         public static string hostPort = "";
+        public static string blazorPort = "";
         public static string blazorHostPort = "";
         public static ulong dataVersion = 0;
 
@@ -141,6 +142,7 @@ namespace AasxServer
         public static bool noSecurity = false;
         public static bool edit = false;
         public static string externalRest = "";
+        public static string externalBlazor = "";
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
@@ -175,6 +177,7 @@ namespace AasxServer
             public bool Edit { get; set; }
             public string Name { get; set; }
             public string ExternalRest { get; set; }
+            public string ExternalBlazor { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -319,7 +322,7 @@ namespace AasxServer
             };
 
             hostPort = a.Host + ":" + a.Port;
-            blazorHostPort = a.Host + ":" + blazorHostPort;
+            blazorHostPort = a.Host + ":" + blazorPort;
 
             if (a.ExternalRest != null)
             {
@@ -328,6 +331,14 @@ namespace AasxServer
             else
             {
                 externalRest = "http://" + hostPort;
+            }
+            if (a.ExternalBlazor != null)
+            {
+                externalBlazor = a.ExternalBlazor;
+            }
+            else
+            {
+                externalBlazor = blazorHostPort;
             }
 
             /*
@@ -568,6 +579,7 @@ namespace AasxServer
                     Console.WriteLine("********** Can not connect to: " + connectServer);
                 }
             }
+            Program.signalNewData(3);
 
             if (a.Opc && server != null)
             {
@@ -719,7 +731,12 @@ namespace AasxServer
 
                 new Option<string>(
                     new[] {"--external-rest"},
-                    "exeternal name of the server"),           };
+                    "external name of the server"),
+
+                new Option<string>(
+                    new[] {"--external-blazor"},
+                    "external name of the server blazor UI"),
+            };
 
             if (args.Length == 0)
             {

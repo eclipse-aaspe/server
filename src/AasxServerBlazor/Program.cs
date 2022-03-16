@@ -24,7 +24,7 @@ namespace AasxServerBlazor
                 .AddJsonFile("appsettings.json").Build();
             string[] url = config["Kestrel:Endpoints:Http:Url"].Split(':');
             if (url[2] != null)
-                AasxServer.Program.blazorHostPort = url[2];
+                AasxServer.Program.blazorPort = url[2];
 
             CreateHostBuilder(args).Build().RunAsync();
 

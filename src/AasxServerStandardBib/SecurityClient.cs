@@ -35,19 +35,21 @@ namespace AasxServer
 
         public static void taskInit()
         {
+            string proxyFile = "../proxy.dat";
+            // string proxyFile = "C:/dat/proxy.dat";
             // Test for proxy
-            Console.WriteLine("Test: ../proxy.dat");
+            Console.WriteLine("Test: " + proxyFile);
 
-            if (File.Exists("../proxy.dat"))
+            if (File.Exists(proxyFile))
             {
                 bool error = false;
-                Console.WriteLine("Found: ../proxy.dat");
+                Console.WriteLine("Found: " + proxyFile);
                 string proxyAddress = "";
                 string username = "";
                 string password = "";
                 try
                 {   // Open the text file using a stream reader.
-                    using (StreamReader sr = new StreamReader("../proxy.dat"))
+                    using (StreamReader sr = new StreamReader(proxyFile))
                     {
                         proxyAddress = sr.ReadLine();
                         username = sr.ReadLine();
@@ -56,7 +58,7 @@ namespace AasxServer
                 }
                 catch (IOException e)
                 {
-                    Console.WriteLine("The file ../proxy.dat could not be read:");
+                    Console.WriteLine("The file " + proxyFile + " could not be read:");
                     Console.WriteLine(e.Message);
                     error = true;
                 }
@@ -638,7 +640,8 @@ namespace AasxServer
                         if (status != null)
                         {
                             status.value = response.StatusCode.ToString() + " ; " +
-                                response.Content.ReadAsStringAsync().Result;
+                                response.Content.ReadAsStringAsync().Result + " ; " +
+                                "GET " + requestPath;
                             Program.signalNewData(1);
                         }
                         return;
@@ -707,54 +710,56 @@ namespace AasxServer
                             {
                                 if (d.path.Length > subPath.Length && subPath == d.path.Substring(0, subPath.Length))
                                 {
-                                    splitPath = d.path.Split('.');
-                                    if (splitPath.Length < 2)
-                                        return;
-                                    requestPath = endPoint.value + "/aas/" + aasPath +
-                                        "/submodels/" + splitPath[0] + "/elements";
-                                    i = 1;
-                                    while (i < splitPath.Length)
-                                    {
-                                        requestPath += "/" + splitPath[i];
-                                        i++;
-                                    }
-                                    requestPath += "/complete";
-                                    try
-                                    {
-                                        task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
-                                        task.Wait();
-                                        if (!response.IsSuccessStatusCode)
-                                        {
-                                            if (status != null)
-                                            {
-                                                status.value = response.StatusCode.ToString() + " ; " +
-                                                    response.Content.ReadAsStringAsync().Result;
-                                                Program.signalNewData(1);
-                                            }
-                                            return;
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        return;
-                                    }
-
-                                    json = response.Content.ReadAsStringAsync().Result;
-                                    JObject parsed = JObject.Parse(json);
-                                    foreach (JProperty jp1 in (JToken)parsed)
-                                    {
-                                        if (jp1.Name == "elem")
-                                        {
-                                            string text = jp1.Value.ToString();
-                                            receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
-                                                text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                            break;
-                                        }
-                                    }
                                     switch (d.mode)
                                     {
                                         case "CREATE":
                                         case "UPDATE":
+                                            splitPath = d.path.Split('.');
+                                            if (splitPath.Length < 2)
+                                                return;
+                                            requestPath = endPoint.value + "/aas/" + aasPath +
+                                                "/submodels/" + splitPath[0] + "/elements";
+                                            i = 1;
+                                            while (i < splitPath.Length)
+                                            {
+                                                requestPath += "/" + splitPath[i];
+                                                i++;
+                                            }
+                                            requestPath += "/complete";
+                                            try
+                                            {
+                                                task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                                                task.Wait();
+                                                if (!response.IsSuccessStatusCode)
+                                                {
+                                                    if (status != null)
+                                                    {
+                                                        status.value = response.StatusCode.ToString() + " ; " +
+                                                            response.Content.ReadAsStringAsync().Result + " ; " +
+                                                            "GET " + requestPath;
+                                                        Program.signalNewData(1);
+                                                    }
+                                                    return;
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                return;
+                                            }
+
+                                            json = response.Content.ReadAsStringAsync().Result;
+                                            JObject parsed = JObject.Parse(json);
+                                            foreach (JProperty jp1 in (JToken)parsed)
+                                            {
+                                                if (jp1.Name == "elem")
+                                                {
+                                                    string text = jp1.Value.ToString();
+                                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                                        text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                                    break;
+                                                }
+                                            }
+
                                             bool found = false;
                                             foreach (var smew in elementCollection.value)
                                             {
@@ -867,7 +872,8 @@ namespace AasxServer
                         if (error || !response.IsSuccessStatusCode)
                         {
                             statusValue = response.StatusCode.ToString() + " ; " +
-                                response.Content.ReadAsStringAsync().Result;
+                                response.Content.ReadAsStringAsync().Result + " ; " +
+                                "PUT " + requestPath;
                             error = true;
                         }
                     }
