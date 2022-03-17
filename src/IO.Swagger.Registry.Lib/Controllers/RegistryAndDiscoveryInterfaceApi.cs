@@ -462,69 +462,117 @@ namespace IO.Swagger.Registry.Controllers
                     }
                 }
             }
-            addAasDescriptorToRegistry(ad, timestamp);
+            // add to internal registry
+            addAasDescriptorToRegistry(ad, timestamp, true);
+
             // POST Descriptor to Registry
-            /*
-            string accessToken = null;
-            string requestPath = AasxServer.Program.externalBlazor + "/registry/shell-descriptors";
-            string json = JsonConvert.SerializeObject(ad);
-
-            var handler = new HttpClientHandler();
-            
-            // if (AasxServer.AasxTask.proxy != null)
-            //     handler.Proxy = AasxServer.AasxTask.proxy;
-            // else
-            //    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-            
-            var client = new HttpClient(handler);
-            if (accessToken != null)
-                client.SetBearerToken(accessToken);
-
-            if (json != "")
+            foreach (var pr in postRegistry)
             {
-                bool error = false;
-                HttpResponseMessage response = new HttpResponseMessage();
-                try
+                string accessToken = null;
+                string requestPath = pr + "/registry/shell-descriptors";
+                string json = JsonConvert.SerializeObject(ad);
+
+                var handler = new HttpClientHandler();
+
+                if (AasxServer.AasxTask.proxy != null)
+                    handler.Proxy = AasxServer.AasxTask.proxy;
+                else
+                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+
+                var client = new HttpClient(handler);
+                if (accessToken != null)
+                    client.SetBearerToken(accessToken);
+
+                if (json != "")
                 {
-                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                    var task = Task.Run(async () =>
+                    bool error = false;
+                    HttpResponseMessage response = new HttpResponseMessage();
+                    try
                     {
-                        response = await client.PostAsync(
-                            requestPath, content);
-                    });
-                    task.Wait();
-                    error = !response.IsSuccessStatusCode;
-                }
-                catch
-                {
-                    error = true;
-                }
-                if (error)
-                {
-                    string r = "ERROR POST; " + response.StatusCode.ToString();
+                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                        var task = Task.Run(async () =>
+                        {
+                            response = await client.PostAsync(
+                                requestPath, content);
+                        });
+                        task.Wait();
+                        error = !response.IsSuccessStatusCode;
+                    }
+                    catch
+                    {
+                        error = true;
+                    }
+                    if (error)
+                    {
+                        string r = "ERROR POST; " + response.StatusCode.ToString();
                         r += " ; " + requestPath;
-                    if (response.Content != null)
-                        r += " ; " + response.Content.ReadAsStringAsync().Result;
-                    Console.WriteLine(r);
+                        if (response.Content != null)
+                            r += " ; " + response.Content.ReadAsStringAsync().Result;
+                        Console.WriteLine(r);
+                    }
                 }
             }
-            */
         }
 
-        static void addAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp)
+        static void addAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
         {
-            var c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
+            string aasID = ad.Identification;
+            string assetID = "";
+            if (ad.GlobalAssetId is GlobalReference gr)
+            {
+                assetID = gr.Value[0];
+            }
+            // overwrite existing entry, if assetID AND aasID are identical
+            if (!initial)
+            {
+                foreach (var e in aasRegistry?.submodelElements)
+                {
+                    if (e.submodelElement is AdminShell.SubmodelElementCollection ec)
+                    {
+                        int found = 0;
+                        AdminShell.Property pjson = null;
+                        foreach (var e2 in ec.value)
+                        {
+                            if (e2.submodelElement is AdminShell.Property ep)
+                            {
+                                if (ep.idShort == "aasID" && ep.value == aasID)
+                                    found++;
+                                if (ep.idShort == "assetID" && ep.value == assetID)
+                                    found++;
+                                if (ep.idShort == "descriptorJSON")
+                                    pjson = ep;
+                            }
+                        }
+                        if (found == 2 && pjson != null)
+                        {
+                            string s = JsonConvert.SerializeObject(ad);
+                            if (s != pjson.value)
+                            {
+                                pjson.TimeStampCreate = timestamp;
+                                pjson.TimeStamp = timestamp;
+                                pjson.value = s;
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // add new entry
+            AdminShell.SubmodelElementCollection c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
             c.TimeStampCreate = timestamp;
             c.TimeStamp = timestamp;
             var p = AdminShell.Property.CreateNew("aasID");
-            p.value = ad.Identification;
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            p.value = aasID;
             c.value.Add(p);
             p = AdminShell.Property.CreateNew("assetID");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
-            if (ad.GlobalAssetId is GlobalReference gr)
+            if (assetID != "")
             {
-                p.value = gr.Value[0];
+                p.value = assetID;
             }
             c.value.Add(p);
             p = AdminShell.Property.CreateNew("descriptorJSON");
@@ -539,6 +587,7 @@ namespace IO.Swagger.Registry.Controllers
         static AdminShell.Submodel submodelRegistry = null;
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;
+        static List<string> postRegistry = new List<string>();
 
         static bool init = false;
         public static void initRegistry(DateTime timestamp)
@@ -575,6 +624,14 @@ namespace IO.Swagger.Registry.Controllers
                 }
                 if (aasRegistry != null)
                 {
+                    foreach (var sme in aasRegistry.submodelElements)
+                    {
+                        if (sme.submodelElement is AdminShell.Property p)
+                        {
+                            if (p.idShort.ToLower() == "postregistry")
+                                postRegistry.Add(p.value);
+                        }
+                    }
                     foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
                     {
                         if (env != null)
@@ -619,7 +676,7 @@ namespace IO.Swagger.Registry.Controllers
             var timestamp = DateTime.UtcNow;
             // InitRegistry(timestamp);
 
-            Console.WriteLine("/registry/shell-descriptors");
+            Console.WriteLine("POST /registry/shell-descriptors");
             addAasDescriptorToRegistry(body, timestamp);
 
             AasxServer.Program.signalNewData(2);
