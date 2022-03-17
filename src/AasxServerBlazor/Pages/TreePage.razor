@@ -144,7 +144,7 @@
                         {
                             <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
                             string qrcodeLink = getQRCodeLink(selectedNode);
-                            if (Program.generatedQrCodes.ContainsKey(selectedNode))
+                            if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
                             {
                                 string qrcodeImage = getQRCodeImage(selectedNode);
                                 if (qrcodeImage != "")
@@ -765,9 +765,11 @@
             var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
             if (asset != null)
             {
-                string url = WebUtility.UrlEncode(asset.identification.id);
+                // string url = WebUtility.UrlEncode(asset.identification.id);
+                string url = asset.identification.id;
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
-                string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
+                // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
+                string link = url;
 
                 return link;
             }
@@ -787,7 +789,7 @@
 
         if (o is AdministrationShell)
         {
-            string image = Program.generatedQrCodes[item];
+            string image = Program.generatedQrCodes[item.Tag];
 
             if (image != null)
                 return image;
@@ -819,9 +821,9 @@
 
         if (o is AdministrationShell)
         {
-            if (Program.generatedQrCodes.ContainsKey(item))
+            if (Program.generatedQrCodes.ContainsKey(item.Tag))
             {
-                Program.generatedQrCodes.Remove(item);
+                Program.generatedQrCodes.Remove(item.Tag);
                 return;
             }
 
@@ -829,7 +831,8 @@
             var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
             if (asset != null)
             {
-                string url = WebUtility.UrlEncode(asset.identification.id);
+                // string url = WebUtility.UrlEncode(asset.identification.id);
+                string url = asset.identification.id;
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
@@ -842,7 +845,7 @@
                 qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
                 string base64 = Convert.ToBase64String(memory.ToArray());
 
-                Program.generatedQrCodes.Add(item, base64);
+                Program.generatedQrCodes.Add(item.Tag, base64);
                 return;
             }
         }
