@@ -2396,6 +2396,7 @@ namespace AasxServer
             if (!write)
             {
                 p.Set(p.valueType, value);
+                signalNewData(0);
 
                 // update in OPC
                 if (!OPCWrite(serverNodeId, value))
