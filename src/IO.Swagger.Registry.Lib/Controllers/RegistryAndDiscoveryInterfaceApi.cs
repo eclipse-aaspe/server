@@ -170,34 +170,16 @@ namespace IO.Swagger.Registry.Controllers
                 // single assetId
                 if (assetId != null && assetId != "")
                 {
-                    assetList.Add(Base64UrlEncoder.Decode(assetId));
+                    assetList.Add(assetId);
                 }
 
                 var aasList = new List<String>();
 
-                foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
+                var aasDecsriptorList = getFromAasRegistry(null, assetList);
+
+                foreach (var ad in aasDecsriptorList)
                 {
-                    if (env != null)
-                    {
-                        bool addEntry = false;
-                        if (assetList.Count == 0)
-                            addEntry = true;
-                        else
-                        {
-                            string asset = "";
-                            var assetRef = env.AasEnv.AdministrationShells[0].assetRef;
-                            if (assetRef != null && assetRef.Count != 0)
-                            {
-                                asset = env.AasEnv.AdministrationShells[0].assetRef?[0].value;
-                                if (assetList.Contains(asset))
-                                    addEntry = true;
-                            }
-                        }
-                        if (addEntry)
-                        {
-                            aasList.Add(env.AasEnv.AdministrationShells[0].identification.id);
-                        }
-                    }
+                    aasList.Add(ad.Identification);
                 }
 
                 return new ObjectResult(aasList);
