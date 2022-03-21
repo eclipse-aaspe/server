@@ -471,6 +471,7 @@ namespace IO.Swagger.Registry.Controllers
                     HttpResponseMessage response = new HttpResponseMessage();
                     try
                     {
+                        Console.WriteLine("POST " + requestPath);
                         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                         var task = Task.Run(async () =>
                         {
@@ -611,7 +612,10 @@ namespace IO.Swagger.Registry.Controllers
                         if (sme.submodelElement is AdminShell.Property p)
                         {
                             if (p.idShort.ToLower() == "postregistry")
+                            {
+                                Console.WriteLine("POST to Registry: " + p.value);
                                 postRegistry.Add(p.value);
+                            }
                         }
                     }
                     foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
