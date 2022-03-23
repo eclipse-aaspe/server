@@ -50,9 +50,12 @@ namespace AasxTimeSeries
             public List<string> samplesValues = null;
             public string samplesTimeStamp = "";
             public int samplesValuesCount = 0;
-            public int totalSamples = 0;
-            public int lowDataIndex = 0;
-            public int highDataIndex = -1;
+            // public int totalSamples = 0;
+            public AdminShell.Property totalSamples = null;
+            // public int lowDataIndex = 0;
+            public AdminShell.Property lowDataIndex = null;
+            // public int highDataIndex = -1;
+            public AdminShell.Property highDataIndex = null;
 
             public List<string> opcNodes = null;
             public List<string> modbusNodes = null;
@@ -326,6 +329,48 @@ namespace AasxTimeSeries
                                             tsb.latestData.setTimeStamp(timeStamp);
                                             tsb.latestData.TimeStampCreate = timeStamp;
                                             tsb.data.Add(tsb.latestData);
+
+                                            AdminShell.SubmodelElement latestDataProperty = null;
+                                            latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("lowDataIndex");
+                                            if (latestDataProperty == null)
+                                            {
+                                                latestDataProperty = AdminShell.Property.CreateNew("lowDataIndex");
+                                                latestDataProperty.TimeStampCreate = timeStamp;
+                                                tsb.latestData.Add(latestDataProperty);
+                                                tsb.lowDataIndex = latestDataProperty as AdminShell.Property;
+                                            }
+                                            latestDataProperty.setTimeStamp(timeStamp);
+
+                                            latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("highDataIndex");
+                                            if (latestDataProperty == null)
+                                            {
+                                                latestDataProperty = AdminShell.Property.CreateNew("highDataIndex");
+                                                (latestDataProperty as AdminShell.Property).value = "-1";
+                                                latestDataProperty.TimeStampCreate = timeStamp;
+                                                tsb.latestData.Add(latestDataProperty);
+                                                tsb.highDataIndex = latestDataProperty as AdminShell.Property;
+                                            }
+                                            latestDataProperty.setTimeStamp(timeStamp);
+
+                                            latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("totalSamples");
+                                            if (latestDataProperty == null)
+                                            {
+                                                latestDataProperty = AdminShell.Property.CreateNew("totalSamples");
+                                                (latestDataProperty as AdminShell.Property).value = "0";
+                                                latestDataProperty.TimeStampCreate = timeStamp;
+                                                tsb.latestData.Add(latestDataProperty);
+                                                tsb.totalSamples = latestDataProperty as AdminShell.Property;
+                                            }
+                                            latestDataProperty.setTimeStamp(timeStamp);
+
+                                            latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("timeStamp");
+                                            if (latestDataProperty == null)
+                                            {
+                                                latestDataProperty = AdminShell.Property.CreateNew("timeStamp");
+                                                latestDataProperty.TimeStampCreate = timeStamp;
+                                                tsb.latestData.Add(latestDataProperty);
+                                            }
+                                            latestDataProperty.setTimeStamp(timeStamp);
                                         }
                                         if (tsb.sampleRate != null)
                                             tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.value);
@@ -541,7 +586,7 @@ namespace AasxTimeSeries
                                 latestTimeStamp = t;
                                 if (tsb.samplesTimeStamp != "")
                                     tsb.samplesTimeStamp += ", ";
-                                tsb.samplesTimeStamp += $"[{tsb.totalSamples}, {t}]";
+                                tsb.samplesTimeStamp += $"[{tsb.totalSamples.value}, {t}]";
                             }
                             else
                             {
@@ -566,18 +611,33 @@ namespace AasxTimeSeries
                                 latestDataProperty = AdminShell.Property.CreateNew("lowDataIndex");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Add(latestDataProperty);
+                                tsb.lowDataIndex = latestDataProperty as AdminShell.Property;
                             }
-                            (latestDataProperty as AdminShell.Property).value = "" + tsb.lowDataIndex;
+                            (latestDataProperty as AdminShell.Property).value = "" + tsb.lowDataIndex.value;
                             latestDataProperty.setTimeStamp(timeStamp);
 
                             latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("highDataIndex");
                             if (latestDataProperty == null)
                             {
                                 latestDataProperty = AdminShell.Property.CreateNew("highDataIndex");
+                                (latestDataProperty as AdminShell.Property).value = "-1";
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Add(latestDataProperty);
+                                tsb.highDataIndex = latestDataProperty as AdminShell.Property;
                             }
-                            (latestDataProperty as AdminShell.Property).value = "" + tsb.highDataIndex;
+                            // (latestDataProperty as AdminShell.Property).value = "" + tsb.highDataIndex;
+                            latestDataProperty.setTimeStamp(timeStamp);
+
+                            latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("totalSamples");
+                            if (latestDataProperty == null)
+                            {
+                                latestDataProperty = AdminShell.Property.CreateNew("totalSamples");
+                                (latestDataProperty as AdminShell.Property).value = "0";
+                                latestDataProperty.TimeStampCreate = timeStamp;
+                                tsb.latestData.Add(latestDataProperty);
+                                tsb.totalSamples = latestDataProperty as AdminShell.Property;
+                            }
+                            // (latestDataProperty as AdminShell.Property).value = "" + tsb.highDataIndex;
                             latestDataProperty.setTimeStamp(timeStamp);
 
                             latestDataProperty = tsb.latestData.value.FindFirstIdShortAs<AdminShell.Property>("timeStamp");
@@ -610,7 +670,7 @@ namespace AasxTimeSeries
                                             latestDataValue = table[valueIndex][i + 1].ToString();
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
-                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples.value}, {latestDataValue}]";
                                         }
                                         else
                                         {
@@ -622,7 +682,7 @@ namespace AasxTimeSeries
                                         latestDataValue = opcDAValues[i];
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
-                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples.value}, {latestDataValue}]";
                                         }
                                         else
                                         {
@@ -635,7 +695,7 @@ namespace AasxTimeSeries
                                         latestDataValue = modbusValues[i];
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
-                                            tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                            tsb.samplesValues[i] += $"[{tsb.totalSamples.value}, {latestDataValue}]";
                                         }
                                         else
                                         {
@@ -651,7 +711,7 @@ namespace AasxTimeSeries
 
                                     if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                     {
-                                        tsb.samplesValues[i] += $"[{tsb.totalSamples}, {latestDataValue}]";
+                                        tsb.samplesValues[i] += $"[{tsb.totalSamples.value}, {latestDataValue}]";
                                     }
                                     else
                                     {
@@ -682,7 +742,10 @@ namespace AasxTimeSeries
                             }
                             tsb.samplesValuesCount++;
                             actualSamples++;
-                            tsb.totalSamples++;
+                            // tsb.totalSamples++;
+                            int totalSamples = Convert.ToInt32(tsb.totalSamples.value);
+                            totalSamples++;
+                            tsb.totalSamples.value = totalSamples.ToString();
                             tsb.actualSamples.value = "" + actualSamples;
                             tsb.actualSamples.setTimeStamp(timeStamp);
                             actualSamplesInCollection++;
@@ -692,9 +755,9 @@ namespace AasxTimeSeries
                             {
                                 if (tsb.sampleMode.value == "continuous")
                                 {
-                                    var firstName = "data" + tsb.lowDataIndex;
+                                    var firstName = "data" + tsb.lowDataIndex.value;
                                     if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                        firstName = "Segment_" + tsb.lowDataIndex;
+                                        firstName = "Segment_" + tsb.lowDataIndex.value;
 
                                     var first =
                                         tsb.data.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(
@@ -708,7 +771,9 @@ namespace AasxTimeSeries
                                             first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Remove(first);
                                         tsb.data.setTimeStamp(timeStamp);
-                                        tsb.lowDataIndex++;
+                                        // tsb.lowDataIndex++;
+                                        int index = Convert.ToInt32(tsb.lowDataIndex.value);
+                                        tsb.lowDataIndex.value = (index + 1).ToString();
                                         updateMode = 1;
                                     }
                                 }
@@ -717,16 +782,18 @@ namespace AasxTimeSeries
                             {
                                 if (actualSamplesInCollection > 0)
                                 {
-                                    tsb.highDataIndex = tsb.samplesCollectionsCount;
+                                    // tsb.highDataIndex = tsb.samplesCollectionsCount;
+                                    int index = Convert.ToInt32(tsb.highDataIndex.value);
+                                    tsb.highDataIndex.value = (index + 1).ToString();
 
                                     AdminShell.SubmodelElementCollection nextCollection = null;
-
                                     // decide
                                     if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                     {
                                         nextCollection = AddToSMC<AdminShell.SubmodelElementCollection>(
                                             timeStamp, null,
-                                            "Segment_" + tsb.samplesCollectionsCount++,
+                                            // "Segment_" + tsb.samplesCollectionsCount++,
+                                            "Segment_" + tsb.highDataIndex.value,
                                             semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
 
                                         var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
@@ -746,8 +813,8 @@ namespace AasxTimeSeries
                                     }
                                     else
                                     {
-                                        nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
-
+                                        // nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
+                                        nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.highDataIndex.value);
                                         var p = AdminShell.Property.CreateNew("timeStamp");
                                         p.value = tsb.samplesTimeStamp;
                                         p.setTimeStamp(timeStamp);
@@ -824,19 +891,50 @@ namespace AasxTimeSeries
                     {
                         if (actualSamplesInCollection > 0)
                         {
-                            tsb.highDataIndex = tsb.samplesCollectionsCount;
-                            var nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
-                            var p = AdminShell.Property.CreateNew("timeStamp");
-                            p.value = tsb.samplesTimeStamp;
-                            p.setTimeStamp(timeStamp);
-                            p.TimeStampCreate = timeStamp;
-                            tsb.samplesTimeStamp = "";
-                            nextCollection.Add(p);
-                            nextCollection.setTimeStamp(timeStamp);
-                            nextCollection.TimeStampCreate = timeStamp;
+                            // tsb.highDataIndex = tsb.samplesCollectionsCount;
+                            int index = Convert.ToInt32(tsb.highDataIndex.value);
+                            tsb.highDataIndex.value = (index + 1).ToString();
+
+                            AdminShell.SubmodelElementCollection nextCollection = null;
+                            if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
+                            {
+                                nextCollection = AddToSMC<AdminShell.SubmodelElementCollection>(
+                                    timeStamp, null,
+                                    // "Segment_" + tsb.samplesCollectionsCount++,
+                                    "Segment_" + tsb.highDataIndex.value,
+                                    semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
+
+                                var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
+                                    timeStamp, nextCollection,
+                                    "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+
+                                AddToSMC<AdminShell.Property>(timeStamp, smcvar,
+                                    "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                                    smeValue: "timeStamp");
+
+                                AddToSMC<AdminShell.Property>(timeStamp, smcvar,
+                                    "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime);
+
+                                AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
+                                    "timeStamp", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                                    smeValue: tsb.samplesTimeStamp);
+                            }
+                            else
+                            {
+                                // nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
+                                nextCollection = AdminShell.SubmodelElementCollection.CreateNew("data" + tsb.highDataIndex.value);
+                                var p = AdminShell.Property.CreateNew("timeStamp");
+                                p.value = tsb.samplesTimeStamp;
+                                p.setTimeStamp(timeStamp);
+                                p.TimeStampCreate = timeStamp;
+                                tsb.samplesTimeStamp = "";
+                                nextCollection.Add(p);
+                                nextCollection.setTimeStamp(timeStamp);
+                                nextCollection.TimeStampCreate = timeStamp;
+                            }
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
-                                p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
+                                var p = AdminShell.Property.CreateNew(tsb.samplesProperties[i].idShort);
                                 p.value = tsb.samplesValues[i];
                                 p.setTimeStamp(timeStamp);
                                 p.TimeStampCreate = timeStamp;

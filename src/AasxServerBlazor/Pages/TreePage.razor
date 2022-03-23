@@ -1394,11 +1394,13 @@
         if (o is Property)
         {
             var prop = o as Property;
-            ret += ", " + prop.value;
+            // ret += ", " + prop.value;
+            ret = "";
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1410,12 +1412,14 @@
                     }
                     break;
                 case 1:
-                    ret = "Value Type";
+                    if (col == 0)
+                        ret = "Value Type";
                     if (col == 1)
                         ret = prop.valueType + "";
                     break;
                 case 2:
-                    ret = "Value";
+                    if (col == 0)
+                        ret = "Value";
                     if (col == 1)
                         ret = prop.value + "";
                     break;

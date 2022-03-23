@@ -1365,10 +1365,12 @@ namespace AasxServer
                                                                     actualCollections--;
                                                                 }
                                                                 tsb.actualCollections.value = actualCollections.ToString();
+                                                                /*
                                                                 tsb.lowDataIndex =
                                                                     Convert.ToInt32(tsb.data.value[0].submodelElement.idShort.Substring("data".Length));
                                                                 tsb.highDataIndex =
                                                                     Convert.ToInt32(tsb.data.value[tsb.data.value.Count - 1].submodelElement.idShort.Substring("data".Length));
+                                                                */
                                                                 signalNewData(1);
                                                             }
                                                         }

@@ -439,10 +439,6 @@ namespace AasxServer
             // inputVariable reference sourcePath: property
             // inputVariable reference destinationElement: collection
 
-            if (op.inputVariable.Count < 3 || op.inputVariable.Count > 4)
-            {
-                return;
-            }
             string opName = op.idShort.ToLower();
 
             AdminShell.SubmodelElementCollection authentication = null;
@@ -457,6 +453,7 @@ namespace AasxServer
             AdminShell.Submodel elementSubmodel = null;
             AdminShell.Property lastDiff = null;
             AdminShell.Property status = null;
+            AdminShell.Property mode = null;
 
             AdminShell.SubmodelElementCollection smec = null;
             AdminShell.Submodel sm = null;
@@ -498,6 +495,10 @@ namespace AasxServer
                             elementCollection = smec;
                         if (sm != null)
                             elementSubmodel = sm;
+                        break;
+                    case "mode":
+                        if (p != null)
+                            mode = p;
                         break;
                 }
             }
@@ -816,6 +817,8 @@ namespace AasxServer
                 AdminShell.SubmodelElementCollection diffCollection = null;
                 DateTime last = new DateTime();
                 int count = 1;
+                if (mode != null && mode.value == "clear")
+                    opName = "put";
                 if (opName == "putdiff")
                 {
                     if (lastDiff == null)
@@ -826,7 +829,112 @@ namespace AasxServer
                     count = elementCollection.value.Count;
                     if (lastDiff.value == "")
                     {
-                        opName = "put";
+                        // get "latestData" from server
+                        bool error = false;
+                        splitPath = path.value.Split('/');
+                        requestPath = endPoint.value + "/aas/" + splitPath[1] +
+                            "/submodels/" + splitPath[3];
+                        requestPath += "/elements/" + elementCollection.idShort;
+                        requestPath += "/latestData/complete";
+                        try
+                        {
+                            task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                            task.Wait();
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                if (status != null)
+                                {
+                                    status.value = response.StatusCode.ToString() + " ; " +
+                                        response.Content.ReadAsStringAsync().Result + " ; " +
+                                        "GET " + requestPath;
+                                }
+                                error = true;
+                            }
+                        }
+                        catch
+                        {
+                            error = true;
+                        }
+
+                        int highDataIndex = -1;
+                        int lowDataIndex = 0;
+                        int totalSamples = 0;
+                        if (!error)
+                        {
+                            try
+                            {
+                                string json = response.Content.ReadAsStringAsync().Result;
+                                JObject parsed = JObject.Parse(json);
+                                foreach (JProperty jp1 in (JToken)parsed)
+                                {
+                                    if (jp1.Name == "elem")
+                                    {
+                                        string text = jp1.Value.ToString();
+                                        var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                            text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                        foreach (var sme in receiveCollection.value)
+                                        {
+                                            var e = sme.submodelElement;
+                                            if (e is AdminShell.Property ep)
+                                            {
+                                                if (ep.idShort == "highDataIndex")
+                                                {
+                                                    highDataIndex = Convert.ToInt32(ep.value);
+                                                    lowDataIndex = highDataIndex + 1;
+                                                }
+                                                if (ep.idShort == "totalSamples")
+                                                {
+                                                    totalSamples = Convert.ToInt32(ep.value);
+                                                }
+                                            }
+                                        }
+                                        if (elementCollection.value.Count == 1)
+                                        {
+                                            if (elementCollection.value[0].submodelElement is AdminShell.SubmodelElementCollection smc)
+                                            {
+                                                if (smc.idShort == "latestData")
+                                                {
+                                                    if (smc.value.Count == 0)
+                                                        return;
+                                                    foreach (var sme in smc.value)
+                                                    {
+                                                        var e = sme.submodelElement;
+                                                        if (e is AdminShell.Property ep)
+                                                        {
+                                                            if (ep.idShort == "highDataIndex")
+                                                            {
+                                                                ep.value = highDataIndex.ToString();
+                                                            }
+                                                            if (ep.idShort == "lowDataIndex")
+                                                            {
+                                                                ep.value = lowDataIndex.ToString();
+                                                            }
+                                                            if (ep.idShort == "totalSamples")
+                                                            {
+                                                                ep.value = totalSamples.ToString();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                error = true;
+                            }
+                        }
+                        if (error || highDataIndex == -1)
+                        {
+                            opName = "put";
+                        }
+                        else
+                        {
+                            if (lastDiff != null)
+                                lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                        }
                     }
                     else
                     {
@@ -881,9 +989,12 @@ namespace AasxServer
                         }
                         if (error || !response.IsSuccessStatusCode)
                         {
-                            statusValue = response.StatusCode.ToString() + " ; " +
-                                response.Content.ReadAsStringAsync().Result + " ; " +
-                                "PUT " + requestPath;
+                            if (response != null)
+                            {
+                                statusValue = response.StatusCode.ToString() + " ; " +
+                                    response.Content.ReadAsStringAsync().Result + " ; " +
+                                    "PUT " + requestPath;
+                            }
                             error = true;
                         }
                     }
