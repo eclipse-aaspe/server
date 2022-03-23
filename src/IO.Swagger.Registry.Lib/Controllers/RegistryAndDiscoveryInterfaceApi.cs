@@ -440,6 +440,17 @@ namespace IO.Swagger.Registry.Controllers
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Endpoint>();
                         sd.Endpoints.Add(esm);
+                        if (sm.semanticId != null)
+                        {
+                            var sid = sm.semanticId.GetAsExactlyOneKey();
+                            if (sid != null)
+                            {
+                                gr = new GlobalReference();
+                                gr.Value = new List<string>();
+                                gr.Value.Add(sid.value);
+                                sd.SemanticId = gr;
+                            }
+                        }
                         ad.SubmodelDescriptors.Add(sd);
                     }
                 }

@@ -60,7 +60,7 @@ namespace IO.Swagger.Registry.Models
         /// </summary>
 
         [DataMember(Name = "semanticId")]
-        public Reference SemanticId { get; set; }
+        public GlobalReference SemanticId { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
