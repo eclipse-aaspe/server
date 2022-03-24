@@ -3476,6 +3476,7 @@ namespace AasxRestServerLibrary
                         {
                             var asset = Program.env[i].AasEnv.FindAsset(aas.assetRef);
                             s += " : " + asset.identification.id;
+                            s += " : " + asset.kind.kind;
                         }
                         aaslist.Add(s);
                     }
