@@ -12,161 +12,161 @@
 
 @implements IDisposable
 
-    <div class="col-12 row">
-        <br />
-        <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
-            @updateVisibleTree(Items, selectedNode)
-            @if (Program.isLoading)
-                {<span style="color:white;background-color:blue;">Loading...</span>}
-            else
-                { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
-            <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
-                  @bind-SelectedNode="SelectedNode"
-                  @bind-ExpandedNodes="ExpandedNodes"
-                  HasChildNodes="@(item => item.Childs?.Any() == true)">
-                <TitleTemplate>
-                    @{ //// SubmodelService.syncSubTree(context);
-                    }
-                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                    @ViewNodeID(context)@ViewNodeInfo(context)
-                    <strong><span style="color:blue">@getSymbols(context)</span></strong>
-                    <span style="color:lightgray;">@ViewTimeStamp(context)</span>
-                </TitleTemplate>
-            </Tree>
-        </div>
-        <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
-            <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
-                @{
-                    <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
-                    for (int line = 0; line < 6; line++)
+<div class="col-12 row">
+    <br />
+    <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
+        @updateVisibleTree(Items, selectedNode)
+        @if (Program.isLoading)
+            {<span style="color:white;background-color:blue;">Loading...</span>}
+        else
+            { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
+        <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
+                @bind-SelectedNode="SelectedNode"
+                @bind-ExpandedNodes="ExpandedNodes"
+                HasChildNodes="@(item => item.Childs?.Any() == true)">
+            <TitleTemplate>
+                @{ //// SubmodelService.syncSubTree(context);
+                }
+                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                @ViewNodeID(context)@ViewNodeInfo(context)
+                <strong><span style="color:blue">@getSymbols(context)</span></strong>
+                <span style="color:lightgray;">@ViewTimeStamp(context)</span>
+            </TitleTemplate>
+        </Tree>
+    </div>
+    <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
+        <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+            @{
+                <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
+                for (int line = 0; line < 6; line++)
+                {
+                    string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
+                    string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
+                    string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
+                    if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
-                        string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
-                        string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
-                        string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
-                        if (nodeDetails0 != "" && nodeDetails1 != "")
+                        <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1 @nodeDetails2<br>
+                    }
+                }
+                if (selectedNode != null && selectedNode.Tag is Referable r)
+                {
+                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    <button style="background-color:lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
+                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    @code {
+                        private void setTimeStamp()
                         {
-                            <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1 @nodeDetails2<br>
+                            (selectedNode.Tag as Referable).setTimeStamp(DateTime.UtcNow);
                         }
                     }
-                    if (selectedNode != null && selectedNode.Tag is Referable r)
+                }
+                // if (selectedNode != null && hasDownloadFile(selectedNode))
+                // {
+                //     <button @onclick="DownloadFile">Download File</button><br>
+                //     <img src="test.jpg" alt="Thumbnail" />
+                // }
+                bool externalLink = false;
+                string link = getLink(selectedNode, out externalLink);
+                if (selectedNode != null && link != "")
+                {
+                    // if (externalLink)
+                    if (true)
                     {
-                        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                        <button style="background-color:lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
-                        <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                        @code {
-                            private void setTimeStamp()
-                            {
-                                (selectedNode.Tag as Referable).setTimeStamp(DateTime.UtcNow);
-                            }
-                        }
+                        <a href="@link" target="_blank">@link</a><br>
                     }
-                    // if (selectedNode != null && hasDownloadFile(selectedNode))
-                    // {
-                    //     <button @onclick="DownloadFile">Download File</button><br>
-                    //     <img src="test.jpg" alt="Thumbnail" />
-                    // }
-                    bool externalLink = false;
-                    string link = getLink(selectedNode, out externalLink);
-                    if (selectedNode != null && link != "")
+                    else
                     {
-                        // if (externalLink)
-                        if (true)
+                        <button onclick="window.location.href = '@link'; ">Download</button><br>
+                    }
+                    if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
+                    {
+                        bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                        bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                        if (toPublish)
                         {
-                            <a href="@link" target="_blank">@link</a><br>
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
                         }
                         else
                         {
-                            <button onclick="window.location.href = '@link'; ">Download</button><br>
+                            <button @onclick="setSubmodelToPublish">Publish</button>
                         }
-                        if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
+                        if (toSubscribe)
                         {
-                            bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                            bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                            if (toPublish)
+                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                        }
+                        else
+                        {
+                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                        }
+                        // <button onclick="window.location.href = '@link';">Subscribe</button><br>
+                        @code {
+                            private void resetSubmodelToPublish()
                             {
-                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                                Program.submodelsToPublish.Remove(selectedNode.Tag);
                             }
-                            else
+                            private void setSubmodelToPublish()
                             {
-                                <button @onclick="setSubmodelToPublish">Publish</button>
+                                bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                                if (!toSubscribe)
+                                    Program.submodelsToPublish.Add(selectedNode.Tag);
                             }
-                            if (toSubscribe)
+                            private void resetSubmodelToSubscribe()
                             {
-                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                                Program.submodelsToSubscribe.Remove(selectedNode.Tag);
                             }
-                            else
+                            private void setSubmodelToSubscribe()
                             {
-                                <button @onclick="setSubmodelToSubscribe">Subscribe</button>
-                            }
-                            // <button onclick="window.location.href = '@link';">Subscribe</button><br>
-                            @code {
-                                private void resetSubmodelToPublish()
-                                {
-                                    Program.submodelsToPublish.Remove(selectedNode.Tag);
-                                }
-                                private void setSubmodelToPublish()
-                                {
-                                    bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                                    if (!toSubscribe)
-                                        Program.submodelsToPublish.Add(selectedNode.Tag);
-                                }
-                                private void resetSubmodelToSubscribe()
-                                {
-                                    Program.submodelsToSubscribe.Remove(selectedNode.Tag);
-                                }
-                                private void setSubmodelToSubscribe()
-                                {
-                                    bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                                    if (!toPublish)
-                                        Program.submodelsToSubscribe.Add(selectedNode.Tag);
-                                }
+                                bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                                if (!toPublish)
+                                    Program.submodelsToSubscribe.Add(selectedNode.Tag);
                             }
                         }
                     }
-                    if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                }
+                if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                {
+                    // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    @code { private string CurrentValue { get; set; } }
+                    if (CurrentValue != null && CurrentValue != "")
                     {
-                        // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                        <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                        @code { private string CurrentValue { get; set; } }
-                        if (CurrentValue != null && CurrentValue != "")
+                        if (selectedNode.Tag is Property)
                         {
-                            if (selectedNode.Tag is Property)
-                            {
-                                (selectedNode.Tag as Property).value = CurrentValue;
-                                (selectedNode.Tag as Property).setTimeStamp(DateTime.UtcNow);
-                                this.StateHasChanged();
-                            }
-                            CurrentValue = "";
+                            (selectedNode.Tag as Property).value = CurrentValue;
+                            (selectedNode.Tag as Property).setTimeStamp(DateTime.UtcNow);
+                            this.StateHasChanged();
                         }
+                        CurrentValue = "";
                     }
-                    if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is AdminShellNS.AdminShellV20.File))
+                }
+                if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is AdminShellNS.AdminShellV20.File))
+                {
+                    if (selectedNode.Tag is AdministrationShell)
                     {
-                        if (selectedNode.Tag is AdministrationShell)
+                        <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
+                        string qrcodeLink = getQRCodeLink(selectedNode);
+                        if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
                         {
-                            <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
-                            string qrcodeLink = getQRCodeLink(selectedNode);
-                            if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
+                            string qrcodeImage = getQRCodeImage(selectedNode);
+                            if (qrcodeImage != "")
                             {
-                                string qrcodeImage = getQRCodeImage(selectedNode);
-                                if (qrcodeImage != "")
-                                {
-                                    <a href="@qrcodeLink" target="_blank">
-                                        <div>
-                                            <img src=data:image;base64,@qrcodeImage style="max-width: 40%;" alt="Qrcode Image" />
-                                        </div>
-                                    </a>
-                                }
+                                <a href="@qrcodeLink" target="_blank">
+                                    <div>
+                                        <img src=data:image;base64,@qrcodeImage style="max-width: 40%;" alt="Qrcode Image" />
+                                    </div>
+                                </a>
                             }
-                            else
+                        }
+                        else
+                        {
+                            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
+                        }
+                        @code {
+                            private void runCreateQRCodeImage()
                             {
-                                <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
+                                createQRCodeImage(selectedNode);
                             }
-                            @code {
-                                private void runCreateQRCodeImage()
-                                {
-                                    createQRCodeImage(selectedNode);
-                                }
-                            }
+                        }
                     }
                 }
 
@@ -177,32 +177,31 @@
 
                     try
                     {
-                        string semanticId = "";
-                        try
-                        {
-                            semanticId = smc.semanticId.Keys[0].value;
-                        }
-                        catch { }
-                        if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-                            semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                        {
-                            TimeSpan diff = smc.TimeStamp - timeStampPlot;
+                        semanticId = smc.semanticId.Keys[0].value;
+                    }
+                    catch { }
+                    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
+                        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+                    {
+                        TimeSpan diff = smc.TimeStamp - timeStampPlot;
 
-                            if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
-                            {
-                                watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+                        if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
+                        {
+                            watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+
+                            collectionPlot = smc;
+                            timeStampPlot = smc.TimeStamp;
 
                             //ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
                             _timeSeriesData.Clear();
                             var mm = AdminShell.Key.MatchMode.Relaxed;
 
-                                ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
-                                _timeSeriesData.Clear();
-                                var mm = AdminShell.Key.MatchMode.Relaxed;
+                            // make initial data for time series
+                            var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
+                            _timeSeriesData.Add(tsd);
 
-                                // make initial data for time series
-                                var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
-                                _timeSeriesData.Add(tsd);
+                            // plot arguments for time series
+                            tsd.Args = PlotArguments.Parse(smc.HasQualifierOfType("TimeSeries.Args")?.value);
 
                             // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
                             var pcts = ZveiTimeSeriesDataV10.Static;
@@ -211,23 +210,22 @@
                             //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
                             //var tssReference = new Reference(k);
                             //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
-                                // ! ZveiTimeSeriesDataV10 hardcoded
-                                var pcts = ZveiTimeSeriesDataV10.Static;
 
+                            // is it a segment
+                            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+                            {
+                                TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
+                            }
+                            else
+                            {
+                                // search for segements on current level
+                                var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
 
                                 if (smcAllValues.Count() != 0)
                                 {
-                                    if(smcAllValues.Last().TimeStamp >= timeStampPlot)
+                                    foreach (var smcseg in smcAllValues)
                                     {
-                                        // render = true;
-                                    }
-
-                                    // if (render)
-                                    {
-                                        foreach (var smcseg in smcAllValues)
-                                        {
-                                            TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
-                                        }
+                                        TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
                                     }
                                 }
                             }
@@ -236,21 +234,19 @@
                             watchTimeToProcessImage.Stop();
                         }
 
-            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi);
-            watchTimeToProcessImage.Stop();
-        }
+                        byte[] imageArray;
+                        string timeSeriesImageBase64 = "";
+                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
 
-        byte[] imageArray;
-        string timeSeriesImageBase64 = "";
-        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+                        if (System.IO.File.Exists(scottplotImgPath))
+                        {
+                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+                        }
 
-        if (System.IO.File.Exists(scottplotImgPath))
-        {
-            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-        }
+                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
 
-                        @if(System.IO.File.Exists(scottplotImgPath))
+                        @if (System.IO.File.Exists(scottplotImgPath))
                         {
                             <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
                                 <label for="filterFromDate">Filter from</label>
@@ -291,50 +287,46 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="modal-body">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                            </div>
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="my-2">Rendering time series...</div>
+                        }
+                    }
+                }
+            }
+
+            @{
+                string detailsImage = createDetailsImage(selectedNode);
+                if (detailsImage != "")
+                {
+                    <br />
+                    <div>
+                        <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
                     </div>
-                </div>
-            }
-            else
-            {
-                <div class="my-2">Rendering time series...</div>
-            }
-        }
-    }
+                }
 
-    string detailsImage = createDetailsImage(selectedNode);
-    if (detailsImage != "")
-    {
-            <br />
-            <div>
-                <img src=data:image;base64,@detailsImage style="max-width: 100%;" alt="Details Image" />
-            </div>
-        }
-
-        if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
-        {
-            if (be.observed != null)
-            {
-                string okey = be.observed.GetAsExactlyOneKey().ToString();
-                <span style="color:white;background-color:blue;">Observed</span>
-                <span>@(" " + okey)</span><br />
-                var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
-                if (refsme != null)
+                if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
                 {
-                    <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                }
-                else
-                {
-                    <span>Referenced element does not exist!</span><br />
+                    if (be.observed != null)
+                    {
+                        string okey = be.observed.GetAsExactlyOneKey().ToString();
+                        <span style="color:white;background-color:blue;">Observed</span>
+                        <span>@(" " + okey)</span><br />
+                        var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
+                        if (refsme != null)
+                        {
+                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                        }
+                        else
+                        {
+                            <span>Referenced element does not exist!</span><br />
+                        }
+                    }
                 }
             }
-        }
-                }
-            </div>
+        </div>
     </div>
 </div>
 

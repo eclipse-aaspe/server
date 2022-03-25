@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using QRCoder;
 using System.Drawing;
-using System.IO;
-using static AdminShellNS.AdminShellV20;
-using AdminShellNS;
-using AasxServer;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
+using System.Text;
+using AasxServer;
+using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using QRCoder;
 using ScottPlot;
+using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerStandardBib
 {
@@ -96,7 +96,8 @@ namespace AasxServerStandardBib
                 //    return null;
                 //panel.Children.Clear();
 
-                ScottPlot.Plot plt = new ScottPlot.Plot(2400, 1200);
+                // ScottPlot.Plot plt = new ScottPlot.Plot(2400, 1200);
+                ScottPlot.Plot plt = new ScottPlot.Plot(1800, 900);
 
                 // go over all groups                
                 foreach (var tsd in this)
