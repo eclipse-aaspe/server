@@ -173,7 +173,7 @@
                 if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
                 {
                     string semanticId = "";
-                    bool render = false;
+                    // bool render = false;
 
                     try
                     {
@@ -219,10 +219,10 @@
                                 {
                                     if(smcAllValues.Last().TimeStamp >= timeStampPlot)
                                     {
-                                        render = true;
+                                        // render = true;
                                     }
 
-                                    if (render)
+                                    // if (render)
                                     {
                                         foreach (var smcseg in smcAllValues)
                                         {
