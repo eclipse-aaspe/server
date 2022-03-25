@@ -1151,7 +1151,10 @@ namespace AasxServer
                                         string s = "";
                                         s = e?.assetRef?.Keys?[0].value;
                                         if (s != "")
+                                        {
                                             bomAssetId.Add(s);
+                                            // Console.WriteLine("Asset: " + s);
+                                        }
                                     }
                                 }
                             }
@@ -1171,6 +1174,13 @@ namespace AasxServer
                     var assetId = aas.assetRef.Keys[0].value;
                     if (!bomAssetId.Contains(assetId))
                         continue;
+                    int assetCount = 0;
+                    foreach (var ba in bomAssetId)
+                    {
+                        if (assetId == ba)
+                            assetCount++;
+                    }
+                    // Console.WriteLine("Asset: " + assetId + ",Count: " + assetCount);
                     if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                     {
                         foreach (var smr in aas.submodelRefs)
@@ -1188,6 +1198,7 @@ namespace AasxServer
                                             try
                                             {
                                                 value = Convert.ToDouble(p.value);
+                                                value *= assetCount;
                                             }
                                             catch { }
                                             switch (p.idShort)
