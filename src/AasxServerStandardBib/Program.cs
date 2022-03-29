@@ -546,6 +546,7 @@ namespace AasxServer
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
             // Test email client
+            Console.WriteLine("Checking Emails for Product Change Notifications");
             if (!Directory.Exists("./pcn"))
             {
                 Directory.CreateDirectory("./pcn");
@@ -588,7 +589,12 @@ namespace AasxServer
                                     string link = html.Substring(lastHrefPos+hl+1, downloadPos - lastHrefPos - hl - 2);
                                     link = link.Replace("&amp;", "&");
                                     Console.WriteLine(link);
-                                    HttpClient httpClient = new HttpClient();
+                                    var handler = new HttpClientHandler();
+                                    if (AasxServer.AasxTask.proxy != null)
+                                        handler.Proxy = AasxServer.AasxTask.proxy;
+                                    else
+                                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                    var httpClient = new HttpClient(handler);
                                     var getTask = httpClient.GetAsync(link);
                                     getTask.Wait(30000);
                                     if (getTask.Result.IsSuccessStatusCode)
