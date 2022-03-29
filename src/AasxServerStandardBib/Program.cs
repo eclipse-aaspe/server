@@ -6,6 +6,7 @@ using System.CommandLine.IO;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -22,6 +23,10 @@ using AasxMqttServer;
 using AasxRestServerLibrary;
 using AdminShellNS;
 using Jose;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Search;
+using MailKit.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -539,6 +544,100 @@ namespace AasxServer
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+
+            // Test email client
+            if (!Directory.Exists("./pcn"))
+            {
+                Directory.CreateDirectory("./pcn");
+            }
+            using (var client = new ImapClient(new ProtocolLogger("imap.log")))
+            {
+                client.Connect("imap.strato.de", 993, SecureSocketOptions.SslOnConnect);
+
+                client.Authenticate("pcn@orzelski.de", "VWmQHE2kJnxsLAb9k0FC");
+
+                client.Inbox.Open(FolderAccess.ReadWrite);
+
+                var uids = client.Inbox.Search(SearchQuery.All);
+
+                foreach (var uid in uids)
+                {
+                    var message = client.Inbox.GetMessage(uid);
+
+                    // write the message to a file
+                    // message.WriteTo(string.Format("{0}.eml", uid));
+                    var s = message.Subject;
+                    if (s.Contains("Neue PCN / PDN"))
+                    {
+                        var html = message.HtmlBody;
+                        if (html != null)
+                        {
+                            int downloadPos = html.IndexOf(">herunterladen<");
+                            while (downloadPos != -1)
+                            {
+                                int hrefPos = html.IndexOf("href=");
+                                int lastHrefPos = -1;
+                                while (hrefPos != -1 && hrefPos < downloadPos)
+                                {
+                                    lastHrefPos = hrefPos;
+                                    hrefPos = html.IndexOf("href=", lastHrefPos+1);
+                                }
+                                if (lastHrefPos != -1)
+                                {
+                                    int hl = "href=".Length;
+                                    string link = html.Substring(lastHrefPos+hl+1, downloadPos - lastHrefPos - hl - 2);
+                                    link = link.Replace("&amp;", "&");
+                                    Console.WriteLine(link);
+                                    HttpClient httpClient = new HttpClient();
+                                    var getTask = httpClient.GetAsync(link);
+                                    getTask.Wait(30000);
+                                    if (getTask.Result.IsSuccessStatusCode)
+                                    {
+                                        string fileHttp = getTask.Result.Content.ReadAsStringAsync().Result;
+                                        var filePos = fileHttp.IndexOf("URL=");
+                                        if (filePos != -1)
+                                        {
+                                            var filePosEnd = fileHttp.IndexOf("\"", filePos);
+                                            if (filePosEnd != -1)
+                                            {
+                                                int u = "URL=".Length;
+                                                string fNameUrl = fileHttp.Substring(filePos + u, filePosEnd - filePos - u);
+                                                int iFile = fNameUrl.IndexOf("/$File/");
+                                                if (iFile != -1)
+                                                {
+                                                    string fName = "./pcn/" + fNameUrl.Substring(iFile + "/$File/".Length);
+                                                    getTask = httpClient.GetAsync(fNameUrl);
+                                                    getTask.Wait(30000);
+                                                    if (getTask.Result.IsSuccessStatusCode)
+                                                    {
+                                                        using (var fs = new FileStream(fName, FileMode.Create))
+                                                        {
+                                                            var fileTask = getTask.Result.Content.CopyToAsync(fs);
+                                                            fileTask.Wait(30000);
+                                                        }
+                                                        if (Path.GetExtension(fName).ToLower() == ".zip")
+                                                        {
+                                                            string path = "./pcn/" + Path.GetFileNameWithoutExtension(fName);
+                                                            ZipFile.ExtractToDirectory(fName, path);
+                                                            File.Delete(fName);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                html = html.Substring(downloadPos + ">herunterladen<".Length);
+                                downloadPos = html.IndexOf(">herunterladen<");
+                            }
+                        }
+                    }
+                    client.Inbox.AddFlags(uid, MessageFlags.Deleted, true);
+                }
+                client.Inbox.Expunge();
+
+                client.Disconnect(true);
+            }
 
             isLoading = false;
 
