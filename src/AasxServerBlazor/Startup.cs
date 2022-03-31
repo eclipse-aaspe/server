@@ -60,7 +60,14 @@ namespace AasxServerBlazor
                 })
                 .AddNewtonsoftJson(opts =>
                 {
-                    opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                    opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    {
+                        NamingStrategy = new CamelCaseNamingStrategy()
+                        {
+                            // Do not change dictionary keys casing
+                            ProcessDictionaryKeys = false
+                        }
+                    };
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
                 })
                 .AddXmlSerializerFormatters();
