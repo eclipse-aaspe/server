@@ -9,21 +9,17 @@
  */
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
-using AasxRestServerLibrary;
 using IO.Swagger.Attributes;
 using IO.Swagger.Models;
 using IO.Swagger.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Swashbuckle.AspNetCore.Annotations;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace IO.Swagger.Controllers
 {

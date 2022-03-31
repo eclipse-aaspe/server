@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using IO.Swagger.Models;
+﻿using IO.Swagger.Models;
+using System.Collections.Generic;
 
 namespace IO.Swagger.Services
 {
