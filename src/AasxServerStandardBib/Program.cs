@@ -568,12 +568,14 @@ namespace AasxServer
                     // write the message to a file
                     // message.WriteTo(string.Format("{0}.eml", uid));
                     var s = message.Subject;
-                    if (s.Contains("Neue PCN / PDN"))
+                    // if (s.Contains("Neue PCN / PDN"))
+                    if (s.Contains("PCN Notification"))
                     {
                         var html = message.HtmlBody;
                         if (html != null)
                         {
-                            int downloadPos = html.IndexOf(">herunterladen<");
+                            // int downloadPos = html.IndexOf(">herunterladen<");
+                            int downloadPos = html.IndexOf(">download<");
                             while (downloadPos != -1)
                             {
                                 int hrefPos = html.IndexOf("href=");
@@ -586,7 +588,7 @@ namespace AasxServer
                                 if (lastHrefPos != -1)
                                 {
                                     int hl = "href=".Length;
-                                    string link = html.Substring(lastHrefPos+hl+1, downloadPos - lastHrefPos - hl - 2);
+                                    string link = html.Substring(lastHrefPos+hl, downloadPos - lastHrefPos - hl);
                                     link = link.Replace("&amp;", "&");
                                     Console.WriteLine(link);
                                     var handler = new HttpClientHandler();
@@ -624,8 +626,15 @@ namespace AasxServer
                                                         if (Path.GetExtension(fName).ToLower() == ".zip")
                                                         {
                                                             string path = "./pcn/" + Path.GetFileNameWithoutExtension(fName);
-                                                            ZipFile.ExtractToDirectory(fName, path);
-                                                            File.Delete(fName);
+                                                            try
+                                                            {
+                                                                ZipFile.ExtractToDirectory(fName, path);
+                                                            }
+                                                            catch
+                                                            {
+
+                                                            }
+                                                            // File.Delete(fName);
                                                         }
                                                     }
                                                 }
@@ -633,14 +642,16 @@ namespace AasxServer
                                         }
                                     }
                                 }
-                                html = html.Substring(downloadPos + ">herunterladen<".Length);
-                                downloadPos = html.IndexOf(">herunterladen<");
+                                // html = html.Substring(downloadPos + ">herunterladen<".Length);
+                                // downloadPos = html.IndexOf(">herunterladen<");
+                                html = html.Substring(downloadPos + ">download<".Length);
+                                downloadPos = html.IndexOf(">download<");
                             }
                         }
                     }
-                    client.Inbox.AddFlags(uid, MessageFlags.Deleted, true);
+                    // client.Inbox.AddFlags(uid, MessageFlags.Deleted, true);
                 }
-                client.Inbox.Expunge();
+                // client.Inbox.Expunge();
 
                 client.Disconnect(true);
             }
