@@ -11,15 +11,20 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
 using IO.Swagger.Attributes;
+
+using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
+using System.Dynamic;
+using AasxRestServerLibrary;
 using IO.Swagger.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace IO.Swagger.Controllers
 {
