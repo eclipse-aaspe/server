@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -767,7 +768,15 @@ namespace IO.Swagger.Helpers
                 //settings.Converters.Add(new ValueOnlyJsonConverter(true, obj));
                 //var jsonTest = JsonConvert.SerializeObject(obj, settings);
                 object output = GetValueOnly(obj, level, extent);
-                var jsonOutput = JsonConvert.SerializeObject(output, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() });
+                settings.ContractResolver = new CamelCasePropertyNamesContractResolver()
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                    {
+                        // Do not change dictionary keys casing
+                        ProcessDictionaryKeys = false
+                    }
+                };
+                var jsonOutput = JsonConvert.SerializeObject(output, Formatting.Indented, settings);
                 return jsonOutput;
             }
 
@@ -846,19 +855,35 @@ namespace IO.Swagger.Helpers
                 if (obj is Submodel submodel)
                 {
                     //Submodel is serialized as an unnamed JSON object
-                    List<object> values = new List<object>();
+                    //List<object> values = new List<object>();
+                    var output = new Dictionary<string, object>();
                     foreach (var smElement in submodel.submodelElements)
                     {
+                        if (smElement.submodelElement is Operation || smElement.submodelElement is Capability)
+                        {
+                            continue;
+                        }
+
                         object value = GetValueOnly(smElement.submodelElement, level, extent);
-                        values.Add(value);
+                        if (value is IDictionary valDict)
+                        {
+                            foreach (var key in valDict.Keys)
+                            {
+                                output.Add((string)key, valDict[key]);
+                            }
+                        }
+                        //values.Add(value);
                     }
-                    return values;
+                    return output;
+                    //return values;
                 }
                 else if (obj is SubmodelElementCollection collection)
                 {
                     //SMECollection is serialized as named JSON Object
-                    Dictionary<string, List<object>> output = new Dictionary<string, List<object>>();
-                    List<object> values = new List<object>();
+                    //Dictionary<string, List<object>> output = new Dictionary<string, List<object>>();
+                    //List<object> values = new List<object>();
+                    Dictionary<string, object> output = new Dictionary<string, object>();
+                    var values = new Dictionary<string, object>();
                     foreach (var smElement in collection.value)
                     {
                         //When core, should only include direct child elements. SMEs of child collection cannot be considered as direct child
@@ -866,8 +891,20 @@ namespace IO.Swagger.Helpers
                         {
                             continue;
                         }
+                        if (smElement.submodelElement is Operation || smElement.submodelElement is Capability)
+                        {
+                            continue;
+                        }
+
                         object value = GetValueOnly(smElement.submodelElement, level, extent);
-                        values.Add(value);
+                        if (value is IDictionary valDict)
+                        {
+                            foreach (var key in valDict.Keys)
+                            {
+                                values.Add((string)key, valDict[key]);
+                            }
+                        }
+                        //values.Add(value);
                     }
                     output.Add(collection.idShort, values);
                     return output;
