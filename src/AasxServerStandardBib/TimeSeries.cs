@@ -338,6 +338,7 @@ namespace AasxTimeSeries
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Add(latestDataProperty);
                                                 tsb.lowDataIndex = latestDataProperty as AdminShell.Property;
+                                                tsb.lowDataIndex.value = "0";
                                             }
                                             latestDataProperty.setTimeStamp(timeStamp);
 
@@ -612,6 +613,7 @@ namespace AasxTimeSeries
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Add(latestDataProperty);
                                 tsb.lowDataIndex = latestDataProperty as AdminShell.Property;
+                                tsb.lowDataIndex.value = "0";
                             }
                             (latestDataProperty as AdminShell.Property).value = "" + tsb.lowDataIndex.value;
                             latestDataProperty.setTimeStamp(timeStamp);
