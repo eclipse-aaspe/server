@@ -670,6 +670,15 @@ namespace AasxTimeSeries
                                     {
                                         if (table[valueIndex] != null && table[valueIndex][i + 1] != null)
                                             latestDataValue = table[valueIndex][i + 1].ToString();
+                                        switch (latestDataValue.ToLower())
+                                        {
+                                            case "true":
+                                                latestDataValue = "1";
+                                                break;
+                                            case "false":
+                                                latestDataValue = "0";
+                                                break;
+                                        }
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
                                             tsb.samplesValues[i] += $"[{tsb.totalSamples.value}, {latestDataValue}]";
@@ -682,6 +691,15 @@ namespace AasxTimeSeries
                                     if (tsb.sourceType == "opcda")
                                     {
                                         latestDataValue = opcDAValues[i];
+                                        switch (latestDataValue.ToLower())
+                                        {
+                                            case "true":
+                                                latestDataValue = "1";
+                                                break;
+                                            case "false":
+                                                latestDataValue = "0";
+                                                break;
+                                        }
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
                                             tsb.samplesValues[i] += $"[{tsb.totalSamples.value}, {latestDataValue}]";
