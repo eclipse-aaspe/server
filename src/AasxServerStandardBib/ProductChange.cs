@@ -1,9 +1,4 @@
-﻿using AdminShellNS;
-using MailKit;
-using MailKit.Net.Imap;
-using MailKit.Search;
-using MailKit.Security;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -11,6 +6,11 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Xml;
+using AdminShellNS;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Search;
+using MailKit.Security;
 
 namespace ProductChange
 {
@@ -44,6 +44,7 @@ namespace ProductChange
 
                 AdminShellPackageEnv pcnEnv = null;
                 AdminShell.Submodel pcnSub = null;
+                AdminShell.SubmodelElementCollection imported = null;
                 int aascount = AasxServer.Program.env.Length;
 
                 for (int i = 0; i < aascount; i++)
@@ -61,6 +62,23 @@ namespace ProductChange
                                 {
                                     pcnEnv = env;
                                     pcnSub = sm;
+
+                                    foreach (var sme in sm.submodelElements)
+                                    {
+                                        if (sme.submodelElement is AdminShell.SubmodelElementCollection smc)
+                                        {
+                                            if (smc.idShort == "imported")
+                                            {
+                                                imported = smc;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (imported == null)
+                                    {
+                                        imported = AdminShell.SubmodelElementCollection.CreateNew("imported");
+                                        sm.Add(imported);
+                                    }
                                 }
                             }
                         }
@@ -71,7 +89,8 @@ namespace ProductChange
                 {
                     Directory.CreateDirectory("./pcn");
                 }
-                using (var client = new ImapClient(new ProtocolLogger("imap.log")))
+                // using (var client = new ImapClient(new ProtocolLogger("imap.log")))
+                using (var client = new ImapClient())
                 {
                     client.Connect("imap.strato.de", 993, SecureSocketOptions.SslOnConnect);
 
@@ -81,6 +100,7 @@ namespace ProductChange
 
                     var uids = client.Inbox.Search(SearchQuery.All);
                     bool error = false;
+                    int importedCount = 0;
 
                     foreach (var uid in uids)
                     {
@@ -138,157 +158,176 @@ namespace ProductChange
                                                         string fName = fNameUrl.Substring(iFile + "/$File/".Length);
                                                         fName = System.Text.RegularExpressions.Regex.Replace(fName, @"[\\/:*?,""<>|]", string.Empty);
                                                         fName = System.Text.RegularExpressions.Regex.Replace(fName, @" -", "_");
-                                                        getTask = httpClient.GetAsync(fNameUrl);
-                                                        getTask.Wait(30000);
-                                                        if (getTask.Result.IsSuccessStatusCode)
+                                                        string name = Path.GetFileNameWithoutExtension(fName);
+                                                        bool import = true;
+                                                        foreach (var sme in imported.value)
                                                         {
-                                                            using (var fs = new FileStream("./pcn/" + fName, FileMode.Create))
+                                                            if (sme.submodelElement is AdminShell.Property p)
                                                             {
-                                                                var fileTask = getTask.Result.Content.CopyToAsync(fs);
-                                                                fileTask.Wait(30000);
-                                                            }
-                                                            if (pcnEnv != null && pcnSub != null)
-                                                            {
-                                                                pcnEnv.AddSupplementaryFileToStore("./pcn/" + fName, "/aasx", fName, false);
-                                                                string name = Path.GetFileNameWithoutExtension(fName);
-                                                                c = AdminShell.SubmodelElementCollection.CreateNew(name);
-                                                                c.TimeStampCreate = timeStamp;
-                                                                c.setTimeStamp(timeStamp);
-                                                                var f = AdminShell.File.CreateNew(name);
-                                                                f.TimeStampCreate = timeStamp;
-                                                                f.setTimeStamp(timeStamp);
-                                                                f.value = "/aasx/" + fName;
-                                                                pcnSub.Add(c);
-                                                                c.Add(f);
-                                                            }
-                                                            if (Path.GetExtension(fName).ToLower() == ".zip")
-                                                            {
-                                                                string path = "./pcn/" + Path.GetFileNameWithoutExtension(fName);
-                                                                try
+                                                                if (p.idShort == name)
                                                                 {
-                                                                    ZipFile.ExtractToDirectory("./pcn/" + fName, path);
+                                                                    import = false;
+                                                                    break;
                                                                 }
-                                                                catch
+                                                            }
+                                                        }
+                                                        if (import)
+                                                        {
+                                                            Console.WriteLine("Import: " + name);
+                                                            importedCount++;
+                                                            var p = AdminShell.Property.CreateNew(name);
+                                                            imported.Add(p);
+                                                            p.TimeStampCreate = timeStamp;
+                                                            p.setTimeStamp(timeStamp); getTask = httpClient.GetAsync(fNameUrl);
+                                                            getTask.Wait(30000);
+                                                            if (getTask.Result.IsSuccessStatusCode)
+                                                            {
+                                                                using (var fs = new FileStream("./pcn/" + fName, FileMode.Create))
                                                                 {
-
+                                                                    var fileTask = getTask.Result.Content.CopyToAsync(fs);
+                                                                    fileTask.Wait(30000);
                                                                 }
-                                                                // File.Delete("./pcn/" + fName);
-
-                                                                try
+                                                                if (pcnEnv != null && pcnSub != null)
                                                                 {
-                                                                    // Preprocessing
-                                                                    // Find empty elements, i.e. Element without EndElement
-                                                                    // Ignore these afterwards
-                                                                    List<String> elements = new List<string>();
-                                                                    List<String> endElements = new List<string>();
-                                                                    List<String> emptyElements = new List<string>();
-
-                                                                    XmlTextReader reader = new XmlTextReader(path + "/PCNbody.xml");
-                                                                    while (reader != null && reader.Read())
+                                                                    pcnEnv.AddSupplementaryFileToStore("./pcn/" + fName, "/aasx", fName, false);
+                                                                    c = AdminShell.SubmodelElementCollection.CreateNew(name);
+                                                                    c.TimeStampCreate = timeStamp;
+                                                                    c.setTimeStamp(timeStamp);
+                                                                    var f = AdminShell.File.CreateNew(name);
+                                                                    f.TimeStampCreate = timeStamp;
+                                                                    f.setTimeStamp(timeStamp);
+                                                                    f.value = "/aasx/" + fName;
+                                                                    pcnSub.Add(c);
+                                                                    c.Add(f);
+                                                                }
+                                                                if (Path.GetExtension(fName).ToLower() == ".zip")
+                                                                {
+                                                                    string path = "./pcn/" + Path.GetFileNameWithoutExtension(fName);
+                                                                    try
                                                                     {
-                                                                        string name = reader.Name;
-                                                                        int i = 0;
-                                                                        switch (reader.NodeType)
+                                                                        ZipFile.ExtractToDirectory("./pcn/" + fName, path);
+                                                                    }
+                                                                    catch
+                                                                    {
+
+                                                                    }
+                                                                    // File.Delete("./pcn/" + fName);
+
+                                                                    try
+                                                                    {
+                                                                        // Preprocessing
+                                                                        // Find empty elements, i.e. Element without EndElement
+                                                                        // Ignore these afterwards
+                                                                        List<String> elements = new List<string>();
+                                                                        List<String> endElements = new List<string>();
+                                                                        List<String> emptyElements = new List<string>();
+
+                                                                        XmlTextReader reader = new XmlTextReader(path + "/PCNbody.xml");
+                                                                        while (reader != null && reader.Read())
                                                                         {
-                                                                            case XmlNodeType.Element:
-                                                                                if (!elements.Contains(name))
-                                                                                    elements.Add(name);
-                                                                                break;
-                                                                            case XmlNodeType.EndElement:
-                                                                                if (!endElements.Contains(name))
-                                                                                    endElements.Add(name);
-                                                                                break;
-                                                                            default:
-                                                                                break;
+                                                                            string eName = reader.Name;
+                                                                            switch (reader.NodeType)
+                                                                            {
+                                                                                case XmlNodeType.Element:
+                                                                                    if (!elements.Contains(eName))
+                                                                                        elements.Add(eName);
+                                                                                    break;
+                                                                                case XmlNodeType.EndElement:
+                                                                                    if (!endElements.Contains(eName))
+                                                                                        endElements.Add(eName);
+                                                                                    break;
+                                                                                default:
+                                                                                    break;
+                                                                            }
                                                                         }
-                                                                    }
-                                                                    reader.Close();
-                                                                    foreach (var e in elements)
-                                                                    {
-                                                                        if (!endElements.Contains(e))
-                                                                            emptyElements.Add(e);
-                                                                    }
-
-                                                                    reader = new XmlTextReader(path + "/PCNbody.xml");
-                                                                    int stack = -1;
-                                                                    string[] readerName = new string[10]
-                                                                        { "", "", "", "", "", "", "", "", "", "" };
-                                                                    string[] readerValue = new string[10]
-                                                                        { "", "", "", "", "", "", "", "", "", "" };
-                                                                    AdminShell.SubmodelElementCollection[] smc =
-                                                                        new AdminShell.SubmodelElementCollection[10]
-                                                                        { null, null, null, null, null, null, null, null, null, null };
-                                                                    while (reader != null && reader.Read())
-                                                                    {
-                                                                        if (emptyElements.Contains(reader.Name))
-                                                                            continue;
-
-                                                                        switch (reader.NodeType)
+                                                                        reader.Close();
+                                                                        foreach (var e in elements)
                                                                         {
-                                                                            case XmlNodeType.Element: // The node is an element.
-                                                                                if (stack >= 0 && smc[stack] == null)
-                                                                                {
-                                                                                    smc[stack] = AdminShell.SubmodelElementCollection.CreateNew(readerName[stack]);
-                                                                                    smc[stack].TimeStampCreate = timeStamp;
-                                                                                    smc[stack].setTimeStamp(timeStamp);
-                                                                                    if (stack == 0)
+                                                                            if (!endElements.Contains(e))
+                                                                                emptyElements.Add(e);
+                                                                        }
+
+                                                                        reader = new XmlTextReader(path + "/PCNbody.xml");
+                                                                        int stack = -1;
+                                                                        string[] readerName = new string[10]
+                                                                            { "", "", "", "", "", "", "", "", "", "" };
+                                                                        string[] readerValue = new string[10]
+                                                                            { "", "", "", "", "", "", "", "", "", "" };
+                                                                        AdminShell.SubmodelElementCollection[] smc =
+                                                                            new AdminShell.SubmodelElementCollection[10]
+                                                                            { null, null, null, null, null, null, null, null, null, null };
+                                                                        while (reader != null && reader.Read())
+                                                                        {
+                                                                            if (emptyElements.Contains(reader.Name))
+                                                                                continue;
+
+                                                                            switch (reader.NodeType)
+                                                                            {
+                                                                                case XmlNodeType.Element: // The node is an element.
+                                                                                    if (stack >= 0 && smc[stack] == null)
                                                                                     {
-                                                                                        if (c != null)
-                                                                                            c.Add(smc[stack]);
-                                                                                    }
-                                                                                    if (stack > 0)
-                                                                                    {
-                                                                                        if (smc[stack - 1] != null)
-                                                                                            smc[stack - 1].Add(smc[stack]);
-                                                                                    }
-                                                                                }
-                                                                                stack++;
-                                                                                if (stack >= 0 && stack < 10)
-                                                                                    readerName[stack] = reader.Name;
-                                                                                break;
-                                                                            case XmlNodeType.Text:
-                                                                                if (stack >= 0 && stack < 10)
-                                                                                    readerValue[stack] = reader.Value;
-                                                                                break;
-                                                                            case XmlNodeType.EndElement:
-                                                                                if (stack >= 0 && stack < 10)
-                                                                                {
-                                                                                    if (readerName[stack] != "" && readerValue[stack] != "")
-                                                                                    {
-                                                                                        var p = AdminShell.Property.CreateNew(readerName[stack]);
-                                                                                        p.TimeStampCreate = timeStamp;
-                                                                                        p.setTimeStamp(timeStamp);
-                                                                                        p.valueType = "string";
-                                                                                        p.value = readerValue[stack];
+                                                                                        smc[stack] = AdminShell.SubmodelElementCollection.CreateNew(readerName[stack]);
+                                                                                        smc[stack].TimeStampCreate = timeStamp;
+                                                                                        smc[stack].setTimeStamp(timeStamp);
                                                                                         if (stack == 0)
                                                                                         {
                                                                                             if (c != null)
-                                                                                                c.Add(p);
+                                                                                                c.Add(smc[stack]);
                                                                                         }
                                                                                         if (stack > 0)
                                                                                         {
                                                                                             if (smc[stack - 1] != null)
-                                                                                                smc[stack - 1].Add(p);
+                                                                                                smc[stack - 1].Add(smc[stack]);
                                                                                         }
                                                                                     }
+                                                                                    stack++;
+                                                                                    if (stack >= 0 && stack < 10)
+                                                                                        readerName[stack] = reader.Name;
+                                                                                    break;
+                                                                                case XmlNodeType.Text:
+                                                                                    if (stack >= 0 && stack < 10)
+                                                                                        readerValue[stack] = reader.Value;
+                                                                                    break;
+                                                                                case XmlNodeType.EndElement:
+                                                                                    if (stack >= 0 && stack < 10)
                                                                                     {
+                                                                                        if (readerName[stack] != "" && readerValue[stack] != "")
+                                                                                        {
+                                                                                            var pxml = AdminShell.Property.CreateNew(readerName[stack]);
+                                                                                            pxml.TimeStampCreate = timeStamp;
+                                                                                            pxml.setTimeStamp(timeStamp);
+                                                                                            pxml.valueType = "string";
+                                                                                            pxml.value = readerValue[stack];
+                                                                                            if (stack == 0)
+                                                                                            {
+                                                                                                if (c != null)
+                                                                                                    c.Add(pxml);
+                                                                                            }
+                                                                                            if (stack > 0)
+                                                                                            {
+                                                                                                if (smc[stack - 1] != null)
+                                                                                                    smc[stack - 1].Add(pxml);
+                                                                                            }
+                                                                                        }
+                                                                                        {
+                                                                                        }
+                                                                                        readerName[stack] = "";
+                                                                                        readerValue[stack] = "";
+                                                                                        smc[stack] = null;
                                                                                     }
-                                                                                    readerName[stack] = "";
-                                                                                    readerValue[stack] = "";
-                                                                                    smc[stack] = null;
-                                                                                }
-                                                                                stack--;
-                                                                                break;
-                                                                            default:
-                                                                                break;
+                                                                                    stack--;
+                                                                                    break;
+                                                                                default:
+                                                                                    break;
+                                                                            }
                                                                         }
+                                                                        reader.Close();
                                                                     }
-                                                                    reader.Close();
-                                                                }
-                                                                catch
-                                                                {
-                                                                    error = true;
-                                                                    Console.WriteLine("Can not parse XML of: " + fName);
+                                                                    catch
+                                                                    {
+                                                                        error = true;
+                                                                        Console.WriteLine("Can not parse XML of: " + fName);
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -308,7 +347,9 @@ namespace ProductChange
                     }
                     try
                     {
-                        AasxServer.Program.env[0].SaveAs(AasxServer.Program.envFileName[0]);
+                        Console.WriteLine("ImportedCount: " + importedCount);
+                        if (importedCount > 0)
+                            AasxServer.Program.env[0].SaveAs(AasxServer.Program.envFileName[0]);
                     }
                     catch
                     {
@@ -316,8 +357,9 @@ namespace ProductChange
                         error = true;
                     }
                     // if (!error)
-                        // client.Inbox.Expunge();
+                    // client.Inbox.Expunge();
                     client.Disconnect(true);
+                    AasxServer.Program.signalNewData(2);
                 }
             }
             Thread.Sleep(5 * 60 * 1000);
