@@ -45,4 +45,8 @@
   <ItemGroup>
     <Folder Include="wwwroot\images\scottplot\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\Logo IDTA_LinkedIn.jpg" />
+  </ItemGroup>
 </Project>
