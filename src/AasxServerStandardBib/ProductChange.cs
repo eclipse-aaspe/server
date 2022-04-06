@@ -92,15 +92,54 @@ namespace ProductChange
                 // using (var client = new ImapClient(new ProtocolLogger("imap.log")))
                 using (var client = new ImapClient())
                 {
-                    client.Connect("imap.strato.de", 993, SecureSocketOptions.SslOnConnect);
+                    string emailAddress = "";
+                    string username = "";
+                    string password = "";
+                    string emailFile = "email.txt";
+                    if (File.Exists(emailFile))
+                    {
+                        try
+                        {   // Open the text file using a stream reader.
+                            using (StreamReader sr = new StreamReader(emailFile))
+                            {
+                                emailFile = sr.ReadLine();
+                            }
+                        }
+                        catch (IOException e)
+                        {
+                            Console.WriteLine("email.txt could not be read:");
+                            Console.WriteLine(e.Message);
+                            return;
+                        }
+                    }
 
-                    client.Authenticate("pcn@orzelski.de", "VWmQHE2kJnxsLAb9k0FC");
+                    if (File.Exists(emailFile))
+                    {
+                        Console.WriteLine("Read email login data: " + emailFile);
+                        try
+                        {   // Open the text file using a stream reader.
+                            using (StreamReader sr = new StreamReader(emailFile))
+                            {
+                                emailAddress = sr.ReadLine();
+                                username = sr.ReadLine();
+                                password = sr.ReadLine();
+                            }
+                        }
+                        catch (IOException e)
+                        {
+                            Console.WriteLine("The file " + emailFile + " could not be read:");
+                            Console.WriteLine(e.Message);
+                            return;
+                        }
+                    }
 
+                    client.Connect(emailAddress, 993, SecureSocketOptions.SslOnConnect);
+                    client.Authenticate(username, password);
                     client.Inbox.Open(FolderAccess.ReadWrite);
 
                     var uids = client.Inbox.Search(SearchQuery.All);
-                    bool error = false;
                     int importedCount = 0;
+                    bool error = false;
 
                     foreach (var uid in uids)
                     {
