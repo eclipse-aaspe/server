@@ -51,6 +51,8 @@ namespace AasxServerBlazor
 
             services.AddControllers();
 
+            services.AddTransient<IAASXFileServerInterfaceService, AASXFileServerInterfaceService>();
+
             // Add framework services.
             services
                 .AddMvc(options =>

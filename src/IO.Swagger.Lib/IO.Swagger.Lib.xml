@@ -15,6 +15,57 @@
             </summary>
             <param name="context"></param>
         </member>
+        <member name="T:IO.Swagger.Controllers.AASXFileServerInterfaceApiController">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.#ctor(IO.Swagger.Services.IAASXFileServerInterfaceService)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="fileService">Helper to deal with API calls</param>
+        </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.DeleteAASXByPackageId(System.String)">
+            <summary>
+            Deletes a specific AASX package from the server
+            </summary>
+            <param name="packageId">The Package Id (BASE64-URL-encoded)</param>
+            <response code="204">Deleted successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.GetAASXByPackageId(System.String)">
+            <summary>
+            Returns a specific AASX package from the server
+            </summary>
+            <param name="packageId">The package Id (BASE64-URL-encoded)</param>
+            <response code="200">Requested AASX package</response>
+        </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.GetAllAASXPackageIds(System.String)">
+            <summary>
+            Returns a list of available AASX packages at the server
+            </summary>
+            <param name="aasId">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="200">Requested package list</response>
+        </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.PutAASXPackageById(System.String,System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
+            <summary>
+            Updates the AASX package at the server
+            </summary>
+            <param name="packageId">Package ID from the package list (BASE64-URL-encoded)</param>
+            <param name="fileName">AASX Package Name</param>
+            <param name="file">AASX Package</param>
+            <param name="aasIds">Included AAS Identifiers</param>
+            <returns></returns>
+        </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.PostAASXPackage(System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
+            <summary>
+            Creates an AASX package at the server
+            </summary>
+            <param name="fileName">Filename of the AASX package</param>
+            <param name="aasIds">Included AAS Ids</param>
+            <param name="file">AASX PAckage</param>
+            <returns></returns>
+        </member>
         <member name="T:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController">
             <summary>
             
@@ -3476,6 +3527,53 @@
             </summary>
             <returns>Hash code</returns>
         </member>
+        <member name="T:IO.Swagger.Models.PackageDescription">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Models.PackageDescription.AasIds">
+            <summary>
+            Gets or Sets AasIds
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Models.PackageDescription.PackageId">
+            <summary>
+            Gets or Sets PackageId
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Models.PackageDescription.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Models.PackageDescription.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Models.PackageDescription.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Models.PackageDescription.Equals(IO.Swagger.Models.PackageDescription)">
+            <summary>
+            Returns true if PackageDescription instances are equal
+            </summary>
+            <param name="other">Instance of PackageDescription to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Models.PackageDescription.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
         <member name="T:IO.Swagger.Models.Permission">
             <summary>
             
@@ -4935,6 +5033,100 @@
             Gets the hash code
             </summary>
             <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Services.AASXFileServerInterfaceService">
+            <summary>
+            This is a helper class to deal with "AASX File Server Interface" defines in "Details of Asset Administration Shell Part 2, section 4.5"
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.DeleteAASXByPackageId(System.String)">
+            <summary>
+            Deletes a specific AASX package from the server
+            </summary>
+            <returns>True, if successfully deleted</returns>
+        </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.GetAASXByPackageId(System.String,System.Byte[]@,System.String@,System.Int64@)">
+            <summary>
+            Returns a specific AASX package from the server
+            </summary>
+            <param name="packageId">Package index of the found package</param>
+            <param name="byteArray">File content</param>
+            <param name="fileName">File Name</param>
+            <param name="fileSize">Size of the file</param>
+            <returns></returns>
+        </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.GetAllAASXPackageIds">
+            <summary>
+            Returns a list of available AASX packages at the server
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.PostAASXPackage(System.Byte[],System.String,System.Int32@)">
+            <summary>
+            Creates an AASX package at the server
+            </summary>
+            <param name="fileContent">New AASX package</param>
+            <param name="fileName">Filename of the AASX package</param>
+            <param name="packageIndex">package index at which the new package is added</param>
+            <returns></returns>
+        </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.PutAASXPackageById(System.String,System.Byte[],System.String)">
+            <summary>
+            Updates the AASX package at the server
+            </summary>
+            <param name="packageId">Package ID from the package list</param>
+            <param name="fileContent">New AASX package</param>
+            <param name="newFileName">Filename of the AASX package</param>
+            <returns></returns>
+        </member>
+        <member name="T:IO.Swagger.Services.IAASXFileServerInterfaceService">
+            <summary>
+            An interface to deal with "AASX File Server Interface" defines in "Details of Asset Administration Shell Part 2, section 4.5"
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Services.IAASXFileServerInterfaceService.GetAllAASXPackageIds">
+            <summary>
+            Returns a list of available AASX packages at the server
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Services.IAASXFileServerInterfaceService.GetAASXByPackageId(System.String,System.Byte[]@,System.String@,System.Int64@)">
+            <summary>
+            Returns a specific AASX package from the server
+            </summary>
+            <param name="packageId">Package Index of the requested package</param>
+            <param name="byteArray">File content</param>
+            <param name="fileName">File Name</param>
+            <param name="fileSize">File size</param>
+            <returns>PackageBody</returns>
+            //TODO:May need to remove Package Body
+        </member>
+        <member name="M:IO.Swagger.Services.IAASXFileServerInterfaceService.DeleteAASXByPackageId(System.String)">
+            <summary>
+            Deletes a specific AASX package from the server
+            </summary>
+            <returns>True id successfully deleted</returns>
+        </member>
+        <member name="M:IO.Swagger.Services.IAASXFileServerInterfaceService.PutAASXPackageById(System.String,System.Byte[],System.String)">
+            <summary>
+            Updates the AASX package at the server
+            </summary>
+            <param name="packageId">Package ID from the package list</param>
+            <param name="fileContent">New AASX package</param>
+            <param name="fileName">Filename of the AASX package</param>
+            <returns></returns>
+        </member>
+        <member name="M:IO.Swagger.Services.IAASXFileServerInterfaceService.PostAASXPackage(System.Byte[],System.String,System.Int32@)">
+            <summary>
+            Creates an AASX package at the server
+            </summary>
+            <param name="fileContent">New AASX package</param>
+            <param name="fileName">Filename of the AASX package</param>
+            <param name="packageIndex">package index at which the new package is added</param>
+            <returns></returns>
         </member>
         <member name="T:IO.Swagger.Services.IUserService">
             <summary>
