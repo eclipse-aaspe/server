@@ -84,6 +84,8 @@ namespace ProductChange
                         }
                     }
                 }
+                if (pcnEnv == null || pcnSub == null || imported == null)
+                    return;
 
                 if (!Directory.Exists("./pcn"))
                 {
