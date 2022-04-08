@@ -3435,7 +3435,7 @@ namespace AasxRestServerLibrary
             return accessrights;
         }
 
-        public void EvalGetListAAS(IHttpContext context)
+        public void EvalGetListAAS(IHttpContext context, bool withasset = false)
         {
             dynamic res = new ExpandoObject();
             int index = -1;
@@ -3468,10 +3468,17 @@ namespace AasxRestServerLibrary
 
                     if (addEntry)
                     {
-                        aaslist.Add(i.ToString() + " : "
+                        string s = i.ToString() + " : "
                             + idshort + " : "
                             + aas.identification + " : "
-                            + AasxServer.Program.envFileName[i]);
+                            + AasxServer.Program.envFileName[i];
+                        if (withasset)
+                        {
+                            var asset = Program.env[i].AasEnv.FindAsset(aas.assetRef);
+                            s += " : " + asset.identification.id;
+                            s += " : " + asset.kind.kind;
+                        }
+                        aaslist.Add(s);
                     }
                 }
             }

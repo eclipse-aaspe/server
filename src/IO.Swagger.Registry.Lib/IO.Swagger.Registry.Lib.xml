@@ -1,0 +1,974 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IO.Swagger.Registry</name>
+    </assembly>
+    <members>
+        <member name="T:IO.Swagger.Registry.Attributes.ValidateModelStateAttribute">
+            <summary>
+            Model state validation attribute
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Attributes.ValidateModelStateAttribute.OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext)">
+            <summary>
+            Called before the action method is invoked
+            </summary>
+            <param name="context"></param>
+        </member>
+        <member name="T:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.DeleteAllAssetLinksById(System.String)">
+            <summary>
+            Deletes all Asset identifier key-value-pair linked to an Asset Administration Shell to edit discoverable content
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="204">Asset identifier key-value-pairs deleted successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.DeleteAssetAdministrationShellDescriptorById(System.String)">
+            <summary>
+            Deletes an Asset Administration Shell Descriptor, i.e. de-registers an AAS
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="204">Asset Administration Shell Descriptor deleted successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.DeleteSubmodelDescriptorById(System.String,System.String)">
+            <summary>
+            Deletes a Submodel Descriptor, i.e. de-registers a submodel
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <param name="submodelIdentifier">The Submodel’s unique id (BASE64-URL-encoded)</param>
+            <response code="204">Submodel Descriptor deleted successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetAdministrationShellDescriptors(System.String)">
+            <summary>
+            Returns all Asset Administration Shell Descriptors
+            </summary>
+            <response code="200">Requested Asset Administration Shell Descriptors</response>
+            <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetAdministrationShellIdsByAssetLink(System.Collections.Generic.List{IO.Swagger.Registry.Models.IdentifierKeyValuePair},System.String)">
+            <summary>
+            Returns a list of Asset Administration Shell ids based on Asset identifier key-value-pairs
+            </summary>
+            <param name="assetIds">The key-value-pair of an Asset identifier (BASE64-URL-encoded JSON-serialized key-value-pairs)</param>
+            <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
+            <response code="200">Requested Asset Administration Shell ids</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllAssetLinksById(System.String)">
+            <summary>
+            Returns a list of Asset identifier key-value-pairs based on an Asset Administration Shell id to edit discoverable content
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="200">Requested Asset identifier key-value-pairs</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAllSubmodelDescriptors(System.String)">
+            <summary>
+            Returns all Submodel Descriptors
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="200">Requested Submodel Descriptors</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetAssetAdministrationShellDescriptorById(System.String)">
+            <summary>
+            Returns a specific Asset Administration Shell Descriptor
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="200">Requested Asset Administration Shell Descriptor</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.GetSubmodelDescriptorById(System.String,System.String)">
+            <summary>
+            Returns a specific Submodel Descriptor
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <param name="submodelIdentifier">The Submodel’s unique id (BASE64-URL-encoded)</param>
+            <response code="200">Requested Submodel Descriptor</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PostAllAssetLinksById(System.Collections.Generic.List{IO.Swagger.Registry.Models.IdentifierKeyValuePair},System.String)">
+            <summary>
+            Creates all Asset identifier key-value-pair linked to an Asset Administration Shell to edit discoverable content
+            </summary>
+            <param name="body">Asset identifier key-value-pairs</param>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="201">Asset identifier key-value-pairs created successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PostAssetAdministrationShellDescriptor(IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor)">
+            <summary>
+            Creates a new Asset Administration Shell Descriptor, i.e. registers an AAS
+            </summary>
+            <param name="body">Asset Administration Shell Descriptor object</param>
+            <response code="201">Asset Administration Shell Descriptor created successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PostSubmodelDescriptor(IO.Swagger.Registry.Models.SubmodelDescriptor,System.String)">
+            <summary>
+            Creates a new Submodel Descriptor, i.e. registers a submodel
+            </summary>
+            <param name="body">Submodel Descriptor object</param>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="201">Submodel Descriptor created successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PutAssetAdministrationShellDescriptorById(IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor,System.String)">
+            <summary>
+            Updates an existing Asset Administration Shell Descriptor
+            </summary>
+            <param name="body">Asset Administration Shell Descriptor object</param>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="204">Asset Administration Shell Descriptor updated successfully</response>
+        </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PutSubmodelDescriptorById(IO.Swagger.Registry.Models.SubmodelDescriptor,System.String,System.String)">
+            <summary>
+            Updates an existing Submodel Descriptor
+            </summary>
+            <param name="body">Submodel Descriptor object</param>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <param name="submodelIdentifier">The Submodel’s unique id (BASE64-URL-encoded)</param>
+            <response code="204">Submodel Descriptor updated successfully</response>
+        </member>
+        <member name="T:IO.Swagger.Registry.Filters.BasePathFilter">
+            <summary>
+            BasePath Document Filter sets BasePath property of Swagger and removes it from the individual URL paths
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Filters.BasePathFilter.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="basePath">BasePath to remove from Operations</param>
+        </member>
+        <member name="P:IO.Swagger.Registry.Filters.BasePathFilter.BasePath">
+            <summary>
+            Gets the BasePath of the Swagger Doc
+            </summary>
+            <returns>The BasePath of the Swagger Doc</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Filters.BasePathFilter.Apply(Microsoft.OpenApi.Models.OpenApiDocument,Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext)">
+            <summary>
+            Apply the filter
+            </summary>
+            <param name="swaggerDoc">OpenApiDocument</param>
+            <param name="context">FilterContext</param>
+        </member>
+        <member name="T:IO.Swagger.Registry.Filters.GeneratePathParamsValidationFilter">
+            <summary>
+            Path Parameter Validation Rules Filter
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Filters.GeneratePathParamsValidationFilter.Apply(Microsoft.OpenApi.Models.OpenApiOperation,Swashbuckle.AspNetCore.SwaggerGen.OperationFilterContext)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="operation">Operation</param>
+            <param name="context">OperationFilterContext</param>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.AdministrativeInformation">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AdministrativeInformation.Revision">
+            <summary>
+            Gets or Sets Revision
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AdministrativeInformation.Version">
+            <summary>
+            Gets or Sets Version
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AdministrativeInformation.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AdministrativeInformation.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AdministrativeInformation.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AdministrativeInformation.Equals(IO.Swagger.Registry.Models.AdministrativeInformation)">
+            <summary>
+            Returns true if AdministrativeInformation instances are equal
+            </summary>
+            <param name="other">Instance of AdministrativeInformation to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AdministrativeInformation.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.Administration">
+            <summary>
+            Gets or Sets Administration
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.Description">
+            <summary>
+            Gets or Sets Description
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.GlobalAssetId">
+            <summary>
+            Gets or Sets GlobalAssetId
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.IdShort">
+            <summary>
+            Gets or Sets IdShort
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.Identification">
+            <summary>
+            Gets or Sets Identification
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.SpecificAssetIds">
+            <summary>
+            Gets or Sets SpecificAssetIds
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.SubmodelDescriptors">
+            <summary>
+            Gets or Sets SubmodelDescriptors
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.Equals(IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor)">
+            <summary>
+            Returns true if AssetAdministrationShellDescriptor instances are equal
+            </summary>
+            <param name="other">Instance of AssetAdministrationShellDescriptor to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.Descriptor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.Descriptor.Endpoints">
+            <summary>
+            Gets or Sets Endpoints
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Descriptor.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Descriptor.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Descriptor.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Descriptor.Equals(IO.Swagger.Registry.Models.Descriptor)">
+            <summary>
+            Returns true if Descriptor instances are equal
+            </summary>
+            <param name="other">Instance of Descriptor to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Descriptor.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.Endpoint">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.Endpoint.Interface">
+            <summary>
+            Gets or Sets Interface
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.Endpoint.ProtocolInformation">
+            <summary>
+            Gets or Sets ProtocolInformation
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Endpoint.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Endpoint.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Endpoint.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Endpoint.Equals(IO.Swagger.Registry.Models.Endpoint)">
+            <summary>
+            Returns true if Endpoint instances are equal
+            </summary>
+            <param name="other">Instance of Endpoint to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Endpoint.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.GlobalReference">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.GlobalReference.Value">
+            <summary>
+            Gets or Sets Value
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.GlobalReference.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.GlobalReference.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.GlobalReference.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.GlobalReference.Equals(IO.Swagger.Registry.Models.GlobalReference)">
+            <summary>
+            Returns true if GlobalReference instances are equal
+            </summary>
+            <param name="other">Instance of GlobalReference to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.GlobalReference.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.HasSemantics">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.HasSemantics.SemanticId">
+            <summary>
+            Gets or Sets SemanticId
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.HasSemantics.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.HasSemantics.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.HasSemantics.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.HasSemantics.Equals(IO.Swagger.Registry.Models.HasSemantics)">
+            <summary>
+            Returns true if HasSemantics instances are equal
+            </summary>
+            <param name="other">Instance of HasSemantics to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.HasSemantics.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.IdentifierKeyValuePair">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.IdentifierKeyValuePair.Key">
+            <summary>
+            Gets or Sets Key
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.IdentifierKeyValuePair.SubjectId">
+            <summary>
+            Gets or Sets SubjectId
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.IdentifierKeyValuePair.Value">
+            <summary>
+            Gets or Sets Value
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.IdentifierKeyValuePair.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.IdentifierKeyValuePair.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.IdentifierKeyValuePair.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.IdentifierKeyValuePair.Equals(IO.Swagger.Registry.Models.IdentifierKeyValuePair)">
+            <summary>
+            Returns true if IdentifierKeyValuePair instances are equal
+            </summary>
+            <param name="other">Instance of IdentifierKeyValuePair to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.IdentifierKeyValuePair.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.Key">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.Key.Type">
+            <summary>
+            Gets or Sets Type
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.Key.Value">
+            <summary>
+            Gets or Sets Value
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Key.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Key.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Key.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Key.Equals(IO.Swagger.Registry.Models.Key)">
+            <summary>
+            Returns true if Key instances are equal
+            </summary>
+            <param name="other">Instance of Key to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Key.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.KeyElements">
+            <summary>
+            Gets or Sets KeyElements
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.AssetAdministrationShellEnum">
+            <summary>
+            Enum AssetAdministrationShellEnum for AssetAdministrationShell
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.AccessPermissionRuleEnum">
+            <summary>
+            Enum AccessPermissionRuleEnum for AccessPermissionRule
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.ConceptDescriptionEnum">
+            <summary>
+            Enum ConceptDescriptionEnum for ConceptDescription
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.SubmodelEnum">
+            <summary>
+            Enum SubmodelEnum for Submodel
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.AnnotatedRelationshipElementEnum">
+            <summary>
+            Enum AnnotatedRelationshipElementEnum for AnnotatedRelationshipElement
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.BasicEventEnum">
+            <summary>
+            Enum BasicEventEnum for BasicEvent
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.BlobEnum">
+            <summary>
+            Enum BlobEnum for Blob
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.CapabilityEnum">
+            <summary>
+            Enum CapabilityEnum for Capability
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.DataElementEnum">
+            <summary>
+            Enum DataElementEnum for DataElement
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.FileEnum">
+            <summary>
+            Enum FileEnum for File
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.EntityEnum">
+            <summary>
+            Enum EntityEnum for Entity
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.EventEnum">
+            <summary>
+            Enum EventEnum for Event
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.MultiLanguagePropertyEnum">
+            <summary>
+            Enum MultiLanguagePropertyEnum for MultiLanguageProperty
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.OperationEnum">
+            <summary>
+            Enum OperationEnum for Operation
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.PropertyEnum">
+            <summary>
+            Enum PropertyEnum for Property
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.RangeEnum">
+            <summary>
+            Enum RangeEnum for Range
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.ReferenceElementEnum">
+            <summary>
+            Enum ReferenceElementEnum for ReferenceElement
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.RelationshipElementEnum">
+            <summary>
+            Enum RelationshipElementEnum for RelationshipElement
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.SubmodelElementEnum">
+            <summary>
+            Enum SubmodelElementEnum for SubmodelElement
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.SubmodelElementListEnum">
+            <summary>
+            Enum SubmodelElementListEnum for SubmodelElementList
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.SubmodelElementStructEnum">
+            <summary>
+            Enum SubmodelElementStructEnum for SubmodelElementStruct
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.ViewEnum">
+            <summary>
+            Enum ViewEnum for View
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Registry.Models.KeyElements.FragmentReferenceEnum">
+            <summary>
+            Enum FragmentReferenceEnum for FragmentReference
+            </summary>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.LangString">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.LangString.Language">
+            <summary>
+            Gets or Sets Language
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.LangString.Text">
+            <summary>
+            Gets or Sets Text
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.LangString.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.LangString.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.LangString.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.LangString.Equals(IO.Swagger.Registry.Models.LangString)">
+            <summary>
+            Returns true if LangString instances are equal
+            </summary>
+            <param name="other">Instance of LangString to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.LangString.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.ModelReference">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ModelReference.ReferredSemanticId">
+            <summary>
+            Gets or Sets ReferredSemanticId
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ModelReference.Keys">
+            <summary>
+            Gets or Sets Keys
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ModelReference.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ModelReference.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ModelReference.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ModelReference.Equals(IO.Swagger.Registry.Models.ModelReference)">
+            <summary>
+            Returns true if ModelReference instances are equal
+            </summary>
+            <param name="other">Instance of ModelReference to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ModelReference.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.OneOfReference">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.OneOfReference.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.OneOfReference.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.OneOfReference.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.OneOfReference.Equals(IO.Swagger.Registry.Models.OneOfReference)">
+            <summary>
+            Returns true if OneOfReference instances are equal
+            </summary>
+            <param name="other">Instance of OneOfReference to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.OneOfReference.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.ProtocolInformation">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ProtocolInformation.EndpointAddress">
+            <summary>
+            Gets or Sets EndpointAddress
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ProtocolInformation.EndpointProtocol">
+            <summary>
+            Gets or Sets EndpointProtocol
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ProtocolInformation.EndpointProtocolVersion">
+            <summary>
+            Gets or Sets EndpointProtocolVersion
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ProtocolInformation.Subprotocol">
+            <summary>
+            Gets or Sets Subprotocol
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ProtocolInformation.SubprotocolBody">
+            <summary>
+            Gets or Sets SubprotocolBody
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.ProtocolInformation.SubprotocolBodyEncoding">
+            <summary>
+            Gets or Sets SubprotocolBodyEncoding
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ProtocolInformation.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ProtocolInformation.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ProtocolInformation.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ProtocolInformation.Equals(IO.Swagger.Registry.Models.ProtocolInformation)">
+            <summary>
+            Returns true if ProtocolInformation instances are equal
+            </summary>
+            <param name="other">Instance of ProtocolInformation to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.ProtocolInformation.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.Reference">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Reference.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Reference.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Reference.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Reference.Equals(IO.Swagger.Registry.Models.Reference)">
+            <summary>
+            Returns true if Reference instances are equal
+            </summary>
+            <param name="other">Instance of Reference to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.Reference.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+        <member name="T:IO.Swagger.Registry.Models.SubmodelDescriptor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.Administration">
+            <summary>
+            Gets or Sets Administration
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.Description">
+            <summary>
+            Gets or Sets Description
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.IdShort">
+            <summary>
+            Gets or Sets IdShort
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.Identification">
+            <summary>
+            Gets or Sets Identification
+            </summary>
+        </member>
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.SemanticId">
+            <summary>
+            Gets or Sets SemanticId
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.SubmodelDescriptor.ToString">
+            <summary>
+            Returns the string presentation of the object
+            </summary>
+            <returns>String presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.SubmodelDescriptor.ToJson">
+            <summary>
+            Returns the JSON string presentation of the object
+            </summary>
+            <returns>JSON string presentation of the object</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.SubmodelDescriptor.Equals(System.Object)">
+            <summary>
+            Returns true if objects are equal
+            </summary>
+            <param name="obj">Object to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.SubmodelDescriptor.Equals(IO.Swagger.Registry.Models.SubmodelDescriptor)">
+            <summary>
+            Returns true if SubmodelDescriptor instances are equal
+            </summary>
+            <param name="other">Instance of SubmodelDescriptor to be compared</param>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:IO.Swagger.Registry.Models.SubmodelDescriptor.GetHashCode">
+            <summary>
+            Gets the hash code
+            </summary>
+            <returns>Hash code</returns>
+        </member>
+    </members>
+</doc>

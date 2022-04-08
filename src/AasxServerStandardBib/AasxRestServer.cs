@@ -171,6 +171,58 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            public static string posttimeseriesPayload = "";
+
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/posttimeseries(/|)$")]
+
+            public IHttpContext posttimeseries(IHttpContext context)
+            {
+                Console.WriteLine("posttimeseries:");
+                posttimeseriesPayload = context.Request.Payload;
+                Console.WriteLine(posttimeseriesPayload);
+
+                context.Response.ContentType = ContentType.HTML;
+                context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+                context.Response.SendResponse("OK");
+                context.Response.StatusCode = Grapevine.Shared.HttpStatusCode.Ok;
+                return context;
+            }
+
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/calculatecfp/aas/([^/]+)(/|)$")]
+
+            public IHttpContext calculatecfp(IHttpContext context)
+            {
+                string restPath = context.Request.PathInfo;
+                int aasIndex = -1;
+                string result = "NONE";
+
+                if (restPath.Contains("/aas/"))
+                {
+                    // specific AAS
+                    string[] split = restPath.Split('/');
+                    if (split[2] == "aas")
+                    {
+                        try
+                        {
+                            if (!int.TryParse(split[3], out aasIndex))
+                                aasIndex = -1;
+                            if (aasIndex >= 0)
+                            {
+                                AasxServer.AasxTask.operation_calculate_cfp(null, aasIndex, DateTime.UtcNow);
+                                result = "OK";
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                context.Response.ContentType = ContentType.HTML;
+                context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+                context.Response.SendResponse(result);
+                context.Response.StatusCode = Grapevine.Shared.HttpStatusCode.Ok;
+                return context;
+            }
+
             public static AasPayloadStructuralChange changeClass = new AasPayloadStructuralChange();
             // public static int eventsCount = 0;
 
@@ -1167,9 +1219,17 @@ namespace AasxRestServerLibrary
 
             // OZ
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listaas(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listasset(/|)$")]
             public IHttpContext GetServerAASX(IHttpContext context)
             {
-                helper.EvalGetListAAS(context);
+                if (context.Request.PathInfo.Contains("listasset"))
+                {
+                    helper.EvalGetListAAS(context, true);
+                }
+                else
+                {
+                    helper.EvalGetListAAS(context);
+                }
                 return context;
             }
 
