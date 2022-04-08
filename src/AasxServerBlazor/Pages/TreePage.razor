@@ -372,7 +372,7 @@
             fromDate = initialFromDate;
             toDate = initialToDate;
             combinedFromDate = initialFromDate;
-            combinedToDate = initialToDate;            
+            combinedToDate = initialToDate;
         }
 
         public void SetFilterStateDay(int offset) {
@@ -386,7 +386,7 @@
             toDate = endOfDay;
             toTime = endOfDay;
             combinedFromDate = day;
-            combinedToDate = endOfDay;   
+            combinedToDate = endOfDay;
         }
 
         public void ResetTimeOfDates()
@@ -1340,7 +1340,8 @@
             return "";
         }
 
-        string ret = "NULL";
+        // string ret = "NULL";
+        string ret = "";
 
         object o = item.Tag;
 
@@ -1361,7 +1362,8 @@
             switch (line)
             {
                 case 0:
-                    ret = "ID";
+                    if (col == 0)
+                        ret = "ID";
                     if (col == 1)
                         ret = aas.identification + "";
                     if (col == 2)
@@ -1370,7 +1372,8 @@
                 case 1:
                     if (asset != null)
                     {
-                        ret = "ASSET";
+                        if (col == 0)
+                            ret = "ASSET";
                         if (col == 1)
                             ret = asset.idShort;
                     }
@@ -1378,7 +1381,8 @@
                 case 2:
                     if (asset != null)
                     {
-                        ret = "ASSETID";
+                        if (col == 0)
+                            ret = "ASSETID";
                         if (col == 1)
                             ret = asset.identification + "";
                         if (col == 2)
@@ -1388,7 +1392,8 @@
                 case 3:
                     if (asset != null)
                     {
-                        ret = "ASSETID URLENCODED";
+                        if (col == 0)
+                            ret = "ASSETID URLENCODED";
                         if (col == 1)
                         {
                             string url = WebUtility.UrlEncode(asset.identification.id);
@@ -1438,17 +1443,20 @@
         if (o is Submodel)
         {
             var sm = o as Submodel;
+            ret = "";
             switch (line)
             {
                 case 0:
-                    ret = "ID";
+                    if (col == 0)
+                        ret = "ID";
                     if (col == 1)
                         ret = sm.identification + "";
                     if (col == 2)
                         ret = " ==> " + Base64UrlEncoder.Encode(sm.identification.id) + "";
                     break;
                 case 1:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1460,7 +1468,8 @@
                     }
                     break;
                 case 2:
-                    ret = getQualifiers(sm.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(sm.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1508,10 +1517,12 @@
                         ret = prop.value + "";
                     break;
                 case 3:
-                    ret = getQualifiers(prop.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(prop.qualifiers, col);
                     break;
                 case 4:
-                    ret = getUnit(item, prop, col);
+                    if (col == 0)
+                        ret = getUnit(item, prop, col);
                     break;
                 case 5:
                 case 6:
@@ -1527,11 +1538,12 @@
         if (o is Entity)
         {
             var e = o as Entity;
-            ret += ", " + e.entityType;
+            // ret += ", " + e.entityType;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1543,7 +1555,8 @@
                     }
                     break;
                 case 1:
-                    ret = "Entity Type";
+                    if (col == 0)
+                        ret = "Entity Type";
                     if (col == 1)
                         ret = e.entityType + "";
                     break;
@@ -1553,7 +1566,8 @@
                     {
                         if (e.assetRef != null)
                         {
-                            ret = "Asset";
+                            if (col == 0)
+                                ret = "Asset";
                             if (col == 1)
                             {
                                 var k = e.assetRef.Keys;
@@ -1566,7 +1580,8 @@
                     }
                     break;
                 case 3:
-                    ret = getQualifiers(e.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(e.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1583,11 +1598,12 @@
         if (o is AdminShellNS.AdminShellV20.File)
         {
             var f = o as AdminShellNS.AdminShellV20.File;
-            ret += ", " + f.value;
+            // ret += ", " + f.value;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1599,12 +1615,14 @@
                     }
                     break;
                 case 1:
-                    ret = "Value";
+                    if (col == 0)
+                        ret = "Value";
                     if (col == 1)
                         ret = f.value;
                     break;
                 case 2:
-                    ret = getQualifiers(f.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(f.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1622,10 +1640,12 @@
         if (o is Blob)
         {
             var b = o as Blob;
+            ret = "";
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1637,17 +1657,20 @@
                     }
                     break;
                 case 1:
-                    ret = "MimeType";
+                    if (col == 0)
+                        ret = "MimeType";
                     if (col == 1)
                         ret = b.mimeType;
                     break;
                 case 2:
-                    ret = "Value";
+                    if (col == 0)
+                        ret = "Value";
                     if (col == 1)
                         ret = b.value;
                     break;
                 case 3:
-                    ret = getQualifiers(b.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(b.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1664,11 +1687,12 @@
         if (o is AdminShellNS.AdminShellV20.Range)
         {
             var r = o as AdminShellNS.AdminShellV20.Range;
-            ret = r.idShort;
+            // ret = r.idShort;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1680,20 +1704,24 @@
                     }
                     break;
                 case 1:
-                    ret = "Min";
+                    if (col == 0)
+                        ret = "Min";
                     if (col == 1)
                         ret = r.min + "";
                     break;
                 case 2:
-                    ret = "Max";
+                    if (col == 0)
+                        ret = "Max";
                     if (col == 1)
                         ret = r.max + "";
                     break;
                 case 3:
-                    ret = getQualifiers(r.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 4:
-                    ret = getUnit(item, r, col);
+                    if (col == 0)
+                        ret = getUnit(item, r, col);
                     break;
                 case 5:
                 case 6:
@@ -1709,11 +1737,12 @@
         if (o is Operation)
         {
             var op = o as Operation;
-            ret = op.idShort;
+            // ret = op.idShort;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1725,7 +1754,8 @@
                     }
                     break;
                 case 1:
-                    ret = "CountInputs";
+                    if (col == 0)
+                        ret = "CountInputs";
                     if (col == 1)
                     {
                         ret = "0";
@@ -1736,7 +1766,8 @@
                     }
                     break;
                 case 2:
-                    ret = "CountOutputs";
+                    if (col == 0)
+                        ret = "CountOutputs";
                     if (col == 1)
                     {
                         ret = "0";
@@ -1747,7 +1778,8 @@
                     }
                     break;
                 case 3:
-                    ret = getQualifiers(op.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(op.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1764,11 +1796,12 @@
         if (o is RelationshipElement)
         {
             var r = o as RelationshipElement;
-            ret = r.idShort;
+            // ret = r.idShort;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1780,7 +1813,8 @@
                     }
                     break;
                 case 1:
-                    ret = "First";
+                    if (col == 0)
+                        ret = "First";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1792,7 +1826,8 @@
                     }
                     break;
                 case 2:
-                    ret = "Second";
+                    if (col == 0)
+                        ret = "Second";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1804,7 +1839,8 @@
                     }
                     break;
                 case 3:
-                    ret = getQualifiers(r.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1821,11 +1857,12 @@
         if (o is ReferenceElement)
         {
             var r = o as ReferenceElement;
-            ret = r.idShort;
+            // ret = r.idShort;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1837,7 +1874,8 @@
                     }
                     break;
                 case 1:
-                    ret = "Value";
+                    if (col == 0)
+                        ret = "Value";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1852,7 +1890,8 @@
                     }
                     break;
                 case 2:
-                    ret = getQualifiers(r.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1878,7 +1917,8 @@
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1896,13 +1936,15 @@
                     ret = "";
                     if (ls.Count > line - 1)
                     {
-                        ret = ls.langString[line - 1].lang;
+                        if (col == 0)
+                            ret = ls.langString[line - 1].lang;
                         if (col == 1)
                             ret = ls.langString[line - 1].str + "";
                     }
                     break;
                 case 5:
-                    ret = getQualifiers(mlp.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(mlp.qualifiers, col);
                     break;
                 case 6:
                 case 7:
@@ -1917,11 +1959,12 @@
         if (o is SubmodelElement)
         {
             var sme = o as SubmodelElement;
-            ret = sme.idShort + ", " + sme.semanticId;
+            // ret = sme.idShort + ", " + sme.semanticId;
             switch (line)
             {
                 case 0:
-                    ret = "Semantic ID";
+                    if (col == 0)
+                        ret = "Semantic ID";
                     if (col == 1)
                     {
                         ret = "NULL";
@@ -1933,7 +1976,8 @@
                     }
                     break;
                 case 1:
-                    ret = getQualifiers(sme.qualifiers, col);
+                    if (col == 0)
+                        ret = getQualifiers(sme.qualifiers, col);
                     break;
                 case 2:
                 case 3:
