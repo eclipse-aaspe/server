@@ -25,6 +25,16 @@
       },
       "applicationUrl": "http://localhost:5001",
       "jsWebView2Debugging": true
+    },
+    "TestRestApi": {
+      "commandName": "Project",
+      "commandLineArgs": "--aspnet --no-security --data-path \"..\\..\\test\\rest_api\\data\" --edit --external-blazor http://localhost:5001",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:5001",
+      "jsWebView2Debugging": true
     }
   }
 }

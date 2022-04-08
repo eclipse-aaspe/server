@@ -301,9 +301,8 @@
 								},
 								{
 									"key": "extent",
-									"value": "withBlob",
-									"description": "Determines to which extent the resource is being serialized",
-									"disabled": true
+									"value": "withBlobValue",
+									"description": "Determines to which extent the resource is being serialized"
 								}
 							],
 							"variable": [
