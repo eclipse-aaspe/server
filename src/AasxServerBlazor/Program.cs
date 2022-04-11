@@ -45,8 +45,8 @@ namespace AasxServerBlazor
                 {
                     webBuilder
                         .UseStartup<Startup>()
-                        //TODO CHECK why is a manuel override used? server does not uses same port consistently (sometimes 5000, sometimes port specified in appconfig.json) across different platforms
-                        //.UseUrls("http://*:5000")
+                    //TODO CHECK why is a manuel override used? server does not uses same port consistently (sometimes 5000, sometimes port specified in appconfig.json) across different platforms
+                    //.UseUrls("http://*:5000")
                     /*
                     .UseKestrel(options =>
                     {

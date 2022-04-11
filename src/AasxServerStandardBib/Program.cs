@@ -474,7 +474,8 @@ namespace AasxServer
                     }
                     envi++;
                 }
-            } else
+            }
+            else
             {
                 Console.WriteLine($"AASX Data Path does not exist. \n\tCurrent Dir\t{Directory.GetCurrentDirectory()}\n\tAASX Data Path\t{AasxHttpContextHelper.DataPath}");
                 throw new Exception("Invalid AASX Data Path.");
