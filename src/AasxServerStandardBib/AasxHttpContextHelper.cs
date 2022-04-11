@@ -553,6 +553,8 @@ namespace AasxRestServerLibrary
         protected static void SendStreamResponse(IHttpContext context, Stream stream,
             string headerAttachmentFileName = null)
         {
+            AasxRestServer.TestResource.allowCORS(context);
+
             context.Response.ContentType = ContentType.APPLICATION;
             //// context.Response.SendChunked = true;
             context.Response.ContentLength64 = stream.Length;
@@ -566,6 +568,8 @@ namespace AasxRestServerLibrary
 
         protected static void SendRedirectResponse(Grapevine.Interfaces.Server.IHttpContext context, string redirectUrl)
         {
+            AasxRestServer.TestResource.allowCORS(context);
+
             context.Response.AppendHeader("redirectInfo", "URL");
             context.Response.Redirect(redirectUrl);
             context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, redirectUrl);
@@ -661,22 +665,34 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            // return as FILE
             try
             {
-                using (var ms = new MemoryStream())
+                if (PathEndsWith(context, "aasenv"))
                 {
-                    // build a file name
-                    var fn = "aasenv.json";
-                    if (findAasReturn.aas.idShort != null)
-                        fn = findAasReturn.aas.idShort + "." + fn;
-                    // serialize via helper
-                    var jsonwriter = copyenv.SerialiazeJsonToStream(new StreamWriter(ms), leaveJsonWriterOpen: true);
-                    // write out again
-                    ms.Position = 0;
-                    SendStreamResponse(context, ms, Path.GetFileName(fn));
-                    // bit ugly
-                    jsonwriter.Close();
+                    // return as FILE
+                    using (var ms = new MemoryStream())
+                    {
+                        // build a file name
+                        var fn = "aasenv.json";
+                        if (findAasReturn.aas.idShort != null)
+                            fn = findAasReturn.aas.idShort + "." + fn;
+                        // serialize via helper
+                        var jsonwriter = copyenv.SerialiazeJsonToStream(new StreamWriter(ms), leaveJsonWriterOpen: true);
+                        // write out again
+                        ms.Position = 0;
+                        SendStreamResponse(context, ms, Path.GetFileName(fn));
+                        // bit ugly
+                        jsonwriter.Close();
+                    }
+                }
+                if (PathEndsWith(context, "aasenvjson"))
+                {
+                    // result
+                    res.env = copyenv;
+
+                    // return as JSON
+                    var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: true, complete: true);
+                    SendJsonResponse(context, res, cr);
                 }
             }
             catch (Exception ex)
@@ -684,6 +700,8 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot serialize and send aas envioronment: {ex.Message}.");
                 return;
             }
+
+
             context.Response.StatusCode = HttpStatusCode.Ok;
         }
 

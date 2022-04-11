@@ -1094,7 +1094,7 @@ namespace AasxRestServerLibrary
 
             // Basic AAS + Asset 
             //TODO:Imp
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv|/aasenvjson)(/|)$")]
 
             public IHttpContext GetAasAndAsset(IHttpContext context)
             {
@@ -1111,7 +1111,7 @@ namespace AasxRestServerLibrary
                         helper.EvalGetAasThumbnail(context, m.Groups[1].ToString());
                     }
                     else
-                    if (helper.PathEndsWith(context, "aasenv"))
+                    if (helper.PathEndsWith(context, "aasenv") || helper.PathEndsWith(context, "aasenvjson"))
                     {
                         helper.EvalGetAasEnv(context, m.Groups[1].ToString());
                     }
