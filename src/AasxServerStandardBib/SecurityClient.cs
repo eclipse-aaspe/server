@@ -224,7 +224,7 @@ namespace AasxServer
                 var inputRef = input.value.submodelElement;
                 if (!(inputRef is AdminShell.ReferenceElement))
                     return;
-                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
                 if (refElement is AdminShell.SubmodelElementCollection re)
                     smec = re;
             }
@@ -471,7 +471,7 @@ namespace AasxServer
                 }
                 if (inputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                     if (refElement is AdminShell.Submodel)
@@ -515,7 +515,7 @@ namespace AasxServer
                 }
                 if (outputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                     if (refElement is AdminShell.Submodel)
@@ -695,17 +695,17 @@ namespace AasxServer
                             receiveSubmodel.SetAllParents(timeStamp);
 
                             // need id for idempotent behaviour
-                            if (receiveSubmodel.identification == null || receiveSubmodel.identification.id != elementSubmodel.identification.id)
+                            if (receiveSubmodel.id == null || receiveSubmodel.id.value != elementSubmodel.id.value)
                                 return;
 
-                            var aas = Program.env[envIndex].AasEnv.FindAASwithSubmodel(receiveSubmodel.identification);
+                            var aas = Program.env[envIndex].AasEnv.FindAASwithSubmodel(receiveSubmodel.id);
 
                             // datastructure update
                             if (Program.env == null || Program.env[envIndex].AasEnv == null || Program.env[envIndex].AasEnv.Assets == null)
                                 return;
 
                             // add Submodel
-                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodel(receiveSubmodel.identification);
+                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodel(receiveSubmodel.id);
                             if (existingSm != null)
                                 Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
                             Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
@@ -1041,7 +1041,7 @@ namespace AasxServer
                 }
                 if (inputRef is AdminShell.ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
                     if (refElement is AdminShell.SubmodelElementCollection)
                         smec = refElement as AdminShell.SubmodelElementCollection;
                 }

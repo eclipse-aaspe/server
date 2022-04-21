@@ -5,7 +5,9 @@ using AdminShellNS;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using static AdminShellNS.AdminShellV20;
+using static AdminShellNS.AdminShellV30;
+using Range = AdminShellNS.AdminShellV30.Range;
+//using static AdminShellNS.AdminShellV20;
 
 namespace IO.Swagger.Helpers
 {
@@ -101,8 +103,8 @@ namespace IO.Swagger.Helpers
                     AddToExcludingProperties(typeof(Property), "valueId");
                     AddToExcludingProperties(typeof(MultiLanguageProperty), "value");
                     AddToExcludingProperties(typeof(MultiLanguageProperty), "valueId");
-                    AddToExcludingProperties(typeof(AdminShellV20.Range), "min");
-                    AddToExcludingProperties(typeof(AdminShellV20.Range), "max");
+                    AddToExcludingProperties(typeof(Range), "min");
+                    AddToExcludingProperties(typeof(Range), "max");
                     AddToExcludingProperties(typeof(RelationshipElement), "first");
                     AddToExcludingProperties(typeof(RelationshipElement), "second");
                     AddToExcludingProperties(typeof(AnnotatedRelationshipElement), "first");

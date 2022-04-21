@@ -302,28 +302,28 @@
             <param name="content">Determines the request or response kind of the resource</param>
             <response code="200">Operation result object</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostAssetAdministrationShell(AdminShellNS.AdminShellV20.AdministrationShell)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostAssetAdministrationShell(AdminShellNS.AdminShellV30.AdministrationShell)">
             <summary>
             Creates a new Asset Administration Shell
             </summary>
             <param name="body">Asset Administration Shell object</param>
             <response code="201">Asset Administration Shell created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostConceptDescription(AdminShellNS.AdminShellV20.ConceptDescription)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostConceptDescription(AdminShellNS.AdminShellV30.ConceptDescription)">
             <summary>
             Creates a new Concept Description
             </summary>
             <param name="body">Concept Description object</param>
             <response code="201">Concept Description created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodel(AdminShellNS.AdminShellV20.Submodel)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodel(AdminShellNS.AdminShellV30.Submodel)">
             <summary>
             Creates a new Submodel
             </summary>
             <param name="body">Submodel object</param>
             <response code="201">Submodel created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElement(AdminShellNS.AdminShellV20.SubmodelElement,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElement(AdminShellNS.AdminShellV30.SubmodelElement,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Creates a new submodel element
             </summary>
@@ -335,7 +335,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="201">Submodel element created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElementByPath(AdminShellNS.AdminShellV20.SubmodelElement,System.String,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElementByPath(AdminShellNS.AdminShellV30.SubmodelElement,System.String,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -348,7 +348,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="201">Submodel element created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElementByPathSubmodelRepo(AdminShellNS.AdminShellV20.SubmodelElement,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElementByPathSubmodelRepo(AdminShellNS.AdminShellV30.SubmodelElement,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -360,7 +360,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="201">Submodel element created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElementSubmodelRepo(AdminShellNS.AdminShellV20.SubmodelElement,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelElementSubmodelRepo(AdminShellNS.AdminShellV30.SubmodelElement,System.String,System.String,System.String,System.String)">
             <summary>
             Creates a new submodel element
             </summary>
@@ -371,7 +371,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="201">Submodel element created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelReference(AdminShellNS.AdminShellV20.Reference,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PostSubmodelReference(AdminShellNS.AdminShellV30.SubmodelRef,System.String)">
             <summary>
             Creates a submodel reference at the Asset Administration Shell
             </summary>
@@ -379,7 +379,7 @@
             <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
             <response code="201">Submodel reference created successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutAssetAdministrationShell(AdminShellNS.AdminShellV20.AdministrationShell,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutAssetAdministrationShell(AdminShellNS.AdminShellV30.AdministrationShell,System.String,System.String)">
             <summary>
             Updates the Asset Administration Shell
             </summary>
@@ -388,7 +388,7 @@
             <param name="content">Determines the request or response kind of the resource</param>
             <response code="204">Asset Administration Shell updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutAssetAdministrationShellById(AdminShellNS.AdminShellV20.AdministrationShell,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutAssetAdministrationShellById(AdminShellNS.AdminShellV30.AdministrationShell,System.String)">
             <summary>
             Updates an existing Asset Administration Shell
             </summary>
@@ -396,7 +396,7 @@
             <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
             <response code="204">Asset Administration Shell updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutAssetInformation(AdminShellNS.AdminShellV20.Asset,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutAssetInformation(AdminShellNS.AdminShellV30.AssetInformation,System.String)">
             <summary>
             Updates the Asset Information
             </summary>
@@ -404,7 +404,7 @@
             <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
             <response code="204">Asset Information updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutConceptDescriptionById(AdminShellNS.AdminShellV20.ConceptDescription,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutConceptDescriptionById(AdminShellNS.AdminShellV30.ConceptDescription,System.String)">
             <summary>
             Updates an existing Concept Description
             </summary>
@@ -412,7 +412,7 @@
             <param name="cdIdentifier">The Concept Description’s unique id (BASE64-URL-encoded)</param>
             <response code="204">Concept Description updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodel(AdminShellNS.AdminShellV20.Submodel,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodel(AdminShellNS.AdminShellV30.Submodel,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Updates the Submodel
             </summary>
@@ -424,7 +424,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="204">Submodel updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodelElementByPath(AdminShellNS.AdminShellV20.SubmodelElement,System.String,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodelElementByPath(AdminShellNS.AdminShellV30.SubmodelElement,System.String,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Updates an existing submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -437,7 +437,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="204">Submodel element updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodelElementByPathSubmodelRepo(AdminShellNS.AdminShellV20.SubmodelElement,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodelElementByPathSubmodelRepo(AdminShellNS.AdminShellV30.SubmodelElement,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Updates an existing submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -449,7 +449,7 @@
             <param name="extent">Determines to which extent the resource is being serialized</param>
             <response code="204">Submodel element updated successfully</response>
         </member>
-        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodelSubmodelRepo(AdminShellNS.AdminShellV20.Submodel,System.String,System.String,System.String,System.String)">
+        <member name="M:IO.Swagger.Controllers.AssetAdministrationShellRepositoryApiController.PutSubmodelSubmodelRepo(AdminShellNS.AdminShellV30.Submodel,System.String,System.String,System.String,System.String)">
             <summary>
             Updates the Submodel
             </summary>
@@ -526,7 +526,7 @@
             <param name="aasIdentifier">The Asset Administration Shell’s unique id</param>
             <returns></returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.DeleteConceptDescription(AdminShellNS.AdminShellV20.ConceptDescription,System.Int32)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.DeleteConceptDescription(AdminShellNS.AdminShellV30.ConceptDescription,System.Int32)">
             <summary>
             Deletes a concept description
             </summary>
@@ -542,21 +542,21 @@
             <param name="packageIndex">The Package index of the found submodel from the server</param>
             <returns></returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PostAAS(AdminShellNS.AdminShellV20.AdministrationShell)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PostAAS(AdminShellNS.AdminShellV30.AdministrationShell)">
             <summary>
             Creates a new Asset Administration Shell
             </summary>
             <param name="aas">Requested AAS to be added in the server</param>
             <returns>If AAS was successfully added</returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.FindAllConceptDescriptionsInSubmodel(System.Object,System.Collections.Generic.List{AdminShellNS.AdminShellV20.ConceptDescription})">
+        <member name="M:IO.Swagger.Helpers.AASHelper.FindAllConceptDescriptionsInSubmodel(System.Object,System.Collections.Generic.List{AdminShellNS.AdminShellV30.ConceptDescription})">
             <summary>
             All the concept descriptions from the submodel, including submodel elements. The method is recursive.
             </summary>
             <param name="obj">Submodel or Submodel Element</param>
             <param name="conceptDescriptions">A list of found concept descriptions</param>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PutAAS(AdminShellNS.AdminShellV20.AdministrationShell,IO.Swagger.Helpers.FindAasReturn)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PutAAS(AdminShellNS.AdminShellV30.AdministrationShell,IO.Swagger.Helpers.FindAasReturn)">
             <summary>
             Updates the Asset Administration Shell
             </summary>
@@ -564,14 +564,14 @@
             <param name="aasReturn">Existing AAS from the server</param>
             <returns>If AAS was successfully modified</returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PostConceptDescription(AdminShellNS.AdminShellV20.ConceptDescription)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PostConceptDescription(AdminShellNS.AdminShellV30.ConceptDescription)">
             <summary>
             Creates a new Concept Description
             </summary>
             <param name="conceptDescription">Concept Description object</param>
             <returns>If the concept description was successfully added</returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PutConceptDescription(AdminShellNS.AdminShellV20.ConceptDescription,AdminShellNS.AdminShellV20.ConceptDescription,System.Int32)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PutConceptDescription(AdminShellNS.AdminShellV30.ConceptDescription,AdminShellNS.AdminShellV30.ConceptDescription,System.Int32)">
             <summary>
             Updates an existing Concept Description
             </summary>
@@ -589,14 +589,14 @@
             <param name="content"></param>
             <param name="extent"></param>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PostSubmodel(AdminShellNS.AdminShellV20.Submodel)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PostSubmodel(AdminShellNS.AdminShellV30.Submodel)">
             <summary>
             Creates a new Submodel
             </summary>
             <param name="submodel">Submodel object</param>
             <returns></returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PutSubmodel(AdminShellNS.AdminShellV20.Submodel,AdminShellNS.AdminShellV20.Submodel,System.Int32)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PutSubmodel(AdminShellNS.AdminShellV30.Submodel,AdminShellNS.AdminShellV30.Submodel,System.Int32)">
             <summary>
             Updates the Submodel
             </summary>
@@ -605,7 +605,7 @@
             <param name="packageIndex">The package index of the existing Submodel object</param>
             <returns></returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PostSubmodelElement(AdminShellNS.AdminShellV20.Submodel,AdminShellNS.AdminShellV20.SubmodelElement)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PostSubmodelElement(AdminShellNS.AdminShellV30.Submodel,AdminShellNS.AdminShellV30.SubmodelElement)">
             <summary>
             Creates a new submodel element
             </summary>
@@ -622,7 +622,7 @@
             <param name="outParent">Parent of SME, bzw. SMEColl</param>
             <returns></returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PostSubmodelElementByPath(AdminShellNS.AdminShellV20.SubmodelElement,AdminShellNS.AdminShellV20.SubmodelElement)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PostSubmodelElementByPath(AdminShellNS.AdminShellV30.SubmodelElement,AdminShellNS.AdminShellV30.SubmodelElement)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -630,7 +630,7 @@
             <param name="submodelElement">Requested Submodel Element to be added</param>
             <returns>Returns true, if successfully added</returns>
         </member>
-        <member name="M:IO.Swagger.Helpers.AASHelper.PutSubmodelElementByPath(System.Object,AdminShellNS.AdminShellV20.SubmodelElement,AdminShellNS.AdminShellV20.SubmodelElement)">
+        <member name="M:IO.Swagger.Helpers.AASHelper.PutSubmodelElementByPath(System.Object,AdminShellNS.AdminShellV30.SubmodelElement,AdminShellNS.AdminShellV30.SubmodelElement)">
             <summary>
             Updates an existing submodel element at a specified path within submodel elements hierarchy
             </summary>

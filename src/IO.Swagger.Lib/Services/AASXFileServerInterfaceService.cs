@@ -118,7 +118,7 @@ namespace IO.Swagger.Services
                     var aasIdList = new List<string>();
                     foreach (var aas in _packages[i].AasEnv.AdministrationShells)
                     {
-                        aasIdList.Add(aas.identification.id);
+                        aasIdList.Add(aas.id.value);
                     }
                     packageDescription.AasIds = aasIdList;
                     packageDescriptionList.Add(packageDescription);
