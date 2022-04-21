@@ -10,7 +10,8 @@ using IO.Swagger.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using static AdminShellNS.AdminShellV20;
+using static AdminShellNS.AdminShellV30;
+//using static AdminShellNS.AdminShellV20;
 
 namespace IO.Swagger.Helpers
 {
@@ -40,7 +41,7 @@ namespace IO.Swagger.Helpers
             foreach (var submodelRef in aasReturn.AAS.submodelRefs)
             {
                 var submodel = Packages[aasReturn.IPackage].AasEnv.FindSubmodel(submodelRef);
-                if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
+                if (submodel != null && submodel.id != null && !string.IsNullOrEmpty(submodel.id.value) && submodel.id.value.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
                     return submodel;
             }
 
@@ -89,7 +90,7 @@ namespace IO.Swagger.Helpers
                     {
                         if (Packages[i] != null)
                         {
-                            if (Packages[i].AasEnv.AdministrationShells[0].identification.id == aasIdentifier)
+                            if (Packages[i].AasEnv.AdministrationShells[0].id.value == aasIdentifier)
                             {
                                 findAasReturn.AAS = Packages[i].AasEnv.AdministrationShells[0];
                                 findAasReturn.IPackage = i;
@@ -132,7 +133,7 @@ namespace IO.Swagger.Helpers
                     {
                         foreach (var cd in env.AasEnv.ConceptDescriptions)
                         {
-                            if (cd.identification.id != null && cd.identification.id.Trim().ToLower() == cdIdentifier.Trim().ToLower())
+                            if (cd.id != null && !string.IsNullOrEmpty(cd.id.value) && cd.id.value.Trim().ToLower() == cdIdentifier.Trim().ToLower())
                             {
                                 packageIndex = i;
                                 return cd;
@@ -156,7 +157,7 @@ namespace IO.Swagger.Helpers
             if (aasReturn.AAS != null)
             {
                 // find the asset
-                var asset = FindAssetwithReference(aasReturn.AAS.assetRef);
+                var asset = aasReturn.AAS.assetInformation;
                 //Deleting AAS from the server
                 Packages[aasReturn.IPackage].AasEnv.AdministrationShells.Remove(aasReturn.AAS);
                 success = true;
@@ -194,26 +195,6 @@ namespace IO.Swagger.Helpers
             return false;
         }
 
-        internal Asset FindAssetwithReference(AssetRef assetRef)
-        {
-            if (Packages != null)
-            {
-                foreach (var env in Packages)
-                {
-                    if (env != null)
-                    {
-                        Asset asset = env.AasEnv.FindAsset(assetRef);
-                        if (asset != null)
-                        {
-                            return asset;
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
         internal bool DeleteSubmodelReferenceFromAAS(string aasIdentifier, string submodelIdentifier)
         {
             FindAasReturn aasReturn = FindAas(aasIdentifier);
@@ -239,7 +220,7 @@ namespace IO.Swagger.Helpers
                 foreach (var submodelRef in aasReturn.AAS.submodelRefs)
                 {
                     var submodel = Packages[aasReturn.IPackage].AasEnv.FindSubmodel(submodelRef);
-                    if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
+                    if (submodel != null && submodel.id != null && !string.IsNullOrEmpty(submodel.id.value) && submodel.id.value.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
                         return submodelRef;
                 }
             }
@@ -266,7 +247,7 @@ namespace IO.Swagger.Helpers
                 {
                     foreach (var submodel in env.AasEnv.Submodels)
                     {
-                        if (submodel != null && submodel.identification.id != null && submodel.identification.id.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
+                        if (submodel != null && submodel.id != null && !string.IsNullOrEmpty(submodel.id.value) && submodel.id.value.Trim().ToLower() == submodelIdentifier.Trim().ToLower())
                         {
                             packageIndex = envi;
                             return submodel;
@@ -343,12 +324,13 @@ namespace IO.Swagger.Helpers
                 var aasReturn = FindAas(aasIdDecoded);
                 if (aasReturn != null)
                 {
+                    //TODO:Check relation between AAS and ConceptDescription as ConceptDiction is no more a part of AAS
                     //Find direct concept descriptions
-                    foreach (ConceptDictionary conceptDictionary in aasReturn.AAS.conceptDictionaries)
-                    {
-                        var cds = FindConceptDescriptionByReference(conceptDictionary.conceptDescriptionsRefs);
-                        conceptDescriptionList.AddRange(cds);
-                    }
+                    //foreach (ConceptDictionary conceptDictionary in aasReturn.AAS.conceptDictionaries)
+                    //{
+                    //    var cds = FindConceptDescriptionByReference(conceptDictionary.conceptDescriptionsRefs);
+                    //    conceptDescriptionList.AddRange(cds);
+                    //}
 
                     //Find concept descriptions from the submodels of the AAS
                     foreach (var submodelRef in aasReturn.AAS.submodelRefs)
@@ -454,7 +436,7 @@ namespace IO.Swagger.Helpers
             return conceptDescriptions;
         }
 
-        private ConceptDescription FindConceptDescriptionByReference(Reference cdr)
+        private ConceptDescription FindConceptDescriptionByReference(ModelReference cdr)
         {
             if (cdr == null)
                 return null;
@@ -469,7 +451,27 @@ namespace IO.Swagger.Helpers
                 return null;
 
             var key = keys[0];
-            if (!key.local || key.type.ToLower().Trim() != "conceptdescription")
+            if (key.type.ToLower().Trim() != "conceptdescription")
+                return null;
+
+            var conceptDescription = FindConceptDescription(key.value, out _);
+            if (conceptDescription != null)
+                return conceptDescription;
+
+            return null;
+        }
+
+        private ConceptDescription FindConceptDescriptionByReference(GlobalReference cdr)
+        {
+            if (cdr == null)
+                return null;
+
+            var key = cdr.GetAsExactlyOneKey();
+
+            if (key == null)
+                return null;
+
+            if (key.type.ToLower().Trim() != "conceptdescription")
                 return null;
 
             var conceptDescription = FindConceptDescription(key.value, out _);
@@ -601,9 +603,18 @@ namespace IO.Swagger.Helpers
                 {
                     foreach (AdministrationShell aas in env.AasEnv.AdministrationShells)
                     {
-                        if (!aas.assetRef.IsEmpty && aas.assetRef.Keys[0].value.Equals(assetId))
+                        if (aas.assetInformation != null)
                         {
-                            outputShells.Add(aas);
+                            var asset = aas.assetInformation;
+                            if (asset.globalAssetId != null && asset.globalAssetId.GetAsExactlyOneKey().value.Equals(assetId))
+                            {
+                                outputShells.Add(aas);
+                            }
+                            //TODO:Need to check
+                            else if (asset.specificAssetId != null && asset.specificAssetId[0].value.Equals(assetId))
+                            {
+                                outputShells.Add(aas);
+                            }
                         }
                     }
                 }
@@ -659,7 +670,7 @@ namespace IO.Swagger.Helpers
             return outputCds;
         }
 
-        internal List<ConceptDescription> FindAllConceptDescriptionsByIsCaseOf(List<Reference> isCaseOfObj)
+        internal List<ConceptDescription> FindAllConceptDescriptionsByIsCaseOf(List<ModelReference> isCaseOfObj)
         {
             List<ConceptDescription> outputCds = new List<ConceptDescription>();
             foreach (AdminShellPackageEnv env in AasxServer.Program.env)
@@ -695,12 +706,12 @@ namespace IO.Swagger.Helpers
             return false;
         }
 
-        internal bool CompareIsCaseOf(List<Reference> isCaseOf1, List<Reference> isCaseOf2)
+        internal bool CompareIsCaseOf(List<ModelReference> isCaseOf1, List<ModelReference> isCaseOf2)
         {
-            foreach (Reference isCaseOf1_Ref in isCaseOf1)
+            foreach (ModelReference isCaseOf1_Ref in isCaseOf1)
             {
                 bool found = false;
-                foreach (Reference isCaseOf2_Ref in isCaseOf2)
+                foreach (ModelReference isCaseOf2_Ref in isCaseOf2)
                 {
                     if (isCaseOf1_Ref.Matches(isCaseOf2_Ref))
                     {
@@ -883,7 +894,7 @@ namespace IO.Swagger.Helpers
                     }
                     return submodelElement.ToValueOnlySerialization();
                 }
-                else if (obj is List<AdminShellV20.SubmodelElement> smEleList)
+                else if (obj is List<SubmodelElement> smEleList)
                 {
                     List<object> values = new List<object>();
                     foreach (var smElement in smEleList)
@@ -958,13 +969,13 @@ namespace IO.Swagger.Helpers
 
         private object GetObjectReference(object obj)
         {
-            if (obj is AdminShellV20.AdministrationShell aas)
-                return aas.GetReference();
+            if (obj is AdministrationShell aas)
+                return aas.GetModelReference();
             else if (obj is Submodel submodel)
-                return submodel.GetReference();
+                return submodel.GetModelReference();
             else if (obj is SubmodelElement submodelElement)
-                return submodelElement.GetReference();
-            else if (obj is List<AdminShellV20.SubmodelElement> smEleList)
+                return submodelElement.GetModelReference(true);
+            else if (obj is List<SubmodelElement> smEleList)
             {
                 List<object> values = new List<object>();
                 foreach (var smElement in smEleList)
@@ -1029,7 +1040,7 @@ namespace IO.Swagger.Helpers
             return false;
         }
 
-        internal Submodel FindSubmodelWithReference(Reference submodelRef)
+        internal Submodel FindSubmodelWithReference(SubmodelRef submodelRef)
         {
             //There should be exactly one key
             if (submodelRef.Count != 1)
@@ -1039,7 +1050,7 @@ namespace IO.Swagger.Helpers
             {
                 if (env != null)
                 {
-                    var submodel = env.AasEnv.FindSubmodel(new Identification(submodelRef.First.idType, submodelRef.First.value));
+                    var submodel = env.AasEnv.FindSubmodel(new Identifier(submodelRef.First.value));
                     if (submodel != null)
                     {
                         return submodel;
@@ -1121,7 +1132,7 @@ namespace IO.Swagger.Helpers
 
         internal object FindAllSubmodelsBySemanticId(SemanticId reqSemaniticId)
         {
-            var outputSubmodels = new List<AdminShellV20.Submodel>();
+            var outputSubmodels = new List<Submodel>();
             foreach (AdminShellPackageEnv env in AasxServer.Program.env)
             {
                 if (env != null)
@@ -1147,7 +1158,7 @@ namespace IO.Swagger.Helpers
 
         internal List<Submodel> FindAllSubmodelsByIdShort(string idShort)
         {
-            var outputSubmodels = new List<AdminShellV20.Submodel>();
+            var outputSubmodels = new List<Submodel>();
             foreach (AdminShellPackageEnv env in AasxServer.Program.env)
             {
                 if (env != null)
@@ -1298,9 +1309,9 @@ namespace IO.Swagger.Helpers
             return false;
         }
 
-        internal bool AddAsset(Asset body, FindAasReturn aasReturn)
+        internal bool AddAsset(AssetInformation body, FindAasReturn aasReturn)
         {
-            var existingAsset = Packages[aasReturn.IPackage].AasEnv.FindAsset(body.identification);
+            var existingAsset = aasReturn.AAS.assetInformation;
             //asset is already present // Ideal case
             if (existingAsset != null)
             {
@@ -1309,7 +1320,7 @@ namespace IO.Swagger.Helpers
             Packages[aasReturn.IPackage].AasEnv.Assets.Add(body);
 
             //Change the assetRef in AAS
-            aasReturn.AAS.assetRef = new AssetRef(new Reference(new Key("Asset", true, body.identification.idType, body.identification.id)));
+            aasReturn.AAS.assetInformation = body;
             return true;
         }
 

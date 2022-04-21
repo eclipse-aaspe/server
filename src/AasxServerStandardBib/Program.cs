@@ -490,7 +490,7 @@ namespace AasxServer
                 Console.WriteLine("REST Server started.");
             }
 
-            i40LanguageRuntime.initialize();
+            //i40LanguageRuntime.initialize();
 
             // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
@@ -822,7 +822,7 @@ namespace AasxServer
 
             [XmlElement(ElementName = "identification")]
             [JsonIgnore]
-            public AdminShell.Identification identification = null;
+            public AdminShell.Identifier identification = null;
 
             [XmlElement(ElementName = "semanticId")]
             public AdminShell.SemanticId semanticId = null;
@@ -847,10 +847,10 @@ namespace AasxServer
 
             [XmlElement(ElementName = "identification")]
             [JsonIgnore]
-            public AdminShell.Identification identification = null;
+            public AdminShell.Identifier identification = null;
 
             [XmlElement(ElementName = "assets")]
-            public List<AdminShell.Asset> assets = new List<AdminShell.Asset>();
+            public List<AdminShell.AssetInformation> assets = new List<AdminShell.AssetInformation>();
 
             [XmlElement(ElementName = "endpoints")]
             public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
@@ -868,7 +868,7 @@ namespace AasxServer
             string endpointAddress = "http://" + hostPort;
 
             aasD.idShort = adminShell.AasEnv.AdministrationShells[0].idShort;
-            aasD.identification = adminShell.AasEnv.AdministrationShells[0].identification;
+            aasD.identification = adminShell.AasEnv.AdministrationShells[0].id;
             aasD.description = adminShell.AasEnv.AdministrationShells[0].description;
 
             AASxEndpoint endp = new AASxEndpoint();
@@ -882,7 +882,7 @@ namespace AasxServer
 
                 sdc.administration = adminShell.AasEnv.Submodels[i].administration;
                 sdc.description = adminShell.AasEnv.Submodels[i].description;
-                sdc.identification = adminShell.AasEnv.Submodels[i].identification;
+                sdc.identification = adminShell.AasEnv.Submodels[i].id;
                 sdc.idShort = adminShell.AasEnv.Submodels[i].idShort;
                 sdc.semanticId = adminShell.AasEnv.Submodels[i].semanticId;
 
@@ -1032,12 +1032,13 @@ namespace AasxServer
 
 
                             alp.idShort = Program.env[j].AasEnv.AdministrationShells[0].idShort;
-                            alp.identification = Program.env[j].AasEnv.AdministrationShells[0].identification.ToString();
+                            alp.identification = Program.env[j].AasEnv.AdministrationShells[0].id.ToString();
                             alp.fileName = Program.envFileName[j];
                             alp.assetId = "";
-                            var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AdministrationShells[0].assetRef);
+                            //var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AdministrationShells[0].assetRef);
+                            var asset = Program.env[j].AasEnv.AdministrationShells[0].assetInformation;
                             if (asset != null)
-                                alp.assetId = asset.identification.id;
+                                alp.assetId = asset.globalAssetId.GetAsIdentifier().value;
                             alp.humanEndPoint = blazorHostPort;
                             alp.restEndPoint = hostPort;
 
@@ -1403,7 +1404,7 @@ namespace AasxServer
                                     }
 
                                     // need id for idempotent behaviour
-                                    if (submodel.identification == null)
+                                    if (submodel.id == null)
                                     {
                                         Console.WriteLine("Identification of SubModel is (null)!");
                                         return;
@@ -1413,7 +1414,7 @@ namespace AasxServer
                                     envi = 0;
                                     while (env[envi] != null)
                                     {
-                                        aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.identification);
+                                        aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.id);
                                         if (aas != null)
                                             break;
                                         envi++;
@@ -1429,7 +1430,7 @@ namespace AasxServer
                                             return;
                                         }
 
-                                        var existingSm = env[envi].AasEnv.FindSubmodel(submodel.identification);
+                                        var existingSm = env[envi].AasEnv.FindSubmodel(submodel.id);
                                         if (existingSm != null)
                                         {
                                             bool toSubscribe = Program.submodelsToSubscribe.Contains(existingSm);
@@ -1511,7 +1512,7 @@ namespace AasxServer
 
                                                     // add SubmodelRef to AAS            
                                                     // access the AAS
-                                                    var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
+                                                    var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", submodel.id);
                                                     var existsmr = aas.HasSubmodelRef(newsmr);
                                                     if (!existsmr)
                                                     {
@@ -1727,13 +1728,13 @@ namespace AasxServer
                 }
 
                 // need id for idempotent behaviour
-                if (submodel.identification == null)
+                if (submodel.id == null)
                 {
                     Console.WriteLine("Identification of SubModel {0} is (null).", GETSUBMODEL);
                     return;
                 }
 
-                var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.identification);
+                var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.id);
 
                 // datastructure update
                 if (env == null || env[0].AasEnv == null || env[0].AasEnv.Assets == null)
@@ -1743,14 +1744,14 @@ namespace AasxServer
                 }
 
                 // add Submodel
-                var existingSm = env[0].AasEnv.FindSubmodel(submodel.identification);
+                var existingSm = env[0].AasEnv.FindSubmodel(submodel.id);
                 if (existingSm != null)
                     env[0].AasEnv.Submodels.Remove(existingSm);
                 env[0].AasEnv.Submodels.Add(submodel);
 
                 // add SubmodelRef to AAS            
                 // access the AAS
-                var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", true, submodel.identification.idType, submodel.identification.id);
+                var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", submodel.id);
                 var existsmr = aas.HasSubmodelRef(newsmr);
                 if (!existsmr)
                 {
@@ -2135,7 +2136,7 @@ namespace AasxServer
                                             if (response != "")
                                             {
                                                 var r12 = sme1 as AdminShell.ReferenceElement;
-                                                var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
+                                                var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
                                                 if (ref12 is AdminShell.SubmodelElementCollection)
                                                 {
                                                     var c1 = ref12 as AdminShell.SubmodelElementCollection;
@@ -2181,9 +2182,9 @@ namespace AasxServer
                                             var r1 = sme1 as AdminShell.ReferenceElement;
                                             var r2 = sme2 as AdminShell.ReferenceElement;
                                             var r3 = sme3 as AdminShell.ReferenceElement;
-                                            var ref1 = env[i].AasEnv.FindReferableByReference(r1.value);
-                                            var ref2 = env[i].AasEnv.FindReferableByReference(r2.value);
-                                            var ref3 = env[i].AasEnv.FindReferableByReference(r3.value);
+                                            var ref1 = env[i].AasEnv.FindReferableByReference(r1.GetModelReference());
+                                            var ref2 = env[i].AasEnv.FindReferableByReference(r2.GetModelReference());
+                                            var ref3 = env[i].AasEnv.FindReferableByReference(r3.GetModelReference());
                                             if (ref1 is AdminShell.Property && ref2 is AdminShell.Submodel && ref3 is AdminShell.Property)
                                             {
                                                 var p1 = ref1 as AdminShell.Property;

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using AasxServer;
 using AdminShellNS;
 using static AasxServerBlazor.Pages.TreePage;
-using static AdminShellNS.AdminShellV20;
+using static AdminShellNS.AdminShellV30;
 
 namespace AasxServerBlazor.Data
 {

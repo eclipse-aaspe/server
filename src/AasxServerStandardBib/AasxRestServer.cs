@@ -123,11 +123,11 @@ namespace AasxRestServerLibrary
                         }
 
                         rootSubmodel.SetAllParents();
-                        AdminShell.KeyList keys = new AdminShellV20.KeyList();
+                        AdminShell.KeyList keys = new AdminShell.KeyList();
 
 #if MICHA
                         // keys were in the reverse order
-                        keys = smec.GetReference()?.Keys;
+                        keys = smec.GetModelReference()?.Keys;
                         if (keys?.IsEmpty == false)
                             keys.Remove(keys.Last());
 #else
@@ -381,23 +381,17 @@ namespace AasxRestServerLibrary
                             foreach (var bev in sm.FindDeep<AdminShell.BasicEvent>())
                             {
                                 // find interesting event?
-                                if (true == bev.semanticId?.MatchesExactlyOneKey(
-                                    type: AdminShell.Key.ConceptDescription,
-                                    local: false,
-                                    idType: AdminShell.Identification.IRI,
+                                if (true == bev.semanticId?.MatchesExactlyOneId(
                                     id: "https://admin-shell.io/tmp/AAS/Events/UpdateValueOutwards",
-                                    matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                                    matchMode: AdminShell.Key.MatchMode.Relaxed))
                                 {
                                     doUpdate = true;
                                     doCreateDelete = false;
                                 }
                                 else
-                                if (true == bev.semanticId?.MatchesExactlyOneKey(
-                                    type: AdminShell.Key.ConceptDescription,
-                                    local: false,
-                                    idType: AdminShell.Identification.IRI,
+                                if (true == bev.semanticId?.MatchesExactlyOneId(
                                     id: "https://admin-shell.io/tmp/AAS/Events/StructureChangeOutwards",
-                                    matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                                    matchMode: AdminShell.Key.MatchMode.Relaxed))
                                 {
                                     doUpdate = false;
                                     doCreateDelete = true;
@@ -425,7 +419,7 @@ namespace AasxRestServerLibrary
 
                                 var eventsOuter = new AasEventMsgEnvelope(
                                         DateTime.UtcNow,
-                                        source: bev.GetReference(),
+                                        source: bev.GetModelReference(),
                                         sourceSemanticId: bev.semanticId,
                                         observableReference: bev.observed,
                                         observableSemanticId: obsSemId);
@@ -451,14 +445,14 @@ namespace AasxRestServerLibrary
                                             // get the path
                                             AdminShell.KeyList p2 = null;
                                             if (d.rf is AdminShell.Submodel delsm)
-                                                p2 = delsm?.GetReference()?.Keys;
+                                                p2 = delsm?.GetModelReference()?.Keys;
                                             if (d.rf is AdminShell.SubmodelElement delsme)
-                                                p2 = delsme?.GetReference()?.Keys;
+                                                p2 = delsme?.GetModelReference()?.Keys;
                                             if (p2 == null)
                                                 continue;
 
                                             // prepare p2 to be relative path to observable
-                                            if (true == p2?.StartsWith(bev.observed?.Keys, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                                            if (true == p2?.StartsWith(bev.observed?.Keys, matchMode: AdminShell.Key.MatchMode.Relaxed))
                                                 p2.RemoveRange(0, bev.observed.Keys.Count);
 
                                             // make payload
@@ -544,8 +538,8 @@ namespace AasxRestServerLibrary
                         (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
                     {
                         // prepare p2 to be relative path to observable
-                        var p2 = sme.GetReference()?.Keys;
-                        if (true == p2?.StartsWith(observablePath, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                        var p2 = sme.GetModelReference()?.Keys;
+                        if (true == p2?.StartsWith(observablePath, matchMode: AdminShell.Key.MatchMode.Relaxed))
                             p2.RemoveRange(0, observablePath.Count);
 
                         if (mode == "CREATE")
@@ -627,8 +621,8 @@ namespace AasxRestServerLibrary
                     }
 
                     // prepare p2 to be relative path to observable
-                    var p2 = sme.GetReference()?.Keys;
-                    if (true == p2?.StartsWith(observablePath, matchMode: AdminShellV20.Key.MatchMode.Relaxed))
+                    var p2 = sme.GetModelReference()?.Keys;
+                    if (true == p2?.StartsWith(observablePath, matchMode: AdminShell.Key.MatchMode.Relaxed))
                         p2.RemoveRange(0, observablePath.Count);
 
                     if (mode == "CREATE")
@@ -908,7 +902,7 @@ namespace AasxRestServerLibrary
                                 string path = x.idShort;
                                 while (x.parent != null && x != x.parent)
                                 {
-                                    x = x.parent;
+                                    x = (AdminShellV30.Referable)x.parent;
                                     path = x.idShort + "." + path;
                                 }
 
@@ -1093,7 +1087,6 @@ namespace AasxRestServerLibrary
             }
 
             // Basic AAS + Asset 
-            //TODO:Imp
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv)(/|)$")]
 
             public IHttpContext GetAasAndAsset(IHttpContext context)

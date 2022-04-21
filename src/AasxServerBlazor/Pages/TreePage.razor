@@ -7,7 +7,7 @@
 @using System.Drawing;
 @using System.IO;
 @using AasxServerBlazor.Data
-@using static AdminShellNS.AdminShellV20;
+@*@using static AdminShellNS.AdminShellV30;*@
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 
 @implements IDisposable
@@ -19,7 +19,8 @@
         @if (Program.isLoading)
             {<span style="color:white;background-color:blue;">Loading...</span>}
         else
-            { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
+        //TODO:JT Uncomment
+            @*{ IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }*@
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
                 @bind-SelectedNode="SelectedNode"
                 @bind-ExpandedNodes="ExpandedNodes"
@@ -139,7 +140,7 @@
                         CurrentValue = "";
                     }
                 }
-                if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is AdminShellNS.AdminShellV20.File))
+                if (selectedNode != null && (selectedNode.Tag is AdministrationShell || selectedNode.Tag is AdminShellNS.AdminShellV30.File))
                 {
                     if (selectedNode.Tag is AdministrationShell)
                     {
@@ -177,7 +178,7 @@
 
                     try
                     {
-                        semanticId = smc.semanticId.Keys[0].value;
+                        semanticId = smc.semanticId.GetAsIdentifier().value;
                     }
                     catch { }
                     if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
@@ -206,7 +207,8 @@
                             // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
                             var pcts = ZveiTimeSeriesDataV10.Static;
 
-                            var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
+                            //var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
+                            var tssReference = pcts.CD_TimeSeriesSegment.GetCdReference();
                             //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
                             //var tssReference = new Reference(k);
                             //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
@@ -219,7 +221,7 @@
                             else
                             {
                                 // search for segements on current level
-                                var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+                                var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference.GetAsExactlyOneKey().value, mm);
 
                                 if (smcAllValues.Count() != 0)
                                 {
@@ -306,7 +308,7 @@
                     </div>
                 }
 
-                if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
+                if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV30.BasicEvent be))
                 {
                     if (be.observed != null)
                     {
@@ -340,6 +342,7 @@
 @using Newtonsoft.Json;
 @using Newtonsoft.Json.Linq;
 @using ScottPlot;
+@using static AdminShellNS.AdminShellV30
 
 @code {
     System.Diagnostics.Stopwatch watchTimeToProcessImage = new System.Diagnostics.Stopwatch();
@@ -410,7 +413,7 @@
     async Task DownloadFile()
     {
         this.StateHasChanged();
-        var f = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+        var f = selectedNode.Tag as AdminShellNS.AdminShellV30.File;
         var fileName = System.IO.Path.GetFileName(f.value);
         if (fileName != "")
         {
@@ -785,9 +788,9 @@
             }
         }
 
-        if (o is AdminShellNS.AdminShellV20.File)
+        if (o is AdminShellNS.AdminShellV30.File)
         {
-            var f = o as AdminShellNS.AdminShellV20.File;
+            var f = o as AdminShellNS.AdminShellV30.File;
 
             // Test for /aasx/
             if (f.value != "")
@@ -846,11 +849,11 @@
         if (o is AdministrationShell)
         {
             var aas = o as AdministrationShell;
-            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            var asset = aas.assetInformation;
             if (asset != null)
             {
                 // string url = WebUtility.UrlEncode(asset.identification.id);
-                string url = asset.identification.id;
+                string url = asset.globalAssetId.GetAsIdentifier().value;
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
@@ -912,11 +915,11 @@
             }
 
             var aas = o as AdministrationShell;
-            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            var asset = aas.assetInformation;
             if (asset != null)
             {
                 // string url = WebUtility.UrlEncode(asset.identification.id);
-                string url = asset.identification.id;
+                string url = asset.globalAssetId.GetAsIdentifier().value;
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
@@ -948,10 +951,10 @@
 
         object o = item.Tag;
 
-        if (o is AdminShellNS.AdminShellV20.File)
+        if (o is AdminShellNS.AdminShellV30.File)
         {
 
-            var f = o as AdminShellNS.AdminShellV20.File;
+            var f = o as AdminShellNS.AdminShellV30.File;
 
             // Test for /aasx/
             string[] split = f.value.Split(new Char[] { '/' });
@@ -997,13 +1000,13 @@
             return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
         }
 
-        if (o is AdminShellNS.AdminShellV20.File || o is Property)
+        if (o is AdminShellNS.AdminShellV30.File || o is Property)
         {
             string value = "";
 
-            if (o is AdminShellNS.AdminShellV20.File)
+            if (o is AdminShellNS.AdminShellV30.File)
             {
-                value = (o as AdminShellNS.AdminShellV20.File).value;
+                value = (o as AdminShellNS.AdminShellV30.File).value;
             }
             if (o is Property)
             {
@@ -1123,7 +1126,7 @@
         {
             ret += "Opr";
         }
-        if (o is AdminShellNS.AdminShellV20.File)
+        if (o is AdminShellNS.AdminShellV30.File)
         {
             ret += "File";
         }
@@ -1131,7 +1134,7 @@
         {
             ret += "Blob";
         }
-        if (o is AdminShellNS.AdminShellV20.Range)
+        if (o is AdminShellNS.AdminShellV30.Range)
         {
             ret += "Range";
         }
@@ -1151,7 +1154,7 @@
         {
             ret += "Ent";
         }
-        if (o is AdminShellNS.AdminShellV20.BasicEvent)
+        if (o is AdminShellNS.AdminShellV30.BasicEvent)
         {
             ret += "Evt";
         }
@@ -1214,9 +1217,9 @@
                 ret += "<T> ";
             ret += sme.idShort;
         }
-        if (o is AdminShellNS.AdminShellV20.File)
+        if (o is AdminShellNS.AdminShellV30.File)
         {
-            var f = o as AdminShellNS.AdminShellV20.File;
+            var f = o as AdminShellNS.AdminShellV30.File;
             ret = "";
             if (f.kind != null && f.kind.IsTemplate)
                 ret += "<T> ";
@@ -1230,9 +1233,9 @@
                 ret += "<T> ";
             ret += b.idShort;
         }
-        if (o is AdminShellNS.AdminShellV20.Range)
+        if (o is AdminShellNS.AdminShellV30.Range)
         {
-            var r = o as AdminShellNS.AdminShellV20.Range;
+            var r = o as AdminShellNS.AdminShellV30.Range;
             ret = "";
             if (r.kind != null && r.kind.IsTemplate)
                 ret += "<T> ";
@@ -1297,9 +1300,9 @@
                     ret += " @QUALIFIERS";
                 }
             }
-            if (o is AdminShellNS.AdminShellV20.File)
+            if (o is AdminShellNS.AdminShellV30.File)
             {
-                var f = o as AdminShellNS.AdminShellV20.File;
+                var f = o as AdminShellNS.AdminShellV30.File;
                 ret = " = " + f.value;
                 if (f.qualifiers != null && f.qualifiers.Count > 0)
                 {
@@ -1307,9 +1310,9 @@
                 }
             }
         }
-        if (o is AdminShellNS.AdminShellV20.Range)
+        if (o is AdminShellNS.AdminShellV30.Range)
         {
-            var r = o as AdminShellNS.AdminShellV20.Range;
+            var r = o as AdminShellNS.AdminShellV30.Range;
             ret = " = " + r.min + " .. " + r.max;
             if (r.qualifiers != null && r.qualifiers.Count > 0)
             {
@@ -1356,23 +1359,23 @@
             ret = "";
             var aas = o as AdministrationShell;
 
-            var asset = Program.env[item.envIndex].AasEnv.FindAsset(aas.assetRef);
+            var asset = aas.assetInformation;
 
             switch (line)
             {
                 case 0:
                     ret = "ID";
                     if (col == 1)
-                        ret = aas.identification + "";
+                        ret = aas.id + "";
                     if (col == 2)
-                        ret = " ==> " + Base64UrlEncoder.Encode(aas.identification.id) + "";
+                        ret = " ==> " + Base64UrlEncoder.Encode(aas.id.value) + "";
                     break;
                 case 1:
                     if (asset != null)
                     {
                         ret = "ASSET";
                         if (col == 1)
-                            ret = asset.idShort;
+                            ret = asset.fakeIdShort;
                     }
                     break;
                 case 2:
@@ -1380,9 +1383,9 @@
                     {
                         ret = "ASSETID";
                         if (col == 1)
-                            ret = asset.identification + "";
+                            ret = asset.globalAssetId.GetAsIdentifier().value + "";
                         if (col == 2)
-                            ret = " ==> " + Base64UrlEncoder.Encode(asset.identification.id) + "";
+                            ret = " ==> " + Base64UrlEncoder.Encode(asset.globalAssetId.GetAsIdentifier().value) + "";
                     }
                     break;
                 case 3:
@@ -1391,7 +1394,7 @@
                         ret = "ASSETID URLENCODED";
                         if (col == 1)
                         {
-                            string url = WebUtility.UrlEncode(asset.identification.id);
+                            string url = WebUtility.UrlEncode(asset.globalAssetId.GetAsIdentifier().value);
                             ret = url;
                         }
                     }
@@ -1443,9 +1446,9 @@
                 case 0:
                     ret = "ID";
                     if (col == 1)
-                        ret = sm.identification + "";
+                        ret = sm.id.value + "";
                     if (col == 2)
-                        ret = " ==> " + Base64UrlEncoder.Encode(sm.identification.id) + "";
+                        ret = " ==> " + Base64UrlEncoder.Encode(sm.id.value) + "";
                     break;
                 case 1:
                     ret = "Semantic ID";
@@ -1580,9 +1583,9 @@
             return ret;
         }
 
-        if (o is AdminShellNS.AdminShellV20.File)
+        if (o is AdminShellNS.AdminShellV30.File)
         {
-            var f = o as AdminShellNS.AdminShellV20.File;
+            var f = o as AdminShellNS.AdminShellV30.File;
             ret += ", " + f.value;
             switch (line)
             {
@@ -1661,9 +1664,9 @@
             return ret;
         }
 
-        if (o is AdminShellNS.AdminShellV20.Range)
+        if (o is AdminShellNS.AdminShellV30.Range)
         {
-            var r = o as AdminShellNS.AdminShellV20.Range;
+            var r = o as AdminShellNS.AdminShellV30.Range;
             ret = r.idShort;
             switch (line)
             {
@@ -1841,9 +1844,9 @@
                     if (col == 1)
                     {
                         ret = "NULL";
-                        if (!(r.value == null || r.value.IsEmpty))
+                        if (!(r.GetModelReference() == null || r.GetModelReference().IsEmpty))
                         {
-                            var k = r.value.Keys;
+                            var k = r.GetModelReference().Keys;
                             if (k != null)
                             {
                                 ret = k.ToString();
@@ -1980,11 +1983,11 @@
     public string getUnit(Item item, SubmodelElement se, int col)
     {
         string ret = "";
-        if (se.semanticId == null || se.semanticId.Keys == null)
+        if (se.semanticId == null || se.semanticId.IsEmpty)
         {
             return ret;
         }
-        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescription(se.semanticId.Keys);
+        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescription(se.semanticId);
         if (cd != null)
         {
             var iec = cd.GetIEC61360();
@@ -1994,8 +1997,8 @@
                 if (col == 1)
                 {
                     ret = iec.unit;
-                    if (iec.unitId != null && iec.unitId.keys != null && iec.unitId.keys.Count > 0)
-                        ret += " (UnitId = " + iec.unitId.keys[0].ToString() + ")";
+                    if (iec.unitId != null && iec.unitId.Value != null && iec.unitId.Value.Count > 0)
+                        ret += " (UnitId = " + iec.unitId.Value.ToString() + ")";
                 }
             }
         }
