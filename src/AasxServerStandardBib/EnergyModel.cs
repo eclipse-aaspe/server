@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using SampleClient;
+using static AdminShellNS.AdminShellV30;
 
 namespace AasxDemonstration
 {
@@ -151,7 +152,7 @@ namespace AasxDemonstration
             DateTime timestamp,
             AdminShell.SubmodelElementCollection parent,
             string idShort,
-            AdminShell.Key semanticIdKey,
+            AdminShell.Identifier semanticIdKey,
             string smeValue = null) where T : AdminShell.SubmodelElement
         {
             var newElem = AdminShell.SubmodelElementWrapper.CreateAdequateType(typeof(T));
@@ -315,13 +316,13 @@ namespace AasxDemonstration
                 VariableSmc = AddToSMC<AdminShell.SubmodelElementCollection>(
                     timeStamp, segmentSmc,
                     "TSvariable_" + TemplateRecordId,
-                    semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+                    semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesVariable).GetAsIdentifier());
 
                 CopySmeFeatures(VariableSmc, TemplateVariable,
                     copyDescription: true, copyQualifers: true);
 
                 AddToSMC<AdminShell.Property>(timeStamp, VariableSmc,
-                    "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                    "RecordId", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_RecordId).GetAsIdentifier(),
                     smeValue: "" + TemplateRecordId);
 
                 var p = AddToSMC<AdminShell.Property>(timeStamp, VariableSmc,
@@ -331,7 +332,7 @@ namespace AasxDemonstration
                     copySemanticId: true, copyDescription: true, copyQualifers: true);
 
                 ValueArray = AddToSMC<AdminShell.Blob>(timeStamp, VariableSmc,
-                    "ValueArray", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                    "ValueArray", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_ValueArray).GetAsIdentifier(),
                     smeValue: RenderValueBlob(sosy, totalSamples));
             }
 
@@ -441,23 +442,23 @@ namespace AasxDemonstration
                 SegmentSmc = AddToSMC<AdminShell.SubmodelElementCollection>(
                     timeStamp, root,
                     "Segment_" + segmentIndex,
-                    semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
+                    semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesSegment).GetAsIdentifier());
 
                 // timestamp variables
 
                 var smcVarTS = AddToSMC<AdminShell.SubmodelElementCollection>(
                     timeStamp, SegmentSmc,
-                    "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+                    "TSvariable_timeStamp", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesVariable).GetAsIdentifier());
 
                 AddToSMC<AdminShell.Property>(timeStamp, smcVarTS,
-                    "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                    "RecordId", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_RecordId).GetAsIdentifier(),
                     smeValue: "timeStamp");
 
                 AddToSMC<AdminShell.Property>(timeStamp, smcVarTS,
-                    "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime);
+                    "UtcTime", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_UtcTime).GetAsIdentifier());
 
                 ValueArray = AddToSMC<AdminShell.Blob>(timeStamp, smcVarTS,
-                    "timeStamp", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                    "timeStamp", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_ValueArray).GetAsIdentifier(),
                     smeValue: RenderValueBlob(sosy, totalSamples));
 
                 // the rest of the variables
@@ -561,6 +562,9 @@ namespace AasxDemonstration
                             Sme = sme,
                             SourceId = q.value
                         });
+
+                    //TODO:JT: Need to check again
+                    return true;
                 });
             }
 
@@ -595,7 +599,7 @@ namespace AasxDemonstration
                     yield break;
 
                 foreach (var sm in env.FindAllSubmodelBySemanticId(
-                    PrefEnergyModel10.SM_EnergyModel, AdminShellV20.Key.MatchMode.Relaxed))
+                    SemanticId.CreateFromKey(PrefEnergyModel10.SM_EnergyModel).GetAsIdentifier(), AdminShell.Key.MatchMode.Relaxed))
                 {
                     var emi = new EnergyModelInstance();
                     emi.ScanSubmodelForIoTDataPoints(sm);
@@ -617,7 +621,7 @@ namespace AasxDemonstration
 
                 // find time series models in SM
                 foreach (var smcts in sm.submodelElements.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
-                    PrefTimeSeries10.CD_TimeSeries, mm))
+                    SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeries).GetAsIdentifier(), mm))
                 {
                     // access
                     if (smcts?.value == null)
@@ -685,7 +689,7 @@ namespace AasxDemonstration
                     var todel = new List<AdminShell.SubmodelElementCollection>();
                     var first = true;
                     foreach (var smcsegt in smcts.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
-                        PrefTimeSeries10.CD_TimeSeriesSegment, mm))
+                        SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesSegment).GetAsIdentifier(), mm))
                     {
                         if (smcsegt == null)
                             continue;
@@ -695,37 +699,38 @@ namespace AasxDemonstration
                         {
                             first = false;
 
+                            //TODO:JT Uncomment
                             // find all elements with required qualifier FOR A SERIES ELEMENT
-                            smcsegt.value.RecurseOnSubmodelElements(null, null, (o, parents, sme) =>
-                            {
-                                var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHubSeries);
-                                if (q != null && q.value != null && q.value.Length > 0)
-                                {
-                                    // found the correct Qualifer, should indicate a variable in the
-                                    // TEMPLATED time series
-                                    if (!(sme is AdminShell.SubmodelElementCollection smcVar)
-                                        || (true != sme.semanticId?.Matches(PrefTimeSeries10.CD_TimeSeriesVariable, mm)))
-                                        return;
+                            //smcsegt.value.RecurseOnSubmodelElements(null, null, (o, parents, sme) =>
+                            //{
+                            //    var q = sme.HasQualifierOfType(PrefEnergyModel10.QualiIoTHubSeries);
+                            //    if (q != null && q.value != null && q.value.Length > 0)
+                            //    {
+                            //        // found the correct Qualifer, should indicate a variable in the
+                            //        // TEMPLATED time series
+                            //        if (!(sme is AdminShell.SubmodelElementCollection smcVar)
+                            //            || (true != sme.semanticId?.Matches(PrefTimeSeries10.CD_TimeSeriesVariable, mm)))
+                            //            return;
 
-                                    // ok, need to identify record id
-                                    var pRecId = smcVar.value?.FindFirstSemanticIdAs<AdminShell.Property>(PrefTimeSeries10.CD_RecordId, mm);
-                                    var pDataPoint = smcVar.value?.FindFirstAnySemanticId<AdminShell.Property>(tsvAllowed, mm,
-                                        invertAllowed: true);
+                            //        // ok, need to identify record id
+                            //        var pRecId = smcVar.value?.FindFirstSemanticIdAs<AdminShell.Property>(PrefTimeSeries10.CD_RecordId, mm);
+                            //        var pDataPoint = smcVar.value?.FindFirstAnySemanticId<AdminShell.Property>(tsvAllowed, mm,
+                            //            invertAllowed: true);
 
-                                    // proper?
-                                    if (("" + pRecId?.value).Length < 1 || pDataPoint == null)
-                                        return;
+                            //        // proper?
+                            //        if (("" + pRecId?.value).Length < 1 || pDataPoint == null)
+                            //            return;
 
-                                    // ok, add
-                                    _trackSegment.Variables.Add(new TrackInstanceTimeSeriesVariable()
-                                    {
-                                        SourceId = q.value,
-                                        TemplateRecordId = pRecId?.value,
-                                        TemplateDataPoint = pDataPoint,
-                                        TemplateVariable = smcVar
-                                    });
-                                }
-                            });
+                            //        // ok, add
+                            //        _trackSegment.Variables.Add(new TrackInstanceTimeSeriesVariable()
+                            //        {
+                            //            SourceId = q.value,
+                            //            TemplateRecordId = pRecId?.value,
+                            //            TemplateDataPoint = pDataPoint,
+                            //            TemplateVariable = smcVar
+                            //        });
+                            //    }
+                            //});
                         }
 
                         // remove all the stuff for a clean start

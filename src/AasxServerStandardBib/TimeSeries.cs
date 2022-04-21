@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using SampleClient;
+using static AdminShellNS.AdminShellV30;
 
 namespace AasxTimeSeries
 {
@@ -63,12 +64,13 @@ namespace AasxTimeSeries
         }
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
+
         public static void timeSeriesInit()
         {
             DateTime timeStamp = DateTime.UtcNow;
 
             timeSeriesBlockList = new List<TimeSeriesBlock>();
-            timeSeriesSubscribe = new List<AdminShellV20.SubmodelElementCollection>();
+            timeSeriesSubscribe = new List<AdminShell.SubmodelElementCollection>();
 
             int aascount = AasxServer.Program.env.Length;
 
@@ -78,6 +80,9 @@ namespace AasxTimeSeries
                 if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
+                    AasxCompatibilityModels.AdminShellV20.AdministrationShell aasV2 = new AasxCompatibilityModels.AdminShellV20.AdministrationShell();
+                    aasV2.TimeStampCreate = timeStamp;
+
                     aas.TimeStampCreate = timeStamp;
                     aas.setTimeStamp(timeStamp);
                     if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
@@ -201,7 +206,7 @@ namespace AasxTimeSeries
                                                         }
                                                         if (sme2 is AdminShell.ReferenceElement)
                                                         {
-                                                            var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).value);
+                                                            var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as AdminShell.ReferenceElement).GetModelReference());
                                                             if (refElement is AdminShell.SubmodelElementCollection)
                                                                 tsb.data = refElement as AdminShell.SubmodelElementCollection;
                                                         }
@@ -308,7 +313,7 @@ namespace AasxTimeSeries
                                                 }
                                                 if (tsb.sourceType == "aas" && sme2 is AdminShell.ReferenceElement r)
                                                 {
-                                                    var el = env.AasEnv.FindReferableByReference(r.value);
+                                                    var el = env.AasEnv.FindReferableByReference(r.GetModelReference());
                                                     if (el is AdminShell.Property p)
                                                     {
                                                         tsb.samplesProperties.Add(p);
@@ -444,7 +449,7 @@ namespace AasxTimeSeries
             DateTime timestamp,
             AdminShell.SubmodelElementCollection smc,
             string idShort,
-            AdminShell.Key semanticIdKey,
+            AdminShell.Identifier semanticIdKey,
             string smeValue = null) where T : AdminShell.SubmodelElement
         {
             var newElem = AdminShell.SubmodelElementWrapper.CreateAdequateType(typeof(T));
@@ -525,7 +530,7 @@ namespace AasxTimeSeries
                                 tsb.block.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("jsonData");
                             if (c == null)
                             {
-                                c = new AdminShellV20.SubmodelElementCollection();
+                                c = new AdminShell.SubmodelElementCollection();
                                 c.idShort = "jsonData";
                                 c.TimeStampCreate = timeStamp;
                                 tsb.block.Add(c);
@@ -753,7 +758,7 @@ namespace AasxTimeSeries
                                         "row: " + (tsb.plotRowOffset + i) + "," +
                                         "col: 0, rowspan: 1, colspan:1, unit: \"\", linewidth: 1.0 }";
                                     if (latestDataProperty.qualifiers == null)
-                                        latestDataProperty.qualifiers = new AdminShellV20.QualifierCollection();
+                                        latestDataProperty.qualifiers = new AdminShell.QualifierCollection();
                                     latestDataProperty.qualifiers.Add(q);
                                     tsb.latestData.Add(latestDataProperty);
                                 }
@@ -814,21 +819,21 @@ namespace AasxTimeSeries
                                             timeStamp, null,
                                             // "Segment_" + tsb.samplesCollectionsCount++,
                                             "Segment_" + tsb.highDataIndex.value,
-                                            semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
+                                            semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesSegment).GetAsIdentifier());
 
                                         var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
                                             timeStamp, nextCollection,
-                                            "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+                                            "TSvariable_timeStamp", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesVariable).GetAsIdentifier());
 
                                         AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                            "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                                            "RecordId", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_RecordId).GetAsIdentifier(),
                                             smeValue: "timeStamp");
 
                                         AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                            "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime);
+                                            "UtcTime", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_UtcTime).GetAsIdentifier());
 
                                         AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
-                                            "timeStamp", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                                            "timeStamp", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_ValueArray).GetAsIdentifier(),
                                             smeValue: tsb.samplesTimeStamp);
                                     }
                                     else
@@ -853,27 +858,27 @@ namespace AasxTimeSeries
                                             var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
                                                 timeStamp, nextCollection,
                                                 "TSvariable_" + tsb.samplesProperties[i].idShort,
-                                                semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+                                                semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesVariable).GetAsIdentifier());
 
                                             // MICHA: bad hack
                                             // if (tsb.samplesProperties[i].idShort.ToLower().Contains("int2"))
                                             //    smcvar.AddQualifier("TimeSeries.Args", "{ type: \"Bars\" }");
 
                                             AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                                "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                                                "RecordId", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_RecordId).GetAsIdentifier(),
                                                 smeValue: "" + tsb.samplesProperties[i].idShort);
 
                                             if (tsb.samplesProperties[i].idShort.ToLower().Contains("float"))
                                                 AddToSMC<AdminShell.Property>(timeStamp, smcvar,
                                                     "" + tsb.samplesProperties[i].idShort,
-                                                    semanticIdKey: PrefTimeSeries10.CD_GeneratedFloat);
+                                                    semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_GeneratedFloat).GetAsIdentifier());
                                             else
                                                 AddToSMC<AdminShell.Property>(timeStamp, smcvar,
                                                     "" + tsb.samplesProperties[i].idShort,
-                                                    semanticIdKey: PrefTimeSeries10.CD_GeneratedInteger);
+                                                    semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_GeneratedInteger).GetAsIdentifier());
 
                                             AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
-                                                "ValueArray", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                                                "ValueArray", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_ValueArray).GetAsIdentifier(),
                                                 smeValue: tsb.samplesValues[i]);
                                         }
                                         else
@@ -922,21 +927,21 @@ namespace AasxTimeSeries
                                     timeStamp, null,
                                     // "Segment_" + tsb.samplesCollectionsCount++,
                                     "Segment_" + tsb.highDataIndex.value,
-                                    semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment);
+                                    semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesSegment).GetAsIdentifier());
 
                                 var smcvar = AddToSMC<AdminShell.SubmodelElementCollection>(
                                     timeStamp, nextCollection,
-                                    "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable);
+                                    "TSvariable_timeStamp", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_TimeSeriesVariable).GetAsIdentifier());
 
                                 AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                    "RecordId", semanticIdKey: PrefTimeSeries10.CD_RecordId,
+                                    "RecordId", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_RecordId).GetAsIdentifier(),
                                     smeValue: "timeStamp");
 
                                 AddToSMC<AdminShell.Property>(timeStamp, smcvar,
-                                    "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime);
+                                    "UtcTime", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_UtcTime).GetAsIdentifier());
 
                                 AddToSMC<AdminShell.Blob>(timeStamp, smcvar,
-                                    "timeStamp", semanticIdKey: PrefTimeSeries10.CD_ValueArray,
+                                    "timeStamp", semanticIdKey: SemanticId.CreateFromKey(PrefTimeSeries10.CD_ValueArray).GetAsIdentifier(),
                                     smeValue: tsb.samplesTimeStamp);
                             }
                             else

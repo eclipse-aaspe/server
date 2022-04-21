@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using static AdminShellNS.AdminShellV20;
+using static AdminShellNS.AdminShellV30;
+//using static AdminShellNS.AdminShellV20;
 
 namespace IO.Swagger.Helpers
 {
@@ -63,8 +64,8 @@ namespace IO.Swagger.Helpers
             {
                 if (m_object is Property property)
                 {
-                    Console.WriteLine($"############### {property.ToValueOnlySerialization()} ########################");
-                    writer.WriteValue(property.ToValueOnlySerialization());
+                    //Console.WriteLine($"############### {property.ToValueOnlySerialization()} ########################");
+                    //writer.WriteValue(property.ToValueOnlySerialization());
                 }
             }
         }
