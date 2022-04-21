@@ -793,7 +793,7 @@
             if (f.value != "")
             {
                 string[] split = f.value.Split(new Char[] { '/' });
-                if (split.Length > 1 && split[1].ToLower() == "aasx")
+                if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
                 {
                     split = f.value.Split(new Char[] { '.' });
                     switch (split.Last().ToLower())
@@ -955,7 +955,7 @@
 
             // Test for /aasx/
             string[] split = f.value.Split(new Char[] { '/' });
-            if (split[1].ToLower() == "aasx")
+            if (split.Length == 2 || split[1].ToLower() == "aasx")
             {
                 return true;
             }
@@ -1021,7 +1021,7 @@
             split = value.Split(new Char[] { '/' });
             if (split.Length > 1)
             {
-                if (split[1].ToLower() == "aasx")
+                if (split.Length == 2 || split[1].ToLower() == "aasx")
                 {
                     // return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
                     return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;

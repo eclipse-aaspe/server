@@ -1125,6 +1125,7 @@ namespace AasxServer
                             {
                                 foreach (var v in sm.submodelElements)
                                 {
+                                    // simple format
                                     if (v.submodelElement is AdminShell.Property p)
                                     {
                                         switch (p.idShort)
@@ -1138,6 +1139,39 @@ namespace AasxServer
                                             case "CfpDistribution":
                                                 cfpDistribution = p;
                                                 break;
+                                        }
+                                    }
+                                    // complex format
+                                    if (v.submodelElement is AdminShell.SubmodelElementCollection c)
+                                    {
+                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                        {
+                                            string lifeCyclePhase = "";
+                                            AdminShell.Property co2eq = null;
+                                            foreach (var v2 in c.value)
+                                            {
+                                                switch (v2.submodelElement.idShort)
+                                                {
+                                                    case "LifeCyclePhase":
+                                                        lifeCyclePhase = v2.submodelElement.ValueAsText();
+                                                        break;
+                                                    case "CO2eq":
+                                                        co2eq = v2.submodelElement as AdminShell.Property;
+                                                        break;
+                                                }
+                                            }
+                                            switch (lifeCyclePhase)
+                                            {
+                                                case "Cradle-to-gate":
+                                                    cfpCradleToGate = co2eq;
+                                                    break;
+                                                case "Production":
+                                                    cfpProduction = co2eq;
+                                                    break;
+                                                case "Distribution":
+                                                    cfpDistribution = co2eq;
+                                                    break;
+                                            }
                                         }
                                     }
                                 }
@@ -1175,6 +1209,10 @@ namespace AasxServer
                     if (!bomAssetId.Contains(assetId))
                         continue;
                     int assetCount = 0;
+                    // Test
+                    // if (!assetId.Contains("1SD"))
+                    //    continue;
+                    // int assetCount = 1;
                     foreach (var ba in bomAssetId)
                     {
                         if (assetId == ba)
@@ -1192,6 +1230,7 @@ namespace AasxServer
                                 {
                                     foreach (var v in sm.submodelElements)
                                     {
+                                        // simple format
                                         if (v.submodelElement is AdminShell.Property p)
                                         {
                                             double value = 0.0;
@@ -1212,6 +1251,46 @@ namespace AasxServer
                                                 case "CfpDistribution":
                                                     cfpDistributionSum += value;
                                                     break;
+                                            }
+                                        }
+                                        // complex format
+                                        if (v.submodelElement is AdminShell.SubmodelElementCollection c)
+                                        {
+                                            if (c.idShort.Contains("FootprintInformationModule"))
+                                            {
+                                                string lifeCyclePhase = "";
+                                                AdminShell.Property co2eq = null;
+                                                foreach (var v2 in c.value)
+                                                {
+                                                    switch (v2.submodelElement.idShort)
+                                                    {
+                                                        case "LifeCyclePhase":
+                                                            lifeCyclePhase = v2.submodelElement.ValueAsText();
+                                                            break;
+                                                        case "CO2eq":
+                                                            co2eq = v2.submodelElement as AdminShell.Property;
+                                                            break;
+                                                    }
+                                                }
+                                                double value = 0.0;
+                                                try
+                                                {
+                                                    value = Convert.ToDouble(co2eq.value);
+                                                    value *= assetCount;
+                                                }
+                                                catch { }
+                                                switch (lifeCyclePhase)
+                                                {
+                                                    case "Cradle-to-gate":
+                                                        cfpCradleToGateSum += value;
+                                                        break;
+                                                    case "Production":
+                                                        cfpProductionSum += value;
+                                                        break;
+                                                    case "Distribution":
+                                                        cfpDistributionSum += value;
+                                                        break;
+                                                }
                                             }
                                         }
                                     }
