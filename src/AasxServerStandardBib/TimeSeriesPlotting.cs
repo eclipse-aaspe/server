@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QRCoder;
 using ScottPlot;
-using static AdminShellNS.AdminShellV20;
+//using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerStandardBib
 {
@@ -1279,38 +1279,38 @@ namespace AasxServerStandardBib
             // challenge is to select SMes, which are NOT from a known semantic id!
             var tsvAllowed = new[]
             {
-            pcts.CD_RecordId.GetSingleKey(),
-            pcts.CD_UtcTime.GetSingleKey(),
-            pcts.CD_TaiTime.GetSingleKey(),
-            pcts.CD_Time.GetSingleKey(),
-            pcts.CD_TimeDuration.GetSingleKey(),
-            pcts.CD_ValueArray.GetSingleKey(),
-            pcts.CD_ExternalDataFile.GetSingleKey()
+            pcts.CD_RecordId.GetSingleId(),
+            pcts.CD_UtcTime.GetSingleId(),
+            pcts.CD_TaiTime.GetSingleId(),
+            pcts.CD_Time.GetSingleId(),
+            pcts.CD_TimeDuration.GetSingleId(),
+            pcts.CD_ValueArray.GetSingleId(),
+            pcts.CD_ExternalDataFile.GetSingleId()
         };
 
             var tsrAllowed = new[]
             {
-            pcts.CD_RecordId.GetSingleKey(),
-            pcts.CD_UtcTime.GetSingleKey(),
-            pcts.CD_TaiTime.GetSingleKey(),
-            pcts.CD_Time.GetSingleKey(),
-            pcts.CD_TimeDuration.GetSingleKey(),
-            pcts.CD_ValueArray.GetSingleKey()
+            pcts.CD_RecordId.GetSingleId(),
+            pcts.CD_UtcTime.GetSingleId(),
+            pcts.CD_TaiTime.GetSingleId(),
+            pcts.CD_Time.GetSingleId(),
+            pcts.CD_TimeDuration.GetSingleId(),
+            pcts.CD_ValueArray.GetSingleId()
         };
 
             // find variables?
             foreach (var smcvar in smcseg.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
-                pcts.CD_TimeSeriesVariable.GetReference(), mm))
+                pcts.CD_TimeSeriesVariable.GetSingleId(), mm))
             {
                 // makes only sense with record id
                 var recid = "" + smcvar.value.FindFirstSemanticIdAs<AdminShell.Property>(
-                    pcts.CD_RecordId.GetReference(), mm)?.value?.Trim();
+                    pcts.CD_RecordId.GetSingleId(), mm)?.value?.Trim();
                 if (recid.Length < 1)
                     continue;
 
                 // add need a value array as well!
                 var valarr = "" + smcvar.value.FindFirstSemanticIdAs<AdminShell.Blob>(
-                    pcts.CD_ValueArray.GetReference(), mm)?.value?.Trim();
+                    pcts.CD_ValueArray.GetSingleId(), mm)?.value?.Trim();
                 if (valarr.Length < 1)
                     continue;
 
@@ -1346,11 +1346,11 @@ namespace AasxServerStandardBib
 
             // find records?
             foreach (var smcrec in smcseg.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
-                pcts.CD_TimeSeriesRecord.GetReference(), mm))
+                pcts.CD_TimeSeriesRecord.GetSingleId(), mm))
             {
                 // makes only sense with a numerical record id
                 var recid = "" + smcrec.value.FindFirstSemanticIdAs<AdminShell.Property>(
-                    pcts.CD_RecordId.GetReference(), mm)?.value?.Trim();
+                    pcts.CD_RecordId.GetSingleId(), mm)?.value?.Trim();
                 if (recid.Length < 1)
                     continue;
                 if (!int.TryParse(recid, out var dataIndex))
@@ -1501,19 +1501,19 @@ namespace AasxServerStandardBib
 
             // detect
             AdminShell.Property prop = null;
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_UtcTime.GetReference(), mm);
+            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_UtcTime.GetSingleId(), mm);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Utc, prop);
 
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_TaiTime.GetReference(), mm);
+            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_TaiTime.GetSingleId(), mm);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Tai, prop);
 
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_Time.GetReference(), mm);
+            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_Time.GetSingleId(), mm);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Plain, prop);
 
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_TimeDuration.GetReference(), mm);
+            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_TimeDuration.GetSingleId(), mm);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Plain, prop);
 
@@ -1644,7 +1644,7 @@ namespace AasxServerStandardBib
                 string idShort,
                 string id,
                 string definitionHereString,
-                AdminShell.Reference isCaseOf = null)
+                AdminShell.ModelReference isCaseOf = null)
             {
                 // access
                 if (idShort == null || idType == null || id == null)
@@ -1653,13 +1653,13 @@ namespace AasxServerStandardBib
                 // create CD
                 var cd = AdminShell.ConceptDescription.CreateNew(idShort, idType, id);
                 var dsiec = cd.CreateDataSpecWithContentIec61360();
-                dsiec.preferredName = new AdminShellV20.LangStringSetIEC61360(lang, "" + idShort);
-                dsiec.definition = new AdminShellV20.LangStringSetIEC61360(lang,
+                dsiec.preferredName = new AdminShell.LangStringSetIEC61360(lang, "" + idShort);
+                dsiec.definition = new AdminShell.LangStringSetIEC61360(lang,
                     "" + AdminShellUtil.CleanHereStringWithNewlines(nl: " ", here: definitionHereString));
 
                 // options
                 if (isCaseOf != null)
-                    cd.IsCaseOf = new List<AdminShell.Reference>(new[] { isCaseOf });
+                    cd.IsCaseOf = new List<AdminShell.ModelReference>(new[] { isCaseOf });
 
                 // ok
                 return cd;
