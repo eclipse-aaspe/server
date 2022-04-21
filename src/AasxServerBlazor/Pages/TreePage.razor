@@ -19,7 +19,8 @@
         @if (Program.isLoading)
         {<span style="color:white;background-color:blue;">Loading...</span>}
         else
-        { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
+        //TODO:JT Uncomment
+            @*{ IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }*@
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
               @bind-SelectedNode="SelectedNode"
               @bind-ExpandedNodes="ExpandedNodes"
@@ -433,7 +434,7 @@
     async Task DownloadFile()
     {
         this.StateHasChanged();
-        var f = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+        var f = selectedNode.Tag as AdminShellNS.AdminShellV30.File;
         var fileName = System.IO.Path.GetFileName(f.value);
         if (fileName != "")
         {
