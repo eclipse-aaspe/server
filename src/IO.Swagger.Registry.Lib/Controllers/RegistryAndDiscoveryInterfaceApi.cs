@@ -403,12 +403,13 @@ namespace IO.Swagger.Registry.Controllers
             var aas = env.AasEnv.AdministrationShells[0];
 
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
-            string asset = aas.assetRef?[0].value;
+            //string asset = aas.assetRef?[0].value;
+            string globalAssetId = aas.assetInformation.globalAssetId.GetAsExactlyOneKey().value;
 
             // ad.Administration.Version = aas.administration.version;
             // ad.Administration.Revision = aas.administration.revision;
             ad.IdShort = aas.idShort;
-            ad.Identification = aas.identification.id;
+            ad.Identification = aas.id.value;
             var e = new Endpoint();
             e.ProtocolInformation = new ProtocolInformation();
             e.ProtocolInformation.EndpointAddress =
@@ -420,7 +421,7 @@ namespace IO.Swagger.Registry.Controllers
             ad.Endpoints.Add(e);
             var gr = new GlobalReference();
             gr.Value = new List<string>();
-            gr.Value.Add(asset);
+            gr.Value.Add(globalAssetId);
             ad.GlobalAssetId = gr;
             // Submodels
             if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
@@ -433,7 +434,7 @@ namespace IO.Swagger.Registry.Controllers
                     {
                         SubmodelDescriptor sd = new SubmodelDescriptor();
                         sd.IdShort = sm.idShort;
-                        sd.Identification = sm.identification.id;
+                        sd.Identification = sm.id.value;
                         var esm = new Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.EndpointAddress =
