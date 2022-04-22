@@ -19,8 +19,7 @@
         @if (Program.isLoading)
             {<span style="color:white;background-color:blue;">Loading...</span>}
         else
-        //TODO:JT Uncomment
-            @*{ IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }*@
+            { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
                 @bind-SelectedNode="SelectedNode"
                 @bind-ExpandedNodes="ExpandedNodes"
