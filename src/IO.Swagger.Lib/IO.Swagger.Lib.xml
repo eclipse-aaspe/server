@@ -47,6 +47,14 @@
             <param name="aasId">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
             <response code="200">Requested package list</response>
         </member>
+        <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.GetAssetAdministrationShellAndAssetByPackageId(System.String,System.String)">
+            <summary>
+            Returns a an AssetAdministrationShell based on aasId and packageId combination
+            </summary>
+            <param name="packageId">Package Id (BASE64-URL-encoded)</param>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+            <response code="200">Requested package list</response>
+        </member>
         <member name="M:IO.Swagger.Controllers.AASXFileServerInterfaceApiController.PutAASXPackageById(System.String,System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
             <summary>
             Updates the AASX package at the server
@@ -5034,6 +5042,21 @@
             </summary>
             <returns>Hash code</returns>
         </member>
+        <member name="T:IO.Swagger.Lib.Models.AssetAdministrationShellAndAsset">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Lib.Models.AssetAdministrationShellAndAsset.aas">
+            <summary>
+            Gets or sets AssetAdministrationShell
+            </summary>
+        </member>
+        <member name="F:IO.Swagger.Lib.Models.AssetAdministrationShellAndAsset.asset">
+            <summary>
+            Gets or sets Asset
+            </summary>
+        </member>
         <member name="T:IO.Swagger.Services.AASXFileServerInterfaceService">
             <summary>
             This is a helper class to deal with "AASX File Server Interface" defines in "Details of Asset Administration Shell Part 2, section 4.5"
@@ -5083,6 +5106,14 @@
             <param name="newFileName">Filename of the AASX package</param>
             <returns></returns>
         </member>
+        <member name="M:IO.Swagger.Services.AASXFileServerInterfaceService.GetAssetAdministrationShellAndAssetByPackageId(System.String,System.String)">
+            <summary>
+             Retrieves AAS w.r.t. PackageId and aasId
+            </summary>
+            <param name="packageId"></param>
+            <param name="aasId"></param>
+            <returns></returns>
+        </member>
         <member name="T:IO.Swagger.Services.IAASXFileServerInterfaceService">
             <summary>
             An interface to deal with "AASX File Server Interface" defines in "Details of Asset Administration Shell Part 2, section 4.5"
@@ -5126,6 +5157,14 @@
             <param name="fileContent">New AASX package</param>
             <param name="fileName">Filename of the AASX package</param>
             <param name="packageIndex">package index at which the new package is added</param>
+            <returns></returns>
+        </member>
+        <member name="M:IO.Swagger.Services.IAASXFileServerInterfaceService.GetAssetAdministrationShellAndAssetByPackageId(System.String,System.String)">
+            <summary>
+            Retrieves AAS w.r.t. PackageId and aasId
+            </summary>
+            <param name="packageId"></param>
+            <param name="aasId"></param>
             <returns></returns>
         </member>
         <member name="T:IO.Swagger.Services.IUserService">

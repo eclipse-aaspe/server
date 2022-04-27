@@ -1,4 +1,6 @@
-﻿using IO.Swagger.Models;
+﻿using AdminShellNS;
+using IO.Swagger.Lib.Models;
+using IO.Swagger.Models;
 using System.Collections.Generic;
 
 namespace IO.Swagger.Services
@@ -47,5 +49,13 @@ namespace IO.Swagger.Services
         /// <param name="packageIndex">package index at which the new package is added</param>
         /// <returns></returns>
         bool PostAASXPackage(byte[] fileContent, string fileName, out int packageIndex);
+
+        /// <summary>
+        /// Retrieves AAS w.r.t. PackageId and aasId
+        /// </summary>
+        /// <param name="packageId"></param>
+        /// <param name="aasId"></param>
+        /// <returns></returns>
+        AssetAdministrationShellAndAsset GetAssetAdministrationShellAndAssetByPackageId(string packageId, string aasId);
     }
 }
