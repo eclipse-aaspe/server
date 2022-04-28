@@ -9,21 +9,23 @@
  */
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Dynamic;
-using System.IO;
-using System.Linq;
-using AasxRestServerLibrary;
-using IO.Swagger.Attributes;
-using IO.Swagger.Models;
-using IO.Swagger.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
+using IO.Swagger.Attributes;
+
+using Microsoft.AspNetCore.Authorization;
+using IO.Swagger.Models;
+using System.Dynamic;
+using AasxRestServerLibrary;
+using IO.Swagger.Services;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using AdminShellNS;
 
 namespace IO.Swagger.Controllers
 {
@@ -132,6 +134,36 @@ namespace IO.Swagger.Controllers
                 }
 
                 return new ObjectResult(packages);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Returns a an AssetAdministrationShell based on aasId and packageId combination
+        /// </summary>
+        /// <param name="packageId">Package Id (BASE64-URL-encoded)</param>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (BASE64-URL-encoded)</param>
+        /// <response code="200">Requested package list</response>
+        [HttpGet]
+        [Route("/packages/{packageId}/shells/{aasIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAssetAdministrationShellAndAssetByPackageId")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AdminShell.AdministrationShell), description: "Requested package list")]
+        public virtual IActionResult GetAssetAdministrationShellAndAssetByPackageId([FromRoute][Required] string packageId, [FromRoute][Required] string aasIdentifier)
+        {
+            try
+            {
+                var aas = _fileService.GetAssetAdministrationShellAndAssetByPackageId(Base64UrlEncoder.Decode(packageId), Base64UrlEncoder.Decode(aasIdentifier));
+
+                if (aas == null)
+                {
+                    return NotFound();
+                }
+
+                return new ObjectResult(aas);
             }
             catch (Exception e)
             {
