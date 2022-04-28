@@ -1253,11 +1253,19 @@ namespace AasxTimeSeries
                     var historyData2 = ExtensionObject.ToEncodeable(results[1].HistoryData) as HistoryData;
                     for (int i = 0; i < historyData1.DataValues.Count; i++)
                     {
-                        var row = new List<object>();
-                        row.Add(historyData1.DataValues[i].SourceTimestamp);
-                        row.Add(historyData1.DataValues[i].Value);
-                        row.Add(historyData2.DataValues[i].Value);
-                        table.Add(row);
+                        var sourceTimeStamp = (DateTime)historyData1.DataValues[i].SourceTimestamp;
+                        var value1 = (string)historyData1.DataValues[i].Value;
+                        var value2 = (string)historyData2.DataValues[i].Value;
+
+                        // collect only valid entries
+                        if (sourceTimeStamp >= startTime && value1 != "" && value2 != "")
+                        {
+                            var row = new List<object>();
+                            row.Add(historyData1.DataValues[i].SourceTimestamp);
+                            row.Add(historyData1.DataValues[i].Value);
+                            row.Add(historyData2.DataValues[i].Value);
+                            table.Add(row);
+                        }
                     }
 
                     for (int i = 0; i < results.Count; i++)
