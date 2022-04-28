@@ -1,9 +1,9 @@
-﻿using AdminShellNS;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Text;
+using AdminShellNS;
 
 namespace IO.Swagger.Lib.Models
 {

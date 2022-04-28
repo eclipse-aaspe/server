@@ -1258,6 +1258,8 @@ namespace AasxTimeSeries
                         var value2 = (string)historyData2.DataValues[i].Value;
 
                         // collect only valid entries
+                        Console.WriteLine("startTime " + startTime + " sourceTimeStamp " + sourceTimeStamp
+                            + " value1 " + value1 + " value2 " + value2);
                         if (sourceTimeStamp >= startTime && value1 != "" && value2 != "")
                         {
                             var row = new List<object>();

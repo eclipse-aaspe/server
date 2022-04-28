@@ -1,12 +1,12 @@
-﻿using AasxRestServerLibrary;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using AasxRestServerLibrary;
 using AdminShellNS;
 using IO.Swagger.Lib.Models;
 using IO.Swagger.Models;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 namespace IO.Swagger.Services
 {
