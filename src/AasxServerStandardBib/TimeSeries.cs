@@ -1191,6 +1191,7 @@ namespace AasxTimeSeries
         }
         public static void Connect(TimeSeriesBlock tsb)
         {
+            Console.WriteLine("Connect OPC UA Historical Data:");
             if (opc == null)
                 opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
             opc.ConsoleSampleClient().Wait();
