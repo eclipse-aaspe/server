@@ -1161,6 +1161,7 @@ namespace AasxTimeSeries
             return 1;
         }
 
+        static TimeSpan correctionMinutes = TimeSpan.FromMinutes(0);
         public static void GetHistory(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Read OPC UA Historical Data:");
@@ -1168,8 +1169,7 @@ namespace AasxTimeSeries
             {
                 ErrorMessage = "";
                 startTime = tsb.opcLastTimeStamp;
-                // endTime = DateTime.UtcNow + TimeSpan.FromMinutes(120);
-                endTime = DateTime.UtcNow;
+                endTime = DateTime.UtcNow + correctionMinutes;
                 tsb.opcLastTimeStamp = endTime;
                 if (session == null)
                     Connect(tsb);
