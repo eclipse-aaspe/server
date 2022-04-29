@@ -1183,7 +1183,6 @@ namespace AasxTimeSeries
                 if (session != null)
                     endTime = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
                 GetData(tsb);
-                tsb.opcLastTimeStamp = endTime;
             }
             catch (Exception ex)
             {
@@ -1286,6 +1285,7 @@ namespace AasxTimeSeries
                             row.Add(historyData1.DataValues[i].Value);
                             row.Add(historyData2.DataValues[i].Value);
                             table.Add(row);
+                            tsb.opcLastTimeStamp = sourceTimeStamp + TimeSpan.FromMilliseconds(1);
                         }
                     }
 
