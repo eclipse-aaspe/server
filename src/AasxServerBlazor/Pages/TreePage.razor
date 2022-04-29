@@ -1324,6 +1324,8 @@
             for (int i = 0; i < ls.Count; i++)
             {
                 ret += ls.langString[i].lang + " ";
+                if (i == 0)
+                    ret += ls.langString[i].str + " ";
             }
             if (mlp.qualifiers != null && mlp.qualifiers.Count > 0)
             {

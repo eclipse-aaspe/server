@@ -60,7 +60,9 @@ namespace AasxTimeSeries
             public List<string> opcNodes = null;
             public List<string> modbusNodes = null;
             public DateTime opcLastTimeStamp;
+            public int correctionMinutes = 0;
         }
+
         static public List<TimeSeriesBlock> timeSeriesBlockList = null;
         static public List<AdminShell.SubmodelElementCollection> timeSeriesSubscribe = null;
         public static void timeSeriesInit()
@@ -124,7 +126,6 @@ namespace AasxTimeSeries
                                         tsb.data = tsb.block;
                                         tsb.samplesProperties = new List<AdminShell.Property>();
                                         tsb.samplesValues = new List<string>();
-                                        tsb.opcLastTimeStamp = DateTime.UtcNow - TimeSpan.FromMinutes(1) + TimeSpan.FromMinutes(120);
 
                                         for (int dataSections = 0; dataSections < 2; dataSections++)
                                         {
@@ -192,6 +193,12 @@ namespace AasxTimeSeries
                                                         if (sme2 is AdminShell.Property)
                                                         {
                                                             tsb.plotRowOffset = Convert.ToInt32((sme2 as AdminShell.Property).value);
+                                                        }
+                                                        break;
+                                                    case "correctionMinutes":
+                                                        if (sme2 is AdminShell.Property)
+                                                        {
+                                                            tsb.correctionMinutes = Convert.ToInt32((sme2 as AdminShell.Property).value);
                                                         }
                                                         break;
                                                     case "data":
@@ -323,6 +330,8 @@ namespace AasxTimeSeries
                                                 countSmec = smec.value.Count;
                                             }
                                         }
+                                        tsb.opcLastTimeStamp = DateTime.UtcNow + TimeSpan.FromMinutes(tsb.correctionMinutes) - TimeSpan.FromMinutes(2);
+
                                         if (tsb.data != null)
                                         {
                                             tsb.latestData = AdminShell.SubmodelElementCollection.CreateNew("latestData");
@@ -1161,7 +1170,6 @@ namespace AasxTimeSeries
             return 1;
         }
 
-        static TimeSpan correctionMinutes = TimeSpan.FromMinutes(0);
         public static void GetHistory(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Read OPC UA Historical Data:");
@@ -1169,15 +1177,16 @@ namespace AasxTimeSeries
             {
                 ErrorMessage = "";
                 startTime = tsb.opcLastTimeStamp;
-                endTime = DateTime.UtcNow + correctionMinutes;
-                tsb.opcLastTimeStamp = endTime;
+                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(tsb.correctionMinutes);
                 if (session == null)
                     Connect(tsb);
                 GetData(tsb);
+                tsb.opcLastTimeStamp = endTime;
             }
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
+                Console.WriteLine(ErrorMessage);
                 session?.Close();
                 session?.Dispose();
                 session = null;
@@ -1255,14 +1264,15 @@ namespace AasxTimeSeries
                     for (int i = 0; i < historyData1.DataValues.Count; i++)
                     {
                         var sourceTimeStamp = (DateTime)historyData1.DataValues[i].SourceTimestamp;
-                        var value1 = (string)historyData1.DataValues[i].Value;
-                        var value2 = (string)historyData2.DataValues[i].Value;
+                        var value1 = historyData1.DataValues[i].Value?.ToString();
+                        var value2 = historyData2.DataValues[i].Value?.ToString();
 
                         // collect only valid entries
-                        Console.WriteLine("startTime " + startTime + " sourceTimeStamp " + sourceTimeStamp
-                            + " value1 " + value1 + " value2 " + value2);
-                        if (sourceTimeStamp >= startTime && value1 != "" && value2 != "")
+                        if (sourceTimeStamp != null && value1 != null && value2 != null &&
+                            sourceTimeStamp >= startTime && value1 != "" && value2 != "")
                         {
+                            // Console.WriteLine("startTime " + startTime + " sourceTimeStamp " + sourceTimeStamp
+                            //    + " value1 " + value1 + " value2 " + value2);
                             var row = new List<object>();
                             row.Add(historyData1.DataValues[i].SourceTimestamp);
                             row.Add(historyData1.DataValues[i].Value);
