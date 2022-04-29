@@ -236,7 +236,9 @@ namespace IO.Swagger.Registry.Controllers
             return new ObjectResult(example);
         }
 
+#pragma warning disable IDE1006 // Benennungsstile
         List<AssetAdministrationShellDescriptor> getFromAasRegistry(
+#pragma warning restore IDE1006 // Benennungsstile
             string getAasIdBase64 = null,
             List<string> getAssetListBase64 = null)
         {
@@ -394,7 +396,9 @@ namespace IO.Swagger.Registry.Controllers
             return new ObjectResult(example);
         }
 
+#pragma warning disable IDE1006 // Benennungsstile
         static void addAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
+#pragma warning restore IDE1006 // Benennungsstile
         {
             var aas = env.AasEnv.AdministrationShells[0];
 
@@ -508,7 +512,9 @@ namespace IO.Swagger.Registry.Controllers
             }
         }
 
+#pragma warning disable IDE1006 // Benennungsstile
         static void addAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
+#pragma warning restore IDE1006 // Benennungsstile
         {
             string aasID = ad.Identification;
             string assetID = "";
@@ -584,7 +590,11 @@ namespace IO.Swagger.Registry.Controllers
         static List<string> postRegistry = new List<string>();
 
         static bool init = false;
+#pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
+#pragma warning disable IDE1006 // Benennungsstile
         public static void initRegistry(DateTime timestamp)
+#pragma warning restore IDE1006 // Benennungsstile
+#pragma warning restore CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
         {
             if (init)
                 return;
