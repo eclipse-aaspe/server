@@ -41,7 +41,9 @@ namespace IO.Swagger.Helpers
             _userService = userService;
         }
 
+#pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+#pragma warning restore CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
         {
             Response.Headers["WWW-Authenticate"] = "Basic";
             return base.HandleChallengeAsync(properties);
