@@ -1176,10 +1176,12 @@ namespace AasxTimeSeries
             try
             {
                 ErrorMessage = "";
-                startTime = tsb.opcLastTimeStamp;
-                endTime = DateTime.UtcNow + TimeSpan.FromMinutes(tsb.correctionMinutes);
                 if (session == null)
                     Connect(tsb);
+                startTime = tsb.opcLastTimeStamp;
+                // get current time on server
+                if (session != null)
+                    endTime = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
                 GetData(tsb);
                 tsb.opcLastTimeStamp = endTime;
             }
@@ -1200,7 +1202,7 @@ namespace AasxTimeSeries
         }
         public static void Connect(TimeSeriesBlock tsb)
         {
-            Console.WriteLine("Connect OPC UA Historical Data:");
+            Console.WriteLine("Connect OPC UA");
             if (opc == null)
                 opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
             opc.ConsoleSampleClient().Wait();
@@ -1209,6 +1211,12 @@ namespace AasxTimeSeries
             {
                 Console.WriteLine("ERROR: Session not connected "
                     + tsb.sourceAddress + " " + tsb.username + " " + tsb.password);
+            }
+            else
+            {
+                // get current time on server
+                tsb.opcLastTimeStamp = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
+                tsb.opcLastTimeStamp -= TimeSpan.FromMinutes(1);
             }
         }
         public static void GetData(TimeSeriesBlock tsb)
