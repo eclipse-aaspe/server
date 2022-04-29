@@ -12,6 +12,9 @@
     <None Update="IEC61360.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Update="LICENSE.TXT">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="startForDemo.bat">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

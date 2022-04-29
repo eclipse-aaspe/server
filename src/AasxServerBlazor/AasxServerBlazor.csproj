@@ -45,4 +45,10 @@
   <ItemGroup>
     <Folder Include="wwwroot\images\scottplot\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="LICENSE.TXT">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
