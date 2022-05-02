@@ -1115,12 +1115,6 @@ namespace AasxServer
         }
         public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
-            double cfpCradleToGateSum = 0.0;
-            double cfpProductionSum = 0.0;
-            double cfpDistributionSum = 0.0;
-            AdminShell.Property cfpCradleToGate = null;
-            AdminShell.Property cfpProduction = null;
-            AdminShell.Property cfpDistribution = null;
             List<string> bomAssetId = new List<string>();
             Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
             // List<cfpNode> cfpList = new List<cfpNode>();
