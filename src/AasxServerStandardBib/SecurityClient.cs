@@ -1099,6 +1099,20 @@ namespace AasxServer
             Program.signalNewData(1);
         }
 
+        private class cfpNode
+        {
+            public string asset = null;
+            public AdminShellV20.AdministrationShell aas = null;
+            public AdminShellV20.Property cradleToGateModule = null;
+            public AdminShellV20.Property productionModule = null;
+            public AdminShellV20.Property distributionModule = null;
+            public AdminShellV20.Property cradleToGateCombination = null;
+            public AdminShellV20.Property productionCombination = null;
+            public AdminShellV20.Property distributionCombination = null;
+            public List<string> bom = new List<string>();
+            public List<cfpNode> children = new List<cfpNode>();
+            public int iChild = 0;
+        }
         public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
             double cfpCradleToGateSum = 0.0;
@@ -1108,117 +1122,26 @@ namespace AasxServer
             AdminShell.Property cfpProduction = null;
             AdminShell.Property cfpDistribution = null;
             List<string> bomAssetId = new List<string>();
+            Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
+            // List<cfpNode> cfpList = new List<cfpNode>();
+            // Dictionary<string, List<string>> assetBOM = new Dictionary<string, List<string>>();
 
-            // get cfp property and list of asset ids
-            var env = AasxServer.Program.env[envIndex];
-            if (env != null)
-            {
-                var aas = env.AasEnv.AdministrationShells[0];
-                if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
-                {
-                    foreach (var smr in aas.submodelRefs)
-                    {
-                        var sm = env.AasEnv.FindSubmodel(smr);
-                        if (sm != null && sm.idShort != null)
-                        {
-                            if (sm.idShort == "ProductCarbonFootprint")
-                            {
-                                foreach (var v in sm.submodelElements)
-                                {
-                                    // simple format
-                                    if (v.submodelElement is AdminShell.Property p)
-                                    {
-                                        switch (p.idShort)
-                                        {
-                                            case "CfpCradleToGate":
-                                                cfpCradleToGate = p;
-                                                break;
-                                            case "CfpProduction":
-                                                cfpProduction = p;
-                                                break;
-                                            case "CfpDistribution":
-                                                cfpDistribution = p;
-                                                break;
-                                        }
-                                    }
-                                    // complex format
-                                    if (v.submodelElement is AdminShell.SubmodelElementCollection c)
-                                    {
-                                        if (c.idShort.Contains("FootprintInformationModule"))
-                                        {
-                                            string lifeCyclePhase = "";
-                                            AdminShell.Property co2eq = null;
-                                            foreach (var v2 in c.value)
-                                            {
-                                                switch (v2.submodelElement.idShort)
-                                                {
-                                                    case "LifeCyclePhase":
-                                                        lifeCyclePhase = v2.submodelElement.ValueAsText();
-                                                        break;
-                                                    case "CO2eq":
-                                                        co2eq = v2.submodelElement as AdminShell.Property;
-                                                        break;
-                                                }
-                                            }
-                                            switch (lifeCyclePhase)
-                                            {
-                                                case "Cradle-to-gate":
-                                                    cfpCradleToGate = co2eq;
-                                                    break;
-                                                case "Production":
-                                                    cfpProduction = co2eq;
-                                                    break;
-                                                case "Distribution":
-                                                    cfpDistribution = co2eq;
-                                                    break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (sm.idShort == "BillOfMaterial")
-                            {
-                                foreach (var v in sm.submodelElements)
-                                {
-                                    if (v.submodelElement is AdminShell.Entity e)
-                                    {
-                                        string s = "";
-                                        s = e?.assetRef?.Keys?[0].value;
-                                        if (s != "")
-                                        {
-                                            bomAssetId.Add(s);
-                                            // Console.WriteLine("Asset: " + s);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+            AdminShellPackageEnv env = null;
             int aascount = AasxServer.Program.env.Length;
+            cfpNode root = null;
 
+            // Collect data from all AAS into cfpNode(s)
             for (int i = 0; i < aascount; i++)
             {
                 env = AasxServer.Program.env[i];
-                if (i != envIndex && env != null)
+                if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
                     var assetId = aas.assetRef.Keys[0].value;
-                    if (!bomAssetId.Contains(assetId))
-                        continue;
-                    int assetCount = 0;
-                    // Test
-                    // if (!assetId.Contains("1SD"))
-                    //    continue;
-                    // int assetCount = 1;
-                    foreach (var ba in bomAssetId)
-                    {
-                        if (assetId == ba)
-                            assetCount++;
-                    }
-                    // Console.WriteLine("Asset: " + assetId + ",Count: " + assetCount);
+                    var cfp = new cfpNode();
+                    cfp.aas = aas;
+                    cfp.asset = assetId;
+
                     if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                     {
                         foreach (var smr in aas.submodelRefs)
@@ -1230,33 +1153,10 @@ namespace AasxServer
                                 {
                                     foreach (var v in sm.submodelElements)
                                     {
-                                        // simple format
-                                        if (v.submodelElement is AdminShell.Property p)
-                                        {
-                                            double value = 0.0;
-                                            try
-                                            {
-                                                value = Convert.ToDouble(p.value);
-                                                value *= assetCount;
-                                            }
-                                            catch { }
-                                            switch (p.idShort)
-                                            {
-                                                case "CfpCradleToGate":
-                                                    cfpCradleToGateSum += value;
-                                                    break;
-                                                case "CfpProduction":
-                                                    cfpProductionSum += value;
-                                                    break;
-                                                case "CfpDistribution":
-                                                    cfpDistributionSum += value;
-                                                    break;
-                                            }
-                                        }
-                                        // complex format
                                         if (v.submodelElement is AdminShell.SubmodelElementCollection c)
                                         {
-                                            if (c.idShort.Contains("FootprintInformationModule"))
+                                            if (c.idShort.Contains("FootprintInformationModule")
+                                                    || c.idShort.Contains("FootprintInformationCombination"))
                                             {
                                                 string lifeCyclePhase = "";
                                                 AdminShell.Property co2eq = null;
@@ -1272,62 +1172,211 @@ namespace AasxServer
                                                             break;
                                                     }
                                                 }
-                                                double value = 0.0;
-                                                try
-                                                {
-                                                    value = Convert.ToDouble(co2eq.value);
-                                                    value *= assetCount;
-                                                }
-                                                catch { }
                                                 switch (lifeCyclePhase)
                                                 {
                                                     case "Cradle-to-gate":
-                                                        cfpCradleToGateSum += value;
+                                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                                        {
+                                                            cfp.cradleToGateModule = co2eq;
+                                                        }
+                                                        if (c.idShort.Contains("FootprintInformationCombination"))
+                                                        {
+                                                            cfp.cradleToGateCombination = co2eq;
+                                                        }
                                                         break;
                                                     case "Production":
-                                                        cfpProductionSum += value;
+                                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                                        {
+                                                            cfp.productionModule = co2eq;
+                                                        }
+                                                        if (c.idShort.Contains("FootprintInformationCombination"))
+                                                        {
+                                                            cfp.productionCombination = co2eq;
+                                                        }
                                                         break;
                                                     case "Distribution":
-                                                        cfpDistributionSum += value;
+                                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                                        {
+                                                            cfp.distributionModule = co2eq;
+                                                        }
+                                                        if (c.idShort.Contains("FootprintInformationCombination"))
+                                                        {
+                                                            cfp.distributionCombination = co2eq;
+                                                        }
                                                         break;
                                                 }
                                             }
                                         }
                                     }
                                 }
+                                if (sm.idShort == "BillOfMaterial")
+                                {
+                                    List<string> bom = new List<string>();
+                                    foreach (var v in sm.submodelElements)
+                                    {
+                                        if (v.submodelElement is AdminShell.Entity e)
+                                        {
+                                            string s = "";
+                                            s = e?.assetRef?.Keys?[0].value;
+                                            if (s != "")
+                                            {
+                                                bom.Add(s);
+                                            }
+                                        }
+                                    }
+                                    // assetBOM.Add(assetId, bom);
+                                    cfp.bom = bom;
+                                }
                             }
+                        }
+                    }
+                    assetCfp.Add(assetId, cfp);
+                    if (i == envIndex)
+                        root = cfp;
+                }
+            }
+
+            // create children from BOM
+            foreach (var d in assetCfp)
+            {
+                var cfp = d.Value;
+                if (cfp.bom.Count != 0)
+                {
+                    foreach (var asset in cfp.bom)
+                    {
+                        cfpNode child = null;
+                        if (assetCfp.TryGetValue(asset, out child))
+                        {
+                            cfp.children.Add(child);
                         }
                     }
                 }
             }
 
-            if (cfpCradleToGate != null)
+            // Iterate tree and calculate CFP values
+            cfpNode node = root;
+            cfpNode parent = null;
+            List<cfpNode> stack = new List<cfpNode>();
+            int sp = -1;
+
+            while (node != null)
             {
-                string value = cfpCradleToGateSum.ToString("N8");
-                if (value != cfpCradleToGate.value)
+                // create cfp combination only once at first child
+                if (node.iChild == 0)
                 {
-                    cfpCradleToGate.value = value;
-                    cfpCradleToGate.setTimeStamp(timeStamp);
+                    if (node.cradleToGateCombination != null)
+                    {
+                        node.cradleToGateCombination.value = "0";
+                        if (node.cradleToGateModule != null)
+                        {
+                            node.cradleToGateCombination.value = node.cradleToGateModule.value;
+                        }
+                        node.cradleToGateCombination.setTimeStamp(timeStamp);
+                    }
+                    if (node.productionCombination != null)
+                    {
+                        node.productionCombination.value = "0";
+                        if (node.productionModule != null)
+                        {
+                            node.productionCombination.value = node.productionModule.value;
+                        }
+                        node.productionCombination.setTimeStamp(timeStamp);
+                    }
+                    if (node.distributionCombination != null)
+                    {
+                        node.distributionCombination.value = "0";
+                        if (node.distributionModule != null)
+                        {
+                            node.distributionCombination.value = node.distributionModule.value;
+                        }
+                        node.distributionCombination.setTimeStamp(timeStamp);
+                    }
+                }
+                // move up, if all children iterated
+                if (node.iChild == node.children.Count)
+                {
+                    if (sp == -1)
+                    {
+                        node = null;
+                    }
+                    else
+                    {
+                        parent = stack[sp];
+                        if (parent.cradleToGateCombination != null)
+                        {
+                            AdminShell.Property p = node.cradleToGateModule;
+                            if (node.cradleToGateCombination != null)
+                                p = node.cradleToGateCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.value);
+                                    value2 = Convert.ToDouble(p.value);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.cradleToGateCombination.value = value1.ToString();
+                                    parent.cradleToGateCombination.setTimeStamp(timeStamp);
+                                }
+                                catch { }
+                            }
+                        }
+                        if (parent.productionCombination != null)
+                        {
+                            AdminShell.Property p = node.productionModule;
+                            if (node.productionCombination != null)
+                                p = node.productionCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.productionCombination.value);
+                                    value2 = Convert.ToDouble(p.value);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.productionCombination.value = value1.ToString();
+                                    parent.productionCombination.setTimeStamp(timeStamp);
+                                }
+                                catch { }
+                            }
+                        }
+                        if (parent.distributionCombination != null)
+                        {
+                            AdminShell.Property p = node.distributionModule;
+                            if (node.distributionCombination != null)
+                                p = node.distributionCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.distributionCombination.value);
+                                    value2 = Convert.ToDouble(p.value);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.distributionCombination.value = value1.ToString();
+                                    parent.distributionCombination.setTimeStamp(timeStamp);
+                                }
+                                catch { }
+                            }
+                        }
+                        parent = null;
+                        node = stack[sp];
+                        stack.RemoveAt(sp);
+                        sp--;
+                    }
+                }
+                else
+                {
+                    // Interate children
+                    stack.Add(node);
+                    sp++;
+                    node = node.children[node.iChild++];
                 }
             }
-            if (cfpProduction != null)
-            {
-                string value = cfpProductionSum.ToString("N8");
-                if (value != cfpProduction.value)
-                {
-                    cfpProduction.value = value;
-                    cfpProduction.setTimeStamp(timeStamp);
-                }
-            }
-            if (cfpDistribution != null)
-            {
-                string value = cfpDistributionSum.ToString("N8");
-                if (value != cfpDistribution.value)
-                {
-                    cfpDistribution.value = value;
-                    cfpDistribution.setTimeStamp(timeStamp);
-                }
-            }
+
             Program.signalNewData(1);
         }
 
