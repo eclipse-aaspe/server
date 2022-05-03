@@ -450,11 +450,11 @@ async Task SaveAs(IJSRuntime js, string filename, byte[] data)
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
-        Convert.ToBase64String(data)
+            /*
+            await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            Convert.ToBase64String(data)
         );
         */
         /*
@@ -1113,7 +1113,15 @@ async Task SaveAs(IJSRuntime js, string filename, byte[] data)
         }
         if (o is SubmodelElement)
         {
-            if (o is SubmodelElementCollection)
+            if(o is AdminShell.SubmodelElementStruct)
+            {
+                ret += "SMS";
+            }
+            else if(o is AdminShell.SubmodelElementList)
+            {
+                ret += "SML";
+            }
+            else if (o is SubmodelElementCollection)
             {
                 ret += "Coll";
             }
