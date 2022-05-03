@@ -455,11 +455,11 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
-        Convert.ToBase64String(data)
+            /*
+            await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            Convert.ToBase64String(data)
         );
         */
         /*
@@ -1124,7 +1124,15 @@
         }
         if (o is SubmodelElement)
         {
-            if (o is SubmodelElementCollection)
+            if(o is AdminShell.SubmodelElementStruct)
+            {
+                ret += "SMS";
+            }
+            else if(o is AdminShell.SubmodelElementList)
+            {
+                ret += "SML";
+            }
+            else if (o is SubmodelElementCollection)
             {
                 ret += "Coll";
             }
