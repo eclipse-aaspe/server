@@ -1099,8 +1099,9 @@ namespace AasxServer
             Program.signalNewData(1);
         }
 
-        private class cfpNode
+        public class cfpNode
         {
+            public int envIndex = -1;
             public string asset = null;
             public AdminShellV20.AdministrationShell aas = null;
             public AdminShellV20.Property cradleToGateModule = null;
@@ -1109,20 +1110,20 @@ namespace AasxServer
             public AdminShellV20.Property cradleToGateCombination = null;
             public AdminShellV20.Property productionCombination = null;
             public AdminShellV20.Property distributionCombination = null;
+            public AdminShell.File manufacturerLogo = null;
+            public AdminShell.File productImage = null;
             public List<string> bom = new List<string>();
             public List<cfpNode> children = new List<cfpNode>();
             public int iChild = 0;
         }
-        public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
-        {
-            List<string> bomAssetId = new List<string>();
-            Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
-            // List<cfpNode> cfpList = new List<cfpNode>();
-            // Dictionary<string, List<string>> assetBOM = new Dictionary<string, List<string>>();
 
+        public static cfpNode createCfpTree(int envIndex, DateTime timeStamp)
+        {
+            Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
+            cfpNode root = new cfpNode();
             AdminShellPackageEnv env = null;
             int aascount = AasxServer.Program.env.Length;
-            cfpNode root = null;
+            root = null;
 
             // Collect data from all AAS into cfpNode(s)
             for (int i = 0; i < aascount; i++)
@@ -1133,6 +1134,7 @@ namespace AasxServer
                     var aas = env.AasEnv.AdministrationShells[0];
                     var assetId = aas.assetRef.Keys[0].value;
                     var cfp = new cfpNode();
+                    cfp.envIndex = i;
                     cfp.aas = aas;
                     cfp.asset = assetId;
 
@@ -1221,6 +1223,28 @@ namespace AasxServer
                                     // assetBOM.Add(assetId, bom);
                                     cfp.bom = bom;
                                 }
+                                if (sm.idShort == "TechnicalData")
+                                {
+                                    foreach (var v in sm.submodelElements)
+                                    {
+                                        if (v.submodelElement is AdminShell.SubmodelElementCollection c)
+                                        {
+                                            if (c.idShort == "GeneralInformation")
+                                            {
+                                                foreach (var sme in c.value)
+                                                {
+                                                    if (sme.submodelElement is AdminShell.File f)
+                                                    {
+                                                        if (f.idShort == "ManufacturerLogo")
+                                                            cfp.manufacturerLogo = f;
+                                                        if (f.idShort == "ProductImage")
+                                                            cfp.productImage = f;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1247,8 +1271,15 @@ namespace AasxServer
                 }
             }
 
+            return root;
+        }
+        public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        {
+            // Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
+            // cfpNode root = null;
+
             // Iterate tree and calculate CFP values
-            cfpNode node = root;
+            cfpNode node = createCfpTree(envIndex, timeStamp);
             cfpNode parent = null;
             List<cfpNode> stack = new List<cfpNode>();
             int sp = -1;

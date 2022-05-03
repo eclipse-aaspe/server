@@ -14,16 +14,16 @@
 
 <div class="col-12 row">
     <br />
-    <div class="col-4" style="border-style:solid;border-color:blue;border-radius:8px;word-wrap:break-word;word-break:break-all;position:sticky">
+    <div class="col-4" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; word-wrap: break-word; word-break: break-all; position: sticky">
         @updateVisibleTree(Items, selectedNode)
         @if (Program.isLoading)
-            {<span style="color:white;background-color:blue;">Loading...</span>}
+        {<span style="color:white;background-color:blue;">Loading...</span>}
         else
-            { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
+        { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
-                @bind-SelectedNode="SelectedNode"
-                @bind-ExpandedNodes="ExpandedNodes"
-                HasChildNodes="@(item => item.Childs?.Any() == true)">
+              @bind-SelectedNode="SelectedNode"
+              @bind-ExpandedNodes="ExpandedNodes"
+              HasChildNodes="@(item => item.Childs?.Any() == true)">
             <TitleTemplate>
                 @{ //// SubmodelService.syncSubTree(context);
                 }
@@ -34,7 +34,7 @@
             </TitleTemplate>
         </Tree>
     </div>
-    <div class="col-8" style="border-style:solid;border-color:blue;border-radius:8px;position:sticky">
+    <div class="col-8" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
                 <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
@@ -211,89 +211,89 @@
                             //var tssReference = new Reference(k);
                             //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
 
-                            // is it a segment
-                            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                            {
-                                TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
-                            }
-                            else
-                            {
-                                // search for segements on current level
-                                var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+        // is it a segment
+        if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+        {
+            TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
+        }
+        else
+        {
+            // search for segements on current level
+            var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
 
-                                if (smcAllValues.Count() != 0)
-                                {
-                                    foreach (var smcseg in smcAllValues)
-                                    {
-                                        TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
-                                    }
-                                }
-                            }
+        if (smcAllValues.Count() != 0)
+        {
+            foreach (var smcseg in smcAllValues)
+            {
+                TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
+            }
+        }
+    }
 
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
-                            watchTimeToProcessImage.Stop();
-                        }
+    _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
+    watchTimeToProcessImage.Stop();
+}
 
-                        byte[] imageArray;
-                        string timeSeriesImageBase64 = "";
-                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+byte[] imageArray;
+string timeSeriesImageBase64 = "";
+string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
 
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-                        }
+if (System.IO.File.Exists(scottplotImgPath))
+{
+    imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+    timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+}
 
-                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
 
-                        @if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
-                                <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
-                                <input type="time" @bind-value="plotFilter.fromTime" />
-                                <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
-                                <input type="time" @bind-value="plotFilter.toTime" />
-                                <div>
-                                    <button type="submit">Apply</button>
-                                    <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
-                                </div>
-                            </EditForm>
+    @if (System.IO.File.Exists(scottplotImgPath))
+    {
+        <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+            <label for="filterFromDate">Filter from</label>
+            <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
+            <input type="time" @bind-value="plotFilter.fromTime" />
+            <label for="filterToDate">Filter to</label>
+            <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
+            <input type="time" @bind-value="plotFilter.toTime" />
+            <div>
+                <button type="submit">Apply</button>
+                <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
+                <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
+                <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
+                <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
+                <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
+            </div>
+        </EditForm>
 
-                            <div class="d-flex flex-column">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
-                                <span class="text-muted" style="font-size:14px;">
-                                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
-                                </span>
-                            </div>
+        <div class="d-flex flex-column">
+            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
+            <span class="text-muted" style="font-size:14px;">
+                Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+            </span>
+        </div>
 
-                            <div class="modal modal-fullscreen @(showImageModal ? "d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Visualization of time series</h5>
-                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="my-2">Rendering time series...</div>
-                        }
-                    }
-                }
+        <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Visualization of time series</h5>
+                        <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="my-2">Rendering time series...</div>
+    }
+}
+}
             }
 
             @{
@@ -326,9 +326,9 @@
                     }
                 }
             }
-        </div>
     </div>
-</div>
+    </div>
+    </div>
 
 
 @inject IJSRuntime js
@@ -350,98 +350,99 @@
     ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
     int plotFilterTsdOffset = 0;
 
-    private class PlotFilter
+private class PlotFilter
+{
+    public DateTime fromDate { get; set; }
+    public DateTime fromTime { get; set; }
+    public DateTime toDate { get; set; }
+    public DateTime toTime { get; set; }
+    public DateTime combinedFromDate { get; set; }
+    public DateTime combinedToDate { get; set; }
+
+    public PlotFilter()
     {
-        public DateTime fromDate { get; set; }
-        public DateTime fromTime { get; set; }
-        public DateTime toDate { get; set; }
-        public DateTime toTime { get; set; }
-        public DateTime combinedFromDate { get; set; }
-        public DateTime combinedToDate { get; set; }
-
-        public PlotFilter()
-        {
-            this.SetInitialFilterState();
-        }
-
-        public void SetInitialFilterState()
-        {
-            ResetTimeOfDates();
-            var initialFromDate = DateTime.Now.AddYears(-3);
-            var initialToDate = DateTime.Now.AddYears(3);
-            fromDate = initialFromDate;
-            toDate = initialToDate;
-            combinedFromDate = initialFromDate;
-            combinedToDate = initialToDate;
-        }
-
-        public void SetFilterStateDay(int offset) {
-            ResetTimeOfDates();
-            DateTime day = DateTime.Today.AddDays(offset);
-            TimeSpan midnight = new System.TimeSpan(0, 23, 59, 59);
-            DateTime endOfDay = day.Add(midnight);
-
-            fromDate = day;
-            fromTime = day;
-            toDate = endOfDay;
-            toTime = endOfDay;
-            combinedFromDate = day;
-            combinedToDate = endOfDay;
-        }
-
-        public void ResetTimeOfDates()
-        {
-            // Reset to 0 AM
-            fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
-            toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
-        }
-
-        public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
-        {
-            ResetTimeOfDates();
-            TimeSpan fromTimeSpan = fromTime.TimeOfDay;
-            TimeSpan toTimeSpan = toTime.TimeOfDay;
-            combinedFromDate = fromDate.Add(fromTimeSpan);
-            combinedToDate = toDate.Add(toTimeSpan);
-            tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
-        }
+        this.SetInitialFilterState();
     }
 
-    async Task DownloadFile()
+    public void SetInitialFilterState()
     {
-        this.StateHasChanged();
-        var f = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
-        var fileName = System.IO.Path.GetFileName(f.value);
-        if (fileName != "")
+        ResetTimeOfDates();
+        var initialFromDate = DateTime.Now.AddYears(-3);
+        var initialToDate = DateTime.Now.AddYears(3);
+        fromDate = initialFromDate;
+        toDate = initialToDate;
+        combinedFromDate = initialFromDate;
+        combinedToDate = initialToDate;
+    }
+
+    public void SetFilterStateDay(int offset)
+    {
+        ResetTimeOfDates();
+        DateTime day = DateTime.Today.AddDays(offset);
+        TimeSpan midnight = new System.TimeSpan(0, 23, 59, 59);
+        DateTime endOfDay = day.Add(midnight);
+
+        fromDate = day;
+        fromTime = day;
+        toDate = endOfDay;
+        toTime = endOfDay;
+        combinedFromDate = day;
+        combinedToDate = endOfDay;
+    }
+
+    public void ResetTimeOfDates()
+    {
+        // Reset to 0 AM
+        fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
+        toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
+    }
+
+    public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
+    {
+        ResetTimeOfDates();
+        TimeSpan fromTimeSpan = fromTime.TimeOfDay;
+        TimeSpan toTimeSpan = toTime.TimeOfDay;
+        combinedFromDate = fromDate.Add(fromTimeSpan);
+        combinedToDate = toDate.Add(toTimeSpan);
+        tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
+    }
+}
+
+async Task DownloadFile()
+{
+    this.StateHasChanged();
+    var f = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+    var fileName = System.IO.Path.GetFileName(f.value);
+    if (fileName != "")
+    {
+        try
         {
-            try
-            {
-                /*
-                string data;
-                using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
-                    {
-                    data = reader.ReadToEnd();
-                }
-                */
-                //
-                byte[] data;
-                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+            /*
+            string data;
+            using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
                 {
-                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
-                    data = ms.ToArray();
-                }
-                //
-                await SaveAs(js, fileName, data);
+                data = reader.ReadToEnd();
             }
-            catch
+            */
+            //
+            byte[] data;
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
             {
+                Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
+                data = ms.ToArray();
             }
-
+            //
+            await SaveAs(js, fileName, data);
         }
+        catch
+        {
+        }
+
     }
-    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    // async Task SaveAs(IJSRuntime js, string filename, string data)
-    {
+}
+async Task SaveAs(IJSRuntime js, string filename, byte[] data)
+// async Task SaveAs(IJSRuntime js, string filename, string data)
+{
         ; await js.InvokeAsync<object>(
      "saveAsFile",
      filename,
