@@ -43,6 +43,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
+    <Content Remove="wwwroot\Logo_IDTA.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="wwwroot\images\scottplot\" />
   </ItemGroup>
 
