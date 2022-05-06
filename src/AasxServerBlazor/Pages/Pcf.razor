@@ -1,6 +1,7 @@
 ﻿@using AasxServer;
 @using static AdminShellNS.AdminShellV20;
 @using System.Drawing;
+@using System.Globalization; 
 
 @page "/pcf";
 
@@ -13,7 +14,7 @@
             float total = 0.0f;
             try
             {
-                total = (float)Convert.ToDouble(node.cradleToGateCombination.value);
+                total = (float)Convert.ToDouble(node.cradleToGateCombination.value, CultureInfo.InvariantCulture);
             }
             catch { }
 
@@ -65,7 +66,7 @@
                             float actual = 0.0f;
                             try
                             {
-                                actual = (float)Convert.ToDouble(value);
+                                actual = (float)Convert.ToDouble(value, CultureInfo.InvariantCulture);
                             }
                             catch { }
 
@@ -74,6 +75,7 @@
                                 string productImage = getImage(node.productImage, node.envIndex);
                                 string manufacturerLogo = getImage(node.manufacturerLogo, node.envIndex);
                                 string percent = Convert.ToInt32(actual / total * 100).ToString();
+                                value = Math.Round(actual, 3).ToString(CultureInfo.InvariantCulture);
 
                                 <div class="mb-2 flex flex-row space-x-2">
 

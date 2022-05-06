@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net;
@@ -1173,30 +1174,36 @@ namespace AasxServer
                                                     case "Cradle-to-gate":
                                                         if (c.idShort.Contains("FootprintInformationModule"))
                                                         {
+                                                            co2eq.value = co2eq.value.Replace(",", ".");
                                                             cfp.cradleToGateModule = co2eq;
                                                         }
                                                         if (c.idShort.Contains("FootprintInformationCombination"))
                                                         {
+                                                            co2eq.value = co2eq.value.Replace(",", ".");
                                                             cfp.cradleToGateCombination = co2eq;
                                                         }
                                                         break;
                                                     case "Production":
                                                         if (c.idShort.Contains("FootprintInformationModule"))
                                                         {
+                                                            co2eq.value = co2eq.value.Replace(",", ".");
                                                             cfp.productionModule = co2eq;
                                                         }
                                                         if (c.idShort.Contains("FootprintInformationCombination"))
                                                         {
+                                                            co2eq.value = co2eq.value.Replace(",", ".");
                                                             cfp.productionCombination = co2eq;
                                                         }
                                                         break;
                                                     case "Distribution":
                                                         if (c.idShort.Contains("FootprintInformationModule"))
                                                         {
+                                                            co2eq.value = co2eq.value.Replace(",", ".");
                                                             cfp.distributionModule = co2eq;
                                                         }
                                                         if (c.idShort.Contains("FootprintInformationCombination"))
                                                         {
+                                                            co2eq.value = co2eq.value.Replace(",", ".");
                                                             cfp.distributionCombination = co2eq;
                                                         }
                                                         break;
@@ -1291,7 +1298,7 @@ namespace AasxServer
                 {
                     if (node.cradleToGateCombination != null)
                     {
-                        node.cradleToGateCombination.value = "0";
+                        node.cradleToGateCombination.value = "0.0";
                         if (node.cradleToGateModule != null)
                         {
                             node.cradleToGateCombination.value = node.cradleToGateModule.value;
@@ -1300,7 +1307,7 @@ namespace AasxServer
                     }
                     if (node.productionCombination != null)
                     {
-                        node.productionCombination.value = "0";
+                        node.productionCombination.value = "0.0";
                         if (node.productionModule != null)
                         {
                             node.productionCombination.value = node.productionModule.value;
@@ -1309,7 +1316,7 @@ namespace AasxServer
                     }
                     if (node.distributionCombination != null)
                     {
-                        node.distributionCombination.value = "0";
+                        node.distributionCombination.value = "0.0";
                         if (node.distributionModule != null)
                         {
                             node.distributionCombination.value = node.distributionModule.value;
@@ -1338,10 +1345,10 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.value);
-                                    value2 = Convert.ToDouble(p.value);
+                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
                                     value1 = Math.Round(value1 + value2, 8);
-                                    parent.cradleToGateCombination.value = value1.ToString();
+                                    parent.cradleToGateCombination.value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.cradleToGateCombination.setTimeStamp(timeStamp);
                                 }
                                 catch { }
@@ -1358,10 +1365,10 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.productionCombination.value);
-                                    value2 = Convert.ToDouble(p.value);
+                                    value1 = Convert.ToDouble(parent.productionCombination.value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
                                     value1 = Math.Round(value1 + value2, 8);
-                                    parent.productionCombination.value = value1.ToString();
+                                    parent.productionCombination.value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.productionCombination.setTimeStamp(timeStamp);
                                 }
                                 catch { }
@@ -1378,10 +1385,10 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.distributionCombination.value);
-                                    value2 = Convert.ToDouble(p.value);
+                                    value1 = Convert.ToDouble(parent.distributionCombination.value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
                                     value1 = Math.Round(value1 + value2, 8);
-                                    parent.distributionCombination.value = value1.ToString();
+                                    parent.distributionCombination.value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.distributionCombination.setTimeStamp(timeStamp);
                                 }
                                 catch { }
