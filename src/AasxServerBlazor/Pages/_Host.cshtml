@@ -16,8 +16,12 @@
     -->
     <link rel="stylesheet" href="css/all.css" />
     <link rel="stylesheet" href="css/treeStyles.css" />
-    <!--<script src="https://cdn.tailwindcss.com"></script>-->
-    <script src="https://cdn.tailwindcss.com"></script>
+    @{
+        if (System.IO.File.Exists("TAILWIND.DAT"))
+        {
+            <script src="https://cdn.tailwindcss.com"></script>
+        }
+    }
 
     <script>
         function cleanupMargin() {
