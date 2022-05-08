@@ -51,7 +51,7 @@
                 if (selectedNode != null && selectedNode.Tag is Referable r)
                 {
                     <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <button style="background-color:lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
                     <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
                     @code {
                         private void setTimeStamp()
@@ -126,7 +126,7 @@
                 if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                 {
                     // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                    <input @bind="CurrentValue" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
+                    <input @bind="CurrentValue" /> <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span><br>
                     @code { private string CurrentValue { get; set; } }
                     if (CurrentValue != null && CurrentValue != "")
                     {
@@ -143,7 +143,7 @@
                 {
                     if (selectedNode.Tag is AdministrationShell)
                     {
-                        <button style="color:white;background-color:blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
+                        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
                         string qrcodeLink = getQRCodeLink(selectedNode);
                         if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
                         {
@@ -152,7 +152,7 @@
                             {
                                 <a href="@qrcodeLink" target="_blank">
                                     <div>
-                                        <img src=data:image;base64,@qrcodeImage style="max-width: 40%;" alt="Qrcode Image" />
+                                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image" />
                                     </div>
                                 </a>
                             }
