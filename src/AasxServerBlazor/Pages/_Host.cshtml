@@ -207,17 +207,6 @@
             }; /* end download() */
         }));
     </script>
-    <script>
-        function cleanupMargin() {
-            if (location.href.endsWith('/pcf/') || location.href.endsWith('/pcf')) {
-                element = document.querySelector("div.content.px-4");
-                element.classList.remove("content");
-                element.classList.remove("px-4");
-                element.style.setProperty("padding", "0", "important");
-            }
-        }
-        window.onload = cleanupMargin;
-    </script>
 </head>
 <body>
     <app>

@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavMan
 
 @*<div class="sidebar">
     <NavMenu />
@@ -18,7 +19,19 @@
         </NavLink>
     </div>
 
-    <div class="content px-4" >
-        @Body
-    </div>
+    @{
+        bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/");
+        if (!isPcf)
+        {
+            <div class="content px-4">
+                @Body
+            </div>
+        }
+        else
+        {
+            <div class="" style="padding: 0px !important;">
+                @Body
+            </div>
+        }
+    }
 </div>
