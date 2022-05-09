@@ -1113,6 +1113,7 @@ namespace AasxServer
             public AdminShellV20.Property distributionCombination = null;
             public AdminShell.File manufacturerLogo = null;
             public AdminShell.File productImage = null;
+            public string productDesignation = "";
             public List<string> bom = new List<string>();
             public List<cfpNode> children = new List<cfpNode>();
             public int iChild = 0;
@@ -1138,6 +1139,7 @@ namespace AasxServer
                     cfp.envIndex = i;
                     cfp.aas = aas;
                     cfp.asset = assetId;
+                    cfp.productDesignation = aas.idShort;
 
                     if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
                     {
@@ -1247,6 +1249,36 @@ namespace AasxServer
                                                         if (f.idShort == "ProductImage")
                                                             cfp.productImage = f;
                                                     }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sm.idShort == "Nameplate")
+                                {
+                                    foreach (var v in sm.submodelElements)
+                                    {
+                                        if (v.submodelElement is AdminShell.MultiLanguageProperty p)
+                                        {
+                                            if (p.idShort == "ManufacturerProductDesignation")
+                                            {
+                                                if (p.value != null)
+                                                {
+                                                    string s = null;
+                                                    foreach (var ls in p.value.langString)
+                                                    {
+                                                        if (ls.lang.ToLower() == "en")
+                                                        {
+                                                            s = ls.str;
+                                                        }
+                                                        if (ls.lang.ToLower() == "de")
+                                                        {
+                                                            if (s != null)
+                                                                s = ls.str;
+                                                        }
+                                                    }
+                                                    if (s != null)
+                                                        cfp.productDesignation = s;
                                                 }
                                             }
                                         }

@@ -23,15 +23,6 @@
         }
     }
 
-    <script>
-        function cleanupMargin() {
-            if (location.href.endsWith('/pcf/') || location.href.endsWith('/pcf')) {
-                element = document.querySelector("div.content.px-4");
-                element.style.setProperty("padding", "0", "important");
-            }
-        }
-        window.onload = cleanupMargin;
-    </script>
     <script type="text/javascript">
         var interval = setInterval(cyclic, 1000);
         var counter = 0;
@@ -214,7 +205,19 @@
                 }
                 return true;
             }; /* end download() */
-        }));</script>
+        }));
+    </script>
+    <script>
+        function cleanupMargin() {
+            if (location.href.endsWith('/pcf/') || location.href.endsWith('/pcf')) {
+                element = document.querySelector("div.content.px-4");
+                element.classList.remove("content");
+                element.classList.remove("px-4");
+                element.style.setProperty("padding", "0", "important");
+            }
+        }
+        window.onload = cleanupMargin;
+    </script>
 </head>
 <body>
     <app>

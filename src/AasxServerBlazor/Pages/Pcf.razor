@@ -77,7 +77,10 @@
                         {
                             string productImage = getImage(node.productImage, node.envIndex);
                             string manufacturerLogo = getImage(node.manufacturerLogo, node.envIndex);
-                            string percent = Convert.ToInt32(actual / total * 100).ToString();
+                            float p = actual / total * 100;
+                            if (p < 1)
+                                p = 1;
+                            string percent = Convert.ToInt32(p).ToString();
                             value = Math.Round(actual, 3).ToString(CultureInfo.InvariantCulture);
 
                             <div class="mb-2 flex flex-row space-x-2">
@@ -88,7 +91,7 @@
                                             <circle r="5" cx="10" cy="10" fill="white"
                                                     stroke="blue"
                                                     stroke-width="10"
-                                                    stroke-dasharray="calc(@percent * 31.42 / 100) 31.42"
+                                                    stroke-dasharray="calc(@percent * 31.42px / 100) 31.42"
                                                     transform="rotate(-90) translate(-20)" />
                                             <circle r="9.5" cx="10" cy="10" fill="white"
                                                     stroke-width="0.5"
@@ -108,7 +111,7 @@
                                     <img src=data:image;base64,@manufacturerLogo class="h-6 self-center" />
                                 }
                                 <div class="self-center">
-                                    <div class="font-bold text-slate-700 dark:text-slate-500">@node.aas.idShort</div>
+                                    <div class="font-bold text-slate-700 dark:text-slate-500">@node.productDesignation</div>
                                 </div>
                             </div>
                             if (!moduleOnly && node.children.Count != 0 && node.cradleToGateModule != null)
