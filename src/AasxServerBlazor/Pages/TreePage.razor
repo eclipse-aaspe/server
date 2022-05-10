@@ -28,7 +28,14 @@
             <TitleTemplate>
                 @{ //// SubmodelService.syncSubTree(context);
                 }
-                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                @if(IsSmColl(context))
+                {
+                    <span style="color:white;background-color:red;">@ViewNodeType(context)</span>
+                }
+                else
+                {
+                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                }
                 @ViewNodeID(context)@ViewNodeInfo(context)
                 <strong><span style="color:blue">@getSymbols(context)</span></strong>
                 <span style="color:lightgray;">@ViewTimeStamp(context)</span>
@@ -455,11 +462,11 @@
      filename,
      data
      );
-            /*
-            await js.InvokeAsync<object>(
-            "saveAsFile",
-            filename,
-            Convert.ToBase64String(data)
+        /*
+        await js.InvokeAsync<object>(
+    "saveAsFile",
+    filename,
+        Convert.ToBase64String(data)
         );
         */
         /*
@@ -1008,7 +1015,8 @@
         if (o is AdministrationShell)
         {
             // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            //return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            return "http://localhost:5001" + "/packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
         }
 
         if (o is AdminShellNS.AdminShellV30.File || o is Property)
@@ -1083,6 +1091,37 @@
         }
 
         return ret;
+    }
+
+    /// <summary>
+    /// This method list added to check if Node is only SubmodelElementCollection (from V2)
+    /// 
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    bool IsSmColl(Item item)
+    {
+        if(item == null)
+        {
+            return false;
+        }
+
+        if(item.Tag is SubmodelElementList)
+        {
+            return false;
+        }
+
+        if(item.Tag is SubmodelElementStruct)
+        {
+            return false;
+        }
+
+        if(item.Tag is SubmodelElementCollection)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     string ViewNodeType(Item item)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdminShellNS;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
@@ -23,7 +24,7 @@ namespace IO.Swagger.Lib.Models
         /// Gets or sets Asset
         /// </summary>
         [DataMember(Name = "asset")]
-        public AdminShell.Asset asset;
+        public AdminShell.AssetInformation asset;
         /// <summary>
         /// Gets or sets Asset
         /// </summary>
