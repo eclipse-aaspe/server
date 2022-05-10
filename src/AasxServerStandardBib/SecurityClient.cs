@@ -1104,13 +1104,13 @@ namespace AasxServer
         {
             public int envIndex = -1;
             public string asset = null;
-            public AdminShellV20.AdministrationShell aas = null;
-            public AdminShellV20.Property cradleToGateModule = null;
-            public AdminShellV20.Property productionModule = null;
-            public AdminShellV20.Property distributionModule = null;
-            public AdminShellV20.Property cradleToGateCombination = null;
-            public AdminShellV20.Property productionCombination = null;
-            public AdminShellV20.Property distributionCombination = null;
+            public AdminShellV30.AdministrationShell aas = null;
+            public AdminShellV30.Property cradleToGateModule = null;
+            public AdminShellV30.Property productionModule = null;
+            public AdminShellV30.Property distributionModule = null;
+            public AdminShellV30.Property cradleToGateCombination = null;
+            public AdminShellV30.Property productionCombination = null;
+            public AdminShellV30.Property distributionCombination = null;
             public AdminShell.File manufacturerLogo = null;
             public AdminShell.File productImage = null;
             public string productDesignation = "";
@@ -1136,12 +1136,8 @@ namespace AasxServer
                 if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
-                    string assetId = "";
-                    try
-                    {
-                        assetId = aas.assetRef.Keys[0].value;
-                    }
-                    catch { }
+                    //var assetId = aas.assetRef.Keys[0].value;
+                    var assetId = aas.assetInformation.globalAssetId.GetAsIdentifier().value;
                     var cfp = new cfpNode();
                     cfp.envIndex = i;
                     cfp.aas = aas;
