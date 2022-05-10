@@ -287,39 +287,6 @@ namespace IO.Swagger.Services
             {
                 foreach (var aas in package.AasEnv.AdministrationShells)
                 {
-                    if (!string.IsNullOrEmpty(aas.identification.id) && aas.identification.id.Equals(aasId))
-                    {
-                        var output = new AssetAdministrationShellAndAsset
-                        {
-                            aas = aas
-                        };
-                        var asset = package.AasEnv.FindAsset(aas.assetRef);
-                        if (asset != null)
-                        {
-                            output.asset = asset;
-                        }
-                        return output;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        ///  Retrieves AAS w.r.t. PackageId and aasId
-        /// </summary>
-        /// <param name="packageId"></param>
-        /// <param name="aasId"></param>
-        /// <returns></returns>
-        public AssetAdministrationShellAndAsset GetAssetAdministrationShellAndAssetByPackageId(string packageId, string aasId)
-        {
-            int packageIndex = int.Parse(packageId);
-            var package = _packages[packageIndex];
-            if (package != null)
-            {
-                foreach (var aas in package.AasEnv.AdministrationShells)
-                {
                     if (!string.IsNullOrEmpty(aas.id?.value) && aas.id.value.Equals(aasId))
                     {
                         var output = new AssetAdministrationShellAndAsset
