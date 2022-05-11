@@ -19,12 +19,19 @@ namespace AasxServerBlazor
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
 
+            //TODO DELETE this piece of code make wrong assumptions about the current directory
+            /*
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json").Build();
+            */
+
+            //TODO REFACTOR it is not ensured that this is the actual endpoint. Why is this information needed so early in the lifecycle?
+            /*
             string[] url = config["Kestrel:Endpoints:Http:Url"].Split(':');
             if (url[2] != null)
-                AasxServer.Program.blazorPort = url[2];
+                AasxServer.Program.blazorHostPort = url[2];
+            */
 
             CreateHostBuilder(args).Build().RunAsync();
 
@@ -38,7 +45,8 @@ namespace AasxServerBlazor
                 {
                     webBuilder
                         .UseStartup<Startup>()
-                        .UseUrls("http://*:5000")
+                    //TODO CHECK why is a manuel override used? server does not uses same port consistently (sometimes 5000, sometimes port specified in appconfig.json) across different platforms
+                    //.UseUrls("http://*:5000")
                     /*
                     .UseKestrel(options =>
                     {

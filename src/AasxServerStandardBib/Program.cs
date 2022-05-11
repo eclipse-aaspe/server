@@ -169,6 +169,7 @@ namespace AasxServer
             public bool Rest { get; set; }
             public bool Opc { get; set; }
             public bool Mqtt { get; set; }
+            public bool AspNet { get; set; }//hack solution to start without grapevine
             public bool DebugWait { get; set; }
             public int? OpcClientRate { get; set; }
             public string[] Connect { get; set; }
@@ -474,6 +475,11 @@ namespace AasxServer
                     envi++;
                 }
             }
+            else
+            {
+                Console.WriteLine($"AASX Data Path does not exist. \n\tCurrent Dir\t{Directory.GetCurrentDirectory()}\n\tAASX Data Path\t{AasxHttpContextHelper.DataPath}");
+                throw new Exception("Invalid AASX Data Path.");
+            }
 
             AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
             AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
@@ -696,6 +702,10 @@ namespace AasxServer
                     "If set, starts a MQTT publisher"),
 
                 new Option<bool>(
+                    new[] {"--aspnet"},
+                    "If set, app is running using aspnet framework"),
+
+                new Option<bool>(
                     new[] {"--debug-wait"},
                     "If set, waits for Debugger to attach"),
 
@@ -704,6 +714,7 @@ namespace AasxServer
                     "If set, starts an OPC client and refreshes on the given period " +
                     "(in milliseconds)"),
 
+                //TODO CHECK is the connect feature legacy code from Package Explorer?
                 new Option<string[]>(
                     new[] {"--connect"},
                     "If set, connects to AAS connect server. " +
@@ -755,7 +766,7 @@ namespace AasxServer
             rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
                 (CommandLineArguments a) =>
                 {
-                    if (!(a.Rest || a.Opc || a.Mqtt))
+                    if (!(a.Rest || a.Opc || a.Mqtt || a.AspNet))
                     {
                         Console.Error.WriteLine($"Please specify --rest and/or --opc and/or --mqtt{nl}");
                         new HelpBuilder(new SystemConsole()).Write(rootCommand);
@@ -979,6 +990,7 @@ namespace AasxServer
 
         public static void connectThreadLoop()
         {
+            //TODO CHECK is this leagy code?
             bool newConnectData = false;
 
             while (connectLoop)

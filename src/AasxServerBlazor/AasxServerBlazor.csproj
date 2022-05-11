@@ -24,8 +24,6 @@
     <ProjectReference Include="..\IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj" />
   </ItemGroup>
 
-  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>
-
   <ItemGroup>
     <Content Include="startForDemo.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

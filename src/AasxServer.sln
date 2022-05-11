@@ -24,6 +24,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Lib", "IO.Swagge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Registry", "IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj", "{F7B9E4DC-FDCD-4F6B-A5C5-DF416802B067}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger", "IO.Swagger\IO.Swagger.csproj", "{478697A0-89E4-4039-902E-0F13EA4EAD72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Swagger.Test", "IO.Swagger.Test\IO.Swagger.Test.csproj", "{1E721E5E-6E56-4E2C-A8ED-AB381B6C7E8A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
