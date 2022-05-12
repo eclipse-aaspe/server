@@ -48,6 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="temp\" />
     <Folder Include="wwwroot\images\scottplot\" />
   </ItemGroup>
 

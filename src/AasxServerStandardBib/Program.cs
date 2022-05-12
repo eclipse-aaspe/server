@@ -143,6 +143,7 @@ namespace AasxServer
         public static bool edit = false;
         public static string externalRest = "";
         public static string externalBlazor = "";
+        public static bool readTemp = false;
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
@@ -178,6 +179,7 @@ namespace AasxServer
             public string Name { get; set; }
             public string ExternalRest { get; set; }
             public string ExternalBlazor { get; set; }
+            public bool ReadTemp { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -262,6 +264,7 @@ namespace AasxServer
             Program.runOPC = a.Opc;
             Program.noSecurity = a.NoSecurity;
             Program.edit = a.Edit;
+            Program.readTemp = a.ReadTemp;
 
             // Wait for Debugger
             if (a.DebugWait)
@@ -428,6 +431,13 @@ namespace AasxServer
 
                     if (fn != "" && envi < envimax)
                     {
+                        string name = Path.GetFileName(fn);
+                        string tempName = "./temp/" + Path.GetFileName(fn);
+                        if (readTemp && File.Exists(tempName))
+                        {
+                            fn = tempName;
+                        }
+
                         Console.WriteLine("Loading {0}...", fn);
                         envFileName[envi] = fn;
                         env[envi] = new AdminShellPackageEnv(fn, true);
@@ -437,7 +447,6 @@ namespace AasxServer
                             return 1;
                         }
                         // check if signed
-                        string name = Path.GetFileName(fn);
                         string fileCert = "./user/" + name + ".cer";
                         if (File.Exists(fileCert))
                         {
@@ -736,6 +745,10 @@ namespace AasxServer
                 new Option<string>(
                     new[] {"--external-blazor"},
                     "external name of the server blazor UI"),
+
+                new Option<bool>(
+                    new[] {"--read-temp"},
+                    "If set, reads existing AASX from temp at startup")
             };
 
             if (args.Length == 0)
