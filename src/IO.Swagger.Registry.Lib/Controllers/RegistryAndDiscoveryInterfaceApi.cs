@@ -456,6 +456,34 @@ namespace IO.Swagger.Registry.Controllers
                             }
                         }
                         ad.SubmodelDescriptors.Add(sd);
+                        if (sm.idShort.ToLower() == "nameplate")
+                        {
+                            // Add special entry for verifiable credentials
+                            sd = new SubmodelDescriptor();
+                            sd.IdShort = "NameplateVC";
+                            sd.Identification = sm.identification.id + "_VC";
+                            esm = new Endpoint();
+                            esm.ProtocolInformation = new ProtocolInformation();
+                            esm.ProtocolInformation.EndpointAddress =
+                                "https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
+                                "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
+                                Base64UrlEncoder.Encode(ad.Identification);
+                            esm.Interface = "VC-1.0";
+                            sd.Endpoints = new List<Endpoint>();
+                            sd.Endpoints.Add(esm);
+                            if (sm.semanticId != null)
+                            {
+                                var sid = sm.semanticId.GetAsExactlyOneKey();
+                                if (sid != null)
+                                {
+                                    gr = new GlobalReference();
+                                    gr.Value = new List<string>();
+                                    gr.Value.Add(sid.value);
+                                    sd.SemanticId = gr;
+                                }
+                            }
+                            ad.SubmodelDescriptors.Add(sd);
+                        }
                     }
                 }
             }

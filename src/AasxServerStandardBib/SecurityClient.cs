@@ -1134,7 +1134,12 @@ namespace AasxServer
                 if (env != null)
                 {
                     var aas = env.AasEnv.AdministrationShells[0];
-                    var assetId = aas.assetRef.Keys[0].value;
+                    string assetId = "";
+                    try
+                    {
+                        assetId = aas.assetRef.Keys[0].value;
+                    }
+                    catch { }
                     var cfp = new cfpNode();
                     cfp.envIndex = i;
                     cfp.aas = aas;
