@@ -13,25 +13,26 @@
 
     @{
         DateTime timeStamp = DateTime.UtcNow;
-        AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
+        // AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
+        // AasxTask.cfpNode node = AasxTask.root;
         float total = 0.0f;
         try
         {
-            total = (float)Convert.ToDouble(node.cradleToGateCombination.value, CultureInfo.InvariantCulture);
+            total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.value, CultureInfo.InvariantCulture);
         }
         catch { }
 
-        nextLevel(node, total, timeStamp);
+        nextLevel(AasxTask.root, total, timeStamp);
     }
 </div>
 
 @{
-    void nextLevel(AasxTask.cfpNode node, float total, DateTime timeStamp, bool moduleOnly = false)
+    void nextLevel(AasxTask.cfpNode nextNode, float total, DateTime timeStamp, bool moduleOnly = false)
     {
         <div class="mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
 
             @{
-
+                AasxTask.cfpNode node = nextNode;
                 while (node != null)
                 {
                     if (node.iChild == 0)
@@ -135,6 +136,7 @@
                     // move up, if all children iterated
                     if (moduleOnly || node.iChild == node.children.Count)
                     {
+                        node.iChild = 0;
                         node = null;
                     }
                     else

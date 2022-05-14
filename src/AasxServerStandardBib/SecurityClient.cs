@@ -1119,10 +1119,12 @@ namespace AasxServer
             public int iChild = 0;
         }
 
-        public static cfpNode createCfpTree(int envIndex, DateTime timeStamp)
+        public static cfpNode root = null;
+
+        public static void createCfpTree(int envIndex, DateTime timeStamp)
         {
             Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
-            cfpNode root = new cfpNode();
+            // cfpNode root = new cfpNode();
             AdminShellPackageEnv env = null;
             int aascount = AasxServer.Program.env.Length;
             root = null;
@@ -1315,15 +1317,21 @@ namespace AasxServer
                 }
             }
 
-            return root;
+            // return root;
         }
+
+        static bool once = false;
         public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
         {
+            if (once)
+                return;
             // Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
             // cfpNode root = null;
 
             // Iterate tree and calculate CFP values
-            cfpNode node = createCfpTree(envIndex, timeStamp);
+            // cfpNode node = createCfpTree(envIndex, timeStamp);
+            createCfpTree(envIndex, timeStamp);
+            cfpNode node = root;
             cfpNode parent = null;
             List<cfpNode> stack = new List<cfpNode>();
             int sp = -1;
@@ -1364,6 +1372,7 @@ namespace AasxServer
                 // move up, if all children iterated
                 if (node.iChild == node.children.Count)
                 {
+                    node.iChild = 0;
                     if (sp == -1)
                     {
                         node = null;
@@ -1446,6 +1455,7 @@ namespace AasxServer
                 }
             }
 
+            // once = true;
             Program.signalNewData(1);
         }
 
@@ -1466,8 +1476,10 @@ namespace AasxServer
 
             DateTime timeStamp = DateTime.UtcNow;
 
-            foreach (var t in taskList)
+            // foreach (var t in taskList)
+            for (int i = 0; i < taskList.Count; i++)
             {
+                var t = taskList[i];
                 if (t.taskType?.value.ToLower() == "cyclic")
                 {
                     if (t.nextExecution > timeStamp)
