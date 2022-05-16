@@ -3100,6 +3100,14 @@ namespace AasxRestServerLibrary
         public bool checkAccessLevel(string currentRole, string operation, string neededRights,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
+            if (Program.secretStringAPI != null)
+            {
+                if (neededRights == "READ")
+                    return true;
+                if (neededRights == "UPDATE" && currentRole == "UPDATE")
+                    return true;
+            }
+
             if (currentRole == null)
                 currentRole = "isNotAuthenticated";
 
@@ -3184,21 +3192,31 @@ namespace AasxRestServerLibrary
         public bool checkAccessRights(IHttpContext context, string currentRole, string operation, string neededRights,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
-            if (checkAccessLevel(currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel))
-                return true;
-
-            if (currentRole == null)
+            if (Program.secretStringAPI != null)
             {
-                if (AasxServer.Program.redirectServer != "")
+                if (neededRights == "READ")
+                    return true;
+                if (neededRights == "UPDATE" && currentRole == "UPDATE")
+                    return true;
+            }
+            else
+            {
+                if (checkAccessLevel(currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel))
+                    return true;
+
+                if (currentRole == null)
                 {
-                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                    string originalRequest = context.Request.Url.ToString();
-                    queryString.Add("OriginalRequest", originalRequest);
-                    Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                    string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
-                    Console.WriteLine("Redirect Response: " + response + "\n");
-                    SendRedirectResponse(context, response);
-                    return false;
+                    if (AasxServer.Program.redirectServer != "")
+                    {
+                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                        string originalRequest = context.Request.Url.ToString();
+                        queryString.Add("OriginalRequest", originalRequest);
+                        Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
+                        string response = AasxServer.Program.redirectServer + "?" + "authType=" + AasxServer.Program.authType + "&" + queryString;
+                        Console.WriteLine("Redirect Response: " + response + "\n");
+                        SendRedirectResponse(context, response);
+                        return false;
+                    }
                 }
             }
 
@@ -3230,6 +3248,27 @@ namespace AasxRestServerLibrary
             index = -1; // not found
 
             string[] split = null;
+
+            // check for secret
+            if (Program.secretStringAPI != null)
+            {
+                accessrights = "READ";
+
+                // Query string with Secret?
+                split = context.Request.Url.ToString().Split(new char[] { '?' });
+                if (split != null && split.Length > 1 && split[1] != null)
+                {
+                    Console.WriteLine("Received query string = " + split[1]);
+                    string secret = split[1];
+                    if (secret.Length > 2 && secret.Substring(0, 2) == "s=")
+                    {
+                        secret = secret.Replace("s=", "");
+                        if (secret == Program.secretStringAPI)
+                            accessrights = "UPDATE";
+                    }
+                }
+                return accessrights;
+            }
 
             string headers = context.Request.Headers.ToString();
 

@@ -144,6 +144,7 @@ namespace AasxServer
         public static string externalRest = "";
         public static string externalBlazor = "";
         public static bool readTemp = false;
+        public static string secretStringAPI = null;
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
@@ -180,6 +181,7 @@ namespace AasxServer
             public string ExternalRest { get; set; }
             public string ExternalBlazor { get; set; }
             public bool ReadTemp { get; set; }
+            public string SecretStringAPI { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -265,6 +267,9 @@ namespace AasxServer
             Program.noSecurity = a.NoSecurity;
             Program.edit = a.Edit;
             Program.readTemp = a.ReadTemp;
+            if (a.SecretStringAPI != null && a.SecretStringAPI != "")
+                secretStringAPI = a.SecretStringAPI;
+            secretStringAPI = "ZVEI";
 
             // Wait for Debugger
             if (a.DebugWait)
@@ -748,7 +753,11 @@ namespace AasxServer
 
                 new Option<bool>(
                     new[] {"--read-temp"},
-                    "If set, reads existing AASX from temp at startup")
+                    "If set, reads existing AASX from temp at startup"),
+
+                new Option<string>(
+                    new[] {"--secret-string"},
+                    "If set, allows UPDATE access by query parameter s=")
             };
 
             if (args.Length == 0)
