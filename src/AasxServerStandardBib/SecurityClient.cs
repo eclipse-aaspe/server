@@ -1477,6 +1477,7 @@ namespace AasxServer
             DateTime timeStamp = DateTime.UtcNow;
 
             // foreach (var t in taskList)
+            bool taskRun = false;
             for (int i = 0; i < taskList.Count; i++)
             {
                 var t = taskList[i];
@@ -1500,8 +1501,11 @@ namespace AasxServer
                     Program.signalNewData(0);
 
                     runOperations(t.def, t.envIndex, timeStamp);
+                    taskRun = true;
                 }
             }
+            if (taskRun)
+                System.GC.Collect();
         }
     }
 }
