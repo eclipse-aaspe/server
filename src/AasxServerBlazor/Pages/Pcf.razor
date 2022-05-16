@@ -133,20 +133,19 @@
                         }
                     }
 
-                    // move up, if all children iterated
-                    if (moduleOnly || node.iChild == node.children.Count)
-                    {
-                        node.iChild = 0;
-                        node = null;
-                    }
-                    else
-                    {
-                        // Interate children
-                        nextLevel(node.children[node.iChild], total, timeStamp);
-                        node.iChild++;
+                        // move up, if all children iterated
+                        if (moduleOnly || node.iChild == node.children.Count)
+                        {
+                            node = null;
+                        }
+                        else
+                        {
+                            // Interate children
+                            nextLevel(node.children[node.iChild], total, timeStamp);
+                            node.iChild++;
+                        }
                     }
                 }
-            }
 
         </div>
     }
