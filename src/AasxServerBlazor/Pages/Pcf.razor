@@ -8,7 +8,7 @@
 @using System.Globalization;
 @implements IDisposable
 
-<div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50 py-6 sm:py-12">
+<div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50 py-6">
     <img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
 
     @{
@@ -89,35 +89,51 @@
                             catch { }
                             value = Math.Round(actual, 3).ToString(CultureInfo.InvariantCulture);
 
+                            //hide all pcf values except for root
+                            var hideClass = "hidden";
+                            var hideCircle = hideClass; //always hide circle
+                            var hideElement = ""; //decide hiding of elements
+                            if (node != AasxTask.root)
+                            {
+                                hideElement = hideClass;
+                            }
+
+
                         <div class="mb-2 flex flex-row space-x-2">
 
-                            <div class="grid place-items-center self-center">
-                                <div class="w-10">
+                            <div class="grid place-items-center self-center @hideElement">
+                                <div class="w-10 @hideCircle">
                                     <svg height="35" width="35" viewBox="0 0 20 20">
                                         <circle r="5" cx="10" cy="10" fill="white"
-                                                stroke="blue"
+                                                stroke="#174a87"
                                                 stroke-width="10"
                                                 stroke-dasharray="calc(@percent * 31.42px / 100) 31.42"
                                                 transform="rotate(-90) translate(-20)" />
                                         <circle r="9.5" cx="10" cy="10" fill="white"
                                                 stroke-width="0.5"
                                                 fill-opacity="0"
-                                                stroke="blue"
+                                                stroke="#174a87"
                                                 transform="rotate(-90) translate(-20)" />
                                     </svg>
                                 </div>
-                                <div class="self-center">@value</div>
+                                <div class="self-center @hideElement">@value</div>
                             </div>
                             @if (productImage != null)
                             {
-                                <img src=data:image;base64,@productImage class="h-16" />
+                                var bytes = Convert.FromBase64String(productImage);
+                                var stream = new System.IO.MemoryStream(bytes);
+                                System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
+                                double idealArea = 2000;
+                                var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
+                                var maxWidthPx = maxWidth + "px";
+                                <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
                             }
                             @if (manufacturerLogo != null)
                             {
                                 var bytes = Convert.FromBase64String(manufacturerLogo);
                                 var stream = new System.IO.MemoryStream(bytes);
                                 System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
-                                double idealArea = 1500;
+                                double idealArea = 1800;
                                 var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
                                 var maxWidthPx = maxWidth + "px";
                                 <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
@@ -146,7 +162,7 @@
                         node.iChild++;
                     }
                 }
-                }
+            }
 
         </div>
     }
