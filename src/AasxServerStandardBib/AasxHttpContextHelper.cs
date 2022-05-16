@@ -3104,7 +3104,7 @@ namespace AasxRestServerLibrary
             {
                 if (neededRights == "READ")
                     return true;
-                if (neededRights == "UPDATE" && currentRole == "UPDATE")
+                if ((neededRights == "UPDATE" || neededRights == "DELETE") && currentRole == "UPDATE")
                     return true;
             }
 
@@ -3196,7 +3196,7 @@ namespace AasxRestServerLibrary
             {
                 if (neededRights == "READ")
                     return true;
-                if (neededRights == "UPDATE" && currentRole == "UPDATE")
+                if ((neededRights == "UPDATE" || neededRights == "DELETE") && currentRole == "UPDATE")
                     return true;
             }
             else
