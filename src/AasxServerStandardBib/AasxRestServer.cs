@@ -69,6 +69,7 @@ namespace AasxRestServerLibrary
                     System.Environment.Exit(1);
                 }
 
+                allowCORS(context);
                 context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.NotFound, $"Operation not allowed!");
                 return context;
             }
@@ -115,6 +116,7 @@ namespace AasxRestServerLibrary
                     AasxServer.Program.secretStringAPI = requestSecret2;
                     context.Response.StatusCode = Grapevine.Shared.HttpStatusCode.Ok;
                     string txt = "OK";
+                    allowCORS(context);
                     context.Response.ContentType = ContentType.TEXT;
                     context.Response.ContentEncoding = Encoding.UTF8;
                     context.Response.ContentLength64 = txt.Length;
