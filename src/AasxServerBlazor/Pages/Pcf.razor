@@ -8,7 +8,7 @@
 @using System.Globalization;
 @implements IDisposable
 
-<div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50 py-6">
+<div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
     <img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
 
     @{
@@ -158,10 +158,15 @@
                                 {
                                     text = "Combination - " + text;
                                 }
-                                <div class="self-center">
+                                <div class="self-center grow">
                                     <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
                                 </div>
                             }
+                            <div class="flex-none self-center">
+                                <button class="btn px-3 text-white" onclick="document.getElementById('iframe').src='https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=@node.aas.idShort'" style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important; ">
+                                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                             if (!moduleOnly && node.children.Count != 0 && node.cradleToGateModule != null)
                             {
