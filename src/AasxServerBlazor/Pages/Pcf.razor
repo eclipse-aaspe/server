@@ -39,6 +39,7 @@
                     {
 
                         bool view = false;
+                        bool viewCombination = false;
                         string value = "";
                         if (moduleOnly)
                         {
@@ -55,6 +56,8 @@
                                 if (node.cradleToGateCombination != null)
                                 {
                                     value = node.cradleToGateCombination.value;
+                                    if (node != AasxTask.root)
+                                        viewCombination = true;
                                     view = true;
                                 }
                             }
@@ -116,9 +119,20 @@
                                                 transform="rotate(-90) translate(-20)" />
                                     </svg>
                                 </div>
-                                <div class="self-center @hideElement">@value</div>
+                                <div class="self-center @hideElement">
+                                    @{
+                                        if (node == AasxTask.root)
+                                        {
+                                            <font size="+2"><span style="color:#174a87">@value</span></font>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#174a87">@value</span>
+                                        }
+                                    }
+                                </div>
                             </div>
-                            @if (productImage != null)
+                            @if (!viewCombination && productImage != null)
                             {
                                 var bytes = Convert.FromBase64String(productImage);
                                 var stream = new System.IO.MemoryStream(bytes);
@@ -138,9 +152,16 @@
                                 var maxWidthPx = maxWidth + "px";
                                 <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
                             }
-                            <div class="self-center">
-                                <div class="font-bold text-slate-700 dark:text-slate-500">@node.productDesignation</div>
-                            </div>
+                            @{
+                                string text = node.productDesignation;
+                                if (viewCombination)
+                                {
+                                    text = "Combination - " + text;
+                                }
+                                <div class="self-center">
+                                    <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
+                                </div>
+                            }
                         </div>
                             if (!moduleOnly && node.children.Count != 0 && node.cradleToGateModule != null)
                             {

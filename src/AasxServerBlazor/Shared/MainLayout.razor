@@ -4,7 +4,7 @@
 @*<div class="sidebar">
     <NavMenu />
 </div>*@
-<div class="main">
+<div class="main h-screen">
 
 
 
@@ -36,33 +36,40 @@
                     background-color: #174a87 !important; /* zvei blau */
                 }
             </style>
-            <div class="top-row flex justify-between" style="justify-content: space-between;">
-                <div class="self-center">
-                    <div class="flex items-stretch">
-                        <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
-                        <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+            <div style="height:100%; flex; padding:0px !important;">
+                <div class="top-row flex justify-between" style="justify-content: space-between; height:8%; padding:0px;">
+                    <div class="self-center">
+                        <div class="flex items-stretch">
+                            <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
+                            <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+                        </div>
+                    </div>
+                    <div class="self-center text-right p-2">
+                        <label for="toggle" class="flex items-center cursor-pointer justify-end">
+                            <!-- toggle -->
+                            <!-- label -->
+                            <div class="ml-3 text-gray-700 font-medium">
+                                Disclaimer: displayed PCF values are for demo purposes only
+                            </div>
+                            <div class="relative ml-2">
+                                <!-- input -->
+                                <input type="checkbox" id="toggle" class="sr-only" onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item) { item.style.display = item.style.display!='block' ? 'block' : 'none'; })">
+                                <!-- line -->
+                                <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
+                                <!-- dot -->
+                                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                            </div>
+                        </label>
                     </div>
                 </div>
-                <div class="self-center text-right p-2">
-                    <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                        <!-- toggle -->
-                        <!-- label -->
-                        <div class="ml-3 text-gray-700 font-medium">
-                            Disclaimer: displayed PCF values are for demo purposes only
-                        </div>
-                        <div class="relative ml-2">
-                            <!-- input -->
-                            <input type="checkbox" id="toggle" class="sr-only" onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item) { item.style.display = item.style.display!='block' ? 'block' : 'none'; })">
-                            <!-- line -->
-                            <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
-                            <!-- dot -->
-                            <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                        </div>
-                    </label>
+                <div class="flex flex-row" style="height:92%;">
+                    <div class="content px-4 basis-1/3" style="height:100%; padding: 0px !important; overflow-y: scroll;">
+                        @Body
+                    </div>
+                    <div class="content px-4 basis-2/3">
+                        <iframe src="https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/" style="width: 100%; height: 100%;"></iframe>
+                    </div>
                 </div>
-            </div>
-            <div class="" style="padding: 0px !important;">
-                @Body
             </div>
         }
     }
