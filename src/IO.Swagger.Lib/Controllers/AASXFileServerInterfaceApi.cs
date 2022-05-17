@@ -13,6 +13,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using AasxRestServerLibrary;
 using AdminShellNS;
 using IO.Swagger.Attributes;
@@ -95,7 +96,13 @@ namespace IO.Swagger.Controllers
                 {
                     return NotFound($"AAXS with requested packageId not found.");
                 }
-                //TODO: whether to use "content-disposition"
+                //content-disposition so that the aasx file can be doenloaded from the web browser.
+                ContentDisposition contentDisposition = new ContentDisposition
+                {
+                    FileName = fileName
+                };
+
+                HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
                 HttpContext.Response.Headers.Add("X-FileName", fileName);
                 HttpContext.Response.ContentLength = fileSize;
                 HttpContext.Response.Body.WriteAsync(content);
