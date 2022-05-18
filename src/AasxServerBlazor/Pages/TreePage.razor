@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject AASService SubmodelService
+@inject NavigationManager NavigationManager
 @using Microsoft.IdentityModel.Tokens;
 @using System
 @using System.Net;
@@ -429,7 +430,7 @@ var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
                 /*
                 string data;
                 using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
-                    {
+                {
                 data = reader.ReadToEnd();
                 }
                 */
@@ -459,9 +460,9 @@ var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
      );
         /*
         await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
-    Convert.ToBase64String(data)
+    "saveAsFile",
+    filename,
+        Convert.ToBase64String(data)
         );
         */
         /*
@@ -1005,7 +1006,8 @@ var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
         {
             // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
             //return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            return "http://localhost:5001" + "/packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
+            string currentUrl = NavigationManager.Uri;
+            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
         }
 
         if (o is AdminShellNS.AdminShellV30.File || o is Property)

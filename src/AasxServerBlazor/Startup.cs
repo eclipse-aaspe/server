@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AasxServerBlazor.Data;
+using IO.Swagger.Controllers;
+using IO.Swagger.Filters;
 using IO.Swagger.Services;
 //TODO: JT Uncomment
 //using IO.Swagger.Controllers;
@@ -124,17 +126,15 @@ namespace AasxServerBlazor
                     //    }
                     //});
 
-                    //TODO: JT Uncomment
-                    //c.EnableAnnotations();
+                    c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
-                    //TODO:JT Uncomment
-                    //string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryApiController).Assembly.GetName().Name;
-                    //c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
+                    string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryApiController).Assembly.GetName().Name;
+                    c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
 
                     // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
                     // Use [ValidateModelState] on Actions to actually validate it in C# as well!
 
-                    //c.OperationFilter<GeneratePathParamsValidationFilter>();  //TODO: JT Uncomment
+                    c.OperationFilter<GeneratePathParamsValidationFilter>();
                 });
         }
 
