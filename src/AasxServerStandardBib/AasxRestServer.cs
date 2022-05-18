@@ -36,6 +36,97 @@ namespace AasxRestServerLibrary
         [RestResource]
         public class TestResource
         {
+            // exit application
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/exit/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/exit/([^/]+)(/|)$")]
+
+            public IHttpContext Exit(IHttpContext context)
+            {
+                string restPath = context.Request.PathInfo;
+                string requestSecret1 = restPath.Replace("/exit/", "");
+                string secret1 = null;
+                bool error = false;
+
+                if (System.IO.File.Exists("SECRET.DAT"))
+                {
+                    try
+                    {
+                        using (StreamReader sr = new StreamReader("SECRET.DAT"))
+                        {
+                            secret1 = sr.ReadLine();
+                        }
+                    }
+                    catch
+                    {
+                        error = true;
+                    };
+                }
+                if (secret1 == null || requestSecret1 != secret1)
+                    error = true;
+
+                if (!error)
+                {
+                    System.Environment.Exit(1);
+                }
+
+                allowCORS(context);
+                context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.NotFound, $"Operation not allowed!");
+                return context;
+            }
+
+            // set secret string to write to API
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/secret/([^/]+)/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/secret/([^/]+)/([^/]+)(/|)$")]
+
+            public IHttpContext Secret(IHttpContext context)
+            {
+                string requestSecret1 = null;
+                string requestSecret2 = null;
+                string secret1 = null;
+                bool error = false;
+
+                string restPath = context.Request.PathInfo;
+                restPath = restPath.Replace("/secret/", "");
+                string[] split = restPath.Split('/');
+                if (split.Count() == 2)
+                {
+                    requestSecret1 = split[0];
+                    requestSecret2 = split[1];
+                }
+
+                if (System.IO.File.Exists("SECRET.DAT"))
+                {
+                    try
+                    {
+                        using (StreamReader sr = new StreamReader("SECRET.DAT"))
+                        {
+                            secret1 = sr.ReadLine();
+                        }
+                    }
+                    catch
+                    {
+                        error = true;
+                    };
+                }
+                if (secret1 == null || requestSecret1 != secret1)
+                    error = true;
+
+                if (!error)
+                {
+                    AasxServer.Program.secretStringAPI = requestSecret2;
+                    context.Response.StatusCode = Grapevine.Shared.HttpStatusCode.Ok;
+                    string txt = "OK";
+                    allowCORS(context);
+                    context.Response.ContentType = ContentType.TEXT;
+                    context.Response.ContentEncoding = Encoding.UTF8;
+                    context.Response.ContentLength64 = txt.Length;
+                    context.Response.SendResponse(txt);
+                }
+
+                context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.NotFound, $"Operation not allowed!");
+                return context;
+            }
+
             // test data server
 
             public static int varInt1 = -100; // -100..100

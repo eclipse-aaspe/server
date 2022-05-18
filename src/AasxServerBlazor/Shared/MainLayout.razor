@@ -4,33 +4,80 @@
 @*<div class="sidebar">
     <NavMenu />
 </div>*@
-<div class="main">
+<div class="main h-screen">
 
-    <div class="top-row px-4">
-        <span align=left hspace=20 style="color:blue;font:xx-large"><strong>AASX Browser</strong></span>
-        <img align=left hspace=20 src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" height="55" width="60" />
-        <img align=left hspace=20 src="Logo_IDTA.jpg" height="30" width="140" />
-        <img align=left hspace=20 src="SpecPI40_t.png" height="22" width="250" />
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-            <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
-        </NavLink>
-        <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
-            <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
-        </NavLink>
-    </div>
+
 
     @{
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/");
         if (!isPcf)
         {
+            <div class="top-row px-4">
+                <span align=left hspace=20 style="color:blue;font:xx-large"><strong>AASX Browser</strong></span>
+                <img align=left hspace=20 src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" height="55" width="60" />
+                <img align=left hspace=20 src="Logo_IDTA.jpg" height="30" width="140" />
+                <img align=left hspace=20 src="SpecPI40_t.png" height="22" width="250" />
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
+                </NavLink>
+                <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
+                </NavLink>
+            </div>
             <div class="content px-4">
                 @Body
             </div>
         }
         else
         {
-            <div class="" style="padding: 0px !important;">
-                @Body
+                <style>
+                input:checked ~ .dot {
+                    transform: translateX(100%);
+                    background-color: #174a87 !important; /* zvei blau */
+                }
+                @@media (max-width: 800px) { /* hide iframe in low widths - mobile phones*/
+                  .hide-slim {display: none;}
+                  .expand-slim {overflow-y: visible !important;}
+                  }
+                }
+                </style>
+            <div style="height:100%; flex; padding:0px !important;">
+                <div class="top-row flex justify-between" style="justify-content: space-between; height:8%; padding:0px;">
+                    <div class="self-center">
+                        <div class="flex items-stretch">
+                            <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
+                            <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+                        </div>
+                    </div>
+                    <div class="self-center text-right p-2">
+                        <label for="toggle" class="flex items-center cursor-pointer justify-end">
+                            <!-- toggle -->
+                            <!-- label -->
+                            <div class="ml-3 text-gray-700 font-medium">
+                                Disclaimer: displayed PCF values are for demo purposes only
+                            </div>
+                            <div class="relative ml-2">
+                                <!-- input -->
+                                <input type="checkbox" id="toggle" class="sr-only"
+                                       onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
+                                        { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
+                                <!-- line -->
+                                <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
+                                <!-- dot -->
+                                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex flex-row" style="height:92%;">
+                    <div class="content px-4 basis-1/3 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
+                        @Body
+                    </div>
+                    <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
+                        <iframe src="https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=ZveiControlCabinetAas"
+                                id="iframe" style="width: 100%; height: 100%;"></iframe>
+                    </div>
+                </div>
             </div>
         }
     }
