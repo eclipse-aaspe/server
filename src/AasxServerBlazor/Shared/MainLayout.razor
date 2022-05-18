@@ -30,12 +30,17 @@
         }
         else
         {
-            <style>
+                <style>
                 input:checked ~ .dot {
                     transform: translateX(100%);
                     background-color: #174a87 !important; /* zvei blau */
                 }
-            </style>
+                @@media (max-width: 800px) { /* hide iframe in low widths - mobile phones*/
+                  .hide-slim {display: none;}
+                  .expand-slim {overflow-y: visible !important;}
+                  }
+                }
+                </style>
             <div style="height:100%; flex; padding:0px !important;">
                 <div class="top-row flex justify-between" style="justify-content: space-between; height:8%; padding:0px;">
                     <div class="self-center">
@@ -63,10 +68,10 @@
                     </div>
                 </div>
                 <div class="flex flex-row" style="height:92%;">
-                    <div class="content px-4 basis-1/3" style="height:100%; padding: 0px !important; overflow-y: scroll;">
+                    <div class="content px-4 basis-1/3 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
                         @Body
                     </div>
-                    <div class="content px-4 basis-2/3" style="padding: 0px !important;">
+                    <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
                         <iframe src="https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/" id="iframe" style="width: 100%; height: 100%;"></iframe>
                     </div>
                 </div>
