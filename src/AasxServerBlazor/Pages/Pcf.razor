@@ -135,22 +135,26 @@
                             @if (!viewCombination && productImage != null)
                             {
                                 var bytes = Convert.FromBase64String(productImage);
-                                var stream = new System.IO.MemoryStream(bytes);
-                                System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
-                                double idealArea = 2000;
-                                var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
-                                var maxWidthPx = maxWidth + "px";
-                                <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                using (var stream = new System.IO.MemoryStream(bytes))
+                                {
+                                    System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
+                                    double idealArea = 2000;
+                                    var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
+                                    var maxWidthPx = maxWidth + "px";
+                                    <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                }
                             }
                             @if (manufacturerLogo != null)
                             {
                                 var bytes = Convert.FromBase64String(manufacturerLogo);
-                                var stream = new System.IO.MemoryStream(bytes);
-                                System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
-                                double idealArea = 1800;
-                                var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
-                                var maxWidthPx = maxWidth + "px";
-                                <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                using (var stream = new System.IO.MemoryStream(bytes))
+                                {
+                                    System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
+                                    double idealArea = 1800;
+                                    var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
+                                    var maxWidthPx = maxWidth + "px";
+                                    <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                }
                             }
                             @{
                                 string text = node.productDesignation;
@@ -209,20 +213,21 @@
                     case "jpg":
                     case "bmp":
                     case "png":
-                        System.IO.Stream s = null;
                         try
                         {
-                            s = Program.env[envIndex].GetLocalStreamFromPackage(f.value);
-                        }
-                        catch { }
-                        if (s != null)
-                        {
-                            using (var m = new System.IO.MemoryStream())
+                            using (System.IO.Stream s = Program.env[envIndex].GetLocalStreamFromPackage(f.value))
                             {
-                                s.CopyTo(m);
-                                return System.Convert.ToBase64String(m.ToArray());
+                                if (s != null)
+                                {
+                                    using (var m = new System.IO.MemoryStream())
+                                    {
+                                        s.CopyTo(m);
+                                        return System.Convert.ToBase64String(m.ToArray());
+                                    }
+                                }
                             }
                         }
+                        catch { }
                         break;
                 }
             }

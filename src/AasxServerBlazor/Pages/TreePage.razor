@@ -350,99 +350,91 @@ var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
     ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
     int plotFilterTsdOffset = 0;
 
-private class PlotFilter
-{
-    public DateTime fromDate { get; set; }
-    public DateTime fromTime { get; set; }
-    public DateTime toDate { get; set; }
-    public DateTime toTime { get; set; }
-    public DateTime combinedFromDate { get; set; }
-    public DateTime combinedToDate { get; set; }
-
-    public PlotFilter()
+    private class PlotFilter
     {
-        this.SetInitialFilterState();
-    }
+        public DateTime fromDate { get; set; }
+        public DateTime fromTime { get; set; }
+        public DateTime toDate { get; set; }
+        public DateTime toTime { get; set; }
+        public DateTime combinedFromDate { get; set; }
+        public DateTime combinedToDate { get; set; }
 
-    public void SetInitialFilterState()
-    {
-        ResetTimeOfDates();
-        var initialFromDate = DateTime.Now.AddYears(-3);
-        var initialToDate = DateTime.Now.AddYears(3);
-        fromDate = initialFromDate;
-        toDate = initialToDate;
-        combinedFromDate = initialFromDate;
-        combinedToDate = initialToDate;
-    }
-
-    public void SetFilterStateDay(int offset)
-    {
-        ResetTimeOfDates();
-        DateTime day = DateTime.Today.AddDays(offset);
-        TimeSpan midnight = new System.TimeSpan(0, 23, 59, 59);
-        DateTime endOfDay = day.Add(midnight);
-
-        fromDate = day;
-        fromTime = day;
-        toDate = endOfDay;
-        toTime = endOfDay;
-        combinedFromDate = day;
-        combinedToDate = endOfDay;
-    }
-
-    public void ResetTimeOfDates()
-    {
-        // Reset to 0 AM
-        fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
-        toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
-    }
-
-    public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
-    {
-        ResetTimeOfDates();
-        TimeSpan fromTimeSpan = fromTime.TimeOfDay;
-        TimeSpan toTimeSpan = toTime.TimeOfDay;
-        combinedFromDate = fromDate.Add(fromTimeSpan);
-        combinedToDate = toDate.Add(toTimeSpan);
-        tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
-    }
-}
-
-async Task DownloadFile()
-{
-    this.StateHasChanged();
-    var f = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
-    var fileName = System.IO.Path.GetFileName(f.value);
-    if (fileName != "")
-    {
-        try
+        public PlotFilter()
         {
-            /*
-            string data;
-            using (System.IO.StreamReader reader = new System.IO.StreamReader(Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value), System.Text.Encoding.UTF8))
-                {
-                data = reader.ReadToEnd();
-            }
-            */
-            //
-            byte[] data;
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+            this.SetInitialFilterState();
+        }
+
+        public void SetInitialFilterState()
+        {
+            ResetTimeOfDates();
+            var initialFromDate = DateTime.Now.AddYears(-3);
+            var initialToDate = DateTime.Now.AddYears(3);
+            fromDate = initialFromDate;
+            toDate = initialToDate;
+            combinedFromDate = initialFromDate;
+            combinedToDate = initialToDate;
+        }
+
+        public void SetFilterStateDay(int offset)
+        {
+            ResetTimeOfDates();
+            DateTime day = DateTime.Today.AddDays(offset);
+            TimeSpan midnight = new System.TimeSpan(0, 23, 59, 59);
+            DateTime endOfDay = day.Add(midnight);
+
+            fromDate = day;
+            fromTime = day;
+            toDate = endOfDay;
+            toTime = endOfDay;
+            combinedFromDate = day;
+            combinedToDate = endOfDay;
+        }
+
+        public void ResetTimeOfDates()
+        {
+            // Reset to 0 AM
+            fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
+            toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
+        }
+
+        public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
+        {
+            ResetTimeOfDates();
+            TimeSpan fromTimeSpan = fromTime.TimeOfDay;
+            TimeSpan toTimeSpan = toTime.TimeOfDay;
+            combinedFromDate = fromDate.Add(fromTimeSpan);
+            combinedToDate = toDate.Add(toTimeSpan);
+            tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
+        }
+    }
+
+    async Task DownloadFile()
+    {
+        this.StateHasChanged();
+        var f = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+        var fileName = System.IO.Path.GetFileName(f.value);
+        if (fileName != "")
+        {
+            try
             {
-                Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
-                data = ms.ToArray();
+                byte[] data;
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                {
+                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.value).CopyTo(ms);
+                    data = ms.ToArray();
+                }
+                //
+                await SaveAs(js, fileName, data);
             }
-            //
-            await SaveAs(js, fileName, data);
-        }
-        catch
-        {
-        }
+            catch
+            {
+            }
 
+        }
     }
-}
-async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-// async Task SaveAs(IJSRuntime js, string filename, string data)
-{
+    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
+    // async Task SaveAs(IJSRuntime js, string filename, string data)
+    {
         ; await js.InvokeAsync<object>(
      "saveAsFile",
      filename,
@@ -769,20 +761,22 @@ async Task SaveAs(IJSRuntime js, string filename, byte[] data)
             var aas = o as AdministrationShell;
             lock (Program.changeAasxFile)
             {
-                System.IO.Stream s = null;
                 try
                 {
-                    s = Program.env[item.envIndex].GetLocalThumbnailStream();
-                }
-                catch { }
-                if (s != null)
-                {
-                    using (var m = new System.IO.MemoryStream())
+                    using (System.IO.Stream s = Program.env[item.envIndex].GetLocalThumbnailStream())
                     {
-                        s.CopyTo(m);
-                        return System.Convert.ToBase64String(m.ToArray());
+                        if (s != null)
+                        {
+                            using (var m = new System.IO.MemoryStream())
+                            {
+                                s.CopyTo(m);
+                                return System.Convert.ToBase64String(m.ToArray());
+                            }
+                        }
+
                     }
                 }
+                catch { }
             }
         }
 
@@ -802,20 +796,21 @@ async Task SaveAs(IJSRuntime js, string filename, byte[] data)
                         case "jpg":
                         case "bmp":
                         case "png":
-                            System.IO.Stream s = null;
                             try
                             {
-                                s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value);
-                            }
-                            catch { }
-                            if (s != null)
-                            {
-                                using (var m = new System.IO.MemoryStream())
+                                using (System.IO.Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value))
                                 {
-                                    s.CopyTo(m);
-                                    return System.Convert.ToBase64String(m.ToArray());
+                                    if (s != null)
+                                    {
+                                        using (var m = new System.IO.MemoryStream())
+                                        {
+                                            s.CopyTo(m);
+                                            return System.Convert.ToBase64String(m.ToArray());
+                                        }
+                                    }
                                 }
                             }
+                            catch { }
                             break;
                     }
                 }
@@ -926,11 +921,14 @@ async Task SaveAs(IJSRuntime js, string filename, byte[] data)
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
                 QRCode qrCode = new QRCode(qrCodeData);
                 Bitmap qrCodeImage = qrCode.GetGraphic(20);
-                System.IO.MemoryStream memory = new System.IO.MemoryStream();
-                qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-                string base64 = Convert.ToBase64String(memory.ToArray());
+                using (System.IO.MemoryStream memory = new System.IO.MemoryStream())
+                {
+                    qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                    string base64 = Convert.ToBase64String(memory.ToArray());
 
-                Program.generatedQrCodes.Add(item.Tag, base64);
+                    Program.generatedQrCodes.Add(item.Tag, base64);
+
+                }
                 return;
             }
         }
