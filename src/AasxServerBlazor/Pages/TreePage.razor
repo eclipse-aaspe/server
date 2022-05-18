@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject AASService SubmodelService
+@inject NavigationManager NavigationManager
 @using Microsoft.IdentityModel.Tokens;
 @using System
 @using System.Net;
@@ -464,9 +465,9 @@
      );
         /*
         await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
-    Convert.ToBase64String(data)
+    "saveAsFile",
+    filename,
+        Convert.ToBase64String(data)
         );
         */
         /*
@@ -1016,7 +1017,8 @@
         {
             // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
             //return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            return "http://localhost:5001" + "/packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
+            string currentUrl = NavigationManager.Uri;
+            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
         }
 
         if (o is AdminShellNS.AdminShellV30.File || o is Property)
