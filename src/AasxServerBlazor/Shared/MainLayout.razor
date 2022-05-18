@@ -58,7 +58,9 @@
                             </div>
                             <div class="relative ml-2">
                                 <!-- input -->
-                                <input type="checkbox" id="toggle" class="sr-only" onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item) { item.style.display = item.style.display!='block' ? 'block' : 'none'; })">
+                                <input type="checkbox" id="toggle" class="sr-only"
+                                       onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
+                                        { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
                                 <!-- line -->
                                 <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
                                 <!-- dot -->
@@ -72,7 +74,8 @@
                         @Body
                     </div>
                     <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
-                        <iframe src="https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/" id="iframe" style="width: 100%; height: 100%;"></iframe>
+                        <iframe src="https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=ZveiControlCabinetAas"
+                                id="iframe" style="width: 100%; height: 100%;"></iframe>
                     </div>
                 </div>
             </div>
