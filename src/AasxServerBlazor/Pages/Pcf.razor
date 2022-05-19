@@ -137,11 +137,14 @@
                                 var bytes = Convert.FromBase64String(productImage);
                                 using (var stream = new System.IO.MemoryStream(bytes))
                                 {
-                                    System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
-                                    double idealArea = 2000;
-                                    var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
-                                    var maxWidthPx = maxWidth + "px";
-                                    <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                    using (System.Drawing.Image img = System.Drawing.Image.FromStream(stream))
+                                    {
+                                        double idealArea = 2000;
+                                        var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
+                                        var maxWidthPx = maxWidth + "px";
+
+                                        <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                    }
                                 }
                             }
                             @if (manufacturerLogo != null)
@@ -149,11 +152,14 @@
                                 var bytes = Convert.FromBase64String(manufacturerLogo);
                                 using (var stream = new System.IO.MemoryStream(bytes))
                                 {
-                                    System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
-                                    double idealArea = 1800;
-                                    var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
-                                    var maxWidthPx = maxWidth + "px";
-                                    <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                    using (System.Drawing.Image img = System.Drawing.Image.FromStream(stream))
+                                    {
+                                        double idealArea = 1800;
+                                        var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
+                                        var maxWidthPx = maxWidth + "px";
+
+                                        <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                    }
                                 }
                             }
                             @{
