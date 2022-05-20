@@ -267,9 +267,9 @@ namespace AasxServer
             Program.noSecurity = a.NoSecurity;
             Program.edit = a.Edit;
             Program.readTemp = a.ReadTemp;
+            secretStringAPI = "ZVEI";
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
                 secretStringAPI = a.SecretStringAPI;
-            secretStringAPI = "ZVEI";
 
             // Wait for Debugger
             if (a.DebugWait)

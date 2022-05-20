@@ -2214,6 +2214,15 @@ namespace AasxRestServerLibrary
                 return;
             }
 
+            // Check query parameter
+            bool first = false;
+            var queryString = context.Request.QueryString;
+            string f = queryString["first"];
+            if (f != null && f != "")
+            {
+                first = true;
+            }
+
             // special case: parent is Submodel itself
             var timeStamp = DateTime.UtcNow;
             var updated = false;
@@ -2227,13 +2236,27 @@ namespace AasxRestServerLibrary
                     context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from Submodel {smid}.");
                     int indexOfExistingSmw = sm.submodelElements.IndexOf(existsmw);
                     sm.submodelElements.RemoveAt(indexOfExistingSmw);
-                    sm.Insert(indexOfExistingSmw, sme);
+                    if (!first)
+                    {
+                        sm.Insert(indexOfExistingSmw, sme);
+                    }
+                    else
+                    {
+                        sm.Insert(0, sme);
+                    }
                 }
                 else
                 {
                     context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to Submodel {smid}.");
                     sme.TimeStampCreate = timeStamp;
-                    sm.Add(sme);
+                    if (!first)
+                    {
+                        sm.Add(sme);
+                    }
+                    else
+                    {
+                        sm.Insert(0, sme);
+                    }
                 }
                 sme.SetAllParentsAndTimestamps(sm, timeStamp, sme.TimeStampCreate);
                 sme.setTimeStamp(timeStamp);
@@ -2260,12 +2283,27 @@ namespace AasxRestServerLibrary
                         int indexOfExistingSmw = parentsmc.value.IndexOf(existsmw);
                         parentsmc.value.RemoveAt(indexOfExistingSmw);
                         parentsmc.Insert(indexOfExistingSmw, sme);
+                        if (!first)
+                        {
+                            parentsmc.Insert(indexOfExistingSmw, sme);
+                        }
+                        else
+                        {
+                            parentsmc.Insert(0, sme);
+                        }
                     }
                     else
                     {
                         sme.TimeStampCreate = timeStamp;
                         context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
-                        parentsmc.Add(sme);
+                        if (!first)
+                        {
+                            parentsmc.Add(sme);
+                        }
+                        else
+                        {
+                            parentsmc.Insert(0, sme);
+                        }
                     }
                     sme.SetAllParentsAndTimestamps(parentsmc, timeStamp, sme.TimeStampCreate);
                     sme.setTimeStamp(timeStamp);
@@ -3255,6 +3293,14 @@ namespace AasxRestServerLibrary
                 accessrights = "READ";
 
                 // Query string with Secret?
+                var queryString = context.Request.QueryString;
+                string s = queryString["s"];
+                if (s != null && s != "")
+                {
+                    if (s == Program.secretStringAPI)
+                        accessrights = "UPDATE";
+                }
+                /*
                 split = context.Request.Url.ToString().Split(new char[] { '?' });
                 if (split != null && split.Length > 1 && split[1] != null)
                 {
@@ -3267,6 +3313,7 @@ namespace AasxRestServerLibrary
                             accessrights = "UPDATE";
                     }
                 }
+                */
                 return accessrights;
             }
 
