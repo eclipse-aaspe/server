@@ -608,6 +608,22 @@ namespace IO.Swagger.Registry.Controllers
             p.TimeStamp = timestamp;
             p.value = JsonConvert.SerializeObject(ad);
             c.value.Add(p);
+            // iterate submodels
+            foreach (var sd in ad.SubmodelDescriptors)
+            {
+                if (sd.IdShort == "NameplateVC")
+                {
+                    if (sd.Endpoints != null && sd.Endpoints.Count > 0)
+                    {
+                        var ep = sd.Endpoints[0].ProtocolInformation.EndpointAddress;
+                        p = AdminShell.Property.CreateNew("NameplateVC");
+                        p.TimeStampCreate = timestamp;
+                        p.TimeStamp = timestamp;
+                        p.value = ep;
+                        c.value.Add(p);
+                    }
+                }
+            }
             aasRegistry?.submodelElements.Add(c);
         }
 
