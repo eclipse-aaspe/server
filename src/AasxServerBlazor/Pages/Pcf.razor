@@ -155,7 +155,12 @@
                                                 var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
                                                 var maxWidthPx = maxWidth + "px";
 
-                                                <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                // <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                productImage = getImageLink(node.productImage, node.envIndex);
+                                                if (productImage != null)
+                                                {
+                                                    <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                }
                                             }
                                         }
                                     }
@@ -170,7 +175,12 @@
                                                 var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
                                                 var maxWidthPx = maxWidth + "px";
 
-                                                <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                                // <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                                manufacturerLogo = getImageLink(node.manufacturerLogo, node.envIndex);
+                                                if (manufacturerLogo != null)
+                                                {
+                                                    <img src=@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                                }
                                             }
                                         }
                                     }
@@ -185,7 +195,9 @@
                                         </div>
                                     }
                                     <div class="flex-none self-center hide-slim">
-                                        <button class="btn px-3 text-white" onclick="document.getElementById('iframe').src='https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=@node.aas.idShort'" style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important; ">
+                                        <button class="btn px-3 text-white"
+                                                onclick="document.getElementById('iframe').src='/dashboard/submodelView.html?id=@node.aas.idShort'"
+                                                style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
                                     </div>
@@ -213,6 +225,34 @@
                 }
 
             </div>
+        }
+
+        string getImageLink(File f, int envIndex)
+        {
+            if (f == null || envIndex == -1)
+                return null;
+
+            if (f.value != "")
+            {
+                string[] split = f.value.Split(new Char[] { '/' });
+                if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+                {
+                    split = f.value.Split(new Char[] { '.' });
+                    switch (split.Last().ToLower())
+                    {
+                        case "jpg":
+                        case "bmp":
+                        case "png":
+                            try
+                            {
+                                return Program.externalRest + "/server/getfile/" + envIndex + f.value;
+                            }
+                            catch { }
+                            break;
+                    }
+                }
+            }
+            return null;
         }
 
         string getImage(File f, int envIndex)
