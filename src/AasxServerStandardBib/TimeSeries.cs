@@ -1266,26 +1266,39 @@ namespace AasxTimeSeries
                         }
                     }
 
-                    var historyData1 = ExtensionObject.ToEncodeable(results[0].HistoryData) as HistoryData;
-                    var historyData2 = ExtensionObject.ToEncodeable(results[1].HistoryData) as HistoryData;
-                    for (int i = 0; i < historyData1.DataValues.Count; i++)
+                    if (results.Count > 0)
                     {
-                        var sourceTimeStamp = (DateTime)historyData1.DataValues[i].SourceTimestamp;
-                        var value1 = historyData1.DataValues[i].Value?.ToString();
-                        var value2 = historyData2.DataValues[i].Value?.ToString();
-
-                        // collect only valid entries
-                        if (sourceTimeStamp != null && value1 != null && value2 != null &&
-                            sourceTimeStamp >= startTime && value1 != "" && value2 != "")
+                        var historyData1 = ExtensionObject.ToEncodeable(results[0].HistoryData) as HistoryData;
+                        int dataValuesCount = historyData1.DataValues.Count;
+                        for (int i = 0; i < dataValuesCount; i++)
                         {
-                            // Console.WriteLine("startTime " + startTime + " sourceTimeStamp " + sourceTimeStamp
-                            //    + " value1 " + value1 + " value2 " + value2);
-                            var row = new List<object>();
-                            row.Add(historyData1.DataValues[i].SourceTimestamp);
-                            row.Add(historyData1.DataValues[i].Value);
-                            row.Add(historyData2.DataValues[i].Value);
-                            table.Add(row);
-                            tsb.opcLastTimeStamp = sourceTimeStamp + TimeSpan.FromMilliseconds(1);
+                            var sourceTimeStamp = historyData1.DataValues[i].SourceTimestamp;
+                            if (sourceTimeStamp != null && sourceTimeStamp >= startTime)
+                            {
+                                bool isValid = true;
+                                var row = new List<object>();
+                                row.Add(historyData1.DataValues[i].SourceTimestamp);
+
+                                foreach (var result in results)
+                                {
+                                    var currentHistoryData = ExtensionObject.ToEncodeable(result.HistoryData) as HistoryData;
+                                    var value = currentHistoryData.DataValues[i].Value?.ToString();
+                                    if (!string.IsNullOrEmpty(value))
+                                    {
+                                        row.Add(currentHistoryData.DataValues[i].Value);
+                                    }
+                                    else
+                                    {
+                                        isValid = false;
+                                        break;
+                                    }
+                                }
+                                if (isValid)
+                                {
+                                    table.Add(row);
+                                    tsb.opcLastTimeStamp = sourceTimeStamp + TimeSpan.FromMilliseconds(1);
+                                }
+                            }
                         }
                     }
 
