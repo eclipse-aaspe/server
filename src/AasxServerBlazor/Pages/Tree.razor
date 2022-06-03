@@ -17,15 +17,23 @@
         <div>
             @if (hasChilds)
             {
-                <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))">
+                string iconId = "";
+                if (AasxServer.Program.htmlId)
+                    iconId = HtmlId(node as Item) + "._icon";
+                <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId" >
                     <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
                 </span>
             }
 
             <div class="uic-tree__title">
-                <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))">
-                    @TitleTemplate(node) @{ /* @(" " + node.GetHashCode() + " ") */ }
-                </span>
+                @{
+                    string titleId = "";
+                    if (AasxServer.Program.htmlId)
+                        titleId = HtmlId(node as Item) + "._title";
+                    <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
+                        @TitleTemplate(node) @{ /* @(" " + node.GetHashCode() + " ") */ }
+                    </span>
+                 }
             </div>
 
             @if (hasChilds)
@@ -40,7 +48,8 @@
                           SelectedNode="SelectedNode"
                           SelectedNodeChanged="SelectedNodeChanged"
                           Visible="nodeExpanded"
-                          HasChildNodes="HasChildNodes" />
+                          HasChildNodes="HasChildNodes"
+                          HtmlId="HtmlId" />
                 }
             }
 
@@ -68,6 +77,8 @@
     [Parameter] public bool Visible { get; set; } = true;
 
     [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = node => true;
+
+    [Parameter] public Func<Item, string> HtmlId { get; set; } = node => "";
 
     private void OnToggleNode(TNode node, bool expand)
     {

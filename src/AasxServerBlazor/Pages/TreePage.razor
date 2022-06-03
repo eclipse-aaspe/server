@@ -23,7 +23,8 @@
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
               @bind-SelectedNode="SelectedNode"
               @bind-ExpandedNodes="ExpandedNodes"
-              HasChildNodes="@(item => item.Childs?.Any() == true)">
+              HasChildNodes="@(item => item.Childs?.Any() == true)"
+              HtmlId="@(item => GetHtmlId(item))">
             <TitleTemplate>
                 @{ //// SubmodelService.syncSubTree(context);
                 }
@@ -37,7 +38,7 @@
     <div class="col-8" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
-                <span style="color:white;background-color:blue;">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
+                <span style="color:white;background-color:blue;" id="SelectedNodeInfo">@ViewNodeType(selectedNode)</span> @ViewNodeID(selectedNode)<br>
                 for (int line = 0; line < 6; line++)
                 {
                     string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
@@ -45,7 +46,8 @@
                     string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
                     if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
-                        <span style="color:white;background-color:blue;">@nodeDetails0</span> @nodeDetails1 @nodeDetails2<br>
+                        string detailsId = "SelectedNodeDetails_" + line;
+                        <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span> @nodeDetails1 @nodeDetails2<br>
                     }
                 }
                 if (selectedNode != null && selectedNode.Tag is Referable r)
@@ -1244,6 +1246,16 @@ var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
             if (mlp.kind != null && mlp.kind.IsTemplate)
                 ret += "<T> ";
             ret += mlp.idShort;
+        }
+        return (ret);
+    }
+
+    string GetHtmlId(Item item)
+    {
+        string ret = ViewNodeID(item);
+        if (item.parent != null)
+        {
+            ret = GetHtmlId(item.parent as Item) + "." + ret;
         }
         return (ret);
     }

@@ -145,6 +145,7 @@ namespace AasxServer
         public static string externalBlazor = "";
         public static bool readTemp = false;
         public static string secretStringAPI = null;
+        public static bool htmlId = false;
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
@@ -182,6 +183,7 @@ namespace AasxServer
             public string ExternalBlazor { get; set; }
             public bool ReadTemp { get; set; }
             public string SecretStringAPI { get; set; }
+            public bool HtmlId { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -267,6 +269,7 @@ namespace AasxServer
             Program.noSecurity = a.NoSecurity;
             Program.edit = a.Edit;
             Program.readTemp = a.ReadTemp;
+            Program.htmlId = a.HtmlId;
             secretStringAPI = "ZVEI";
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
                 secretStringAPI = a.SecretStringAPI;
@@ -757,7 +760,11 @@ namespace AasxServer
 
                 new Option<string>(
                     new[] {"--secret-string"},
-                    "If set, allows UPDATE access by query parameter s=")
+                    "If set, allows UPDATE access by query parameter s="),
+
+                new Option<bool>(
+                    new[] {"--html-id"},
+                    "If set, creates id for HTML objects in blazor tree for testing")
             };
 
             if (args.Length == 0)
