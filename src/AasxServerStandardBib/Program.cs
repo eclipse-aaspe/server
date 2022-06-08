@@ -160,6 +160,8 @@ namespace AasxServer
 
         public static object changeAasxFile = new object();
 
+        public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
+
         private class CommandLineArguments
 
         {
@@ -190,6 +192,18 @@ namespace AasxServer
 
         private static int Run(CommandLineArguments a)
         {
+            // Read environment variables
+            string[] evlist = { "PLCNEXTTARGET" };
+            foreach (var ev in evlist)
+            {
+                string v = Environment.GetEnvironmentVariable(ev);
+                if (v != null)
+                {
+                    Console.WriteLine("Variable: " + ev + " = " + v);
+                    envVariables.Add(ev, v);
+                }
+            }
+            
             if (a.Connect != null)
             {
                 if (a.Connect.Length == 0)
@@ -1928,6 +1942,19 @@ namespace AasxServer
                                             break;
                                         case "OPCPath": // Path
                                             Path = p.value;
+                                            break;
+                                        case "OPCEnvVar": // Only if enviroment variable ist set
+                                            // VARIABLE=VALUE
+                                            string[] split = p.value.Split('=');
+                                            if (split.Length == 2)
+                                            {
+                                                string value = "";
+                                                if (envVariables.TryGetValue(split[0], out value))
+                                                {
+                                                    if (split[1] != value)
+                                                        URL = ""; // continue
+                                                }
+                                            }
                                             break;
                                     }
                                     j++;
