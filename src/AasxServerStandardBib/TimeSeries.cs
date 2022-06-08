@@ -1268,24 +1268,28 @@ namespace AasxTimeSeries
 
                     if (results.Count > 0)
                     {
-                        var historyData1 = ExtensionObject.ToEncodeable(results[0].HistoryData) as HistoryData;
-                        int dataValuesCount = historyData1.DataValues.Count;
+                        HistoryData[] historyDatas = new HistoryData[results.Count];
+                        for (int i = 0; i < results.Count; i++)
+                        {
+                            historyDatas[i] = ExtensionObject.ToEncodeable(results[i].HistoryData) as HistoryData;
+                        }
+
+                        int dataValuesCount = historyDatas[0].DataValues.Count;
                         for (int i = 0; i < dataValuesCount; i++)
                         {
-                            var sourceTimeStamp = historyData1.DataValues[i].SourceTimestamp;
+                            var sourceTimeStamp = historyDatas[0].DataValues[i].SourceTimestamp;
                             if (sourceTimeStamp != null && sourceTimeStamp >= startTime)
                             {
                                 bool isValid = true;
                                 var row = new List<object>();
-                                row.Add(historyData1.DataValues[i].SourceTimestamp);
+                                row.Add(sourceTimeStamp);
 
-                                foreach (var result in results)
+                                foreach (HistoryData historyData in historyDatas)
                                 {
-                                    var currentHistoryData = ExtensionObject.ToEncodeable(result.HistoryData) as HistoryData;
-                                    var value = currentHistoryData.DataValues[i].Value?.ToString();
+                                    var value = historyData.DataValues[i].Value?.ToString();
                                     if (!string.IsNullOrEmpty(value))
                                     {
-                                        row.Add(currentHistoryData.DataValues[i].Value);
+                                        row.Add(historyData.DataValues[i].Value);
                                     }
                                     else
                                     {
