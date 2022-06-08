@@ -203,7 +203,7 @@ namespace AasxServer
                     envVariables.Add(ev, v);
                 }
             }
-            
+
             if (a.Connect != null)
             {
                 if (a.Connect.Length == 0)
