@@ -1609,14 +1609,18 @@ namespace AasxServer
         {
             if (!timerSet)
             {
+                /*
                 // Create a timer with an specified interval.
                 OPCClientTimer = new System.Timers.Timer(value);
                 // Hook up the Elapsed event for the timer. 
                 OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
                 OPCClientTimer.AutoReset = true;
                 OPCClientTimer.Enabled = true;
+                */
 
                 timerSet = true;
+
+                AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
             }
         }
 
@@ -1653,6 +1657,12 @@ namespace AasxServer
         }
         */
 
+        public static void OnOPCClientNextTimedEvent()
+        {
+            ReadOPCClient(false);
+            // RunScript(false);
+            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+        }
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);

@@ -428,6 +428,26 @@ namespace AasxTimeSeries
             }
         }
 
+        private static long opcClientRate = 0;
+        private static long opcClientCount = 0;
+        public static void SetOPCClientThread(double value)
+        {
+            opcClientRate = (long)value;
+        }
+
+        private static void OnOPCClientNextTimedEvent(long ms)
+        {
+            if (opcClientRate != 0)
+            {
+                opcClientCount += ms;
+                if (opcClientCount >= opcClientRate)
+                {
+                    AasxServer.Program.OnOPCClientNextTimedEvent();
+                    opcClientCount = 0;
+                }
+            }
+        }
+
         /*
         static ulong ChangeNumber = 0;
 
@@ -487,6 +507,8 @@ namespace AasxTimeSeries
         {
             if (Program.isLoading)
                 return true;
+
+            OnOPCClientNextTimedEvent(100);
 
             // ulong newChangeNumber = ChangeNumber + 1;
             // bool useNewChangeNumber = false;
