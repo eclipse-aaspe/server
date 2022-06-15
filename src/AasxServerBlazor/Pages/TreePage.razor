@@ -243,65 +243,65 @@
 
                             _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
                             watchTimeToProcessImage.Stop();
+                        }
 
-                            byte[] imageArray;
-                            string timeSeriesImageBase64 = "";
-                            string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+                        byte[] imageArray;
+                        string timeSeriesImageBase64 = "";
+                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
 
-                            if (System.IO.File.Exists(scottplotImgPath))
-                            {
-                                imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                                timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-                            }
+                        if (System.IO.File.Exists(scottplotImgPath))
+                        {
+                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+                        }
 
-                            var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
 
-                            if (System.IO.File.Exists(scottplotImgPath))
-                            {
-                                <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
-                                    <label for="filterFromDate">Filter from</label>
-                                    <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
-                                    <input type="time" @bind-value="plotFilter.fromTime" />
-                                    <label for="filterToDate">Filter to</label>
-                                    <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
-                                    <input type="time" @bind-value="plotFilter.toTime" />
-                                    <div>
-                                        <button type="submit">Apply</button>
-                                        <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
-                                        <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
-                                        <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                        <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
-                                        <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
-                                    </div>
-                                </EditForm>
-
-                                <div class="d-flex flex-column">
-                                    <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
-                                    <span class="text-muted" style="font-size:14px;">
-                                        Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
-                                    </span>
+                        if (System.IO.File.Exists(scottplotImgPath))
+                        {
+                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+                                <label for="filterFromDate">Filter from</label>
+                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
+                                <input type="time" @bind-value="plotFilter.fromTime" />
+                                <label for="filterToDate">Filter to</label>
+                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
+                                <input type="time" @bind-value="plotFilter.toTime" />
+                                <div>
+                                    <button type="submit">Apply</button>
+                                    <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
+                                    <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
+                                    <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
+                                    <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
+                                    <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
                                 </div>
+                            </EditForm>
 
-                                <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Visualization of time series</h5>
-                                                <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
-                                            </div>
-                                            <div class="modal-body text-center">
-                                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                                            </div>
+                            <div class="d-flex flex-column">
+                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
+                                <span class="text-muted" style="font-size:14px;">
+                                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+                                </span>
+                            </div>
+
+                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Visualization of time series</h5>
+                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
                                         </div>
                                     </div>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="my-2">Rendering time series...</div>
-                            }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="my-2">Rendering time series...</div>
                         }
                     }
                 }
