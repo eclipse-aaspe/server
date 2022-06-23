@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.2" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.13.1" />
     <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NJsonSchema" Version="10.3.2" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.359.31" />
     <PackageReference Include="QRCoder" Version="1.4.1" />
