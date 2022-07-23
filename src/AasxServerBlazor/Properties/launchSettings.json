@@ -18,7 +18,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path \"C:\\Development\\PCF\" --edit --external-blazor http://localhost:5001 --read-temp --secret-string 123",
+      "commandLineArgs": "--rest --data-path \"C:\\Development\\TimeSeriesView\" --edit --external-blazor http://localhost:5001 --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

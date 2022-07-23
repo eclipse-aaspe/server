@@ -2281,7 +2281,6 @@ namespace AasxRestServerLibrary
                         context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from SubmodelCollection.");
                         int indexOfExistingSmw = parentsmc.value.IndexOf(existsmw);
                         parentsmc.value.RemoveAt(indexOfExistingSmw);
-                        parentsmc.Insert(indexOfExistingSmw, sme);
                         if (!first)
                         {
                             parentsmc.Insert(indexOfExistingSmw, sme);
