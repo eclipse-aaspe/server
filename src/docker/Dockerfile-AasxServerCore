@@ -4,7 +4,7 @@ WORKDIR /repo/src
 
 # Copy the source code and build
 COPY ./src/ /repo/src/
-COPY ./LICENSE.TXT /repo/
+COPY ./LICENSE.TXT /repo/LICENSE.txt
 RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore
 
 FROM mcr.microsoft.com/dotnet/runtime:3.1
