@@ -1,4 +1,7 @@
-﻿
+﻿@*
+https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
+*@
+
 @using Microsoft.AspNetCore.Components.Web
 @using MW.Blazor
 
@@ -20,7 +23,7 @@
                 string iconId = "";
                 if (AasxServer.Program.htmlId)
                     iconId = HtmlId(node as Item) + "._icon";
-                <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId" >
+                <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId">
                     <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
                 </span>
             }
@@ -33,7 +36,7 @@
                     <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
                         @TitleTemplate(node) @{ /* @(" " + node.GetHashCode() + " ") */ }
                     </span>
-                 }
+                }
             </div>
 
             @if (hasChilds)
