@@ -296,5 +296,27 @@ namespace Extenstions
                     SetParentsForSME(submodel, sme);
         }
 
+        public static void Add(this Submodel submodel, ISubmodelElement submodelElement)
+        {
+            if (submodel.SubmodelElements == null)
+            {
+                submodel.SubmodelElements = new List<ISubmodelElement>();
+            }
+
+            submodelElement.Parent = submodel;
+            submodel.SubmodelElements.Add(submodelElement);
+        }
+
+        public static void Insert(this Submodel submodel, int index, ISubmodelElement submodelElement)
+        {
+            if (submodel.SubmodelElements == null)
+            {
+                submodel.SubmodelElements = new List<ISubmodelElement>();
+            }
+
+            submodelElement.Parent = submodel;
+            submodel.SubmodelElements.Insert(index, submodelElement);
+        }
+
     }
 }

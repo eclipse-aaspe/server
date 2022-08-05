@@ -198,7 +198,7 @@ namespace AasxServer
             string[] evlist = { "PLCNEXTTARGET" };
             foreach (var ev in evlist)
             {
-                string v = Environment.GetEnvironmentVariable(ev);
+                string v = System.Environment.GetEnvironmentVariable(ev);
                 if (v != null)
                 {
                     Console.WriteLine("Variable: " + ev + " = " + v);
@@ -457,7 +457,7 @@ namespace AasxServer
                     {
                         string name = Path.GetFileName(fn);
                         string tempName = "./temp/" + Path.GetFileName(fn);
-                        if (readTemp && File.Exists(tempName))
+                        if (readTemp && System.IO.File.Exists(tempName))
                         {
                             fn = tempName;
                         }
@@ -1968,7 +1968,7 @@ namespace AasxServer
                                             break;
                                         case "OPCEnvVar": // Only if enviroment variable ist set
                                             // VARIABLE=VALUE
-                                            string[] split = p.value.Split('=');
+                                            string[] split = p.Value.Split('=');
                                             if (split.Length == 2)
                                             {
                                                 string value = "";

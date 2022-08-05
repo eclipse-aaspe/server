@@ -1321,7 +1321,7 @@ namespace AasxServer
         }
 
         static bool once = false;
-        public static void operation_calculate_cfp(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        public static void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
         {
             if (once)
                 return;
@@ -1481,7 +1481,7 @@ namespace AasxServer
             for (int i = 0; i < taskList.Count; i++)
             {
                 var t = taskList[i];
-                if (t.taskType?.value.ToLower() == "cyclic")
+                if (t.taskType?.Value.ToLower() == "cyclic")
                 {
                     if (t.nextExecution > timeStamp)
                         continue;

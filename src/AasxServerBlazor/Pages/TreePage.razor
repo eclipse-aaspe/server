@@ -21,8 +21,8 @@
         @updateVisibleTree(Items, selectedNode)
         @if (Program.isLoading)
         {<span style="color:white;background-color:blue;">Loading...</span>}
-        else
-            { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }
+        @*else
+        { IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow); }*@
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
               @bind-SelectedNode="SelectedNode"
               @bind-ExpandedNodes="ExpandedNodes"
@@ -819,7 +819,7 @@
                         case "png":
                             try
                             {
-                                using (System.IO.Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.value))
+                                using (System.IO.Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value))
                                 {
                                     if (s != null)
                                     {

@@ -15,7 +15,7 @@
     float total = 0.0f;
     try
     {
-        total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.value, CultureInfo.InvariantCulture);
+        total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
         total = (float)Math.Round(total, 1);
 
     }
@@ -61,7 +61,7 @@
                             {
                                 if (node.cradleToGateModule != null)
                                 {
-                                    value = node.cradleToGateModule.value;
+                                    value = node.cradleToGateModule.Value;
                                     view = true;
                                 }
                             }
@@ -71,7 +71,7 @@
                                 {
                                     if (node.cradleToGateCombination != null)
                                     {
-                                        value = node.cradleToGateCombination.value;
+                                        value = node.cradleToGateCombination.Value;
                                         //if (node != AasxTask.root)
                                         viewCombination = true;
                                         view = true;
@@ -81,7 +81,7 @@
                                 {
                                     if (node.cradleToGateModule != null)
                                     {
-                                        value = node.cradleToGateModule.value;
+                                        value = node.cradleToGateModule.Value;
                                         view = true;
                                     }
                                 }
@@ -196,7 +196,7 @@
                                     }
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
-                                                onclick="document.getElementById('iframe').src='/dashboard/submodelView.html?id=@node.aas.idShort'"
+                                                onclick="document.getElementById('iframe').src='/dashboard/submodelView.html?id=@node.aas.IdShort'"
                                                 style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
@@ -232,12 +232,12 @@
             if (f == null || envIndex == -1)
                 return null;
 
-            if (f.value != "")
+            if (f.Value != "")
             {
-                string[] split = f.value.Split(new Char[] { '/' });
+                string[] split = f.Value.Split(new Char[] { '/' });
                 if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
                 {
-                    split = f.value.Split(new Char[] { '.' });
+                    split = f.Value.Split(new Char[] { '.' });
                     switch (split.Last().ToLower())
                     {
                         case "jpg":
@@ -245,7 +245,7 @@
                         case "png":
                             try
                             {
-                                return Program.externalRest + "/server/getfile/" + envIndex + f.value;
+                                return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
                             }
                             catch { }
                             break;
@@ -260,12 +260,12 @@
             if (f == null || envIndex == -1)
                 return null;
 
-            if (f.value != "")
+            if (f.Value != "")
             {
-                string[] split = f.value.Split(new Char[] { '/' });
+                string[] split = f.Value.Split(new Char[] { '/' });
                 if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
                 {
-                    split = f.value.Split(new Char[] { '.' });
+                    split = f.Value.Split(new Char[] { '.' });
                     switch (split.Last().ToLower())
                     {
                         case "jpg":
@@ -273,7 +273,7 @@
                         case "png":
                             try
                             {
-                                using (System.IO.Stream s = Program.env[envIndex].GetLocalStreamFromPackage(f.value))
+                                using (System.IO.Stream s = Program.env[envIndex].GetLocalStreamFromPackage(f.Value))
                                 {
                                     if (s != null)
                                     {

@@ -74,5 +74,27 @@ namespace Extenstions
             return submodelElementCollection;
         }
 
+        public static void Add(this SubmodelElementCollection submodelElementCollection, ISubmodelElement submodelElement)
+        {
+            if (submodelElementCollection.Value == null)
+            {
+                submodelElementCollection.Value = new List<ISubmodelElement>();
+            }
+
+            submodelElement.Parent = submodelElementCollection;
+            submodelElementCollection.Value.Add(submodelElement);
+        }
+
+        public static void Insert(this SubmodelElementCollection submodelElementCollection, int index, ISubmodelElement submodelElement)
+        {
+            if (submodelElementCollection.Value == null)
+            {
+                submodelElementCollection.Value = new List<ISubmodelElement>();
+            }
+
+            submodelElement.Parent = submodelElementCollection;
+            submodelElementCollection.Value.Insert(index, submodelElement);
+        }
+
     }
 }

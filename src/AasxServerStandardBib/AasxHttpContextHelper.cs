@@ -2279,17 +2279,17 @@ namespace AasxRestServerLibrary
                 if (existsmw != null)
                 {
                     updated = true;
-                    sme.TimeStampCreate = existsmw.submodelElement.TimeStampCreate;
-                    context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from Submodel {smid}.");
-                    int indexOfExistingSmw = sm.submodelElements.IndexOf(existsmw);
-                    sm.submodelElements.RemoveAt(indexOfExistingSmw);
+                    sme.TimeStampCreate = existsmw.TimeStampCreate;
+                    context.Server.Logger.Debug($"Removing old SubmodelElement {sme.IdShort} from Submodel {smid}.");
+                    int indexOfExistingSmw = sm.SubmodelElements.IndexOf(existsmw);
+                    sm.SubmodelElements.RemoveAt(indexOfExistingSmw);
                     if (!first)
                     {
-                        sm.Insert(indexOfExistingSmw, sme);
+                        sm.SubmodelElements.Insert(indexOfExistingSmw, sme);
                     }
                     else
                     {
-                        sm.Insert(0, sme);
+                        sm.SubmodelElements.Insert(0, sme);
                     }
                 }
                 else
@@ -2326,10 +2326,10 @@ namespace AasxRestServerLibrary
                     if (existsmw != null)
                     {
                         updated = true;
-                        sme.TimeStampCreate = existsmw.submodelElement.TimeStampCreate;
-                        context.Server.Logger.Debug($"Removing old SubmodelElement {sme.idShort} from SubmodelCollection.");
-                        int indexOfExistingSmw = parentsmc.value.IndexOf(existsmw);
-                        parentsmc.value.RemoveAt(indexOfExistingSmw);
+                        sme.TimeStampCreate = existsmw.TimeStampCreate;
+                        context.Server.Logger.Debug($"Removing old SubmodelElement {sme.IdShort} from SubmodelCollection.");
+                        int indexOfExistingSmw = parentsmc.Value.IndexOf(existsmw);
+                        parentsmc.Value.RemoveAt(indexOfExistingSmw);
                         if (!first)
                         {
                             parentsmc.Insert(indexOfExistingSmw, sme);
@@ -2342,7 +2342,7 @@ namespace AasxRestServerLibrary
                     else
                     {
                         sme.TimeStampCreate = timeStamp;
-                        context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
+                        context.Server.Logger.Debug($"Adding new SubmodelElement {sme.IdShort} to SubmodelCollection.");
                         if (!first)
                         {
                             parentsmc.Add(sme);
