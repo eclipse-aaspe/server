@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
 using Opc.Ua;
 
@@ -21,7 +22,7 @@ namespace AasOpcUaServer
     public class AasUaPackageFileHandler
     {
         private AdminShellPackageEnv package = null;
-        private AdminShell.File file = null;
+        private AasCore.Aas3_0_RC02.File file = null;
 
         private class PackageFileHandle
         {
@@ -42,7 +43,7 @@ namespace AasOpcUaServer
 
         private Dictionary<UInt32, PackageFileHandle> handles = new Dictionary<uint, PackageFileHandle>();
 
-        public AasUaPackageFileHandler(AdminShellPackageEnv package, AdminShell.File file)
+        public AasUaPackageFileHandler(AdminShellPackageEnv package, AasCore.Aas3_0_RC02.File file)
         {
             this.package = package;
             this.file = file;
@@ -63,7 +64,7 @@ namespace AasOpcUaServer
                 throw new InvalidOperationException("no admin-shell package or file");
             var nh = GetMaxHandle() + 1;
             var fh = new PackageFileHandle(nh);
-            fh.packStream = package.GetLocalStreamFromPackage(file.value);
+            fh.packStream = package.GetLocalStreamFromPackage(file.Value);
             if (fh.packStream == null)
                 throw new InvalidOperationException("no admin-shell package or file");
             handles.Add(nh, fh);
@@ -188,7 +189,7 @@ namespace AasOpcUaServer
         /// Shall be TRUE for local, existing files ..
         /// </summary>
         /// <returns></returns>
-        public bool CheckSuitablity(AdminShellPackageEnv package, AdminShell.File file)
+        public bool CheckSuitablity(AdminShellPackageEnv package, AasCore.Aas3_0_RC02.File file)
         {
             // trivial
             if (package == null || file == null)
@@ -198,7 +199,7 @@ namespace AasOpcUaServer
             Stream s = null;
             try
             {
-                s = package.GetLocalStreamFromPackage(file.value);
+                s = package.GetLocalStreamFromPackage(file.Value);
             }
             catch (Exception ex)
             {
@@ -211,7 +212,7 @@ namespace AasOpcUaServer
         }
 
         public NodeState CreateAddElements(NodeState parent, CreateMode mode,
-            AdminShellPackageEnv package = null, AdminShell.File file = null)
+            AdminShellPackageEnv package = null, AasCore.Aas3_0_RC02.File file = null)
         {
             // access
             if (parent == null)
@@ -238,11 +239,11 @@ namespace AasOpcUaServer
 
 
                 // this first information is to provide a "off-the-shelf" size information; a Open() will re-new this
-                var fileLen = Convert.ToUInt64(package.GetStreamSizeFromPackage(file.value));
+                var fileLen = Convert.ToUInt64(package.GetStreamSizeFromPackage(file.Value));
 
                 // populate attributes from the spec
                 this.entityBuilder.CreateAddPropertyState<string>(o, mode, "MimeType",
-                    DataTypeIds.String, file.mimeType, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
+                    DataTypeIds.String, file.ContentType, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
                 instData.nodeOpenCount = this.entityBuilder.CreateAddPropertyState<UInt16>(o, mode, "OpenCount",
                     DataTypeIds.UInt16, 0, ReferenceTypeIds.HasProperty, VariableTypeIds.PropertyType);
                 instData.nodeSize = this.entityBuilder.CreateAddPropertyState<UInt64>(o, mode, "Size",

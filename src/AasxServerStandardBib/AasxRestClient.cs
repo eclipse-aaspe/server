@@ -5,8 +5,10 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AasxIntegrationBase;
 using AdminShellNS;
+using Extenstions;
 using Grapevine;
 using Grapevine.Client;
 using Grapevine.Shared;
@@ -28,7 +30,7 @@ namespace AasxRestServerLibrary
             this.client = new RestClient();
             this.client.Host = this.uri.Host;
             this.client.Port = this.uri.Port;
-            if (File.Exists("C:\\dat\\proxy.dat"))
+            if (System.IO.File.Exists("C:\\dat\\proxy.dat"))
             {
                 string proxyAddress = "";
                 string username = "";
@@ -94,14 +96,14 @@ namespace AasxRestServerLibrary
 
         // utilities
 
-        string BuildUriQueryPartId(string tag, AdminShell.Identifiable entity)
+        string BuildUriQueryPartId(string tag, IIdentifiable entity)
         {
-            if (entity == null || entity.id == null)
+            if (entity == null || entity.Id == null)
                 return "";
             var res = "";
             if (tag != null)
                 res += tag.Trim() + "=";
-            res += "" + entity.id.value.Trim();
+            res += "" + entity.Id.Trim();
             return res;
         }
 
@@ -161,20 +163,20 @@ namespace AasxRestServerLibrary
             return response.GetContent();
         }
 
-        public string UpdatePropertyValue(AdminShell.AdministrationShellEnv env, AdminShell.Submodel submodel, AdminShell.SubmodelElement sme)
+        public string UpdatePropertyValue(AasCore.Aas3_0_RC02.Environment env, Submodel submodel, ISubmodelElement sme)
         {
             // trivial fails
             if (env == null || sme == null)
                 return null;
 
             // need AAS, indirect
-            var aas = env.FindAASwithSubmodel(submodel.id);
+            var aas = env.FindAasWithSubmodelId(submodel.Id);
             if (aas == null)
                 return null;
 
             // build path         
-            var aasId = aas.idShort;
-            var submodelId = submodel.idShort;
+            var aasId = aas.IdShort;
+            var submodelId = submodel.IdShort;
             var elementId = sme.CollectIdShortByParent();
             var reqpath = "./aas/" + aasId + "/submodels/" + submodelId + "/elements/" + elementId + "/property";
 

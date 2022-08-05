@@ -7,6 +7,8 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using AasCore.Aas3_0_RC02;
+using AasxServerStandardBib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -185,7 +187,7 @@ namespace AdminShellNS
         public static string CleanHereStringWithNewlines(string here, string nl = null)
         {
             if (nl == null)
-                nl = Environment.NewLine;
+                nl = System.Environment.NewLine;
             var lines = CleanHereStringToArray(here);
             if (lines == null)
                 return null;
@@ -360,12 +362,12 @@ namespace AdminShellNS
         {
             // try get a speaking name
             var metaModelName = "<unknown>";
-            var x1 = mi.GetCustomAttribute<AdminShell.MetaModelName>();
+            var x1 = mi.GetCustomAttribute<MetaModelName>();
             if (x1 != null && x1.name != null)
                 metaModelName = x1.name;
 
             // check if this object is searchable
-            var x2 = mi.GetCustomAttribute<AdminShell.TextSearchable>();
+            var x2 = mi.GetCustomAttribute<TextSearchable>();
             if (x2 != null)
             {
                 // what to check?
@@ -413,9 +415,10 @@ namespace AdminShellNS
 
             // try to get element name of an AAS entity
             string elName = null;
-            if (obj is AdminShell.Referable)
+            if (obj is IReferable)
             {
-                elName = (obj as AdminShell.Referable).GetElementName();
+                //elName = (obj as IReferable).GetElementName();
+                elName = obj.GetType().Name;
                 businessObject = obj;
             }
 
@@ -433,11 +436,11 @@ namespace AdminShellNS
             foreach (var fi in fields)
             {
                 // is the object marked to be skipped?
-                var x3 = fi.GetCustomAttribute<AdminShell.SkipForReflection>();
+                var x3 = fi.GetCustomAttribute<SkipForReflection>();
                 if (x3 != null)
                     continue;
 
-                var x4 = fi.GetCustomAttribute<AdminShell.SkipForSearch>();
+                var x4 = fi.GetCustomAttribute<SkipForSearch>();
                 if (x4 != null)
                     continue;
 
@@ -474,11 +477,11 @@ namespace AdminShellNS
                     continue;
 
                 // is the object marked to be skipped?
-                var x3 = pi.GetCustomAttribute<AdminShell.SkipForReflection>();
+                var x3 = pi.GetCustomAttribute<SkipForReflection>();
                 if (x3 != null)
                     continue;
 
-                var x4 = pi.GetCustomAttribute<AdminShell.SkipForSearch>();
+                var x4 = pi.GetCustomAttribute<SkipForSearch>();
                 if (x4 != null)
                     continue;
 

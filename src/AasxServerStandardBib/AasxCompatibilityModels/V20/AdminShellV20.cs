@@ -4478,7 +4478,7 @@ namespace AasxCompatibilityModels
 
             public void SerializeXmlToStream(StreamWriter s)
             {
-                var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
+                var serializer = new XmlSerializer(typeof(AdministrationShellEnv));
                 var nss = new XmlSerializerNamespaces();
                 nss.Add("xsi", System.Xml.Schema.XmlSchema.InstanceNamespace);
                 nss.Add("aas", "http://www.admin-shell.io/aas/2/0");
@@ -4914,7 +4914,7 @@ namespace AasxCompatibilityModels
         {
             // constants
             public static Type[] PROP_MLP = new Type[] {
-            typeof(AdminShell.MultiLanguageProperty), typeof(AdminShell.Property) };
+            typeof(MultiLanguageProperty), typeof(Property) };
 
             // for JSON only
             [XmlIgnore]
@@ -5372,7 +5372,7 @@ namespace AasxCompatibilityModels
             /// <returns>SubmodelElement or null</returns>
             public static SubmodelElement CreateAdequateType(Type t)
             {
-                if (t == null || !t.IsSubclassOf(typeof(AdminShell.SubmodelElement)))
+                if (t == null || !t.IsSubclassOf(typeof(SubmodelElement)))
                     return null;
                 var sme = Activator.CreateInstance(t) as SubmodelElement;
                 return sme;

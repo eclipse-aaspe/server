@@ -9,9 +9,11 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AasxRestServerLibrary;
 using AasxServer;
 using AdminShellNS;
+using Extenstions;
 using IdentityModel;
 using IdentityModel.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -22,11 +24,11 @@ namespace AasxServer
 {
     public class AasxTask
     {
-        public AdminShell.SubmodelElementCollection def = null;
-        public AdminShell.Property taskType = null;
-        public AdminShell.Property cycleTime = null;
-        public AdminShell.Property cycleCount = null;
-        public AdminShell.Property nextCycle = null;
+        public SubmodelElementCollection def = null;
+        public Property taskType = null;
+        public Property cycleTime = null;
+        public Property cycleCount = null;
+        public Property nextCycle = null;
         public DateTime nextExecution = new DateTime();
         public int envIndex = -1;
 
@@ -37,7 +39,7 @@ namespace AasxServer
         public static void taskInit()
         {
             string proxyFile = "proxy.txt";
-            if (File.Exists(proxyFile))
+            if (System.IO.File.Exists(proxyFile))
             {
                 try
                 {   // Open the text file using a stream reader.
@@ -53,7 +55,7 @@ namespace AasxServer
                 }
             }
 
-            if (File.Exists(proxyFile))
+            if (System.IO.File.Exists(proxyFile))
             {
                 // Test for proxy
                 Console.WriteLine("Read proxyFile: " + proxyFile);
@@ -97,62 +99,62 @@ namespace AasxServer
                 var env = AasxServer.Program.env[i];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AdministrationShells[0];
-                    if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
-                        foreach (var smr in aas.submodelRefs)
+                        foreach (var smr in aas.Submodels)
                         {
                             var sm = env.AasEnv.FindSubmodel(smr);
-                            if (sm != null && sm.idShort != null && sm.idShort.ToLower().Contains("tasks"))
+                            if (sm != null && sm.IdShort != null && sm.IdShort.ToLower().Contains("tasks"))
                             {
-                                sm.setTimeStamp(timeStamp);
-                                int countSme = sm.submodelElements.Count;
+                                sm.SetTimeStamp(timeStamp);
+                                int countSme = sm.SubmodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
-                                    var sme = sm.submodelElements[iSme].submodelElement;
-                                    if (sme is AdminShell.SubmodelElementCollection smec)
+                                    var sme = sm.SubmodelElements[iSme];
+                                    if (sme is SubmodelElementCollection smec)
                                     {
                                         var nextTask = new AasxTask();
                                         AasxTask.taskList.Add(nextTask);
                                         nextTask.def = smec;
                                         nextTask.envIndex = i;
 
-                                        int countSmec = smec.value.Count;
+                                        int countSmec = smec.Value.Count;
                                         for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                         {
-                                            var sme2 = smec.value[iSmec].submodelElement;
-                                            var idShort = sme2.idShort.ToLower();
+                                            var sme2 = smec.Value[iSmec];
+                                            var idShort = sme2.IdShort.ToLower();
 
                                             switch (idShort)
                                             {
                                                 case "tasktype":
-                                                    if (sme2 is AdminShell.Property)
+                                                    if (sme2 is Property)
                                                     {
-                                                        nextTask.taskType = sme2 as AdminShell.Property;
+                                                        nextTask.taskType = sme2 as Property;
                                                     }
                                                     break;
                                                 case "cycletime":
-                                                    if (sme2 is AdminShell.Property)
+                                                    if (sme2 is Property)
                                                     {
-                                                        nextTask.cycleTime = sme2 as AdminShell.Property;
+                                                        nextTask.cycleTime = sme2 as Property;
                                                     }
                                                     break;
                                                 case "cyclecount":
-                                                    if (sme2 is AdminShell.Property)
+                                                    if (sme2 is Property)
                                                     {
-                                                        nextTask.cycleCount = sme2 as AdminShell.Property;
+                                                        nextTask.cycleCount = sme2 as Property;
                                                     }
                                                     break;
                                                 case "nextcycle":
-                                                    if (sme2 is AdminShell.Property)
+                                                    if (sme2 is Property)
                                                     {
-                                                        nextTask.nextCycle = sme2 as AdminShell.Property;
+                                                        nextTask.nextCycle = sme2 as Property;
                                                     }
                                                     break;
                                             }
                                         }
 
-                                        if (nextTask.taskType?.value.ToLower() == "init")
+                                        if (nextTask.taskType?.Value.ToLower() == "init")
                                             runOperations(nextTask.def, nextTask.envIndex, timeStamp);
                                     }
                                 }
@@ -167,16 +169,16 @@ namespace AasxServer
             tasksThread.Start();
         }
 
-        static void runOperations(AdminShell.SubmodelElementCollection smec, int envIndex, DateTime timeStamp)
+        static void runOperations(SubmodelElementCollection smec, int envIndex, DateTime timeStamp)
         {
-            int countSmec = smec.value.Count;
+            int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
             {
-                var sme2 = smec.value[iSmec].submodelElement;
+                var sme2 = smec.Value[iSmec];
 
-                if (sme2 is AdminShell.Operation op)
+                if (sme2 is Operation op)
                 {
-                    var idShort = sme2.idShort.ToLower();
+                    var idShort = sme2.IdShort.ToLower();
                     switch (idShort)
                     {
                         case "authenticate":
@@ -200,89 +202,89 @@ namespace AasxServer
             }
         }
 
-        static void operation_authenticate(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        static void operation_authenticate(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
 
-            if (op.inputVariable.Count != 1)
+            if (op.InputVariables.Count != 1)
             {
                 return;
             }
 
-            AdminShell.Property authType = null;
-            AdminShell.Property authServerEndPoint = null;
-            AdminShell.File authServerCertificate = null;
-            AdminShell.File clientCertificate = null;
-            AdminShell.Property clientCertificatePassWord = null;
-            AdminShell.Property accessToken = null;
-            AdminShell.Property userName = null;
-            AdminShell.Property passWord = null;
+            Property authType = null;
+            Property authServerEndPoint = null;
+            AasCore.Aas3_0_RC02.File authServerCertificate = null;
+            AasCore.Aas3_0_RC02.File clientCertificate = null;
+            Property clientCertificatePassWord = null;
+            Property accessToken = null;
+            Property userName = null;
+            Property passWord = null;
 
-            var smec = new AdminShell.SubmodelElementCollection();
-            foreach (var input in op.inputVariable)
+            var smec = new SubmodelElementCollection();
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (!(inputRef is AdminShell.ReferenceElement))
+                var inputRef = input.Value;
+                if (!(inputRef is ReferenceElement))
                     return;
-                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
-                if (refElement is AdminShell.SubmodelElementCollection re)
+                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
+                if (refElement is SubmodelElementCollection re)
                     smec = re;
             }
 
-            int countSmec = smec.value.Count;
+            int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
             {
-                var sme2 = smec.value[iSmec].submodelElement;
-                var idShort = sme2.idShort.ToLower();
+                var sme2 = smec.Value[iSmec];
+                var idShort = sme2.IdShort.ToLower();
 
                 switch (idShort)
                 {
                     case "authtype":
-                        if (sme2 is AdminShell.Property)
+                        if (sme2 is Property)
                         {
-                            authType = sme2 as AdminShell.Property;
+                            authType = sme2 as Property;
                         }
                         break;
                     case "authserverendpoint":
-                        if (sme2 is AdminShell.Property)
+                        if (sme2 is Property)
                         {
-                            authServerEndPoint = sme2 as AdminShell.Property;
+                            authServerEndPoint = sme2 as Property;
                         }
                         break;
                     case "accesstoken":
-                        if (sme2 is AdminShell.Property)
+                        if (sme2 is Property)
                         {
-                            accessToken = sme2 as AdminShell.Property;
+                            accessToken = sme2 as Property;
                         }
                         break;
                     case "username":
-                        if (sme2 is AdminShell.Property)
+                        if (sme2 is Property)
                         {
-                            userName = sme2 as AdminShell.Property;
+                            userName = sme2 as Property;
                         }
                         break;
                     case "password":
-                        if (sme2 is AdminShell.Property)
+                        if (sme2 is Property)
                         {
-                            passWord = sme2 as AdminShell.Property;
+                            passWord = sme2 as Property;
                         }
                         break;
                     case "authservercertificate":
-                        if (sme2 is AdminShell.File)
+                        if (sme2 is AasCore.Aas3_0_RC02.File)
                         {
-                            authServerCertificate = sme2 as AdminShell.File;
+                            authServerCertificate = sme2 as AasCore.Aas3_0_RC02.File;
                         }
                         break;
                     case "clientcertificate":
-                        if (sme2 is AdminShell.File)
+                        if (sme2 is AasCore.Aas3_0_RC02.File)
                         {
-                            clientCertificate = sme2 as AdminShell.File;
+                            clientCertificate = sme2 as AasCore.Aas3_0_RC02.File;
                         }
                         break;
                     case "clientcertificatepassword":
-                        if (sme2 is AdminShell.Property)
+                        if (sme2 is Property)
                         {
-                            clientCertificatePassWord = sme2 as AdminShell.Property;
+                            clientCertificatePassWord = sme2 as Property;
                         }
                         break;
                 }
@@ -290,16 +292,16 @@ namespace AasxServer
 
             if (authType != null)
             {
-                switch (authType.value.ToLower())
+                switch (authType.Value.ToLower())
                 {
                     case "openid":
                         if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
                             && accessToken != null)
                         {
-                            if (accessToken.value != "")
+                            if (accessToken.Value != "")
                             {
                                 bool valid = true;
-                                var jwtToken = new JwtSecurityToken(accessToken.value);
+                                var jwtToken = new JwtSecurityToken(accessToken.Value);
                                 if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
                                     valid = false;
                                 if (valid) return;
@@ -313,7 +315,7 @@ namespace AasxServer
                             var client = new HttpClient(handler);
                             DiscoveryDocumentResponse disco = null;
 
-                            var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.value); });
+                            var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
                             task.Wait();
                             if (disco.IsError) return;
                             Console.WriteLine("OpenID Discovery JSON:");
@@ -323,7 +325,7 @@ namespace AasxServer
                             Stream s = null;
                             try
                             {
-                                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.value);
+                                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.Value);
                             }
                             catch { }
                             if (s == null) return;
@@ -333,16 +335,16 @@ namespace AasxServer
                                 s.CopyTo(m);
                                 var b = m.GetBuffer();
                                 serverCert = new X509Certificate2(b);
-                                Console.WriteLine("Auth server certificate: " + authServerCertificate.value);
+                                Console.WriteLine("Auth server certificate: " + authServerCertificate.Value);
                             }
 
                             string[] x5c = null;
                             X509Certificate2 certificate = null;
-                            string certificatePassword = clientCertificatePassWord.value;
+                            string certificatePassword = clientCertificatePassWord.Value;
                             Stream s2 = null;
                             try
                             {
-                                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.value);
+                                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.Value);
                             }
                             catch { }
                             if (s2 == null) return;
@@ -355,7 +357,7 @@ namespace AasxServer
                                     var b = m.GetBuffer();
                                     xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
                                     certificate = new X509Certificate2(b, certificatePassword);
-                                    Console.WriteLine("Client certificate: " + clientCertificate.value);
+                                    Console.WriteLine("Client certificate: " + clientCertificate.Value);
                                 }
 
                                 string[] X509Base64 = new string[xc.Count];
@@ -424,8 +426,8 @@ namespace AasxServer
 
                                 if (response.IsError) return;
 
-                                accessToken.value = response.AccessToken;
-                                accessToken.setTimeStamp(timeStamp);
+                                accessToken.Value = response.AccessToken;
+                                accessToken.SetTimeStamp(timeStamp);
                             }
                         }
                         break;
@@ -433,51 +435,51 @@ namespace AasxServer
             }
         }
 
-        static void operation_get_put(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        static void operation_get_put(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
             // inputVariable sourceEndPoint: property
             // inputVariable reference sourcePath: property
             // inputVariable reference destinationElement: collection
 
-            string opName = op.idShort.ToLower();
+            string opName = op.IdShort.ToLower();
 
-            AdminShell.SubmodelElementCollection authentication = null;
-            AdminShell.Property authType = null;
-            AdminShell.Property accessToken = null;
-            AdminShell.Property userName = null;
-            AdminShell.Property passWord = null;
-            AdminShell.File authServerCertificate = null;
-            AdminShell.Property endPoint = null;
-            AdminShell.Property path = null;
-            AdminShell.SubmodelElementCollection elementCollection = null;
-            AdminShell.Submodel elementSubmodel = null;
-            AdminShell.Property lastDiff = null;
-            AdminShell.Property status = null;
-            AdminShell.Property mode = null;
+            SubmodelElementCollection authentication = null;
+            Property authType = null;
+            Property accessToken = null;
+            Property userName = null;
+            Property passWord = null;
+            AasCore.Aas3_0_RC02.File authServerCertificate = null;
+            Property endPoint = null;
+            Property path = null;
+            SubmodelElementCollection elementCollection = null;
+            Submodel elementSubmodel = null;
+            Property lastDiff = null;
+            Property status = null;
+            Property mode = null;
 
-            AdminShell.SubmodelElementCollection smec = null;
-            AdminShell.Submodel sm = null;
-            AdminShell.Property p = null;
-            foreach (var input in op.inputVariable)
+            SubmodelElementCollection smec = null;
+            Submodel sm = null;
+            Property p = null;
+            foreach (var input in op.InputVariables)
             {
                 smec = null;
                 sm = null;
                 p = null;
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
-                    p = (inputRef as AdminShell.Property);
+                    p = (inputRef as Property);
                 }
-                if (inputRef is AdminShell.ReferenceElement)
+                if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
-                    if (refElement is AdminShell.SubmodelElementCollection)
-                        smec = refElement as AdminShell.SubmodelElementCollection;
-                    if (refElement is AdminShell.Submodel)
-                        sm = refElement as AdminShell.Submodel;
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
+                    if (refElement is SubmodelElementCollection)
+                        smec = refElement as SubmodelElementCollection;
+                    if (refElement is Submodel)
+                        sm = refElement as Submodel;
                 }
-                switch (inputRef.idShort.ToLower())
+                switch (inputRef.IdShort.ToLower())
                 {
                     case "authentication":
                         if (smec != null)
@@ -503,25 +505,25 @@ namespace AasxServer
                         break;
                 }
             }
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
                 smec = null;
                 sm = null;
                 p = null;
-                var outputRef = output.value.submodelElement;
-                if (outputRef is AdminShell.Property)
+                var outputRef = output.Value;
+                if (outputRef is Property)
                 {
-                    p = (outputRef as AdminShell.Property);
+                    p = (outputRef as Property);
                 }
-                if (outputRef is AdminShell.ReferenceElement)
+                if (outputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
-                    if (refElement is AdminShell.SubmodelElementCollection)
-                        smec = refElement as AdminShell.SubmodelElementCollection;
-                    if (refElement is AdminShell.Submodel)
-                        sm = refElement as AdminShell.Submodel;
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
+                    if (refElement is SubmodelElementCollection)
+                        smec = refElement as SubmodelElementCollection;
+                    if (refElement is Submodel)
+                        sm = refElement as Submodel;
                 }
-                switch (outputRef.idShort.ToLower())
+                switch (outputRef.IdShort.ToLower())
                 {
                     case "lastdiff":
                         if (p != null)
@@ -537,42 +539,42 @@ namespace AasxServer
             if (authentication != null)
             {
                 smec = authentication;
-                int countSmec = smec.value.Count;
+                int countSmec = smec.Value.Count;
                 for (int iSmec = 0; iSmec < countSmec; iSmec++)
                 {
-                    var sme2 = smec.value[iSmec].submodelElement;
-                    var idShort = sme2.idShort.ToLower();
+                    var sme2 = smec.Value[iSmec];
+                    var idShort = sme2.IdShort.ToLower();
 
                     switch (idShort)
                     {
                         case "authtype":
-                            if (sme2 is AdminShell.Property)
+                            if (sme2 is Property)
                             {
-                                authType = sme2 as AdminShell.Property;
+                                authType = sme2 as Property;
                             }
                             break;
                         case "accesstoken":
-                            if (sme2 is AdminShell.Property)
+                            if (sme2 is Property)
                             {
-                                accessToken = sme2 as AdminShell.Property;
+                                accessToken = sme2 as Property;
                             }
                             break;
                         case "username":
-                            if (sme2 is AdminShell.Property)
+                            if (sme2 is Property)
                             {
-                                userName = sme2 as AdminShell.Property;
+                                userName = sme2 as Property;
                             }
                             break;
                         case "password":
-                            if (sme2 is AdminShell.Property)
+                            if (sme2 is Property)
                             {
-                                passWord = sme2 as AdminShell.Property;
+                                passWord = sme2 as Property;
                             }
                             break;
                         case "authservercertificate":
-                            if (sme2 is AdminShell.File)
+                            if (sme2 is AasCore.Aas3_0_RC02.File)
                             {
-                                authServerCertificate = sme2 as AdminShell.File;
+                                authServerCertificate = sme2 as AasCore.Aas3_0_RC02.File;
                             }
                             break;
                     }
@@ -586,13 +588,13 @@ namespace AasxServer
                 handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
             var client = new HttpClient(handler);
             if (accessToken != null)
-                client.SetBearerToken(accessToken.value);
+                client.SetBearerToken(accessToken.Value);
 
-            string requestPath = endPoint.value + "/" + path.value;
+            string requestPath = endPoint.Value + "/" + path.Value;
             HttpResponseMessage response = null;
             Task task = null;
             string diffPath = "";
-            var splitPath = path.value.Split('.');
+            var splitPath = path.Value.Split('.');
             string aasPath = splitPath[0];
             string subPath = "";
             int i = 1;
@@ -605,7 +607,7 @@ namespace AasxServer
             }
 
             if (status != null)
-                status.value = "OK";
+                status.Value = "OK";
             if (opName == "get" || opName == "getdiff")
             {
                 if (splitPath.Length < 2)
@@ -619,10 +621,10 @@ namespace AasxServer
                     if (elementCollection == null)
                         return;
 
-                    if (lastDiff.value == "")
+                    if (lastDiff.Value == "")
                     {
                         opName = "get";
-                        requestPath = endPoint.value + "/aas/" + aasPath +
+                        requestPath = endPoint.Value + "/aas/" + aasPath +
                             "/submodels/" + splitPath[1] + "/elements";
                         i = 2;
                         while (i < splitPath.Length)
@@ -634,12 +636,12 @@ namespace AasxServer
                     }
                     else
                     {
-                        last = DateTime.Parse(lastDiff.value).ToUniversalTime();
-                        requestPath = endPoint.value +
+                        last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
+                        requestPath = endPoint.Value +
                             "/diffjson/aas/" + splitPath[0] +
                             "?path=" + subPath;
                         requestPath += "."; // to avoid wrong data by prefix only
-                        requestPath += "&time=" + lastDiff.value;
+                        requestPath += "&time=" + lastDiff.Value;
                     }
                 }
 
@@ -651,7 +653,7 @@ namespace AasxServer
                     {
                         if (status != null)
                         {
-                            status.value = response.StatusCode.ToString() + " ; " +
+                            status.Value = response.StatusCode.ToString() + " ; " +
                                 response.Content.ReadAsStringAsync().Result + " ; " +
                                 "GET " + requestPath;
                             Program.signalNewData(1);
@@ -665,8 +667,8 @@ namespace AasxServer
                 }
 
                 string json = response.Content.ReadAsStringAsync().Result;
-                AdminShell.SubmodelElementCollection receiveCollection = null;
-                AdminShell.Submodel receiveSubmodel = null;
+                SubmodelElementCollection receiveCollection = null;
+                Submodel receiveSubmodel = null;
                 try
                 {
                     if (opName == "get")
@@ -679,33 +681,33 @@ namespace AasxServer
                                 if (jp1.Name == "elem")
                                 {
                                     string text = jp1.Value.ToString();
-                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
                                         text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                    elementCollection.value = receiveCollection.value;
+                                    elementCollection.Value = receiveCollection.Value;
                                     elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
-                                    elementCollection.setTimeStamp(timeStamp);
+                                    elementCollection.SetTimeStamp(timeStamp);
                                 }
                             }
                         }
                         if (elementSubmodel != null)
                         {
-                            receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.Submodel>(
+                            receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
                                 json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                            receiveSubmodel.setTimeStamp(timeStamp);
+                            receiveSubmodel.SetTimeStamp(timeStamp);
                             receiveSubmodel.SetAllParents(timeStamp);
 
                             // need id for idempotent behaviour
-                            if (receiveSubmodel.id == null || receiveSubmodel.id.value != elementSubmodel.id.value)
+                            if (receiveSubmodel.Id == null || receiveSubmodel.Id != elementSubmodel.Id)
                                 return;
 
-                            var aas = Program.env[envIndex].AasEnv.FindAASwithSubmodel(receiveSubmodel.id);
+                            var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(receiveSubmodel.Id);
 
                             // datastructure update
-                            if (Program.env == null || Program.env[envIndex].AasEnv == null || Program.env[envIndex].AasEnv.Assets == null)
+                            if (Program.env == null || Program.env[envIndex].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
                                 return;
 
                             // add Submodel
-                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodel(receiveSubmodel.id);
+                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(receiveSubmodel.Id);
                             if (existingSm != null)
                                 Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
                             Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
@@ -713,7 +715,7 @@ namespace AasxServer
                     }
                     if (opName == "getdiff")
                     {
-                        // lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                        // lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
                         diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
                         foreach (var d in diffList)
@@ -729,7 +731,7 @@ namespace AasxServer
                                             splitPath = d.path.Split('.');
                                             if (splitPath.Length < 2)
                                                 return;
-                                            requestPath = endPoint.value + "/aas/" + aasPath +
+                                            requestPath = endPoint.Value + "/aas/" + aasPath +
                                                 "/submodels/" + splitPath[0] + "/elements";
                                             i = 1;
                                             while (i < splitPath.Length)
@@ -746,7 +748,7 @@ namespace AasxServer
                                                 {
                                                     if (status != null)
                                                     {
-                                                        status.value = response.StatusCode.ToString() + " ; " +
+                                                        status.Value = response.StatusCode.ToString() + " ; " +
                                                             response.Content.ReadAsStringAsync().Result + " ; " +
                                                             "GET " + requestPath;
                                                         Program.signalNewData(1);
@@ -766,25 +768,25 @@ namespace AasxServer
                                                 if (jp1.Name == "elem")
                                                 {
                                                     string text = jp1.Value.ToString();
-                                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
                                                         text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                                     break;
                                                 }
                                             }
 
                                             bool found = false;
-                                            foreach (var smew in elementCollection.value)
+                                            foreach (var smew in elementCollection.Value)
                                             {
-                                                var sme = smew.submodelElement;
-                                                if (sme.idShort == receiveCollection.idShort)
+                                                var sme = smew;
+                                                if (sme.IdShort == receiveCollection.IdShort)
                                                 {
-                                                    if (sme is AdminShell.SubmodelElementCollection smc)
+                                                    if (sme is SubmodelElementCollection smc)
                                                     {
                                                         if (d.mode == "UPDATE")
                                                         {
-                                                            smc.value = receiveCollection.value;
+                                                            smc.Value = receiveCollection.Value;
                                                             smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
-                                                            smc.setTimeStamp(timeStamp);
+                                                            smc.SetTimeStamp(timeStamp);
                                                         }
                                                         found = true;
                                                         break;
@@ -793,9 +795,9 @@ namespace AasxServer
                                             }
                                             if (!found && d.mode == "CREATE")
                                             {
-                                                elementCollection.value.Add(receiveCollection);
+                                                elementCollection.Value.Add(receiveCollection);
                                                 receiveCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, timeStamp);
-                                                receiveCollection.setTimeStamp(timeStamp);
+                                                receiveCollection.SetTimeStamp(timeStamp);
                                                 Program.signalNewData(2);
                                             }
                                             break;
@@ -810,15 +812,15 @@ namespace AasxServer
                     return;
                 }
                 if (lastDiff != null)
-                    lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                 Program.signalNewData(1);
             }
             if (opName == "put" || opName == "putdiff")
             {
-                AdminShell.SubmodelElementCollection diffCollection = null;
+                SubmodelElementCollection diffCollection = null;
                 DateTime last = new DateTime();
                 int count = 1;
-                if (mode != null && mode.value == "clear")
+                if (mode != null && mode.Value == "clear")
                     opName = "put";
                 if (opName == "putdiff")
                 {
@@ -827,15 +829,15 @@ namespace AasxServer
                     if (elementCollection == null)
                         return;
                     diffCollection = elementCollection;
-                    count = elementCollection.value.Count;
-                    if (lastDiff.value == "")
+                    count = elementCollection.Value.Count;
+                    if (lastDiff.Value == "")
                     {
                         // get "latestData" from server
                         bool error = false;
-                        splitPath = path.value.Split('/');
-                        requestPath = endPoint.value + "/aas/" + splitPath[1] +
+                        splitPath = path.Value.Split('/');
+                        requestPath = endPoint.Value + "/aas/" + splitPath[1] +
                             "/submodels/" + splitPath[3];
-                        requestPath += "/elements/" + elementCollection.idShort;
+                        requestPath += "/elements/" + elementCollection.IdShort;
                         requestPath += "/latestData/complete";
                         try
                         {
@@ -845,7 +847,7 @@ namespace AasxServer
                             {
                                 if (status != null)
                                 {
-                                    status.value = response.StatusCode.ToString() + " ; " +
+                                    status.Value = response.StatusCode.ToString() + " ; " +
                                         response.Content.ReadAsStringAsync().Result + " ; " +
                                         "GET " + requestPath;
                                 }
@@ -871,48 +873,48 @@ namespace AasxServer
                                     if (jp1.Name == "elem")
                                     {
                                         string text = jp1.Value.ToString();
-                                        var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>(
+                                        var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
                                             text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                        foreach (var sme in receiveCollection.value)
+                                        foreach (var sme in receiveCollection.Value)
                                         {
-                                            var e = sme.submodelElement;
-                                            if (e is AdminShell.Property ep)
+                                            var e = sme;
+                                            if (e is Property ep)
                                             {
-                                                if (ep.idShort == "highDataIndex")
+                                                if (ep.IdShort == "highDataIndex")
                                                 {
-                                                    highDataIndex = Convert.ToInt32(ep.value);
+                                                    highDataIndex = Convert.ToInt32(ep.Value);
                                                     lowDataIndex = highDataIndex + 1;
                                                 }
-                                                if (ep.idShort == "totalSamples")
+                                                if (ep.IdShort == "totalSamples")
                                                 {
-                                                    totalSamples = Convert.ToInt32(ep.value);
+                                                    totalSamples = Convert.ToInt32(ep.Value);
                                                 }
                                             }
                                         }
-                                        if (elementCollection.value.Count == 1)
+                                        if (elementCollection.Value.Count == 1)
                                         {
-                                            if (elementCollection.value[0].submodelElement is AdminShell.SubmodelElementCollection smc)
+                                            if (elementCollection.Value[0] is SubmodelElementCollection smc)
                                             {
-                                                if (smc.idShort == "latestData")
+                                                if (smc.IdShort == "latestData")
                                                 {
-                                                    if (smc.value.Count == 0)
+                                                    if (smc.Value.Count == 0)
                                                         return;
-                                                    foreach (var sme in smc.value)
+                                                    foreach (var sme in smc.Value)
                                                     {
-                                                        var e = sme.submodelElement;
-                                                        if (e is AdminShell.Property ep)
+                                                        var e = sme;
+                                                        if (e is Property ep)
                                                         {
-                                                            if (ep.idShort == "highDataIndex")
+                                                            if (ep.IdShort == "highDataIndex")
                                                             {
-                                                                ep.value = highDataIndex.ToString();
+                                                                ep.Value = highDataIndex.ToString();
                                                             }
-                                                            if (ep.idShort == "lowDataIndex")
+                                                            if (ep.IdShort == "lowDataIndex")
                                                             {
-                                                                ep.value = lowDataIndex.ToString();
+                                                                ep.Value = lowDataIndex.ToString();
                                                             }
-                                                            if (ep.idShort == "totalSamples")
+                                                            if (ep.IdShort == "totalSamples")
                                                             {
-                                                                ep.value = totalSamples.ToString();
+                                                                ep.Value = totalSamples.ToString();
                                                             }
                                                         }
                                                     }
@@ -934,12 +936,12 @@ namespace AasxServer
                         else
                         {
                             if (lastDiff != null)
-                                lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                                lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                         }
                     }
                     else
                     {
-                        last = DateTime.Parse(lastDiff.value).ToUniversalTime();
+                        last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
                     }
                 }
 
@@ -952,11 +954,11 @@ namespace AasxServer
                     {
                         if (opName == "putdiff")
                         {
-                            var sme = diffCollection.value[i].submodelElement;
-                            if (!(sme is AdminShell.SubmodelElementCollection))
+                            var sme = diffCollection.Value[i];
+                            if (!(sme is SubmodelElementCollection))
                                 return;
-                            elementCollection = sme as AdminShell.SubmodelElementCollection;
-                            diffPath = "/" + diffCollection.idShort;
+                            elementCollection = sme as SubmodelElementCollection;
+                            diffPath = "/" + diffCollection.IdShort;
                             if (elementCollection.TimeStamp <= last)
                                 elementCollection = null;
                         }
@@ -968,7 +970,7 @@ namespace AasxServer
                     catch
                     {
                         statusValue = "error PUTDIFF index: " + i + " old " + count +
-                            " new " + diffCollection.value.Count;
+                            " new " + diffCollection.Value.Count;
                         Console.WriteLine(statusValue);
                         error = true;
                     }
@@ -1003,7 +1005,7 @@ namespace AasxServer
                     {
                         if (status != null)
                         {
-                            status.value = statusValue;
+                            status.Value = statusValue;
                             Program.signalNewData(1);
                         }
                         return;
@@ -1011,41 +1013,41 @@ namespace AasxServer
                 }
 
                 if (lastDiff != null)
-                    lastDiff.value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
         }
-        static void operation_limitCount(AdminShell.Operation op, int envIndex, DateTime timeStamp)
+        static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference collection: collection
             // inputVariable limit: property
             // inputVariable prefix: property
 
-            if (op.inputVariable.Count != 3)
+            if (op.InputVariables.Count != 3)
             {
                 return;
             }
-            AdminShell.SubmodelElementCollection collection = null;
-            AdminShell.Property limit = null;
-            AdminShell.Property prefix = null;
-            AdminShell.SubmodelElementCollection smec = null;
-            AdminShell.Property p = null;
+            SubmodelElementCollection collection = null;
+            Property limit = null;
+            Property prefix = null;
+            SubmodelElementCollection smec = null;
+            Property p = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
                 smec = null;
                 p = null;
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
-                    p = (inputRef as AdminShell.Property);
+                    p = (inputRef as Property);
                 }
-                if (inputRef is AdminShell.ReferenceElement)
+                if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
-                    if (refElement is AdminShell.SubmodelElementCollection)
-                        smec = refElement as AdminShell.SubmodelElementCollection;
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
+                    if (refElement is SubmodelElementCollection)
+                        smec = refElement as SubmodelElementCollection;
                 }
-                switch (inputRef.idShort.ToLower())
+                switch (inputRef.IdShort.ToLower())
                 {
                     case "collection":
                         if (smec != null)
@@ -1066,26 +1068,26 @@ namespace AasxServer
 
             try
             {
-                int count = Convert.ToInt32(limit.value);
-                string pre = prefix.value;
+                int count = Convert.ToInt32(limit.Value);
+                string pre = prefix.Value;
                 int preCount = 0;
                 int i = 0;
-                while (i < collection.value.Count)
+                while (i < collection.Value.Count)
                 {
-                    if (pre == collection.value[i].submodelElement.idShort.Substring(0, pre.Length))
+                    if (pre == collection.Value[i].IdShort.Substring(0, pre.Length))
                         preCount++;
                     i++;
                 }
                 i = 0;
-                while (preCount > count && i < collection.value.Count)
+                while (preCount > count && i < collection.Value.Count)
                 {
-                    if (pre == collection.value[i].submodelElement.idShort.Substring(0, pre.Length))
+                    if (pre == collection.Value[i].IdShort.Substring(0, pre.Length))
                     {
-                        AdminShell.Referable r = collection.value[i].submodelElement;
-                        var sm = r.getParentSubmodel();
+                        IReferable r = collection.Value[i];
+                        var sm = r.GetParentSubmodel();
                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
                             r, "Remove", sm, (ulong)timeStamp.Ticks);
-                        collection.value.RemoveAt(i);
+                        collection.Value.RemoveAt(i);
                         preCount--;
                     }
                     else
@@ -1104,15 +1106,15 @@ namespace AasxServer
         {
             public int envIndex = -1;
             public string asset = null;
-            public AdminShellV30.AdministrationShell aas = null;
-            public AdminShellV30.Property cradleToGateModule = null;
-            public AdminShellV30.Property productionModule = null;
-            public AdminShellV30.Property distributionModule = null;
-            public AdminShellV30.Property cradleToGateCombination = null;
-            public AdminShellV30.Property productionCombination = null;
-            public AdminShellV30.Property distributionCombination = null;
-            public AdminShell.File manufacturerLogo = null;
-            public AdminShell.File productImage = null;
+            public AssetAdministrationShell aas = null;
+            public Property cradleToGateModule = null;
+            public Property productionModule = null;
+            public Property distributionModule = null;
+            public Property cradleToGateCombination = null;
+            public Property productionCombination = null;
+            public Property distributionCombination = null;
+            public AasCore.Aas3_0_RC02.File manufacturerLogo = null;
+            public AasCore.Aas3_0_RC02.File productImage = null;
             public string productDesignation = "";
             public List<string> bom = new List<string>();
             public List<cfpNode> children = new List<cfpNode>();
@@ -1135,80 +1137,80 @@ namespace AasxServer
                 env = AasxServer.Program.env[i];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AdministrationShells[0];
-                    //var assetId = aas.assetRef.Keys[0].value;
-                    var assetId = aas.assetInformation.globalAssetId.GetAsIdentifier().value;
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    //var assetId = aas.assetRef.Keys[0].Value;
+                    var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
                     var cfp = new cfpNode();
                     cfp.envIndex = i;
                     cfp.aas = aas;
                     cfp.asset = assetId;
-                    cfp.productDesignation = aas.idShort;
+                    cfp.productDesignation = aas.IdShort;
 
-                    if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                    if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
-                        foreach (var smr in aas.submodelRefs)
+                        foreach (var smr in aas.Submodels)
                         {
                             var sm = env.AasEnv.FindSubmodel(smr);
-                            if (sm != null && sm.idShort != null)
+                            if (sm != null && sm.IdShort != null)
                             {
-                                if (sm.idShort == "ProductCarbonFootprint")
+                                if (sm.IdShort == "ProductCarbonFootprint")
                                 {
-                                    foreach (var v in sm.submodelElements)
+                                    foreach (var v in sm.SubmodelElements)
                                     {
-                                        if (v.submodelElement is AdminShell.SubmodelElementCollection c)
+                                        if (v is SubmodelElementCollection c)
                                         {
-                                            if (c.idShort.Contains("FootprintInformationModule")
-                                                    || c.idShort.Contains("FootprintInformationCombination"))
+                                            if (c.IdShort.Contains("FootprintInformationModule")
+                                                    || c.IdShort.Contains("FootprintInformationCombination"))
                                             {
                                                 string lifeCyclePhase = "";
-                                                AdminShell.Property co2eq = null;
-                                                foreach (var v2 in c.value)
+                                                Property co2eq = null;
+                                                foreach (var v2 in c.Value)
                                                 {
-                                                    switch (v2.submodelElement.idShort)
+                                                    switch (v2.IdShort)
                                                     {
                                                         case "LifeCyclePhase":
-                                                            lifeCyclePhase = v2.submodelElement.ValueAsText();
+                                                            lifeCyclePhase = v2.ValueAsText();
                                                             break;
                                                         case "CO2eq":
-                                                            co2eq = v2.submodelElement as AdminShell.Property;
+                                                            co2eq = v2 as Property;
                                                             break;
                                                     }
                                                 }
                                                 switch (lifeCyclePhase)
                                                 {
                                                     case "Cradle-to-gate":
-                                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                                        if (c.IdShort.Contains("FootprintInformationModule"))
                                                         {
-                                                            co2eq.value = co2eq.value.Replace(",", ".");
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.cradleToGateModule = co2eq;
                                                         }
-                                                        if (c.idShort.Contains("FootprintInformationCombination"))
+                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
                                                         {
-                                                            co2eq.value = co2eq.value.Replace(",", ".");
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.cradleToGateCombination = co2eq;
                                                         }
                                                         break;
                                                     case "Production":
-                                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                                        if (c.IdShort.Contains("FootprintInformationModule"))
                                                         {
-                                                            co2eq.value = co2eq.value.Replace(",", ".");
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.productionModule = co2eq;
                                                         }
-                                                        if (c.idShort.Contains("FootprintInformationCombination"))
+                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
                                                         {
-                                                            co2eq.value = co2eq.value.Replace(",", ".");
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.productionCombination = co2eq;
                                                         }
                                                         break;
                                                     case "Distribution":
-                                                        if (c.idShort.Contains("FootprintInformationModule"))
+                                                        if (c.IdShort.Contains("FootprintInformationModule"))
                                                         {
-                                                            co2eq.value = co2eq.value.Replace(",", ".");
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.distributionModule = co2eq;
                                                         }
-                                                        if (c.idShort.Contains("FootprintInformationCombination"))
+                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
                                                         {
-                                                            co2eq.value = co2eq.value.Replace(",", ".");
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.distributionCombination = co2eq;
                                                         }
                                                         break;
@@ -1217,15 +1219,17 @@ namespace AasxServer
                                         }
                                     }
                                 }
-                                if (sm.idShort == "BillOfMaterial")
+                                if (sm.IdShort == "BillOfMaterial")
                                 {
                                     List<string> bom = new List<string>();
-                                    foreach (var v in sm.submodelElements)
+                                    foreach (var v in sm.SubmodelElements)
                                     {
-                                        if (v.submodelElement is AdminShell.Entity e)
+                                        if (v is Entity e)
                                         {
                                             string s = "";
-                                            s = e?.assetRef?.Keys?[0].value;
+                                            //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
+                                            //s = e?.assetRef?.Keys?[0].Value;
+                                            s = e?.GlobalAssetId?.Keys?[0].Value;
                                             if (s != "")
                                             {
                                                 bom.Add(s);
@@ -1235,21 +1239,21 @@ namespace AasxServer
                                     // assetBOM.Add(assetId, bom);
                                     cfp.bom = bom;
                                 }
-                                if (sm.idShort == "TechnicalData")
+                                if (sm.IdShort == "TechnicalData")
                                 {
-                                    foreach (var v in sm.submodelElements)
+                                    foreach (var v in sm.SubmodelElements)
                                     {
-                                        if (v.submodelElement is AdminShell.SubmodelElementCollection c)
+                                        if (v is SubmodelElementCollection c)
                                         {
-                                            if (c.idShort == "GeneralInformation")
+                                            if (c.IdShort == "GeneralInformation")
                                             {
-                                                foreach (var sme in c.value)
+                                                foreach (var sme in c.Value)
                                                 {
-                                                    if (sme.submodelElement is AdminShell.File f)
+                                                    if (sme is AasCore.Aas3_0_RC02.File f)
                                                     {
-                                                        if (f.idShort == "ManufacturerLogo")
+                                                        if (f.IdShort == "ManufacturerLogo")
                                                             cfp.manufacturerLogo = f;
-                                                        if (f.idShort == "ProductImage")
+                                                        if (f.IdShort == "ProductImage")
                                                             cfp.productImage = f;
                                                     }
                                                 }
@@ -1257,27 +1261,27 @@ namespace AasxServer
                                         }
                                     }
                                 }
-                                if (sm.idShort == "Nameplate")
+                                if (sm.IdShort == "Nameplate")
                                 {
-                                    foreach (var v in sm.submodelElements)
+                                    foreach (var v in sm.SubmodelElements)
                                     {
-                                        if (v.submodelElement is AdminShell.MultiLanguageProperty p)
+                                        if (v is MultiLanguageProperty p)
                                         {
-                                            if (p.idShort == "ManufacturerProductDesignation")
+                                            if (p.IdShort == "ManufacturerProductDesignation")
                                             {
-                                                if (p.value != null)
+                                                if (p.Value != null)
                                                 {
                                                     string s = null;
-                                                    foreach (var ls in p.value.langString)
+                                                    foreach (var ls in p.Value.LangStrings)
                                                     {
-                                                        if (ls.lang.ToLower() == "en")
+                                                        if (ls.Language.ToLower() == "en")
                                                         {
-                                                            s = ls.str;
+                                                            s = ls.Text;
                                                         }
-                                                        if (ls.lang.ToLower() == "de")
+                                                        if (ls.Language.ToLower() == "de")
                                                         {
                                                             if (s != null)
-                                                                s = ls.str;
+                                                                s = ls.Text;
                                                         }
                                                     }
                                                     if (s != null)
@@ -1339,30 +1343,30 @@ namespace AasxServer
                 {
                     if (node.cradleToGateCombination != null)
                     {
-                        node.cradleToGateCombination.value = "0.0";
+                        node.cradleToGateCombination.Value = "0.0";
                         if (node.cradleToGateModule != null)
                         {
-                            node.cradleToGateCombination.value = node.cradleToGateModule.value;
+                            node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
                         }
-                        node.cradleToGateCombination.setTimeStamp(timeStamp);
+                        node.cradleToGateCombination.SetTimeStamp(timeStamp);
                     }
                     if (node.productionCombination != null)
                     {
-                        node.productionCombination.value = "0.0";
+                        node.productionCombination.Value = "0.0";
                         if (node.productionModule != null)
                         {
-                            node.productionCombination.value = node.productionModule.value;
+                            node.productionCombination.Value = node.productionModule.Value;
                         }
-                        node.productionCombination.setTimeStamp(timeStamp);
+                        node.productionCombination.SetTimeStamp(timeStamp);
                     }
                     if (node.distributionCombination != null)
                     {
-                        node.distributionCombination.value = "0.0";
+                        node.distributionCombination.Value = "0.0";
                         if (node.distributionModule != null)
                         {
-                            node.distributionCombination.value = node.distributionModule.value;
+                            node.distributionCombination.Value = node.distributionModule.Value;
                         }
-                        node.distributionCombination.setTimeStamp(timeStamp);
+                        node.distributionCombination.SetTimeStamp(timeStamp);
                     }
                 }
                 // move up, if all children iterated
@@ -1378,7 +1382,7 @@ namespace AasxServer
                         parent = stack[sp];
                         if (parent.cradleToGateCombination != null)
                         {
-                            AdminShell.Property p = node.cradleToGateModule;
+                            Property p = node.cradleToGateModule;
                             if (node.cradleToGateCombination != null)
                                 p = node.cradleToGateCombination;
                             if (p != null)
@@ -1387,18 +1391,18 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
+                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
                                     value1 = Math.Round(value1 + value2, 8);
-                                    parent.cradleToGateCombination.value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.cradleToGateCombination.setTimeStamp(timeStamp);
+                                    parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.cradleToGateCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch { }
                             }
                         }
                         if (parent.productionCombination != null)
                         {
-                            AdminShell.Property p = node.productionModule;
+                            Property p = node.productionModule;
                             if (node.productionCombination != null)
                                 p = node.productionCombination;
                             if (p != null)
@@ -1407,18 +1411,18 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.productionCombination.value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
+                                    value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
                                     value1 = Math.Round(value1 + value2, 8);
-                                    parent.productionCombination.value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.productionCombination.setTimeStamp(timeStamp);
+                                    parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.productionCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch { }
                             }
                         }
                         if (parent.distributionCombination != null)
                         {
-                            AdminShell.Property p = node.distributionModule;
+                            Property p = node.distributionModule;
                             if (node.distributionCombination != null)
                                 p = node.distributionCombination;
                             if (p != null)
@@ -1427,11 +1431,11 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.distributionCombination.value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
+                                    value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
                                     value1 = Math.Round(value1 + value2, 8);
-                                    parent.distributionCombination.value = value1.ToString(CultureInfo.InvariantCulture);
-                                    parent.distributionCombination.setTimeStamp(timeStamp);
+                                    parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.distributionCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch { }
                             }
@@ -1483,16 +1487,16 @@ namespace AasxServer
                         continue;
                     if (t.cycleCount != null)
                     {
-                        if (t.cycleCount.value == "")
-                            t.cycleCount.value = "0";
-                        t.cycleCount.value = (Convert.ToInt32(t.cycleCount.value) + 1).ToString();
-                        t.cycleCount.setTimeStamp(timeStamp);
+                        if (t.cycleCount.Value == "")
+                            t.cycleCount.Value = "0";
+                        t.cycleCount.Value = (Convert.ToInt32(t.cycleCount.Value) + 1).ToString();
+                        t.cycleCount.SetTimeStamp(timeStamp);
                     }
-                    t.nextExecution = timeStamp.AddMilliseconds(Convert.ToInt32(t.cycleTime.value));
+                    t.nextExecution = timeStamp.AddMilliseconds(Convert.ToInt32(t.cycleTime.Value));
                     if (t.nextCycle != null)
                     {
-                        t.nextCycle.value = t.nextExecution.ToString();
-                        t.nextCycle.setTimeStamp(timeStamp);
+                        t.nextCycle.Value = t.nextExecution.ToString();
+                        t.nextCycle.SetTimeStamp(timeStamp);
                     }
                     Program.signalNewData(0);
 

@@ -17,10 +17,12 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
+using AasCore.Aas3_0_RC02;
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
 using AdminShellNS;
+using Extenstions;
 using Jose;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -309,7 +311,7 @@ namespace AasxServer
 
             if (a.ProxyFile != null)
             {
-                if (!File.Exists(a.ProxyFile))
+                if (!System.IO.File.Exists(a.ProxyFile))
                 {
                     Console.Error.WriteLine($"Proxy file not found: {a.ProxyFile}");
                     return 1;
@@ -470,7 +472,7 @@ namespace AasxServer
                         }
                         // check if signed
                         string fileCert = "./user/" + name + ".cer";
-                        if (File.Exists(fileCert))
+                        if (System.IO.File.Exists(fileCert))
                         {
                             X509Certificate2 x509 = new X509Certificate2(fileCert);
                             envSymbols[envi] = "S";
@@ -626,7 +628,7 @@ namespace AasxServer
                     Console.CancelKeyPress += (sender, eArgs) =>
                     {
                         quitEvent.Set();
-                        eArgs.Cancel = true;
+                        //eArgs.Cancel = true;
                     };
                 }
                 catch
@@ -812,6 +814,7 @@ namespace AasxServer
             System.Environment.ExitCode = exitCode;
         }
 
+
         public static string ContentToString(this HttpContent httpContent)
         {
             var readAsStringAsync = httpContent.ReadAsStringAsync();
@@ -853,11 +856,13 @@ namespace AasxServer
         {
             [XmlElement(ElementName = "administration")]
             [JsonIgnore]
-            public AdminShell.Administration administration = null;
+            //public AdminShell.Administration administration = null;
+            public AdministrativeInformation administration = null;
 
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
-            public AdminShell.Description description = null;
+            //public AdminShell.Description description = null;
+            public LangStringSet description = null;
 
             [XmlElement(ElementName = "idShort")]
             [JsonIgnore]
@@ -865,10 +870,10 @@ namespace AasxServer
 
             [XmlElement(ElementName = "identification")]
             [JsonIgnore]
-            public AdminShell.Identifier identification = null;
+            public string identification = null;
 
             [XmlElement(ElementName = "semanticId")]
-            public AdminShell.SemanticId semanticId = null;
+            public Reference semanticId = null;
 
             [XmlElement(ElementName = "endpoints")]
             public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
@@ -879,21 +884,23 @@ namespace AasxServer
 
             [XmlElement(ElementName = "administration")]
             [JsonIgnore]
-            public AdminShell.Administration administration = null;
+            //public AdminShell.Administration administration = null;
+            public AdministrativeInformation administration = null;
 
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
-            public AdminShell.Description description = new AdminShell.Description();
+            //public AdminShell.Description description = new AdminShell.Description();
+            public LangStringSet description = new(new List<LangString>());
 
             [XmlElement(ElementName = "idShort")]
             public string idShort = "";
 
             [XmlElement(ElementName = "identification")]
             [JsonIgnore]
-            public AdminShell.Identifier identification = null;
+            public string identification = null;
 
             [XmlElement(ElementName = "assets")]
-            public List<AdminShell.AssetInformation> assets = new List<AdminShell.AssetInformation>();
+            public List<AssetInformation> assets = new List<AssetInformation>();
 
             [XmlElement(ElementName = "endpoints")]
             public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
@@ -905,17 +912,18 @@ namespace AasxServer
         /* AAS Detail Part 2 Descriptor Definitions END*/
 
         /* Creation of AAS Descriptor */
+        //TODO: jtikekar Remove for now
         public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
         {
             aasDescriptor aasD = new aasDescriptor();
             string endpointAddress = "http://" + hostPort;
 
-            aasD.idShort = adminShell.AasEnv.AdministrationShells[0].idShort;
-            aasD.identification = adminShell.AasEnv.AdministrationShells[0].id;
-            aasD.description = adminShell.AasEnv.AdministrationShells[0].description;
+            aasD.idShort = adminShell.AasEnv.AssetAdministrationShells[0].IdShort;
+            aasD.identification = adminShell.AasEnv.AssetAdministrationShells[0].Id;
+            aasD.description = adminShell.AasEnv.AssetAdministrationShells[0].Description;
 
             AASxEndpoint endp = new AASxEndpoint();
-            endp.address = endpointAddress + "/aas/" + adminShell.AasEnv.AdministrationShells[0].idShort;
+            endp.address = endpointAddress + "/aas/" + adminShell.AasEnv.AssetAdministrationShells[0].IdShort;
             aasD.endpoints.Add(endp);
 
             int submodelCount = adminShell.AasEnv.Submodels.Count;
@@ -923,26 +931,27 @@ namespace AasxServer
             {
                 SubmodelDescriptors sdc = new SubmodelDescriptors();
 
-                sdc.administration = adminShell.AasEnv.Submodels[i].administration;
-                sdc.description = adminShell.AasEnv.Submodels[i].description;
-                sdc.identification = adminShell.AasEnv.Submodels[i].id;
-                sdc.idShort = adminShell.AasEnv.Submodels[i].idShort;
-                sdc.semanticId = adminShell.AasEnv.Submodels[i].semanticId;
+                sdc.administration = adminShell.AasEnv.Submodels[i].Administration;
+                sdc.description = adminShell.AasEnv.Submodels[i].Description;
+                sdc.identification = adminShell.AasEnv.Submodels[i].Id;
+                sdc.idShort = adminShell.AasEnv.Submodels[i].IdShort;
+                sdc.semanticId = adminShell.AasEnv.Submodels[i].SemanticId;
 
                 AASxEndpoint endpSub = new AASxEndpoint();
-                endpSub.address = endpointAddress + "/aas/" + adminShell.AasEnv.AdministrationShells[0].idShort +
-                                   "/submodels/" + adminShell.AasEnv.Submodels[i].idShort;
+                endpSub.address = endpointAddress + "/aas/" + adminShell.AasEnv.AssetAdministrationShells[0].IdShort +
+                                   "/submodels/" + adminShell.AasEnv.Submodels[i].IdShort;
                 endpSub.type = "http";
                 sdc.endpoints.Add(endpSub);
 
                 aasD.submodelDescriptors.Add(sdc);
             }
 
-            int assetCount = adminShell.AasEnv.Assets.Count;
-            for (int i = 0; i < assetCount; i++)
-            {
-                aasD.assets.Add(adminShell.AasEnv.Assets[i]);
-            }
+            //Commented wrt new specifications, Environment does not contain AssetInformatiom
+            //int assetCount = adminShell.AasEnv.Assets.Count;
+            //for (int i = 0; i < assetCount; i++)
+            //{
+            //    aasD.assets.Add(adminShell.AasEnv.Assets[i]);
+            //}
             return aasD;
         }
 
@@ -1074,15 +1083,14 @@ namespace AasxServer
                             /* Create Detail part 2 Descriptor END */
 
 
-                            alp.idShort = Program.env[j].AasEnv.AdministrationShells[0].idShort;
-                            alp.identification = Program.env[j].AasEnv.AdministrationShells[0].id.ToString();
+                            alp.idShort = Program.env[j].AasEnv.AssetAdministrationShells[0].IdShort;
+                            alp.identification = Program.env[j].AasEnv.AssetAdministrationShells[0].Id;
                             alp.fileName = Program.envFileName[j];
                             alp.assetId = "";
-                            //var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AdministrationShells[0].assetRef);
-                            var asset = Program.env[j].AasEnv.AdministrationShells[0].assetInformation;
+                            //var asset = Program.env[j].AasEnv.FindAsset(Program.env[j].AasEnv.AssetAdministrationShells[0].assetRef);
+                            var asset = Program.env[j].AasEnv.AssetAdministrationShells[0].AssetInformation;
                             if (asset != null)
-                                alp.assetId = asset.globalAssetId.GetAsIdentifier().value;
-                            alp.humanEndPoint = blazorHostPort;
+                                alp.humanEndPoint = blazorHostPort;
                             alp.restEndPoint = hostPort;
 
                             adp.aasList.Add(alp);
@@ -1169,21 +1177,21 @@ namespace AasxServer
                 {
                     foreach (var sm in env[envi].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.idShort != null)
+                        if (sm != null && sm.IdShort != null)
                         {
                             bool toPublish = Program.submodelsToPublish.Contains(sm);
                             if (!toPublish)
                             {
-                                int count = sm.qualifiers.Count;
+                                int count = sm.Qualifiers.Count;
                                 if (count != 0)
                                 {
                                     int j = 0;
 
                                     while (j < count) // Scan qualifiers
                                     {
-                                        var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                                        var p = sm.Qualifiers[j] as Qualifier;
 
-                                        if (p.type == "PUBLISH")
+                                        if (p.Type == "PUBLISH")
                                         {
                                             toPublish = true;
                                         }
@@ -1202,7 +1210,7 @@ namespace AasxServer
                                 td.type = "submodel";
                                 td.publish.Add(json);
                                 tf.data.Add(td);
-                                Console.WriteLine("Publish Submodel " + sm.idShort);
+                                Console.WriteLine("Publish Submodel " + sm.IdShort);
                             }
                         }
                     }
@@ -1293,7 +1301,7 @@ namespace AasxServer
 
                                 dynamic res = new System.Dynamic.ExpandoObject();
 
-                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
+                                Byte[] binaryFile = System.IO.File.ReadAllBytes(Program.envFileName[aasIndex]);
                                 string binaryBase64 = Convert.ToBase64String(binaryFile);
 
                                 string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
@@ -1334,7 +1342,7 @@ namespace AasxServer
 
                                 dynamic res = new System.Dynamic.ExpandoObject();
 
-                                Byte[] binaryFile = File.ReadAllBytes(Program.envFileName[aasIndex]);
+                                Byte[] binaryFile = System.IO.File.ReadAllBytes(Program.envFileName[aasIndex]);
                                 string binaryBase64 = Convert.ToBase64String(binaryFile);
 
                                 if (binaryBase64.Length <= blockSize)
@@ -1370,15 +1378,15 @@ namespace AasxServer
                                 string[] split = td2.type.Split('.');
                                 foreach (var smc in AasxTimeSeries.TimeSeries.timeSeriesSubscribe)
                                 {
-                                    if (smc.idShort == split[0])
+                                    if (smc.IdShort == split[0])
                                     {
                                         foreach (var tsb in AasxTimeSeries.TimeSeries.timeSeriesBlockList)
                                         {
-                                            if (tsb.sampleStatus.value == "stop")
+                                            if (tsb.sampleStatus.Value == "stop")
                                             {
-                                                tsb.sampleStatus.value = "stopped";
+                                                tsb.sampleStatus.Value = "stopped";
                                             }
-                                            if (tsb.sampleStatus.value != "start")
+                                            if (tsb.sampleStatus.Value != "start")
                                                 continue;
 
                                             if (tsb.block == smc)
@@ -1389,31 +1397,31 @@ namespace AasxServer
                                                     {
                                                         JsonSerializer serializer = new JsonSerializer();
                                                         serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                                        var smcData = (AdminShell.SubmodelElementCollection)serializer.Deserialize(reader,
-                                                            typeof(AdminShell.SubmodelElementCollection));
-                                                        if (smcData != null && smc.value.Count < 100)
+                                                        var smcData = (SubmodelElementCollection)serializer.Deserialize(reader,
+                                                            typeof(SubmodelElementCollection));
+                                                        if (smcData != null && smc.Value.Count < 100)
                                                         {
                                                             if (tsb.data != null)
                                                             {
-                                                                int maxCollections = Convert.ToInt32(tsb.maxCollections.value);
-                                                                int actualCollections = tsb.data.value.Count;
+                                                                int maxCollections = Convert.ToInt32(tsb.maxCollections.Value);
+                                                                int actualCollections = tsb.data.Value.Count;
                                                                 if (actualCollections < maxCollections ||
-                                                                    (tsb.sampleMode.value == "continuous" && actualCollections == maxCollections))
+                                                                    (tsb.sampleMode.Value == "continuous" && actualCollections == maxCollections))
                                                                 {
-                                                                    tsb.data.Add(smcData);
+                                                                    tsb.data.Value.Add(smcData);
                                                                     actualCollections++;
                                                                 }
                                                                 if (actualCollections > maxCollections)
                                                                 {
-                                                                    tsb.data.value.RemoveAt(0);
+                                                                    tsb.data.Value.RemoveAt(0);
                                                                     actualCollections--;
                                                                 }
-                                                                tsb.actualCollections.value = actualCollections.ToString();
+                                                                tsb.actualCollections.Value = actualCollections.ToString();
                                                                 /*
                                                                 tsb.lowDataIndex =
-                                                                    Convert.ToInt32(tsb.data.value[0].submodelElement.idShort.Substring("data".Length));
+                                                                    Convert.ToInt32(tsb.data.Value[0].submodelElement.IdShort.Substring("data".Length));
                                                                 tsb.highDataIndex =
-                                                                    Convert.ToInt32(tsb.data.value[tsb.data.value.Count - 1].submodelElement.idShort.Substring("data".Length));
+                                                                    Convert.ToInt32(tsb.data.Value[tsb.data.Value.Count - 1].submodelElement.IdShort.Substring("data".Length));
                                                                 */
                                                                 signalNewData(1);
                                                             }
@@ -1430,14 +1438,14 @@ namespace AasxServer
                             {
                                 foreach (string sm in td2.publish)
                                 {
-                                    AdminShell.Submodel submodel = null;
+                                    Submodel submodel = null;
                                     try
                                     {
                                         using (TextReader reader = new StringReader(sm))
                                         {
                                             JsonSerializer serializer = new JsonSerializer();
                                             serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                            submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
+                                            submodel = (Submodel)serializer.Deserialize(reader, typeof(Submodel));
                                         }
                                     }
                                     catch (Exception)
@@ -1447,17 +1455,17 @@ namespace AasxServer
                                     }
 
                                     // need id for idempotent behaviour
-                                    if (submodel.id == null)
+                                    if (submodel.Id == null)
                                     {
                                         Console.WriteLine("Identification of SubModel is (null)!");
                                         return;
                                     }
 
-                                    AdminShell.AdministrationShell aas = null;
+                                    AssetAdministrationShell aas = null;
                                     envi = 0;
                                     while (env[envi] != null)
                                     {
-                                        aas = env[envi].AasEnv.FindAASwithSubmodel(submodel.id);
+                                        aas = env[envi].AasEnv.FindAasWithSubmodelId(submodel.Id);
                                         if (aas != null)
                                             break;
                                         envi++;
@@ -1467,28 +1475,28 @@ namespace AasxServer
                                     if (aas != null)
                                     {
                                         // datastructure update
-                                        if (env == null || env[envi].AasEnv == null || env[envi].AasEnv.Assets == null)
+                                        if (env == null || env[envi].AasEnv == null /*|| env[envi].AasEnv.Assets == null*/)
                                         {
                                             Console.WriteLine("Error accessing internal data structures.");
                                             return;
                                         }
 
-                                        var existingSm = env[envi].AasEnv.FindSubmodel(submodel.id);
+                                        var existingSm = env[envi].AasEnv.FindSubmodelById(submodel.Id);
                                         if (existingSm != null)
                                         {
                                             bool toSubscribe = Program.submodelsToSubscribe.Contains(existingSm);
                                             if (!toSubscribe)
                                             {
-                                                int eqcount = existingSm.qualifiers.Count;
+                                                int eqcount = existingSm.Qualifiers.Count;
                                                 if (eqcount != 0)
                                                 {
                                                     int j = 0;
 
                                                     while (j < eqcount) // Scan qualifiers
                                                     {
-                                                        var p = existingSm.qualifiers[j] as AdminShell.Qualifier;
+                                                        var p = existingSm.Qualifiers[j] as Qualifier;
 
-                                                        if (p.type == "SUBSCRIBE")
+                                                        if (p.Type == "SUBSCRIBE")
                                                         {
                                                             toSubscribe = true;
                                                             break;
@@ -1500,20 +1508,20 @@ namespace AasxServer
 
                                             if (toSubscribe)
                                             {
-                                                Console.WriteLine("Subscribe Submodel " + submodel.idShort);
+                                                Console.WriteLine("Subscribe Submodel " + submodel.IdShort);
 
-                                                int c2 = submodel.qualifiers.Count;
+                                                int c2 = submodel.Qualifiers.Count;
                                                 if (c2 != 0)
                                                 {
                                                     int k = 0;
 
                                                     while (k < c2) // Scan qualifiers
                                                     {
-                                                        var q = submodel.qualifiers[k] as AdminShell.Qualifier;
+                                                        var q = submodel.Qualifiers[k] as Qualifier;
 
-                                                        if (q.type == "PUBLISH")
+                                                        if (q.Type == "PUBLISH")
                                                         {
-                                                            q.type = "SUBSCRIBE";
+                                                            q.Type = "SUBSCRIBE";
                                                         }
 
                                                         k++;
@@ -1521,21 +1529,21 @@ namespace AasxServer
                                                 }
 
                                                 bool overwrite = true;
-                                                int escount = existingSm.submodelElements.Count;
-                                                int count2 = submodel.submodelElements.Count;
+                                                int escount = existingSm.SubmodelElements.Count;
+                                                int count2 = submodel.SubmodelElements.Count;
                                                 if (escount == count2)
                                                 {
                                                     int smi = 0;
                                                     while (smi < escount)
                                                     {
-                                                        var sme1 = submodel.submodelElements[smi].submodelElement;
-                                                        var sme2 = existingSm.submodelElements[smi].submodelElement;
+                                                        var sme1 = submodel.SubmodelElements[smi];
+                                                        var sme2 = existingSm.SubmodelElements[smi];
 
-                                                        if (sme1 is AdminShell.Property)
+                                                        if (sme1 is Property)
                                                         {
-                                                            if (sme2 is AdminShell.Property)
+                                                            if (sme2 is Property)
                                                             {
-                                                                (sme2 as AdminShell.Property).value = (sme1 as AdminShell.Property).value;
+                                                                (sme2 as Property).Value = (sme1 as Property).Value;
                                                             }
                                                             else
                                                             {
@@ -1555,11 +1563,14 @@ namespace AasxServer
 
                                                     // add SubmodelRef to AAS            
                                                     // access the AAS
-                                                    var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", submodel.id);
-                                                    var existsmr = aas.HasSubmodelRef(newsmr);
+                                                    var key = new Key(KeyTypes.Submodel, submodel.Id);
+                                                    var keyList = new List<Key>() { key };
+                                                    var newsmr = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, keyList);
+                                                    //var newsmr = SubmodelRef.CreateNew("Submodel", submodel.id);
+                                                    var existsmr = aas.HasSubmodelReference(newsmr);
                                                     if (!existsmr)
                                                     {
-                                                        aas.AddSubmodelRef(newsmr);
+                                                        aas.Submodels.Add(newsmr);
                                                     }
                                                 }
                                                 newConnectData = true;
@@ -1715,32 +1726,32 @@ namespace AasxServer
             // Search for submodel REST and scan qualifiers for GET and PUT commands
             foreach (var sm in env[0].AasEnv.Submodels)
             {
-                if (sm != null && sm.idShort != null && sm.idShort == "REST")
+                if (sm != null && sm.IdShort != null && sm.IdShort == "REST")
                 {
-                    int count = sm.qualifiers.Count;
+                    int count = sm.Qualifiers.Count;
                     if (count != 0)
                     {
                         int j = 0;
 
                         while (j < count) // Scan qualifiers
                         {
-                            var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                            var p = sm.Qualifiers[j] as Qualifier;
 
-                            if (p.type == "GETSUBMODEL")
+                            if (p.Type == "GETSUBMODEL")
                             {
-                                GETSUBMODEL = p.value;
+                                GETSUBMODEL = p.Value;
                             }
-                            if (p.type == "GETURL")
+                            if (p.Type == "GETURL")
                             {
-                                GETURL = p.value;
+                                GETURL = p.Value;
                             }
-                            if (p.type == "PUTSUBMODEL")
+                            if (p.Type == "PUTSUBMODEL")
                             {
-                                PUTSUBMODEL = p.value;
+                                PUTSUBMODEL = p.Value;
                             }
-                            if (p.type == "PUTURL")
+                            if (p.Type == "PUTURL")
                             {
-                                PUTURL = p.value;
+                                PUTURL = p.Value;
                             }
 
                             j++;
@@ -1764,14 +1775,14 @@ namespace AasxServer
                     Console.WriteLine("Can not connect to REST server {0}.", GETURL);
                 }
 
-                AdminShell.Submodel submodel = null;
+                Submodel submodel = null;
                 try
                 {
                     using (TextReader reader = new StringReader(sm))
                     {
                         JsonSerializer serializer = new JsonSerializer();
                         serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                        submodel = (AdminShell.Submodel)serializer.Deserialize(reader, typeof(AdminShell.Submodel));
+                        submodel = (Submodel)serializer.Deserialize(reader, typeof(Submodel));
                     }
                 }
                 catch (Exception)
@@ -1781,34 +1792,35 @@ namespace AasxServer
                 }
 
                 // need id for idempotent behaviour
-                if (submodel.id == null)
+                if (submodel.Id == null)
                 {
                     Console.WriteLine("Identification of SubModel {0} is (null).", GETSUBMODEL);
                     return;
                 }
 
-                var aas = env[0].AasEnv.FindAASwithSubmodel(submodel.id);
+                var aas = env[0].AasEnv.FindAasWithSubmodelId(submodel.Id);
 
                 // datastructure update
-                if (env == null || env[0].AasEnv == null || env[0].AasEnv.Assets == null)
+                if (env == null || env[0].AasEnv == null /*|| env[0].AasEnv.Assets == null*/)
                 {
                     Console.WriteLine("Error accessing internal data structures.");
                     return;
                 }
 
                 // add Submodel
-                var existingSm = env[0].AasEnv.FindSubmodel(submodel.id);
+                var existingSm = env[0].AasEnv.FindSubmodelById(submodel.Id);
                 if (existingSm != null)
                     env[0].AasEnv.Submodels.Remove(existingSm);
                 env[0].AasEnv.Submodels.Add(submodel);
 
                 // add SubmodelRef to AAS            
                 // access the AAS
-                var newsmr = AdminShell.SubmodelRef.CreateNew("Submodel", submodel.id);
-                var existsmr = aas.HasSubmodelRef(newsmr);
+                var keyList = new List<Key>() { new Key(KeyTypes.Submodel, submodel.Id) };
+                var newsmr = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, keyList);
+                var existsmr = aas.HasSubmodelReference(newsmr);
                 if (!existsmr)
                 {
-                    aas.AddSubmodelRef(newsmr);
+                    aas.AddSubmodelReference(newsmr);
                 }
             }
 
@@ -1819,7 +1831,7 @@ namespace AasxServer
                 {
                     foreach (var sm in env[0].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.idShort != null && sm.idShort == PUTSUBMODEL)
+                        if (sm != null && sm.IdShort != null && sm.IdShort == PUTSUBMODEL)
                         {
                             var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
 
@@ -1915,9 +1927,9 @@ namespace AasxServer
                 {
                     foreach (var sm in env[i].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.idShort != null)
+                        if (sm != null && sm.IdShort != null)
                         {
-                            int count = sm.qualifiers.Count;
+                            int count = sm.Qualifiers.Count;
                             if (count != 0)
                             {
                                 int stopTimeout = Timeout.Infinite;
@@ -1933,26 +1945,26 @@ namespace AasxServer
 
                                 while (j < count) // URL, Username, Password, Namespace, Path
                                 {
-                                    var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                                    var p = sm.Qualifiers[j] as Qualifier;
 
-                                    switch (p.type)
+                                    switch (p.Type)
                                     {
                                         case "OPCURL": // URL
-                                            URL = p.value;
+                                            URL = p.Value;
                                             break;
                                         case "OPCUsername": // Username
-                                            Username = p.value;
+                                            Username = p.Value;
                                             break;
                                         case "OPCPassword": // Password
-                                            Password = p.value;
+                                            Password = p.Value;
                                             break;
                                         case "OPCNamespace": // Namespace
                                             // TODO: if not int, currently throws nondescriptive error
-                                            if (int.TryParse(p.value, out int tmpI))
+                                            if (int.TryParse(p.Value, out int tmpI))
                                                 Namespace = tmpI;
                                             break;
                                         case "OPCPath": // Path
-                                            Path = p.value;
+                                            Path = p.Value;
                                             break;
                                         case "OPCEnvVar": // Only if enviroment variable ist set
                                             // VARIABLE=VALUE
@@ -1996,7 +2008,7 @@ namespace AasxServer
                                         {
                                             // make OPC UA client
                                             client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
                                             client.ConsoleSampleClient().Wait();
                                             // add it to the dictionary under this submodels idShort
                                             OPCClients.Add(URL, client);
@@ -2019,29 +2031,29 @@ namespace AasxServer
                                                 // stop processing OPC read because we couldnt connect
                                                 // but return true as this shouldn't stop the main loop
                                                 Console.WriteLine(ae.Message);
-                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.idShort);
+                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.IdShort);
                                                 return true;
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.idShort);
+                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
                                     }
                                 }
                                 Console.WriteLine("==================================================");
-                                Console.WriteLine("Read values for {0} from {1} ...", sm.idShort, URL);
+                                Console.WriteLine("Read values for {0} from {1} ...", sm.IdShort, URL);
                                 Console.WriteLine("==================================================");
 
                                 // over all SMEs
-                                count = sm.submodelElements.Count;
+                                count = sm.SubmodelElements.Count;
                                 for (j = 0; j < count; j++)
                                 {
-                                    var sme = sm.submodelElements[j].submodelElement;
+                                    var sme = sm.SubmodelElements[j];
                                     // some preparations for multiple AAS below
                                     int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
 
-                                    string AASSubmodel = env[i].AasEnv.AdministrationShells[0].idShort + "." + sm.idShort; // for multiple AAS, use something like env.AasEnv.AdministrationShells[i].idShort;
+                                    string AASSubmodel = env[i].AasEnv.AssetAdministrationShells[0].IdShort + "." + sm.IdShort; // for multiple AAS, use something like env.AasEnv.AssetAdministrationShells[i].IdShort;
                                     string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
                                     string nodePath = Path; // generally starts with Submodel idShort
                                     WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
@@ -2076,59 +2088,59 @@ namespace AasxServer
                 {
                     foreach (var sm in env[i].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.idShort != null)
+                        if (sm != null && sm.IdShort != null)
                         {
-                            int count = sm.qualifiers != null ? sm.qualifiers.Count : 0;
+                            int count = sm.Qualifiers != null ? sm.Qualifiers.Count : 0;
                             if (count != 0)
                             {
-                                var q = sm.qualifiers[0] as AdminShell.Qualifier;
-                                if (q.type == "SCRIPT")
+                                var q = sm.Qualifiers[0] as Qualifier;
+                                if (q.Type == "SCRIPT")
                                 {
                                     // Triple
                                     // Reference to property with Number
                                     // Reference to submodel with numbers/strings
                                     // Reference to property to store found text
-                                    count = sm.submodelElements.Count;
+                                    count = sm.SubmodelElements.Count;
                                     int smi = 0;
                                     while (smi < count)
                                     {
-                                        var sme1 = sm.submodelElements[smi++].submodelElement;
-                                        if (sme1.qualifiers.Count == 0)
+                                        var sme1 = sm.SubmodelElements[smi++];
+                                        if (sme1.Qualifiers.Count == 0)
                                         {
                                             continue;
                                         }
-                                        var qq = sme1.qualifiers[0] as AdminShell.Qualifier;
+                                        var qq = sme1.Qualifiers[0] as Qualifier;
 
-                                        if (qq.type == "Add")
+                                        if (qq.Type == "Add")
                                         {
-                                            int v = Convert.ToInt32((sme1 as AdminShell.Property).value);
-                                            v += Convert.ToInt32(qq.value);
-                                            (sme1 as AdminShell.Property).value = v.ToString();
+                                            int v = Convert.ToInt32((sme1 as Property).Value);
+                                            v += Convert.ToInt32(qq.Value);
+                                            (sme1 as Property).Value = v.ToString();
                                             continue;
                                         }
 
-                                        if (qq.type == "GetValue")
+                                        if (qq.Type == "GetValue")
                                         {
                                             /*
-                                            if (!(sme1 is AdminShell.ReferenceElement))
+                                            if (!(sme1 is ReferenceElement))
                                             {
                                                 continue;
                                             }
 
-                                            string url = qq.value;
+                                            string url = qq.Value;
                                             string username = "";
                                             string password = "";
 
                                             if (sme1.qualifiers.Count == 3)
                                             {
-                                                qq = sme1.qualifiers[1] as AdminShell.Qualifier;
+                                                qq = sme1.qualifiers[1] as Qualifier;
                                                 if (qq.type != "Username")
                                                     continue;
-                                                username = qq.value;
-                                                qq = sme1.qualifiers[2] as AdminShell.Qualifier;
+                                                username = qq.Value;
+                                                qq = sme1.qualifiers[2] as Qualifier;
                                                 if (qq.type != "Password")
                                                     continue;
-                                                password = qq.value;
+                                                password = qq.Value;
                                             }
 
                                             var handler = new HttpClientHandler();
@@ -2144,18 +2156,18 @@ namespace AasxServer
 
                                             string response = await client.GetStringAsync(url);
 
-                                            var r12 = sme1 as AdminShell.ReferenceElement;
-                                            var ref12 = env[i].AasEnv.FindReferableByReference(r12.value);
-                                            if (ref12 is AdminShell.Property)
+                                            var r12 = sme1 as ReferenceElement;
+                                            var ref12 = env[i].AasEnv.FindReferableByReference(r12.Value);
+                                            if (ref12 is Property)
                                             {
-                                                var p1 = ref12 as AdminShell.Property;
-                                                p1.value = response;
+                                                var p1 = ref12 as Property;
+                                                p1.Value = response;
                                             }
                                             continue;
                                             */
                                         }
 
-                                        if (qq.type == "GetJSON")
+                                        if (qq.Type == "GetJSON")
                                         {
                                             if (init)
                                                 return;
@@ -2163,25 +2175,25 @@ namespace AasxServer
                                             if (Program.isLoading)
                                                 return;
 
-                                            if (!(sme1 is AdminShell.ReferenceElement))
+                                            if (!(sme1 is ReferenceElement))
                                             {
                                                 continue;
                                             }
 
-                                            string url = qq.value;
+                                            string url = qq.Value;
                                             string username = "";
                                             string password = "";
 
-                                            if (sme1.qualifiers.Count == 3)
+                                            if (sme1.Qualifiers.Count == 3)
                                             {
-                                                qq = sme1.qualifiers[1] as AdminShell.Qualifier;
-                                                if (qq.type != "Username")
+                                                qq = sme1.Qualifiers[1] as Qualifier;
+                                                if (qq.Type != "Username")
                                                     continue;
-                                                username = qq.value;
-                                                qq = sme1.qualifiers[2] as AdminShell.Qualifier;
-                                                if (qq.type != "Password")
+                                                username = qq.Value;
+                                                qq = sme1.Qualifiers[2] as Qualifier;
+                                                if (qq.Type != "Password")
                                                     continue;
-                                                password = qq.value;
+                                                password = qq.Value;
                                             }
 
                                             var handler = new HttpClientHandler();
@@ -2201,12 +2213,12 @@ namespace AasxServer
 
                                             if (response != "")
                                             {
-                                                var r12 = sme1 as AdminShell.ReferenceElement;
+                                                var r12 = sme1 as ReferenceElement;
                                                 var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
-                                                if (ref12 is AdminShell.SubmodelElementCollection)
+                                                if (ref12 is SubmodelElementCollection)
                                                 {
-                                                    var c1 = ref12 as AdminShell.SubmodelElementCollection;
-                                                    // if (c1.value.Count == 0)
+                                                    var c1 = ref12 as SubmodelElementCollection;
+                                                    // if (c1.Value.Count == 0)
                                                     {
                                                         // dynamic model = JObject.Parse(response);
                                                         JObject parsed = JObject.Parse(response);
@@ -2217,53 +2229,53 @@ namespace AasxServer
                                             continue;
                                         }
 
-                                        if (qq.type != "SearchNumber" || smi >= count)
+                                        if (qq.Type != "SearchNumber" || smi >= count)
                                         {
                                             continue;
                                         }
-                                        var sme2 = sm.submodelElements[smi++].submodelElement;
-                                        if (sme2.qualifiers.Count == 0)
+                                        var sme2 = sm.SubmodelElements[smi++];
+                                        if (sme2.Qualifiers.Count == 0)
                                         {
                                             continue;
                                         }
-                                        qq = sme2.qualifiers[0] as AdminShell.Qualifier;
-                                        if (qq.type != "SearchList" || smi >= count)
+                                        qq = sme2.Qualifiers[0] as Qualifier;
+                                        if (qq.Type != "SearchList" || smi >= count)
                                         {
                                             continue;
                                         }
-                                        var sme3 = sm.submodelElements[smi++].submodelElement;
-                                        if (sme3.qualifiers.Count == 0)
+                                        var sme3 = sm.SubmodelElements[smi++];
+                                        if (sme3.Qualifiers.Count == 0)
                                         {
                                             continue;
                                         }
-                                        qq = sme3.qualifiers[0] as AdminShell.Qualifier;
-                                        if (qq.type != "SearchResult")
+                                        qq = sme3.Qualifiers[0] as Qualifier;
+                                        if (qq.Type != "SearchResult")
                                         {
                                             break;
                                         }
-                                        if (sme1 is AdminShell.ReferenceElement &&
-                                            sme2 is AdminShell.ReferenceElement &&
-                                            sme3 is AdminShell.ReferenceElement)
+                                        if (sme1 is ReferenceElement &&
+                                            sme2 is ReferenceElement &&
+                                            sme3 is ReferenceElement)
                                         {
-                                            var r1 = sme1 as AdminShell.ReferenceElement;
-                                            var r2 = sme2 as AdminShell.ReferenceElement;
-                                            var r3 = sme3 as AdminShell.ReferenceElement;
+                                            var r1 = sme1 as ReferenceElement;
+                                            var r2 = sme2 as ReferenceElement;
+                                            var r3 = sme3 as ReferenceElement;
                                             var ref1 = env[i].AasEnv.FindReferableByReference(r1.GetModelReference());
                                             var ref2 = env[i].AasEnv.FindReferableByReference(r2.GetModelReference());
                                             var ref3 = env[i].AasEnv.FindReferableByReference(r3.GetModelReference());
-                                            if (ref1 is AdminShell.Property && ref2 is AdminShell.Submodel && ref3 is AdminShell.Property)
+                                            if (ref1 is Property && ref2 is Submodel && ref3 is Property)
                                             {
-                                                var p1 = ref1 as AdminShell.Property;
+                                                var p1 = ref1 as Property;
                                                 // Simulate changes
-                                                var sm2 = ref2 as AdminShell.Submodel;
-                                                var p3 = ref3 as AdminShell.Property;
-                                                int count2 = sm2.submodelElements.Count;
+                                                var sm2 = ref2 as Submodel;
+                                                var p3 = ref3 as Property;
+                                                int count2 = sm2.SubmodelElements.Count;
                                                 for (int j = 0; j < count2; j++)
                                                 {
-                                                    var sme = sm2.submodelElements[j].submodelElement;
-                                                    if (sme.idShort == p1.value)
+                                                    var sme = sm2.SubmodelElements[j];
+                                                    if (sme.IdShort == p1.Value)
                                                     {
-                                                        p3.value = (sme as AdminShell.Property).value;
+                                                        p3.Value = (sme as Property).Value;
                                                     }
                                                 }
                                             }
@@ -2280,8 +2292,8 @@ namespace AasxServer
             return;
         }
 
-        public static bool parseJson(AdminShell.SubmodelElementCollection c, JObject o, List<string> filter,
-            AdminShell.Property minDiffAbsolute = null, AdminShell.Property minDiffPercent = null)
+        public static bool parseJson(SubmodelElementCollection c, JObject o, List<string> filter,
+            Property minDiffAbsolute = null, Property minDiffPercent = null)
         {
             int newMode = 0;
             DateTime timeStamp = DateTime.UtcNow;
@@ -2290,9 +2302,9 @@ namespace AasxServer
             int iMinDiffAbsolute = 1;
             int iMinDiffPercent = 0;
             if (minDiffAbsolute != null)
-                iMinDiffAbsolute = Convert.ToInt32(minDiffAbsolute.value);
+                iMinDiffAbsolute = Convert.ToInt32(minDiffAbsolute.Value);
             if (minDiffPercent != null)
-                iMinDiffPercent = Convert.ToInt32(minDiffPercent.value);
+                iMinDiffPercent = Convert.ToInt32(minDiffPercent.Value);
 
             foreach (JProperty jp1 in (JToken)o)
             {
@@ -2302,44 +2314,45 @@ namespace AasxServer
                         continue;
                 }
 
-                AdminShell.SubmodelElementCollection c2;
+                SubmodelElementCollection c2;
                 switch (jp1.Value.Type)
                 {
                     case JTokenType.Array:
-                        c2 = c.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(jp1.Name);
+                        c2 = c.FindFirstIdShortAs<SubmodelElementCollection>(jp1.Name);
                         if (c2 == null)
                         {
-                            c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
-                            c.Add(c2);
+                            //c2 = SubmodelElementCollection.CreateNew(jp1.Name);
+                            c2 = new SubmodelElementCollection(idShort: jp1.Name);
+                            c.Value.Add(c2);
                             c2.TimeStampCreate = timeStamp;
-                            c2.setTimeStamp(timeStamp);
+                            c2.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
                         int count = 1;
                         foreach (JObject el in jp1.Value)
                         {
                             string n = jp1.Name + "_array_" + count++;
-                            AdminShell.SubmodelElementCollection c3 =
-                                c2.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(n);
+                            SubmodelElementCollection c3 =
+                                c2.FindFirstIdShortAs<SubmodelElementCollection>(n);
                             if (c3 == null)
                             {
-                                c3 = AdminShell.SubmodelElementCollection.CreateNew(n);
-                                c2.Add(c3);
+                                c3 = new SubmodelElementCollection(idShort: n);
+                                c2.Value.Add(c3);
                                 c3.TimeStampCreate = timeStamp;
-                                c3.setTimeStamp(timeStamp);
+                                c3.SetTimeStamp(timeStamp);
                                 newMode = 1;
                             }
                             ok |= parseJson(c3, el, filter);
                         }
                         break;
                     case JTokenType.Object:
-                        c2 = c.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(jp1.Name);
+                        c2 = c.FindFirstIdShortAs<SubmodelElementCollection>(jp1.Name);
                         if (c2 == null)
                         {
-                            c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
-                            c.Add(c2);
+                            c2 = new SubmodelElementCollection(idShort: jp1.Name);
+                            c.Value.Add(c2);
                             c2.TimeStampCreate = timeStamp;
-                            c2.setTimeStamp(timeStamp);
+                            c2.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
                         foreach (JObject el in jp1.Value)
@@ -2348,30 +2361,30 @@ namespace AasxServer
                         }
                         break;
                     default:
-                        AdminShell.Property p = c.value.FindFirstIdShortAs<AdminShell.Property>(jp1.Name);
+                        Property p = c.FindFirstIdShortAs<Property>(jp1.Name);
                         if (p == null)
                         {
-                            p = AdminShell.Property.CreateNew(jp1.Name);
-                            c.Add(p);
+                            p = new Property(DataTypeDefXsd.String, idShort: jp1.Name);
+                            c.Value.Add(p);
                             p.TimeStampCreate = timeStamp;
-                            p.setTimeStamp(timeStamp);
+                            p.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
                         try
                         {
-                            if (p.value == "")
-                                p.value = "0";
+                            if (p.Value == "")
+                                p.Value = "0";
                             string value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
                             if (!value.Contains("."))
                             {
                                 int v = Convert.ToInt32(value);
-                                int lastv = Convert.ToInt32(p.value);
+                                int lastv = Convert.ToInt32(p.Value);
                                 int delta = Math.Abs(v - lastv);
                                 if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
                                 {
-                                    p.value = value;
-                                    p.setTimeStamp(timeStamp);
+                                    p.Value = value;
+                                    p.SetTimeStamp(timeStamp);
                                     ok = true;
                                 }
                             }
@@ -2379,17 +2392,17 @@ namespace AasxServer
                             {
                                 /*
                                 double v = Convert.ToDouble(value, CultureInfo.InvariantCulture);
-                                double lastv = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
+                                double lastv = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
                                 double delta = Math.Abs(v - lastv);
                                 if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
                                 {
-                                    p.value = value;
+                                    p.Value = value;
                                     p.setTimeStamp(timeStamp);
                                     ok = true;
                                 }
                                 */
-                                p.value = value;
-                                p.setTimeStamp(timeStamp);
+                                p.Value = value;
+                                p.SetTimeStamp(timeStamp);
                                 ok = true;
                             }
                         }
@@ -2404,34 +2417,34 @@ namespace AasxServer
             return ok;
         }
 
-        private static void WalkSubmodelElement(AdminShell.SubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
+        private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
         {
-            if (sme is AdminShell.Property)
+            if (sme is Property)
             {
-                var p = sme as AdminShell.Property;
-                string clientNodeName = nodePath + p.idShort;
-                string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.idShort);
+                var p = sme as Property;
+                string clientNodeName = nodePath + p.IdShort;
+                string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.IdShort);
                 NodeId clientNode = new NodeId(clientNodeName, (ushort)clientNamespace);
                 UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
             }
-            else if (sme is AdminShell.SubmodelElementCollection)
+            else if (sme is SubmodelElementCollection)
             {
-                var collection = sme as AdminShell.SubmodelElementCollection;
-                for (int i = 0; i < collection.value.Count; i++)
+                var collection = sme as SubmodelElementCollection;
+                for (int i = 0; i < collection.Value.Count; i++)
                 {
-                    string newNodeIdBase = nodePath + "." + collection.idShort;
-                    WalkSubmodelElement(collection.value[i].submodelElement, newNodeIdBase, serverNodePrefix, client, clientNamespace);
+                    string newNodeIdBase = nodePath + "." + collection.IdShort;
+                    WalkSubmodelElement(collection.Value[i], newNodeIdBase, serverNodePrefix, client, clientNamespace);
                 }
             }
         }
 
-        private static void UpdatePropertyFromOPCClient(AdminShell.Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
+        private static void UpdatePropertyFromOPCClient(Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
         {
             string value = "";
 
-            bool write = (p.HasQualifierOfType("OPCWRITE") != null);
+            bool write = (p.FindQualifierOfType("OPCWRITE") != null);
             if (write)
-                value = p.value;
+                value = p.Value;
 
             try
             {
@@ -2464,7 +2477,8 @@ namespace AasxServer
             // update in AAS env
             if (!write)
             {
-                p.Set(p.valueType, value);
+                p.Value = value;
+                //p.Set(p.ValueType, value);
                 signalNewData(0);
 
                 // update in OPC

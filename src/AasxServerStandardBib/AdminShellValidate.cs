@@ -7,20 +7,15 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using AasCore.Aas3_0_RC02;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Schema;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
 
 namespace AdminShellNS
 {
@@ -89,12 +84,12 @@ namespace AdminShellNS
     public class AasValidationRecord
     {
         public AasValidationSeverity Severity = AasValidationSeverity.Hint;
-        public AdminShell.Referable Source = null;
+        public IReferable Source = null;
         public string Message = "";
 
         public Action Fix = null;
 
-        public AasValidationRecord(AasValidationSeverity Severity, AdminShell.Referable Source,
+        public AasValidationRecord(AasValidationSeverity Severity, IReferable Source,
             string Message, Action Fix = null)
         {
             this.Severity = Severity;
@@ -208,7 +203,7 @@ namespace AdminShellNS
             {
                 var parts = new List<string> { $"Failed to compile the schema files:" };
                 parts.AddRange(newRecs.Select<AasValidationRecord, string>((r) => r.Message));
-                throw new InvalidOperationException(string.Join(Environment.NewLine, parts));
+                throw new InvalidOperationException(string.Join(System.Environment.NewLine, parts));
             }
 
             return new XmlValidator(xmlSchemaSet);

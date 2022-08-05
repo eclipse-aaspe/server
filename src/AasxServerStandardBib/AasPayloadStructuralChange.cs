@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using AasCore.Aas3_0_RC02;
 using AasxIntegrationBase;
 using AdminShellNS;
 using Newtonsoft.Json;
@@ -55,7 +56,8 @@ namespace AdminShellEvents
         /// Observable of the defined Event. 
         /// Is null / empty, if identical to Observable.
         /// </summary>
-        public AdminShell.KeyList Path { get; set; }
+        //public AdminShell.KeyList Path { get; set; }
+        public List<Key> Path { get; set; }
 
         /// <summary>
         /// JSON-Serializatin of the Submodel, SMC, SME which was denoted by Observabale and Path.
@@ -76,7 +78,7 @@ namespace AdminShellEvents
             ulong count,
             DateTime timeStamp,
             ChangeReason reason,
-            AdminShell.KeyList path = null,
+            List<Key> path = null,
             string data = null)
         {
             Count = count;
@@ -95,7 +97,7 @@ namespace AdminShellEvents
             var res = "PayloadStructuralChangeItem: {Observable}";
             if (Path != null)
                 foreach (var k in Path)
-                    res += "/" + k.value;
+                    res += "/" + k.Value;
             res += " -> " + Reason.ToString();
             return res;
         }
@@ -106,7 +108,7 @@ namespace AdminShellEvents
             var left = "  MsgUpdateValueItem: {Observable}";
             if (Path != null)
                 foreach (var k in Path)
-                    left += "/" + k.value;
+                    left += "/" + k.Value;
 
             var right = "";
             right += " -> " + Reason.ToString();
@@ -118,14 +120,14 @@ namespace AdminShellEvents
 #endif
 
 #if NOT
-        public AdminShell.Referable GetDataAsReferable()
+        public IReferable GetDataAsReferable()
         {
             // access
             if (Data == null)
                 return null;
 
             // try deserialize
-            return AdminShellSerializationHelper.DeserializeFromJSON<AdminShell.Referable>(Data);
+            return AdminShellSerializationHelper.DeserializeFromJSON<IReferable>(Data);
         }
 #endif
     }
@@ -170,7 +172,7 @@ namespace AdminShellEvents
             var res = base.ToString();
             if (Changes != null)
                 foreach (var chg in Changes)
-                    res += Environment.NewLine + chg.ToString();
+                    res += System.Environment.NewLine + chg.ToString();
             return res;
         }
 

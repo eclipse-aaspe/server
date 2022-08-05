@@ -21,10 +21,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
+using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace AdminShellNS
+//namespace AdminShellNS
+namespace AdminShell_V30
 {
     /// <summary>
     /// Partial main class of AdminShell: SubmodelElements

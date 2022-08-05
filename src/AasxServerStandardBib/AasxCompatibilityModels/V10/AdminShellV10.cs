@@ -4145,8 +4145,8 @@ namespace AasxCompatibilityModels
                         {
                             // create, as not existing
                             var frn = "aasenv-with-no-id";
-                            if (this.aasenv.AdministrationShells.Count > 0)
-                                frn = this.aasenv.AdministrationShells[0].GetFriendlyName() ?? frn;
+                            if (this.AasEnv.AdministrationShells.Count > 0)
+                                frn = this.AasEnv.AdministrationShells[0].GetFriendlyName() ?? frn;
                             var aas_spec_fn = "/aasx/#/#.aas";
                             if (prefFmt == PreferredFormat.Json)
                                 aas_spec_fn += ".json";

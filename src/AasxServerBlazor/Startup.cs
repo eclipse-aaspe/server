@@ -4,13 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AasxServerBlazor.Data;
-using IO.Swagger.Controllers;
-using IO.Swagger.Filters;
-using IO.Swagger.Services;
-//TODO: JT Uncomment
 //using IO.Swagger.Controllers;
 //using IO.Swagger.Filters;
-//using IO.Swagger.Helpers;
 //using IO.Swagger.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -55,7 +50,8 @@ namespace AasxServerBlazor
 
             services.AddControllers();
 
-            services.AddTransient<IAASXFileServerInterfaceService, AASXFileServerInterfaceService>();
+            //TODO: jtikekar uncomment
+            //services.AddTransient<IAASXFileServerInterfaceService, AASXFileServerInterfaceService>();
 
             // Add framework services.
             services
@@ -126,15 +122,19 @@ namespace AasxServerBlazor
                     //    }
                     //});
 
-                    c.EnableAnnotations();
+                    //TODO: jtikekar Uncomment
+                    //c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
-                    string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryApiController).Assembly.GetName().Name;
-                    c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
+
+                    //TODO: jtikekar Uncomment
+                    //string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryApiController).Assembly.GetName().Name;
+                    //c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
 
                     // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
                     // Use [ValidateModelState] on Actions to actually validate it in C# as well!
 
-                    c.OperationFilter<GeneratePathParamsValidationFilter>();
+                    //TODO: jtikekar Uncomment
+                    //c.OperationFilter<GeneratePathParamsValidationFilter>();
                 });
         }
 
@@ -164,6 +164,11 @@ namespace AasxServerBlazor
                 //TODO: Either use the SwaggerGen generated Swagger contract (generated from C# classes)
                 c.SwaggerEndpoint("Final-Draft/swagger.json", "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository");
                 c.RoutePrefix = "swagger";
+
+                c.ConfigObject.AdditionalItems["syntaxHighlight"] = new Dictionary<string, object>
+                {
+                    ["activated"] = Configuration.GetSection("SyntaxHighlight")
+                };
 
                 //TODO: Or alternatively use the original Swagger contract that's included in the static files
                 // c.SwaggerEndpoint("swagger-original.json", "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository Original");

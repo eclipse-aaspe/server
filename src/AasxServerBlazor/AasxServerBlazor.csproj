@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -20,8 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
-    <ProjectReference Include="..\IO.Swagger.Lib\IO.Swagger.Lib.csproj" />
-    <ProjectReference Include="..\IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj" />
+    <!--<ProjectReference Include="..\IO.Swagger.Lib\IO.Swagger.Lib.csproj" />
+    <ProjectReference Include="..\IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj" />-->
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>

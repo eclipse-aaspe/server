@@ -5,8 +5,10 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using AasCore.Aas3_0_RC02;
 using AasxServer;
 using AdminShellNS;
+using Extenstions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QRCoder;
@@ -21,7 +23,7 @@ namespace AasxServerStandardBib
 
         public class ListOfTimeSeriesData : List<TimeSeriesData>
         {
-            public TimeSeriesData FindDataSetBySource(AdminShell.SubmodelElementCollection smcts)
+            public TimeSeriesData FindDataSetBySource(SubmodelElementCollection smcts)
             {
                 if (smcts == null)
                     return null;
@@ -71,7 +73,7 @@ namespace AasxServerStandardBib
             //        var pie = wpfPlot.Plot.AddPie(cumdi.Value.ToArray());
             //        pie.SliceLabels = cumdi.Label.ToArray();
             //        pie.ShowLabels = args.labels;
-            //        pie.ShowValues = args.values;
+            //        pie.ShowValues = args.Values;
             //        pie.ShowPercentages = args.percent;
             //        pie.SliceFont.Size = 9.0f;
             //        return pie;
@@ -81,7 +83,7 @@ namespace AasxServerStandardBib
             //    {
             //        var bar = wpfPlot.Plot.AddBar(cumdi.Value.ToArray());
             //        wpfPlot.Plot.XTicks(cumdi.Position.ToArray(), cumdi.Label.ToArray());
-            //        bar.ShowValuesAboveBars = args.values;
+            //        bar.ShowValuesAboveBars = args.Values;
             //        return bar;
             //    }
 
@@ -653,7 +655,7 @@ namespace AasxServerStandardBib
 
         public class TimeSeriesData
         {
-            public AdminShell.SubmodelElementCollection SourceTimeSeries;
+            public SubmodelElementCollection SourceTimeSeries;
 
             public PlotArguments Args;
 
@@ -694,8 +696,8 @@ namespace AasxServerStandardBib
         {
             public string DataSetId = "";
             public TimeSeriesTimeAxis TimeAxis;
-            public AdminShell.Property DataPoint;
-            public AdminShell.ConceptDescription DataPointCD;
+            public Property DataPoint;
+            public ConceptDescription DataPointCD;
 
             public PlotArguments Args = null;
 
@@ -1268,9 +1270,9 @@ namespace AasxServerStandardBib
 
         public static void TimeSeriesAddSegmentData(
         ZveiTimeSeriesDataV10 pcts,
-        AdminShell.Key.MatchMode mm,
+        //AdminShell.Key.MatchMode mm,
         TimeSeriesData tsd,
-        AdminShell.SubmodelElementCollection smcseg)
+        SubmodelElementCollection smcseg)
         {
             // access
             if (pcts == null || smcseg == null)
@@ -1279,38 +1281,39 @@ namespace AasxServerStandardBib
             // challenge is to select SMes, which are NOT from a known semantic id!
             var tsvAllowed = new[]
             {
-            pcts.CD_RecordId.GetSingleId(),
-            pcts.CD_UtcTime.GetSingleId(),
-            pcts.CD_TaiTime.GetSingleId(),
-            pcts.CD_Time.GetSingleId(),
-            pcts.CD_TimeDuration.GetSingleId(),
-            pcts.CD_ValueArray.GetSingleId(),
-            pcts.CD_ExternalDataFile.GetSingleId()
+            //pcts.CD_RecordId.Id,
+            pcts.CD_RecordId.Id,
+            pcts.CD_UtcTime.Id,
+            pcts.CD_TaiTime.Id,
+            pcts.CD_Time.Id,
+            pcts.CD_TimeDuration.Id,
+            pcts.CD_ValueArray.Id,
+            pcts.CD_ExternalDataFile.Id
         };
 
             var tsrAllowed = new[]
             {
-            pcts.CD_RecordId.GetSingleId(),
-            pcts.CD_UtcTime.GetSingleId(),
-            pcts.CD_TaiTime.GetSingleId(),
-            pcts.CD_Time.GetSingleId(),
-            pcts.CD_TimeDuration.GetSingleId(),
-            pcts.CD_ValueArray.GetSingleId()
+            pcts.CD_RecordId.Id,
+            pcts.CD_UtcTime.Id,
+            pcts.CD_TaiTime.Id,
+            pcts.CD_Time.Id,
+            pcts.CD_TimeDuration.Id,
+            pcts.CD_ValueArray.Id
         };
 
             // find variables?
-            foreach (var smcvar in smcseg.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
-                pcts.CD_TimeSeriesVariable.GetSingleId(), mm))
+            foreach (var smcvar in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(
+                pcts.CD_TimeSeriesVariable.Id))
             {
                 // makes only sense with record id
-                var recid = "" + smcvar.value.FindFirstSemanticIdAs<AdminShell.Property>(
-                    pcts.CD_RecordId.GetSingleId(), mm)?.value?.Trim();
+                var recid = "" + smcvar.Value.FindFirstSemanticIdAs<Property>(
+                    pcts.CD_RecordId.Id)?.Value?.Trim();
                 if (recid.Length < 1)
                     continue;
 
                 // add need a value array as well!
-                var valarr = "" + smcvar.value.FindFirstSemanticIdAs<AdminShell.Blob>(
-                    pcts.CD_ValueArray.GetSingleId(), mm)?.value?.Trim();
+                //var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>(pcts.CD_ValueArray.Id)?.Value?.Trim();
+                var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>(pcts.CD_ValueArray.Id).Value.ToString().Trim();
                 if (valarr.Length < 1)
                     continue;
 
@@ -1323,13 +1326,12 @@ namespace AasxServerStandardBib
                     tsd.DataSet.Add(ds);
 
                     // at this very moment, check if this is a time series
-                    var timeSpec = DetectTimeSpecifier(pcts, mm, smcvar);
+                    var timeSpec = DetectTimeSpecifier(pcts, smcvar);
                     if (timeSpec != null)
                         ds.TimeAxis = timeSpec.Item1;
 
                     // find a DataPoint description?
-                    var pdp = smcvar.value.FindFirstAnySemanticId<AdminShell.Property>(tsvAllowed, mm,
-                        invertAllowed: true);
+                    var pdp = smcvar.Value.FindFirstAnySemanticId<Property>(tsvAllowed, invertAllowed: true);
                     if (pdp != null && ds.DataPoint == null)
                     {
                         ds.DataPoint = pdp;
@@ -1337,7 +1339,7 @@ namespace AasxServerStandardBib
                     }
 
                     // plot arguments for record?
-                    ds.Args = PlotArguments.Parse(smcvar.HasQualifierOfType("TimeSeries.Args")?.value);
+                    ds.Args = PlotArguments.Parse(smcvar.FindQualifierOfType("TimeSeries.Args")?.Value);
                 }
 
                 // now try add the value array
@@ -1345,12 +1347,11 @@ namespace AasxServerStandardBib
             }
 
             // find records?
-            foreach (var smcrec in smcseg.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(
-                pcts.CD_TimeSeriesRecord.GetSingleId(), mm))
+            foreach (var smcrec in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(pcts.CD_TimeSeriesRecord.Id))
             {
                 // makes only sense with a numerical record id
-                var recid = "" + smcrec.value.FindFirstSemanticIdAs<AdminShell.Property>(
-                    pcts.CD_RecordId.GetSingleId(), mm)?.value?.Trim();
+                var recid = "" + smcrec.Value.FindFirstSemanticIdAs<Property>(
+                    pcts.CD_RecordId.Id)?.Value?.Trim();
                 if (recid.Length < 1)
                     continue;
                 if (!int.TryParse(recid, out var dataIndex))
@@ -1362,16 +1363,15 @@ namespace AasxServerStandardBib
 
                 // but, in this case, the dataset id's and data comes from individual
                 // data points
-                foreach (var pdp in smcrec.value.FindAllSemanticId<AdminShell.Property>(tsrAllowed, mm,
-                        invertAllowed: true))
+                foreach (var pdp in smcrec.Value.FindAllSemanticId<Property>(tsrAllowed, invertedAllowed: true))
                 {
                     // the dataset id is?
-                    var dsid = "" + pdp.idShort;
+                    var dsid = "" + pdp.IdShort;
                     if (!(dsid != null && dsid.Trim() != ""))
                         continue;
 
                     // query avilable information on the time
-                    var timeSpec = DetectTimeSpecifier(pcts, mm, smcrec);
+                    var timeSpec = DetectTimeSpecifier(pcts, smcrec);
                     if (timeSpec == null)
                         continue;
 
@@ -1404,11 +1404,11 @@ namespace AasxServerStandardBib
                         }
 
                         // plot arguments for datapoint?
-                        ds.Args = PlotArguments.Parse(pdp.HasQualifierOfType("TimeSeries.Args")?.value);
+                        ds.Args = PlotArguments.Parse(pdp.FindQualifierOfType("TimeSeries.Args")?.Value);
                     }
 
                     // now access the value of the data point as float value
-                    if (!double.TryParse(pdp.value, NumberStyles.Float,
+                    if (!double.TryParse(pdp.Value, NumberStyles.Float,
                             CultureInfo.InvariantCulture, out var dataValue))
                         continue;
 
@@ -1416,7 +1416,7 @@ namespace AasxServerStandardBib
                     if (ds.AssignedTimeDS == null)
                         continue;
 
-                    var tm = SpecifiedTimeToDouble(timeSpec.Item1, timeSpec.Item2.value);
+                    var tm = SpecifiedTimeToDouble(timeSpec.Item1, timeSpec.Item2.Value);
                     if (!tm.HasValue)
                         continue;
 
@@ -1454,10 +1454,10 @@ namespace AasxServerStandardBib
         {
             public static ZveiTimeSeriesDataV10 Static = new ZveiTimeSeriesDataV10();
 
-            public AdminShell.Submodel
+            public Submodel
                 SM_TimeSeriesData;
 
-            public AdminShell.ConceptDescription
+            public ConceptDescription
                 CD_TimeSeries,
                 CD_Name,
                 CD_Description,
@@ -1489,33 +1489,33 @@ namespace AasxServerStandardBib
             }
         }
 
-        protected static Tuple<TimeSeriesTimeAxis, AdminShell.Property>
+        protected static Tuple<TimeSeriesTimeAxis, Property>
         DetectTimeSpecifier(
             ZveiTimeSeriesDataV10 pcts,
-            AdminShell.Key.MatchMode mm,
-            AdminShell.SubmodelElementCollection smc)
+            //AdminShell.Key.MatchMode mm,
+            SubmodelElementCollection smc)
         {
             // access
-            if (smc?.value == null || pcts == null)
+            if (smc?.Value == null || pcts == null)
                 return null;
 
             // detect
-            AdminShell.Property prop = null;
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_UtcTime.GetSingleId(), mm);
+            Property prop = null;
+            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_UtcTime.Id);
             if (prop != null)
-                return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Utc, prop);
+                return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Utc, prop);
 
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_TaiTime.GetSingleId(), mm);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_TaiTime.Id);
             if (prop != null)
-                return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Tai, prop);
+                return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Tai, prop);
 
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_Time.GetSingleId(), mm);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_Time.Id);
             if (prop != null)
-                return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Plain, prop);
+                return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Plain, prop);
 
-            prop = smc.value.FindFirstSemanticIdAs<AdminShell.Property>(pcts.CD_TimeDuration.GetSingleId(), mm);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_TimeDuration.Id);
             if (prop != null)
-                return new Tuple<TimeSeriesTimeAxis, AdminShell.Property>(TimeSeriesTimeAxis.Plain, prop);
+                return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Plain, prop);
 
             // no
             return null;
@@ -1546,7 +1546,7 @@ namespace AasxServerStandardBib
 
             protected Dictionary<string, LibraryEntry> theLibrary = new Dictionary<string, LibraryEntry>();
 
-            protected List<AdminShell.Referable> theReflectedReferables = new List<AdminShell.Referable>();
+            protected List<IReferable> theReflectedReferables = new List<IReferable>();
 
             public string DomainInfo = "";
 
@@ -1618,12 +1618,12 @@ namespace AasxServerStandardBib
                 return theLibrary[name];
             }
 
-            public T RetrieveReferable<T>(string name) where T : AdminShell.Referable
+            public T RetrieveReferable<T>(string name) where T : IReferable
             {
                 // entry
                 var entry = this.RetrieveEntry(name);
                 if (entry == null || entry.contents == null)
-                    return null;
+                    return default;
 
                 // try de-serialize
                 try
@@ -1634,32 +1634,35 @@ namespace AasxServerStandardBib
                 catch (Exception ex)
                 {
                     AdminShellNS.LogInternally.That.SilentlyIgnoredError(ex);
-                    return null;
+                    //return null;
+                    return default;
                 }
             }
 
-            public static AdminShell.ConceptDescription CreateSparseConceptDescription(
+            public static ConceptDescription CreateSparseConceptDescription(
                 string lang,
                 string idType,
                 string idShort,
                 string id,
                 string definitionHereString,
-                AdminShell.ModelReference isCaseOf = null)
+                Reference isCaseOf = null)
             {
                 // access
                 if (idShort == null || idType == null || id == null)
                     return null;
 
                 // create CD
-                var cd = AdminShell.ConceptDescription.CreateNew(idShort, idType, id);
-                var dsiec = cd.CreateDataSpecWithContentIec61360();
-                dsiec.preferredName = new AdminShell.LangStringSetIEC61360(lang, "" + idShort);
-                dsiec.definition = new AdminShell.LangStringSetIEC61360(lang,
-                    "" + AdminShellUtil.CleanHereStringWithNewlines(nl: " ", here: definitionHereString));
+                //var cd = ConceptDescription.CreateNew(idShort, idType, id);
+                var cd = new ConceptDescription(id, idShort: idShort);
+                //TODO: jtikekar Temporarily commented
+                //var dsiec = cd.CreateDataSpecWithContentIec61360();
+                //dsiec.preferredName = new AdminShell.LangStringSetIEC61360(lang, "" + idShort);
+                //dsiec.definition = new AdminShell.LangStringSetIEC61360(lang,
+                //    "" + AdminShellUtil.CleanHereStringWithNewlines(nl: " ", here: definitionHereString));
 
                 // options
                 if (isCaseOf != null)
-                    cd.IsCaseOf = new List<AdminShell.ModelReference>(new[] { isCaseOf });
+                    cd.IsCaseOf = new List<Reference>(new[] { isCaseOf });
 
                 // ok
                 return cd;
@@ -1674,7 +1677,7 @@ namespace AasxServerStandardBib
             {
             }
 
-            public virtual AdminShell.Referable[] GetAllReferables()
+            public virtual IReferable[] GetAllReferables()
             {
                 return this.theReflectedReferables?.ToArray();
             }
@@ -1687,7 +1690,7 @@ namespace AasxServerStandardBib
                     return;
 
                 // remember found Referables
-                this.theReflectedReferables = new List<AdminShell.Referable>();
+                this.theReflectedReferables = new List<IReferable>();
 
                 // reflection
                 foreach (var fi in typeToReflect.GetFields())
@@ -1697,8 +1700,8 @@ namespace AasxServerStandardBib
 
                     // test
                     var ok = false;
-                    var isSM = fi.FieldType == typeof(AdminShell.Submodel);
-                    var isCD = fi.FieldType == typeof(AdminShell.ConceptDescription);
+                    var isSM = fi.FieldType == typeof(Submodel);
+                    var isCD = fi.FieldType == typeof(ConceptDescription);
 
                     if (useAttributes && fi.GetCustomAttribute(typeof(RetrieveReferableForField)) != null)
                         ok = true;
@@ -1715,13 +1718,13 @@ namespace AasxServerStandardBib
                     // access library
                     if (isSM)
                     {
-                        var sm = this.RetrieveReferable<AdminShell.Submodel>(libName);
+                        var sm = this.RetrieveReferable<Submodel>(libName);
                         fi.SetValue(this, sm);
                         this.theReflectedReferables.Add(sm);
                     }
                     if (isCD)
                     {
-                        var cd = this.RetrieveReferable<AdminShell.ConceptDescription>(libName);
+                        var cd = this.RetrieveReferable<ConceptDescription>(libName);
                         fi.SetValue(this, cd);
                         this.theReflectedReferables.Add(cd);
                     }
@@ -1743,8 +1746,8 @@ namespace AasxServerStandardBib
 
                     // test
                     var ok = false;
-                    var isSM = fi.FieldType == typeof(AdminShell.Submodel);
-                    var isCD = fi.FieldType == typeof(AdminShell.ConceptDescription);
+                    var isSM = fi.FieldType == typeof(Submodel);
+                    var isCD = fi.FieldType == typeof(ConceptDescription);
 
                     if (useAttributes && fi.GetCustomAttribute(typeof(RetrieveReferableForField)) != null)
                         ok = true;
@@ -1759,7 +1762,7 @@ namespace AasxServerStandardBib
                         continue;
 
                     // add
-                    var rf = fi.GetValue(this) as AdminShell.Referable;
+                    var rf = fi.GetValue(this) as IReferable;
                     if (rf != null)
                         this.theReflectedReferables.Add(rf);
                 }
@@ -1853,8 +1856,8 @@ namespace AasxServerStandardBib
             }
 
             public static string EvalDisplayText(
-                    string minmalText, AdminShell.SubmodelElement sme,
-                    AdminShell.ConceptDescription cd = null,
+                    string minmalText, ISubmodelElement sme,
+                    ConceptDescription cd = null,
                     bool addMinimalTxt = false,
                     string defaultLang = null,
                     bool useIdShort = true)
@@ -1863,22 +1866,24 @@ namespace AasxServerStandardBib
                 if (sme != null)
                 {
                     // best option: description of the SME itself
-                    string better = sme.description?.GetDefaultStr(defaultLang);
+                    string better = sme.Description?.GetDefaultString(defaultLang);
 
                     // if still none, simply use idShort
                     // SME specific non-multi-lang found better than CD multi-lang?!
                     if (!HasContent(better) && useIdShort)
-                        better = sme.idShort;
+                        better = sme.IdShort;
 
                     // no? then look for CD information
                     if (cd != null)
                     {
+                        //TODO: jtikekar Temporarily commented
+                        //if (!HasContent(better))
+                        //    better = cd.GetDefaultPreferredName(defaultLang);
                         if (!HasContent(better))
-                            better = cd.GetDefaultPreferredName(defaultLang);
-                        if (!HasContent(better))
-                            better = cd.idShort;
-                        if (HasContent(better) && true == HasContent(cd.IEC61360Content?.unit))
-                            better += $" [{cd.IEC61360Content?.unit}]";
+                            better = cd.IdShort;
+                        //TODO: jtikekar Temporarily commented
+                        //if (HasContent(better) && true == HasContent(cd.IEC61360Content?.unit))
+                        //    better += $" [{cd.IEC61360Content?.unit}]";
                     }
 
                     if (HasContent(better))

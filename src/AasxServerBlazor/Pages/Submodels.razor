@@ -1,8 +1,8 @@
 ﻿@page "/submodels"
 
+@using AasCore.Aas3_0_RC02
 @using AasxServerBlazor.Data
 @using AdminShellNS;
-@using static AdminShellNS.AdminShell;
 @inject AASService SubmodelService
 
 <h1>Liste Submodels</h1>
@@ -24,10 +24,10 @@ else
         <tbody>
             @foreach (var sm in SubmodelService.GetSubmodels())
             {
-                if (sm != null && sm.idShort != null)
+                if (sm != null && sm.IdShort != null)
                 {
                     <tr>
-                        <td>@sm.idShort</td>
+                        <td>@sm.IdShort</td>
                     </tr>
                 }
             }
@@ -37,7 +37,7 @@ else
 }
 
 @code {
-    List<AdminShell.Submodel> submodels;
+    List<Submodel> submodels;
 
     protected override void OnInitialized()
     {

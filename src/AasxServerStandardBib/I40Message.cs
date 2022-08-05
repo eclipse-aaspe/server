@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -63,10 +64,10 @@ namespace AasxServer
     public class I40Message_Interaction
     {
         public I40TransmitFrame frame;
-        public List<AdminShellNS.AdminShell.Submodel> interactionElements;
+        public List<Submodel> interactionElements;
         public I40Message_Interaction()
         {
-            interactionElements = new List<AdminShellNS.AdminShell.Submodel> { };
+            interactionElements = new List<Submodel> { };
         }
 
     }

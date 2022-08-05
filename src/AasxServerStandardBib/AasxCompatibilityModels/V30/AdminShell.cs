@@ -7,6 +7,7 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using AdminShellNS;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -19,7 +20,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
-namespace AdminShellNS
+//namespace AdminShellNS
+namespace AdminShell_V30
 {
     /// <summary>
     /// This empty class derives always from the current version of the Administration Shell class hierarchy.

@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using AasCore.Aas3_0_RC02;
 using AasxIntegrationBase;
 using AdminShellNS;
 using Newtonsoft.Json;
@@ -34,7 +35,7 @@ namespace AdminShellEvents
         /// Path of the element to be updated. Contains one or more Keys, relative to the Observable of
         /// the defined Event.
         /// </summary>
-        public AdminShell.KeyList Path { get; set; }
+        public List<Key> Path { get; set; }
 
         /// <summary>
         /// Serialized updated value of the updated element.
@@ -44,16 +45,16 @@ namespace AdminShellEvents
         /// <summary>
         /// ValueId of the update element.
         /// </summary>
-        public AdminShell.Reference ValueId { get; set; }
+        public Reference ValueId { get; set; }
 
         //
         // Constructor
         //
 
         public AasPayloadUpdateValueItem(
-            AdminShell.KeyList path = null,
+            List<Key> path = null,
             string value = null,
-            AdminShell.Reference valueId = null)
+            Reference valueId = null)
         {
             Path = path;
             Value = value;
@@ -69,7 +70,7 @@ namespace AdminShellEvents
             var res = "PayloadUpdateValueItem: {Observable}";
             if (Path != null)
                 foreach (var k in Path)
-                    res += "/" + k.value;
+                    res += "/" + k.Value;
             if (Value != null)
                 res += " = " + Value;
             if (ValueId != null)
@@ -83,7 +84,7 @@ namespace AdminShellEvents
             var left = "  MsgUpdateValueItem: {Observable}";
             if (Path != null)
                 foreach (var k in Path)
-                    left += "/" + k.value;
+                    left += "/" + k.Value;
 
             var right = "";
             if (Value != null)
@@ -144,7 +145,7 @@ namespace AdminShellEvents
             var res = base.ToString();
             if (Values != null)
                 foreach (var val in Values)
-                    res += Environment.NewLine + val.ToString();
+                    res += System.Environment.NewLine + val.ToString();
             return res;
         }
 
