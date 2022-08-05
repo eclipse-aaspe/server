@@ -22,12 +22,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
+using AdminShellNS;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 
-namespace AdminShellNS
+//namespace AdminShellNS
+namespace AdminShell_V30
 {
     /// <summary>
     /// Partial main class of AdminShell: SubmodelElements
@@ -947,6 +949,8 @@ namespace AdminShellNS
                     if (smw.submodelElement != null && smw.submodelElement is T)
                         if (smw.submodelElement.idShort.Trim().ToLower() == idShort.Trim().ToLower())
                             yield return smw.submodelElement as T;
+
+                yield return null;
             }
 
             public SubmodelElementWrapper FindFirstIdShort(string idShort)
@@ -2703,7 +2707,8 @@ namespace AdminShellNS
             [XmlIgnore]
             [JsonIgnore]
             [SkipForHash] // do NOT count children!
-            private SubmodelElementWrapperCollection _value = null;
+            //private SubmodelElementWrapperCollection _value = null;
+            private SubmodelElementWrapperCollection _value = new SubmodelElementWrapperCollection();
 
             [JsonIgnore]
             public SubmodelElementWrapperCollection value

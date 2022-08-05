@@ -46,7 +46,9 @@ namespace IO.Swagger.Services
                         Directory.CreateDirectory(archivePath);
                     }
                     var fileName = Path.Combine(archivePath, Path.GetFileName(_envFileNames[packageIndex]));
-                    System.IO.File.Move(_envFileNames[packageIndex], fileName);
+                    System.IO.File.Copy(_envFileNames[packageIndex], fileName, true);
+                    System.IO.File.Delete(_envFileNames[packageIndex]);
+                    //System.IO.File.Move(_envFileNames[packageIndex], fileName);
                 }
                 catch (Exception ex)
                 {
@@ -85,7 +87,7 @@ namespace IO.Swagger.Services
                 {
                     copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
                     System.IO.File.Copy(requestedFileName, copyFileName, true);
-                    AasxServer.Program.env[packageIndex].SaveAs(copyFileName);
+                    AasxServer.Program.env[packageIndex].SaveAs(requestedFileName);
                 }
                 catch (Exception ex)
                 {

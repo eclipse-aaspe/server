@@ -236,9 +236,9 @@ namespace AdminShellNS
 
             // try to get element name of an AAS entity
             string elName = null;
-            if (obj is AdminShell.Referable)
+            if (obj is IReferable)
             {
-                elName = (obj as AdminShell.Referable).GetElementName();
+                elName = (obj as IReferable).GetElementName();
                 businessObject = obj;
             }
 

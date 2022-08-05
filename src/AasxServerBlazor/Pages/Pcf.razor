@@ -1,9 +1,9 @@
 ﻿@page "/pcf";
 
+@using AasCore.Aas3_0_RC02
 @using Data
 @inject AASService SubmodelService
 @using AasxServer;
-@using static AdminShellNS.AdminShellV30;
 @using System.Drawing;
 @using System.Globalization;
 @implements IDisposable
@@ -17,7 +17,7 @@
         float total = 0.0f;
         try
         {
-            total = (float)Convert.ToDouble(node.cradleToGateCombination.value, CultureInfo.InvariantCulture);
+            total = (float)Convert.ToDouble(node.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
         }
         catch { }
 
@@ -43,7 +43,7 @@
                         {
                             if (node.cradleToGateModule != null)
                             {
-                                value = node.cradleToGateModule.value;
+                                value = node.cradleToGateModule.Value;
                                 view = true;
                             }
                         }
@@ -53,7 +53,7 @@
                             {
                                 if (node.cradleToGateCombination != null)
                                 {
-                                    value = node.cradleToGateCombination.value;
+                                    value = node.cradleToGateCombination.Value;
                                     view = true;
                                 }
                             }
@@ -61,7 +61,7 @@
                             {
                                 if (node.cradleToGateModule != null)
                                 {
-                                    value = node.cradleToGateModule.value;
+                                    value = node.cradleToGateModule.Value;
                                     view = true;
                                 }
                             }
@@ -143,12 +143,12 @@
         if (f == null || envIndex == -1)
             return null;
 
-        if (f.value != "")
+        if (f.Value != "")
         {
-            string[] split = f.value.Split(new Char[] { '/' });
+            string[] split = f.Value.Split(new Char[] { '/' });
             if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
             {
-                split = f.value.Split(new Char[] { '.' });
+                split = f.Value.Split(new Char[] { '.' });
                 switch (split.Last().ToLower())
                 {
                     case "jpg":
@@ -157,7 +157,7 @@
                         System.IO.Stream s = null;
                         try
                         {
-                            s = Program.env[envIndex].GetLocalStreamFromPackage(f.value);
+                            s = Program.env[envIndex].GetLocalStreamFromPackage(f.Value);
                         }
                         catch { }
                         if (s != null)

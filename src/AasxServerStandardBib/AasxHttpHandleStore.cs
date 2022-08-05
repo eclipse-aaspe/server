@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
 using Newtonsoft.Json;
 
@@ -39,9 +40,9 @@ namespace AasxRestServerLibrary
     {
         private static int counter = 1;
 
-        public AdminShell.Identifier identification = null;
+        public string identification = null;
 
-        public AasxHttpHandleIdentification(AdminShell.Identifier src, string keyPreset = null)
+        public AasxHttpHandleIdentification(string src, string keyPreset = null)
         {
             if (keyPreset == null)
                 this.Key = $"@ID{counter++:00000000}";
@@ -49,7 +50,8 @@ namespace AasxRestServerLibrary
                 this.Key = keyPreset;
             this.ExpiresInternal = DateTime.UtcNow.AddMinutes(60);
             this.Expires = this.ExpiresInternal.ToString("R");
-            this.identification = new AdminShell.Identifier(src);
+            //this.identification = new IIdentifiable(src);
+            this.identification = src;
         }
     }
 

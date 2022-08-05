@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -15,7 +16,7 @@ namespace AdminShellNS
         /// <summary>
         /// This converter is used for reading JSON files; it claims to be responsible for "SubmodelElements" (the base class)
         /// and decides, which sub-class of the base class shall be populated. 
-        /// The decision, shich special sub-class to create is done in a factory AdminShell.SubmodelElementWrapper.CreateAdequateType(),
+        /// The decision, shich special sub-class to create is done in a factory SubmodelElementWrapper.CreateAdequateType(),
         /// in order to have all sub-class specific decisions in one place (SubmodelElementWrapper)
         /// Remark: There is a NuGet package JsonSubTypes, which could have done the job, except the fact of having
         /// "modelType" being a class property with a contained property "name".
@@ -37,7 +38,7 @@ namespace AdminShellNS
 
             public override bool CanConvert(Type objectType)
             {
-                if (typeof(AdminShell.SubmodelElement).IsAssignableFrom(objectType))
+                if (typeof(ISubmodelElement).IsAssignableFrom(objectType))
                     return true;
                 return false;
             }
@@ -56,7 +57,8 @@ namespace AdminShellNS
                 JObject jObject = JObject.Load(reader);
 
                 // Create target object based on JObject
-                object target = new AdminShell.SubmodelElement();
+                //object target = new SubmodelElement();
+                ISubmodelElement target = null;
 
                 if (jObject.ContainsKey(UpperClassProperty))
                 {
@@ -71,7 +73,7 @@ namespace AdminShellNS
                             var cpval = cprop.Value.ToObject<string>();
                             if (cpval == null)
                                 continue;
-                            var o = AdminShell.SubmodelElementWrapper.CreateAdequateType(cpval);
+                            var o = CreateSubmodelElementIstance(cpval);
                             if (o != null)
                                 target = o;
                         }
@@ -84,10 +86,22 @@ namespace AdminShellNS
                 return target;
             }
 
+
+            private static ISubmodelElement CreateSubmodelElementIstance(string typeName)
+            {
+                //TODO: jtikekar Need to test
+                Type type = Type.GetType(typeName);
+                if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
+                    return null;
+                var sme = Activator.CreateInstance(type) as ISubmodelElement;
+                return sme;
+            }
+
             public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
             {
                 throw new NotImplementedException();
             }
+
         }
 
         /// <summary>
@@ -124,19 +138,21 @@ namespace AdminShellNS
             {
                 JsonProperty property = base.CreateProperty(member, memberSerialization);
 
-                if (!BlobHasValue && property.DeclaringType == typeof(AdminShell.Blob) && property.PropertyName == "value")
+                if (!BlobHasValue && property.DeclaringType == typeof(Blob) && property.PropertyName == "value")
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!SubmodelHasElements && property.DeclaringType == typeof(AdminShell.Submodel) && property.PropertyName == "submodelElements")
+                if (!SubmodelHasElements && property.DeclaringType == typeof(Submodel) && property.PropertyName == "submodelElements")
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!SmcHasValue && property.DeclaringType == typeof(AdminShell.SubmodelElementCollection) && property.PropertyName == "value")
+                if (!SmcHasValue && property.DeclaringType == typeof(SubmodelElementCollection) && property.PropertyName == "value")
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!OpHasVariables && property.DeclaringType == typeof(AdminShell.Operation) && (property.PropertyName == "in" || property.PropertyName == "out"))
+                if (!OpHasVariables && property.DeclaringType == typeof(Operation) && (property.PropertyName == "in" || property.PropertyName == "out"))
                     property.ShouldSerialize = instance => { return false; };
 
-                if (!AasHasViews && property.DeclaringType == typeof(AdminShell.AdministrationShell) && property.PropertyName == "views")
+
+                //TODO (jtikekar, 2022-07-08): AssetAdministrationShell.View not supported anymore
+                if (!AasHasViews && property.DeclaringType == typeof(AssetAdministrationShell) && property.PropertyName == "views")
                     property.ShouldSerialize = instance => { return false; };
 
                 return property;

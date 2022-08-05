@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AasxServer;
 using AdminShellNS;
+using Extenstions;
 using static AasxServerBlazor.Pages.TreePage;
-using static AdminShellNS.AdminShellV30;
 
 namespace AasxServerBlazor.Data
 {
@@ -50,7 +51,7 @@ namespace AasxServerBlazor.Data
             if (item.Tag is SubmodelElementCollection)
             {
                 var smec = item.Tag as SubmodelElementCollection;
-                if (item.Childs.Count() != smec.value.Count)
+                if (item.Childs.Count() != smec.Value.Count)
                 {
                     createSMECItems(item, smec, item.envIndex);
                 }
@@ -69,46 +70,46 @@ namespace AasxServerBlazor.Data
                     root.envIndex = i;
                     if (Program.env[i] != null)
                     {
-                        root.Text = Program.env[i].AasEnv.AdministrationShells[0].idShort;
-                        root.Tag = Program.env[i].AasEnv.AdministrationShells[0];
+                        root.Text = Program.env[i].AasEnv.AssetAdministrationShells[0].IdShort;
+                        root.Tag = Program.env[i].AasEnv.AssetAdministrationShells[0];
                         if (Program.envSymbols[i] != "L")
                         {
                             List<Item> childs = new List<Item>();
                             var env = AasxServer.Program.env[i];
-                            var aas = env.AasEnv.AdministrationShells[0];
-                            if (env != null && aas.submodelRefs != null && aas.submodelRefs.Count > 0)
-                                foreach (var smr in aas.submodelRefs)
+                            var aas = env.AasEnv.AssetAdministrationShells[0];
+                            if (env != null && aas.Submodels != null && aas.Submodels.Count > 0)
+                                foreach (var smr in aas.Submodels)
                                 {
                                     var sm = env.AasEnv.FindSubmodel(smr);
-                                    if (sm != null && sm.idShort != null)
+                                    if (sm != null && sm.IdShort != null)
                                     {
                                         var smItem = new Item();
                                         smItem.envIndex = i;
-                                        smItem.Text = sm.idShort;
+                                        smItem.Text = sm.IdShort;
                                         smItem.Tag = sm;
                                         childs.Add(smItem);
                                         List<Item> smChilds = new List<Item>();
-                                        if (sm.submodelElements != null)
-                                            foreach (var sme in sm.submodelElements)
+                                        if (sm.SubmodelElements != null)
+                                            foreach (var sme in sm.SubmodelElements)
                                             {
                                                 var smeItem = new Item();
                                                 smeItem.envIndex = i;
-                                                smeItem.Text = sme.submodelElement.idShort;
-                                                smeItem.Tag = sme.submodelElement;
+                                                smeItem.Text = sme.IdShort;
+                                                smeItem.Tag = sme;
                                                 smChilds.Add(smeItem);
-                                                if (sme.submodelElement is SubmodelElementCollection)
+                                                if (sme is SubmodelElementCollection)
                                                 {
-                                                    var smec = sme.submodelElement as SubmodelElementCollection;
+                                                    var smec = sme as SubmodelElementCollection;
                                                     createSMECItems(smeItem, smec, i);
                                                 }
-                                                if (sme.submodelElement is Operation)
+                                                if (sme is Operation)
                                                 {
-                                                    var o = sme.submodelElement as Operation;
+                                                    var o = sme as Operation;
                                                     createOperationItems(smeItem, o, i);
                                                 }
-                                                if (sme.submodelElement is Entity)
+                                                if (sme is Entity)
                                                 {
-                                                    var e = sme.submodelElement as Entity;
+                                                    var e = sme as Entity;
                                                     createEntityItems(smeItem, e, i);
                                                 }
                                             }
@@ -136,28 +137,28 @@ namespace AasxServerBlazor.Data
         void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)
         {
             List<Item> smChilds = new List<Item>();
-            foreach (var sme in smec.value)
+            foreach (var sme in smec.Value)
             {
-                if (sme != null && sme.submodelElement != null)
+                if (sme != null && sme != null)
                 {
                     var smeItem = new Item();
                     smeItem.envIndex = i;
-                    smeItem.Text = sme.submodelElement.idShort;
-                    smeItem.Tag = sme.submodelElement;
+                    smeItem.Text = sme.IdShort;
+                    smeItem.Tag = sme;
                     smChilds.Add(smeItem);
-                    if (sme.submodelElement is SubmodelElementCollection)
+                    if (sme is SubmodelElementCollection)
                     {
-                        var smecNext = sme.submodelElement as SubmodelElementCollection;
+                        var smecNext = sme as SubmodelElementCollection;
                         createSMECItems(smeItem, smecNext, i);
                     }
-                    if (sme.submodelElement is Operation)
+                    if (sme is Operation)
                     {
-                        var o = sme.submodelElement as Operation;
+                        var o = sme as Operation;
                         createOperationItems(smeItem, o, i);
                     }
-                    if (sme.submodelElement is Entity)
+                    if (sme is Entity)
                     {
-                        var e = sme.submodelElement as Entity;
+                        var e = sme as Entity;
                         createEntityItems(smeItem, e, i);
                     }
                 }
@@ -170,32 +171,41 @@ namespace AasxServerBlazor.Data
         void createOperationItems(Item smeRootItem, Operation op, int i)
         {
             List<Item> smChilds = new List<Item>();
-            foreach (var v in op.inputVariable)
+            if (op.InputVariables != null)
             {
-                var smeItem = new Item();
-                smeItem.envIndex = i;
-                smeItem.Text = v.value.submodelElement.idShort;
-                smeItem.Type = "In";
-                smeItem.Tag = v.value.submodelElement;
-                smChilds.Add(smeItem);
+                foreach (var v in op.InputVariables)
+                {
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = v.Value.IdShort;
+                    smeItem.Type = "In";
+                    smeItem.Tag = v.Value;
+                    smChilds.Add(smeItem);
+                }
             }
-            foreach (var v in op.outputVariable)
+            if (op.OutputVariables != null)
             {
-                var smeItem = new Item();
-                smeItem.envIndex = i;
-                smeItem.Text = v.value.submodelElement.idShort;
-                smeItem.Type = "Out";
-                smeItem.Tag = v.value.submodelElement;
-                smChilds.Add(smeItem);
+                foreach (var v in op.OutputVariables)
+                {
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = v.Value.IdShort;
+                    smeItem.Type = "Out";
+                    smeItem.Tag = v.Value;
+                    smChilds.Add(smeItem);
+                }
             }
-            foreach (var v in op.inoutputVariable)
+            if (op.InoutputVariables != null)
             {
-                var smeItem = new Item();
-                smeItem.envIndex = i;
-                smeItem.Text = v.value.submodelElement.idShort;
-                smeItem.Type = "InOut";
-                smeItem.Tag = v.value.submodelElement;
-                smChilds.Add(smeItem);
+                foreach (var v in op.InoutputVariables)
+                {
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = v.Value.IdShort;
+                    smeItem.Type = "InOut";
+                    smeItem.Tag = v.Value;
+                    smChilds.Add(smeItem);
+                }
             }
             smeRootItem.Childs = smChilds;
             foreach (var c in smChilds)
@@ -205,15 +215,15 @@ namespace AasxServerBlazor.Data
         void createEntityItems(Item smeRootItem, Entity e, int i)
         {
             List<Item> smChilds = new List<Item>();
-            foreach (var s in e.statements)
+            foreach (var s in e.Statements)
             {
-                if (s != null && s.submodelElement != null)
+                if (s != null && s != null)
                 {
                     var smeItem = new Item();
                     smeItem.envIndex = i;
-                    smeItem.Text = s.submodelElement.idShort;
+                    smeItem.Text = s.IdShort;
                     smeItem.Type = "In";
-                    smeItem.Tag = s.submodelElement;
+                    smeItem.Tag = s;
                     smChilds.Add(smeItem);
                 }
             }

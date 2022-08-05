@@ -9,9 +9,11 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AasxMqttClient;
 using AdminShellEvents;
 using AdminShellNS;
+using Extenstions;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server;
 using Grapevine.Server.Attributes;
@@ -84,8 +86,8 @@ namespace AasxRestServerLibrary
 
             public class DeletedListItem
             {
-                public AdminShell.Submodel sm;
-                public AdminShell.Referable rf;
+                public Submodel sm;
+                public IReferable rf;
             }
 
             public static List<DeletedListItem> deletedList = new List<DeletedListItem>();
@@ -99,10 +101,10 @@ namespace AasxRestServerLibrary
                 public string obj = "";
                 public string data = "";
 
-                public static void add(AdminShell.Referable o, string op, AdminShell.Submodel rootSubmodel, ulong changeCount)
+                public static void add(IReferable o, string op, Submodel rootSubmodel, ulong changeCount)
                 {
-                    // if (o is AdminShell.SubmodelElementCollection smec)
-                    if (o is AdminShell.SubmodelElement smec)
+                    // if (o is SubmodelElementCollection smec)
+                    if (o is ISubmodelElement smec)
                     {
                         string json = "";
 
@@ -123,21 +125,21 @@ namespace AasxRestServerLibrary
                         }
 
                         rootSubmodel.SetAllParents();
-                        AdminShell.KeyList keys = new AdminShell.KeyList();
+                        List<Key> keys = new();
 
 #if MICHA
                         // keys were in the reverse order
                         keys = smec.GetModelReference()?.Keys;
-                        if (keys?.IsEmpty == false)
+                        if (keys.Count != 0)
                             keys.Remove(keys.Last());
 #else
 
                         while (smec != null)
                         {
-                            keys.Add(AdminShellV20.Key.CreateNew("SMEC", false, "SMEC", smec.idShort));
-                            smec = (smec.parent as AdminShell.SubmodelElementCollection);
+                            keys.Add(AdminShellV20.Key.CreateNew("SMEC", false, "SMEC", smec.IdShort));
+                            smec = (smec.parent as SubmodelElementCollection);
                         }
-                        keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.idShort));
+                        keys.Add(AdminShellV20.Key.CreateNew("SM", false, "SM", rootSubmodel.IdShort));
 #endif
 
 
@@ -150,15 +152,15 @@ namespace AasxRestServerLibrary
                         if (op == "Remove")
                         {
                             o.TimeStamp = DateTime.UtcNow;
-                            AdminShell.Referable x = o;
+                            IReferable x = o;
                             /*
-                            string path = x.idShort;
+                            string path = x.IdShort;
                             while (x.parent != null && x != x.parent)
                             {
                                 x = x.parent;
-                                path = x.idShort + "." + path;
+                                path = x.IdShort + "." + path;
                             }
-                            o.idShort = path;
+                            o.IdShort = path;
                             */
                             deletedList.Add(new DeletedListItem() { sm = rootSubmodel, rf = o });
                             if (deletedList.Count > 1000 && deletedList[0].rf != null)
@@ -362,15 +364,15 @@ namespace AasxRestServerLibrary
                         continue;
 
                     var env = AasxServer.Program.env[i];
-                    if (env?.AasEnv?.AdministrationShells == null)
+                    if (env?.AasEnv?.AssetAdministrationShells == null)
                         continue;
 
-                    foreach (var aas in env.AasEnv.AdministrationShells)
+                    foreach (var aas in env.AasEnv.AssetAdministrationShells)
                     {
-                        if (aas?.submodelRefs == null)
+                        if (aas?.Submodels == null)
                             continue;
 
-                        foreach (var smr in aas.submodelRefs)
+                        foreach (var smr in aas.Submodels)
                         {
                             // find Submodel
                             var sm = env.AasEnv.FindSubmodel(smr);
@@ -378,20 +380,18 @@ namespace AasxRestServerLibrary
                                 continue;
 
                             // find a matching event element
-                            foreach (var bev in sm.FindDeep<AdminShell.BasicEvent>())
+                            foreach (var bev in sm.FindDeep<BasicEventElement>())
                             {
                                 // find interesting event?
-                                if (true == bev.semanticId?.MatchesExactlyOneId(
-                                    id: "https://admin-shell.io/tmp/AAS/Events/UpdateValueOutwards",
-                                    matchMode: AdminShell.Key.MatchMode.Relaxed))
+                                //if (true == bev.SemanticId?.MatchesExactlyOneId(
+                                //    id: "https://admin-shell.io/tmp/AAS/Events/UpdateValueOutwards",
+                                //    matchMode: Key.MatchMode.Relaxed))
+                                if (true == bev.SemanticId?.Matches(id: "https://admin-shell.io/tmp/AAS/Events/UpdateValueOutwards"))
                                 {
                                     doUpdate = true;
                                     doCreateDelete = false;
                                 }
-                                else
-                                if (true == bev.semanticId?.MatchesExactlyOneId(
-                                    id: "https://admin-shell.io/tmp/AAS/Events/StructureChangeOutwards",
-                                    matchMode: AdminShell.Key.MatchMode.Relaxed))
+                                else if (true == bev.SemanticId?.Matches(id: "https://admin-shell.io/tmp/AAS/Events/StructureChangeOutwards"))
                                 {
                                     doUpdate = false;
                                     doCreateDelete = true;
@@ -400,18 +400,18 @@ namespace AasxRestServerLibrary
                                     continue;
 
                                 // find obseverved as well
-                                if (bev.observed == null && bev.observed.Count < 1)
+                                if (bev.Observed == null && bev.Observed.Keys.Count < 1)
                                     continue;
-                                var obs = env.AasEnv.FindReferableByReference(bev.observed);
+                                var obs = env.AasEnv.FindReferableByReference(bev.Observed);
                                 if (obs == null)
                                     continue;
 
                                 // obseverved semantic id is pain in the ..
-                                AdminShell.SemanticId obsSemId = null;
-                                if (obs is AdminShell.Submodel obssm)
-                                    obsSemId = obssm.semanticId;
-                                if (obs is AdminShell.SubmodelElement obssme)
-                                    obsSemId = obssme.semanticId;
+                                Reference obsSemId = null;
+                                if (obs is Submodel obssm)
+                                    obsSemId = obssm.SemanticId;
+                                if (obs is ISubmodelElement obssme)
+                                    obsSemId = obssme.SemanticId;
 
                                 //
                                 // Create event outer message
@@ -420,8 +420,8 @@ namespace AasxRestServerLibrary
                                 var eventsOuter = new AasEventMsgEnvelope(
                                         DateTime.UtcNow,
                                         source: bev.GetModelReference(),
-                                        sourceSemanticId: bev.semanticId,
-                                        observableReference: bev.observed,
+                                        sourceSemanticId: bev.SemanticId,
+                                        observableReference: bev.Observed,
                                         observableSemanticId: obsSemId);
 
                                 // directly create lists of update value and structural change events
@@ -443,17 +443,17 @@ namespace AasxRestServerLibrary
                                         if (d.rf.TimeStamp > minimumDate)
                                         {
                                             // get the path
-                                            AdminShell.KeyList p2 = null;
-                                            if (d.rf is AdminShell.Submodel delsm)
+                                            List<Key> p2 = null;
+                                            if (d.rf is Submodel delsm)
                                                 p2 = delsm?.GetModelReference()?.Keys;
-                                            if (d.rf is AdminShell.SubmodelElement delsme)
+                                            if (d.rf is ISubmodelElement delsme)
                                                 p2 = delsme?.GetModelReference()?.Keys;
                                             if (p2 == null)
                                                 continue;
 
                                             // prepare p2 to be relative path to observable
-                                            if (true == p2?.StartsWith(bev.observed?.Keys, matchMode: AdminShell.Key.MatchMode.Relaxed))
-                                                p2.RemoveRange(0, bev.observed.Keys.Count);
+                                            if (true == p2?.StartsWith(bev.Observed?.Keys))
+                                                p2.RemoveRange(0, bev.Observed.Keys.Count);
 
                                             // make payload
                                             var pliDel = new AasPayloadStructuralChangeItem(
@@ -490,13 +490,13 @@ namespace AasxRestServerLibrary
                                     if (diffTimeStamp > minimumDate)
                                     {
                                         ;
-                                        foreach (var sme in sm.submodelElements)
+                                        foreach (var sme in sm.SubmodelElements)
                                             GetEventMsgRecurseDiff(
                                                 strMode,
                                                 plStruct, plUpdate,
-                                                sme.submodelElement,
+                                                sme,
                                                 minimumDate, doUpdate, doCreateDelete,
-                                                bev.observed?.Keys);
+                                                bev.Observed?.Keys);
                                     }
                                 //}
 
@@ -528,18 +528,19 @@ namespace AasxRestServerLibrary
                 string mode,
                 AasPayloadStructuralChange plStruct,
                 AasPayloadUpdateValue plUpdate,
-                AdminShell.SubmodelElement sme, DateTime minimumDate,
+                ISubmodelElement sme, DateTime minimumDate,
                 bool doUpdate, bool doCreateDelete,
-                AdminShell.KeyList observablePath = null)
+                List<Key> observablePath = null)
             {
-                if (!(sme is AdminShell.SubmodelElementCollection))
+                if (!(sme is SubmodelElementCollection))
                 {
                     if ((mode == "CREATE" && sme.TimeStampCreate > minimumDate) ||
                         (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
                     {
                         // prepare p2 to be relative path to observable
                         var p2 = sme.GetModelReference()?.Keys;
-                        if (true == p2?.StartsWith(observablePath, matchMode: AdminShell.Key.MatchMode.Relaxed))
+                        //if (true == p2?.StartsWith(observablePath, matchMode: AdminShell.Key.MatchMode.Relaxed))
+                        if (true == p2?.StartsWith(observablePath))
                             p2.RemoveRange(0, observablePath.Count);
 
                         if (mode == "CREATE")
@@ -558,9 +559,9 @@ namespace AasxRestServerLibrary
                             if (/* doUpdate && */ plUpdate != null)
                             {
                                 var val = sme.ValueAsText();
-                                if (sme is AdminShell.Blob blob)
+                                if (sme is Blob blob)
                                     // take BLOB as "large" text
-                                    val = blob.value;
+                                    val = Encoding.UTF8.GetString(blob.Value);
                                 plUpdate.Values.Add(new AasPayloadUpdateValueItem(
                                     path: p2,
                                     val));
@@ -571,7 +572,7 @@ namespace AasxRestServerLibrary
                     return;
                 }
 
-                var smec = sme as AdminShell.SubmodelElementCollection;
+                var smec = sme as SubmodelElementCollection;
                 if (mode == "CREATE" || smec.TimeStamp > minimumDate)
                 {
                     bool deeper = false;
@@ -583,7 +584,7 @@ namespace AasxRestServerLibrary
                     else
                     //
                     {
-                        if (smec.value.Count == 1)
+                        if (smec.Value.Count == 1)
                         {
                             deeper = true;
                         }
@@ -591,10 +592,10 @@ namespace AasxRestServerLibrary
                         {
                             // replace foreach by explicit loop for multiple threads
                             int i = 0;
-                            while (i < smec.value.Count)
+                            while (i < smec.Value.Count)
                             {
-                                var sme2 = smec.value[i];
-                                if (sme2.submodelElement.TimeStamp != smec.TimeStamp)
+                                var sme2 = smec.Value[i];
+                                if (sme2.TimeStamp != smec.TimeStamp)
                                 {
                                     deeper = true;
                                     break;
@@ -608,13 +609,13 @@ namespace AasxRestServerLibrary
                     {
                         // replace foreach by explicit loop for multiple threads
                         int i = 0;
-                        while (i < smec.value.Count)
+                        while (i < smec.Value.Count)
                         {
-                            var sme2 = smec.value[i];
+                            var sme2 = smec.Value[i];
                             GetEventMsgRecurseDiff(
                                 mode,
                                 plStruct, plUpdate,
-                                sme2.submodelElement, minimumDate, doUpdate, doCreateDelete, observablePath);
+                                sme2, minimumDate, doUpdate, doCreateDelete, observablePath);
                             i++;
                         }
                         return;
@@ -622,7 +623,7 @@ namespace AasxRestServerLibrary
 
                     // prepare p2 to be relative path to observable
                     var p2 = sme.GetModelReference()?.Keys;
-                    if (true == p2?.StartsWith(observablePath, matchMode: AdminShell.Key.MatchMode.Relaxed))
+                    if (true == p2?.StartsWith(observablePath))
                         p2.RemoveRange(0, observablePath.Count);
 
                     if (mode == "CREATE")
@@ -899,11 +900,11 @@ namespace AasxRestServerLibrary
                             if (d.rf.TimeStamp > minimumDate)
                             {
                                 var x = d.rf;
-                                string path = x.idShort;
-                                while (x.parent != null && x != x.parent)
+                                string path = x.IdShort;
+                                while (x.Parent != null && x != x.Parent)
                                 {
-                                    x = (AdminShellV30.Referable)x.parent;
-                                    path = x.idShort + "." + path;
+                                    x = (IReferable)x.Parent;
+                                    path = x.IdShort + "." + path;
                                 }
 
                                 if (searchPath == "" ||
@@ -925,35 +926,35 @@ namespace AasxRestServerLibrary
                         var env = AasxServer.Program.env[i];
                         if (env != null)
                         {
-                            var aas = env.AasEnv.AdministrationShells[0];
-                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                            var aas = env.AasEnv.AssetAdministrationShells[0];
+                            if (aas.Submodels != null && aas.Submodels.Count > 0)
                             {
-                                DateTime diffTimeStamp = new DateTime();
+                                DateTime diffTimeStamp = new();
                                 diffTimeStamp = aas.TimeStampCreate;
                                 if (diffTimeStamp > minimumDate)
                                 {
                                     if (mode == "CREATE" || aas.TimeStamp != aas.TimeStampCreate)
                                     {
-                                        string p = aas.idShort;
+                                        string p = aas.IdShort;
                                         if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                         {
                                             addEntry(diffJson, ref diffText, ref diffList,
-                                            mode, aas.idShort, "AAS", aas.TimeStamp);
+                                            mode, aas.IdShort, "AAS", aas.TimeStamp);
                                         }
                                     }
                                 }
 
-                                foreach (var smr in aas.submodelRefs)
+                                foreach (var smr in aas.Submodels)
                                 {
                                     var sm = env.AasEnv.FindSubmodel(smr);
-                                    if (sm != null && sm.idShort != null)
+                                    if (sm != null && sm.IdShort != null)
                                     {
                                         if (sm.TimeStamp > minimumDate)
                                         {
-                                            string p = sm.idShort;
+                                            string p = sm.IdShort;
                                             if (mode == "CREATE" && sm.TimeStampCreate > minimumDate)
                                             {
-                                                // string p = aas.idShort + "." + sm.idShort;
+                                                // string p = aas.IdShort + "." + sm.IdShort;
                                                 if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                                 {
                                                     addEntry(diffJson, ref diffText, ref diffList,
@@ -961,9 +962,9 @@ namespace AasxRestServerLibrary
                                                 }
                                             }
 
-                                            foreach (var sme in sm.submodelElements)
+                                            foreach (var sme in sm.SubmodelElements)
                                                 checkDiff(diffJson, ref diffText, ref diffList,
-                                                    mode, p + ".", sme.submodelElement,
+                                                    mode, p + ".", sme,
                                                     minimumDate, deep, searchPath);
                                         }
                                     }
@@ -991,17 +992,17 @@ namespace AasxRestServerLibrary
             }
 
             static void checkDiff(bool diffJson, ref string diffText, ref List<diffEntry> diffList,
-                string mode, string path, AdminShell.SubmodelElement sme,
+                string mode, string path, ISubmodelElement sme,
                 DateTime minimumDate, bool deep, string searchPath)
             {
-                if (!(sme is AdminShell.SubmodelElementCollection))
+                if (!(sme is SubmodelElementCollection))
                 {
                     if ((mode == "CREATE" && sme.TimeStampCreate > minimumDate) ||
                         (mode != "CREATE" && sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate))
                     {
                         if (searchPath != "")
                         {
-                            string p = path + sme.idShort;
+                            string p = path + sme.IdShort;
                             if (!(searchPath.Length <= p.Length && searchPath == p.Substring(0, searchPath.Length)))
                                 return;
                         }
@@ -1009,14 +1010,14 @@ namespace AasxRestServerLibrary
                         if (mode != "CREATE")
                             value = sme.ValueAsText();
                         addEntry(diffJson, ref diffText, ref diffList,
-                            mode, path + sme.idShort, "SME", sme.TimeStamp, value);
+                            mode, path + sme.IdShort, "SME", sme.TimeStamp, value);
                         return;
                     }
 
                     return;
                 }
 
-                var smec = sme as AdminShell.SubmodelElementCollection;
+                var smec = sme as SubmodelElementCollection;
                 if (mode == "CREATE" || sme.TimeStamp > minimumDate)
                 {
                     bool deeper = false;
@@ -1026,14 +1027,14 @@ namespace AasxRestServerLibrary
                     }
                     else
                     {
-                        if (smec.value.Count == 1)
+                        if (smec.Value.Count == 1)
                         {
                             deeper = true;
                         }
                         else
                         {
-                            foreach (var sme2 in smec.value)
-                                if (sme2.submodelElement.TimeStamp != smec.TimeStamp)
+                            foreach (var sme2 in smec.Value)
+                                if (sme2.TimeStamp != smec.TimeStamp)
                                 {
                                     deeper = true;
                                     break;
@@ -1043,9 +1044,9 @@ namespace AasxRestServerLibrary
 
                     if (deeper)
                     {
-                        foreach (var sme2 in smec.value)
+                        foreach (var sme2 in smec.Value)
                             checkDiff(diffJson, ref diffText, ref diffList,
-                                mode, path + sme.idShort + ".", sme2.submodelElement,
+                                mode, path + sme.IdShort + ".", sme2,
                                 minimumDate, deep, searchPath);
                         return;
                     }
@@ -1055,13 +1056,13 @@ namespace AasxRestServerLibrary
                     {
                         if (searchPath != "")
                         {
-                            string p = path + sme.idShort;
+                            string p = path + sme.IdShort;
                             if (!(searchPath.Length <= p.Length && searchPath == p.Substring(0, searchPath.Length)))
                                 return;
                         }
 
                         addEntry(diffJson, ref diffText, ref diffList,
-                            mode, path + smec.idShort, "SMEC", smec.TimeStamp);
+                            mode, path + smec.IdShort, "SMEC", smec.TimeStamp);
                     }
                 }
 
@@ -1087,7 +1088,6 @@ namespace AasxRestServerLibrary
             }
 
             // Basic AAS + Asset 
-            //TODO:Imp
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv|/aasenvjson)(/|)$")]
 
             public IHttpContext GetAasAndAsset(IHttpContext context)
@@ -1270,7 +1270,7 @@ namespace AasxRestServerLibrary
                             && req.Payload != null)
                         {
                             var ba = Convert.FromBase64String(req.Payload);
-                            File.WriteAllBytes("test.aasx", ba);
+                            System.IO.File.WriteAllBytes("test.aasx", ba);
                         }
                     }
                     else

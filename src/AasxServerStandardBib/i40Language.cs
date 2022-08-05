@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
+using Extenstions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -19,7 +21,7 @@ namespace AasxServer
 {
     public class i40LanguageAutomaton
     {
-        public AdminShell.SubmodelElementCollection automatonControl;
+        public SubmodelElementCollection automatonControl;
 
         public string name = "";
         public string getStatus = "stop";
@@ -38,13 +40,13 @@ namespace AasxServer
         public Dictionary<string, string> constants;
 
         public Dictionary<string, string> variablesStrings;
-        public Dictionary<string, AdminShell.SubmodelElementCollection> variablesCollections;
+        public Dictionary<string, SubmodelElementCollection> variablesCollections;
 
         public HashSet<string> states = new HashSet<string>();
         public HashSet<string> initialStates = new HashSet<string>();
         public HashSet<string> actualStates = new HashSet<string>();
 
-        public List<AdminShell.SubmodelElementCollection> transitions;
+        public List<SubmodelElementCollection> transitions;
 
         public int tick = 0;
         public int maxTick = 2;
@@ -70,19 +72,19 @@ namespace AasxServer
                 {
                     foreach (var sm in Program.env[envi].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.idShort != null)
+                        if (sm != null && sm.IdShort != null)
                         {
                             bool withI40Language = false;
-                            int count = sm.qualifiers.Count;
+                            int count = sm.Qualifiers.Count;
                             if (count != 0)
                             {
                                 int j = 0;
 
                                 while (j < count) // Scan qualifiers
                                 {
-                                    var p = sm.qualifiers[j] as AdminShell.Qualifier;
+                                    var p = sm.Qualifiers[j] as Qualifier;
 
-                                    if (p.type == "i40language")
+                                    if (p.Type == "i40language")
                                     {
                                         withI40Language = true;
                                     }
@@ -93,27 +95,27 @@ namespace AasxServer
                             {
                                 var auto = new i40LanguageAutomaton();
                                 automatons.Add(auto);
-                                auto.name = sm.idShort;
+                                auto.name = sm.IdShort;
                                 if (auto.name == "automatonServiceRequester")
                                     isRequester = true;
                                 if (auto.name == "automatonServiceProvider")
                                     isProvider = true;
 
-                                foreach (var smw1 in sm.submodelElements)
+                                foreach (var smw1 in sm.SubmodelElements)
                                 {
-                                    var sme1 = smw1.submodelElement;
+                                    var sme1 = smw1;
 
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "automatonControl")
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "automatonControl")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                        var smc1 = sme1 as SubmodelElementCollection;
                                         auto.automatonControl = smc1;
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
-                                            if (sme2 is AdminShell.Property && sme2.idShort == "setSteppingTime")
+                                            var sme2 = smw2;
+                                            if (sme2 is Property && sme2.IdShort == "setSteppingTime")
                                             {
-                                                string value = (sme2 as AdminShell.Property).value;
+                                                string value = (sme2 as Property).Value;
                                                 Regex regex = new Regex(@"^\d+$");
                                                 if (regex.IsMatch(value))
                                                 {
@@ -121,34 +123,34 @@ namespace AasxServer
                                                 }
                                                 else
                                                 {
-                                                    (sme2 as AdminShell.Property).value = auto.setSteppingTime;
+                                                    (sme2 as Property).Value = auto.setSteppingTime;
                                                 }
                                             }
                                         }
                                     }
 
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "frames")
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "frames")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
-                                        auto.frameNames = new string[smc1.value.Count];
-                                        auto.frameContent = new Dictionary<string, string>[smc1.value.Count];
+                                        var smc1 = sme1 as SubmodelElementCollection;
+                                        auto.frameNames = new string[smc1.Value.Count];
+                                        auto.frameContent = new Dictionary<string, string>[smc1.Value.Count];
 
                                         int i = 0;
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
-                                            if (sme2 is AdminShell.SubmodelElementCollection)
+                                            var sme2 = smw2;
+                                            if (sme2 is SubmodelElementCollection)
                                             {
-                                                var smc2 = sme2 as AdminShell.SubmodelElementCollection;
-                                                auto.frameNames[i] = smc2.idShort;
+                                                var smc2 = sme2 as SubmodelElementCollection;
+                                                auto.frameNames[i] = smc2.IdShort;
                                                 auto.frameContent[i] = new Dictionary<string, string>();
 
-                                                foreach (var smw3 in smc2.value)
+                                                foreach (var smw3 in smc2.Value)
                                                 {
-                                                    var sme3 = smw3.submodelElement;
-                                                    if (sme3 is AdminShell.Property)
+                                                    var sme3 = smw3;
+                                                    if (sme3 is Property)
                                                     {
-                                                        auto.frameContent[i].Add(sme3.idShort, (sme3 as AdminShell.Property).value);
+                                                        auto.frameContent[i].Add(sme3.IdShort, (sme3 as Property).Value);
                                                     }
                                                 }
                                             }
@@ -156,80 +158,80 @@ namespace AasxServer
                                         }
                                     }
 
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "constants")
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "constants")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                        var smc1 = sme1 as SubmodelElementCollection;
                                         auto.constants = new Dictionary<string, string>();
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
-                                            if (sme2 is AdminShell.Property)
+                                            var sme2 = smw2;
+                                            if (sme2 is Property)
                                             {
-                                                auto.constants.Add(sme2.idShort, (sme2 as AdminShell.Property).value);
+                                                auto.constants.Add(sme2.IdShort, (sme2 as Property).Value);
                                             }
                                         }
                                     }
 
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "variables")
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "variables")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                        var smc1 = sme1 as SubmodelElementCollection;
                                         auto.variablesStrings = new Dictionary<string, string>();
-                                        auto.variablesCollections = new Dictionary<string, AdminShell.SubmodelElementCollection>();
+                                        auto.variablesCollections = new Dictionary<string, SubmodelElementCollection>();
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
-                                            if (sme2 is AdminShell.Property)
+                                            var sme2 = smw2;
+                                            if (sme2 is Property)
                                             {
-                                                auto.variablesStrings.Add(sme2.idShort, (sme2 as AdminShell.Property).value);
+                                                auto.variablesStrings.Add(sme2.IdShort, (sme2 as Property).Value);
                                             }
-                                            if (sme2 is AdminShell.SubmodelElementCollection)
+                                            if (sme2 is SubmodelElementCollection)
                                             {
-                                                auto.variablesCollections.Add(sme2.idShort, (sme2 as AdminShell.SubmodelElementCollection));
+                                                auto.variablesCollections.Add(sme2.IdShort, (sme2 as SubmodelElementCollection));
                                             }
                                         }
                                     }
 
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "states")
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "states")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                        var smc1 = sme1 as SubmodelElementCollection;
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
-                                            if (sme2 is AdminShell.Property || (sme2 is AdminShell.SubmodelElementCollection && sme2.idShort != "initialStates"))
+                                            var sme2 = smw2;
+                                            if (sme2 is Property || (sme2 is SubmodelElementCollection && sme2.IdShort != "initialStates"))
                                             {
-                                                auto.states.Add(sme2.idShort);
+                                                auto.states.Add(sme2.IdShort);
                                             }
-                                            if (sme2 is AdminShell.SubmodelElementCollection && sme2.idShort == "initialStates")
+                                            if (sme2 is SubmodelElementCollection && sme2.IdShort == "initialStates")
                                             {
-                                                var smc2 = sme2 as AdminShell.SubmodelElementCollection;
+                                                var smc2 = sme2 as SubmodelElementCollection;
 
-                                                foreach (var smw3 in smc2.value)
+                                                foreach (var smw3 in smc2.Value)
                                                 {
-                                                    var sme3 = smw3.submodelElement;
-                                                    if (sme3 is AdminShell.Property || (sme3 is AdminShell.SubmodelElementCollection && sme3.idShort != "initialStates"))
+                                                    var sme3 = smw3;
+                                                    if (sme3 is Property || (sme3 is SubmodelElementCollection && sme3.IdShort != "initialStates"))
                                                     {
-                                                        auto.initialStates.Add(sme3.idShort);
-                                                        auto.states.Add(sme3.idShort);
+                                                        auto.initialStates.Add(sme3.IdShort);
+                                                        auto.states.Add(sme3.IdShort);
                                                     }
                                                 }
                                             }
                                         }
                                     }
 
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "transitions")
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "transitions")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
-                                        auto.transitions = new List<AdminShell.SubmodelElementCollection>();
+                                        var smc1 = sme1 as SubmodelElementCollection;
+                                        auto.transitions = new List<SubmodelElementCollection>();
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
-                                            if (sme2 is AdminShell.SubmodelElementCollection)
+                                            var sme2 = smw2;
+                                            if (sme2 is SubmodelElementCollection)
                                             {
-                                                auto.transitions.Add(sme2 as AdminShell.SubmodelElementCollection);
+                                                auto.transitions.Add(sme2 as SubmodelElementCollection);
                                             }
                                         }
                                     }
@@ -273,34 +275,34 @@ namespace AasxServer
                     }
 
                     // get actual automaton data from AAS
-                    foreach (var smw1 in auto.automatonControl.value)
+                    foreach (var smw1 in auto.automatonControl.Value)
                     {
-                        var sme1 = smw1.submodelElement;
-                        if (sme1 is AdminShell.Property && sme1.idShort == "setMode")
+                        var sme1 = smw1;
+                        if (sme1 is Property && sme1.IdShort == "setMode")
                         {
-                            auto.setMode = (sme1 as AdminShell.Property).value;
+                            auto.setMode = (sme1 as Property).Value;
                         }
-                        if (sme1 is AdminShell.Property && sme1.idShort == "stopAtStates")
+                        if (sme1 is Property && sme1.IdShort == "stopAtStates")
                         {
-                            string stopAtStates = (sme1 as AdminShell.Property).value;
+                            string stopAtStates = (sme1 as Property).Value;
                             string[] states = stopAtStates.Split(' ');
                             foreach (var s in states)
                                 if (auto.actualStates.Contains(s))
                                     auto.setMode = "stop";
                         }
-                        if (sme1 is AdminShell.Property && sme1.idShort == "setForcedStates")
+                        if (sme1 is Property && sme1.IdShort == "setForcedStates")
                         {
-                            auto.setForcedStates = (sme1 as AdminShell.Property).value;
-                            (sme1 as AdminShell.Property).value = "";
+                            auto.setForcedStates = (sme1 as Property).Value;
+                            (sme1 as Property).Value = "";
                         }
-                        if (sme1 is AdminShell.Property && sme1.idShort == "setSingleStep")
+                        if (sme1 is Property && sme1.IdShort == "setSingleStep")
                         {
-                            auto.setSingleStep = (sme1 as AdminShell.Property).value;
-                            (sme1 as AdminShell.Property).value = "";
+                            auto.setSingleStep = (sme1 as Property).Value;
+                            (sme1 as Property).Value = "";
                         }
-                        if (sme1 is AdminShell.Property && sme1.idShort == "setSteppingTime")
+                        if (sme1 is Property && sme1.IdShort == "setSteppingTime")
                         {
-                            string value = (sme1 as AdminShell.Property).value;
+                            string value = (sme1 as Property).Value;
                             Regex regex = new Regex(@"^\d+$");
                             if (regex.IsMatch(value))
                             {
@@ -351,18 +353,18 @@ namespace AasxServer
                         // collect enabled transitons
                         foreach (var t in auto.transitions)
                         {
-                            foreach (var smw1 in t.value)
+                            foreach (var smw1 in t.Value)
                             {
-                                var sme1 = smw1.submodelElement;
-                                if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "from" || sme1.idShort == "From"))
+                                var sme1 = smw1;
+                                if (sme1 is SubmodelElementCollection && (sme1.IdShort == "from" || sme1.IdShort == "From"))
                                 {
-                                    var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                    var smc1 = sme1 as SubmodelElementCollection;
 
-                                    foreach (var smw2 in smc1.value)
+                                    foreach (var smw2 in smc1.Value)
                                     {
-                                        var sme2 = smw2.submodelElement;
+                                        var sme2 = smw2;
 
-                                        fromStates.Add(sme2.idShort);
+                                        fromStates.Add(sme2.IdShort);
                                     }
                                 }
                             }
@@ -378,7 +380,7 @@ namespace AasxServer
                             }
                             if (allFromStatesActive)
                             {
-                                transitionsEnabled.Add(t.idShort);
+                                transitionsEnabled.Add(t.IdShort);
                             }
                             fromStates.Clear();
                         }
@@ -393,36 +395,36 @@ namespace AasxServer
                         // Check which enabled transitions are active by their inputs
                         foreach (var t in auto.transitions)
                         {
-                            if (transitionsEnabled.Contains(t.idShort))
+                            if (transitionsEnabled.Contains(t.IdShort))
                             {
                                 bool includesInput = false;
-                                foreach (var smw1 in t.value)
+                                foreach (var smw1 in t.Value)
                                 {
-                                    var sme1 = smw1.submodelElement;
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "input")
+                                    var sme1 = smw1;
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "input")
                                     {
                                         includesInput = true;
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                        var smc1 = sme1 as SubmodelElementCollection;
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
+                                            var sme2 = smw2;
 
-                                            if (sme2 is AdminShell.Operation)
+                                            if (sme2 is Operation)
                                             {
                                                 if (auto.name == debugAutomaton)
                                                 {
                                                 }
 
-                                                var op = sme2 as AdminShell.Operation;
-                                                // Console.WriteLine("Operation: " + op.idShort);
+                                                var op = sme2 as Operation;
+                                                // Console.WriteLine("Operation: " + op.IdShort);
                                                 bool opResult = false;
-                                                switch (op.idShort)
+                                                switch (op.IdShort)
                                                 {
                                                     case "wait":
                                                         opResult = operation_wait(op, auto);
                                                         if (opResult)
-                                                            transitionsActive.Add(t.idShort);
+                                                            transitionsActive.Add(t.IdShort);
                                                         break;
                                                     case "message":
                                                         opResult = operation_message(op, auto);
@@ -430,17 +432,17 @@ namespace AasxServer
                                                     case "checkCollection":
                                                         opResult = operation_checkCollection(op, auto);
                                                         if (opResult)
-                                                            transitionsActive.Add(t.idShort);
+                                                            transitionsActive.Add(t.IdShort);
                                                         break;
                                                     case "check":
                                                         opResult = operation_check(op, auto);
                                                         if (opResult)
-                                                            transitionsActive.Add(t.idShort);
+                                                            transitionsActive.Add(t.IdShort);
                                                         break;
                                                     case "receiveProposals":
                                                         opResult = operation_receiveProposals(op, auto);
                                                         if (opResult)
-                                                            transitionsActive.Add(t.idShort);
+                                                            transitionsActive.Add(t.IdShort);
                                                         break;
                                                     case "receiveSRAnswer":
                                                         opResult = operation_receiveSRAnswer(op, auto);
@@ -461,7 +463,7 @@ namespace AasxServer
                                                         opResult = operation_calculate(op, auto);
                                                         break;
                                                     default:
-                                                        transitionsActive.Add(t.idShort);
+                                                        transitionsActive.Add(t.IdShort);
                                                         break;
                                                 }
                                             }
@@ -469,37 +471,37 @@ namespace AasxServer
                                     }
                                 }
                                 if (!includesInput)
-                                    transitionsActive.Add(t.idShort);
+                                    transitionsActive.Add(t.IdShort);
                             }
                         }
 
                         // collect fromStates and toStates from enabled transitions
                         foreach (var t in auto.transitions)
                         {
-                            if (transitionsActive.Contains(t.idShort))
+                            if (transitionsActive.Contains(t.IdShort))
                             {
                                 // execute output operations
-                                foreach (var smw1 in t.value)
+                                foreach (var smw1 in t.Value)
                                 {
-                                    var sme1 = smw1.submodelElement;
-                                    if (sme1 is AdminShell.SubmodelElementCollection && sme1.idShort == "output")
+                                    var sme1 = smw1;
+                                    if (sme1 is SubmodelElementCollection && sme1.IdShort == "output")
                                     {
-                                        var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                        var smc1 = sme1 as SubmodelElementCollection;
 
-                                        foreach (var smw2 in smc1.value)
+                                        foreach (var smw2 in smc1.Value)
                                         {
-                                            var sme2 = smw2.submodelElement;
+                                            var sme2 = smw2;
 
-                                            if (sme2 is AdminShell.Operation)
+                                            if (sme2 is Operation)
                                             {
                                                 if (auto.name == debugAutomaton)
                                                 {
                                                 }
 
-                                                var op = sme2 as AdminShell.Operation;
-                                                // Console.WriteLine("Operation: " + op.idShort);
+                                                var op = sme2 as Operation;
+                                                // Console.WriteLine("Operation: " + op.IdShort);
                                                 bool opResult = false;
-                                                switch (op.idShort)
+                                                switch (op.IdShort)
                                                 {
                                                     case "message":
                                                         opResult = operation_message(op, auto);
@@ -537,31 +539,31 @@ namespace AasxServer
                                     }
 
                                     // changes states
-                                    foreach (var smw21 in t.value)
+                                    foreach (var smw21 in t.Value)
                                     {
-                                        sme1 = smw21.submodelElement;
-                                        if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "from" || sme1.idShort == "From"))
+                                        sme1 = smw21;
+                                        if (sme1 is SubmodelElementCollection && (sme1.IdShort == "from" || sme1.IdShort == "From"))
                                         {
-                                            var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                            var smc1 = sme1 as SubmodelElementCollection;
 
-                                            foreach (var smw2 in smc1.value)
+                                            foreach (var smw2 in smc1.Value)
                                             {
-                                                var sme2 = smw2.submodelElement;
+                                                var sme2 = smw2;
 
-                                                if (!fromStates.Contains(sme2.idShort))
-                                                    fromStates.Add(sme2.idShort);
+                                                if (!fromStates.Contains(sme2.IdShort))
+                                                    fromStates.Add(sme2.IdShort);
                                             }
                                         }
-                                        if (sme1 is AdminShell.SubmodelElementCollection && (sme1.idShort == "to" || sme1.idShort == "To"))
+                                        if (sme1 is SubmodelElementCollection && (sme1.IdShort == "to" || sme1.IdShort == "To"))
                                         {
-                                            var smc1 = sme1 as AdminShell.SubmodelElementCollection;
+                                            var smc1 = sme1 as SubmodelElementCollection;
 
-                                            foreach (var smw2 in smc1.value)
+                                            foreach (var smw2 in smc1.Value)
                                             {
-                                                var sme2 = smw2.submodelElement;
+                                                var sme2 = smw2;
 
-                                                if (!toStates.Contains(sme2.idShort))
-                                                    toStates.Add(sme2.idShort);
+                                                if (!toStates.Contains(sme2.IdShort))
+                                                    toStates.Add(sme2.IdShort);
                                             }
                                         }
                                     }
@@ -585,38 +587,38 @@ namespace AasxServer
                         // Console.WriteLine();
 
                         // display actual automaton data in AAS
-                        foreach (var smw1 in auto.automatonControl.value)
+                        foreach (var smw1 in auto.automatonControl.Value)
                         {
-                            var sme1 = smw1.submodelElement;
-                            if (sme1 is AdminShell.Property && sme1.idShort == "getActualTime")
+                            var sme1 = smw1;
+                            if (sme1 is Property && sme1.IdShort == "getActualTime")
                             {
-                                (sme1 as AdminShell.Property).value = DateTime.UtcNow.ToString();
+                                (sme1 as Property).Value = DateTime.UtcNow.ToString();
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "getStatus")
+                            if (sme1 is Property && sme1.IdShort == "getStatus")
                             {
-                                (sme1 as AdminShell.Property).value = auto.getStatus;
+                                (sme1 as Property).Value = auto.getStatus;
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "getActualStates")
+                            if (sme1 is Property && sme1.IdShort == "getActualStates")
                             {
-                                (sme1 as AdminShell.Property).value = "";
+                                (sme1 as Property).Value = "";
                                 foreach (var s in auto.actualStates)
                                 {
-                                    (sme1 as AdminShell.Property).value += s + " ";
+                                    (sme1 as Property).Value += s + " ";
                                 }
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "getTransitionsEnabled")
+                            if (sme1 is Property && sme1.IdShort == "getTransitionsEnabled")
                             {
-                                (sme1 as AdminShell.Property).value = "";
+                                (sme1 as Property).Value = "";
                                 foreach (var t in transitionsEnabled)
                                 {
-                                    (sme1 as AdminShell.Property).value += t + " ";
+                                    (sme1 as Property).Value += t + " ";
                                 }
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "getErrors")
+                            if (sme1 is Property && sme1.IdShort == "getErrors")
                             {
-                                (sme1 as AdminShell.Property).value = auto.getErrors;
+                                (sme1 as Property).Value = auto.getErrors;
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "getMessages")
+                            if (sme1 is Property && sme1.IdShort == "getMessages")
                             {
                                 string value = "";
                                 foreach (var text in auto.getMessages)
@@ -625,24 +627,24 @@ namespace AasxServer
                                         value += ", ";
                                     value += text;
                                 }
-                                (sme1 as AdminShell.Property).value = value;
+                                (sme1 as Property).Value = value;
                             }
                             /*
-                            if (sme1 is AdminShell.Property && sme1.idShort == "setMode")
+                            if (sme1 is Property && sme1.IdShort == "setMode")
                             {
-                                (sme1 as AdminShell.Property).value = "";
+                                (sme1 as Property).Value = "";
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "setForcedStates")
+                            if (sme1 is Property && sme1.IdShort == "setForcedStates")
                             {
-                                (sme1 as AdminShell.Property).value = "";
+                                (sme1 as Property).Value = "";
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "setSingleStep")
+                            if (sme1 is Property && sme1.IdShort == "setSingleStep")
                             {
-                                (sme1 as AdminShell.Property).value = "";
+                                (sme1 as Property).Value = "";
                             }
-                            if (sme1 is AdminShell.Property && sme1.idShort == "setSteppingTime")
+                            if (sme1 is Property && sme1.IdShort == "setSteppingTime")
                             {
-                                string value = (sme1 as AdminShell.Property).value;
+                                string value = (sme1 as Property).Value;
                                 Regex regex = new Regex(@"^\d+$");
                                 if (regex.IsMatch(value))
                                 {
@@ -664,77 +666,77 @@ namespace AasxServer
             }
         }
 
-        public static bool operation_message(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_message(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property value = text
-            foreach (var v in op.inputVariable)
+            foreach (var v in op.InputVariables)
             {
-                if (v.value.submodelElement is AdminShell.Property)
+                if (v.Value is Property)
                 {
-                    var p = v.value.submodelElement as AdminShell.Property;
+                    var p = v.Value as Property;
                     if (auto.getMessages.Count < 100)
-                        auto.getMessages.Add(p.value);
+                        auto.getMessages.Add(p.Value);
                     if (auto.getMessages.Count == 100)
                         auto.getMessages.Add("+++");
-                    // Console.WriteLine("operation message: " + p.idShort + " = " + p.value);
+                    // Console.WriteLine("operation message: " + p.IdShort + " = " + p.Value);
                 }
             }
             return true;
         }
 
-        public static bool operation_clearMessages(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_clearMessages(Operation op, i40LanguageAutomaton auto)
         {
             auto.getMessages.Clear();
             return true;
         }
 
-        public static bool operation_wait(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_wait(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable reference waitingTime: property value
             // outputVariable reference endTime: property value
 
-            if (op.inputVariable.Count != 1 && op.outputVariable.Count != 1)
+            if (op.InputVariables.Count != 1 && op.OutputVariables.Count != 1)
             {
                 return false;
             }
 
-            var in1 = op.inputVariable.First();
-            var r1 = in1.value.submodelElement;
-            if (!(r1 is AdminShell.ReferenceElement))
+            var in1 = op.InputVariables.First();
+            var r1 = in1.Value;
+            if (!(r1 is ReferenceElement))
                 return false;
-            var ref1 = Program.env[0].AasEnv.FindReferableByReference((r1 as AdminShell.ReferenceElement).GetModelReference());
+            var ref1 = Program.env[0].AasEnv.FindReferableByReference((r1 as ReferenceElement).GetModelReference());
             if (ref1 == null)
-                auto.getErrors += r1.idShort + " not found! ";
-            if (!(ref1 is AdminShell.Property))
+                auto.getErrors += r1.IdShort + " not found! ";
+            if (!(ref1 is Property))
                 return false;
-            var p1 = ref1 as AdminShell.Property;
-            int waitingTime = Convert.ToInt32(p1.value);
+            var p1 = ref1 as Property;
+            int waitingTime = Convert.ToInt32(p1.Value);
 
-            var out1 = op.outputVariable.First();
-            var r2 = out1.value.submodelElement;
-            if (!(r2 is AdminShell.ReferenceElement))
+            var out1 = op.OutputVariables.First();
+            var r2 = out1.Value;
+            if (!(r2 is ReferenceElement))
                 return false;
-            var ref2 = Program.env[0].AasEnv.FindReferableByReference((r2 as AdminShell.ReferenceElement).GetModelReference());
+            var ref2 = Program.env[0].AasEnv.FindReferableByReference((r2 as ReferenceElement).GetModelReference());
             if (ref2 == null)
-                auto.getErrors += r2.idShort + " not found! ";
-            if (!(ref2 is AdminShell.Property))
+                auto.getErrors += r2.IdShort + " not found! ";
+            if (!(ref2 is Property))
                 return false;
-            var p2 = ref2 as AdminShell.Property;
+            var p2 = ref2 as Property;
 
             DateTime localTime = DateTime.UtcNow;
-            if (p2.value == "") // start
+            if (p2.Value == "") // start
             {
                 var endTime = localTime.AddSeconds(waitingTime);
-                p2.value = endTime.ToString();
-                // Console.WriteLine("endTime = " + p2.value);
+                p2.Value = endTime.ToString();
+                // Console.WriteLine("endTime = " + p2.Value);
             }
             else // test if time has elapsed
             {
                 // Console.WriteLine("localTime = " + localTime);
-                var endTime = DateTime.Parse(p2.value);
+                var endTime = DateTime.Parse(p2.Value);
                 if (DateTime.Compare(localTime, endTime) > 0)
                 {
-                    p2.value = "";
+                    p2.Value = "";
                     return true;
                 }
             }
@@ -742,7 +744,7 @@ namespace AasxServer
             return false;
         }
 
-        public static bool operation_receiveProposals(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_receiveProposals(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
@@ -756,55 +758,55 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 4)
+            if (op.InputVariables.Count != 3 && op.OutputVariables.Count != 4)
             {
                 return false;
             }
 
-            AdminShell.Submodel refSubmodel = null;
-            AdminShell.Property protocol = null;
-            AdminShell.Property receivedFrameJSON = null;
+            Submodel refSubmodel = null;
+            Property protocol = null;
+            Property receivedFrameJSON = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
-                    protocol = (inputRef as AdminShell.Property);
+                    protocol = (inputRef as Property);
                     continue;
                 }
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Submodel)
-                    refSubmodel = refElement as AdminShell.Submodel;
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Submodel)
+                    refSubmodel = refElement as Submodel;
             }
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
-                if (!(outputRef is AdminShell.ReferenceElement))
+                var outputRef = output.Value;
+                if (!(outputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += outputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property)
-                    receivedFrameJSON = refElement as AdminShell.Property;
+                    auto.getErrors += outputRef.IdShort + " not found! ";
+                if (refElement is Property)
+                    receivedFrameJSON = refElement as Property;
             }
 
-            var out1 = op.outputVariable.First();
-            var r2 = out1.value.submodelElement;
-            if (!(r2 is AdminShell.ReferenceElement))
+            var out1 = op.OutputVariables.First();
+            var r2 = out1.Value;
+            if (!(r2 is ReferenceElement))
                 return false;
-            var ref2 = Program.env[0].AasEnv.FindReferableByReference((r2 as AdminShell.ReferenceElement).GetModelReference());
+            var ref2 = Program.env[0].AasEnv.FindReferableByReference((r2 as ReferenceElement).GetModelReference());
             if (ref2 == null)
-                auto.getErrors += r2.idShort + " not found! ";
-            if (!(ref2 is AdminShell.SubmodelElementCollection))
+                auto.getErrors += r2.IdShort + " not found! ";
+            if (!(ref2 is SubmodelElementCollection))
                 return false;
-            var smc2 = ref2 as AdminShell.SubmodelElementCollection;
+            var smc2 = ref2 as SubmodelElementCollection;
 
-            if (protocol.value != "memory" && protocol.value != "connect")
+            if (protocol.Value != "memory" && protocol.Value != "connect")
                 return false;
             while ((auto.name == "automatonServiceRequester" && receivedFrameJSONRequester.Count != 0)
                     || (auto.name == "automatonServiceProvider" && receivedFrameJSONProvider.Count != 0))
@@ -832,9 +834,9 @@ namespace AasxServer
                     }
                 }
 
-                receivedFrameJSON.value = receivedFrame;
+                receivedFrameJSON.Value = receivedFrame;
 
-                AdminShell.Submodel submodel = null;
+                Submodel submodel = null;
 
                 if (receivedFrame != "")
                 {
@@ -851,19 +853,19 @@ namespace AasxServer
                         Console.WriteLine("A new Call for Proposal is received");
                         if (submodel != null)
                         {
-                            if (submodel.idShort == "Boring")
+                            if (submodel.IdShort == "Boring")
                             {
                                 boringSubmodel = submodel;
                                 boringSubmodelFrame = newBiddingMessage.frame;
                             }
-                            AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
-                            smcSubmodel.idShort = submodel.idShort;
-                            foreach (var sme in submodel.submodelElements)
+                            SubmodelElementCollection smcSubmodel = new SubmodelElementCollection();
+                            smcSubmodel.IdShort = submodel.IdShort;
+                            foreach (var sme in submodel.SubmodelElements)
                             {
-                                smcSubmodel.Add(sme.submodelElement);
+                                smcSubmodel.Value.Add(sme);
                                 treeChanged = true;
                             }
-                            smc2.Add(smcSubmodel);
+                            smc2.Value.Add(smcSubmodel);
 
                         }
 
@@ -878,7 +880,7 @@ namespace AasxServer
             return true;
         }
 
-        public static bool operation_receiveI40message(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_receiveI40message(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property protocol: i40connect
             // inputVariable property protocolServer: URL
@@ -894,50 +896,50 @@ namespace AasxServer
             {
             }
 
-            if ((op.inputVariable.Count < 2 && op.inputVariable.Count > 3) && op.outputVariable.Count != 2)
+            if ((op.InputVariables.Count < 2 && op.InoutputVariables.Count > 3) && op.OutputVariables.Count != 2)
             {
                 return false;
             }
 
-            AdminShell.Property protocol = null;
-            AdminShell.Property protocolServer = null;
-            AdminShell.SubmodelElementCollection refProposals = null;
-            AdminShell.Submodel refSubmodel = null;
-            AdminShell.Property messageType = null;
-            AdminShell.Property receivedFrameJSON = null;
+            Property protocol = null;
+            Property protocolServer = null;
+            SubmodelElementCollection refProposals = null;
+            Submodel refSubmodel = null;
+            Property messageType = null;
+            Property receivedFrameJSON = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (!(inputRef is AdminShell.ReferenceElement))
+                var inputRef = input.Value;
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property p)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Property p)
                 {
-                    if (p.idShort == "protocol")
+                    if (p.IdShort == "protocol")
                         protocol = p;
-                    if (p.idShort == "protocolServer")
+                    if (p.IdShort == "protocolServer")
                         protocolServer = p;
                 }
-                if (refElement is AdminShell.Submodel s)
+                if (refElement is Submodel s)
                 {
                     refSubmodel = s;
                 }
             }
 
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
-                if (!(outputRef is AdminShell.ReferenceElement))
+                var outputRef = output.Value;
+                if (!(outputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += outputRef.idShort + " not found! ";
-                if (refElement is AdminShell.SubmodelElementCollection smc)
+                    auto.getErrors += outputRef.IdShort + " not found! ";
+                if (refElement is SubmodelElementCollection smc)
                     refProposals = smc;
-                if (refElement is AdminShell.Property p)
+                if (refElement is Property p)
                 {
                     if (refProposals == null && messageType == null)
                         messageType = p;
@@ -946,7 +948,7 @@ namespace AasxServer
                 }
             }
 
-            if (protocol.value != "memory" && protocol.value != "i40connect")
+            if (protocol.Value != "memory" && protocol.Value != "i40connect")
                 return false;
 
             while ((auto.name == "automatonServiceRequester" && receivedFrameJSONRequester.Count != 0)
@@ -975,9 +977,9 @@ namespace AasxServer
                     }
                 }
 
-                receivedFrameJSON.value = receivedFrame;
+                receivedFrameJSON.Value = receivedFrame;
 
-                AdminShell.Submodel submodel = null;
+                Submodel submodel = null;
 
                 if (receivedFrame != "")
                 {
@@ -996,25 +998,25 @@ namespace AasxServer
                             Console.WriteLine("A new Call for Proposal is received");
                             if (submodel != null)
                             {
-                                if (submodel.idShort == "Boring")
+                                if (submodel.IdShort == "Boring")
                                 {
                                     boringSubmodel = submodel;
                                     boringSubmodelFrame = newBiddingMessage.frame;
                                 }
-                                AdminShell.SubmodelElementCollection smcSubmodel = new AdminShell.SubmodelElementCollection();
-                                smcSubmodel.idShort = submodel.idShort;
-                                foreach (var sme in submodel.submodelElements)
+                                SubmodelElementCollection smcSubmodel = new SubmodelElementCollection();
+                                smcSubmodel.IdShort = submodel.IdShort;
+                                foreach (var sme in submodel.SubmodelElements)
                                 {
-                                    smcSubmodel.Add(sme.submodelElement);
+                                    smcSubmodel.Value.Add(sme);
                                     treeChanged = true;
                                 }
-                                refProposals.Add(smcSubmodel);
+                                refProposals.Value.Add(smcSubmodel);
                             }
                         }
                         else
                         {
                             if (messageType != null)
-                                messageType.value = newBiddingMessage.frame.type;
+                                messageType.Value = newBiddingMessage.frame.type;
                         }
                     }
                     catch
@@ -1026,7 +1028,7 @@ namespace AasxServer
             return true;
         }
 
-        public static bool operation_receiveSRAnswer(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_receiveSRAnswer(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
@@ -1082,7 +1084,7 @@ namespace AasxServer
         }
 
 
-        public static AdminShell.Submodel boringSubmodel = null;
+        public static Submodel boringSubmodel = null;
         public static I40TransmitFrame boringSubmodelFrame = null;
 
         public static bool isRequester = false;
@@ -1096,15 +1098,16 @@ namespace AasxServer
         public static List<string> sendFrameJSONProvider = new List<string>();
         public static List<string> receivedFrameJSONRequester = new List<string>();
         public static string srAnswerMessageType = "";
-        public static AdminShell.Submodel returnBoringSbmodel()
+        public static Submodel returnBoringSbmodel()
         {
-            AdminShell.Identifier _boringSMID = new AdminShell.Identifier();
-            _boringSMID.value = "www.company.com/ids/sm/3145_4121_8002_1792";
-            AdminShell.Submodel _boringSubmodel = new AdminShell.Submodel();
-            _boringSubmodel = Program.env[0].AasEnv.FindSubmodel(_boringSMID);
-            return Program.env[0].AasEnv.FindSubmodel(_boringSMID);
+            //IIdentifiable _boringSMID = new IIdentifiable();
+            string _boringSMID = "www.company.com/ids/sm/3145_4121_8002_1792";
+            //Submodel _boringSubmodel = new Submodel();
+            Submodel _boringSubmodel = Program.env[0].AasEnv.FindSubmodelById(_boringSMID);
+            //return Program.env[0].AasEnv.FindSubmodelById(_boringSMID);
+            return _boringSubmodel;
         }
-        public static bool operation_sendFrame(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_sendFrame(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
@@ -1115,48 +1118,48 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 1)
+            if (op.InputVariables.Count != 3 && op.OutputVariables.Count != 1)
             {
                 return false;
             }
 
-            AdminShell.Property protocol = null;
-            AdminShell.SubmodelElementCollection refFrame = null;
-            AdminShell.Submodel refSubmodel = null;
-            AdminShell.Property sendFrameJSON = null;
+            Property protocol = null;
+            SubmodelElementCollection refFrame = null;
+            Submodel refSubmodel = null;
+            Property sendFrameJSON = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
-                    protocol = (inputRef as AdminShell.Property);
+                    protocol = (inputRef as Property);
                     continue;
                 }
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.SubmodelElementCollection)
-                    refFrame = refElement as AdminShell.SubmodelElementCollection;
-                if (refElement is AdminShell.Submodel)
-                    refSubmodel = refElement as AdminShell.Submodel;
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is SubmodelElementCollection)
+                    refFrame = refElement as SubmodelElementCollection;
+                if (refElement is Submodel)
+                    refSubmodel = refElement as Submodel;
             }
 
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
-                if (!(outputRef is AdminShell.ReferenceElement))
+                var outputRef = output.Value;
+                if (!(outputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += outputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property)
-                    sendFrameJSON = refElement as AdminShell.Property;
+                    auto.getErrors += outputRef.IdShort + " not found! ";
+                if (refElement is Property)
+                    sendFrameJSON = refElement as Property;
             }
 
-            if (protocol.value != "memory" && protocol.value != "connect")
+            if (protocol.Value != "memory" && protocol.Value != "connect")
                 return false;
 
             if (boringSubmodel == null)
@@ -1169,12 +1172,12 @@ namespace AasxServer
 
             Program.count = Program.count + 1;
 
-            AdminShell.Submodel _boringSubmodel = new AdminShell.Submodel();
-            _boringSubmodel = returnBoringSbmodel();
+            //Submodel _boringSubmodel = new Submodel();
+            Submodel _boringSubmodel = returnBoringSbmodel();
             newBiddingMessage.interactionElements.Add(_boringSubmodel);
 
             string frame = JsonConvert.SerializeObject(newBiddingMessage, Newtonsoft.Json.Formatting.Indented);
-            sendFrameJSON.value = frame;
+            sendFrameJSON.Value = frame;
 
             boringSubmodel = null;
 
@@ -1182,7 +1185,7 @@ namespace AasxServer
 
             if (auto.name == "automatonServiceRequester")
             {
-                switch (protocol.value)
+                switch (protocol.Value)
                 {
                     case "memory":
                         receivedFrameJSONProvider.Add(frame);
@@ -1194,7 +1197,7 @@ namespace AasxServer
             }
             if (auto.name == "automatonServiceProvider")
             {
-                switch (protocol.value)
+                switch (protocol.Value)
                 {
                     case "memory":
                         receivedFrameJSONRequester.Add(frame);
@@ -1208,7 +1211,7 @@ namespace AasxServer
             return true;
         }
 
-        public static bool operation_sendI40message(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_sendI40message(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property protocol: i40connect
             // inputVariable property protocolServer: URL
@@ -1223,59 +1226,59 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 1)
+            if (op.InputVariables.Count != 3 && op.OutputVariables.Count != 1)
             {
                 return false;
             }
 
-            AdminShell.Property protocol = null;
-            AdminShell.Property protocolServer = null;
-            AdminShell.Submodel refSubmodel = null;
-            AdminShell.Property messageType = null;
-            AdminShell.Property sendFrameJSON = null;
+            Property protocol = null;
+            Property protocolServer = null;
+            Submodel refSubmodel = null;
+            Property messageType = null;
+            Property sendFrameJSON = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property p1)
+                var inputRef = input.Value;
+                if (inputRef is Property p1)
                 {
-                    if (p1.idShort == "messageType")
+                    if (p1.IdShort == "messageType")
                         messageType = p1;
                     continue;
                 }
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property p)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Property p)
                 {
-                    if (p.idShort == "protocol")
+                    if (p.IdShort == "protocol")
                         protocol = p;
-                    if (p.idShort == "protocolServer")
+                    if (p.IdShort == "protocolServer")
                         protocolServer = p;
                 }
-                if (refElement is AdminShell.Submodel s)
+                if (refElement is Submodel s)
                 {
                     refSubmodel = s;
                 }
             }
 
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
-                if (!(outputRef is AdminShell.ReferenceElement))
+                var outputRef = output.Value;
+                if (!(outputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += outputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property p)
+                    auto.getErrors += outputRef.IdShort + " not found! ";
+                if (refElement is Property p)
                 {
-                    sendFrameJSON = refElement as AdminShell.Property;
+                    sendFrameJSON = refElement as Property;
                 }
             }
 
-            if (protocol.value != "memory" && protocol.value != "i40connect")
+            if (protocol.Value != "memory" && protocol.Value != "i40connect")
                 return false;
 
             string frame = "";
@@ -1291,18 +1294,18 @@ namespace AasxServer
 
                 Program.count = Program.count + 1;
 
-                AdminShell.Submodel _boringSubmodel = new AdminShell.Submodel();
-                _boringSubmodel = returnBoringSbmodel();
+                //Submodel _boringSubmodel = new Submodel();
+                Submodel _boringSubmodel = returnBoringSbmodel();
                 newBiddingMessage.interactionElements.Add(_boringSubmodel);
 
                 frame = JsonConvert.SerializeObject(newBiddingMessage, Newtonsoft.Json.Formatting.Indented);
-                sendFrameJSON.value = frame;
+                sendFrameJSON.Value = frame;
 
                 boringSubmodel = null;
             }
             else
             {
-                if (messageType.value == "informConfirm")
+                if (messageType.Value == "informConfirm")
                 {
                     Console.WriteLine("The Service requester has sent the accept proposal");
                     I40MessageHelper _i40MessageHelper = new I40MessageHelper();
@@ -1324,7 +1327,7 @@ namespace AasxServer
             {
                 if (auto.name == "automatonServiceRequester")
                 {
-                    switch (protocol.value)
+                    switch (protocol.Value)
                     {
                         case "memory":
                             receivedFrameJSONProvider.Add(frame);
@@ -1336,7 +1339,7 @@ namespace AasxServer
                 }
                 if (auto.name == "automatonServiceProvider")
                 {
-                    switch (protocol.value)
+                    switch (protocol.Value)
                     {
                         case "memory":
                             receivedFrameJSONRequester.Add(frame);
@@ -1351,7 +1354,7 @@ namespace AasxServer
             return true;
         }
 
-        public static bool operation_processRequesterResponse(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_processRequesterResponse(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property protocol: memory, connect
             // inputVariable reference frame proposal: collection
@@ -1384,7 +1387,7 @@ namespace AasxServer
             return true;
         }
 
-        public static bool operation_clear(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_clear(Operation op, i40LanguageAutomaton auto)
         {
             // outputVariables are references to collections
             // alle elements will be removed from collections
@@ -1393,36 +1396,36 @@ namespace AasxServer
             {
             }
 
-            if (op.outputVariable.Count == 0)
+            if (op.OutputVariables.Count == 0)
             {
                 return false;
             }
 
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
-                if (outputRef is AdminShell.ReferenceElement)
+                var outputRef = output.Value;
+                if (outputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                    var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                     if (refElement == null)
-                        auto.getErrors += outputRef.idShort + " not found! ";
-                    if (refElement is AdminShell.SubmodelElementCollection)
+                        auto.getErrors += outputRef.IdShort + " not found! ";
+                    if (refElement is SubmodelElementCollection)
                     {
-                        var refSMEC = refElement as AdminShell.SubmodelElementCollection;
-                        List<AdminShell.SubmodelElement> list = new List<AdminShell.SubmodelElement>();
-                        foreach (var sme in refSMEC.value)
+                        var refSMEC = refElement as SubmodelElementCollection;
+                        List<ISubmodelElement> list = new List<ISubmodelElement>();
+                        foreach (var sme in refSMEC.Value)
                         {
-                            list.Add(sme.submodelElement);
+                            list.Add(sme);
                         }
                         foreach (var sme2 in list)
                         {
-                            refSMEC.Remove(sme2);
+                            refSMEC.Value.Remove(sme2);
                             treeChanged = true;
                         }
                     }
-                    if (refElement is AdminShell.Property p)
+                    if (refElement is Property p)
                     {
-                        p.value = "";
+                        p.Value = "";
                     }
                 }
             }
@@ -1430,7 +1433,7 @@ namespace AasxServer
             return true;
         }
 
-        public static bool operation_checkCollection(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_checkCollection(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property checkType: isEmpty, isNotEmpty;
             // inputVariable reference collection proposal
@@ -1439,34 +1442,34 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 2 && op.outputVariable.Count != 0)
+            if (op.InputVariables.Count != 2 && op.OutputVariables.Count != 0)
             {
                 return false;
             }
 
-            AdminShell.Property checkType = null;
-            AdminShell.SubmodelElementCollection refCollection = null;
+            Property checkType = null;
+            SubmodelElementCollection refCollection = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
-                    checkType = (inputRef as AdminShell.Property);
+                    checkType = (inputRef as Property);
                     continue;
                 }
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.SubmodelElementCollection)
-                    refCollection = refElement as AdminShell.SubmodelElementCollection;
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is SubmodelElementCollection)
+                    refCollection = refElement as SubmodelElementCollection;
             }
 
-            int count = refCollection.value.Count;
+            int count = refCollection.Value.Count;
 
-            switch (checkType.idShort)
+            switch (checkType.IdShort)
             {
                 case "isEmpty":
                     return (count == 0);
@@ -1477,7 +1480,7 @@ namespace AasxServer
             return false;
         }
 
-        public static bool operation_check(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_check(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property checkType: isEmpty, isNotEmpty;
             // inputVariable reference collection proposal
@@ -1486,49 +1489,49 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 3 && op.outputVariable.Count != 0)
+            if (op.InputVariables.Count != 3 && op.OutputVariables.Count != 0)
             {
                 return false;
             }
 
-            AdminShell.Property checkType = null;
-            AdminShell.Property argument1 = null;
-            AdminShell.Property argument2 = null;
-            AdminShell.SubmodelElementCollection refCollection = null;
-            AdminShell.Property refProperty = null;
+            Property checkType = null;
+            Property argument1 = null;
+            Property argument2 = null;
+            SubmodelElementCollection refCollection = null;
+            Property refProperty = null;
             int count = 0;
             string value = "";
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
                     if (count == 0)
-                        checkType = (inputRef as AdminShell.Property);
+                        checkType = (inputRef as Property);
                     if (count == 1)
-                        argument1 = (inputRef as AdminShell.Property);
+                        argument1 = (inputRef as Property);
                     if (count == 2)
-                        argument2 = (inputRef as AdminShell.Property);
+                        argument2 = (inputRef as Property);
                     count++;
                     continue;
                 }
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Property)
                 {
-                    refProperty = refElement as AdminShell.Property;
+                    refProperty = refElement as Property;
                     if (count == 1)
-                        argument1 = (refProperty as AdminShell.Property);
+                        argument1 = (refProperty as Property);
                     if (count == 2)
-                        argument2 = (refProperty as AdminShell.Property);
+                        argument2 = (refProperty as Property);
                 }
-                if (refElement is AdminShell.SubmodelElementCollection)
+                if (refElement is SubmodelElementCollection)
                 {
-                    refCollection = refElement as AdminShell.SubmodelElementCollection;
+                    refCollection = refElement as SubmodelElementCollection;
                 }
                 count++;
             }
@@ -1536,7 +1539,7 @@ namespace AasxServer
             if (checkType == null || argument1 == null || argument2 == null)
                 return false;
 
-            switch (checkType.idShort)
+            switch (checkType.IdShort)
             {
                 case "isEmpty":
                     if (refCollection != null)
@@ -1551,15 +1554,15 @@ namespace AasxServer
                         return (value != "");
                     return false;
                 case "isEqual":
-                    return (argument1.value == argument2.value);
+                    return (argument1.Value == argument2.Value);
                 case "isNotEqual":
-                    return (argument1.value != argument2.value);
+                    return (argument1.Value != argument2.Value);
             }
 
             return false;
         }
 
-        public static bool operation_executeLogic(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_executeLogic(Operation op, i40LanguageAutomaton auto)
         {
             // parameter sequence
             // inputVariable property i40logic type: 1
@@ -1640,7 +1643,7 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count < 4 && op.outputVariable.Count > 2)
+            if (op.InputVariables.Count < 4 && op.OutputVariables.Count > 2)
             {
                 return false;
             }
@@ -1652,27 +1655,27 @@ namespace AasxServer
             // inputVariable reference submodel sub: 0..1
             // inputVariable reference property message: 0..1
             // outputVariable reference collection outputQueue(s): 0..2
-            AdminShell.Property i40Logic = null;
-            AdminShell.Property protocol = null;
-            AdminShell.SubmodelElementCollection frame1 = null;
-            AdminShell.SubmodelElementCollection frame2 = null;
-            AdminShell.SubmodelElementCollection inQueue = null;
-            AdminShell.Submodel sub = null;
-            AdminShell.SubmodelElementCollection proposalMessage = null;
-            AdminShell.SubmodelElementCollection outQueue1 = null;
-            AdminShell.SubmodelElementCollection outQueue2 = null;
+            Property i40Logic = null;
+            Property protocol = null;
+            SubmodelElementCollection frame1 = null;
+            SubmodelElementCollection frame2 = null;
+            SubmodelElementCollection inQueue = null;
+            Submodel sub = null;
+            SubmodelElementCollection proposalMessage = null;
+            SubmodelElementCollection outQueue1 = null;
+            SubmodelElementCollection outQueue2 = null;
 
-            AdminShell.SubmodelElementCollection refCollection = null;
-            AdminShell.Property refProperty = null;
+            SubmodelElementCollection refCollection = null;
+            Property refProperty = null;
 
             string state = "i40logic";
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property p)
+                var inputRef = input.Value;
+                if (inputRef is Property p)
                 {
-                    switch (p.idShort)
+                    switch (p.IdShort)
                     {
                         case "i40Logic":
                             i40Logic = p;
@@ -1680,7 +1683,7 @@ namespace AasxServer
                             break;
                     }
                     // Debug
-                    switch (i40Logic?.value)
+                    switch (i40Logic?.Value)
                     {
                         case "callForProposal":
                             break;
@@ -1704,15 +1707,15 @@ namespace AasxServer
                     continue;
                 }
 
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Property)
                 {
-                    refProperty = refElement as AdminShell.Property;
-                    switch (refProperty.idShort)
+                    refProperty = refElement as Property;
+                    switch (refProperty.IdShort)
                     {
                         case "protocol":
                             protocol = refProperty;
@@ -1721,26 +1724,26 @@ namespace AasxServer
                     }
                     continue;
                 }
-                if (refElement is AdminShell.Submodel)
+                if (refElement is Submodel)
                 {
                     if (state == "submodel")
                     {
-                        sub = refElement as AdminShell.Submodel;
+                        sub = refElement as Submodel;
                         state = "outQueue1";
                     }
                     continue;
                 }
-                if (refElement is AdminShell.SubmodelElementCollection)
+                if (refElement is SubmodelElementCollection)
                 {
-                    refCollection = refElement as AdminShell.SubmodelElementCollection;
-                    if (refCollection.idShort == "proposalMessage")
+                    refCollection = refElement as SubmodelElementCollection;
+                    if (refCollection.IdShort == "proposalMessage")
                     {
                         proposalMessage = refCollection;
                         state = "outQueue1";
                         continue;
                     }
 
-                    switch (i40Logic?.value)
+                    switch (i40Logic?.Value)
                     {
                         case "callForProposal":
                             switch (state)
@@ -1819,19 +1822,19 @@ namespace AasxServer
                 }
             }
 
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
+                var outputRef = output.Value;
 
-                if (!(outputRef is AdminShell.ReferenceElement))
+                if (!(outputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += outputRef.idShort + " not found! ";
-                if (refElement is AdminShell.SubmodelElementCollection)
+                    auto.getErrors += outputRef.IdShort + " not found! ";
+                if (refElement is SubmodelElementCollection)
                 {
-                    refCollection = refElement as AdminShell.SubmodelElementCollection;
-                    switch (i40Logic?.value)
+                    refCollection = refElement as SubmodelElementCollection;
+                    switch (i40Logic?.Value)
                     {
                         case "callForProposal":
                         case "capabilityCheck":
@@ -1867,44 +1870,44 @@ namespace AasxServer
             }
 
             // Execute operation
-            AdminShell.SubmodelElementCollection smcSubmodel = null;
+            SubmodelElementCollection smcSubmodel = null;
 
-            switch (i40Logic?.value)
+            switch (i40Logic?.Value)
             {
                 case "callForProposal":
                     // Harish, please add correct code here
-                    smcSubmodel = new AdminShell.SubmodelElementCollection();
-                    smcSubmodel.idShort = "callForProposal";
-                    foreach (var sme in sub.submodelElements)
+                    smcSubmodel = new SubmodelElementCollection();
+                    smcSubmodel.IdShort = "callForProposal";
+                    foreach (var sme in sub.SubmodelElements)
                     {
-                        smcSubmodel.Add(sme.submodelElement);
+                        smcSubmodel.Value.Add(sme);
                         treeChanged = true;
                     }
-                    outQueue1.Add(smcSubmodel);
+                    outQueue1.Value.Add(smcSubmodel);
                     return true;
                 case "evaluateProposal":
                     // Harish, please add correct code here
-                    foreach (var sme in inQueue.value)
+                    foreach (var sme in inQueue.Value)
                     {
-                        outQueue1.Add(sme.submodelElement);
+                        outQueue1.Value.Add(sme);
                     }
-                    inQueue.value.Clear();
+                    inQueue.Value.Clear();
                     treeChanged = true;
                     return true;
                 case "WaitingForServiceRequesterAnswer":
                     // Harish, please add correct code here
-                    foreach (var sme in inQueue.value)
+                    foreach (var sme in inQueue.Value)
                     {
-                        outQueue1.Add(sme.submodelElement);
+                        outQueue1.Value.Add(smcSubmodel);
                     }
-                    inQueue.value.Clear();
+                    inQueue.Value.Clear();
                     treeChanged = true;
                     return true;
                 case "ServiceProvision":
-                    if (inQueue.value.Count != 0)
+                    if (inQueue.Value.Count != 0)
                     {
-                        outQueue1.Add(inQueue);
-                        // inQueue.value.Clear();
+                        outQueue1.Value.Add(inQueue);
+                        // inQueue.Value.Clear();
                         treeChanged = true;
                     }
                     return true;
@@ -1917,7 +1920,7 @@ namespace AasxServer
                 case "checkingSchedule":
                     return true;
                 case "PriceCalculation":
-                    outQueue1.Add(proposalMessage);
+                    outQueue1.Value.Add(proposalMessage);
                     treeChanged = true;
                     return true;
             }
@@ -1970,7 +1973,7 @@ namespace AasxServer
             return message;
         }
 
-        public static bool operation_sendI40frame(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_sendI40frame(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable reference property protocol
             // inputVariable reference collection outputQueue
@@ -1979,31 +1982,31 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 2)
+            if (op.InputVariables.Count != 2)
             {
                 return false;
             }
 
-            AdminShell.Property protocol = null;
-            AdminShell.SubmodelElementCollection outQueue = null;
+            Property protocol = null;
+            SubmodelElementCollection outQueue = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
+                var inputRef = input.Value;
 
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property p)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Property p)
                 {
                     protocol = p;
                     continue;
                 }
-                if (refElement is AdminShell.SubmodelElementCollection)
+                if (refElement is SubmodelElementCollection)
                 {
-                    outQueue = refElement as AdminShell.SubmodelElementCollection;
+                    outQueue = refElement as SubmodelElementCollection;
                     continue;
                 }
             }
@@ -2011,13 +2014,13 @@ namespace AasxServer
             if (protocol != null & outQueue != null)
             {
                 // Harish, please add correct code here
-                i40frameSend(JsonConvert.SerializeObject(outQueue, Newtonsoft.Json.Formatting.Indented), protocol.value, auto);
+                i40frameSend(JsonConvert.SerializeObject(outQueue, Newtonsoft.Json.Formatting.Indented), protocol.Value, auto);
             }
 
             return false;
         }
 
-        public static bool operation_receiveI40frame(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_receiveI40frame(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable reference property protocol
             // inputVariable reference collection inputQueue
@@ -2026,31 +2029,31 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 2)
+            if (op.InputVariables.Count != 2)
             {
                 return false;
             }
 
-            AdminShell.Property protocol = null;
-            AdminShell.SubmodelElementCollection inQueue = null;
+            Property protocol = null;
+            SubmodelElementCollection inQueue = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
+                var inputRef = input.Value;
 
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property p)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is Property p)
                 {
                     protocol = p;
                     continue;
                 }
-                if (refElement is AdminShell.SubmodelElementCollection)
+                if (refElement is SubmodelElementCollection)
                 {
-                    inQueue = refElement as AdminShell.SubmodelElementCollection;
+                    inQueue = refElement as SubmodelElementCollection;
                     continue;
                 }
             }
@@ -2059,16 +2062,16 @@ namespace AasxServer
             {
                 // Harish, please add correct code here
 
-                AdminShell.SubmodelElementCollection smc = null;
+                SubmodelElementCollection smc = null;
                 try
                 {
-                    smc = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElementCollection>
-                        (i40frameReceive(protocol.value, auto), new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                    smc = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>
+                        (i40frameReceive(protocol.Value, auto), new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                     if (smc != null)
                     {
-                        foreach (var sme in smc.value)
+                        foreach (var sme in smc.Value)
                         {
-                            inQueue.Add(sme.submodelElement);
+                            inQueue.Value.Add(sme);
                             treeChanged = true;
                         }
                     }
@@ -2079,7 +2082,7 @@ namespace AasxServer
 
             return false;
         }
-        public static bool operation_calculate(AdminShell.Operation op, i40LanguageAutomaton auto)
+        public static bool operation_calculate(Operation op, i40LanguageAutomaton auto)
         {
             // inputVariable property checkType: isEmpty, isNotEmpty;
             // inputVariable reference collection proposal
@@ -2088,51 +2091,51 @@ namespace AasxServer
             {
             }
 
-            if (op.inputVariable.Count != 2 && op.outputVariable.Count != 1)
+            if (op.InputVariables.Count != 2 && op.OutputVariables.Count != 1)
             {
                 return false;
             }
 
-            AdminShell.Property operation = null;
-            AdminShell.SubmodelElementCollection inputCollection = null;
-            AdminShell.Property outputProperty = null;
-            AdminShell.SubmodelElementCollection outputCollection = null;
+            Property operation = null;
+            SubmodelElementCollection inputCollection = null;
+            Property outputProperty = null;
+            SubmodelElementCollection outputCollection = null;
 
-            foreach (var input in op.inputVariable)
+            foreach (var input in op.InputVariables)
             {
-                var inputRef = input.value.submodelElement;
-                if (inputRef is AdminShell.Property)
+                var inputRef = input.Value;
+                if (inputRef is Property)
                 {
-                    operation = (inputRef as AdminShell.Property);
+                    operation = (inputRef as Property);
                     continue;
                 }
-                if (!(inputRef is AdminShell.ReferenceElement))
+                if (!(inputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += inputRef.idShort + " not found! ";
-                if (refElement is AdminShell.SubmodelElementCollection)
+                    auto.getErrors += inputRef.IdShort + " not found! ";
+                if (refElement is SubmodelElementCollection)
                 {
-                    inputCollection = refElement as AdminShell.SubmodelElementCollection;
+                    inputCollection = refElement as SubmodelElementCollection;
                 }
             }
 
-            foreach (var output in op.outputVariable)
+            foreach (var output in op.OutputVariables)
             {
-                var outputRef = output.value.submodelElement;
-                if (!(outputRef is AdminShell.ReferenceElement))
+                var outputRef = output.Value;
+                if (!(outputRef is ReferenceElement))
                     return false;
-                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as AdminShell.ReferenceElement).GetModelReference());
+                var refElement = Program.env[0].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
                 if (refElement == null)
-                    auto.getErrors += outputRef.idShort + " not found! ";
-                if (refElement is AdminShell.Property)
+                    auto.getErrors += outputRef.IdShort + " not found! ";
+                if (refElement is Property)
                 {
-                    outputProperty = (refElement as AdminShell.Property);
+                    outputProperty = (refElement as Property);
                     continue;
                 }
-                if (refElement is AdminShell.SubmodelElementCollection)
+                if (refElement is SubmodelElementCollection)
                 {
-                    outputCollection = (refElement as AdminShell.SubmodelElementCollection);
+                    outputCollection = (refElement as SubmodelElementCollection);
                     continue;
                 }
             }
@@ -2140,19 +2143,19 @@ namespace AasxServer
             if (operation == null || inputCollection == null || (outputProperty == null && outputCollection == null))
                 return false;
 
-            switch (operation.idShort)
+            switch (operation.IdShort)
             {
                 case "length":
-                    outputProperty.value = inputCollection.value.Count.ToString();
+                    outputProperty.Value = inputCollection.Value.Count.ToString();
                     break;
                 case "getFirst":
                     if (outputProperty != null)
-                        outputProperty.value = inputCollection.value[0].submodelElement.ValueAsText();
+                        outputProperty.Value = inputCollection.Value[0].ValueAsText();
                     if (outputCollection != null)
                     {
-                        outputCollection.Add(inputCollection.value[0].submodelElement);
+                        outputCollection.Value.Add(inputCollection.Value[0]);
                     }
-                    inputCollection.value.RemoveAt(0);
+                    inputCollection.Value.RemoveAt(0);
                     break;
             }
 

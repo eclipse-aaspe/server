@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
 using Opc.Ua;
 
@@ -24,9 +25,9 @@ namespace AasOpcUaServer
             return clean;
         }
 
-        public static string ToOpcUaReference(AdminShell.ModelReference refid)
+        public static string ToOpcUaReference(Reference refid)
         {
-            if (refid == null || refid.IsEmpty)
+            if (refid == null || refid.Keys == null || refid.Keys.Count == 0)
                 return null;
 
             var semstr = "";
@@ -35,77 +36,48 @@ namespace AasOpcUaServer
                 if (semstr != "")
                     semstr += ",";
                 semstr += String.Format("({0}){1}",
-                            k.type, k.value);
+                            k.Type, k.Value);
             }
 
             return semstr;
         }
 
-        public static string ToOpcUaReference(AdminShell.GlobalReference refid)
+
+        public static List<string> ToOpcUaReferenceList(Reference refid)
         {
-            if (refid == null || refid.IsEmpty)
-                return null;
-
-            var semstr = "";
-            foreach (var k in refid.Value)
-            {
-                if (semstr != "")
-                    semstr += ",";
-                semstr += String.Format("{0}", k.value);
-            }
-
-            return semstr;
-        }
-
-        public static List<string> ToOpcUaReferenceList(AdminShell.ModelReference refid)
-        {
-            if (refid == null || refid.IsEmpty)
+            if (refid == null || refid.Keys == null || refid.Keys.Count == 0)
                 return null;
 
             var res = new List<string>();
             foreach (var k in refid.Keys)
             {
-                res.Add(String.Format("{0}", k.value));
+                res.Add(String.Format("{0}", k.Value));
             }
 
             return res;
         }
 
-        public static List<string> ToOpcUaReferenceList(AdminShell.GlobalReference refid)
+        public static LocalizedText[] GetUaLocalizedTexts(LangStringSet ls)
         {
-            if (refid == null || refid.IsEmpty)
-                return null;
-
-            var res = new List<string>();
-            foreach (var k in refid.Value)
-            {
-                res.Add(String.Format("{0}", k.value));
-            }
-
-            return res;
-        }
-
-        public static LocalizedText[] GetUaLocalizedTexts(IList<AdminShell.LangStr> ls)
-        {
-            if (ls == null || ls.Count < 1)
+            if (ls == null || ls.LangStrings.Count < 1)
                 return new LocalizedText[] { new LocalizedText("", "") };
-            var res = new LocalizedText[ls.Count];
-            for (int i = 0; i < ls.Count; i++)
-                res[i] = new LocalizedText(ls[i].lang, ls[i].str);
+            var res = new LocalizedText[ls.LangStrings.Count];
+            for (int i = 0; i < ls.LangStrings.Count; i++)
+                res[i] = new LocalizedText(ls.LangStrings[i].Language, ls.LangStrings[i].Text);
             return res;
         }
 
-        public static LocalizedText GetBestUaDescriptionFromAasDescription(AdminShell.Description desc)
+        public static LocalizedText GetBestUaDescriptionFromAasDescription(LangStringSet desc)
         {
             var res = new LocalizedText("", "");
-            if (desc != null && desc.langString != null)
+            if (desc != null && desc.LangStrings != null)
             {
                 var found = false;
-                foreach (var ls in desc.langString)
-                    if (!found || ls.lang.Trim().ToLower().StartsWith("en"))
+                foreach (var ls in desc.LangStrings)
+                    if (!found || ls.Language.Trim().ToLower().StartsWith("en"))
                     {
                         found = true;
-                        res = new LocalizedText(ls.lang, ls.str);
+                        res = new LocalizedText(ls.Language, ls.Text);
                     }
             }
             return res;

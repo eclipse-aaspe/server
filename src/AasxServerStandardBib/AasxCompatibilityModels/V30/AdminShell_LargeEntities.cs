@@ -21,10 +21,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
+using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace AdminShellNS
+//namespace AdminShellNS
+namespace AdminShell_V30
 {
     /// <summary>
     /// Partial main class of AdminShell: SubmodelElements
@@ -255,7 +257,7 @@ namespace AdminShellNS
             public ListOfIdentifierKeyValuePair specificAssetId = null;
 
             // new in V3RC02
-            public File defaultThumbnail = null;
+            public Resource defaultThumbnail = null;
 
             // some fake information
             [XmlIgnore]
@@ -312,7 +314,7 @@ namespace AdminShellNS
                     specificAssetId = new ListOfIdentifierKeyValuePair(src.specificAssetId);
 
                 if (src.defaultThumbnail != null)
-                    defaultThumbnail = new File(src.defaultThumbnail);
+                    defaultThumbnail = new Resource(src.defaultThumbnail);
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -1469,7 +1471,7 @@ namespace AdminShellNS
                 var sew = new SubmodelElementWrapper();
                 sme.parent = this; // track parent here!
                 sew.submodelElement = sme;
-                if (index < 0 || index >= submodelElements.Count)
+                if (index < 0 || index > submodelElements.Count)
                     return;
                 submodelElements.Insert(index, sew);
             }

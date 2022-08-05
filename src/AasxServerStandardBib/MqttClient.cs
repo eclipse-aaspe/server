@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
 using MQTTnet;
 using MQTTnet.Client;
@@ -53,7 +54,7 @@ namespace AasxMqttClient
                 if (iAASEnv == lastAASEnv && package[iAASEnv] != null)
                 {
                     //publish AAS to AAS Topic
-                    foreach (AdminShell.AdministrationShell aas in package[iAASEnv].AasEnv.AdministrationShells)
+                    foreach (AssetAdministrationShell aas in package[iAASEnv].AasEnv.AssetAdministrationShells)
                     {
 
 
@@ -63,10 +64,10 @@ namespace AasxMqttClient
                         {
                             if (iSubmodel == lastSubmodel)
                             {
-                                Console.WriteLine("Publish MQTT AAS " + aas.idShort + " Submodel_" + sm.idShort);
+                                Console.WriteLine("Publish MQTT AAS " + aas.IdShort + " Submodel_" + sm.IdShort);
 
                                 var message2 = new MqttApplicationMessageBuilder()
-                                                .WithTopic("Submodel_" + sm.idShort)
+                                                .WithTopic("Submodel_" + sm.IdShort)
                                                 .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(sm))
                                                 .WithExactlyOnceQoS()
                                                 .WithRetainFlag()
