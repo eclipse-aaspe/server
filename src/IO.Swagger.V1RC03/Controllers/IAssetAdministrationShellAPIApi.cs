@@ -29,7 +29,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Submodel reference deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteSubmodelReferenceById([FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult DeleteSubmodelReferenceById([FromRoute][Required]string submodelIdentifier);
 
         /// <summary>
         /// Returns all submodel references

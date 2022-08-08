@@ -571,7 +571,7 @@ namespace AasxRestServerLibrary
                                 if ((doCreateDelete || doUpdate) == false)
                                     throw new Exception("invalid flags");
 
-                                DateTime diffTimeStamp = sm.TimeStamp;
+                                DateTime? diffTimeStamp = sm.TimeStamp;
                                 var strMode = "";
                                 if (doCreateDelete)
                                     strMode = "CREATE";
@@ -1049,7 +1049,7 @@ namespace AasxRestServerLibrary
                                                 if (searchPath == "" || (p.Length <= searchPathLen && p == searchPath.Substring(0, p.Length)))
                                                 {
                                                     addEntry(diffJson, ref diffText, ref diffList,
-                                                        mode, p, "SM", sm.TimeStamp);
+                                                        mode, p, "SM", (DateTime)sm.TimeStamp);
                                                 }
                                             }
 

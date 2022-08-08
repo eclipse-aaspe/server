@@ -41,7 +41,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteSubmodelById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteSubmodelById([FromRoute][Required]byte[] submodelIdentifier)
+        public virtual IActionResult DeleteSubmodelById([FromRoute][Required]string submodelIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -98,8 +98,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelById([FromRoute][Required]byte[] submodelIdentifier)
-        { 
+        public virtual IActionResult GetSubmodelById([FromRoute][Required]string submodelIdentifier)
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(Submodel));
 
@@ -108,13 +108,13 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
+
+            var sm = new Submodel("test-identifier");
+            //var json = AasCore.Aas3_0_RC02.Jsonization.Serialize.ToJsonObject(sm);
+
+            //string exampleJson = json.ToJsonString();
             
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<Submodel>(exampleJson)
-                        : default(Submodel);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            return new ObjectResult(sm);
         }
 
         /// <summary>
@@ -124,9 +124,9 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Submodel created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
+        //[ValidateModelState]
         [HttpPost]
         [Route("/submodels")]
-        [ValidateModelState]
         [SwaggerOperation("PostSubmodel")]
         [SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
@@ -166,7 +166,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelById([FromBody]Submodel body, [FromRoute][Required]byte[] submodelIdentifier)
+        public virtual IActionResult PutSubmodelById([FromBody]Submodel body, [FromRoute][Required]string submodelIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

@@ -30,7 +30,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Submodel deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteSubmodelById([FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult DeleteSubmodelById([FromRoute][Required]string submodelIdentifier);
 
         /// <summary>
         /// Returns all Submodels
@@ -50,7 +50,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested Submodel</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetSubmodelById([FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult GetSubmodelById([FromRoute][Required]string submodelIdentifier);
 
         /// <summary>
         /// Creates a new Submodel
@@ -72,6 +72,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutSubmodelById([FromBody]Submodel body, [FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult PutSubmodelById([FromBody]Submodel body, [FromRoute][Required]string submodelIdentifier);
     }
 }

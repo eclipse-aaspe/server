@@ -40,7 +40,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteSubmodelReferenceById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteSubmodelReferenceById([FromRoute][Required]byte[] submodelIdentifier)
+        public virtual IActionResult DeleteSubmodelReferenceById([FromRoute][Required]string submodelIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

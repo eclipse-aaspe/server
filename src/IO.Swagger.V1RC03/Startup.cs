@@ -58,14 +58,14 @@ namespace IO.Swagger.V1RC03
                 {
                     options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
                     options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
+                    options.InputFormatters.Add(new AasCoreInputFormatter());
+                    options.OutputFormatters.Add(new AasCoreOutputFormatter());
                 })
                 .AddNewtonsoftJson(opts =>
                 {
                     opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
-                })
-                .AddXmlSerializerFormatters();
-
+                });
 
             services
                 .AddSwaggerGen(c =>

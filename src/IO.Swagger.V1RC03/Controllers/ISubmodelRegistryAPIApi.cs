@@ -29,7 +29,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Submodel Descriptor deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteSubmodelDescriptorById([FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult DeleteSubmodelDescriptorById([FromRoute][Required]string submodelIdentifier);
 
         /// <summary>
         /// Returns all Submodel Descriptors
@@ -47,7 +47,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested Submodel Descriptor</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetSubmodelDescriptorById([FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult GetSubmodelDescriptorById([FromRoute][Required]string submodelIdentifier);
 
         /// <summary>
         /// Creates a new Submodel Descriptor, i.e. registers a submodel
@@ -69,6 +69,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutSubmodelDescriptorById([FromBody]SubmodelDescriptor body, [FromRoute][Required]byte[] submodelIdentifier);
+        IActionResult PutSubmodelDescriptorById([FromBody]SubmodelDescriptor body, [FromRoute][Required]string submodelIdentifier);
     }
 }
