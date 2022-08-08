@@ -159,6 +159,10 @@ namespace AasxServerBlazor
                 //TODO: Either use the SwaggerGen generated Swagger contract (generated from C# classes)
                 c.SwaggerEndpoint("Final-Draft/swagger.json", "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository");
                 c.RoutePrefix = "swagger";
+                c.ConfigObject.AdditionalItems["syntaxHighlight"] = new Dictionary<string, object>
+                {
+                    ["activated"] = false
+                };
 
                 //TODO: Or alternatively use the original Swagger contract that's included in the static files
                 // c.SwaggerEndpoint("swagger-original.json", "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository Original");

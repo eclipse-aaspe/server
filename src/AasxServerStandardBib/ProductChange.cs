@@ -462,7 +462,7 @@ namespace ProductChange
                 foreach (System.IO.FileInfo fi in ParentDirectory.GetFiles("*.xml"))
                 {
                     string name = fi.Name;
-                    var c = AdminShell.SubmodelElementCollection.CreateNew(name);
+                    var c = AdminShell.SubmodelElementCollection.CreateNew(name.Replace(".", "_"));
                     c.TimeStampCreate = timeStamp;
                     c.setTimeStamp(timeStamp);
                     /*
