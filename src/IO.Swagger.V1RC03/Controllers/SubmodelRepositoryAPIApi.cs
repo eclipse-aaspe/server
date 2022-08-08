@@ -69,19 +69,18 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<Submodel>), description: "Requested Submodels")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodels([FromQuery]string semanticId, [FromQuery]string idShort)
-        { 
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<Submodel>));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "[ \"\", \"\" ]";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<Submodel>>(exampleJson)
-                        : default(List<Submodel>);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            var list = new List<Submodel>();
+            list.Add(new Submodel("test-identifier1"));
+            list.Add(new Submodel("test-identifier2"));
+            list.Add(new Submodel("test-identifier3"));
+
+            return new ObjectResult(list);
         }
 
         /// <summary>
