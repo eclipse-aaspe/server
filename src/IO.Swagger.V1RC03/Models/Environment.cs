@@ -17,6 +17,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using AasCore.Aas3_0_RC02;
+
 
 namespace IO.Swagger.V1RC03.Models
 { 
