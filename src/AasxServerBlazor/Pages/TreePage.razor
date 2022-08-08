@@ -1376,6 +1376,10 @@
             {
                 ret += " #" + sme.Value.Count;
             }
+            if (sme.qualifiers != null && sme.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
         }
         if (o is ISubmodelElement)
         {
@@ -1563,8 +1567,7 @@
                     }
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = getQualifiers(sm.Qualifiers, col);
+                    ret = getQualifiers(sm.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1612,8 +1615,7 @@
                         ret = prop.Value + "";
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(prop.Qualifiers, col);
+                    ret = getQualifiers(prop.qualifiers, col);
                     break;
                 case 4:
                     if (col == 0)
@@ -1689,8 +1691,7 @@
                     }
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(e.Qualifiers, col);
+                    ret = getQualifiers(e.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1729,8 +1730,7 @@
                         ret = f.Value;
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = getQualifiers(f.Qualifiers, col);
+                    ret = getQualifiers(f.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1776,8 +1776,7 @@
                         ret = System.Text.Encoding.ASCII.GetString(b.Value);
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(b.Qualifiers, col);
+                    ret = getQualifiers(b.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1823,8 +1822,7 @@
                         ret = r.Max + "";
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(r.Qualifiers, col);
+                    ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 4:
                     if (col == 0)
@@ -1885,8 +1883,7 @@
                     }
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(op.Qualifiers, col);
+                    ret = getQualifiers(op.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -2006,8 +2003,7 @@
                     }
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(r.Qualifiers, col);
+                    ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -2057,8 +2053,7 @@
                     }
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = getQualifiers(r.Qualifiers, col);
+                    ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -2110,8 +2105,7 @@
                     }
                     break;
                 case 5:
-                    if (col == 0)
-                        ret = getQualifiers(mlp.Qualifiers, col);
+                    ret = getQualifiers(mlp.qualifiers, col);
                     break;
                 case 6:
                 case 7:
@@ -2143,8 +2137,7 @@
                     }
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = getQualifiers(sme.Qualifiers, col);
+                    ret = getQualifiers(sme.qualifiers, col);
                     break;
                 case 2:
                 case 3:
@@ -2169,7 +2162,8 @@
 
         if (q != null && q.Count > 0)
         {
-            ret = "Qualifiers";
+            if (col == 0)
+                ret = "Qualifiers";
             if (col == 1)
             {
                 ret = "";
@@ -2177,10 +2171,13 @@
                 {
                     if (i != 0)
                         ret += ", ";
-                    ret += q[i].Type + " ";
-                    if (q[i].Value != "")
+                    if (q[i].type != null && q[i].type != "")
                     {
-                        ret += "= " + q[i].Value;
+                        ret += q[i].type + " ";
+                    }
+                    if (q[i].value != null && q[i].value != "")
+                    {
+                        ret += "= " + q[i].value;
                     }
                 }
             }
