@@ -6,6 +6,7 @@ using System.CommandLine.IO;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -22,6 +23,10 @@ using AasxMqttServer;
 using AasxRestServerLibrary;
 using AdminShellNS;
 using Jose;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Search;
+using MailKit.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -539,6 +544,8 @@ namespace AasxServer
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
+
+            ProductChange.pcn.pcnInit();
 
             isLoading = false;
 

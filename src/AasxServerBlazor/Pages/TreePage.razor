@@ -1306,6 +1306,10 @@
             {
                 ret += " #" + sme.value.Count;
             }
+            if (sme.qualifiers != null && sme.qualifiers.Count > 0)
+            {
+                ret += " @QUALIFIERS";
+            }
         }
         if (o is SubmodelElement)
         {
@@ -1494,8 +1498,7 @@
                     }
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = getQualifiers(sm.qualifiers, col);
+                    ret = getQualifiers(sm.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1543,8 +1546,7 @@
                         ret = prop.value + "";
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(prop.qualifiers, col);
+                    ret = getQualifiers(prop.qualifiers, col);
                     break;
                 case 4:
                     if (col == 0)
@@ -1606,8 +1608,7 @@
                     }
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(e.qualifiers, col);
+                    ret = getQualifiers(e.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1647,8 +1648,7 @@
                         ret = f.value;
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = getQualifiers(f.qualifiers, col);
+                    ret = getQualifiers(f.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1695,8 +1695,7 @@
                         ret = b.value;
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(b.qualifiers, col);
+                    ret = getQualifiers(b.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1742,8 +1741,7 @@
                         ret = r.max + "";
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(r.qualifiers, col);
+                    ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 4:
                     if (col == 0)
@@ -1804,8 +1802,7 @@
                     }
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(op.qualifiers, col);
+                    ret = getQualifiers(op.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1865,8 +1862,7 @@
                     }
                     break;
                 case 3:
-                    if (col == 0)
-                        ret = getQualifiers(r.qualifiers, col);
+                    ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1916,8 +1912,7 @@
                     }
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = getQualifiers(r.qualifiers, col);
+                    ret = getQualifiers(r.qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1969,8 +1964,7 @@
                     }
                     break;
                 case 5:
-                    if (col == 0)
-                        ret = getQualifiers(mlp.qualifiers, col);
+                    ret = getQualifiers(mlp.qualifiers, col);
                     break;
                 case 6:
                 case 7:
@@ -2002,8 +1996,7 @@
                     }
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = getQualifiers(sme.qualifiers, col);
+                    ret = getQualifiers(sme.qualifiers, col);
                     break;
                 case 2:
                 case 3:
@@ -2028,7 +2021,8 @@
 
         if (q != null && q.Count > 0)
         {
-            ret = "Qualifiers";
+            if (col == 0)
+                ret = "Qualifiers";
             if (col == 1)
             {
                 ret = "";
@@ -2036,8 +2030,11 @@
                 {
                     if (i != 0)
                         ret += ", ";
-                    ret += q[i].type + " ";
-                    if (q[i].value != "")
+                    if (q[i].type != null && q[i].type != "")
+                    {
+                        ret += q[i].type + " ";
+                    }
+                    if (q[i].value != null && q[i].value != "")
                     {
                         ret += "= " + q[i].value;
                     }
