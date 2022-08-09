@@ -18,11 +18,17 @@ namespace IO.Swagger.V1RC03
 
         }
 
-        public bool CanRead(InputFormatterContext context)
+        public override bool CanRead(InputFormatterContext context)
         {
-            //add more logic so that only aascore type are read
-            return base.CanRead(context);
+            if (typeof(IClass).IsAssignableFrom(context.ModelType)){
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
+
 
         public override Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
         {
@@ -37,14 +43,17 @@ namespace IO.Swagger.V1RC03
 
             if (type == typeof(Submodel))
             {
-                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.SubmodelFrom(node); 
-            } else if (type == typeof(AssetAdministrationShell))
+                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.SubmodelFrom(node);
+            }
+            else if (type == typeof(AssetAdministrationShell))
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.AssetAdministrationShellFrom(node);
-            } else if(type == typeof(SpecificAssetId))
+            }
+            else if (type == typeof(SpecificAssetId))
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.SpecificAssetIdFrom(node);
-            } else if(type == typeof(AasCore.Aas3_0_RC02.ISubmodelElement))
+            }
+            else if (type == typeof(AasCore.Aas3_0_RC02.ISubmodelElement))
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ISubmodelElementFrom(node);
             }
