@@ -96,7 +96,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelDescriptorById([FromRoute][Required]string submodelIdentifier)
-        { 
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(SubmodelDescriptor));
 
@@ -105,11 +105,14 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = null;
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<SubmodelDescriptor>(exampleJson)
-                        : default(SubmodelDescriptor);            //TODO: Change the data returned
+            var example = new SubmodelDescriptor();
+            example.Administration = new AasCore.Aas3_0_RC02.AdministrativeInformation();
+            example.SemanticId = new AasCore.Aas3_0_RC02.Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, new List<AasCore.Aas3_0_RC02.Key>());
+//            string exampleJson = null;
+//            exampleJson = null;
+//                        var example = exampleJson != null
+//                        ? JsonConvert.DeserializeObject<SubmodelDescriptor>(exampleJson)
+//                        : default(SubmodelDescriptor);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
