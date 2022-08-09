@@ -64,7 +64,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Operation result object</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetOperationAsyncResult([FromRoute][Required]string idShortPath, [FromRoute][Required]byte[] handleId, [FromQuery]string content);
+        IActionResult GetOperationAsyncResult([FromRoute][Required]string idShortPath, [FromRoute][Required]string handleId, [FromQuery]string content);
 
         /// <summary>
         /// Returns the Submodel

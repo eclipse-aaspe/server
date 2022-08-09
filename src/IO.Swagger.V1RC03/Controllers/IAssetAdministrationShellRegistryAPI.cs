@@ -101,7 +101,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelDescriptorAASRegistry([FromBody]SubmodelDescriptor body, [FromRoute][Required]byte[] aasIdentifier);
+        IActionResult PostSubmodelDescriptorAASRegistry([FromBody]SubmodelDescriptor body, [FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Updates an existing Asset Administration Shell Descriptor
@@ -113,7 +113,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutAssetAdministrationShellDescriptorById([FromBody]AssetAdministrationShellDescriptor body, [FromRoute][Required]byte[] aasIdentifier);
+        IActionResult PutAssetAdministrationShellDescriptorById([FromBody]AssetAdministrationShellDescriptor body, [FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Updates an existing Submodel Descriptor

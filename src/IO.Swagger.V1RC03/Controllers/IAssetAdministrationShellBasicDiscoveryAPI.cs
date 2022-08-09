@@ -28,7 +28,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Specific Asset identifiers deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult DeleteAllAssetLinksById([FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Returns a list of Asset Administration Shell ids linked to specific Asset identifiers
@@ -47,7 +47,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested specific Asset identifiers</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult GetAllAssetLinksById([FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Creates specific Asset identifiers linked to an Asset Administration Shell to edit discoverable content

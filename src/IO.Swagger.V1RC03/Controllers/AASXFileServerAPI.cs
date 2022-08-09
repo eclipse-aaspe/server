@@ -41,7 +41,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteAASXByPackageId")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAASXByPackageId([FromRoute][Required]byte[] packageId)
+        public virtual IActionResult DeleteAASXByPackageId([FromRoute][Required]string packageId)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

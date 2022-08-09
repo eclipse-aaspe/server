@@ -41,7 +41,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteAllAssetLinksById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult DeleteAllAssetLinksById([FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -97,7 +97,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<AasCore.Aas3_0_RC02.SpecificAssetId>), description: "Requested specific Asset identifiers")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult GetAllAssetLinksById([FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<AasCore.Aas3_0_RC02.SpecificAssetId>));

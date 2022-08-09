@@ -28,7 +28,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Concept Description deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteConceptDescriptionById([FromRoute][Required]byte[] cdIdentifier);
+        IActionResult DeleteConceptDescriptionById([FromRoute][Required]string cdIdentifier);
 
         /// <summary>
         /// Returns all Concept Descriptions
@@ -39,7 +39,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="dataSpecificationRef">DataSpecification reference (UTF8-BASE64-URL-encoded)</param>
         /// <response code="200">Requested Concept Descriptions</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllConceptDescriptions([FromQuery]string idShort, [FromQuery]byte[] isCaseOf, [FromQuery]byte[] dataSpecificationRef);
+        IActionResult GetAllConceptDescriptions([FromQuery]string idShort, [FromQuery]string isCaseOf, [FromQuery]string dataSpecificationRef);
 
         /// <summary>
         /// Returns a specific Concept Description
@@ -49,7 +49,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested Concept Description</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetConceptDescriptionById([FromRoute][Required]byte[] cdIdentifier);
+        IActionResult GetConceptDescriptionById([FromRoute][Required]string cdIdentifier);
 
         /// <summary>
         /// Creates a new Concept Description
@@ -71,6 +71,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutConceptDescriptionById([FromBody] AasCore.Aas3_0_RC02.ConceptDescription body, [FromRoute][Required]byte[] cdIdentifier);
+        IActionResult PutConceptDescriptionById([FromBody] AasCore.Aas3_0_RC02.ConceptDescription body, [FromRoute][Required]string cdIdentifier);
     }
 }

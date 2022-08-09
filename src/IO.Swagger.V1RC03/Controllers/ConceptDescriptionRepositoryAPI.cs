@@ -41,7 +41,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteConceptDescriptionById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteConceptDescriptionById([FromRoute][Required]byte[] cdIdentifier)
+        public virtual IActionResult DeleteConceptDescriptionById([FromRoute][Required]string cdIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -69,7 +69,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllConceptDescriptions")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<AasCore.Aas3_0_RC02.ConceptDescription>), description: "Requested Concept Descriptions")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllConceptDescriptions([FromQuery]string idShort, [FromQuery]byte[] isCaseOf, [FromQuery]byte[] dataSpecificationRef)
+        public virtual IActionResult GetAllConceptDescriptions([FromQuery]string idShort, [FromQuery]string isCaseOf, [FromQuery]string dataSpecificationRef)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<ConceptDescription>));
@@ -99,7 +99,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AasCore.Aas3_0_RC02.ConceptDescription), description: "Requested Concept Description")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetConceptDescriptionById([FromRoute][Required]byte[] cdIdentifier)
+        public virtual IActionResult GetConceptDescriptionById([FromRoute][Required]string cdIdentifier)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(ConceptDescription));
@@ -167,7 +167,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutConceptDescriptionById([FromBody] AasCore.Aas3_0_RC02.ConceptDescription body, [FromRoute][Required]byte[] cdIdentifier)
+        public virtual IActionResult PutConceptDescriptionById([FromBody] AasCore.Aas3_0_RC02.ConceptDescription body, [FromRoute][Required]string cdIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

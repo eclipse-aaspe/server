@@ -255,7 +255,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelDescriptorAASRegistry([FromBody]SubmodelDescriptor body, [FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult PostSubmodelDescriptorAASRegistry([FromBody]SubmodelDescriptor body, [FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(SubmodelDescriptor));
@@ -292,7 +292,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutAssetAdministrationShellDescriptorById([FromBody]AssetAdministrationShellDescriptor body, [FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult PutAssetAdministrationShellDescriptorById([FromBody]AssetAdministrationShellDescriptor body, [FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

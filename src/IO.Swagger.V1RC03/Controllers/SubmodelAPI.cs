@@ -140,7 +140,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetOperationAsyncResult([FromRoute][Required]string idShortPath, [FromRoute][Required]byte[] handleId, [FromQuery]string content)
+        public virtual IActionResult GetOperationAsyncResult([FromRoute][Required]string idShortPath, [FromRoute][Required]string handleId, [FromQuery]string content)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(OperationResult));

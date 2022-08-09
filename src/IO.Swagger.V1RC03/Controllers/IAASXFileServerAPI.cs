@@ -28,7 +28,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteAASXByPackageId([FromRoute][Required]byte[] packageId);
+        IActionResult DeleteAASXByPackageId([FromRoute][Required]string packageId);
 
         /// <summary>
         /// Returns a specific AASX package from the server
@@ -38,7 +38,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested AASX package</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAASXByPackageId([FromRoute][Required]byte[] packageId);
+        IActionResult GetAASXByPackageId([FromRoute][Required]string packageId);
 
         /// <summary>
         /// Returns a list of available AASX packages at the server
@@ -47,7 +47,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="aasId">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="200">Requested package list</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllAASXPackageIds([FromQuery]byte[] aasId);
+        IActionResult GetAllAASXPackageIds([FromQuery]string aasId);
 
 
     }
