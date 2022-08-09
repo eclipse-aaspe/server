@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using AasCore.Aas3_0_RC02;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -715,5 +716,865 @@ namespace IO.Swagger.V1RC03.ApiModel
         /// </summary>
         [EnumMember(Value = "Timeout")]
         TimeoutEnum = 5
+    }
+
+    [DataContract]
+    public partial class PackageDescription : IEquatable<PackageDescription>
+    {
+        /// <summary>
+        /// Gets or Sets AasIds
+        /// </summary>
+
+        [DataMember(Name = "aasIds")]
+        public List<string> AasIds { get; set; }
+
+        /// <summary>
+        /// Gets or Sets PackageId
+        /// </summary>
+
+        [DataMember(Name = "packageId")]
+        public string PackageId { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class PackageDescription {\n");
+            sb.Append("  AasIds: ").Append(AasIds).Append("\n");
+            sb.Append("  PackageId: ").Append(PackageId).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType() && Equals((PackageDescription)obj);
+        }
+
+        /// <summary>
+        /// Returns true if PackageDescription instances are equal
+        /// </summary>
+        /// <param name="other">Instance of PackageDescription to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(PackageDescription other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return
+                (
+                    AasIds == other.AasIds ||
+                    AasIds != null &&
+                    AasIds.SequenceEqual(other.AasIds)
+                ) &&
+                (
+                    PackageId == other.PackageId ||
+                    PackageId != null &&
+                    PackageId.Equals(other.PackageId)
+                );
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                var hashCode = 41;
+                // Suitable nullity checks etc, of course :)
+                if (AasIds != null)
+                    hashCode = hashCode * 59 + AasIds.GetHashCode();
+                if (PackageId != null)
+                    hashCode = hashCode * 59 + PackageId.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        #region Operators
+#pragma warning disable 1591
+
+        public static bool operator ==(PackageDescription left, PackageDescription right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(PackageDescription left, PackageDescription right)
+        {
+            return !Equals(left, right);
+        }
+
+#pragma warning restore 1591
+        #endregion Operators
+    }
+
+    [DataContract]
+    public partial class Descriptor : IEquatable<Descriptor>
+    {
+        /// <summary>
+        /// Gets or Sets Endpoints
+        /// </summary>
+
+        [DataMember(Name = "endpoints")]
+        public List<Endpoint> Endpoints { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class Descriptor {\n");
+            sb.Append("  Endpoints: ").Append(Endpoints).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType() && Equals((Descriptor)obj);
+        }
+
+        /// <summary>
+        /// Returns true if Descriptor instances are equal
+        /// </summary>
+        /// <param name="other">Instance of Descriptor to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(Descriptor other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return
+                (
+                    Endpoints == other.Endpoints ||
+                    Endpoints != null &&
+                    Endpoints.SequenceEqual(other.Endpoints)
+                );
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                var hashCode = 41;
+                // Suitable nullity checks etc, of course :)
+                if (Endpoints != null)
+                    hashCode = hashCode * 59 + Endpoints.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        #region Operators
+#pragma warning disable 1591
+
+        public static bool operator ==(Descriptor left, Descriptor right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(Descriptor left, Descriptor right)
+        {
+            return !Equals(left, right);
+        }
+
+#pragma warning restore 1591
+        #endregion Operators
+    }
+
+    [DataContract]
+    public partial class AssetAdministrationShellDescriptor : Descriptor, IEquatable<AssetAdministrationShellDescriptor>
+    {
+        /// <summary>
+        /// Gets or Sets Administration
+        /// </summary>
+
+        [DataMember(Name = "administration")]
+        public AdministrativeInformation Administration { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Descriptions
+        /// </summary>
+
+        [DataMember(Name = "descriptions")]
+        public List<AasCore.Aas3_0_RC02.LangString> Descriptions { get; set; }
+
+        /// <summary>
+        /// Gets or Sets DisplayNames
+        /// </summary>
+
+        [DataMember(Name = "displayNames")]
+        public List<LangString> DisplayNames { get; set; }
+
+        /// <summary>
+        /// Gets or Sets GlobalAssetId
+        /// </summary>
+
+        [DataMember(Name = "globalAssetId")]
+        public AasCore.Aas3_0_RC02.Reference GlobalAssetId { get; set; }
+
+        /// <summary>
+        /// Gets or Sets IdShort
+        /// </summary>
+
+        [DataMember(Name = "idShort")]
+        public string IdShort { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Identification
+        /// </summary>
+        [Required]
+
+        [DataMember(Name = "identification")]
+        public string Identification { get; set; }
+
+        /// <summary>
+        /// Gets or Sets SpecificAssetIds
+        /// </summary>
+
+        [DataMember(Name = "specificAssetIds")]
+        public AasCore.Aas3_0_RC02.SpecificAssetId SpecificAssetIds { get; set; }
+
+        /// <summary>
+        /// Gets or Sets SubmodelDescriptors
+        /// </summary>
+
+        [DataMember(Name = "submodelDescriptors")]
+        public List<SubmodelDescriptor> SubmodelDescriptors { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class AssetAdministrationShellDescriptor {\n");
+            sb.Append("  Administration: ").Append(Administration).Append("\n");
+            sb.Append("  Descriptions: ").Append(Descriptions).Append("\n");
+            sb.Append("  DisplayNames: ").Append(DisplayNames).Append("\n");
+            sb.Append("  GlobalAssetId: ").Append(GlobalAssetId).Append("\n");
+            sb.Append("  IdShort: ").Append(IdShort).Append("\n");
+            sb.Append("  Identification: ").Append(Identification).Append("\n");
+            sb.Append("  SpecificAssetIds: ").Append(SpecificAssetIds).Append("\n");
+            sb.Append("  SubmodelDescriptors: ").Append(SubmodelDescriptors).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public new string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType() && Equals((AssetAdministrationShellDescriptor)obj);
+        }
+
+        /// <summary>
+        /// Returns true if AssetAdministrationShellDescriptor instances are equal
+        /// </summary>
+        /// <param name="other">Instance of AssetAdministrationShellDescriptor to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(AssetAdministrationShellDescriptor other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return
+                (
+                    Administration == other.Administration ||
+                    Administration != null &&
+                    Administration.Equals(other.Administration)
+                ) &&
+                (
+                    Descriptions == other.Descriptions ||
+                    Descriptions != null &&
+                    Descriptions.SequenceEqual(other.Descriptions)
+                ) &&
+                (
+                    DisplayNames == other.DisplayNames ||
+                    DisplayNames != null &&
+                    DisplayNames.SequenceEqual(other.DisplayNames)
+                ) &&
+                (
+                    GlobalAssetId == other.GlobalAssetId ||
+                    GlobalAssetId != null &&
+                    GlobalAssetId.Equals(other.GlobalAssetId)
+                ) &&
+                (
+                    IdShort == other.IdShort ||
+                    IdShort != null &&
+                    IdShort.Equals(other.IdShort)
+                ) &&
+                (
+                    Identification == other.Identification ||
+                    Identification != null &&
+                    Identification.Equals(other.Identification)
+                ) &&
+                (
+                    SpecificAssetIds == other.SpecificAssetIds ||
+                    SpecificAssetIds != null &&
+                    SpecificAssetIds.Equals(other.SpecificAssetIds)
+                ) &&
+                (
+                    SubmodelDescriptors == other.SubmodelDescriptors ||
+                    SubmodelDescriptors != null &&
+                    SubmodelDescriptors.SequenceEqual(other.SubmodelDescriptors)
+                );
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                var hashCode = 41;
+                // Suitable nullity checks etc, of course :)
+                if (Administration != null)
+                    hashCode = hashCode * 59 + Administration.GetHashCode();
+                if (Descriptions != null)
+                    hashCode = hashCode * 59 + Descriptions.GetHashCode();
+                if (DisplayNames != null)
+                    hashCode = hashCode * 59 + DisplayNames.GetHashCode();
+                if (GlobalAssetId != null)
+                    hashCode = hashCode * 59 + GlobalAssetId.GetHashCode();
+                if (IdShort != null)
+                    hashCode = hashCode * 59 + IdShort.GetHashCode();
+                if (Identification != null)
+                    hashCode = hashCode * 59 + Identification.GetHashCode();
+                if (SpecificAssetIds != null)
+                    hashCode = hashCode * 59 + SpecificAssetIds.GetHashCode();
+                if (SubmodelDescriptors != null)
+                    hashCode = hashCode * 59 + SubmodelDescriptors.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        #region Operators
+#pragma warning disable 1591
+
+        public static bool operator ==(AssetAdministrationShellDescriptor left, AssetAdministrationShellDescriptor right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(AssetAdministrationShellDescriptor left, AssetAdministrationShellDescriptor right)
+        {
+            return !Equals(left, right);
+        }
+
+#pragma warning restore 1591
+        #endregion Operators
+    }
+
+    [DataContract]
+    public partial class SubmodelDescriptor : Descriptor, IEquatable<SubmodelDescriptor>
+    {
+        /// <summary>
+        /// Gets or Sets Administration
+        /// </summary>
+
+        [DataMember(Name = "administration")]
+        public AdministrativeInformation Administration { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Descriptions
+        /// </summary>
+
+        [DataMember(Name = "descriptions")]
+        public List<LangString> Descriptions { get; set; }
+
+        /// <summary>
+        /// Gets or Sets DisplayNames
+        /// </summary>
+
+        [DataMember(Name = "displayNames")]
+        public List<LangString> DisplayNames { get; set; }
+
+        /// <summary>
+        /// Gets or Sets IdShort
+        /// </summary>
+
+        [DataMember(Name = "idShort")]
+        public string IdShort { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Identification
+        /// </summary>
+        [Required]
+
+        [DataMember(Name = "identification")]
+        public string Identification { get; set; }
+
+        /// <summary>
+        /// Gets or Sets SemanticId
+        /// </summary>
+
+        [DataMember(Name = "semanticId")]
+        public AasCore.Aas3_0_RC02.Reference SemanticId { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class SubmodelDescriptor {\n");
+            sb.Append("  Administration: ").Append(Administration).Append("\n");
+            sb.Append("  Descriptions: ").Append(Descriptions).Append("\n");
+            sb.Append("  DisplayNames: ").Append(DisplayNames).Append("\n");
+            sb.Append("  IdShort: ").Append(IdShort).Append("\n");
+            sb.Append("  Identification: ").Append(Identification).Append("\n");
+            sb.Append("  SemanticId: ").Append(SemanticId).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public new string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType() && Equals((SubmodelDescriptor)obj);
+        }
+
+        /// <summary>
+        /// Returns true if SubmodelDescriptor instances are equal
+        /// </summary>
+        /// <param name="other">Instance of SubmodelDescriptor to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(SubmodelDescriptor other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return
+                (
+                    Administration == other.Administration ||
+                    Administration != null &&
+                    Administration.Equals(other.Administration)
+                ) &&
+                (
+                    Descriptions == other.Descriptions ||
+                    Descriptions != null &&
+                    Descriptions.SequenceEqual(other.Descriptions)
+                ) &&
+                (
+                    DisplayNames == other.DisplayNames ||
+                    DisplayNames != null &&
+                    DisplayNames.SequenceEqual(other.DisplayNames)
+                ) &&
+                (
+                    IdShort == other.IdShort ||
+                    IdShort != null &&
+                    IdShort.Equals(other.IdShort)
+                ) &&
+                (
+                    Identification == other.Identification ||
+                    Identification != null &&
+                    Identification.Equals(other.Identification)
+                ) &&
+                (
+                    SemanticId == other.SemanticId ||
+                    SemanticId != null &&
+                    SemanticId.Equals(other.SemanticId)
+                );
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                var hashCode = 41;
+                // Suitable nullity checks etc, of course :)
+                if (Administration != null)
+                    hashCode = hashCode * 59 + Administration.GetHashCode();
+                if (Descriptions != null)
+                    hashCode = hashCode * 59 + Descriptions.GetHashCode();
+                if (DisplayNames != null)
+                    hashCode = hashCode * 59 + DisplayNames.GetHashCode();
+                if (IdShort != null)
+                    hashCode = hashCode * 59 + IdShort.GetHashCode();
+                if (Identification != null)
+                    hashCode = hashCode * 59 + Identification.GetHashCode();
+                if (SemanticId != null)
+                    hashCode = hashCode * 59 + SemanticId.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        #region Operators
+#pragma warning disable 1591
+
+        public static bool operator ==(SubmodelDescriptor left, SubmodelDescriptor right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(SubmodelDescriptor left, SubmodelDescriptor right)
+        {
+            return !Equals(left, right);
+        }
+
+#pragma warning restore 1591
+        #endregion Operators
+    }
+
+    [DataContract]
+    public partial class Endpoint : IEquatable<Endpoint>
+    {
+        /// <summary>
+        /// Gets or Sets _Interface
+        /// </summary>
+        [Required]
+
+        [DataMember(Name = "interface")]
+        public string _Interface { get; set; }
+
+        /// <summary>
+        /// Gets or Sets ProtocolInformation
+        /// </summary>
+        [Required]
+
+        [DataMember(Name = "protocolInformation")]
+        public ProtocolInformation ProtocolInformation { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class Endpoint {\n");
+            sb.Append("  _Interface: ").Append(_Interface).Append("\n");
+            sb.Append("  ProtocolInformation: ").Append(ProtocolInformation).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType() && Equals((Endpoint)obj);
+        }
+
+        /// <summary>
+        /// Returns true if Endpoint instances are equal
+        /// </summary>
+        /// <param name="other">Instance of Endpoint to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(Endpoint other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return
+                (
+                    _Interface == other._Interface ||
+                    _Interface != null &&
+                    _Interface.Equals(other._Interface)
+                ) &&
+                (
+                    ProtocolInformation == other.ProtocolInformation ||
+                    ProtocolInformation != null &&
+                    ProtocolInformation.Equals(other.ProtocolInformation)
+                );
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                var hashCode = 41;
+                // Suitable nullity checks etc, of course :)
+                if (_Interface != null)
+                    hashCode = hashCode * 59 + _Interface.GetHashCode();
+                if (ProtocolInformation != null)
+                    hashCode = hashCode * 59 + ProtocolInformation.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        #region Operators
+#pragma warning disable 1591
+
+        public static bool operator ==(Endpoint left, Endpoint right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(Endpoint left, Endpoint right)
+        {
+            return !Equals(left, right);
+        }
+
+#pragma warning restore 1591
+        #endregion Operators
+    }
+
+    [DataContract]
+    public partial class ProtocolInformation : IEquatable<ProtocolInformation>
+    {
+        /// <summary>
+        /// Gets or Sets EndpointAddress
+        /// </summary>
+        [Required]
+
+        [DataMember(Name = "endpointAddress")]
+        public string EndpointAddress { get; set; }
+
+        /// <summary>
+        /// Gets or Sets EndpointProtocol
+        /// </summary>
+
+        [DataMember(Name = "endpointProtocol")]
+        public string EndpointProtocol { get; set; }
+
+        /// <summary>
+        /// Gets or Sets EndpointProtocolVersion
+        /// </summary>
+
+        [DataMember(Name = "endpointProtocolVersion")]
+        public string EndpointProtocolVersion { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Subprotocol
+        /// </summary>
+
+        [DataMember(Name = "subprotocol")]
+        public string Subprotocol { get; set; }
+
+        /// <summary>
+        /// Gets or Sets SubprotocolBody
+        /// </summary>
+
+        [DataMember(Name = "subprotocolBody")]
+        public string SubprotocolBody { get; set; }
+
+        /// <summary>
+        /// Gets or Sets SubprotocolBodyEncoding
+        /// </summary>
+
+        [DataMember(Name = "subprotocolBodyEncoding")]
+        public string SubprotocolBodyEncoding { get; set; }
+
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class ProtocolInformation {\n");
+            sb.Append("  EndpointAddress: ").Append(EndpointAddress).Append("\n");
+            sb.Append("  EndpointProtocol: ").Append(EndpointProtocol).Append("\n");
+            sb.Append("  EndpointProtocolVersion: ").Append(EndpointProtocolVersion).Append("\n");
+            sb.Append("  Subprotocol: ").Append(Subprotocol).Append("\n");
+            sb.Append("  SubprotocolBody: ").Append(SubprotocolBody).Append("\n");
+            sb.Append("  SubprotocolBodyEncoding: ").Append(SubprotocolBodyEncoding).Append("\n");
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType() && Equals((ProtocolInformation)obj);
+        }
+
+        /// <summary>
+        /// Returns true if ProtocolInformation instances are equal
+        /// </summary>
+        /// <param name="other">Instance of ProtocolInformation to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals(ProtocolInformation other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return
+                (
+                    EndpointAddress == other.EndpointAddress ||
+                    EndpointAddress != null &&
+                    EndpointAddress.Equals(other.EndpointAddress)
+                ) &&
+                (
+                    EndpointProtocol == other.EndpointProtocol ||
+                    EndpointProtocol != null &&
+                    EndpointProtocol.Equals(other.EndpointProtocol)
+                ) &&
+                (
+                    EndpointProtocolVersion == other.EndpointProtocolVersion ||
+                    EndpointProtocolVersion != null &&
+                    EndpointProtocolVersion.Equals(other.EndpointProtocolVersion)
+                ) &&
+                (
+                    Subprotocol == other.Subprotocol ||
+                    Subprotocol != null &&
+                    Subprotocol.Equals(other.Subprotocol)
+                ) &&
+                (
+                    SubprotocolBody == other.SubprotocolBody ||
+                    SubprotocolBody != null &&
+                    SubprotocolBody.Equals(other.SubprotocolBody)
+                ) &&
+                (
+                    SubprotocolBodyEncoding == other.SubprotocolBodyEncoding ||
+                    SubprotocolBodyEncoding != null &&
+                    SubprotocolBodyEncoding.Equals(other.SubprotocolBodyEncoding)
+                );
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                var hashCode = 41;
+                // Suitable nullity checks etc, of course :)
+                if (EndpointAddress != null)
+                    hashCode = hashCode * 59 + EndpointAddress.GetHashCode();
+                if (EndpointProtocol != null)
+                    hashCode = hashCode * 59 + EndpointProtocol.GetHashCode();
+                if (EndpointProtocolVersion != null)
+                    hashCode = hashCode * 59 + EndpointProtocolVersion.GetHashCode();
+                if (Subprotocol != null)
+                    hashCode = hashCode * 59 + Subprotocol.GetHashCode();
+                if (SubprotocolBody != null)
+                    hashCode = hashCode * 59 + SubprotocolBody.GetHashCode();
+                if (SubprotocolBodyEncoding != null)
+                    hashCode = hashCode * 59 + SubprotocolBodyEncoding.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        #region Operators
+#pragma warning disable 1591
+
+        public static bool operator ==(ProtocolInformation left, ProtocolInformation right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(ProtocolInformation left, ProtocolInformation right)
+        {
+            return !Equals(left, right);
+        }
+
+#pragma warning restore 1591
+        #endregion Operators
     }
 }
