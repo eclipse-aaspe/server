@@ -25,22 +25,22 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class ConceptDescriptionRepositoryAPIApiController : ControllerBase, IConceptDescriptionRepositoryAPIApiController
+    public class AssetAdministrationShellRepositoryApiController : ControllerBase, IAssetAdministrationShellRepositoryApiController
     { 
         /// <summary>
-        /// Deletes a Concept Description
+        /// Deletes an Asset Administration Shell
         /// </summary>
-        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="204">Concept Description deleted successfully</response>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Asset Administration Shell deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/concept-descriptions/{cdIdentifier}")]
+        [Route("/shells/{aasIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("DeleteConceptDescriptionById")]
+        [SwaggerOperation("DeleteAssetAdministrationShellById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteConceptDescriptionById([FromRoute][Required]byte[] cdIdentifier)
+        public virtual IActionResult DeleteAssetAdministrationShellById([FromRoute][Required]byte[] aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -55,23 +55,22 @@ namespace IO.Swagger.V1RC03.Controllers
         }
 
         /// <summary>
-        /// Returns all Concept Descriptions
+        /// Returns all Asset Administration Shells
         /// </summary>
-        /// <param name="idShort">The Concept Description’s IdShort</param>
-        /// <param name="isCaseOf">IsCaseOf reference (UTF8-BASE64-URL-encoded)</param>
-        /// <param name="dataSpecificationRef">DataSpecification reference (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="200">Requested Concept Descriptions</response>
+        /// <param name="assetIds">A list of specific Asset identifiers</param>
+        /// <param name="idShort">The Asset Administration Shell’s IdShort</param>
+        /// <response code="200">Requested Asset Administration Shells</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/concept-descriptions")]
+        [Route("/shells")]
         [ValidateModelState]
-        [SwaggerOperation("GetAllConceptDescriptions")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<ConceptDescription>), description: "Requested Concept Descriptions")]
+        [SwaggerOperation("GetAllAssetAdministrationShells")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShell>), description: "Requested Asset Administration Shells")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllConceptDescriptions([FromQuery]string idShort, [FromQuery]byte[] isCaseOf, [FromQuery]byte[] dataSpecificationRef)
+        public virtual IActionResult GetAllAssetAdministrationShells([FromQuery]List<SpecificAssetId> assetIds, [FromQuery]string idShort)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<ConceptDescription>));
+            // return StatusCode(200, default(List<AssetAdministrationShell>));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
@@ -79,29 +78,29 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "[ \"\", \"\" ]";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<ConceptDescription>>(exampleJson)
-                        : default(List<ConceptDescription>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<List<AssetAdministrationShell>>(exampleJson)
+                        : default(List<AssetAdministrationShell>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Returns a specific Concept Description
+        /// Returns a specific Asset Administration Shell
         /// </summary>
-        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="200">Requested Concept Description</response>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="200">Requested Asset Administration Shell</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/concept-descriptions/{cdIdentifier}")]
+        [Route("/shells/{aasIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("GetConceptDescriptionById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description")]
+        [SwaggerOperation("GetAssetAdministrationShellById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetConceptDescriptionById([FromRoute][Required]byte[] cdIdentifier)
+        public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required]byte[] aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(ConceptDescription));
+            // return StatusCode(200, default(AssetAdministrationShell));
 
             //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(404, default(Result));
@@ -112,29 +111,29 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "\"\"";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<ConceptDescription>(exampleJson)
-                        : default(ConceptDescription);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<AssetAdministrationShell>(exampleJson)
+                        : default(AssetAdministrationShell);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Creates a new Concept Description
+        /// Creates a new Asset Administration Shell
         /// </summary>
-        /// <param name="body">Concept Description object</param>
-        /// <response code="201">Concept Description created successfully</response>
+        /// <param name="body">Asset Administration Shell object</param>
+        /// <response code="201">Asset Administration Shell created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/concept-descriptions")]
+        [Route("/shells")]
         [ValidateModelState]
-        [SwaggerOperation("PostConceptDescription")]
-        [SwaggerResponse(statusCode: 201, type: typeof(ConceptDescription), description: "Concept Description created successfully")]
+        [SwaggerOperation("PostAssetAdministrationShell")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShell), description: "Asset Administration Shell created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostConceptDescription([FromBody]ConceptDescription body)
+        public virtual IActionResult PostAssetAdministrationShell([FromBody]AssetAdministrationShell body)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(201, default(ConceptDescription));
+            // return StatusCode(201, default(AssetAdministrationShell));
 
             //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(400, default(Result));
@@ -145,28 +144,28 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "\"\"";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<ConceptDescription>(exampleJson)
-                        : default(ConceptDescription);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<AssetAdministrationShell>(exampleJson)
+                        : default(AssetAdministrationShell);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Updates an existing Concept Description
+        /// Updates an existing Asset Administration Shell
         /// </summary>
-        /// <param name="body">Concept Description object</param>
-        /// <param name="cdIdentifier">The Concept Description’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="204">Concept Description updated successfully</response>
+        /// <param name="body">Asset Administration Shell object</param>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Asset Administration Shell updated successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/concept-descriptions/{cdIdentifier}")]
+        [Route("/shells/{aasIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("PutConceptDescriptionById")]
+        [SwaggerOperation("PutAssetAdministrationShellById")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutConceptDescriptionById([FromBody]ConceptDescription body, [FromRoute][Required]byte[] cdIdentifier)
+        public virtual IActionResult PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]byte[] aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

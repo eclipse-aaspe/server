@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface IAssetAdministrationShellRepositoryAPIApiController
+    public interface IAssetAdministrationShellRepositoryApiController
     { 
         /// <summary>
         /// Deletes an Asset Administration Shell

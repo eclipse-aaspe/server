@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface IDescriptorAPIApiController
+    public interface IDescriptorApiController
     { 
         /// <summary>
         /// Returns the self-describing information of a network resource (Descriptor)

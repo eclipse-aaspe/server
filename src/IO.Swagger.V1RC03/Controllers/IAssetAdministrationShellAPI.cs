@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface IAssetAdministrationShellAPIApiController
+    public interface IAssetAdministrationShellApiController
     { 
         /// <summary>
         /// Deletes the submodel reference from the Asset Administration Shell

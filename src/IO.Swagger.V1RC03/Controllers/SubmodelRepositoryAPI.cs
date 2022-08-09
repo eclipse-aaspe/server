@@ -17,7 +17,8 @@ using System.ComponentModel.DataAnnotations;
 using IO.Swagger.V1RC03.Attributes;
 
 using Microsoft.AspNetCore.Authorization;
-using IO.Swagger.V1RC03.Models;
+using IO.Swagger.V1RC03.Models;//remove later
+using AasCore.Aas3_0_RC02;
 
 namespace IO.Swagger.V1RC03.Controllers
 { 
@@ -25,22 +26,22 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class AssetAdministrationShellBasicDiscoveryAPIApiController : ControllerBase, IAssetAdministrationShellBasicDiscoveryAPIApiController
+    public class SubmodelRepositoryApiController : ControllerBase, ISubmodelRepositoryApiController
     { 
         /// <summary>
-        /// Deletes all specific Asset identifiers linked to an Asset Administration Shell to edit discoverable content
+        /// Deletes a Submodel
         /// </summary>
-        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="204">Specific Asset identifiers deleted successfully</response>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Submodel deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/lookup/shells/{aasIdentifier}")]
+        [Route("/submodels/{submodelIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("DeleteAllAssetLinksById")]
+        [SwaggerOperation("DeleteSubmodelById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult DeleteSubmodelById([FromRoute][Required]string submodelIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -55,87 +56,119 @@ namespace IO.Swagger.V1RC03.Controllers
         }
 
         /// <summary>
-        /// Returns a list of Asset Administration Shell ids linked to specific Asset identifiers
+        /// Returns all Submodels
         /// </summary>
-        /// <param name="assetIds">A list of specific Asset identifiers</param>
-        /// <response code="200">Requested Asset Administration Shell ids</response>
+        /// <param name="semanticId">The value of the semantic id reference (BASE64-URL-encoded)</param>
+        /// <param name="idShort">The Submodel’s idShort</param>
+        /// <response code="200">Requested Submodels</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/lookup/shells")]
+        [Route("/submodels")]
         [ValidateModelState]
-        [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
+        [SwaggerOperation("GetAllSubmodels")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<Submodel>), description: "Requested Submodels")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink([FromQuery]List<SpecificAssetId> assetIds)
-        { 
+        public virtual IActionResult GetAllSubmodels([FromQuery]string semanticId, [FromQuery]string idShort)
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<string>));
+            // return StatusCode(200, default(List<Submodel>));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "[ \"\", \"\" ]";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<string>>(exampleJson)
-                        : default(List<string>);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            var list = new List<Submodel>();
+            list.Add(new Submodel("test-identifier1"));
+            list.Add(new Submodel("test-identifier2"));
+            list.Add(new Submodel("test-identifier3"));
+
+            return new ObjectResult(list);
         }
 
         /// <summary>
-        /// Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content
+        /// Returns a specific Submodel
         /// </summary>
-        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="200">Requested specific Asset identifiers</response>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="200">Requested Submodel</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/lookup/shells/{aasIdentifier}")]
+        [Route("/submodels/{submodelIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("GetAllAssetLinksById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<SpecificAssetId>), description: "Requested specific Asset identifiers")]
+        [SwaggerOperation("GetSubmodelById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier)
-        { 
+        public virtual IActionResult GetSubmodelById([FromRoute][Required]string submodelIdentifier)
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<SpecificAssetId>));
+            // return StatusCode(200, default(Submodel));
 
             //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(404, default(Result));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
+
+            var sm = new Submodel("test-identifier");
+            //var json = AasCore.Aas3_0_RC02.Jsonization.Serialize.ToJsonObject(sm);
+
+            //string exampleJson = json.ToJsonString();
+            
+            return new ObjectResult(sm);
+        }
+
+        /// <summary>
+        /// Creates a new Submodel
+        /// </summary>
+        /// <param name="body">Submodel object</param>
+        /// <response code="201">Submodel created successfully</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        //[ValidateModelState]
+        [HttpPost]
+        [Route("/submodels")]
+        [SwaggerOperation("PostSubmodel")]
+        [SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PostSubmodel([FromBody]Submodel body)
+        { 
+            //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
+            // return StatusCode(201, default(Submodel));
+
+            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
+            // return StatusCode(400, default(Result));
+
+            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
+            // return StatusCode(0, default(Result));
             string exampleJson = null;
-            exampleJson = "[ \"\", \"\" ]";
+            exampleJson = "\"\"";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<SpecificAssetId>>(exampleJson)
-                        : default(List<SpecificAssetId>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<Submodel>(exampleJson)
+                        : default(Submodel);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Creates specific Asset identifiers linked to an Asset Administration Shell to edit discoverable content
+        /// Updates an existing Submodel
         /// </summary>
-        /// <param name="body">A list of specific Asset identifiers</param>
-        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="201">Specific Asset identifiers created successfully</response>
+        /// <param name="body">Submodel object</param>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <response code="204">Submodel updated successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [HttpPost]
-        [Route("/lookup/shells/{aasIdentifier}")]
+        [HttpPut]
+        [Route("/submodels/{submodelIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("PostAllAssetLinksById")]
-        [SwaggerResponse(statusCode: 201, type: typeof(List<SpecificAssetId>), description: "Specific Asset identifiers created successfully")]
+        [SwaggerOperation("PutSubmodelById")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostAllAssetLinksById([FromBody]List<SpecificAssetId> body, [FromRoute][Required]string aasIdentifier)
+        public virtual IActionResult PutSubmodelById([FromBody]Submodel body, [FromRoute][Required]string submodelIdentifier)
         { 
-            //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(201, default(List<SpecificAssetId>));
+            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
+            // return StatusCode(204);
 
             //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(400, default(Result));
@@ -145,13 +178,8 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "[ \"\", \"\" ]";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<SpecificAssetId>>(exampleJson)
-                        : default(List<SpecificAssetId>);            //TODO: Change the data returned
-            return new ObjectResult(example);
+
+            throw new NotImplementedException();
         }
     }
 }

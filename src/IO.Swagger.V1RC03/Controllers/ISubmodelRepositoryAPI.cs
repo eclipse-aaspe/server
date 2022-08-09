@@ -20,7 +20,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface ISubmodelRepositoryAPIApiController
+    public interface ISubmodelRepositoryApiController
     { 
         /// <summary>
         /// Deletes a Submodel

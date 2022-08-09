@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface ISubmodelRegistryAPIApiController
+    public interface ISubmodelRegistryApiController
     { 
         /// <summary>
         /// Deletes a Submodel Descriptor, i.e. de-registers a submodel

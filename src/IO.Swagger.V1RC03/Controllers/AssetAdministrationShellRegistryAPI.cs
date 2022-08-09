@@ -25,7 +25,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class AssetAdministrationShellRegistryAPIApiController : ControllerBase, IAssetAdministrationShellRegistryAPIApiController
+    public class AssetAdministrationShellRegistryApiController : ControllerBase, IAssetAdministrationShellRegistryApiController
     { 
         /// <summary>
         /// Deletes an Asset Administration Shell Descriptor, i.e. de-registers an AAS

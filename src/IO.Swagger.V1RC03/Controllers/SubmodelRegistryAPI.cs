@@ -17,8 +17,7 @@ using System.ComponentModel.DataAnnotations;
 using IO.Swagger.V1RC03.Attributes;
 
 using Microsoft.AspNetCore.Authorization;
-using IO.Swagger.V1RC03.Models;//remove later
-using AasCore.Aas3_0_RC02;
+using IO.Swagger.V1RC03.Models;
 
 namespace IO.Swagger.V1RC03.Controllers
 { 
@@ -26,22 +25,22 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class SubmodelRepositoryAPIApiController : ControllerBase, ISubmodelRepositoryAPIApiController
+    public class SubmodelRegistryApiController : ControllerBase, ISubmodelRegistryApiController
     { 
         /// <summary>
-        /// Deletes a Submodel
+        /// Deletes a Submodel Descriptor, i.e. de-registers a submodel
         /// </summary>
         /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="204">Submodel deleted successfully</response>
+        /// <response code="204">Submodel Descriptor deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/submodels/{submodelIdentifier}")]
+        [Route("/submodel-descriptors/{submodelIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("DeleteSubmodelById")]
+        [SwaggerOperation("DeleteSubmodelDescriptorById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteSubmodelById([FromRoute][Required]string submodelIdentifier)
+        public virtual IActionResult DeleteSubmodelDescriptorById([FromRoute][Required]string submodelIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -56,84 +55,81 @@ namespace IO.Swagger.V1RC03.Controllers
         }
 
         /// <summary>
-        /// Returns all Submodels
+        /// Returns all Submodel Descriptors
         /// </summary>
-        /// <param name="semanticId">The value of the semantic id reference (BASE64-URL-encoded)</param>
-        /// <param name="idShort">The Submodel’s idShort</param>
-        /// <response code="200">Requested Submodels</response>
+        /// <response code="200">Requested Submodel Descriptors</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/submodels")]
+        [Route("/submodel-descriptors")]
         [ValidateModelState]
-        [SwaggerOperation("GetAllSubmodels")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Submodel>), description: "Requested Submodels")]
+        [SwaggerOperation("GetAllSubmodelDescriptors")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelDescriptor>), description: "Requested Submodel Descriptors")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodels([FromQuery]string semanticId, [FromQuery]string idShort)
-        {
+        public virtual IActionResult GetAllSubmodelDescriptors()
+        { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<Submodel>));
+            // return StatusCode(200, default(List<SubmodelDescriptor>));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            var list = new List<Submodel>();
-            list.Add(new Submodel("test-identifier1"));
-            list.Add(new Submodel("test-identifier2"));
-            list.Add(new Submodel("test-identifier3"));
-
-            return new ObjectResult(list);
+            string exampleJson = null;
+            exampleJson = null;
+                        var example = exampleJson != null
+                        ? JsonConvert.DeserializeObject<List<SubmodelDescriptor>>(exampleJson)
+                        : default(List<SubmodelDescriptor>);            //TODO: Change the data returned
+            return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Returns a specific Submodel
+        /// Returns a specific Submodel Descriptor
         /// </summary>
         /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="200">Requested Submodel</response>
+        /// <response code="200">Requested Submodel Descriptor</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/submodels/{submodelIdentifier}")]
+        [Route("/submodel-descriptors/{submodelIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("GetSubmodelById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
+        [SwaggerOperation("GetSubmodelDescriptorById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(SubmodelDescriptor), description: "Requested Submodel Descriptor")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelById([FromRoute][Required]string submodelIdentifier)
-        {
+        public virtual IActionResult GetSubmodelDescriptorById([FromRoute][Required]string submodelIdentifier)
+        { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(Submodel));
+            // return StatusCode(200, default(SubmodelDescriptor));
 
             //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(404, default(Result));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-
-            var sm = new Submodel("test-identifier");
-            //var json = AasCore.Aas3_0_RC02.Jsonization.Serialize.ToJsonObject(sm);
-
-            //string exampleJson = json.ToJsonString();
-            
-            return new ObjectResult(sm);
+            string exampleJson = null;
+            exampleJson = null;
+                        var example = exampleJson != null
+                        ? JsonConvert.DeserializeObject<SubmodelDescriptor>(exampleJson)
+                        : default(SubmodelDescriptor);            //TODO: Change the data returned
+            return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Creates a new Submodel
+        /// Creates a new Submodel Descriptor, i.e. registers a submodel
         /// </summary>
-        /// <param name="body">Submodel object</param>
-        /// <response code="201">Submodel created successfully</response>
+        /// <param name="body">Submodel Descriptor object</param>
+        /// <response code="201">Submodel Descriptor created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        //[ValidateModelState]
         [HttpPost]
-        [Route("/submodels")]
-        [SwaggerOperation("PostSubmodel")]
-        [SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
+        [Route("/submodel-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("PostSubmodelDescriptor")]
+        [SwaggerResponse(statusCode: 201, type: typeof(SubmodelDescriptor), description: "Submodel Descriptor created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodel([FromBody]Submodel body)
+        public virtual IActionResult PostSubmodelDescriptor([FromBody]SubmodelDescriptor body)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(201, default(Submodel));
+            // return StatusCode(201, default(SubmodelDescriptor));
 
             //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(400, default(Result));
@@ -141,31 +137,30 @@ namespace IO.Swagger.V1RC03.Controllers
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
             string exampleJson = null;
-            exampleJson = "\"\"";
-            
+            exampleJson = null;
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<Submodel>(exampleJson)
-                        : default(Submodel);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<SubmodelDescriptor>(exampleJson)
+                        : default(SubmodelDescriptor);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
         /// <summary>
-        /// Updates an existing Submodel
+        /// Updates an existing Submodel Descriptor
         /// </summary>
-        /// <param name="body">Submodel object</param>
+        /// <param name="body">Submodel Descriptor object</param>
         /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="204">Submodel updated successfully</response>
+        /// <response code="204">Submodel Descriptor updated successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/submodels/{submodelIdentifier}")]
+        [Route("/submodel-descriptors/{submodelIdentifier}")]
         [ValidateModelState]
-        [SwaggerOperation("PutSubmodelById")]
+        [SwaggerOperation("PutSubmodelDescriptorById")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelById([FromBody]Submodel body, [FromRoute][Required]string submodelIdentifier)
+        public virtual IActionResult PutSubmodelDescriptorById([FromBody]SubmodelDescriptor body, [FromRoute][Required]string submodelIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface IAssetAdministrationShellBasicDiscoveryAPIApiController
+    public interface IAssetAdministrationShellBasicDiscoveryApiController
     { 
         /// <summary>
         /// Deletes all specific Asset identifiers linked to an Asset Administration Shell to edit discoverable content

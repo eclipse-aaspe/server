@@ -26,7 +26,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class SubmodelAPIApiController : ControllerBase, ISubmodelAPIApiController
+    public class SubmodelApiController : ControllerBase, ISubmodelApiController
     { 
         /// <summary>
         /// Deletes a submodel element at a specified path within the submodel elements hierarchy

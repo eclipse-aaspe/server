@@ -25,31 +25,35 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class DescriptorAPIApiController : ControllerBase, IDescriptorAPIApiController
+    public class AssetAdministrationShellSerializationApiController : ControllerBase, IAssetAdministrationShellSerializationApiController
     { 
         /// <summary>
-        /// Returns the self-describing information of a network resource (Descriptor)
+        /// Returns an appropriate serialization based on the specified format (see SerializationFormat)
         /// </summary>
-        /// <response code="200">Requested Descriptor</response>
+        /// <param name="aasIds">The Asset Administration Shells&#x27; unique ids (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="submodelIds">The Submodels&#x27; unique ids (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="includeConceptDescriptions">Include Concept Descriptions?</param>
+        /// <response code="200">Requested serialization based on SerializationFormat</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/descriptor")]
+        [Route("/serialization")]
         [ValidateModelState]
-        [SwaggerOperation("GetDescriptor")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Descriptor>), description: "Requested Descriptor")]
+        [SwaggerOperation("GenerateSerializationByIds")]
+        [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested serialization based on SerializationFormat")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetDescriptor()
+        public virtual IActionResult GenerateSerializationByIds([FromQuery][Required()]List<string> aasIds, [FromQuery][Required()]List<string> submodelIds, [FromQuery][Required()]bool? includeConceptDescriptions)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<Descriptor>));
+            // return StatusCode(200, default(byte[]));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
             string exampleJson = null;
-            exampleJson = null;
+            exampleJson = "\"\"";
+            
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<Descriptor>>(exampleJson)
-                        : default(List<Descriptor>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<byte[]>(exampleJson)
+                        : default(byte[]);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
     }

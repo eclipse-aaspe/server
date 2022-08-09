@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface IAssetAdministrationShellSerializationAPIApiController
+    public interface IAssetAdministrationShellSerializationApiController
     { 
         /// <summary>
         /// Returns an appropriate serialization based on the specified format (see SerializationFormat)

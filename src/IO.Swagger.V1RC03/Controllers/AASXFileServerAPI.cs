@@ -25,7 +25,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class AASXFileServerAPIApiController : ControllerBase, IAASXFileServerAPIApiController
+    public class AASXFileServerApiController : ControllerBase, IAASXFileServerApiController
     { 
         /// <summary>
         /// Deletes a specific AASX package from the server

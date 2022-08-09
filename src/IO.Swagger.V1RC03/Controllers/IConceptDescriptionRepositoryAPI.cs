@@ -19,7 +19,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// <summary>
     /// 
     /// </summary>
-    public interface IConceptDescriptionRepositoryAPIApiController
+    public interface IConceptDescriptionRepositoryApiController
     { 
         /// <summary>
         /// Deletes a Concept Description
