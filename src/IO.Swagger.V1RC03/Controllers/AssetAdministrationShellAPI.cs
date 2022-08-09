@@ -92,7 +92,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/aas")]
         [ValidateModelState]
         [SwaggerOperation("GetAssetAdministrationShell")]
-        [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AasCore.Aas3_0_RC02.AssetAdministrationShell), description: "Requested Asset Administration Shell")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAssetAdministrationShell([FromQuery]string content)
         { 
@@ -105,8 +105,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "\"\"";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<AssetAdministrationShell>(exampleJson)
-                        : default(AssetAdministrationShell);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<AasCore.Aas3_0_RC02.AssetAdministrationShell>(exampleJson)
+                        : default(AasCore.Aas3_0_RC02.AssetAdministrationShell);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -184,7 +184,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("PutAssetAdministrationShell")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutAssetAdministrationShell([FromBody]AssetAdministrationShell body, [FromQuery]string content)
+        public virtual IActionResult PutAssetAdministrationShell([FromBody]AasCore.Aas3_0_RC02.AssetAdministrationShell body, [FromQuery]string content)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

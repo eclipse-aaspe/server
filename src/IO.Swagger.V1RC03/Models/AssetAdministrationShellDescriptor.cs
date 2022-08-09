@@ -74,7 +74,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="specificAssetIds")]
-        public SpecificAssetId SpecificAssetIds { get; set; }
+        public AasCore.Aas3_0_RC02.SpecificAssetId SpecificAssetIds { get; set; }
 
         /// <summary>
         /// Gets or Sets SubmodelDescriptors

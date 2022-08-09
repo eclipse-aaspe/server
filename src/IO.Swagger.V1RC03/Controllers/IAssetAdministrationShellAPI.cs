@@ -75,7 +75,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Asset Administration Shell updated successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutAssetAdministrationShell([FromBody]AssetAdministrationShell body, [FromQuery]string content);
+        IActionResult PutAssetAdministrationShell([FromBody] AasCore.Aas3_0_RC02.AssetAdministrationShell body, [FromQuery]string content);
 
         /// <summary>
         /// Updates the Asset Information

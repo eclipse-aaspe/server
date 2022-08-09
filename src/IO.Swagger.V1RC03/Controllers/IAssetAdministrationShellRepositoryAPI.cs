@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using IO.Swagger.V1RC03.Models;
+using AasCore.Aas3_0_RC02;
 
 namespace IO.Swagger.V1RC03.Controllers
 { 
@@ -29,7 +29,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Asset Administration Shell deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteAssetAdministrationShellById([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult DeleteAssetAdministrationShellById([FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Returns all Asset Administration Shells
@@ -39,7 +39,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="idShort">The Asset Administration Shell’s IdShort</param>
         /// <response code="200">Requested Asset Administration Shells</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllAssetAdministrationShells([FromQuery]List<SpecificAssetId> assetIds, [FromQuery]string idShort);
+        IActionResult GetAllAssetAdministrationShells([FromQuery]List<AasCore.Aas3_0_RC02.SpecificAssetId> assetIds, [FromQuery]string idShort);
 
         /// <summary>
         /// Returns a specific Asset Administration Shell
@@ -49,7 +49,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested Asset Administration Shell</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAssetAdministrationShellById([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult GetAssetAdministrationShellById([FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Creates a new Asset Administration Shell
@@ -59,7 +59,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Asset Administration Shell created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostAssetAdministrationShell([FromBody]AssetAdministrationShell body);
+        IActionResult PostAssetAdministrationShell([FromBody]AasCore.Aas3_0_RC02.AssetAdministrationShell body);
 
         /// <summary>
         /// Updates an existing Asset Administration Shell
@@ -71,6 +71,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]byte[] aasIdentifier);
+        IActionResult PutAssetAdministrationShellById([FromBody]AasCore.Aas3_0_RC02.AssetAdministrationShell body, [FromRoute][Required]string aasIdentifier);
     }
 }

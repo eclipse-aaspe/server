@@ -38,7 +38,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="assetIds">A list of specific Asset identifiers</param>
         /// <response code="200">Requested Asset Administration Shell ids</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllAssetAdministrationShellIdsByAssetLink([FromQuery]List<SpecificAssetId> assetIds);
+        IActionResult GetAllAssetAdministrationShellIdsByAssetLink([FromQuery]List<AasCore.Aas3_0_RC02.SpecificAssetId> assetIds);
 
         /// <summary>
         /// Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content
@@ -60,6 +60,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostAllAssetLinksById([FromBody]List<SpecificAssetId> body, [FromRoute][Required]string aasIdentifier);
+        IActionResult PostAllAssetLinksById([FromBody]List<AasCore.Aas3_0_RC02.SpecificAssetId> body, [FromRoute][Required]string aasIdentifier);
     }
 }

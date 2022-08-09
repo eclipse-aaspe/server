@@ -46,7 +46,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="specificAssetId")]
-        public SpecificAssetId SpecificAssetId { get; set; }
+        public AasCore.Aas3_0_RC02.SpecificAssetId SpecificAssetId { get; set; }
 
         /// <summary>
         /// Gets or Sets DefaultThumbnail

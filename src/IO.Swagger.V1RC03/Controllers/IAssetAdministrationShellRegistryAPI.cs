@@ -29,7 +29,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Asset Administration Shell Descriptor deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteAssetAdministrationShellDescriptorById([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult DeleteAssetAdministrationShellDescriptorById([FromRoute][Required]string aasIdentifier);
 
         /// <summary>
         /// Deletes a Submodel Descriptor, i.e. de-registers a submodel
@@ -58,7 +58,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested Submodel Descriptors</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllSubmodelDescriptorsAASRegistry([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult GetAllSubmodelDescriptorsAASRegistry([FromRoute][Required] string aasIdentifier);
 
         /// <summary>
         /// Returns a specific Asset Administration Shell Descriptor
@@ -68,7 +68,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested Asset Administration Shell Descriptor</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAssetAdministrationShellDescriptorById([FromRoute][Required]byte[] aasIdentifier);
+        IActionResult GetAssetAdministrationShellDescriptorById([FromRoute][Required] string aasIdentifier);
 
         /// <summary>
         /// Returns a specific Submodel Descriptor

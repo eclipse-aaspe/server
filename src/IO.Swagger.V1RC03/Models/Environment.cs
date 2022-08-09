@@ -33,7 +33,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="assetAdministrationShells")]
-        public List<AssetAdministrationShell> AssetAdministrationShells { get; set; }
+        public List<AasCore.Aas3_0_RC02.AssetAdministrationShell> AssetAdministrationShells { get; set; }
 
         /// <summary>
         /// Gets or Sets Submodels

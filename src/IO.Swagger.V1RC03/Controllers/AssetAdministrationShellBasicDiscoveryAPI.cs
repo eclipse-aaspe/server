@@ -68,7 +68,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink([FromQuery]List<SpecificAssetId> assetIds)
+        public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink([FromQuery]List<AasCore.Aas3_0_RC02.SpecificAssetId> assetIds)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<string>));
@@ -95,13 +95,13 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/lookup/shells/{aasIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetLinksById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<SpecificAssetId>), description: "Requested specific Asset identifiers")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<AasCore.Aas3_0_RC02.SpecificAssetId>), description: "Requested specific Asset identifiers")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllAssetLinksById([FromRoute][Required]byte[] aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<SpecificAssetId>));
+            // return StatusCode(200, default(List<AasCore.Aas3_0_RC02.SpecificAssetId>));
 
             //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(404, default(Result));
@@ -112,8 +112,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "[ \"\", \"\" ]";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<SpecificAssetId>>(exampleJson)
-                        : default(List<SpecificAssetId>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<List<AasCore.Aas3_0_RC02.SpecificAssetId>>(exampleJson)
+                        : default(List<AasCore.Aas3_0_RC02.SpecificAssetId>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -130,14 +130,14 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/lookup/shells/{aasIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("PostAllAssetLinksById")]
-        [SwaggerResponse(statusCode: 201, type: typeof(List<SpecificAssetId>), description: "Specific Asset identifiers created successfully")]
+        [SwaggerResponse(statusCode: 201, type: typeof(List<AasCore.Aas3_0_RC02.SpecificAssetId>), description: "Specific Asset identifiers created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostAllAssetLinksById([FromBody]List<SpecificAssetId> body, [FromRoute][Required]string aasIdentifier)
+        public virtual IActionResult PostAllAssetLinksById([FromBody]List<AasCore.Aas3_0_RC02.SpecificAssetId> body, [FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(201, default(List<SpecificAssetId>));
+            // return StatusCode(201, default(List<AasCore.Aas3_0_RC02.SpecificAssetId>));
 
             //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(400, default(Result));
@@ -151,8 +151,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "[ \"\", \"\" ]";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<SpecificAssetId>>(exampleJson)
-                        : default(List<SpecificAssetId>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<List<AasCore.Aas3_0_RC02.SpecificAssetId>>(exampleJson)
+                        : default(List<AasCore.Aas3_0_RC02.SpecificAssetId>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
     }

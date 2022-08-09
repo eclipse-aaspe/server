@@ -42,7 +42,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteAssetAdministrationShellDescriptorById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAssetAdministrationShellDescriptorById([FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult DeleteAssetAdministrationShellDescriptorById([FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -124,7 +124,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelDescriptor>), description: "Requested Submodel Descriptors")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelDescriptorsAASRegistry([FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult GetAllSubmodelDescriptorsAASRegistry([FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<SubmodelDescriptor>));
@@ -156,7 +156,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShellDescriptor), description: "Requested Asset Administration Shell Descriptor")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAssetAdministrationShellDescriptorById([FromRoute][Required]byte[] aasIdentifier)
+        public virtual IActionResult GetAssetAdministrationShellDescriptorById([FromRoute][Required]string aasIdentifier)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(AssetAdministrationShellDescriptor));

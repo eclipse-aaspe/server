@@ -22,13 +22,13 @@ using IO.Swagger.V1RC03.ApiModel;
 
 
 namespace IO.Swagger.V1RC03.Controllers
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [ApiController]
     public class AssetAdministrationShellRepositoryApiController : ControllerBase, IAssetAdministrationShellRepositoryApiController
-    { 
+    {
         /// <summary>
         /// Deletes an Asset Administration Shell
         /// </summary>
@@ -42,8 +42,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteAssetAdministrationShellById")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAssetAdministrationShellById([FromRoute][Required]byte[] aasIdentifier)
-        { 
+        public virtual IActionResult DeleteAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
+        {
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
 
@@ -67,21 +67,21 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/shells")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShells")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShell>), description: "Requested Asset Administration Shells")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<AasCore.Aas3_0_RC02.AssetAdministrationShell>), description: "Requested Asset Administration Shells")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAssetAdministrationShells([FromQuery]List<SpecificAssetId> assetIds, [FromQuery]string idShort)
-        { 
+        public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<AasCore.Aas3_0_RC02.SpecificAssetId> assetIds, [FromQuery] string idShort)
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<AssetAdministrationShell>));
+            // return StatusCode(200, default(List<AasCore.Aas3_0_RC02.AssetAdministrationShell>));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
             string exampleJson = null;
             exampleJson = "[ \"\", \"\" ]";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<AssetAdministrationShell>>(exampleJson)
-                        : default(List<AssetAdministrationShell>);            //TODO: Change the data returned
+
+            var example = exampleJson != null
+            ? JsonConvert.DeserializeObject<List<AasCore.Aas3_0_RC02.AssetAdministrationShell>>(exampleJson)
+            : default(List<AasCore.Aas3_0_RC02.AssetAdministrationShell>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -96,11 +96,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/shells/{aasIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("GetAssetAdministrationShellById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AasCore.Aas3_0_RC02.AssetAdministrationShell), description: "Requested Asset Administration Shell")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required]byte[] aasIdentifier)
-        { 
+        public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(AssetAdministrationShell));
 
@@ -109,12 +109,7 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<AssetAdministrationShell>(exampleJson)
-                        : default(AssetAdministrationShell);            //TODO: Change the data returned
+            var example = new AasCore.Aas3_0_RC02.AssetAdministrationShell("test-id", new AasCore.Aas3_0_RC02.AssetInformation(AasCore.Aas3_0_RC02.AssetKind.Type));
             return new ObjectResult(example);
         }
 
@@ -129,11 +124,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/shells")]
         [ValidateModelState]
         [SwaggerOperation("PostAssetAdministrationShell")]
-        [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShell), description: "Asset Administration Shell created successfully")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AasCore.Aas3_0_RC02.AssetAdministrationShell), description: "Asset Administration Shell created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostAssetAdministrationShell([FromBody]AssetAdministrationShell body)
-        { 
+        public virtual IActionResult PostAssetAdministrationShell([FromBody] AasCore.Aas3_0_RC02.AssetAdministrationShell body)
+        {
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(AssetAdministrationShell));
 
@@ -144,10 +139,10 @@ namespace IO.Swagger.V1RC03.Controllers
             // return StatusCode(0, default(Result));
             string exampleJson = null;
             exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<AssetAdministrationShell>(exampleJson)
-                        : default(AssetAdministrationShell);            //TODO: Change the data returned
+
+            var example = exampleJson != null
+            ? JsonConvert.DeserializeObject<AasCore.Aas3_0_RC02.AssetAdministrationShell>(exampleJson)
+            : default(AasCore.Aas3_0_RC02.AssetAdministrationShell);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -167,8 +162,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]byte[] aasIdentifier)
-        { 
+        public virtual IActionResult PutAssetAdministrationShellById([FromBody] AasCore.Aas3_0_RC02.AssetAdministrationShell body, [FromRoute][Required] string aasIdentifier)
+        {
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
 
