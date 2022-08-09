@@ -69,7 +69,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested AASX package")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAASXByPackageId([FromRoute][Required]byte[] packageId)
+        public virtual IActionResult GetAASXByPackageId([FromRoute][Required]string packageId)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(byte[]));
@@ -100,7 +100,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllAASXPackageIds")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<PackageDescription>), description: "Requested package list")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAASXPackageIds([FromQuery]byte[] aasId)
+        public virtual IActionResult GetAllAASXPackageIds([FromQuery]string aasId)
         { 
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<PackageDescription>));
