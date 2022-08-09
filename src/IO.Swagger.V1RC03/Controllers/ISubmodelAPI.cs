@@ -12,8 +12,8 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using IO.Swagger.V1RC03.Models;//remove later
 using AasCore.Aas3_0_RC02;
+using IO.Swagger.V1RC03.ApiModel;
 
 namespace IO.Swagger.V1RC03.Controllers
 { 
