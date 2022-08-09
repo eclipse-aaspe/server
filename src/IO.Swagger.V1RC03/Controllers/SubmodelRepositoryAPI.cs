@@ -76,9 +76,9 @@ namespace IO.Swagger.V1RC03.Controllers
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
             var list = new List<Submodel>();
-            list.Add(new Submodel("test-identifier1"));
-            list.Add(new Submodel("test-identifier2"));
-            list.Add(new Submodel("test-identifier3"));
+            list.Add(TestData.getTestSubmodel());
+            list.Add(TestData.getTestSubmodel());
+            list.Add(TestData.getTestSubmodel());
 
             return new ObjectResult(list);
         }
