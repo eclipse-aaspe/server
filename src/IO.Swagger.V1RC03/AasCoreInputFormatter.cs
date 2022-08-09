@@ -37,6 +37,9 @@ namespace IO.Swagger.V1RC03
             if (type == typeof(Submodel))
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.SubmodelFrom(node); 
+            } else if (type == typeof(AssetAdministrationShell))
+            {
+                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.AssetAdministrationShellFrom(node);
             }
 
             return InputFormatterResult.SuccessAsync(result);

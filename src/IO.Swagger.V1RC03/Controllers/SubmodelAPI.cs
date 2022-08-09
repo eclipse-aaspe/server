@@ -19,6 +19,8 @@ using IO.Swagger.V1RC03.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.V1RC03.Models;//remove later
 using AasCore.Aas3_0_RC02;
+using IO.Swagger.V1RC03.ApiModel;
+
 
 namespace IO.Swagger.V1RC03.Controllers
 { 
