@@ -69,7 +69,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/submodel/submodel-elements")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElements")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelElement>), description: "List of found submodel elements")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<AasCore.Aas3_0_RC02.ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElements([FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         { 
@@ -82,8 +82,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "[ \"\", \"\" ]";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<SubmodelElement>>(exampleJson)
-                        : default(List<SubmodelElement>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<List<AasCore.Aas3_0_RC02.ISubmodelElement>>(exampleJson)
+                        : default(List<AasCore.Aas3_0_RC02.ISubmodelElement>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -172,21 +172,16 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/submodel")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodel")]
-        [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AasCore.Aas3_0_RC02.Submodel), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodel([FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
-        { 
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(Submodel));
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<Submodel>(exampleJson)
-                        : default(Submodel);            //TODO: Change the data returned
+            var example = TestData.getTestSubmodel();
             return new ObjectResult(example);
         }
 
@@ -204,11 +199,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/submodel/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPath")]
-        [SwaggerResponse(statusCode: 200, type: typeof(SubmodelElement), description: "Requested submodel element")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AasCore.Aas3_0_RC02.ISubmodelElement), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
-        { 
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(SubmodelElement));
 
@@ -217,12 +212,8 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<SubmodelElement>(exampleJson)
-                        : default(SubmodelElement);            //TODO: Change the data returned
+
+            var example = TestData.getTestSubmodel().SubmodelElements[0];
             return new ObjectResult(example);
         }
 
@@ -286,10 +277,10 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/submodel/submodel-elements")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElement")]
-        [SwaggerResponse(statusCode: 201, type: typeof(SubmodelElement), description: "Submodel element created successfully")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AasCore.Aas3_0_RC02.ISubmodelElement), description: "Submodel element created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElement([FromBody]SubmodelElement body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
+        public virtual IActionResult PostSubmodelElement([FromBody] AasCore.Aas3_0_RC02.ISubmodelElement body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(SubmodelElement));
@@ -299,13 +290,8 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<SubmodelElement>(exampleJson)
-                        : default(SubmodelElement);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //TODO: Change the data returned
+            return new ObjectResult(body);
         }
 
         /// <summary>
@@ -324,11 +310,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/submodel/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElementByPath")]
-        [SwaggerResponse(statusCode: 201, type: typeof(SubmodelElement), description: "Submodel element created successfully")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AasCore.Aas3_0_RC02.ISubmodelElement), description: "Submodel element created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementByPath([FromBody]SubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
+        public virtual IActionResult PostSubmodelElementByPath([FromBody] AasCore.Aas3_0_RC02.ISubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(SubmodelElement));
@@ -345,8 +331,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "\"\"";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<SubmodelElement>(exampleJson)
-                        : default(SubmodelElement);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<AasCore.Aas3_0_RC02.ISubmodelElement>(exampleJson)
+                        : default(AasCore.Aas3_0_RC02.ISubmodelElement);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -367,7 +353,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("PutSubmodel")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodel([FromBody]Submodel body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
+        public virtual IActionResult PutSubmodel([FromBody] AasCore.Aas3_0_RC02.Submodel body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -400,7 +386,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelElementByPath([FromBody]SubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
+        public virtual IActionResult PutSubmodelElementByPath([FromBody] AasCore.Aas3_0_RC02.ISubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent)
         { 
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);

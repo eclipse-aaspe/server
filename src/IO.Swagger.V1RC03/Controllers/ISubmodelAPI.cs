@@ -116,7 +116,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Submodel element created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelElement([FromBody]SubmodelElement body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
+        IActionResult PostSubmodelElement([FromBody]AasCore.Aas3_0_RC02.ISubmodelElement body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
 
         /// <summary>
         /// Creates a new submodel element at a specified path within submodel elements hierarchy
@@ -131,7 +131,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelElementByPath([FromBody]SubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
+        IActionResult PostSubmodelElementByPath([FromBody] AasCore.Aas3_0_RC02.ISubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
 
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="204">Submodel updated successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutSubmodel([FromBody]Submodel body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
+        IActionResult PutSubmodel([FromBody]AasCore.Aas3_0_RC02.Submodel body, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
 
         /// <summary>
         /// Updates an existing submodel element at a specified path within submodel elements hierarchy
@@ -160,6 +160,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutSubmodelElementByPath([FromBody]SubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
+        IActionResult PutSubmodelElementByPath([FromBody] AasCore.Aas3_0_RC02.ISubmodelElement body, [FromRoute][Required]string idShortPath, [FromQuery]string level, [FromQuery]string content, [FromQuery]string extent);
     }
 }

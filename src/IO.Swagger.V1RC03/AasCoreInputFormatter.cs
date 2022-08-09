@@ -44,6 +44,9 @@ namespace IO.Swagger.V1RC03
             } else if(type == typeof(SpecificAssetId))
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.SpecificAssetIdFrom(node);
+            } else if(type == typeof(AasCore.Aas3_0_RC02.ISubmodelElement))
+            {
+                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ISubmodelElementFrom(node);
             }
 
             return InputFormatterResult.SuccessAsync(result);
