@@ -56,6 +56,10 @@ namespace IO.Swagger.V1RC03
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ConceptDescriptionFrom(node);
             }
+            else if (type == typeof(AasCore.Aas3_0_RC02.AssetInformation))
+            {
+                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.AssetInformationFrom(node);
+            }
             return InputFormatterResult.SuccessAsync(result);
         }
     }

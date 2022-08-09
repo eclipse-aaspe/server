@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using IO.Swagger.V1RC03.Models;
 
 namespace IO.Swagger.V1RC03.Controllers
 { 
