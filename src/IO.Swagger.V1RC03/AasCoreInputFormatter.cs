@@ -48,7 +48,14 @@ namespace IO.Swagger.V1RC03
             {
                 result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ISubmodelElementFrom(node);
             }
-
+            else if (type == typeof(AasCore.Aas3_0_RC02.Reference))
+            {
+                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ReferenceFrom(node);
+            }
+            else if (type == typeof(AasCore.Aas3_0_RC02.ConceptDescription))
+            {
+                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ConceptDescriptionFrom(node);
+            }
             return InputFormatterResult.SuccessAsync(result);
         }
     }

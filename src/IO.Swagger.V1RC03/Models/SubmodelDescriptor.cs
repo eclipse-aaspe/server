@@ -67,7 +67,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="semanticId")]
-        public Reference SemanticId { get; set; }
+        public AasCore.Aas3_0_RC02.Reference SemanticId { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

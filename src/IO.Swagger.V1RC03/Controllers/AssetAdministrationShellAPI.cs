@@ -64,7 +64,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/aas/submodels")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelReferences")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Reference>), description: "Requested submodel references")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<AasCore.Aas3_0_RC02.Reference>), description: "Requested submodel references")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelReferences()
         { 
@@ -77,8 +77,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "[ \"\", \"\" ]";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<Reference>>(exampleJson)
-                        : default(List<Reference>);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<List<AasCore.Aas3_0_RC02.Reference>>(exampleJson)
+                        : default(List<AasCore.Aas3_0_RC02.Reference>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 
@@ -148,10 +148,10 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/aas/submodels")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelReference")]
-        [SwaggerResponse(statusCode: 201, type: typeof(Reference), description: "Submodel reference created successfully")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AasCore.Aas3_0_RC02.Reference), description: "Submodel reference created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelReference([FromBody]Reference body)
+        public virtual IActionResult PostSubmodelReference([FromBody] AasCore.Aas3_0_RC02.Reference body)
         { 
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(Reference));
@@ -165,8 +165,8 @@ namespace IO.Swagger.V1RC03.Controllers
             exampleJson = "\"\"";
             
                         var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<Reference>(exampleJson)
-                        : default(Reference);            //TODO: Change the data returned
+                        ? JsonConvert.DeserializeObject<AasCore.Aas3_0_RC02.Reference>(exampleJson)
+                        : default(AasCore.Aas3_0_RC02.Reference);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
 

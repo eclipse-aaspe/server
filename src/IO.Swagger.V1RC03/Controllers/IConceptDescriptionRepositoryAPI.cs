@@ -60,7 +60,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Concept Description created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostConceptDescription([FromBody]ConceptDescription body);
+        IActionResult PostConceptDescription([FromBody] AasCore.Aas3_0_RC02.ConceptDescription body);
 
         /// <summary>
         /// Updates an existing Concept Description
@@ -72,6 +72,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PutConceptDescriptionById([FromBody]ConceptDescription body, [FromRoute][Required]byte[] cdIdentifier);
+        IActionResult PutConceptDescriptionById([FromBody] AasCore.Aas3_0_RC02.ConceptDescription body, [FromRoute][Required]byte[] cdIdentifier);
     }
 }

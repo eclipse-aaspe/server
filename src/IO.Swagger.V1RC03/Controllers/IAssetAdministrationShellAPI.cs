@@ -64,7 +64,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Submodel reference created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelReference([FromBody]Reference body);
+        IActionResult PostSubmodelReference([FromBody] AasCore.Aas3_0_RC02.Reference body);
 
         /// <summary>
         /// Updates the Asset Administration Shell

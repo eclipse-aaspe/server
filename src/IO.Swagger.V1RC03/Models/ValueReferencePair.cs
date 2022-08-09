@@ -38,7 +38,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="valueId")]
-        public Reference ValueId { get; set; }
+        public AasCore.Aas3_0_RC02.Reference ValueId { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

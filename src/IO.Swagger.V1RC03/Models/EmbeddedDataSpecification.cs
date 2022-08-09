@@ -31,7 +31,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="dataSpecification")]
-        public Reference DataSpecification { get; set; }
+        public AasCore.Aas3_0_RC02.Reference DataSpecification { get; set; }
 
         /// <summary>
         /// Gets or Sets DataSpecificationContent

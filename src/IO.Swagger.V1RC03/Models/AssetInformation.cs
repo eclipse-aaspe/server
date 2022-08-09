@@ -39,7 +39,7 @@ namespace IO.Swagger.V1RC03.Models
         /// </summary>
 
         [DataMember(Name="globalAssetId")]
-        public Reference GlobalAssetId { get; set; }
+        public AasCore.Aas3_0_RC02.Reference GlobalAssetId { get; set; }
 
         /// <summary>
         /// Gets or Sets SpecificAssetId
