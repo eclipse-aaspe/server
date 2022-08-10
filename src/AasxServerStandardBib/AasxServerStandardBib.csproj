@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BouncyCastle.NetCore" Version="1.9.0" />
     <PackageReference Include="Grapevine" Version="4.1.2" />
     <PackageReference Include="IdentityModel" Version="5.1.1" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
@@ -35,6 +36,10 @@
   <ItemGroup>
     <None Include="..\..\LICENSE.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
+    <None Update="Andreas_Orzelski_Chain.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Opc.Ua.SampleClient.Config.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
