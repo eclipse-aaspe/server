@@ -4,17 +4,17 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using AasxServer;
 using AdminShellNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
-using SampleClient;
 using Org.Webpki.JsonCanonicalizer;
-using System.Security.Cryptography;
-using System.Text;
+using SampleClient;
 
 namespace AasxTimeSeries
 {
@@ -557,10 +557,10 @@ namespace AasxTimeSeries
                 X509Certificate2Collection xc = new X509Certificate2Collection();
                 xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
 
-                for (int j = xc.Count-1; j >= 0; j--)
+                for (int j = xc.Count - 1; j >= 0; j--)
                 {
-                    Console.WriteLine("Add certificate_" + (j+1));
-                    AdminShell.Property c = AdminShellV20.Property.CreateNew("certificate_" + (j+1));
+                    Console.WriteLine("Add certificate_" + (j + 1));
+                    AdminShell.Property c = AdminShellV20.Property.CreateNew("certificate_" + (j + 1));
                     c.setTimeStamp(timestamp);
                     c.TimeStampCreate = timestamp;
                     c.value = Convert.ToBase64String(xc[j].GetRawCertData());
