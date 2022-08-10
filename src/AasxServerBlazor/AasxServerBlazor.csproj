@@ -20,8 +20,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
+    <ProjectReference Include="..\es6numberserializer\es6numberserializer.csproj" />
     <ProjectReference Include="..\IO.Swagger.Lib\IO.Swagger.Lib.csproj" />
     <ProjectReference Include="..\IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj" />
+    <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="Url&quot;" /></VisualStudio></ProjectExtensions>

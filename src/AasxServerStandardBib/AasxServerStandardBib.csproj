@@ -36,6 +36,10 @@
     <None Include="..\..\LICENSE.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
+    <None Update="Andreas_Orzelski_Chain.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Opc.Ua.SampleClient.Config.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
