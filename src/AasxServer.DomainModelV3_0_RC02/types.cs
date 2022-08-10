@@ -8,6 +8,7 @@ using System.Collections.Generic;  // can't alias
 
 using Aas = AasCore.Aas3_0_RC02;
 using System;
+using Newtonsoft.Json;
 
 namespace AasCore.Aas3_0_RC02
 {
@@ -388,12 +389,14 @@ namespace AasCore.Aas3_0_RC02
         public string? Checksum { get; set; }
 
         #region Parent
+        [JsonIgnore]
         public IClass Parent { get; set; }
         #endregion
 
         #region TimeStamp
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
-
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
 
         #endregion
@@ -1036,8 +1039,11 @@ namespace AasCore.Aas3_0_RC02
         public List<Reference>? Submodels { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -1932,8 +1938,11 @@ namespace AasCore.Aas3_0_RC02
         public List<ISubmodelElement>? SubmodelElements { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
 
         #endregion
@@ -2432,8 +2441,11 @@ namespace AasCore.Aas3_0_RC02
         public Reference Second { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -2929,8 +2941,11 @@ namespace AasCore.Aas3_0_RC02
         /// </summary>
         public DataTypeDefXsd? ValueTypeListElement { get; set; }
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -3402,8 +3417,11 @@ namespace AasCore.Aas3_0_RC02
         public List<ISubmodelElement>? Value { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -3905,8 +3923,11 @@ namespace AasCore.Aas3_0_RC02
         public Reference? ValueId { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -4372,9 +4393,12 @@ namespace AasCore.Aas3_0_RC02
         /// </remarks>
         public Reference? ValueId { get; set; }
         #region Parent and Timestamp
-        public IClass Parent { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime TimeStampCreate { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime TimeStamp { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        [JsonIgnore]
+        public IClass Parent { get ; set ; }
+        [JsonIgnore]
+        public DateTime TimeStampCreate { get ; set ; }
+        [JsonIgnore]
+        public DateTime TimeStamp { get ; set; }
         #endregion
 
         /// <summary>
@@ -4850,8 +4874,11 @@ namespace AasCore.Aas3_0_RC02
         /// </remarks>
         public string? Max { get; set; }
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -5287,8 +5314,11 @@ namespace AasCore.Aas3_0_RC02
         public Reference? Value { get; set; }
 
         #region Parent and timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -5750,8 +5780,11 @@ namespace AasCore.Aas3_0_RC02
         public string ContentType { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -6195,8 +6228,11 @@ namespace AasCore.Aas3_0_RC02
         public string ContentType { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -6638,8 +6674,11 @@ namespace AasCore.Aas3_0_RC02
         public List<IDataElement>? Annotations { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -7156,8 +7195,11 @@ namespace AasCore.Aas3_0_RC02
         public SpecificAssetId? SpecificAssetId { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -7952,8 +7994,11 @@ namespace AasCore.Aas3_0_RC02
         public string? MaxInterval { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -8410,8 +8455,11 @@ namespace AasCore.Aas3_0_RC02
         public List<OperationVariable>? InoutputVariables { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -8995,8 +9043,11 @@ namespace AasCore.Aas3_0_RC02
         public List<Reference>? DataSpecifications { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 
@@ -9400,8 +9451,11 @@ namespace AasCore.Aas3_0_RC02
         public List<Reference>? IsCaseOf { get; set; }
 
         #region Parent and Timestamp
+        [JsonIgnore]
         public IClass Parent { get; set; }
+        [JsonIgnore]
         public DateTime TimeStampCreate { get; set; }
+        [JsonIgnore]
         public DateTime TimeStamp { get; set; }
         #endregion
 

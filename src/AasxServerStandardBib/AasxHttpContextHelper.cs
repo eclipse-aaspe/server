@@ -529,27 +529,36 @@ namespace AasxRestServerLibrary
 
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
         {
-            var settings = new JsonSerializerSettings();
-            if (contractResolver != null)
-                settings.ContractResolver = contractResolver;
-            var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-            var buffer = context.Request.ContentEncoding.GetBytes(json);
-            var length = buffer.Length;
-
-            var queryString = context.Request.QueryString;
-            string refresh = queryString["refresh"];
-            if (refresh != null && refresh != "")
+            try
             {
-                context.Response.Headers.Remove("Refresh");
-                context.Response.Headers.Add("Refresh", refresh);
+                var settings = new JsonSerializerSettings();
+                if (contractResolver != null)
+                    settings.ContractResolver = contractResolver;
+                var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
+
+                var buffer = context.Request.ContentEncoding.GetBytes(json);
+                var length = buffer.Length;
+
+                var queryString = context.Request.QueryString;
+                string refresh = queryString["refresh"];
+                if (refresh != null && refresh != "")
+                {
+                    context.Response.Headers.Remove("Refresh");
+                    context.Response.Headers.Add("Refresh", refresh);
+                }
+
+                AasxRestServer.TestResource.allowCORS(context);
+
+                context.Response.ContentType = ContentType.JSON;
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = length;
+                context.Response.SendResponse(buffer);
             }
-
-            AasxRestServer.TestResource.allowCORS(context);
-
-            context.Response.ContentType = ContentType.JSON;
-            context.Response.ContentEncoding = Encoding.UTF8;
-            context.Response.ContentLength64 = length;
-            context.Response.SendResponse(buffer);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
         protected static void SendTextResponse(Grapevine.Interfaces.Server.IHttpContext context, string txt, string mimeType = null)
@@ -2342,7 +2351,7 @@ namespace AasxRestServerLibrary
                     else
                     {
                         sme.TimeStampCreate = timeStamp;
-                        context.Server.Logger.Debug($"Adding new SubmodelElement {sme.idShort} to SubmodelCollection.");
+                        context.Server.Logger.Debug($"Adding new SubmodelElement {sme.IdShort} to SubmodelCollection.");
                         parentsmc.Add(sme);
                     }
                     sme.SetAllParentsAndTimestamps(parentsmc, timeStamp, sme.TimeStampCreate);
