@@ -1,0 +1,4361 @@
+{
+  "openapi" : "3.0.3",
+  "info" : {
+    "title" : "DotAAS Part 2 | HTTP/REST | Entire API Collection",
+    "description" : "The entire API collection as part of Details of the Asset Administration Shell Part 2",
+    "termsOfService" : "https://github.com/admin-shell-io/aas-specs",
+    "contact" : {
+      "name" : "Constantin Ziesche, Andreas Orzelski, Florian Krebs, Bastian Rössl, Manuel Sauer, Jens Vialkowitsch, Michael Hoffmeister, Torben Miny, Sebastian Bader"
+    },
+    "version" : "V1.0RC03"
+  },
+  "servers" : [ {
+    "url" : "{protocol}://{host_name}:{port}/api/{version_prefix}",
+    "variables" : {
+      "protocol" : {
+        "description" : "Allows access through http and https (recommended)",
+        "enum" : [ "http", "https" ],
+        "default" : "https"
+      },
+      "host_name" : {
+        "description" : "Hostname of server hosting the api",
+        "default" : "admin-shell.io"
+      },
+      "port" : {
+        "description" : "80 is default for http, 443 for https",
+        "enum" : [ "80", "443" ],
+        "default" : "443"
+      },
+      "version_prefix" : {
+        "enum" : [ "v1" ],
+        "default" : "v1"
+      }
+    }
+  } ],
+  "paths" : {
+    "/shells" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository API" ],
+        "summary" : "Returns all Asset Administration Shells",
+        "operationId" : "GetAllAssetAdministrationShells",
+        "parameters" : [ {
+          "name" : "assetIds",
+          "in" : "query",
+          "description" : "A list of specific Asset identifiers",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "example" : "[ { \"name\": \"some-asset-id\", \"value\": \"http://example-company.com/myAsset\", \"externalSubjectId\": { \"keys\": [ { \"type\": \"GlobalReference\", \"value\": \"http://example-company.com/example-companys-asset-keys\" } ], \"type\": \"GlobalReference\" } }, { \"name\": \"some-other-asset-id\", \"value\": \"12345ABC\", \"externalSubjectId\": { \"keys\": [ { \"type\": \"GlobalReference\", \"value\": \"http://my-own-company.com/keys\" } ], \"type\": \"GlobalReference\" } } ]e\": \"globalAssetId\",\"value\": \"http://example.company/myAsset\", \"externalSubjectId\": \"http://example.company\"},{\"name\": \"myOwnInternalAssetId\",\"value\": \"12345ABC\", \"externalSubjectId\": \"http://example.company\"}]",
+            "items" : {
+              "$ref" : "#/components/schemas/SpecificAssetId"
+            }
+          }
+        }, {
+          "name" : "idShort",
+          "in" : "query",
+          "description" : "The Asset Administration Shell’s IdShort",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shells",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AssetAdministrationShell"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAssetAdministrationShells/1/0/RC03", "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellsByAssetId/1/0/RC03", "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellsByIdShort/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Repository API" ],
+        "summary" : "Creates a new Asset Administration Shell",
+        "operationId" : "PostAssetAdministrationShell",
+        "requestBody" : {
+          "description" : "Asset Administration Shell object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShell"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Asset Administration Shell created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShell"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostAssetAdministrationShell/1/0/RC03" ]
+      }
+    },
+    "/shells/{aasIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Repository API" ],
+        "summary" : "Returns a specific Asset Administration Shell",
+        "operationId" : "GetAssetAdministrationShellById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShell"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetAdministrationShellById/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Repository API" ],
+        "summary" : "Updates an existing Asset Administration Shell",
+        "operationId" : "PutAssetAdministrationShellById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Administration Shell object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShell"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetAdministrationShellById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Repository API" ],
+        "summary" : "Deletes an Asset Administration Shell",
+        "operationId" : "DeleteAssetAdministrationShellById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteAssetAdministrationShellById/1/0/RC03" ]
+      }
+    },
+    "/aas" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Returns the Asset Administration Shell",
+        "operationId" : "GetAssetAdministrationShell",
+        "parameters" : [ {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShell"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetAdministrationShell/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Updates the Asset Administration Shell",
+        "operationId" : "PutAssetAdministrationShell",
+        "parameters" : [ {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Administration Shell object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShell"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetAdministrationShell/1/0/RC03" ]
+      }
+    },
+    "/aas/asset-information" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Returns the Asset Information",
+        "operationId" : "GetAssetInformation",
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Information",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetInformation"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetInformation/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Updates the Asset Information",
+        "operationId" : "PutAssetInformation",
+        "requestBody" : {
+          "description" : "Asset Information object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetInformation"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Information updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetInformation/1/0/RC03" ]
+      }
+    },
+    "/aas/submodels" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Returns all submodel references",
+        "operationId" : "GetAllSubmodelReferences",
+        "responses" : {
+          "200" : {
+            "description" : "Requested submodel references",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Reference"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelReferences/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Creates a submodel reference at the Asset Administration Shell",
+        "operationId" : "PostSubmodelReference",
+        "requestBody" : {
+          "description" : "Reference to the Submodel",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel reference created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Reference"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelReference/1/0/RC03" ]
+      }
+    },
+    "/aas/submodels/{submodelIdentifier}" : {
+      "delete" : {
+        "tags" : [ "Asset Administration Shell API" ],
+        "summary" : "Deletes the submodel reference from the Asset Administration Shell",
+        "operationId" : "DeleteSubmodelReferenceById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel reference deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelReference/1/0/RC03" ]
+      }
+    },
+    "/submodels" : {
+      "get" : {
+        "tags" : [ "Submodel Repository API" ],
+        "summary" : "Returns all Submodels",
+        "operationId" : "GetAllSubmodels",
+        "parameters" : [ {
+          "name" : "semanticId",
+          "in" : "query",
+          "description" : "The value of the semantic id reference (BASE64-URL-encoded)",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "idShort",
+          "in" : "query",
+          "description" : "The Submodel’s idShort",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodels",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Submodel"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodels/1/0/RC03", "https://admin-shell.io/aas/API/GetAllSubmodelsBySemanticId/1/0/RC03", "https://admin-shell.io/aas/API/GetAllSubmodelsByIdShort/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Submodel Repository API" ],
+        "summary" : "Creates a new Submodel",
+        "operationId" : "PostSubmodel",
+        "requestBody" : {
+          "description" : "Submodel object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Submodel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Submodel"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodel/1/0/RC03" ]
+      }
+    },
+    "/submodels/{submodelIdentifier}" : {
+      "get" : {
+        "tags" : [ "Submodel Repository API" ],
+        "summary" : "Returns a specific Submodel",
+        "operationId" : "GetSubmodelById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Submodel"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelById/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Submodel Repository API" ],
+        "summary" : "Updates an existing Submodel",
+        "operationId" : "PutSubmodelById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Submodel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Submodel Repository API" ],
+        "summary" : "Deletes a Submodel",
+        "operationId" : "DeleteSubmodelById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelById/1/0/RC03" ]
+      }
+    },
+    "/submodel" : {
+      "get" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Returns the Submodel",
+        "operationId" : "GetSubmodel",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Submodel"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodel/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Updates the Submodel",
+        "operationId" : "PutSubmodel",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Submodel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodel/1/0/RC03" ]
+      }
+    },
+    "/submodel/submodel-elements" : {
+      "get" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Returns all submodel elements including their hierarchy",
+        "operationId" : "GetAllSubmodelElements",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "List of found submodel elements",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SubmodelElement"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelElements/1/0/RC03", "https://admin-shell.io/aas/API/GetAllSubmodelElementsBySemanticId/1/0/RC03", "https://admin-shell.io/aas/API/GetAllSubmodelElementsByParentPathAndSemanticId/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Creates a new submodel element",
+        "operationId" : "PostSubmodelElement",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel element created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelElement/1/0/RC03c" ]
+      }
+    },
+    "/submodel/submodel-elements/{idShortPath}" : {
+      "get" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Returns a specific submodel element from the Submodel at a specified path",
+        "operationId" : "GetSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested submodel element",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelElementByPath/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Updates an existing submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PutSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelElementByPath/1/0/RC03", "https://admin-shell.io/aas/API/SetSubmodelElementValueByPath/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Creates a new submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PostSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "level",
+          "in" : "query",
+          "description" : "Determines the structural depth of the respective resource content",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "deep", "core" ],
+            "default" : "deep"
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "extent",
+          "in" : "query",
+          "description" : "Determines to which extent the resource is being serialized",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "withBlobValue", "withoutBlobValue" ]
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Requested submodel element",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel element created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelElement"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelElementByPath/1/0/RC03c" ]
+      },
+      "delete" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Deletes a submodel element at a specified path within the submodel elements hierarchy",
+        "operationId" : "DeleteSubmodelElementByPath",
+        "parameters" : [ {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelElementByPath/1/0/RC03" ]
+      }
+    },
+    "/submodel/submodel-elements/{idShortPath}/attachment" : {
+      "get" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Downloads file content from a specific submodel element from the Submodel at a specified path",
+        "operationId" : "GetFileByPath",
+        "parameters" : [ {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested file",
+            "headers" : {
+              "Content-Disposition" : {
+                "description" : "In order to physically download the file usually set to attachment with a filename",
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                },
+                "example" : "attachment; filename=\"filename.jpg\""
+              }
+            },
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary",
+                  "x-content-type" : "application/octet-stream"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Method not allowed - Download only valid for File submodel element",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetFileByPath/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy",
+        "operationId" : "PutFileByPath",
+        "parameters" : [ {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "File to upload",
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/idShortPath_attachment_body"
+              },
+              "encoding" : {
+                "file" : {
+                  "contentType" : "application/octet-stream",
+                  "style" : "form"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel element updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Method not allowed - Upload only valid for File submodel element",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutFileByPath/1/0/RC03" ]
+      }
+    },
+    "/submodel/submodel-elements/{idShortPath}/invoke" : {
+      "post" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Synchronously or asynchronously invokes an Operation at a specified path",
+        "operationId" : "InvokeOperation",
+        "parameters" : [ {
+          "name" : "async",
+          "in" : "query",
+          "description" : "Determines whether an operation invocation is performed asynchronously or synchronously",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "content",
+          "in" : "query",
+          "description" : "Determines the request or response kind of the resource",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "metadata", "value", "reference", "path" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated), in this case an operation",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Operation request object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OperationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Operation result object",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperationResult"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Method not allowed - Invoke only valid for Operation submodel element",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/InvokeOperationSync/1/0/RC03", "https://admin-shell.io/aas/API/InvokeOperationAsync/1/0/RC03" ]
+      }
+    },
+    "/submodel/submodel-elements/{idShortPath}/operation-results/{handleId}" : {
+      "get" : {
+        "tags" : [ "Submodel API" ],
+        "summary" : "Returns the Operation result of an asynchronous invoked Operation",
+        "operationId" : "GetOperationAsyncResult",
+        "parameters" : [ {
+          "name" : "content",
+          "in" : "query",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "normal", "value" ],
+            "default" : "normal"
+          }
+        }, {
+          "name" : "idShortPath",
+          "in" : "path",
+          "description" : "IdShort path to the submodel element (dot-separated), in this case an operation",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "handleId",
+          "in" : "path",
+          "description" : "The returned handle id of an operation’s asynchronous invocation used to request the current state of the operation’s execution (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Operation result object",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperationResult"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetOperationAsyncResult/1/0/RC03" ]
+      }
+    },
+    "/shell-descriptors" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns all Asset Administration Shell Descriptors",
+        "operationId" : "GetAllAssetAdministrationShellDescriptors",
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell Descriptors",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellDescriptors/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Creates a new Asset Administration Shell Descriptor, i.e. registers an AAS",
+        "operationId" : "PostAssetAdministrationShellDescriptor",
+        "requestBody" : {
+          "description" : "Asset Administration Shell Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Asset Administration Shell Descriptor created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostAssetAdministrationShellDescriptor/1/0/RC03" ]
+      }
+    },
+    "/shell-descriptors/{aasIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns a specific Asset Administration Shell Descriptor",
+        "operationId" : "GetAssetAdministrationShellDescriptorById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell Descriptor",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetAdministrationShellDescriptorById/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Updates an existing Asset Administration Shell Descriptor",
+        "operationId" : "PutAssetAdministrationShellDescriptorById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Administration Shell Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell Descriptor updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetAdministrationShellDescriptorById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Deletes an Asset Administration Shell Descriptor, i.e. de-registers an AAS",
+        "operationId" : "DeleteAssetAdministrationShellDescriptorById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell Descriptor deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteAssetAdministrationShellDescriptorById/1/0/RC03" ]
+      }
+    },
+    "/shell-descriptors/{aasIdentifier}/submodel-descriptors" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns all Submodel Descriptors",
+        "operationId" : "GetAllSubmodelDescriptors_AASRegistry",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel Descriptors",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SubmodelDescriptor"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelDescriptors/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Creates a new Submodel Descriptor, i.e. registers a submodel",
+        "operationId" : "PostSubmodelDescriptor_AASRegistry",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel Descriptor created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelDescriptor/1/0/RC03" ]
+      }
+    },
+    "/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns a specific Submodel Descriptor",
+        "operationId" : "GetSubmodelDescriptorById_AASRegistry",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel Descriptor",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelDescriptor"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelDescriptorById/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Updates an existing Submodel Descriptor",
+        "operationId" : "PutSubmodelDescriptorById_AASRegistry",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel Descriptor updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelDescriptorById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Deletes a Submodel Descriptor, i.e. de-registers a submodel",
+        "operationId" : "DeleteSubmodelDescriptorById_AASRegistry",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel Descriptor deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelDescriptorById/1/0/RC03" ]
+      }
+    },
+    "/submodel-descriptors" : {
+      "get" : {
+        "tags" : [ "Submodel Registry API" ],
+        "summary" : "Returns all Submodel Descriptors",
+        "operationId" : "GetAllSubmodelDescriptors",
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel Descriptors",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SubmodelDescriptor"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelDescriptors/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Submodel Registry API" ],
+        "summary" : "Creates a new Submodel Descriptor, i.e. registers a submodel",
+        "operationId" : "PostSubmodelDescriptor",
+        "requestBody" : {
+          "description" : "Submodel Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel Descriptor created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelDescriptor/1/0/RC03" ]
+      }
+    },
+    "/submodel-descriptors/{submodelIdentifier}" : {
+      "get" : {
+        "tags" : [ "Submodel Registry API" ],
+        "summary" : "Returns a specific Submodel Descriptor",
+        "operationId" : "GetSubmodelDescriptorById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel Descriptor",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelDescriptor"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelDescriptorById/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Submodel Registry API" ],
+        "summary" : "Updates an existing Submodel Descriptor",
+        "operationId" : "PutSubmodelDescriptorById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel Descriptor updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelDescriptorById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Submodel Registry API" ],
+        "summary" : "Deletes a Submodel Descriptor, i.e. de-registers a submodel",
+        "operationId" : "DeleteSubmodelDescriptorById",
+        "parameters" : [ {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel Descriptor deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelDescriptorById/1/0/RC03" ]
+      }
+    },
+    "/concept-descriptions" : {
+      "get" : {
+        "tags" : [ "Concept Description Repository API" ],
+        "summary" : "Returns all Concept Descriptions",
+        "operationId" : "GetAllConceptDescriptions",
+        "parameters" : [ {
+          "name" : "idShort",
+          "in" : "query",
+          "description" : "The Concept Description’s IdShort",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "isCaseOf",
+          "in" : "query",
+          "description" : "IsCaseOf reference (UTF8-BASE64-URL-encoded)",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        }, {
+          "name" : "dataSpecificationRef",
+          "in" : "query",
+          "description" : "DataSpecification reference (UTF8-BASE64-URL-encoded)",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Concept Descriptions",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ConceptDescription"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllConceptDescriptions/1/0/RC03", "https://admin-shell.io/aas/API/GetAllConceptDescriptionsByIdShort/1/0/RC03", "https://admin-shell.io/aas/API/GetAllConceptDescriptionsByIsCaseOf/1/0/RC03", "https://admin-shell.io/aas/API/GetAllConceptDescriptionsByDataSpecificationReference/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Concept Description Repository API" ],
+        "summary" : "Creates a new Concept Description",
+        "operationId" : "PostConceptDescription",
+        "requestBody" : {
+          "description" : "Concept Description object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConceptDescription"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Concept Description created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConceptDescription"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostConceptDescription/1/0/RC03" ]
+      }
+    },
+    "/concept-descriptions/{cdIdentifier}" : {
+      "get" : {
+        "tags" : [ "Concept Description Repository API" ],
+        "summary" : "Returns a specific Concept Description",
+        "operationId" : "GetConceptDescriptionById",
+        "parameters" : [ {
+          "name" : "cdIdentifier",
+          "in" : "path",
+          "description" : "The Concept Description’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Concept Description",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConceptDescription"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetConceptDescriptionById/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "Concept Description Repository API" ],
+        "summary" : "Updates an existing Concept Description",
+        "operationId" : "PutConceptDescriptionById",
+        "parameters" : [ {
+          "name" : "cdIdentifier",
+          "in" : "path",
+          "description" : "The Concept Description’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Concept Description object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConceptDescription"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Concept Description updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutConceptDescriptionById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Concept Description Repository API" ],
+        "summary" : "Deletes a Concept Description",
+        "operationId" : "DeleteConceptDescriptionById",
+        "parameters" : [ {
+          "name" : "cdIdentifier",
+          "in" : "path",
+          "description" : "The Concept Description’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Concept Description deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteConceptDescriptionById/1/0/RC03" ]
+      }
+    },
+    "/packages" : {
+      "get" : {
+        "tags" : [ "AASX File Server API" ],
+        "summary" : "Returns a list of available AASX packages at the server",
+        "operationId" : "GetAllAASXPackageIds",
+        "parameters" : [ {
+          "name" : "aasId",
+          "in" : "query",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested package list",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PackageDescription"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAASXPackageIds/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "AASX File Server API" ],
+        "summary" : "Stores the AASX package at the server",
+        "operationId" : "PostAASXPackage",
+        "requestBody" : {
+          "description" : "AASX package",
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/packages_body"
+              },
+              "encoding" : {
+                "file" : {
+                  "contentType" : "application/asset-administration-shell-package",
+                  "style" : "form"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "AASX package stored successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PackageDescription"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostAASXPackage/1/0/RC03" ]
+      }
+    },
+    "/packages/{packageId}" : {
+      "get" : {
+        "tags" : [ "AASX File Server API" ],
+        "summary" : "Returns a specific AASX package from the server",
+        "operationId" : "GetAASXByPackageId",
+        "parameters" : [ {
+          "name" : "packageId",
+          "in" : "path",
+          "description" : "The package Id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested AASX package",
+            "headers" : {
+              "X-FileName" : {
+                "description" : "Filename of the package",
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/asset-administration-shell-package" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary",
+                  "x-content-type" : "application/asset-administration-shell-package"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAASXByPackageId/1/0/RC03" ]
+      },
+      "put" : {
+        "tags" : [ "AASX File Server API" ],
+        "summary" : "Updates the AASX package at the server",
+        "operationId" : "PutAASXByPackageId",
+        "parameters" : [ {
+          "name" : "packageId",
+          "in" : "path",
+          "description" : "The Package Id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "AASX package",
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/packages_packageId_body"
+              },
+              "encoding" : {
+                "file" : {
+                  "contentType" : "application/asset-administration-shell-package",
+                  "style" : "form"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "AASX package updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAASXByPackageId/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "AASX File Server API" ],
+        "summary" : "Deletes a specific AASX package from the server",
+        "operationId" : "DeleteAASXByPackageId",
+        "parameters" : [ {
+          "name" : "packageId",
+          "in" : "path",
+          "description" : "The Package Id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteAASXByPackageId/1/0/RC03" ]
+      }
+    },
+    "/serialization" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Serialization API" ],
+        "summary" : "Returns an appropriate serialization based on the specified format (see SerializationFormat)",
+        "operationId" : "GenerateSerializationByIds",
+        "parameters" : [ {
+          "name" : "aasIds",
+          "in" : "query",
+          "description" : "The Asset Administration Shells' unique ids (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "submodelIds",
+          "in" : "query",
+          "description" : "The Submodels' unique ids (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "includeConceptDescriptions",
+          "in" : "query",
+          "description" : "Include Concept Descriptions?",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "boolean",
+            "default" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested serialization based on SerializationFormat",
+            "content" : {
+              "application/asset-administration-shell-package+xml" : {
+                "schema" : {
+                  "type" : "string",
+                  "description" : "AASX package",
+                  "format" : "binary",
+                  "x-content-type" : "application/asset-administration-shell-package+xml"
+                }
+              },
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Environment"
+                }
+              },
+              "application/xml" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Environment"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GenerateSerializationByIds/1/0/RC03" ]
+      }
+    },
+    "/lookup/shells" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Basic Discovery API" ],
+        "summary" : "Returns a list of Asset Administration Shell ids linked to specific Asset identifiers",
+        "operationId" : "GetAllAssetAdministrationShellIdsByAssetLink",
+        "parameters" : [ {
+          "name" : "assetIds",
+          "in" : "query",
+          "description" : "A list of specific Asset identifiers",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "array",
+            "example" : "[ { \"name\": \"some-asset-id\", \"value\": \"http://example-company.com/myAsset\", \"externalSubjectId\": { \"keys\": [ { \"type\": \"GlobalReference\", \"value\": \"http://example-company.com/example-companys-asset-keys\" } ], \"type\": \"GlobalReference\" } }, { \"name\": \"some-other-asset-id\", \"value\": \"12345ABC\", \"externalSubjectId\": { \"keys\": [ { \"type\": \"GlobalReference\", \"value\": \"http://my-own-company.com/keys\" } ], \"type\": \"GlobalReference\" } } ]e\": \"globalAssetId\",\"value\": \"http://example.company/myAsset\", \"externalSubjectId\": \"http://example.company\"},{\"name\": \"myOwnInternalAssetId\",\"value\": \"12345ABC\", \"externalSubjectId\": \"http://example.company\"}]",
+            "items" : {
+              "$ref" : "#/components/schemas/SpecificAssetId"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell ids",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellIdsByAssetLink/1/0/RC03" ]
+      }
+    },
+    "/lookup/shells/{aasIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Basic Discovery API" ],
+        "summary" : "Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content",
+        "operationId" : "GetAllAssetLinksById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested specific Asset identifiers",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SpecificAssetId"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAssetLinksById/1/0/RC03" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Basic Discovery API" ],
+        "summary" : "Creates specific Asset identifiers linked to an Asset Administration Shell to edit discoverable content",
+        "operationId" : "PostAllAssetLinksById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "bytev"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "A list of specific Asset identifiers",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/components/schemas/SpecificAssetId"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Specific Asset identifiers created successfully",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SpecificAssetId"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostAllAssetLinksById/1/0/RC03" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Basic Discovery API" ],
+        "summary" : "Deletes all specific Asset identifiers linked to an Asset Administration Shell to edit discoverable content",
+        "operationId" : "DeleteAllAssetLinksById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Specific Asset identifiers deleted successfully"
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteAllAssetLinksById/1/0/RC03" ]
+      }
+    },
+    "/descriptor" : {
+      "get" : {
+        "tags" : [ "Descriptor API" ],
+        "summary" : "Returns the self-describing information of a network resource (Descriptor)",
+        "operationId" : "GetDescriptor",
+        "responses" : {
+          "200" : {
+            "description" : "Requested Descriptor",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Descriptor"
+                  },
+                  "x-content-type" : "application/json"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/Descriptor/GetDescriptor/1/0/RC03" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "SpecificAssetId" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "externalSubjectId", "name", "value" ],
+          "properties" : {
+            "name" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "value" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "externalSubjectId" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "HasSemantics" : {
+        "type" : "object",
+        "properties" : {
+          "semanticId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "supplementalSemanticIds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "Reference" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ReferenceParent"
+        }, {
+          "properties" : {
+            "referredSemanticId" : {
+              "$ref" : "#/components/schemas/ReferenceParent"
+            }
+          }
+        } ]
+      },
+      "ReferenceParent" : {
+        "required" : [ "type" ],
+        "properties" : {
+          "type" : {
+            "$ref" : "#/components/schemas/ReferenceTypes"
+          },
+          "keys" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Key"
+            }
+          }
+        }
+      },
+      "ReferenceTypes" : {
+        "type" : "string",
+        "enum" : [ "GlobalReference", "ModelReference" ]
+      },
+      "Key" : {
+        "required" : [ "type", "value" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "$ref" : "#/components/schemas/KeyTypes"
+          },
+          "value" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        }
+      },
+      "KeyTypes" : {
+        "type" : "string",
+        "enum" : [ "AnnotatedRelationshipElement", "AssetAdministrationShell", "BasicEventElement", "Blob", "Capability", "ConceptDescription", "DataElement", "Entity", "EventElement", "File", "FragmentReference", "GlobalReference", "Identifiable", "MultiLanguageProperty", "Operation", "Property", "Range", "ReferenceElement", "RelationshipElement", "Submodel", "SubmodelElement", "SubmodelElementList", "SubmodelElementCollection" ]
+      },
+      "AssetAdministrationShell" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Identifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "required" : [ "assetInformation" ],
+          "properties" : {
+            "assetInformation" : {
+              "$ref" : "#/components/schemas/AssetInformation"
+            },
+            "submodels" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            },
+            "derivedFrom" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "Identifiable" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "required" : [ "id" ],
+          "properties" : {
+            "id" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "administration" : {
+              "$ref" : "#/components/schemas/AdministrativeInformation"
+            }
+          }
+        } ]
+      },
+      "Referable" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasExtensions"
+        }, {
+          "required" : [ "modelType" ],
+          "properties" : {
+            "idShort" : {
+              "maxLength" : 128,
+              "minLength" : 1,
+              "pattern" : "^[a-zA-Z][a-zA-Z0-9_]+$",
+              "type" : "string"
+            },
+            "displayNames" : {
+              "$ref" : "#/components/schemas/LangStringSet"
+            },
+            "category" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "descriptions" : {
+              "$ref" : "#/components/schemas/LangStringSet"
+            },
+            "checksum" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "modelType" : {
+              "$ref" : "#/components/schemas/ModelType"
+            }
+          }
+        } ]
+      },
+      "HasExtensions" : {
+        "type" : "object",
+        "properties" : {
+          "extensions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Extension"
+            }
+          }
+        }
+      },
+      "Extension" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "name" ],
+          "properties" : {
+            "name" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "valueType" : {
+              "$ref" : "#/components/schemas/DataTypeDefXsd"
+            },
+            "value" : {
+              "type" : "string"
+            },
+            "refersTo" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "DataTypeDefXsd" : {
+        "type" : "string",
+        "enum" : [ "xs:anyURI", "xs:base64Binary", "xs:boolean", "xs:date", "xs:dateTime", "xs:dateTimeStamp", "xs:decimal", "xs:double", "xs:duration", "xs:float", "xs:gDay", "xs:gMonth", "xs:gMonthDay", "xs:gYear", "xs:gYearMonth", "xs:hexBinary", "rdf:langString", "xs:string", "xs:time", "xs:dayTimeDuration", "xs:yearMonthDuration", "xs:integer", "xs:long", "xs:int", "xs:short", "xs:byte", "xs:NonNegativeInteger", "xs:positiveInteger", "xs:unsignedLong", "xs:unsignedInt", "xs:unsignedShort", "xs:unsignedByte", "xs:nonPositiveInteger", "xs:negativeInteger" ]
+      },
+      "LangStringSet" : {
+        "required" : [ "langStrings" ],
+        "type" : "object",
+        "properties" : {
+          "langStrings" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LangString"
+            }
+          }
+        }
+      },
+      "LangString" : {
+        "required" : [ "language", "text" ],
+        "type" : "object",
+        "properties" : {
+          "language" : {
+            "pattern" : "^(([a-zA-Z]{2,3}(-[a-zA-Z]{3}(-[a-zA-Z]{3}){2})?|[a-zA-Z]{4}|[a-zA-Z]{5,8})(-[a-zA-Z]{4})?(-([a-zA-Z]{2}|[0-9]{3}  ))?(-(([a-zA-Z0-9]){5,8}|[0-9]([a-zA-Z0-9]){3}))*(-[0-9A-WY-Za-wy-z](-([a-zA-Z0-9]){2,8})+)*(-[xX](-([a-zA-Z0-9]){1,8}  )+)?|[xX](-([a-zA-Z0-9]){1,8})+|((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i  -tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh  -xiang)))$",
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ModelType" : {
+        "type" : "string",
+        "enum" : [ "AssetAdministrationShell", "Submodel", "SubmodelElementList", "SubmodelElementCollection", "Property", "MultiLanguageProperty", "Range", "ReferenceElement", "Blob", "File", "AnnotatedRelationshipElement", "RelationshipElement", "Entity", "BasicEventElement", "Operation", "Capability", "ConceptDescription" ]
+      },
+      "AdministrativeInformation" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "properties" : {
+            "version" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "revision" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "HasDataSpecification" : {
+        "properties" : {
+          "embeddedDataSpecifications" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EmbeddedDataSpecification"
+            }
+          }
+        }
+      },
+      "EmbeddedDataSpecification" : {
+        "properties" : {
+          "dataSpecification" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "dataSpecificationContent" : {
+            "$ref" : "#/components/schemas/DataSpecificationContent"
+          }
+        }
+      },
+      "DataSpecificationContent" : {
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/DataSpecificationIEC61360"
+        }, {
+          "$ref" : "#/components/schemas/DataSpecificationPhysicalUnit"
+        } ]
+      },
+      "DataSpecificationIEC61360" : {
+        "allOf" : [ {
+          "required" : [ "preferredName" ],
+          "type" : "object",
+          "properties" : {
+            "dataType" : {
+              "type" : "string",
+              "enum" : [ "DATE", "STRING", "STRING_TRANSLATABLE", "INTEGER_MEASURE", "INTEGER_COUNT", "INTEGER_CURRENCY", "REAL_MEASURE", "REAL_COUNT", "REAL_CURRENCY", "BOOLEAN", "IRI", "IRDI", "RATIONAL", "RATIONAL_MEASURE", "TIME", "TIMESTAMP", "HTML", "BLOB", "FILE" ]
+            },
+            "definition" : {
+              "$ref" : "#/components/schemas/LangStringSet"
+            },
+            "levelType" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LevelType"
+              }
+            },
+            "preferredName" : {
+              "$ref" : "#/components/schemas/LangStringSet"
+            },
+            "shortName" : {
+              "$ref" : "#/components/schemas/LangStringSet"
+            },
+            "sourceOfDefinition" : {
+              "type" : "string"
+            },
+            "symbol" : {
+              "type" : "string"
+            },
+            "unit" : {
+              "type" : "string"
+            },
+            "unitId" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "valueFormat" : {
+              "type" : "string"
+            },
+            "valueList" : {
+              "$ref" : "#/components/schemas/ValueList"
+            },
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "LevelType" : {
+        "type" : "string",
+        "enum" : [ "Min", "Max", "Nom", "Typ" ]
+      },
+      "ValueList" : {
+        "required" : [ "valueReferencePairs" ],
+        "type" : "object",
+        "properties" : {
+          "valueReferencePairs" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ValueReferencePair"
+            }
+          }
+        }
+      },
+      "ValueReferencePair" : {
+        "properties" : {
+          "value" : {
+            "type" : "string"
+          },
+          "valueId" : {
+            "$ref" : "#/components/schemas/Reference"
+          }
+        }
+      },
+      "DataSpecificationPhysicalUnit" : {
+        "required" : [ "definition", "unitName", "unitSymbol" ],
+        "type" : "object",
+        "properties" : {
+          "conversionFactor" : {
+            "type" : "string"
+          },
+          "definition" : {
+            "$ref" : "#/components/schemas/LangStringSet"
+          },
+          "dinNotation" : {
+            "type" : "string"
+          },
+          "eceCode" : {
+            "type" : "string"
+          },
+          "eceName" : {
+            "type" : "string"
+          },
+          "nistName" : {
+            "type" : "string"
+          },
+          "registrationAuthorityId" : {
+            "type" : "string"
+          },
+          "siName" : {
+            "type" : "string"
+          },
+          "siNotation" : {
+            "type" : "string"
+          },
+          "sourceOfDefinition" : {
+            "type" : "string"
+          },
+          "supplier" : {
+            "type" : "string"
+          },
+          "unitName" : {
+            "type" : "string"
+          },
+          "unitSymbol" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AssetInformation" : {
+        "required" : [ "assetKind" ],
+        "type" : "object",
+        "properties" : {
+          "assetKind" : {
+            "$ref" : "#/components/schemas/AssetKind"
+          },
+          "globalAssetId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "specificAssetId" : {
+            "$ref" : "#/components/schemas/SpecificAssetId"
+          },
+          "defaultThumbnail" : {
+            "$ref" : "#/components/schemas/Resource"
+          }
+        },
+        "example" : {
+          "specificAssetId" : "",
+          "assetKind" : "Type",
+          "defaultThumbnail" : {
+            "path" : "path",
+            "contentType" : "contentType"
+          },
+          "globalAssetId" : ""
+        }
+      },
+      "AssetKind" : {
+        "type" : "string",
+        "enum" : [ "Type", "Instance" ]
+      },
+      "Resource" : {
+        "required" : [ "path" ],
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "pattern" : "^([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+/([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+([ \t]*;[ \t]*([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+=(([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+|\"(([\t !#-\\[\\]-~]|[\\x80-\\xff])|\\\\([\t !-~]|[\\x80-\\xff]))*\"))*$",
+            "type" : "string"
+          },
+          "contentType" : {
+            "minLength" : 1,
+            "pattern" : "^([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+/([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+([ \t]*;[ \t]*([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+=(([!#$%&'*+\\-.^_`|~0-9a-zA-Z])+|\"(([\t !#-\\[\\]-~]|[\\x80-\\xff])|\\\\([\t !-~]|[\\x80-\\xff]))*\"))*$",
+            "type" : "string"
+          }
+        },
+        "example" : {
+          "path" : "path",
+          "contentType" : "contentType"
+        }
+      },
+      "Result" : {
+        "type" : "object",
+        "properties" : {
+          "messages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Message"
+            }
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "example" : {
+          "success" : true,
+          "messages" : [ {
+            "code" : "code",
+            "messageType" : "Undefined",
+            "text" : "text",
+            "timestamp" : "timestamp"
+          }, {
+            "code" : "code",
+            "messageType" : "Undefined",
+            "text" : "text",
+            "timestamp" : "timestamp"
+          } ]
+        }
+      },
+      "Message" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "messageType" : {
+            "type" : "string",
+            "enum" : [ "Undefined", "Info", "Warning", "Error", "Exception" ]
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "timestamp" : {
+            "type" : "string"
+          }
+        },
+        "example" : {
+          "code" : "code",
+          "messageType" : "Undefined",
+          "text" : "text",
+          "timestamp" : "timestamp"
+        }
+      },
+      "Submodel" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Identifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasKind"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "properties" : {
+            "submodelElements" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelElement"
+              }
+            }
+          }
+        } ]
+      },
+      "HasKind" : {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "$ref" : "#/components/schemas/ModelingKind"
+          }
+        }
+      },
+      "ModelingKind" : {
+        "type" : "string",
+        "enum" : [ "Template", "Instance" ]
+      },
+      "Qualifiable" : {
+        "type" : "object",
+        "properties" : {
+          "qualifiers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Qualifier"
+            }
+          }
+        }
+      },
+      "Qualifier" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "type", "valueType" ],
+          "properties" : {
+            "kind" : {
+              "$ref" : "#/components/schemas/QualifierKind"
+            },
+            "type" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "valueType" : {
+              "$ref" : "#/components/schemas/DataTypeDefXsd"
+            },
+            "value" : {
+              "type" : "string"
+            },
+            "valueId" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "QualifierKind" : {
+        "type" : "string",
+        "enum" : [ "ValueQualifier", "ConceptQualifier", "TemplateQualifier" ]
+      },
+      "SubmodelElement" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Referable"
+        }, {
+          "$ref" : "#/components/schemas/HasKind"
+        }, {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "$ref" : "#/components/schemas/Qualifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        } ]
+      },
+      "OperationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "inoutputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "inputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "timeout" : {
+            "type" : "integer"
+          }
+        }
+      },
+      "OperationVariable" : {
+        "required" : [ "value" ],
+        "type" : "object",
+        "properties" : {
+          "value" : {
+            "$ref" : "#/components/schemas/SubmodelElement"
+          }
+        },
+        "example" : {
+          "value" : ""
+        }
+      },
+      "OperationResult" : {
+        "type" : "object",
+        "properties" : {
+          "executionResult" : {
+            "$ref" : "#/components/schemas/Result"
+          },
+          "executionState" : {
+            "$ref" : "#/components/schemas/ExecutionState"
+          },
+          "inoutputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "outputArguments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationVariable"
+            }
+          },
+          "requestId" : {
+            "type" : "string"
+          }
+        },
+        "example" : {
+          "outputArguments" : [ null, null ],
+          "requestId" : "requestId",
+          "executionResult" : {
+            "success" : true,
+            "messages" : [ {
+              "code" : "code",
+              "messageType" : "Undefined",
+              "text" : "text",
+              "timestamp" : "timestamp"
+            }, {
+              "code" : "code",
+              "messageType" : "Undefined",
+              "text" : "text",
+              "timestamp" : "timestamp"
+            } ]
+          },
+          "executionState" : "Initiated",
+          "inoutputArguments" : [ {
+            "value" : ""
+          }, {
+            "value" : ""
+          } ]
+        }
+      },
+      "ExecutionState" : {
+        "type" : "string",
+        "enum" : [ "Initiated", "Running", "Completed", "Canceled", "Failed", "Timeout" ]
+      },
+      "AssetAdministrationShellDescriptor" : {
+        "required" : [ "endpoints", "identification" ],
+        "type" : "object",
+        "example" : "{ \"identification\": \"https://example.org/aas/motor\", \"endpoints\": [ { \"protocolInformation\": { \"endpointAddress\": \"https://localhost:1234\", \"endpointProtocolVersion\": \"1.1\" }, \"interface\": \"AAS-1.0\" }, { \"protocolInformation\": { \"endpointAddress\": \"opc.tcp://localhost:4840\" }, \"interface\": \"AAS-1.0\" }, { \"protocolInformation\": { \"endpointAddress\": \"https://localhost:5678\", \"endpointProtocolVersion\": \"1.1\", \"subprotocol\": \"OPC UA Basic SOAP\", \"subprotocolBody\": \"ns=2;s=MyAAS\", \"subprotocolBodyEncoding\": \"application/soap+xml\" }, \"interface\": \"AAS-1.0\" } ] }",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Descriptor"
+        }, {
+          "properties" : {
+            "administration" : {
+              "$ref" : "#/components/schemas/AdministrativeInformation"
+            },
+            "descriptions" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "displayNames" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangString"
+              }
+            },
+            "globalAssetId" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "idShort" : {
+              "type" : "string"
+            },
+            "identification" : {
+              "type" : "string"
+            },
+            "specificAssetIds" : {
+              "$ref" : "#/components/schemas/SpecificAssetId"
+            },
+            "submodelDescriptors" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          }
+        } ]
+      },
+      "Descriptor" : {
+        "type" : "object",
+        "properties" : {
+          "endpoints" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Endpoint"
+            }
+          }
+        },
+        "example" : "{ \"endpoints\": [ { \"protocolInformation\": { \"endpointAddress\": \"https://localhost:1234\", \"endpointProtocolVersion\": \"1.1\" }, \"interface\": \"AAS-1.0\" }, { \"protocolInformation\": { \"endpointAddress\": \"opc.tcp://localhost:4840\" }, \"interface\": \"AAS-1.0\" }, { \"protocolInformation\": { \"endpointAddress\": \"https://localhost:5678\", \"endpointProtocolVersion\": \"1.1\", \"subprotocol\": \"OPC UA Basic SOAP\", \"subprotocolBody\": \"ns=2;s=MyAAS\", \"subprotocolBodyEncoding\": \"application/soap+xml\" }, \"interface\": \"AAS-1.0\" } ] }"
+      },
+      "Endpoint" : {
+        "required" : [ "interface", "protocolInformation" ],
+        "type" : "object",
+        "properties" : {
+          "interface" : {
+            "type" : "string"
+          },
+          "protocolInformation" : {
+            "$ref" : "#/components/schemas/ProtocolInformation"
+          }
+        }
+      },
+      "ProtocolInformation" : {
+        "required" : [ "endpointAddress" ],
+        "type" : "object",
+        "properties" : {
+          "endpointAddress" : {
+            "type" : "string"
+          },
+          "endpointProtocol" : {
+            "type" : "string"
+          },
+          "endpointProtocolVersion" : {
+            "type" : "string"
+          },
+          "subprotocol" : {
+            "type" : "string"
+          },
+          "subprotocolBody" : {
+            "type" : "string"
+          },
+          "subprotocolBodyEncoding" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SubmodelDescriptor" : {
+        "required" : [ "endpoints", "identification" ],
+        "type" : "object",
+        "properties" : {
+          "administration" : {
+            "$ref" : "#/components/schemas/AdministrativeInformation"
+          },
+          "descriptions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LangString"
+            }
+          },
+          "displayNames" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LangString"
+            }
+          },
+          "idShort" : {
+            "type" : "string"
+          },
+          "identification" : {
+            "type" : "string"
+          },
+          "semanticId" : {
+            "$ref" : "#/components/schemas/Reference"
+          }
+        },
+        "example" : "{ \"identification\": \"https://admin-shell.io/zvei/nameplate/1/0/Nameplate\", \"endpoints\": [ { \"protocolInformation\": { \"endpointAddress\": \"https://localhost:1234\", \"endpointProtocolVersion\": \"1.1\" }, \"interface\": \"AAS-1.0\" }, { \"protocolInformation\": { \"endpointAddress\": \"opc.tcp://localhost:4840\" }, \"interface\": \"AAS-1.0\" }, { \"protocolInformation\": { \"endpointAddress\": \"https://localhost:5678\", \"endpointProtocolVersion\": \"1.1\", \"subprotocol\": \"OPC UA Basic SOAP\", \"subprotocolBody\": \"ns=2;s=MyAAS\", \"subprotocolBodyEncoding\": \"application/soap+xml\" }, \"interface\": \"AAS-1.0\" } ] }",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Descriptor"
+        } ]
+      },
+      "ConceptDescription" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Identifiable"
+        }, {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "properties" : {
+            "isCaseOf" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          }
+        } ]
+      },
+      "PackageDescription" : {
+        "type" : "object",
+        "properties" : {
+          "aasIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "packageId" : {
+            "type" : "string"
+          }
+        },
+        "example" : {
+          "aasIds" : [ "aasIds", "aasIds" ],
+          "packageId" : "packageId"
+        }
+      },
+      "Environment" : {
+        "type" : "object",
+        "properties" : {
+          "assetAdministrationShells" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AssetAdministrationShell"
+            }
+          },
+          "submodels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Submodel"
+            }
+          },
+          "conceptDescriptions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConceptDescription"
+            }
+          }
+        }
+      },
+      "idShortPath_attachment_body" : {
+        "type" : "object",
+        "properties" : {
+          "fileName" : {
+            "type" : "string"
+          },
+          "file" : {
+            "type" : "string",
+            "format" : "binary"
+          }
+        }
+      },
+      "packages_body" : {
+        "type" : "object",
+        "properties" : {
+          "aasIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "file" : {
+            "type" : "string",
+            "format" : "binary"
+          },
+          "fileName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "packages_packageId_body" : {
+        "type" : "object",
+        "properties" : {
+          "aasIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "file" : {
+            "type" : "string",
+            "format" : "binary"
+          },
+          "fileName" : {
+            "type" : "string"
+          }
+        }
+      }
+    }
+  }
+}
