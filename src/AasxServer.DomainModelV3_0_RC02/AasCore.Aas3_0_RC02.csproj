@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <Configurations>Debug;Release;DebugSlow</Configurations>
     <Platforms>AnyCPU</Platforms>
     <LangVersion>8</LangVersion>
