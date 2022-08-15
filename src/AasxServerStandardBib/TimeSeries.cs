@@ -524,6 +524,8 @@ namespace AasxTimeSeries
 
         private static void Sign(SubmodelElementCollection smc, DateTime timestamp)
         {
+            return;
+
             string certFile = "Andreas_Orzelski_Chain.pfx";
             string certPW = "i40";
             if (System.IO.File.Exists(certFile))
@@ -531,78 +533,79 @@ namespace AasxTimeSeries
                 ServicePointManager.ServerCertificateValidationCallback =
                     new System.Net.Security.RemoteCertificateValidationCallback(AcceptAllCertifications);
 
-                var certificate = new X509Certificate2(certFile, certPW);
-
-                SubmodelElementCollection smec = new SubmodelElementCollection(idShort:"signature");
-                smec.SetTimeStamp(timestamp);
-                smec.TimeStampCreate = timestamp;
-                Property json = new Property(DataTypeDefXsd.String, idShort:"submodelJson");
-                json.SetTimeStamp(timestamp);
-                json.TimeStampCreate = timestamp;
-                Property canonical = new Property(DataTypeDefXsd.String, idShort: "submodelJsonCanonical");
-                canonical.SetTimeStamp(timestamp);
-                canonical.TimeStampCreate = timestamp;
-                Property subject = new Property(DataTypeDefXsd.String, idShort:"subject");
-                subject.SetTimeStamp(timestamp);
-                subject.TimeStampCreate = timestamp;
-                SubmodelElementCollection x5c = new SubmodelElementCollection(idShort:"x5c");
-                x5c.SetTimeStamp(timestamp);
-                x5c.TimeStampCreate = timestamp;
-                Property algorithm = new Property(DataTypeDefXsd.String,idShort:"algorithm");
-                algorithm.SetTimeStamp(timestamp);
-                algorithm.TimeStampCreate = timestamp;
-                Property sigT = new Property(DataTypeDefXsd.String, idShort: "sigT");
-                sigT.SetTimeStamp(timestamp);
-                sigT.TimeStampCreate = timestamp;
-                Property signature = new Property(DataTypeDefXsd.String, idShort: "signature");
-                signature.SetTimeStamp(timestamp);
-                signature.TimeStampCreate = timestamp;
-                smec.Add(json);
-                smec.Add(canonical);
-                smec.Add(subject);
-                smec.Add(x5c);
-                smec.Add(algorithm);
-                smec.Add(sigT);
-                smec.Add(signature);
-                string s = null;
-                s = JsonConvert.SerializeObject(smc, Formatting.Indented);
-                json.Value = s;
-                JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
-                string result = jsonCanonicalizer.GetEncodedString();
-                canonical.Value = result;
-                subject.Value = certificate.Subject;
-
-                X509Certificate2Collection xc = new X509Certificate2Collection();
-                xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
-
-                for (int j = xc.Count - 1; j >= 0; j--)
+                using (var certificate = new X509Certificate2(certFile, certPW))
                 {
-                    Console.WriteLine("Add certificate_" + (j + 1));
-                    Property c = new Property(DataTypeDefXsd.String, idShort: "certificate_" + (j + 1));
-                    c.SetTimeStamp(timestamp);
-                    c.TimeStampCreate = timestamp;
-                    c.Value = Convert.ToBase64String(xc[j].GetRawCertData());
-                    x5c.Add(c);
-                }
+                    AdminShell.SubmodelElementCollection smec = AdminShell.SubmodelElementCollection.CreateNew("signature");
+                    smec.setTimeStamp(timestamp);
+                    smec.TimeStampCreate = timestamp;
+                    AdminShell.Property json = AdminShellV20.Property.CreateNew("submodelJson");
+                    json.setTimeStamp(timestamp);
+                    json.TimeStampCreate = timestamp;
+                    AdminShell.Property canonical = AdminShellV20.Property.CreateNew("submodelJsonCanonical");
+                    canonical.setTimeStamp(timestamp);
+                    canonical.TimeStampCreate = timestamp;
+                    AdminShell.Property subject = AdminShellV20.Property.CreateNew("subject");
+                    subject.setTimeStamp(timestamp);
+                    subject.TimeStampCreate = timestamp;
+                    AdminShell.SubmodelElementCollection x5c = AdminShell.SubmodelElementCollection.CreateNew("x5c");
+                    x5c.setTimeStamp(timestamp);
+                    x5c.TimeStampCreate = timestamp;
+                    AdminShell.Property algorithm = AdminShellV20.Property.CreateNew("algorithm");
+                    algorithm.setTimeStamp(timestamp);
+                    algorithm.TimeStampCreate = timestamp;
+                    AdminShell.Property sigT = AdminShellV20.Property.CreateNew("sigT");
+                    sigT.setTimeStamp(timestamp);
+                    sigT.TimeStampCreate = timestamp;
+                    AdminShell.Property signature = AdminShellV20.Property.CreateNew("signature");
+                    signature.setTimeStamp(timestamp);
+                    signature.TimeStampCreate = timestamp;
+                    smec.Add(json);
+                    smec.Add(canonical);
+                    smec.Add(subject);
+                    smec.Add(x5c);
+                    smec.Add(algorithm);
+                    smec.Add(sigT);
+                    smec.Add(signature);
+                    string s = null;
+                    s = JsonConvert.SerializeObject(smc, Formatting.Indented);
+                    json.value = s;
+                    JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
+                    string result = jsonCanonicalizer.GetEncodedString();
+                    canonical.value = result;
+                    subject.value = certificate.Subject;
 
-                try
-                {
-                    using (RSA rsa = certificate.GetRSAPrivateKey())
+                    X509Certificate2Collection xc = new X509Certificate2Collection();
+                    xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
+
+                    for (int j = xc.Count - 1; j >= 0; j--)
                     {
-                        algorithm.Value = "RS256";
-                        byte[] data = Encoding.UTF8.GetBytes(result);
-                        byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                        signature.Value = Convert.ToBase64String(signed);
-                        sigT.Value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
+                        Console.WriteLine("Add certificate_" + (j + 1));
+                        AdminShell.Property c = AdminShellV20.Property.CreateNew("certificate_" + (j + 1));
+                        c.setTimeStamp(timestamp);
+                        c.TimeStampCreate = timestamp;
+                        c.value = Convert.ToBase64String(xc[j].GetRawCertData());
+                        x5c.Add(c);
                     }
-                }
-                // ReSharper disable EmptyGeneralCatchClause
-                catch
-                {
-                }
-                // ReSharper enable EmptyGeneralCatchClause
 
-                smc.Add(smec); // add signature
+                    try
+                    {
+                        using (RSA rsa = certificate.GetRSAPrivateKey())
+                        {
+                            algorithm.value = "RS256";
+                            byte[] data = Encoding.UTF8.GetBytes(result);
+                            byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                            signature.value = Convert.ToBase64String(signed);
+                            sigT.value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
+                        }
+                    }
+                    // ReSharper disable EmptyGeneralCatchClause
+                    catch
+                    {
+                    }
+                    // ReSharper enable EmptyGeneralCatchClause
+
+                    smc.Add(smec); // add signature
+                }
             }
         }
 
