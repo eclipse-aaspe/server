@@ -531,6 +531,7 @@ namespace AasxServer
             // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
 
+            /* OZOZ
             var _energyModelInstances = new List<EnergyModelInstance>();
             foreach (var penv in AasxServer.Program.env)
             {
@@ -539,13 +540,15 @@ namespace AasxServer
                     EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
             }
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
+            */
 
             AasxTask.taskInit();
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
-            ProductChange.pcn.pcnInit();
+            // Disable, because of Linux Segementation Fault
+            //// ProductChange.pcn.pcnInit();
 
             isLoading = false;
 
