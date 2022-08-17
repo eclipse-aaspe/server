@@ -1388,7 +1388,10 @@
                 var prop = o as Property;
                 if (prop.Value != "")
                 {
-                    ret = " = " + prop.Value;
+                    string v = prop.value;
+                    if (v.Length > 100)
+                        v = v.Substring(0, 100) + " ..";
+                    ret = " = " + v;
                 }
                 if (prop.Qualifiers != null && prop.Qualifiers.Count > 0)
                 {

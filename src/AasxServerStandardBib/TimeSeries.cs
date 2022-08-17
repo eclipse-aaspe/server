@@ -506,14 +506,7 @@ namespace AasxTimeSeries
             return (T)newElem;
         }
 
-        private static ISubmodelElement CreateSubmodelElementInstance(Type type)
-        {
-            if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
-                return null;
-            var sme = Activator.CreateInstance(type) as ISubmodelElement;
-            return sme;
-        }
-
+        /*
         static public bool AcceptAllCertifications(
             object sender, System.Security.Cryptography.X509Certificates.X509Certificate certification,
             System.Security.Cryptography.X509Certificates.X509Chain chain,
@@ -521,22 +514,27 @@ namespace AasxTimeSeries
         {
             return true;
         }
+        */
 
         private static void Sign(SubmodelElementCollection smc, DateTime timestamp)
         {
-            return;
-
+            Console.WriteLine("Sign");
+            //
             string certFile = "Andreas_Orzelski_Chain.pfx";
             string certPW = "i40";
             if (System.IO.File.Exists(certFile))
             {
-                ServicePointManager.ServerCertificateValidationCallback =
-                    new System.Net.Security.RemoteCertificateValidationCallback(AcceptAllCertifications);
+                // ServicePointManager.ServerCertificateValidationCallback =
+                //    new System.Net.Security.RemoteCertificateValidationCallback(AcceptAllCertifications);
 
+                Console.WriteLine("X509");
                 using (var certificate = new X509Certificate2(certFile, certPW))
                 {
-                    SubmodelElementCollection smec = new SubmodelElementCollection(idShort:"signature");
-                    smec.SetTimeStamp(timestamp);
+                    if (certificate == null)
+                        return;
+
+                    AdminShell.SubmodelElementCollection smec = AdminShell.SubmodelElementCollection.CreateNew("signature");
+                    smec.setTimeStamp(timestamp);
                     smec.TimeStampCreate = timestamp;
                     Property json = new Property(DataTypeDefXsd.String,idShort:"submodelJson");
                     json.SetTimeStamp(timestamp);
@@ -569,6 +567,8 @@ namespace AasxTimeSeries
                     string s = null;
                     s = JsonConvert.SerializeObject(smc, Formatting.Indented);
                     json.Value = s;
+
+                    Console.WriteLine("Canonicalize");
                     JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
                     string result = jsonCanonicalizer.GetEncodedString();
                     canonical.Value = result;
@@ -587,11 +587,15 @@ namespace AasxTimeSeries
                         x5c.Add(c);
                     }
 
+                    Console.WriteLine("RSA");
                     try
                     {
                         using (RSA rsa = certificate.GetRSAPrivateKey())
                         {
-                            algorithm.Value = "RS256";
+                            if (rsa == null)
+                                return;
+
+                            algorithm.value = "RS256";
                             byte[] data = Encoding.UTF8.GetBytes(result);
                             byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                             signature.Value = Convert.ToBase64String(signed);
@@ -604,9 +608,11 @@ namespace AasxTimeSeries
                     }
                     // ReSharper enable EmptyGeneralCatchClause
 
+                    Console.WriteLine("Add smc");
                     smc.Add(smec); // add signature
                 }
             }
+            //
         }
 
         static void modbusByteSwap(Byte[] bytes)
@@ -1218,7 +1224,7 @@ namespace AasxTimeSeries
             if (tsb.minDiffPercent != null)
                 minDiffPercent = Convert.ToInt32(tsb.minDiffPercent.Value);
 
-            Console.WriteLine("Read Modbus Data:");
+            // Console.WriteLine("Read Modbus Data:");
             try
             {
                 ErrorMessage = "";
