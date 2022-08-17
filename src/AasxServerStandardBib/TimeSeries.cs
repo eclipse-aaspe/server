@@ -496,6 +496,7 @@ namespace AasxTimeSeries
             return newElem as T;
         }
 
+        /*
         static public bool AcceptAllCertifications(
             object sender, System.Security.Cryptography.X509Certificates.X509Certificate certification,
             System.Security.Cryptography.X509Certificates.X509Chain chain,
@@ -503,20 +504,25 @@ namespace AasxTimeSeries
         {
             return true;
         }
+        */
 
         private static void Sign(AdminShell.SubmodelElementCollection smc, DateTime timestamp)
         {
-            return;
-
+            Console.WriteLine("Sign");
+            //
             string certFile = "Andreas_Orzelski_Chain.pfx";
             string certPW = "i40";
             if (System.IO.File.Exists(certFile))
             {
-                ServicePointManager.ServerCertificateValidationCallback =
-                    new System.Net.Security.RemoteCertificateValidationCallback(AcceptAllCertifications);
+                // ServicePointManager.ServerCertificateValidationCallback =
+                //    new System.Net.Security.RemoteCertificateValidationCallback(AcceptAllCertifications);
 
+                Console.WriteLine("X509");
                 using (var certificate = new X509Certificate2(certFile, certPW))
                 {
+                    if (certificate == null)
+                        return;
+
                     AdminShell.SubmodelElementCollection smec = AdminShell.SubmodelElementCollection.CreateNew("signature");
                     smec.setTimeStamp(timestamp);
                     smec.TimeStampCreate = timestamp;
@@ -551,6 +557,8 @@ namespace AasxTimeSeries
                     string s = null;
                     s = JsonConvert.SerializeObject(smc, Formatting.Indented);
                     json.value = s;
+
+                    Console.WriteLine("Canonicalize");
                     JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
                     string result = jsonCanonicalizer.GetEncodedString();
                     canonical.value = result;
@@ -569,10 +577,14 @@ namespace AasxTimeSeries
                         x5c.Add(c);
                     }
 
+                    Console.WriteLine("RSA");
                     try
                     {
                         using (RSA rsa = certificate.GetRSAPrivateKey())
                         {
+                            if (rsa == null)
+                                return;
+
                             algorithm.value = "RS256";
                             byte[] data = Encoding.UTF8.GetBytes(result);
                             byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
@@ -586,9 +598,11 @@ namespace AasxTimeSeries
                     }
                     // ReSharper enable EmptyGeneralCatchClause
 
+                    Console.WriteLine("Add smc");
                     smc.Add(smec); // add signature
                 }
             }
+            //
         }
 
         static void modbusByteSwap(Byte[] bytes)
@@ -1192,7 +1206,7 @@ namespace AasxTimeSeries
             if (tsb.minDiffPercent != null)
                 minDiffPercent = Convert.ToInt32(tsb.minDiffPercent.value);
 
-            Console.WriteLine("Read Modbus Data:");
+            // Console.WriteLine("Read Modbus Data:");
             try
             {
                 ErrorMessage = "";
