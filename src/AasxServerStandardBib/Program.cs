@@ -291,7 +291,7 @@ namespace AasxServer
             Program.edit = a.Edit;
             Program.readTemp = a.ReadTemp;
             Program.htmlId = a.HtmlId;
-            secretStringAPI = "ZVEI";
+            // secretStringAPI = "ZVEI";
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
                 secretStringAPI = a.SecretStringAPI;
 
