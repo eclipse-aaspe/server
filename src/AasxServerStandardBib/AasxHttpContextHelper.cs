@@ -2808,7 +2808,7 @@ namespace AasxRestServerLibrary
 
             if (!error)
             {
-                int userCount = securityUserName.Length;
+                int userCount = securityUserName.Count;
 
                 for (int i = 0; i < userCount; i++)
                 {
@@ -3329,6 +3329,28 @@ namespace AasxRestServerLibrary
                         Console.WriteLine("Received bearer token = " + split[1]);
                         bearerToken = split[1];
                     }
+                    if (bearerToken == null && split[0].ToLower() == "basic")
+                    {
+                        try
+                        {
+                            var credentialBytes = Convert.FromBase64String(split[1]);
+                            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+                            string username = credentials[0];
+                            string password = credentials[1];
+
+                            int userCount = securityUserName.Count;
+
+                            for (int i = 0; i < userCount; i++)
+                            {
+                                if (username == securityUserName[i] && password == securityUserPassword[i])
+                                {
+                                    user = username;
+                                    break;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
                 }
             }
             else // check query string for bearer token
@@ -3344,15 +3366,6 @@ namespace AasxRestServerLibrary
             if (bearerToken == null)
             {
                 error = true;
-
-                // Check email token
-                token = context.Request.Headers.Get("Email");
-                if (token != null)
-                {
-                    Console.WriteLine("Received Email token = " + token);
-                    user = token;
-                    error = false;
-                }
             }
 
             // Check email token
@@ -3425,60 +3438,62 @@ namespace AasxRestServerLibrary
                             catch { }
                         }
                     }
-
-                    if (user != null && user != "")
-                    {
-                        if (securityRights != null)
-                        {
-                            int rightsCount = securityRights.Count;
-
-                            for (int i = 0; i < rightsCount; i++)
-                            {
-                                if (securityRights[i].name.Contains("@")) // email address
-                                {
-                                    if (user == securityRights[i].name)
-                                    {
-                                        // accessrights = securityRightsValue[i];
-                                        accessrights = securityRights[i].role;
-                                        return accessrights;
-                                    }
-                                }
-                            }
-                            for (int i = 0; i < rightsCount; i++)
-                            {
-                                if (!securityRights[i].name.Contains("@")) // domain name only
-                                {
-                                    string[] splitUser = user.Split('@');
-                                    if (splitUser[1] == securityRights[i].name)
-                                    {
-                                        // accessrights = securityRightsValue[i];
-                                        accessrights = securityRights[i].role;
-                                        return accessrights;
-                                    }
-                                }
-                            }
-                        }
-
-                        return accessrights;
-                    }
-                    else
-                    {
-                        id = Convert.ToInt32(parsed2.SelectToken("sessionID").Value<string>());
-
-                        random = sessionRandom[id];
-                        user = sessionUserName[id];
-
-                        if (random == null || random == "" || user == null || user == "")
-                        {
-                            error = true;
-                        }
-                    }
                 }
                 catch
                 {
                     error = true;
                 }
             }
+
+            if (user != null && user != "")
+            {
+                if (securityRights != null)
+                {
+                    int rightsCount = securityRights.Count;
+
+                    for (int i = 0; i < rightsCount; i++)
+                    {
+                        if (securityRights[i].name.Contains("@")) // email address
+                        {
+                            if (user == securityRights[i].name)
+                            {
+                                // accessrights = securityRightsValue[i];
+                                accessrights = securityRights[i].role;
+                                return accessrights;
+                            }
+                        }
+                    }
+                    for (int i = 0; i < rightsCount; i++)
+                    {
+                        if (!securityRights[i].name.Contains("@")) // domain name only
+                        {
+                            string[] splitUser = user.Split('@');
+                            if (splitUser[1] == securityRights[i].name)
+                            {
+                                // accessrights = securityRightsValue[i];
+                                accessrights = securityRights[i].role;
+                                return accessrights;
+                            }
+                        }
+                    }
+                }
+
+                return accessrights;
+            }
+            /*
+            else
+            {
+                id = Convert.ToInt32(parsed2.SelectToken("sessionID").Value<string>());
+
+                random = sessionRandom[id];
+                user = sessionUserName[id];
+
+                if (random == null || random == "" || user == null || user == "")
+                {
+                    error = true;
+                }
+            }
+            */
 
             if (!error)
             {
@@ -3779,8 +3794,8 @@ namespace AasxRestServerLibrary
             SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
         }
 
-        public static string[] securityUserName = null;
-        public static string[] securityUserPassword = null;
+        public static List<string> securityUserName = new List<string>();
+        public static List<string> securityUserPassword = new List<string>();
 
         public static string[] serverCertfileNames = null;
         public static X509Certificate2[] serverCerts = null;
@@ -3934,6 +3949,16 @@ namespace AasxRestServerLibrary
                                                                 }
                                                                 break;
                                                         }
+                                                    }
+                                                }
+                                                break;
+                                            case "basicAuth":
+                                                for (int iSmec = 0; iSmec < countSmec; iSmec++)
+                                                {
+                                                    if (smec.value[iSmec].submodelElement is AdminShell.Property p)
+                                                    {
+                                                        securityUserName.Add(p.idShort);
+                                                        securityUserPassword.Add(p.value);
                                                     }
                                                 }
                                                 break;
