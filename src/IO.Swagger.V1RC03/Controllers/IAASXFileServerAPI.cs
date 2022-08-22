@@ -14,40 +14,40 @@ using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace IO.Swagger.V1RC03.Controllers
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     public interface IAASXFileServerApiController
-    { 
+    {
         /// <summary>
         /// Deletes a specific AASX package from the server
         /// </summary>
-        
+
         /// <param name="packageId">The Package Id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="204">Deleted successfully</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult DeleteAASXByPackageId([FromRoute][Required]string packageId);
+        IActionResult DeleteAASXByPackageId([FromRoute][Required] string packageId);
 
         /// <summary>
         /// Returns a specific AASX package from the server
         /// </summary>
-        
+
         /// <param name="packageId">The package Id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="200">Requested AASX package</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAASXByPackageId([FromRoute][Required]string packageId);
+        IActionResult GetAASXByPackageId([FromRoute][Required] string packageId);
 
         /// <summary>
         /// Returns a list of available AASX packages at the server
         /// </summary>
-        
+
         /// <param name="aasId">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="200">Requested package list</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllAASXPackageIds([FromQuery]string aasId);
+        IActionResult GetAllAASXPackageIds([FromQuery] string aasId);
 
 
     }

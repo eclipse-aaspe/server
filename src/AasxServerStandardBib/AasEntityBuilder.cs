@@ -683,11 +683,7 @@ namespace AasOpcUaServer
             public AasUaEntityRelationshipElement RelationshipElement;
             public AasUaEntityOperationVariable OperationVariable;
             public AasUaEntityOperation Operation;
-            //TODO:Remove
-            //public AasUaEntityConceptDictionary ConceptDictionary;
             public AasUaEntityConceptDescription ConceptDescription;
-            //TODO:Remove
-            //public AasUaEntityView View;
             public AasUaEntityAsset Asset;
             public AasUaEntityAAS AAS;
 

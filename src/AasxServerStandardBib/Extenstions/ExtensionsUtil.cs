@@ -10,55 +10,6 @@ namespace Extenstions
 {
     public static class ExtensionsUtil
     {
-        public static KeyTypes GetKeyTypeFromString(string keyTypeString)
-        {
-            switch (keyTypeString.ToLower())
-            {
-                case "submodelelementcollection":
-                    return KeyTypes.SubmodelElementCollection;
-                case "submodelelementlist":
-                    return KeyTypes.SubmodelElementList;
-                case "basicevent":
-                    return KeyTypes.BasicEventElement;
-                case "blob":
-                    return KeyTypes.Blob;
-                case "entity":
-                    return KeyTypes.Entity;
-                case "file":
-                    return KeyTypes.File;
-                case "multilanguageproperty":
-                    return KeyTypes.MultiLanguageProperty;
-                case "property":
-                    return KeyTypes.Property;
-                case "operation":
-                    return KeyTypes.Operation;
-                case "range":
-                    return KeyTypes.Range;
-                case "referenceelement":
-                    return KeyTypes.ReferenceElement;
-                case "relationshipelement":
-                    return KeyTypes.RelationshipElement;
-                case "annotatedrelationshipelement":
-                    return KeyTypes.AnnotatedRelationshipElement;
-                case "assetadministrationshell":
-                    return KeyTypes.AssetAdministrationShell;
-                case "submodel":
-                    return KeyTypes.Submodel;
-                case "capability":
-                    return KeyTypes.Capability;
-                case "conceptdescription":
-                    return KeyTypes.ConceptDescription;
-                case "dataelement":
-                    return KeyTypes.DataElement;
-                case "referable":
-                    return KeyTypes.Referable;
-                case "globalreference":
-                    return KeyTypes.GlobalReference;
-                //TODO: jtikekar alternative to null return
-                default:
-                    throw new Exception("KeyType NOT found for " + keyTypeString);
-            }
-        }
 
         public static Reference ConvertReferenceFromV10(AdminShellV10.Reference sourceReference, ReferenceTypes referenceTypes)
         {
@@ -153,7 +104,6 @@ namespace Extenstions
                 IIdentifiable => KeyTypes.Identifiable,
                 IReferable => KeyTypes.Referable,
                 Reference => KeyTypes.GlobalReference,//TODO:jtikekar what about model reference
-                //TODO: jtikekar alternative to null return
                 _ => KeyTypes.SubmodelElement,  // default case
             };
         }

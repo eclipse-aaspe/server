@@ -1,4 +1,5 @@
 ﻿using AasCore.Aas3_0_RC02;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,21 @@ namespace Extenstions
 
             // found?
             return res;
+        }
+
+        public static LangStringSet ConvertFromV20(this LangStringSet langStringSet, AasxCompatibilityModels.AdminShellV20.LangStringSet sourceLangStrings)
+        {
+
+            if (!sourceLangStrings.langString.IsNullOrEmpty())
+            {
+                langStringSet.LangStrings = new List<LangString>();
+                foreach (var sourceLangString in sourceLangStrings.langString)
+                {
+                    var langString = new LangString(sourceLangString.lang, sourceLangString.str);
+                    langStringSet.LangStrings.Add(langString);
+                }
+            }
+            return langStringSet;
         }
     }
 }

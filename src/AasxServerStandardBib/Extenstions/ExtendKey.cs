@@ -1,5 +1,6 @@
 ﻿using AasCore.Aas3_0_RC02;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Extenstions
 {
@@ -43,6 +44,11 @@ namespace Extenstions
         public static string ToString(this Key key)
         {
             return $"[{key.Type}, {key.Value}]";
+        }
+
+        public static string ToString(this List<Key> keys)
+        {
+            return string.Join(",", keys.Select((x) => x.ToString()));
         }
     }
 }

@@ -1,8 +1,11 @@
 ﻿using AasCore.Aas3_0_RC02;
 using AasxCompatibilityModels;
+using AasxServerStandardBib.Extenstions;
+using Opc.Ua;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ReferenceTypes = AasCore.Aas3_0_RC02.ReferenceTypes;
 
 namespace Extenstions
 {
@@ -64,11 +67,11 @@ namespace Extenstions
             var currentParent = submodelElement.Parent;
             while (includeParents && currentParent != null)
             {
-                currentParent = null;
                 if (currentParent is IIdentifiable identifiable)
                 {
                     var currentParentKey = new Key(ExtensionsUtil.GetKeyType(identifiable), identifiable.Id);
                     keyList.Add(currentParentKey);
+                    currentParent = null;
                 }
                 else if (currentParent is IReferable referable)
                 {
@@ -309,6 +312,16 @@ namespace Extenstions
                     var newProperty = new Property(DataTypeDefXsd.String);
                     outputSubmodelElement = newProperty.ConvertFromV20(sourceProperty);
                 }
+                else if (sourceSubmodelElement is AdminShellV20.MultiLanguageProperty sourceMultiLangProp)
+                {
+                    var newMultiLangProperty = new MultiLanguageProperty();
+                    outputSubmodelElement = newMultiLangProperty.ConvertFromV20(sourceMultiLangProp);
+                }
+                else if (sourceSubmodelElement is AdminShellV20.Range sourceRange)
+                {
+                    var newRange = new AasCore.Aas3_0_RC02.Range(DataTypeDefXsd.String);
+                    outputSubmodelElement = newRange.ConvertFromV20(sourceRange);
+                }
                 else if (sourceSubmodelElement is AdminShellV20.File sourceFile)
                 {
                     var newFile = new File("");
@@ -329,8 +342,14 @@ namespace Extenstions
                     var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceRelationshipElement.second, ReferenceTypes.ModelReference);
                     outputSubmodelElement = new RelationshipElement(newFirst, newSecond);
                 }
-
-                if (sourceSubmodelElement is AdminShellV20.Operation sourceOperation)
+                else if(sourceSubmodelElement is AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelationshipElement)
+                {
+                    var newFirst = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.first, ReferenceTypes.ModelReference);
+                    var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.second, ReferenceTypes.ModelReference);
+                    var newAnnotedRelElement = new AnnotatedRelationshipElement(newFirst, newSecond);
+                    outputSubmodelElement = newAnnotedRelElement.ConvertFromV20(sourceAnnotedRelationshipElement);
+                }
+                else if (sourceSubmodelElement is AdminShellV20.Operation sourceOperation)
                 {
                     var newInputVariables = new List<OperationVariable>();
                     var newOutputVariables = new List<OperationVariable>();

@@ -5,22 +5,22 @@ using AasCore.Aas3_0_RC02;
 using System.Collections.Generic;
 using System;
 using System.Text.Json.Nodes;
+using IO.Swagger.V1RC03.Services;
 
 namespace IO.Swagger.V1RC03
 {
     public class AasCoreInputFormatter : InputFormatter
     {
-
         public AasCoreInputFormatter()
         {
             this.SupportedMediaTypes.Clear();
             this.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
-
         }
 
         public override bool CanRead(InputFormatterContext context)
         {
-            if (typeof(IClass).IsAssignableFrom(context.ModelType)){
+            if (typeof(IClass).IsAssignableFrom(context.ModelType))
+            {
                 return true;
             }
             else

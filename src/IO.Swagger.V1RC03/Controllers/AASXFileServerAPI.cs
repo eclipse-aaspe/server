@@ -18,16 +18,31 @@ using IO.Swagger.V1RC03.Attributes;
 
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.V1RC03.ApiModel;
-
+using IO.Swagger.V1RC03.Logging;
+using IO.Swagger.V1RC03.Services;
+using System.Net.Mime;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IO.Swagger.V1RC03.Controllers
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [ApiController]
     public class AASXFileServerApiController : ControllerBase, IAASXFileServerApiController
-    { 
+    {
+        private readonly IAppLogger<AASXFileServerApiController> _logger;
+        private readonly IBase64UrlDecoderService _decoderService;
+        private readonly IAasxFileServerInterfaceService _fileService;
+
+        public AASXFileServerApiController(IAppLogger<AASXFileServerApiController> logger, IBase64UrlDecoderService decoderService, IAasxFileServerInterfaceService fileService)
+        {
+            _logger = logger;
+            _decoderService = decoderService;
+            _fileService = fileService;
+        }
         /// <summary>
         /// Deletes a specific AASX package from the server
         /// </summary>
@@ -41,18 +56,13 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("DeleteAASXByPackageId")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAASXByPackageId([FromRoute][Required]string packageId)
-        { 
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+        public virtual IActionResult DeleteAASXByPackageId([FromRoute][Required] string packageId)
+        {
+            var decodedPackageId = _decoderService.Decode("packageId", packageId);
 
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
+            _fileService.DeleteAASXByPackageId(decodedPackageId);
 
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            return NoContent();
         }
 
         /// <summary>
@@ -69,23 +79,24 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested AASX package")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAASXByPackageId([FromRoute][Required]string packageId)
-        { 
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(byte[]));
+        public virtual IActionResult GetAASXByPackageId([FromRoute][Required] string packageId)
+        {
+            //TODO: jtikekar resolve issues
+            var decodedPackageId = _decoderService.Decode("packageId", packageId);
 
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
+            var fileName = _fileService.GetAASXByPackageId(decodedPackageId, out byte[] content, out long fileSize);
 
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<byte[]>(exampleJson)
-                        : default(byte[]);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //content-disposition so that the aasx file can be downloaded from the web browser.
+            ContentDisposition contentDisposition = new()
+            {
+                FileName = fileName
+            };
+
+            HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
+            HttpContext.Response.Headers.Add("X-FileName", fileName);
+            HttpContext.Response.ContentLength = fileSize;
+            HttpContext.Response.Body.WriteAsync(content);
+            return new EmptyResult();
         }
 
         /// <summary>
@@ -100,22 +111,60 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllAASXPackageIds")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<PackageDescription>), description: "Requested package list")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAASXPackageIds([FromQuery]string aasId)
-        { 
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<PackageDescription>));
+        public virtual IActionResult GetAllAASXPackageIds([FromQuery] string aasId)
+        {
+            var decodedAasId = _decoderService.Decode("aasId", aasId);
 
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "[ {\n  \"aasIds\" : [ \"aasIds\", \"aasIds\" ],\n  \"packageId\" : \"packageId\"\n}, {\n  \"aasIds\" : [ \"aasIds\", \"aasIds\" ],\n  \"packageId\" : \"packageId\"\n} ]";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<PackageDescription>>(exampleJson)
-                        : default(List<PackageDescription>);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            var output = _fileService.GetAllAASXPackageIds(decodedAasId);
+
+            return new ObjectResult(output);
         }
 
+        /// <summary>
+        /// Creates an AASX package at the server
+        /// </summary>
+        /// <param name="fileName">Filename of the AASX package</param>
+        /// <param name="aasIds">Included AAS Ids</param>
+        /// <param name="file">AASX PAckage</param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("/packages")]
+        [ValidateModelState]
+        [SwaggerOperation("PostAASXPackage")]
+        public virtual IActionResult PostAASXPackage([FromForm] string aasIds, [FromForm] IFormFile file, [FromForm] string fileName)
+        {
+            //TODO jtikekar aasIds
+            var stream = new MemoryStream();
+            file.CopyTo(stream);
+            var packageId = _fileService.PostAASXPackage(stream.ToArray(), fileName);
+            return CreatedAtAction(nameof(PostAASXPackage), packageId);
+        }
+
+        /// <summary>
+        /// Updates the AASX package at the server
+        /// </summary>
+        /// <param name="packageId">Package ID from the package list (BASE64-URL-encoded)</param>
+        /// <param name="fileName">AASX Package Name</param>
+        /// <param name="file">AASX Package</param>
+        /// <param name="aasIds">Included AAS Identifiers</param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("/packages/{packageId}")]
+        [ValidateModelState]
+        [SwaggerOperation("PutAASXPackageById")]
+        public virtual IActionResult PutAASXPackageById([FromRoute][Required] string packageId, [FromForm] string fileName, [FromForm] IFormFile file, [FromForm] string aasIds)
+        {
+            //TODO jtikekar aasIds
+            var decodedPackageId = _decoderService.Decode("packageId", packageId);
+
+            var stream = new MemoryStream();
+            file.CopyTo(stream);
+
+            _fileService.UpdateAASXPackageById(decodedPackageId, stream.ToArray(), fileName);
+
+            return NoContent();
+
+        }
 
     }
 }

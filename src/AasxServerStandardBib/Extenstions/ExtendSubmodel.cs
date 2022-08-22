@@ -207,7 +207,6 @@ namespace Extenstions
             return (T)submodelElement;
         }
 
-        //TODO: jtikekar proper method name
         public static IEnumerable<T> FindDeep<T>(this Submodel submodel)
         {
             if (submodel.SubmodelElements == null || submodel.SubmodelElements.Count == 0)
@@ -250,8 +249,15 @@ namespace Extenstions
                 return null;
             }
 
-            var output = submodel.SubmodelElements.Where(sme => (sme != null) && sme.IdShort.Equals(smeIdShort, StringComparison.OrdinalIgnoreCase)).First();
-            return output;
+            var submodelElements = submodel.SubmodelElements.Where(sme => (sme != null) && sme.IdShort.Equals(smeIdShort, StringComparison.OrdinalIgnoreCase));
+            if (submodelElements.Any())
+            {
+                return submodelElements.First();
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public static void SetAllParents(this Submodel submodel, DateTime timestamp)

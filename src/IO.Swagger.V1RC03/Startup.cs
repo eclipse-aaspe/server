@@ -77,9 +77,9 @@ namespace IO.Swagger.V1RC03
                         Description = "DotAAS Part 2 | HTTP/REST | Entire API Collection (ASP.NET Core 3.1)",
                         Contact = new OpenApiContact()
                         {
-                           Name = "Constantin Ziesche, Andreas Orzelski, Florian Krebs, Bastian Rössl, Manuel Sauer, Jens Vialkowitsch, Michael Hoffmeister, Torben Miny, Sebastian Bader",
-                           Url = new Uri("https://github.com/swagger-api/swagger-codegen"),
-                           Email = ""
+                            Name = "Constantin Ziesche, Andreas Orzelski, Florian Krebs, Bastian Rössl, Manuel Sauer, Jens Vialkowitsch, Michael Hoffmeister, Torben Miny, Sebastian Bader",
+                            Url = new Uri("https://github.com/swagger-api/swagger-codegen"),
+                            Email = ""
                         },
                         TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
                     });

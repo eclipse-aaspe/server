@@ -4,6 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AasxServerBlazor.Data;
+using IO.Swagger.V1RC03;
+using IO.Swagger.V1RC03.Controllers;
+using IO.Swagger.V1RC03.Filters;
+using IO.Swagger.V1RC03.Logging;
+using IO.Swagger.V1RC03.Middleware;
+using IO.Swagger.V1RC03.Services;
 //using IO.Swagger.Controllers;
 //using IO.Swagger.Filters;
 //using IO.Swagger.Services;
@@ -15,9 +21,11 @@ using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace AasxServerBlazor
 {
@@ -50,15 +58,26 @@ namespace AasxServerBlazor
 
             services.AddControllers();
 
-            //TODO: jtikekar uncomment
-            //services.AddTransient<IAASXFileServerInterfaceService, AASXFileServerInterfaceService>();
+            services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+            services.AddTransient<IAssetAdministrationShellEnvironmentService, AssetAdministrationShellEnvironmentService>();
+            services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+            services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
+            services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
+            services.AddTransient<IOutputModifiersService, OutputModifiersService>();
+            services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
 
             // Add framework services.
             services
+                .AddLogging(config =>
+                {
+                    config.AddConsole();
+                })
                 .AddMvc(options =>
                 {
                     options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
                     options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
+                    options.InputFormatters.Add(new AasCoreInputFormatter());
+                    options.OutputFormatters.Add(new AasCoreOutputFormatter());
                 })
                 .AddNewtonsoftJson(opts =>
                 {
@@ -72,6 +91,7 @@ namespace AasxServerBlazor
                     };
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
                 })
+                //TODO:jtikekar Uncomment
                 .AddXmlSerializerFormatters();
 
             //// configure DI for application services
@@ -122,19 +142,16 @@ namespace AasxServerBlazor
                     //    }
                     //});
 
-                    //TODO: jtikekar Uncomment
-                    //c.EnableAnnotations();
+                    c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
 
-                    //TODO: jtikekar Uncomment
-                    //string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryApiController).Assembly.GetName().Name;
-                    //c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
+                    string swaggerCommentedAssembly = typeof(AssetAdministrationShellEnvironmentAPIController).Assembly.GetName().Name;
+                    c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
 
                     // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
                     // Use [ValidateModelState] on Actions to actually validate it in C# as well!
 
-                    //TODO: jtikekar Uncomment
-                    //c.OperationFilter<GeneratePathParamsValidationFilter>();
+                    c.OperationFilter<GeneratePathParamsValidationFilter>();
                 });
         }
 
@@ -149,6 +166,8 @@ namespace AasxServerBlazor
             {
                 app.UseExceptionHandler("/Error");
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             // app.UseHttpsRedirection();
 
@@ -165,9 +184,10 @@ namespace AasxServerBlazor
                 c.SwaggerEndpoint("Final-Draft/swagger.json", "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository");
                 c.RoutePrefix = "swagger";
 
+                var syntaxHighlight = Configuration["SyntaxHighlight"];
                 c.ConfigObject.AdditionalItems["syntaxHighlight"] = new Dictionary<string, object>
                 {
-                    ["activated"] = Configuration.GetSection("SyntaxHighlight")
+                    ["activated"] = syntaxHighlight
                 };
 
                 //TODO: Or alternatively use the original Swagger contract that's included in the static files

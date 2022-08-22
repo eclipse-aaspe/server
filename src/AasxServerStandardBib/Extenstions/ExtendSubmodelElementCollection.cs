@@ -9,7 +9,6 @@ namespace Extenstions
 {
     public static class ExtendSubmodelElementCollection
     {
-        //TODO:jtikekar similar method for SubmodelElementList
         public static T FindFirstIdShortAs<T>(this SubmodelElementCollection submodelElementCollection, string idShort) where T : ISubmodelElement
         {
 

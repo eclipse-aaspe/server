@@ -1,10 +1,19 @@
 ﻿using AasCore.Aas3_0_RC02;
+using IO.Swagger.V1RC03.ApiModel;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Threading;
 
 namespace IO.Swagger.V1RC03
 {
     public class TestData
     {
+        /// <summary>
+        /// HandleId vs Operation Result of the corresponding Opration
+        /// </summary>
+        public static Dictionary<string, OperationResult> opResultAsyncDict = new Dictionary<string, OperationResult>();
+        private static Timer m_simulationTimer;
         public static Submodel getTestSubmodel()
         {
             var prop1 = new Property(valueType: DataTypeDefXsd.String, idShort: "property1", value: "123");
@@ -27,5 +36,44 @@ namespace IO.Swagger.V1RC03
             return sm;
         }
 
+        internal static void InvokeTestOperation(OperationHandle operationHandle)
+        {
+            //First invokation
+            OperationResult opResult = new OperationResult();
+            opResult.OutputArguments = new List<OperationVariable>
+            {
+                new OperationVariable(new Property(DataTypeDefXsd.String, idShort:"DemoOutputArgument"))
+            };
+            opResult.ExecutionState = ExecutionState.InitiatedEnum;
+            Message message = new Message
+            {
+                Code = "xxx",
+                MessageType = Message.MessageTypeEnum.InfoEnum,
+                Text = "Initiated the operation",
+                Timestamp = DateTime.UtcNow.ToString()
+            };
+            Result result = new Result
+            {
+                Messages = new List<Message>() { message }
+            };
+            opResult.ExecutionResult = result;
+            opResult.RequestId = operationHandle.RequestId;
+
+            opResultAsyncDict.Add(operationHandle.HandleId, opResult);
+
+            m_simulationTimer = new Timer(DoSimulation, null, 5000, 5000);
+        }
+
+        private static void DoSimulation(object state)
+        {
+            var random = new Random();
+            var values = Enum.GetValues(typeof(ExecutionState));
+
+            foreach (var handleId in opResultAsyncDict.Keys)
+            {
+                var value = (ExecutionState)values.GetValue(random.Next(values.Length));
+                opResultAsyncDict[handleId].ExecutionState = value;
+            }
+        }
     }
 }

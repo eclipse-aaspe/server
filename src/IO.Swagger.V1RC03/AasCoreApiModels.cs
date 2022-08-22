@@ -432,101 +432,101 @@ namespace IO.Swagger.V1RC03.ApiModel
         #endregion Operators
     }
 
-    [DataContract]
-    public partial class OperationVariable : IEquatable<OperationVariable>
-    {
-        /// <summary>
-        /// Gets or Sets Value
-        /// </summary>
-        [Required]
+    //[DataContract]
+    //    public partial class OperationVariable : IEquatable<OperationVariable>
+    //    {
+    //        /// <summary>
+    //        /// Gets or Sets Value
+    //        /// </summary>
+    //        [Required]
 
-        [DataMember(Name = "value")]
-        public AasCore.Aas3_0_RC02.ISubmodelElement Value { get; set; }
+    //        [DataMember(Name = "value")]
+    //        public AasCore.Aas3_0_RC02.ISubmodelElement Value { get; set; }
 
-        /// <summary>
-        /// Returns the string presentation of the object
-        /// </summary>
-        /// <returns>String presentation of the object</returns>
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            sb.Append("class OperationVariable {\n");
-            sb.Append("  Value: ").Append(Value).Append("\n");
-            sb.Append("}\n");
-            return sb.ToString();
-        }
+    //        /// <summary>
+    //        /// Returns the string presentation of the object
+    //        /// </summary>
+    //        /// <returns>String presentation of the object</returns>
+    //        public override string ToString()
+    //        {
+    //            var sb = new StringBuilder();
+    //            sb.Append("class OperationVariable {\n");
+    //            sb.Append("  Value: ").Append(Value).Append("\n");
+    //            sb.Append("}\n");
+    //            return sb.ToString();
+    //        }
 
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
-        }
+    //        /// <summary>
+    //        /// Returns the JSON string presentation of the object
+    //        /// </summary>
+    //        /// <returns>JSON string presentation of the object</returns>
+    //        public string ToJson()
+    //        {
+    //            return JsonConvert.SerializeObject(this, Formatting.Indented);
+    //        }
 
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="obj">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((OperationVariable)obj);
-        }
+    //        /// <summary>
+    //        /// Returns true if objects are equal
+    //        /// </summary>
+    //        /// <param name="obj">Object to be compared</param>
+    //        /// <returns>Boolean</returns>
+    //        public override bool Equals(object obj)
+    //        {
+    //            if (ReferenceEquals(null, obj)) return false;
+    //            if (ReferenceEquals(this, obj)) return true;
+    //            return obj.GetType() == GetType() && Equals((OperationVariable)obj);
+    //        }
 
-        /// <summary>
-        /// Returns true if OperationVariable instances are equal
-        /// </summary>
-        /// <param name="other">Instance of OperationVariable to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(OperationVariable other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
+    //        /// <summary>
+    //        /// Returns true if OperationVariable instances are equal
+    //        /// </summary>
+    //        /// <param name="other">Instance of OperationVariable to be compared</param>
+    //        /// <returns>Boolean</returns>
+    //        public bool Equals(OperationVariable other)
+    //        {
+    //            if (ReferenceEquals(null, other)) return false;
+    //            if (ReferenceEquals(this, other)) return true;
 
-            return
-                (
-                    Value == other.Value ||
-                    Value != null &&
-                    Value.Equals(other.Value)
-                );
-        }
+    //            return
+    //                (
+    //                    Value == other.Value ||
+    //                    Value != null &&
+    //                    Value.Equals(other.Value)
+    //                );
+    //        }
 
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                if (Value != null)
-                    hashCode = hashCode * 59 + Value.GetHashCode();
-                return hashCode;
-            }
-        }
+    //        /// <summary>
+    //        /// Gets the hash code
+    //        /// </summary>
+    //        /// <returns>Hash code</returns>
+    //        public override int GetHashCode()
+    //        {
+    //            unchecked // Overflow is fine, just wrap
+    //            {
+    //                var hashCode = 41;
+    //                // Suitable nullity checks etc, of course :)
+    //                if (Value != null)
+    //                    hashCode = hashCode * 59 + Value.GetHashCode();
+    //                return hashCode;
+    //            }
+    //        }
 
-        #region Operators
-#pragma warning disable 1591
+    //        #region Operators
+    //#pragma warning disable 1591
 
-        public static bool operator ==(OperationVariable left, OperationVariable right)
-        {
-            return Equals(left, right);
-        }
+    //        public static bool operator ==(OperationVariable left, OperationVariable right)
+    //        {
+    //            return Equals(left, right);
+    //        }
 
-        public static bool operator !=(OperationVariable left, OperationVariable right)
-        {
-            return !Equals(left, right);
-        }
+    //        public static bool operator !=(OperationVariable left, OperationVariable right)
+    //        {
+    //            return !Equals(left, right);
+    //        }
 
-#pragma warning restore 1591
-        #endregion Operators
-    }
+    //#pragma warning restore 1591
+    //        #endregion Operators
+    //    }
 
     [DataContract]
     public partial class OperationResult : IEquatable<OperationResult>
@@ -716,6 +716,23 @@ namespace IO.Swagger.V1RC03.ApiModel
         /// </summary>
         [EnumMember(Value = "Timeout")]
         TimeoutEnum = 5
+    }
+
+    /// <summary>
+    /// The returned handle of an operation’s asynchronous invocation used to request the current state of the operation’s execution.
+    /// </summary>
+    public partial class OperationHandle
+    {
+        /// <summary>
+        /// Client Request Id
+        /// </summary>
+        public string RequestId { get; set; }
+        /// <summary>
+        /// Handle id
+        /// </summary>
+        public string HandleId { get; set; }
+
+
     }
 
     [DataContract]

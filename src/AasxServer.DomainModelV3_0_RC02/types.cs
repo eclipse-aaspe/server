@@ -1267,6 +1267,11 @@ namespace AasCore.Aas3_0_RC02
             return transformer.Transform(this, context);
         }
 
+        //TODO:jtikekar refactor, added to support XML serilization at AdminShellPackageEnv line 805
+        public AssetAdministrationShell()
+        {
+
+        }
         public AssetAdministrationShell(
             string id,
             AssetInformation assetInformation,
@@ -4394,11 +4399,11 @@ namespace AasCore.Aas3_0_RC02
         public Reference? ValueId { get; set; }
         #region Parent and Timestamp
         [JsonIgnore]
-        public IClass Parent { get ; set ; }
+        public IClass Parent { get; set; }
         [JsonIgnore]
-        public DateTime TimeStampCreate { get ; set ; }
+        public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
-        public DateTime TimeStamp { get ; set; }
+        public DateTime TimeStamp { get; set; }
         #endregion
 
         /// <summary>
@@ -11462,6 +11467,10 @@ namespace AasCore.Aas3_0_RC02
             return transformer.Transform(this, context);
         }
 
+        public Environment()
+        {
+
+        }
         public Environment(
             List<AssetAdministrationShell>? assetAdministrationShells = null,
             List<Submodel>? submodels = null,

@@ -308,9 +308,13 @@ namespace Extenstions
                 return null;
             }
 
-            var submodel = environment.Submodels.Where(s => s.Id.Equals(key.Value, StringComparison.OrdinalIgnoreCase)).First();
+            var submodels = environment.Submodels.Where(s => s.Id.Equals(key.Value, StringComparison.OrdinalIgnoreCase));
+            if (submodels.Any())
+            {
+                return submodels.First();
+            }
 
-            return submodel;
+            return null;
         }
 
         public static Submodel FindSubmodelById(this AasCore.Aas3_0_RC02.Environment environment, string submodelId)

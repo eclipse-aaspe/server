@@ -462,11 +462,11 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
-        Convert.ToBase64String(data)
+            /*
+            await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            Convert.ToBase64String(data)
         );
         */
         /*
@@ -1044,7 +1044,38 @@
                 if (split.Length == 2 || split[1].ToLower() == "aasx")
                 {
                     // return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
-                    return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;
+                    //return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;   //Old Grapevine implementation
+                    string idShortPath = item.Text;
+                    string submodelId = "", aasId = "";
+                    var currentParentItem = item.parent;
+                    while (currentParentItem != null)
+                    {
+                        if (currentParentItem is Item parentItem)
+                        {
+                            var parent = parentItem.Tag;
+                            if(parent is IIdentifiable identifiable)
+                            {
+                                if(parent is Submodel submodel)
+                                {
+                                    submodelId = submodel.Id;
+                                }
+                                else if(parent is AssetAdministrationShell aas)
+                                {
+                                    aasId = aas.Id;
+                                }
+                            }
+                            else if(parent is IReferable referable)
+                            {
+                                idShortPath = referable.IdShort + "." + idShortPath;
+                            }
+                            currentParentItem = parentItem.parent;
+                        }
+                    }
+                    
+                    string currentUrl = NavigationManager.Uri;
+                    return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
+                    "/submodel/submodel-elements/" + idShortPath + "/attachment";
+                    
                 }
             }
         }
