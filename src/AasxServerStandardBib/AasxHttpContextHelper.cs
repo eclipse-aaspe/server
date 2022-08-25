@@ -504,7 +504,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        private static string makeJsonLD(string json, int count)
+        public static string makeJsonLD(string json, int count)
         {
             int total = json.Length;
             string header = "";
@@ -576,107 +576,6 @@ namespace AasxRestServerLibrary
             jsonld = "\"doc\": " + jsonld;
 
             return "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
-
-            /*
-            var o = JObject.Parse(json);
-
-            foreach (JProperty jp1 in (JToken)o)
-            {
-                jp1. = jp1.Name + "__" + count;
-                switch (jp1.Value.Type)
-                {
-                    case JTokenType.Array:
-                        c2 = c.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(jp1.Name);
-                        if (c2 == null)
-                        {
-                            c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
-                            c.Add(c2);
-                            c2.TimeStampCreate = timeStamp;
-                            c2.setTimeStamp(timeStamp);
-                            newMode = 1;
-                        }
-                        int count = 1;
-                        foreach (JObject el in jp1.Value)
-                        {
-                            string n = jp1.Name + "_array_" + count++;
-                            AdminShell.SubmodelElementCollection c3 =
-                                c2.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(n);
-                            if (c3 == null)
-                            {
-                                c3 = AdminShell.SubmodelElementCollection.CreateNew(n);
-                                c2.Add(c3);
-                                c3.TimeStampCreate = timeStamp;
-                                c3.setTimeStamp(timeStamp);
-                                newMode = 1;
-                            }
-                            ok |= parseJson(c3, el, filter);
-                        }
-                        break;
-                    case JTokenType.Object:
-                        c2 = c.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>(jp1.Name);
-                        if (c2 == null)
-                        {
-                            c2 = AdminShell.SubmodelElementCollection.CreateNew(jp1.Name);
-                            c.Add(c2);
-                            c2.TimeStampCreate = timeStamp;
-                            c2.setTimeStamp(timeStamp);
-                            newMode = 1;
-                        }
-                        foreach (JObject el in jp1.Value)
-                        {
-                            ok |= parseJson(c2, el, filter);
-                        }
-                        break;
-                    default:
-                        AdminShell.Property p = c.value.FindFirstIdShortAs<AdminShell.Property>(jp1.Name);
-                        if (p == null)
-                        {
-                            p = AdminShell.Property.CreateNew(jp1.Name);
-                            c.Add(p);
-                            p.TimeStampCreate = timeStamp;
-                            p.setTimeStamp(timeStamp);
-                            newMode = 1;
-                        }
-                        // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
-                        try
-                        {
-                            if (p.value == "")
-                                p.value = "0";
-                            string value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
-                            if (!value.Contains("."))
-                            {
-                                int v = Convert.ToInt32(value);
-                                int lastv = Convert.ToInt32(p.value);
-                                int delta = Math.Abs(v - lastv);
-                                if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
-                                {
-                                    p.value = value;
-                                    p.setTimeStamp(timeStamp);
-                                    ok = true;
-                                }
-                            }
-                            else
-                            {
-                                double v = Convert.ToDouble(value, CultureInfo.InvariantCulture);
-                                double lastv = Convert.ToDouble(p.value, CultureInfo.InvariantCulture);
-                                double delta = Math.Abs(v - lastv);
-                                if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
-                                {
-                                    p.value = value;
-                                    p.setTimeStamp(timeStamp);
-                                    ok = true;
-                                }
-                                p.value = value;
-                                p.setTimeStamp(timeStamp);
-                                ok = true;
-                            }
-                        }
-                        catch
-                        {
-                        }
-                        break;
-                }
-            }*/
         }
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
         {
