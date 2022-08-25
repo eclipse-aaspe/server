@@ -527,15 +527,81 @@ namespace AasxRestServerLibrary
             }
         }
 
+        public static string makeJsonLD(string json, int count)
+        {
+            int total = json.Length;
+            string header = "";
+            string jsonld = "";
+            string name = "";
+            int state = 0;
+
+            for (int i = 0; i < total; i++)
+            {
+                var c = json[i];
+                switch (state)
+                {
+                    case 0:
+                        if (c == '"')
+                        {
+                            state = 1;
+                        }
+                        else
+                        {
+                            jsonld += c;
+                        }
+                        break;
+                    case 1:
+                        if (c == '"')
+                        {
+                            state = 2;
+                        }
+                        else
+                        {
+                            name += c;
+                        }
+                        break;
+                    case 2:
+                        if (c == ':')
+                        {
+                            bool skip = false;
+                            string pattern = ": null";
+                            if (i + pattern.Length < total)
+                            {
+                                if (json.Substring(i, pattern.Length) == pattern)
+                                {
+                                    skip = true;
+                                    while (json[i] != '\n')
+                                        i++;
+                                }
+                            }
+
+                            if (!skip)
+                            {
+                                count++;
+                                name += "__" + count;
+                                if (header != "")
+                                    header += ",\r\n";
+                                header += "  \"" + name + "\": " + "\"aio:" + name + "\"";
+                                jsonld += "\"" + name + "\":";
+                            }
+                        }
+                        else
+                        {
+                            jsonld += "\"" + name + "\"" + c;
+                        }
+                        state = 0;
+                        name = "";
+                        break;
+                }
+            }
+
+            header = "\"context\": {\r\n" + header + "\r\n},\r\n";
+            jsonld = "\"doc\": " + jsonld;
+
+            return "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
+        }
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
         {
-            try
-            {
-                var settings = new JsonSerializerSettings();
-                if (contractResolver != null)
-                    settings.ContractResolver = contractResolver;
-                var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-
                 var buffer = context.Request.ContentEncoding.GetBytes(json);
                 var length = buffer.Length;
 
@@ -559,6 +625,27 @@ namespace AasxRestServerLibrary
                 Console.WriteLine(ex.Message);
                 Console.WriteLine(ex.StackTrace);
             }
+            string jsonld = queryString["jsonld"];
+
+            var settings = new JsonSerializerSettings();
+            if (contractResolver != null)
+                settings.ContractResolver = contractResolver;
+            var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
+
+            if (jsonld != null)
+            {
+                json = makeJsonLD(json, 0);
+            }
+
+            var buffer = context.Request.ContentEncoding.GetBytes(json);
+            var length = buffer.Length;
+
+            AasxRestServer.TestResource.allowCORS(context);
+
+            context.Response.ContentType = ContentType.JSON;
+            context.Response.ContentEncoding = Encoding.UTF8;
+            context.Response.ContentLength64 = length;
+            context.Response.SendResponse(buffer);
         }
 
         protected static void SendTextResponse(Grapevine.Interfaces.Server.IHttpContext context, string txt, string mimeType = null)
