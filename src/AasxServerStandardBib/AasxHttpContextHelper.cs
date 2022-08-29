@@ -4,6 +4,8 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -24,6 +26,7 @@ using Jose.netstandard1_4;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -613,7 +616,9 @@ namespace AasxRestServerLibrary
             jsonld = jsonld.Substring(0, jsonld.Length - 3);
             jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
-            return "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
+            jsonld = "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
+
+            return jsonld;
         }
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
         {
@@ -633,7 +638,52 @@ namespace AasxRestServerLibrary
 
             if (jsonld != null)
             {
-                json = makeJsonLD(json, 0);
+                jsonld = makeJsonLD(json, 0);
+
+                string requestPath = "https://nameplate.h2894164.stratoserver.net/demo/sign?create_as_verifiable_presentation=false";
+
+                var handler = new HttpClientHandler();
+
+                if (AasxServer.AasxTask.proxy != null)
+                    handler.Proxy = AasxServer.AasxTask.proxy;
+                else
+                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+
+                var client = new HttpClient(handler);
+
+                if (jsonld != "")
+                {
+                    bool error = false;
+                    HttpResponseMessage response = new HttpResponseMessage();
+                    try
+                    {
+                        var content = new StringContent(jsonld, System.Text.Encoding.UTF8, "application/json");
+                        var task = Task.Run(async () =>
+                        {
+                            response = await client.PostAsync(
+                                requestPath, content);
+                        });
+                        task.Wait();
+                        error = !response.IsSuccessStatusCode;
+                    }
+                    catch
+                    {
+                        error = true;
+                    }
+                    if (!error)
+                    {
+                        json = response.Content.ReadAsStringAsync().Result;
+                    }
+                    else
+                    {
+                        string r = "ERROR POST; " + response.StatusCode.ToString();
+                        r += " ; " + requestPath;
+                        if (response.Content != null)
+                            r += " ; " + response.Content.ReadAsStringAsync().Result;
+                        Console.WriteLine(r);
+                        json = r;
+                    }
+                }
             }
 
             var buffer = context.Request.ContentEncoding.GetBytes(json);
