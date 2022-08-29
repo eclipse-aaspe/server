@@ -534,6 +534,8 @@ namespace AasxRestServerLibrary
             string jsonld = "";
             string name = "";
             int state = 0;
+            int identification = 0;
+            string id = "idNotFound";
 
             for (int i = 0; i < total; i++)
             {
@@ -570,6 +572,21 @@ namespace AasxRestServerLibrary
                                 if (json.Substring(i, pattern.Length) == pattern)
                                 {
                                     skip = true;
+                                    i += pattern.Length;
+                                    // remove last "," in jsonld if character after null is not ","
+                                    int j = jsonld.Length - 1;
+                                    while (Char.IsWhiteSpace(jsonld[j]))
+                                    {
+                                        j--;
+                                    }
+                                    if (jsonld[j] == ',' && json[i] != ',')
+                                    {
+                                        jsonld = jsonld.Substring(0, j) + "\r\n";
+                                    }
+                                    else
+                                    {
+                                        jsonld = jsonld.Substring(0, j + 1) + "\r\n";
+                                    }
                                     while (json[i] != '\n')
                                         i++;
                                 }
@@ -577,6 +594,23 @@ namespace AasxRestServerLibrary
 
                             if (!skip)
                             {
+                                if (name == "identification")
+                                    identification++;
+                                if (name == "id" && identification == 1)
+                                {
+                                    id = "";
+                                    int j = i;
+                                    while (j < json.Length && json[j] != '"')
+                                    {
+                                        j++;
+                                    }
+                                    j++;
+                                    while (j < json.Length && json[j] != '"')
+                                    {
+                                        id += json[j];
+                                        j++;
+                                    }
+                                }
                                 count++;
                                 name += "__" + count;
                                 if (header != "")
@@ -595,9 +629,13 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            string prefix = "  \"aio\": \"https://admin-shell-io.com/ns#\",\r\n";
+            prefix += "  \"I40GenericCredential\": \"aio:I40GenericCredential\",\r\n";
+            header = prefix + header;
             header = "\"context\": {\r\n" + header + "\r\n},\r\n";
+            jsonld = jsonld.Substring(0, jsonld.Length - 3);
+            jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
-
             return "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
         }
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
