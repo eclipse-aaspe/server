@@ -302,7 +302,7 @@ namespace IO.Swagger.V1RC03.Services
                         {
                             throw new InvalidOutputModifierException(level);
                         }
-                        if (!string.IsNullOrEmpty(content) && !content.EqualsAny("normal", "reference"))
+                        if (!string.IsNullOrEmpty(content) && !content.EqualsAny("normal", "metadata", "value", "reference"))
                         {
                             throw new InvalidOutputModifierException(content);
                         }

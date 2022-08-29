@@ -218,9 +218,6 @@ namespace Extenstions
             return null;
         }
 
-
-
-
         private static void BasicConversionFromV10(this ISubmodelElement submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement)
         {
             if (!string.IsNullOrEmpty(sourceSubmodelElement.idShort))
@@ -334,7 +331,15 @@ namespace Extenstions
                 }
                 else if (sourceSubmodelElement is AdminShellV20.ReferenceElement sourceReferenceElement)
                 {
-                    outputSubmodelElement = new ReferenceElement();
+                    var newReference = ExtensionsUtil.ConvertReferenceFromV20(sourceReferenceElement.value, ReferenceTypes.ModelReference);
+                    outputSubmodelElement = new ReferenceElement(value: newReference);
+                }
+                else if (sourceSubmodelElement is AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelationshipElement)
+                {
+                    var newFirst = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.first, ReferenceTypes.ModelReference);
+                    var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.second, ReferenceTypes.ModelReference);
+                    var newAnnotedRelElement = new AnnotatedRelationshipElement(newFirst, newSecond);
+                    outputSubmodelElement = newAnnotedRelElement.ConvertAnnotationsFromV20(sourceAnnotedRelationshipElement);
                 }
                 else if (sourceSubmodelElement is AdminShellV20.RelationshipElement sourceRelationshipElement)
                 {
@@ -342,12 +347,11 @@ namespace Extenstions
                     var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceRelationshipElement.second, ReferenceTypes.ModelReference);
                     outputSubmodelElement = new RelationshipElement(newFirst, newSecond);
                 }
-                else if(sourceSubmodelElement is AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelationshipElement)
+                else if (sourceSubmodelElement is AdminShellV20.BasicEvent sourceBasicEvent)
                 {
-                    var newFirst = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.first, ReferenceTypes.ModelReference);
-                    var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.second, ReferenceTypes.ModelReference);
-                    var newAnnotedRelElement = new AnnotatedRelationshipElement(newFirst, newSecond);
-                    outputSubmodelElement = newAnnotedRelElement.ConvertFromV20(sourceAnnotedRelationshipElement);
+                    var newObserved = ExtensionsUtil.ConvertReferenceFromV20(sourceBasicEvent.observed, ReferenceTypes.ModelReference);
+
+                    outputSubmodelElement = new BasicEventElement(newObserved, Direction.Input, StateOfEvent.Off); //TODO: jtikekar default values of enums
                 }
                 else if (sourceSubmodelElement is AdminShellV20.Operation sourceOperation)
                 {
@@ -684,5 +688,6 @@ namespace Extenstions
         {
             return submodelElements.FindAllSemanticId<T>(allowedSemanticIds, invertAllowed).FirstOrDefault();
         }
+
     }
 }

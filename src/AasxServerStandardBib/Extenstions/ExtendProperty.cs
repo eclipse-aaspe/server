@@ -58,7 +58,7 @@ namespace Extenstions
             }
             else
             {
-                Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {property.IdShort}");
+                Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
             }
             property.Value = sourceProperty.value;
             if (sourceProperty.valueId != null)
@@ -81,6 +81,66 @@ namespace Extenstions
             }
 
             return property;
+        }
+
+        public static void UpdatePropertyFrom(this Property property, Property sourceProperty)
+        {
+            if (sourceProperty.Extensions != null)
+            {
+                property.Extensions = sourceProperty.Extensions;
+            }
+            if (sourceProperty.Category != null)
+            {
+                property.Category = sourceProperty.Category;
+            }
+            if (sourceProperty.IdShort != null)
+            {
+                property.IdShort = sourceProperty.IdShort;
+            }
+            if (sourceProperty.DisplayName != null)
+            {
+                property.DisplayName = sourceProperty.DisplayName;
+            }
+            if (sourceProperty.Description != null)
+            {
+                property.Description = sourceProperty.Description;
+            }
+            if (sourceProperty.Checksum != null)
+            {
+                property.Checksum = sourceProperty.Checksum;
+            }
+            if (sourceProperty.Kind != null)
+            {
+                property.Kind = sourceProperty.Kind;
+            }
+            if (sourceProperty.SemanticId != null)
+            {
+                property.SemanticId = sourceProperty.SemanticId;
+            }
+            if (sourceProperty.SupplementalSemanticIds != null)
+            {
+                property.SupplementalSemanticIds = sourceProperty.SupplementalSemanticIds;
+            }
+            if (sourceProperty.Qualifiers != null)
+            {
+                property.Qualifiers = sourceProperty.Qualifiers;
+            }
+            if (sourceProperty.DataSpecifications != null)
+            {
+                property.DataSpecifications = sourceProperty.DataSpecifications;
+            }
+            if (sourceProperty.ValueType != null)
+            {
+                property.ValueType = sourceProperty.ValueType;
+            }
+            if (sourceProperty.ValueId != null)
+            {
+                property.ValueId = sourceProperty.ValueId;
+            }
+            if (sourceProperty.Value != null)
+            {
+                property.Value = sourceProperty.Value;
+            }
         }
     }
 }

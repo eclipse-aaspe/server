@@ -13,9 +13,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using System.Xml;
 using Nodes = System.Text.Json.Nodes;
 
 namespace IO.Swagger.V1RC03
@@ -59,6 +61,10 @@ namespace IO.Swagger.V1RC03
         {
             var response = context.HttpContext.Response;
             var httpContext = context.HttpContext;
+
+            var contentType = httpContext.Request.ContentType;
+
+
             var serviceProvider = httpContext.RequestServices;
             var _modifierService = serviceProvider.GetRequiredService<IOutputModifiersService>();
 
@@ -80,8 +86,21 @@ namespace IO.Swagger.V1RC03
             //Validate Output modifiers
             _modifierService.ValidateOutputModifiers(context.Object, level, content, extent);
 
-
-            if (IsGenericListOfIClass(context.Object))
+            if (!string.IsNullOrEmpty(contentType) && contentType.Contains("xml"))
+            {
+                //TODO: jtikekar refactor
+                response.ContentType = contentType;
+                XmlWriterSettings settings = new XmlWriterSettings();
+                settings.Indent = true;
+                StringBuilder xml = new StringBuilder();
+                using (XmlWriter writer = XmlWriter.Create(xml, settings))
+                {
+                    Xmlization.Serialize.To((IClass)context.Object, writer);
+                    writer.Flush();
+                }
+                response.WriteAsync(xml.ToString());
+            }
+            else if (IsGenericListOfIClass(context.Object))
             //if (IsGenericListOfIClass(output))
             {
                 var jsonArray = new JsonArray();
@@ -134,20 +153,6 @@ namespace IO.Swagger.V1RC03
                     writer.FlushAsync().GetAwaiter().GetResult();
                 }
             }
-            //else if(typeof(JsonObject).IsAssignableFrom(output.GetType()))
-            //{
-            //    //Write ValueOnly
-            //    JsonObject json = (JsonObject)output;
-            //    var writer = new Utf8JsonWriter(response.Body);
-            //    json.WriteTo(writer);
-            //    writer.FlushAsync().GetAwaiter().GetResult();
-            //}
-            //else
-            //{
-            //    //Write IdShortPath
-            //    var json = JsonSerializer.Serialize(output);
-            //    httpContext.Response.WriteAsync(json);
-            //}
             return Task.FromResult(response);
         }
     }

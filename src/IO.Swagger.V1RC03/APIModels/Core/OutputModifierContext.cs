@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace IO.Swagger.V1RC03.APIModels.Core
 {
-    internal class OutputModifierContext
+    public class OutputModifierContext
     {
         private string _level, _content, _extent;
         private bool _includeChildren = true;

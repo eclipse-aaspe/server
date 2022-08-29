@@ -41,12 +41,12 @@ namespace Extenstions
             return true;
         }
 
-        public static string ToString(this Key key)
+        public static string ToStringExtended(this Key key)
         {
             return $"[{key.Type}, {key.Value}]";
         }
 
-        public static string ToString(this List<Key> keys)
+        public static string ToStringExtended(this List<Key> keys)
         {
             return string.Join(",", keys.Select((x) => x.ToString()));
         }

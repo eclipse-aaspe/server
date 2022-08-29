@@ -43,9 +43,9 @@ namespace IO.Swagger.V1RC03.Services
         void UpdateAssetAdministrationShellById(AssetAdministrationShell body, string aasIdentifier);
         void UpdateAssetInformation(AssetInformation body, string aasIdentifier);
         void UpdateConceptDescriptionById(ConceptDescription body, string cdIdentifier);
-        void UpdateSubmodelById(Submodel body, string submodelIdentifier);
-        void UpdateSubmodel(Submodel body, string aasIdentifier, string submodelIdentifier);
-        void UpdateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath);
-        void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath);
+        void UpdateSubmodelById(Submodel body, string submodelIdentifier, APIModels.Core.OutputModifierContext outputModifierContext = null);
+        void UpdateSubmodel(Submodel body, string aasIdentifier, string submodelIdentifier, APIModels.Core.OutputModifierContext outputModifierContext);
+        void UpdateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath, APIModels.Core.OutputModifierContext outputModifierContext);
+        void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, APIModels.Core.OutputModifierContext outputModifierContext);
     }
 }

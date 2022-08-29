@@ -162,7 +162,7 @@ namespace Extenstions
 
             if (sourceSubmodel.qualifiers != null && sourceSubmodel.qualifiers.Count != 0)
             {
-                if (submodel.Qualifiers == null && submodel.Qualifiers.Count != 0)
+                if (submodel.Qualifiers == null)
                 {
                     submodel.Qualifiers = new List<Qualifier>();
                 }

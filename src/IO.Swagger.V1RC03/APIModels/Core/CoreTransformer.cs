@@ -631,24 +631,27 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             if (context.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
                 var valueOnlyResult = new JsonObject();
+                var jsonArray = new JsonArray();
                 if (that.Value != null)
                 {
+
                     foreach (ISubmodelElement item in that.Value)
                     {
                         if (item is Property property)
                         {
-                            valueOnlyResult[item.IdShort] = JsonValue.Create(property.Value);
+                            jsonArray.Add(JsonValue.Create(property.Value));
                         }
                         else if (item is MultiLanguageProperty multiLanguageProperty)
                         {
-                            valueOnlyResult[item.IdShort] = _valueTransformer.TransformValue(multiLanguageProperty.Value, context);
+                            jsonArray.Add(_valueTransformer.TransformValue(multiLanguageProperty.Value, context));
                         }
                         else
                         {
-                            valueOnlyResult[item.IdShort] = _valueTransformer.Transform(item, context);
+                            jsonArray.Add(_valueTransformer.Transform(item, context));
                         }
                     }
                 }
+                valueOnlyResult[that.IdShort] = jsonArray;
 
                 return valueOnlyResult;
             }
@@ -805,26 +808,10 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             //if content is Value
             if (context.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
-                var valueOnlyResult = new JsonObject();
-                if (that.Value != null)
+                var valueOnlyResult = new JsonObject
                 {
-                    foreach (ISubmodelElement item in that.Value)
-                    {
-                        if (item is Property property)
-                        {
-                            valueOnlyResult[item.IdShort] = JsonValue.Create(property.Value);
-                        }
-                        else if (item is MultiLanguageProperty multiLanguageProperty)
-                        {
-                            valueOnlyResult[item.IdShort] = _valueTransformer.TransformValue(multiLanguageProperty.Value, context);
-                        }
-                        else
-                        {
-                            valueOnlyResult[item.IdShort] = _valueTransformer.Transform(item, context);
-                        }
-                    }
-                }
-
+                    [that.IdShort] = _valueTransformer.Transform(that, context)
+                };
                 return valueOnlyResult;
             }
             var result = new JsonObject();

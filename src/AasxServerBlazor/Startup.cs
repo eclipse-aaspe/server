@@ -64,6 +64,7 @@ namespace AasxServerBlazor
             services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
             services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
             services.AddTransient<IOutputModifiersService, OutputModifiersService>();
+            services.AddTransient<IInputModifierService, InputModifierService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
 
             // Add framework services.
@@ -90,16 +91,9 @@ namespace AasxServerBlazor
                         }
                     };
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
-                })
-                //TODO:jtikekar Uncomment
-                .AddXmlSerializerFormatters();
-
-            //// configure DI for application services
-            //services.AddScoped<IUserService, UserService>();
-            //// configure basic authentication 
-            //services.AddAuthentication("BasicAuthentication")
-            //    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null); services.AddAuthentication();
-
+                });
+            //TODO:jtikekar Uncomment
+            //.AddXmlSerializerFormatters();
 
             services
                 .AddSwaggerGen(c =>

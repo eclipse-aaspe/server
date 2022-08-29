@@ -12,13 +12,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Serialization;
 using AasCore.Aas3_0_RC02;
 using AdminShellNS;
 using Extenstions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace AdminShellNS
 {
@@ -802,9 +805,17 @@ namespace AdminShellNS
                     {
                         using (var s = specPart.GetStream(FileMode.Create))
                         {
-                            var serializer = new XmlSerializer(typeof(AasCore.Aas3_0_RC02.Environment));
                             var nss = GetXmlDefaultNamespaces();
-                            serializer.Serialize(s, _aasEnv, nss);
+                            //var serializer = new XmlSerializer(typeof(AasCore.Aas3_0_RC02.Environment));
+                            //serializer.Serialize(s, _aasEnv, nss);
+
+                            XmlWriterSettings settings = new XmlWriterSettings
+                            {
+                                Indent = true
+                            };
+                            using XmlWriter writer = XmlWriter.Create(s, settings);
+                            Xmlization.Serialize.To((IClass)_aasEnv, writer);
+                            writer.Flush();
                         }
                     }
 

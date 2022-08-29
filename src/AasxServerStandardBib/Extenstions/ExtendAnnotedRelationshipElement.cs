@@ -10,14 +10,14 @@ namespace AasxServerStandardBib.Extenstions
 {
     public static class ExtendAnnotedRelationshipElement
     {
-        public static AnnotatedRelationshipElement ConvertFromV20(this AnnotatedRelationshipElement annotatedRelationshipElement, AasxCompatibilityModels.AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelElement)
+        public static AnnotatedRelationshipElement ConvertAnnotationsFromV20(this AnnotatedRelationshipElement annotatedRelationshipElement, AasxCompatibilityModels.AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelElement)
         {
-            if(sourceAnnotedRelElement == null)
+            if (sourceAnnotedRelElement == null)
             {
                 return null;
             }
 
-            if(sourceAnnotedRelElement.annotations != null)
+            if (sourceAnnotedRelElement.annotations != null)
             {
                 annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
                 foreach (var submodelElementWrapper in sourceAnnotedRelElement.annotations)

@@ -30,6 +30,7 @@ using System.IO;
 using System.Text;
 using IO.Swagger.V1RC03.ModelBinder;
 using System.Net.Mime;
+using IO.Swagger.V1RC03.APIModels.Core;
 
 namespace IO.Swagger.V1RC03.Controllers
 {
@@ -1008,8 +1009,9 @@ namespace IO.Swagger.V1RC03.Controllers
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            var outputModifierContext = new OutputModifierContext(level, content, extent);
 
-            _aasEnvService.UpdateSubmodel(body, decodedAasId, decodedSubmodelId);
+            _aasEnvService.UpdateSubmodel(body, decodedAasId, decodedSubmodelId, outputModifierContext);
 
             //TODO: jtikekar handle output modifiers
             return NoContent();
@@ -1066,9 +1068,10 @@ namespace IO.Swagger.V1RC03.Controllers
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            _aasEnvService.UpdateSubmodelElementByPath(body, decodedAasId, decodedSubmodelId, idShortPath);
+            var outputModifierContext = new OutputModifierContext(level, content, extent);
 
-            //TODO: jtikekar Handle output modifiers
+            _aasEnvService.UpdateSubmodelElementByPath(body, decodedAasId, decodedSubmodelId, idShortPath, outputModifierContext);
+
             return NoContent();
         }
 
@@ -1096,9 +1099,10 @@ namespace IO.Swagger.V1RC03.Controllers
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            _aasEnvService.UpdateSubmodelElementByPathSubmodelRepo(body, decodedSubmodelId, idShortPath);
+            var outputModifierContext = new OutputModifierContext(level, content, extent);
 
-            //TODO: jtikekar Handle output modifiers
+            _aasEnvService.UpdateSubmodelElementByPathSubmodelRepo(body, decodedSubmodelId, idShortPath, outputModifierContext);
+
             return NoContent();
         }
     }

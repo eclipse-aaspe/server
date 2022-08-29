@@ -332,7 +332,7 @@
                 {
                     if (be.Observed != null)
                     {
-                        string okey = be.Observed.GetAsExactlyOneKey().ToString();
+                        string okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
                         <span style="color:white;background-color:blue;">Observed</span>
                         <span>@(" " + okey)</span><br />
                         var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
@@ -1664,7 +1664,7 @@
                                 var k = e.GlobalAssetId.Keys;
                                 if (k != null)
                                 {
-                                    ret = k.ToString();
+                                    ret = k.ToStringExtended();
                                 }
                             }
                         }
@@ -1924,7 +1924,7 @@
                         var k = r.First;
                         if (k != null)
                         {
-                            ret = k.Keys.ToString();
+                            ret = k.Keys.ToStringExtended();
                         }
                     }
                     break;
@@ -1937,7 +1937,7 @@
                         var k = r.Second;
                         if (k != null)
                         {
-                            ret = k.Keys.ToString();
+                            ret = k.Keys.ToStringExtended();
                         }
                     }
                     break;
@@ -1987,7 +1987,7 @@
                             var k = r.GetModelReference().Keys;
                             if (k != null)
                             {
-                                ret = k.ToString();
+                                ret = k.ToStringExtended();
                             }
                         }
                     }

@@ -614,6 +614,11 @@
             Serialize an instance of the meta-model into a JSON object.
             </summary>
         </member>
+        <member name="M:IO.Swagger.V1RC03.APIModels.ValueOnly.UpdateImplementation.Update(AasCore.Aas3_0_RC02.IClass,AasCore.Aas3_0_RC02.IClass,IO.Swagger.V1RC03.APIModels.Core.OutputModifierContext)">
+            <summary>
+            Serialize an instance of the meta-model into a JSON object.
+            </summary>
+        </member>
         <member name="M:IO.Swagger.V1RC03.APIModels.ValueOnly.ValueOnlySerializer.ToJsonObject(AasCore.Aas3_0_RC02.IClass,IO.Swagger.V1RC03.APIModels.Core.OutputModifierContext)">
             <summary>
             Serialize an instance of the meta-model into a JSON object.

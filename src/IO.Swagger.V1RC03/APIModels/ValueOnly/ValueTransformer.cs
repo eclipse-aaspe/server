@@ -165,9 +165,20 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 var arrayAnnotations = new JsonArray();
                 foreach (IDataElement item in that.Annotations)
                 {
-                    arrayAnnotations.Add(
-                        Transform(
-                            item, context));
+                    var annotationValue = new JsonObject();
+                    if (item is Property property)
+                    {
+                        annotationValue[item.IdShort] = JsonValue.Create(property.Value);
+                    }
+                    else if (item is MultiLanguageProperty multiLanguageProperty)
+                    {
+                        annotationValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                    }
+                    else
+                    {
+                        annotationValue[item.IdShort] = Transform(item, context);
+                    }
+                    arrayAnnotations.Add(annotationValue);
                 }
                 value["annotations"] = arrayAnnotations;
             }

@@ -4,6 +4,8 @@ using AasxServerStandardBib.Extenstions;
 using AdminShellNS;
 using Extenstions;
 using IO.Swagger.V1RC03.ApiModel;
+using IO.Swagger.V1RC03.APIModels.Core;
+using IO.Swagger.V1RC03.APIModels.ValueOnly;
 using IO.Swagger.V1RC03.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -12,6 +14,7 @@ using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using File = AasCore.Aas3_0_RC02.File;
@@ -35,7 +38,7 @@ namespace IO.Swagger.V1RC03.Services
 
         #region AssetAdministrationShell
 
-        public void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath)
+        public void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, OutputModifierContext outputModifierContext)
         {
             if (string.IsNullOrEmpty(body.IdShort))
             {
@@ -47,14 +50,14 @@ namespace IO.Swagger.V1RC03.Services
             {
                 if (IsSubmodelPresentInAAS(aas, submodelIdentifier))
                 {
-                    UpdateSubmodelElementByPathSubmodelRepo(body, submodelIdentifier, idShortPath);
+                    UpdateSubmodelElementByPathSubmodelRepo(body, submodelIdentifier, idShortPath, outputModifierContext);
                 }
             }
         }
 
-        public void UpdateSubmodel(Submodel body, string aasIdentifier, string submodelIdentifier)
+        public void UpdateSubmodel(Submodel body, string aasIdentifier, string submodelIdentifier, OutputModifierContext outputModifierContext)
         {
-            if (string.IsNullOrEmpty(body.Id))
+            if (string.IsNullOrEmpty(body.Id) && !outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
                 throw new NoIdentifierException("Submodel");
             }
@@ -64,7 +67,7 @@ namespace IO.Swagger.V1RC03.Services
             {
                 if (IsSubmodelPresentInAAS(aas, submodelIdentifier))
                 {
-                    UpdateSubmodelById(body, submodelIdentifier);
+                    UpdateSubmodelById(body, submodelIdentifier, outputModifierContext);
                 }
             }
         }
@@ -651,7 +654,7 @@ namespace IO.Swagger.V1RC03.Services
 
         #region Submodel
 
-        public void UpdateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath)
+        public void UpdateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath, OutputModifierContext outputModifierContext = null)
         {
             if (string.IsNullOrEmpty(body.IdShort))
             {
@@ -661,42 +664,51 @@ namespace IO.Swagger.V1RC03.Services
             var submodelElement = GetSubmodelElementByPathSubmodelRepo(submodelIdentifier, idShortPath, out object smeParent);
             if (submodelElement != null && smeParent != null)
             {
-                if (smeParent is SubmodelElementCollection collection)
-                {
-                    var smeIndex = collection.Value.IndexOf(submodelElement);
-                    collection.Value.Remove(submodelElement);
-                    collection.Value.Insert(smeIndex, body);
-                }
-                else if (smeParent is SubmodelElementList list)
-                {
-                    var smeIndex = list.Value.IndexOf(submodelElement);
-                    list.Value.Remove(submodelElement);
-                    list.Value.Insert(smeIndex, body);
-                }
-                //Added support for submodel here, as no other api found for this functionality
-                else if (smeParent is Submodel submodel)
-                {
-                    var smeIndex = submodel.SubmodelElements.IndexOf(submodelElement);
-                    submodel.SubmodelElements.Remove(submodelElement);
-                    submodel.SubmodelElements.Insert(smeIndex, body);
-                }
+                UpdateImplementation.Update(submodelElement, body, outputModifierContext);
+                //if (smeParent is SubmodelElementCollection collection)
+                //{
+                //    var smeIndex = collection.Value.IndexOf(submodelElement);
+                //    collection.Value.Remove(submodelElement);
+                //    collection.Value.Insert(smeIndex, body);
+                //}
+                //else if (smeParent is SubmodelElementList list)
+                //{
+                //    var smeIndex = list.Value.IndexOf(submodelElement);
+                //    list.Value.Remove(submodelElement);
+                //    list.Value.Insert(smeIndex, body);
+                //}
+                ////Added support for submodel here, as no other api found for this functionality
+                //else if (smeParent is Submodel submodel)
+                //{
+                //    var smeIndex = submodel.SubmodelElements.IndexOf(submodelElement);
+                //    submodel.SubmodelElements.Remove(submodelElement);
+                //    submodel.SubmodelElements.Insert(smeIndex, body);
+                //}
 
                 AasxServer.Program.signalNewData(1);
             }
         }
 
-        public void UpdateSubmodelById(Submodel body, string submodelIdentifier)
+        public void UpdateSubmodelById(Submodel body, string submodelIdentifier, OutputModifierContext outputModifierContext = null)
         {
             if (string.IsNullOrEmpty(body.Id))
             {
-                throw new NoIdentifierException("Submodel");
+                if (outputModifierContext != null && outputModifierContext.Content.Equals("value"))
+                {
+
+                }
+                else
+                {
+                    throw new NoIdentifierException("Submodel");
+                }
             }
 
             var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
             if (submodel != null)
             {
-                _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
-                _packages[packageIndex].AasEnv.Submodels.Add(body);
+                UpdateImplementation.Update(submodel, body, outputModifierContext);
+                //_packages[packageIndex].AasEnv.Submodels.Remove(submodel);
+                //_packages[packageIndex].AasEnv.Submodels.Add(body);
                 AasxServer.Program.signalNewData(1);
             }
         }

@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System;
 using System.Text.Json.Nodes;
 using IO.Swagger.V1RC03.Services;
+using IO.Swagger.V1RC03.APIModels.ValueOnly;
+using Microsoft.Extensions.Primitives;
+using System.Linq;
 
 namespace IO.Swagger.V1RC03
 {
@@ -37,9 +40,28 @@ namespace IO.Swagger.V1RC03
             MediaTypeHeaderValue requestContentType = null;
             MediaTypeHeaderValue.TryParse(request.ContentType, out requestContentType);
 
+            // 1. content
+            context.HttpContext.Request.Query.TryGetValue("content", out StringValues contentValues);
+            var content = contentValues.Any() ? contentValues.First() : null;
+
             object result = null;
 
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(request.Body).Result;
+
+            //TODO: jtikekar refactor
+            if (!string.IsNullOrEmpty(content) && content.Equals("value", StringComparison.OrdinalIgnoreCase))
+            {
+                if (type == typeof(Submodel))
+                {
+                    result = ValueOnlyDeserializer.DeserializeSubmodel(node);
+                }
+                if (type == typeof(ISubmodelElement))
+                {
+                    result = ValueOnlyDeserializer.DeserializeISubmodelElement(node);
+                }
+
+                return InputFormatterResult.SuccessAsync(result);
+            }
 
             if (type == typeof(Submodel))
             {
