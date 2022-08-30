@@ -642,10 +642,12 @@ namespace AasxRestServerLibrary
             {
                 k--;
             }
+            #pragma warning disable format
             jsonld = jsonld.Substring(0, k+1);
             jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
             jsonld = "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
+            #pragma warning restore format
 
             return jsonld;
         }
