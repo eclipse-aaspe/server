@@ -611,9 +611,11 @@ namespace AasxRestServerLibrary
 
             string prefix = "  \"aio\": \"https://admin-shell-io.com/ns#\",\r\n";
             prefix += "  \"I40GenericCredential\": \"aio:I40GenericCredential\",\r\n";
+            prefix += "  \"__AAS\": \"aio:__AAS\",\r\n";
             header = prefix + header;
             header = "\"context\": {\r\n" + header + "\r\n},\r\n";
             jsonld = jsonld.Substring(0, jsonld.Length - 3);
+            jsonld = "{\r\n  \"__AAS\": " + jsonld + "\r\n  }";
             jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
             jsonld = "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
@@ -630,29 +632,32 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Add("Refresh", refresh);
             }
             string jsonld = queryString["jsonld"];
+            string vc = queryString["vc"];
 
             var settings = new JsonSerializerSettings();
             if (contractResolver != null)
                 settings.ContractResolver = contractResolver;
             var json = JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
 
-            if (jsonld != null)
+            if (jsonld != null || vc != null)
             {
                 jsonld = makeJsonLD(json, 0);
+                json = jsonld;
 
-                string requestPath = "https://nameplate.h2894164.stratoserver.net/demo/sign?create_as_verifiable_presentation=false";
-
-                var handler = new HttpClientHandler();
-
-                if (AasxServer.AasxTask.proxy != null)
-                    handler.Proxy = AasxServer.AasxTask.proxy;
-                else
-                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-
-                var client = new HttpClient(handler);
-
-                if (jsonld != "")
+                if (vc != null && jsonld != null && jsonld != "")
                 {
+                    string requestPath = "https://nameplate.h2894164.stratoserver.net/demo/sign?create_as_verifiable_presentation=false";
+
+                    var handler = new HttpClientHandler();
+
+                    if (AasxServer.AasxTask.proxy != null)
+                        handler.Proxy = AasxServer.AasxTask.proxy;
+                    else
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+
+                    var client = new HttpClient(handler);
+                    client.Timeout = TimeSpan.FromSeconds(60);
+
                     bool error = false;
                     HttpResponseMessage response = new HttpResponseMessage();
                     try
