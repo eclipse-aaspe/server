@@ -620,7 +620,6 @@ namespace AasxRestServerLibrary
                 k--;
             }
             jsonld = jsonld.Substring(0, k+1);
-            //// jsonld = "{\r\n  \"__AAS\": " + jsonld + "\r\n  }";
             jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
             jsonld = "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
