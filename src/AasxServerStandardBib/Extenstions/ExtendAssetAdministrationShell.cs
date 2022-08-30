@@ -192,7 +192,10 @@ namespace Extenstions
                 //TODO: jtikekar: DataSpecificationContent?? (as per old implementation)
                 foreach (var sourceDataSpec in sourceAas.hasDataSpecification)
                 {
-                    assetAdministrationShell.DataSpecifications.Add(ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.GlobalReference));
+                    if (sourceDataSpec.dataSpecification != null)
+                    {
+                        assetAdministrationShell.DataSpecifications.Add(ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.GlobalReference));
+                    }
                 }
             }
 
