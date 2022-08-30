@@ -48,7 +48,7 @@ namespace Extenstions
 
         public static string ToStringExtended(this List<Key> keys)
         {
-            return string.Join(",", keys.Select((x) => x.ToString()));
+            return string.Join(",", keys.Select((x) => x.ToStringExtended()));
         }
     }
 }
