@@ -637,8 +637,13 @@ namespace AasxRestServerLibrary
             prefix += "  \"__AAS\": \"aio:__AAS\",\r\n";
             header = prefix + header;
             header = "\"context\": {\r\n" + header + "\r\n},\r\n";
-            jsonld = jsonld.Substring(0, jsonld.Length - 3);
-            jsonld = "{\r\n  \"__AAS\": " + jsonld + "\r\n  }";
+            int k = jsonld.Length - 2;
+            while (k >= 0 && jsonld[k] != '}' && jsonld[k] != ']')
+            {
+                k--;
+            }
+            jsonld = jsonld.Substring(0, k+1);
+            // jsonld = "{\r\n  \"__AAS\": " + jsonld + "\r\n  }";
             jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
             jsonld = "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
