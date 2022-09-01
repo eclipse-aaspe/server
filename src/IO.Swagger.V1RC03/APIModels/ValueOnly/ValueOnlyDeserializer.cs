@@ -62,6 +62,14 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                             {
                                 output = CreateReferenceElement(item.Key, jsonObject);
                             }
+                            else if(jsonObject.ContainsKey("entityType"))
+                            {
+                                output = CreateEntity(item.Key, jsonObject);
+                            }
+                            else if(jsonObject.ContainsKey("observed"))
+                            {
+                                output = CreateBasicEventElement(item.Key, jsonObject);
+                            }
                             else
                             {
                                 //This can be SubmodelElementCollection
@@ -73,6 +81,53 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 
             }
 
+            return output;
+        }
+
+        private static ISubmodelElement CreateBasicEventElement(string idShort, JsonObject jsonObject)
+        {
+            Reference observed = null;
+            var observedNode = jsonObject["observed"] as JsonNode;
+            if (observedNode != null)
+            {
+                observed = Jsonization.Deserialize.ReferenceFrom(observedNode);
+            }
+            var output = new BasicEventElement(observed, Direction.Input, StateOfEvent.Off, idShort:idShort); //Defining dummy enum values
+            return output;
+        }
+
+        private static ISubmodelElement CreateEntity(string idShort, JsonObject jsonObject)
+        {
+            string entityType = null;
+            var entityTypeNode = jsonObject["entityType"] as JsonValue;
+            if(entityTypeNode != null)
+            {
+                entityTypeNode.TryGetValue(out entityType);
+            }
+
+            Entity output = new Entity((EntityType)Stringification.EntityTypeFromString(entityType), idShort:idShort);
+
+            var globalAssetIdNode = jsonObject["globalAssetId"] as JsonNode;
+            if (globalAssetIdNode != null)
+            {
+                var globalAssetId = Jsonization.Deserialize.ReferenceFrom(globalAssetIdNode);
+                output.GlobalAssetId = globalAssetId; 
+            }
+
+            var statementsNode = jsonObject["statements"] as JsonArray;
+            if (statementsNode != null)
+            {
+                var statements = new List<ISubmodelElement>();
+                foreach (var statementNode in statementsNode)
+                {
+                    if (statementNode != null)
+                    {
+                        var statement = DeserializeISubmodelElement(statementNode);
+                        statements.Add(statement);
+                    }
+                }
+                output.Statements = statements;
+            }
             return output;
         }
 

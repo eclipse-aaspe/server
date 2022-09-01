@@ -79,8 +79,6 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.Qualifiers = source.Qualifiers;
             that.DataSpecifications = source.DataSpecifications;
 
-            //if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
-            //{
             if (source.SubmodelElements.Any())
             {
                 for (int i = 0; i < source.SubmodelElements.Count; i++)
@@ -88,7 +86,6 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     UpdateImplementation.Update(that.SubmodelElements[i], source.SubmodelElements[i], outputModifierContext);
                 }
             }
-            //}
 
             return that;
         }
@@ -415,7 +412,63 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 
         public IClass Transform(Entity that, UpdateContext context)
         {
-            throw new NotImplementedException();
+            var source = context.Source as Entity;
+            var outputModifierContext = context.OutputModifierContext;
+            if (outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
+            {
+                that.EntityType = source.EntityType;
+                if(source.GlobalAssetId != null)
+                {
+                    that.GlobalAssetId = source.GlobalAssetId;
+                }
+
+                if(source.SpecificAssetId != null)
+                {
+                    that.SpecificAssetId = source.SpecificAssetId;
+                }
+
+                if (source.Statements.Any())
+                {
+                    for (int i = 0; i < source.Statements.Count; i++)
+                    {
+                        UpdateImplementation.Update(that.Statements[i], source.Statements[i], outputModifierContext);
+                    }
+                }
+                return that;
+            }
+
+            that.Extensions = source.Extensions;
+            that.Category = source.Category;
+            that.IdShort = source.IdShort;
+            that.DisplayName = source.DisplayName;
+            that.Description = source.Description;
+            that.Checksum = source.Checksum;
+            that.Kind = source.Kind;
+            that.SemanticId = source.SemanticId;
+            that.SupplementalSemanticIds = source.SupplementalSemanticIds;
+            that.Qualifiers = source.Qualifiers;
+            that.DataSpecifications = source.DataSpecifications;
+
+            that.EntityType = source.EntityType;
+            if (source.GlobalAssetId != null)
+            {
+                that.GlobalAssetId = source.GlobalAssetId;
+            }
+
+            if (source.SpecificAssetId != null)
+            {
+                that.SpecificAssetId = source.SpecificAssetId;
+            }
+
+            if (source.Statements.Any())
+            {
+                for (int i = 0; i < source.Statements.Count; i++)
+                {
+                    UpdateImplementation.Update(that.Statements[i], source.Statements[i], outputModifierContext);
+                }
+            }
+
+            return that;
         }
 
         public IClass Transform(EventPayload that, UpdateContext context)
@@ -425,7 +478,31 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 
         public IClass Transform(BasicEventElement that, UpdateContext context)
         {
-            throw new NotImplementedException();
+            var source = context.Source as BasicEventElement;
+            var outputModifierContext = context.OutputModifierContext;
+            if (outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
+            {
+                that.Observed = source.Observed;
+                return that;
+            }
+
+            that.Extensions = source.Extensions;
+            that.Category = source.Category;
+            that.IdShort = source.IdShort;
+            that.DisplayName = source.DisplayName;
+            that.Description = source.Description;
+            that.Checksum = source.Checksum;
+            that.Kind = source.Kind;
+            that.SemanticId = source.SemanticId;
+            that.SupplementalSemanticIds = source.SupplementalSemanticIds;
+            that.Qualifiers = source.Qualifiers;
+            that.DataSpecifications = source.DataSpecifications;
+
+            if(!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
+            {
+                that.Observed = source.Observed;
+            }
+            return that;
         }
 
         public IClass Transform(Operation that, UpdateContext context)

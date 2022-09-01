@@ -112,6 +112,10 @@ namespace AasxServerBlazor.Data
                                                     var e = sme as Entity;
                                                     createEntityItems(smeItem, e, i);
                                                 }
+                                                if(sme is AnnotatedRelationshipElement annotatedRelationshipElement)
+                                                {
+                                                    CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                                                }
                                             }
                                         smItem.Childs = smChilds;
                                         foreach (var c in smChilds)
@@ -132,6 +136,26 @@ namespace AasxServerBlazor.Data
                 }
             }
             viewItems = items;
+        }
+
+        private void CreateAnnotedRelationshipElementItems(Item smeRootItem, AnnotatedRelationshipElement annotatedRelationshipElement, int i)
+        {
+            List<Item> smChilds = new List<Item>();
+            foreach (var s in annotatedRelationshipElement.Annotations)
+            {
+                if (s != null && s != null)
+                {
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = s.IdShort;
+                    smeItem.Type = "In";
+                    smeItem.Tag = s;
+                    smChilds.Add(smeItem);
+                }
+            }
+            smeRootItem.Childs = smChilds;
+            foreach (var c in smChilds)
+                c.parent = smeRootItem;
         }
 
         void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)
@@ -160,6 +184,10 @@ namespace AasxServerBlazor.Data
                     {
                         var e = sme as Entity;
                         createEntityItems(smeItem, e, i);
+                    }
+                    if(sme is AnnotatedRelationshipElement annotatedRelationshipElement)
+                    {
+                        CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
                     }
                 }
             }

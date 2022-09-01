@@ -462,11 +462,11 @@
      filename,
      data
      );
-            /*
-            await js.InvokeAsync<object>(
-            "saveAsFile",
-            filename,
-            Convert.ToBase64String(data)
+        /*
+        await js.InvokeAsync<object>(
+        "saveAsFile",
+        filename,
+    Convert.ToBase64String(data)
         );
         */
         /*
@@ -1071,11 +1071,11 @@
                             currentParentItem = parentItem.parent;
                         }
                     }
-                    
+
                     string currentUrl = NavigationManager.Uri;
                     return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
                     "/submodel/submodel-elements/" + idShortPath + "/attachment";
-                    
+
                 }
             }
         }
@@ -1235,6 +1235,10 @@
         if (o is BasicEventElement)
         {
             ret += "Evt";
+        }
+        if(o is AnnotatedRelationshipElement)
+        {
+            ret += "RelA";
         }
 
         return (ret);
@@ -1761,7 +1765,7 @@
                     break;
                 case 1:
                     if (col == 0)
-                        ret = "MimeType";
+                        ret = "ContentType";
                     if (col == 1)
                         ret = b.ContentType;
                     break;
@@ -1896,6 +1900,66 @@
             return ret;
         }
 
+        if (o is AnnotatedRelationshipElement)
+        {
+            var r = o as AnnotatedRelationshipElement;
+            // ret = r.idShort;
+            switch (line)
+            {
+                case 0:
+                    if (col == 0)
+                        ret = "Semantic ID";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.SemanticId?.GetAsExactlyOneKey();
+                        if (k != null)
+                        {
+                            ret = $"[{k.Type}, {k.Value}]";
+                        }
+                    }
+                    break;
+                case 1:
+                    if (col == 0)
+                        ret = "First";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.First;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToStringExtended();
+                        }
+                    }
+                    break;
+                case 2:
+                    if (col == 0)
+                        ret = "Second";
+                    if (col == 1)
+                    {
+                        ret = "NULL";
+                        var k = r.Second;
+                        if (k != null)
+                        {
+                            ret = k.Keys.ToStringExtended();
+                        }
+                    }
+                    break;
+                case 3:
+                    if (col == 0)
+                        ret = getQualifiers(r.Qualifiers, col);
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    ret = "";
+                    break;
+            }
+            return ret;
+        }
         if (o is RelationshipElement)
         {
             var r = o as RelationshipElement;

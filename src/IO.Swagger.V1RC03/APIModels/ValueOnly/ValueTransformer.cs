@@ -194,9 +194,20 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 var arrayStatements = new Nodes.JsonArray();
                 foreach (ISubmodelElement item in that.Statements)
                 {
-                    arrayStatements.Add(
-                        Transform(
-                            item, context));
+                    var statementValue = new JsonObject();
+                    if (item is Property property)
+                    {
+                        statementValue[item.IdShort] = JsonValue.Create(property.Value);
+                    }
+                    else if (item is MultiLanguageProperty multiLanguageProperty)
+                    {
+                        statementValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                    }
+                    else
+                    {
+                        statementValue[item.IdShort] = Transform(item, context);
+                    }
+                    arrayStatements.Add(statementValue);
                 }
                 value["statements"] = arrayStatements;
             }

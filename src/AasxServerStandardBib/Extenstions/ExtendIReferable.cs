@@ -29,37 +29,52 @@ namespace Extenstions
         {
             if (referable is Submodel submodel && submodel.SubmodelElements != null)
             {
-                foreach (var submodelElement in submodel.SubmodelElements)
+                if (submodel.SubmodelElements != null)
                 {
-                    yield return submodelElement;
+                    foreach (var submodelElement in submodel.SubmodelElements)
+                    {
+                        yield return submodelElement;
+                    }
                 }
             }
             else if (referable is SubmodelElementCollection submodelElementCollection)
             {
-                foreach (var submodelElement in submodelElementCollection.Value)
+                if (submodelElementCollection.Value != null)
                 {
-                    yield return submodelElement;
+                    foreach (var submodelElement in submodelElementCollection.Value)
+                    {
+                        yield return submodelElement;
+                    }
                 }
             }
             else if (referable is SubmodelElementList submodelElementList)
             {
-                foreach (var submodelElement in submodelElementList.Value)
+                if (submodelElementList.Value != null)
                 {
-                    yield return submodelElement;
+                    foreach (var submodelElement in submodelElementList.Value)
+                    {
+                        yield return submodelElement;
+                    }
                 }
             }
             else if (referable is AnnotatedRelationshipElement annotatedRelationshipElement)
             {
-                foreach (var submodelElement in annotatedRelationshipElement.Annotations)
+                if (annotatedRelationshipElement.Annotations != null)
                 {
-                    yield return submodelElement;
+                    foreach (var submodelElement in annotatedRelationshipElement.Annotations)
+                    {
+                        yield return submodelElement;
+                    }
                 }
             }
             else if (referable is Entity entity)
             {
-                foreach (var submodelElement in entity.Statements)
+                if (entity.Statements != null)
                 {
-                    yield return submodelElement;
+                    foreach (var submodelElement in entity.Statements)
+                    {
+                        yield return submodelElement;
+                    }
                 }
             }
             else if (referable is Operation operation)

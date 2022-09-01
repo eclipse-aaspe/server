@@ -21,6 +21,7 @@ using AdminShellNS;
 using Extenstions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static System.Net.WebRequestMethods;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace AdminShellNS
@@ -204,9 +205,12 @@ namespace AdminShellNS
             // read V3.0?
             if (nsuri != null && nsuri.Trim() == "http://www.admin-shell.io/aas/3/0")
             {
-                XmlSerializer serializer = new XmlSerializer(
-                    typeof(AasCore.Aas3_0_RC02.Environment), "http://www.admin-shell.io/aas/3/0");
-                res = serializer.Deserialize(s) as AasCore.Aas3_0_RC02.Environment;
+                //XmlSerializer serializer = new XmlSerializer(
+                //    typeof(AasCore.Aas3_0_RC02.Environment), "http://www.admin-shell.io/aas/3/0");
+                //res = serializer.Deserialize(s) as AasCore.Aas3_0_RC02.Environment;
+
+                XmlReader xmlReader = XmlReader.Create(s);
+                res = Xmlization.Deserialize.EnvironmentFrom(xmlReader, "http://www.admin-shell.io/aas/3/0");
                 return res;
             }
 
@@ -446,6 +450,8 @@ namespace AdminShellNS
                         {
                             // own catch loop to be more specific
                             aasEnv = AdminShellSerializationHelper.DeserializeXmlFromStreamWithCompat(s);
+                            //XmlReader xmlReader = XmlReader.Create(s);
+                            //aasEnv = Xmlization.Deserialize.EnvironmentFrom(xmlReader);
                             openPackage = package;
 
                             if (aasEnv == null)
@@ -811,11 +817,12 @@ namespace AdminShellNS
 
                             XmlWriterSettings settings = new XmlWriterSettings
                             {
-                                Indent = true
+                                Indent = true,
+                                OmitXmlDeclaration = true
                             };
                             using XmlWriter writer = XmlWriter.Create(s, settings);
-                            Xmlization.Serialize.To((IClass)_aasEnv, writer);
-                            writer.Flush();
+                            string ns = "http://www.admin-shell.io/aas/3/0";
+                            Xmlization.Serialize.To((IClass)_aasEnv, writer, ns: ns);
                         }
                     }
 

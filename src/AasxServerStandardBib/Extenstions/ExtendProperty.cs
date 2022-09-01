@@ -20,7 +20,15 @@ namespace Extenstions
             {
                 return null;
             }
-            property.ValueType = (DataTypeDefXsd)Stringification.DataTypeDefXsdFromString("xs:" + sourceProperty.valueType);
+            var propertyType = Stringification.DataTypeDefXsdFromString("xs:" + sourceProperty.valueType);
+            if (propertyType != null)
+            {
+                property.ValueType = (DataTypeDefXsd)propertyType;
+            }
+            else
+            {
+                Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
+            }
             property.Value = sourceProperty.value;
             if (sourceProperty.valueId != null)
             {

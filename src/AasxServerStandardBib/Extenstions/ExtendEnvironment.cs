@@ -42,6 +42,10 @@ namespace Extenstions
             //Convert Submodels
             if (sourceEnvironement.Submodels != null)
             {
+                if (environment.Submodels == null)
+                {
+                    environment.Submodels = new List<Submodel>();
+                }
                 foreach (var sourceSubmodel in sourceEnvironement.Submodels)
                 {
                     var newSubmodel = new Submodel(sourceSubmodel.identification.id);
@@ -52,6 +56,10 @@ namespace Extenstions
 
             if (sourceEnvironement.ConceptDescriptions != null)
             {
+                if (environment.ConceptDescriptions == null)
+                {
+                    environment.ConceptDescriptions = new List<ConceptDescription>();
+                }
                 foreach (var sourceConceptDescription in sourceEnvironement.ConceptDescriptions)
                 {
                     var newConceptDescription = new ConceptDescription(sourceConceptDescription.identification.id);

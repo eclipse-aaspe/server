@@ -141,10 +141,9 @@ namespace Extenstions
 
         public static ISubmodelElement ConvertFromV10(this ISubmodelElement submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement, bool shallowCopy = false)
         {
-
+            ISubmodelElement outputSubmodelElement = null;
             if (sourceSubmodelElement != null)
             {
-                ISubmodelElement outputSubmodelElement = null;
                 if (sourceSubmodelElement is AdminShellV10.SubmodelElementCollection collection)
                 {
                     var newSmeCollection = new SubmodelElementCollection();
@@ -215,7 +214,7 @@ namespace Extenstions
                 outputSubmodelElement.BasicConversionFromV10(sourceSubmodelElement);
             }
 
-            return null;
+            return outputSubmodelElement;
         }
 
         private static void BasicConversionFromV10(this ISubmodelElement submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement)
@@ -352,6 +351,12 @@ namespace Extenstions
                     var newObserved = ExtensionsUtil.ConvertReferenceFromV20(sourceBasicEvent.observed, ReferenceTypes.ModelReference);
 
                     outputSubmodelElement = new BasicEventElement(newObserved, Direction.Input, StateOfEvent.Off); //TODO: jtikekar default values of enums
+                }
+                else if(sourceSubmodelElement is AdminShellV20.Entity sourceEntity)
+                {
+                    var entityType = Stringification.EntityTypeFromString(sourceEntity.entityType);
+                    var newEntity = new Entity((EntityType)entityType);
+                    outputSubmodelElement = newEntity.ConvertFromV20(sourceEntity);
                 }
                 else if (sourceSubmodelElement is AdminShellV20.Operation sourceOperation)
                 {
