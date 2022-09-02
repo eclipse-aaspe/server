@@ -43,6 +43,53 @@ namespace AasxRestServerLibrary
         [RestResource]
         public class TestResource
         {
+            private bool comp(string op, string left, string right)
+            {
+                switch (op)
+                {
+                    case "==":
+                        return left == right;
+                    case "!=":
+                        return left != right;
+                    case ">":
+                    case "<":
+                    case ">=":
+                    case "<=":
+                        if (left == "" || right == "")
+                            return false;
+                        if (!left.All(char.IsDigit))
+                            return false;
+                        if (!right.All(char.IsDigit))
+                            return false;
+
+                        try
+                        {
+                            int l = Convert.ToInt32(left);
+                            int r = Convert.ToInt32(right);
+
+                            switch(op)
+                            {
+                                case ">":
+                                    return l > r;
+                                case "<":
+                                    return l < r;
+                                case ">=":
+                                    return l >= r;
+                                case "<=":
+                                    return l <= r;
+                            }
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                        break;
+                    case "contains":
+                        return left.Contains(right);
+                }
+
+                return false;
+            }
             // search
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/query/([^/]+)(/|)$")]
 
@@ -64,7 +111,7 @@ namespace AasxRestServerLibrary
                     result += "WHERE:\n";
                     result += "aas | submodel | submodelelement (element to search for)\n";
                     result += "OR | AND\n";
-                    result += "%id | %idshort | %semanticid <space> == | contains <space> \"value\"\n";
+                    result += "%id | %idshort | %value | %semanticid <space> == | contains <space> \"value\"\n";
                     result += "(last line may be repeated)\n\n";
 
                     result += "EXAMPLE:\n\n";
@@ -197,8 +244,7 @@ namespace AasxRestServerLibrary
                                         compare = aas.IdShort;
                                         break;
                                 }
-                                if ((op == "==" && compare == attrValue) ||
-                                    (op == "contains" && compare.Contains(attrValue)))
+                                if (comp(op, compare, attrValue))
                                 {
                                     conditionsTrue++;
                                 }
@@ -266,8 +312,7 @@ namespace AasxRestServerLibrary
                                                     compare = sm.SemanticId.Keys[0].Value;
                                                 break;
                                         }
-                                        if ((op == "==" && compare == attrValue) ||
-                                            (op == "contains" && compare.Contains(attrValue)))
+                                        if (comp(op, compare, attrValue))
                                         {
                                             conditionsTrue++;
                                         }
@@ -330,13 +375,16 @@ namespace AasxRestServerLibrary
                                                 case "%idshort":
                                                     compare = sme.IdShort;
                                                     break;
+                                                case "%value":
+                                                    if (sme is Property p)
+                                                        compare = p.Value;
+                                                    break;
                                                 case "%semanticid":
                                                     if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
                                                         compare = sme.SemanticId.Keys[0].Value;
                                                     break;
                                             }
-                                            if ((op == "==" && compare == attrValue) ||
-                                                (op == "contains" && compare.Contains(attrValue)))
+                                            if (comp(op, compare, attrValue))
                                             {
                                                 conditionsTrue++;
                                             }
