@@ -86,7 +86,7 @@ namespace AasxRestServerLibrary
                     result += "submodel 1 http://localhost:51310/aas/R901278815_25/submodels/Nameplate\n";
                     result += "submodel 1 http://localhost:51310/aas/R901278815_25xx/submodels/Nameplate\n";
                     result += "totalfound 4 http://localhost:51310\n";
-                    result += "(SELECT scope <space> how often found in this <space> endpoint to get data)\n";
+                    result += "(Selected scope <space> how often found in this <space> endpoint to get the data)\n";
 
                     context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.Ok, result);
                     return context;
