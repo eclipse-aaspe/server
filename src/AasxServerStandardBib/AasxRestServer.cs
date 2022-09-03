@@ -86,6 +86,8 @@ namespace AasxRestServerLibrary
                         break;
                     case "contains":
                         return left.Contains(right);
+                    case "!contains":
+                        return left.Contains(right);
                 }
 
                 return false;
@@ -111,7 +113,7 @@ namespace AasxRestServerLibrary
                     result += "WHERE:\n";
                     result += "aas | submodel | submodelelement (element to search for)\n";
                     result += "OR | AND\n";
-                    result += "%id | %idshort | %value | %semanticid <space> == | contains <space> \"value\"\n";
+                    result += "%id | %idshort | %value | %semanticid | %path <space> == | != | > | >= | < | <= | contains | !contains <space> \"value\"\n";
                     result += "(last line may be repeated)\n\n";
 
                     result += "EXAMPLE:\n\n";
@@ -147,8 +149,12 @@ namespace AasxRestServerLibrary
                 string from = "";
                 string fromId = "";
                 string whereElement = "";
-                string whereCondition = "";
-                List<string> whereOperations = new List<string>();
+                string whereAasCondition = "";
+                string whereSmCondition = "";
+                string whereSmeCondition = "";
+                List<string> whereAasOperations = new List<string>();
+                List<string> whereSmOperations = new List<string>();
+                List<string> whereSmeOperations = new List<string>();
                 int countLines = 0;
                 string last = "";
                 foreach (var sp in split)
@@ -157,6 +163,11 @@ namespace AasxRestServerLibrary
                         continue;
 
                     string s = sp.ToLower();
+                    if (s == "where:")
+                    {
+                        last = "";
+                        countLines = 0;
+                    }
                     switch (last)
                     {
                         case "select:":
@@ -178,10 +189,32 @@ namespace AasxRestServerLibrary
                                     whereElement = sp.Replace("\"", "").ToLower();
                                     break;
                                 case 1:
-                                    whereCondition = sp.Replace("\"", "").ToLower();
+                                    switch (whereElement)
+                                    {
+                                        case "aas":
+                                            whereAasCondition = sp.Replace("\"", "").ToLower();
+                                            break;
+                                        case "submodel":
+                                            whereSmCondition = sp.Replace("\"", "").ToLower();
+                                            break;
+                                        case "submodelelement":
+                                            whereSmeCondition = sp.Replace("\"", "").ToLower();
+                                            break;
+                                    }
                                     break;
                                 default:
-                                    whereOperations.Add(sp.Replace("\"", ""));
+                                    switch (whereElement)
+                                    {
+                                        case "aas":
+                                            whereAasOperations.Add(sp.Replace("\"", ""));
+                                            break;
+                                        case "submodel":
+                                            whereSmOperations.Add(sp.Replace("\"", ""));
+                                            break;
+                                        case "submodelelement":
+                                            whereSmeOperations.Add(sp.Replace("\"", ""));
+                                            break;
+                                    }
                                     break;
                             }
                             countLines++;
@@ -194,12 +227,27 @@ namespace AasxRestServerLibrary
                 result += "from = \"" + from + "\"\n";
                 if (fromId != "")
                     result += "fromId = \"" + fromId + "\"\n";
-                result += "whereElement = \"" + whereElement + "\"\n";
-                result += "whereCondition = \"" + whereCondition + "\"\n";
-                foreach (var wo in whereOperations)
-                    result += "whereOperation = \"" + wo + "\"\n";
+                if (whereAasCondition != "")
+                {
+                    result += "whereAasCondition = \"" + whereAasCondition + "\"\n";
+                    foreach (var wo in whereAasOperations)
+                        result += "whereAasOperation = \"" + wo + "\"\n";
+                }
+                if (whereSmCondition != "")
+                {
+                    result += "whereSmCondition = \"" + whereSmCondition + "\"\n";
+                    foreach (var wo in whereSmOperations)
+                        result += "whereSmOperation = \"" + wo + "\"\n";
+                }
+                if (whereSmeCondition != "")
+                {
+                    result += "whereSmeCondition = \"" + whereSmeCondition + "\"\n";
+                    foreach (var wo in whereSmeOperations)
+                        result += "whereSmeOperation = \"" + wo + "\"\n";
+                }
                 result += "\n";
 
+                result += "repository endpoint " + AasxServer.Program.externalRest + "\n";
                 int totalFound = 0;
                 int foundInRepository = 0;
                 int aascount = AasxServer.Program.env.Length;
@@ -218,10 +266,10 @@ namespace AasxRestServerLibrary
                                 continue;
                         }
 
-                        if (whereElement == "aas")
+                        if (whereAasCondition != "")
                         {
                             int conditionsTrue = 0;
-                            foreach (var wo in whereOperations)
+                            foreach (var wo in whereAasOperations)
                             {
                                 string attr = "";
                                 string attrValue = "";
@@ -249,19 +297,26 @@ namespace AasxRestServerLibrary
                                     conditionsTrue++;
                                 }
                             }
-                            if ((whereCondition == "and" && conditionsTrue == whereOperations.Count)
-                                    || (whereCondition == "or" && conditionsTrue != 0))
+                            if ((whereAasCondition == "and" && conditionsTrue == whereAasOperations.Count)
+                                    || (whereAasCondition == "or" && conditionsTrue != 0))
                             {
-                                if (select == "aas")
+                                if (whereSmCondition == "")
                                 {
-                                    foundInAas++;
-                                    totalFound++;
+                                    if (select == "aas")
+                                    {
+                                        foundInAas++;
+                                        totalFound++;
+                                    }
+                                    if (select == "repository")
+                                    {
+                                        foundInRepository++;
+                                        totalFound++;
+                                    }
                                 }
-                                if (select == "repository")
-                                {
-                                    foundInRepository++;
-                                    totalFound++;
-                                }
+                            }
+                            else
+                            {
+                                continue;
                             }
                         }
 
@@ -282,10 +337,10 @@ namespace AasxRestServerLibrary
                             }
 
                             int foundInSubmodel = 0;
-                            if (whereElement == "submodel")
+                            if (whereSmCondition != "")
                             {
                                 int conditionsTrue = 0;
-                                foreach (var wo in whereOperations)
+                                foreach (var wo in whereSmOperations)
                                 {
                                     string attr = "";
                                     string attrValue = "";
@@ -319,28 +374,35 @@ namespace AasxRestServerLibrary
                                     }
                                 }
 
-                                if ((whereCondition == "and" && conditionsTrue == whereOperations.Count)
-                                        || (whereCondition == "or" && conditionsTrue != 0))
+                                if ((whereSmCondition == "and" && conditionsTrue == whereSmOperations.Count)
+                                        || (whereSmCondition == "or" && conditionsTrue != 0))
                                 {
-                                    if (select == "submodel")
+                                    if (whereSmeCondition == "")
                                     {
-                                        foundInSubmodel++;
-                                        totalFound++;
+                                        if (select == "submodel")
+                                        {
+                                            foundInSubmodel++;
+                                            totalFound++;
+                                        }
+                                        if (select == "aas")
+                                        {
+                                            foundInAas++;
+                                            totalFound++;
+                                        }
+                                        if (select == "repository")
+                                        {
+                                            foundInRepository++;
+                                            totalFound++;
+                                        }
                                     }
-                                    if (select == "aas")
-                                    {
-                                        foundInAas++;
-                                        totalFound++;
-                                    }
-                                    if (select == "repository")
-                                    {
-                                        foundInRepository++;
-                                        totalFound++;
-                                    }
+                                }
+                                else
+                                {
+                                    continue;
                                 }
                             }
 
-                            if (whereElement == "submodelelement")
+                            if (whereSmeCondition != "")
                             {
                                 List<List<ISubmodelElement>> stack = new List<List<ISubmodelElement>>();
                                 List<int> iStack = new List<int>();
@@ -356,7 +418,7 @@ namespace AasxRestServerLibrary
                                         var sme = level[iLevel];
 
                                         int conditionsTrue = 0;
-                                        foreach (var wo in whereOperations)
+                                        foreach (var wo in whereSmeOperations)
                                         {
                                             string attr = "";
                                             string attrValue = "";
@@ -383,6 +445,10 @@ namespace AasxRestServerLibrary
                                                     if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
                                                         compare = sme.SemanticId.Keys[0].Value;
                                                     break;
+                                                case "%path":
+                                                    attrValue = attrValue.Replace(".", "/");
+                                                    compare = aas.IdShort + "/" + sm.IdShort + "/" + path;
+                                                    break;
                                             }
                                             if (comp(op, compare, attrValue))
                                             {
@@ -390,8 +456,8 @@ namespace AasxRestServerLibrary
                                             }
                                         }
 
-                                        if ((whereCondition == "and" && conditionsTrue == whereOperations.Count)
-                                                || (whereCondition == "or" && conditionsTrue != 0))
+                                        if ((whereSmeCondition == "and" && conditionsTrue == whereSmeOperations.Count)
+                                                || (whereSmeCondition == "or" && conditionsTrue != 0))
                                         {
                                             if (select == "submodelelement")
                                             {
