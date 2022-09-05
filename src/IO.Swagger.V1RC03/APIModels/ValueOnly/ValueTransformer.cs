@@ -163,23 +163,31 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             if (that.Annotations != null)
             {
                 var arrayAnnotations = new JsonArray();
-                foreach (IDataElement item in that.Annotations)
+                if (context.IncludeChildren)
                 {
-                    var annotationValue = new JsonObject();
-                    if (item is Property property)
+                    if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
                     {
-                        annotationValue[item.IdShort] = JsonValue.Create(property.Value);
+                        context.IncludeChildren = false;
                     }
-                    else if (item is MultiLanguageProperty multiLanguageProperty)
+                    foreach (IDataElement item in that.Annotations)
                     {
-                        annotationValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                        var annotationValue = new JsonObject();
+                        if (item is Property property)
+                        {
+                            annotationValue[item.IdShort] = JsonValue.Create(property.Value);
+                        }
+                        else if (item is MultiLanguageProperty multiLanguageProperty)
+                        {
+                            annotationValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                        }
+                        else
+                        {
+                            annotationValue[item.IdShort] = Transform(item, context);
+                        }
+                        arrayAnnotations.Add(annotationValue);
                     }
-                    else
-                    {
-                        annotationValue[item.IdShort] = Transform(item, context);
-                    }
-                    arrayAnnotations.Add(annotationValue);
                 }
+
                 value["annotations"] = arrayAnnotations;
             }
 
@@ -191,25 +199,31 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             var value = new JsonObject();
             if (that.Statements != null)
             {
-                var arrayStatements = new Nodes.JsonArray();
-                foreach (ISubmodelElement item in that.Statements)
+                var statementValue = new JsonObject();
+                if (context.IncludeChildren)
                 {
-                    var statementValue = new JsonObject();
-                    if (item is Property property)
+                    if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
                     {
-                        statementValue[item.IdShort] = JsonValue.Create(property.Value);
+                        context.IncludeChildren = false;
                     }
-                    else if (item is MultiLanguageProperty multiLanguageProperty)
+                    foreach (ISubmodelElement item in that.Statements)
                     {
-                        statementValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                        //var statementValue = new JsonObject();
+                        if (item is Property property)
+                        {
+                            statementValue[item.IdShort] = JsonValue.Create(property.Value);
+                        }
+                        else if (item is MultiLanguageProperty multiLanguageProperty)
+                        {
+                            statementValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                        }
+                        else
+                        {
+                            statementValue[item.IdShort] = Transform(item, context);
+                        }
                     }
-                    else
-                    {
-                        statementValue[item.IdShort] = Transform(item, context);
-                    }
-                    arrayStatements.Add(statementValue);
                 }
-                value["statements"] = arrayStatements;
+                value["statements"] = statementValue;
             }
             value["entityType"] = Serialize.EntityTypeToJsonValue(
                     that.EntityType);

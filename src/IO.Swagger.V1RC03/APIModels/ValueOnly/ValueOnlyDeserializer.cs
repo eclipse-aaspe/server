@@ -1,4 +1,5 @@
 ﻿using AasCore.Aas3_0_RC02;
+using IO.Swagger.V1RC03.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,12 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 {
     internal static class ValueOnlyDeserializer
     {
+        private static IAssetAdministrationShellEnvironmentService _aasEnvService;
+
+        public static void ConfigureAasEnvService(IAssetAdministrationShellEnvironmentService aasEnvService)
+        {
+            _aasEnvService = aasEnvService;
+        }
         public static ISubmodelElement DeserializeISubmodelElement(JsonNode jsonNode)
         {
             ISubmodelElement output = null;
@@ -44,6 +51,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                             }
                             else if (jsonObject.ContainsKey("contentType") && jsonObject.ContainsKey("value"))
                             {
+                                //If it contains both contentType and Value, both File and Blob are possible. Hence, we need to retrieve actual elements from the server
                                 output = CreateFile(item.Key, jsonObject);  // TODO: jtikekar Blob
                             }
                             else if (jsonObject.ContainsKey("contentType"))
@@ -62,11 +70,11 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                             {
                                 output = CreateReferenceElement(item.Key, jsonObject);
                             }
-                            else if(jsonObject.ContainsKey("entityType"))
+                            else if (jsonObject.ContainsKey("entityType"))
                             {
                                 output = CreateEntity(item.Key, jsonObject);
                             }
-                            else if(jsonObject.ContainsKey("observed"))
+                            else if (jsonObject.ContainsKey("observed"))
                             {
                                 output = CreateBasicEventElement(item.Key, jsonObject);
                             }
@@ -92,7 +100,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             {
                 observed = Jsonization.Deserialize.ReferenceFrom(observedNode);
             }
-            var output = new BasicEventElement(observed, Direction.Input, StateOfEvent.Off, idShort:idShort); //Defining dummy enum values
+            var output = new BasicEventElement(observed, Direction.Input, StateOfEvent.Off, idShort: idShort); //Defining dummy enum values
             return output;
         }
 
@@ -100,31 +108,29 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
         {
             string entityType = null;
             var entityTypeNode = jsonObject["entityType"] as JsonValue;
-            if(entityTypeNode != null)
+            if (entityTypeNode != null)
             {
                 entityTypeNode.TryGetValue(out entityType);
             }
 
-            Entity output = new Entity((EntityType)Stringification.EntityTypeFromString(entityType), idShort:idShort);
+            Entity output = new Entity((EntityType)Stringification.EntityTypeFromString(entityType), idShort: idShort);
 
             var globalAssetIdNode = jsonObject["globalAssetId"] as JsonNode;
             if (globalAssetIdNode != null)
             {
                 var globalAssetId = Jsonization.Deserialize.ReferenceFrom(globalAssetIdNode);
-                output.GlobalAssetId = globalAssetId; 
+                output.GlobalAssetId = globalAssetId;
             }
 
-            var statementsNode = jsonObject["statements"] as JsonArray;
+            var statementsNode = jsonObject["statements"] as JsonObject;
             if (statementsNode != null)
             {
                 var statements = new List<ISubmodelElement>();
-                foreach (var statementNode in statementsNode)
+                foreach (var item in statementsNode)
                 {
-                    if (statementNode != null)
-                    {
-                        var statement = DeserializeISubmodelElement(statementNode);
-                        statements.Add(statement);
-                    }
+                    var newNode = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
+                    var statement = DeserializeISubmodelElement(newNode);
+                    statements.Add(statement);
                 }
                 output.Statements = statements;
             }
@@ -197,11 +203,8 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 var annotations = new List<IDataElement>();
                 foreach (var annotationNode in annotationsNode)
                 {
-                    if (annotationNode != null)
-                    {
-                        var annotation = DeserializeISubmodelElement(annotationNode);
-                        annotations.Add((IDataElement)annotation);
-                    }
+                    var annotation = DeserializeISubmodelElement(annotationNode);
+                    annotations.Add((IDataElement)annotation);
                 }
                 output.Annotations = annotations;
             }

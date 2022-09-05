@@ -63,6 +63,7 @@ namespace IO.Swagger.V1RC03.Middleware
                         message.MessageType = Message.MessageTypeEnum.ErrorEnum;
                         break;
                     }
+                case InvalidNumberOfChildElementsException:
                 case NoIdentifierException:
                 case ArgumentNullException:
                 case OperationVariableException:

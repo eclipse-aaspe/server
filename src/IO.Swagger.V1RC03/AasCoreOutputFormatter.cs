@@ -101,7 +101,6 @@ namespace IO.Swagger.V1RC03
                 response.WriteAsync(xml.ToString());
             }
             else if (IsGenericListOfIClass(context.Object))
-            //if (IsGenericListOfIClass(output))
             {
                 var jsonArray = new JsonArray();
                 IList genericList = (IList)context.Object;
@@ -111,29 +110,23 @@ namespace IO.Swagger.V1RC03
                     contextObjectType.Add((IClass)generic);
                 }
 
-                if (!string.IsNullOrEmpty(content) && content.Equals("path", StringComparison.OrdinalIgnoreCase))
+                //The list structure is only applicable for "GetAllSubmodelElements", bzw., only Submodel. Therefore, level = core, then indirect children should be avoided.
+                //Hence, setting IncludeChildren = false here itself.
+                if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
                 {
-                    var output = new List<object>();
-                    foreach (var item in contextObjectType)
-                    {
-                        var idShortPath = PathSerializer.ToIdShortPath(item, outputModifierContext);
-                        output.Add(idShortPath);
-                    }
-                    var jsonPath = JsonSerializer.Serialize(output);
-                    httpContext.Response.WriteAsync(jsonPath);
+                    outputModifierContext.IncludeChildren = false;
                 }
-                else
+
+                //content = path is not handled here.
+                foreach (var item in contextObjectType)
                 {
-                    foreach (var item in contextObjectType)
-                    {
-                        //var json = AasCore.Aas3_0_RC02.Jsonization.Serialize.ToJsonObject(item);
-                        var json = CoreSerializer.ToJsonObject(item, outputModifierContext);
-                        jsonArray.Add(json);
-                    }
-                    var writer = new Utf8JsonWriter(response.Body);
-                    jsonArray.WriteTo(writer);
-                    writer.FlushAsync().GetAwaiter().GetResult();
+                    //var json = AasCore.Aas3_0_RC02.Jsonization.Serialize.ToJsonObject(item);
+                    var json = CoreSerializer.ToJsonObject(item, outputModifierContext);
+                    jsonArray.Add(json);
                 }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
             }
             else if (typeof(IClass).IsAssignableFrom(context.ObjectType))
             {

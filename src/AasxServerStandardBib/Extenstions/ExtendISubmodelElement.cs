@@ -352,7 +352,7 @@ namespace Extenstions
 
                     outputSubmodelElement = new BasicEventElement(newObserved, Direction.Input, StateOfEvent.Off); //TODO: jtikekar default values of enums
                 }
-                else if(sourceSubmodelElement is AdminShellV20.Entity sourceEntity)
+                else if (sourceSubmodelElement is AdminShellV20.Entity sourceEntity)
                 {
                     var entityType = Stringification.EntityTypeFromString(sourceEntity.entityType);
                     var newEntity = new Entity((EntityType)entityType);

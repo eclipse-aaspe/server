@@ -47,7 +47,7 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             {
                 if (string.IsNullOrEmpty(value))
                 {
-                    _extent = "withoutBLOBValue ";
+                    _extent = "withoutBLOBValue";
                 }
                 else
                 {
@@ -74,15 +74,22 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             Content = content;
             Extent = extent;
 
-            if (Level.Equals("core", StringComparison.OrdinalIgnoreCase) && Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
-            {
-                IncludeChildren = false;
-            }
+            //if (Level.Equals("core", StringComparison.OrdinalIgnoreCase) && Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    IncludeChildren = false;
+            //}
 
             if (Content.Equals("path", StringComparison.OrdinalIgnoreCase))
             {
                 idShortPaths = new List<string>();
             }
+        }
+
+        internal bool IsDefault()
+        {
+            return Level.Equals("deep", StringComparison.OrdinalIgnoreCase) &&
+                Content.Equals("normal", StringComparison.OrdinalIgnoreCase) &&
+                Extent.Equals("withoutBLOBValue", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
