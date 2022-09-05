@@ -771,12 +771,12 @@ namespace AasxRestServerLibrary
                     if (storeResult)
                     {
                         storeResult = false;
-                        storeAasLast = storeAas.ToList();
-                        storeAas.Clear();
-                        storeSubmodelsLast = storeSubmodels.ToList();
-                        storeSubmodels.Clear();
-                        storeSmesLast = storeSmes.ToList();
-                        storeSmes.Clear();
+                        storeAasLast = storeAas;
+                        storeAas = new List<AssetAdministrationShell>();
+                        storeSubmodelsLast = storeSubmodels;
+                        storeSubmodels = new List<Submodel>();
+                        storeSmesLast = storeSmes;
+                        storeSmes = new List<ISubmodelElement>();
                         totalFound = 0;
                         foundInRepository = 0;
                         result += "\n";
