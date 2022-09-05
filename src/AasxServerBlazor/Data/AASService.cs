@@ -112,7 +112,7 @@ namespace AasxServerBlazor.Data
                                                     var e = sme as Entity;
                                                     createEntityItems(smeItem, e, i);
                                                 }
-                                                if(sme is AnnotatedRelationshipElement annotatedRelationshipElement)
+                                                if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
                                                 {
                                                     CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
                                                 }
@@ -185,7 +185,7 @@ namespace AasxServerBlazor.Data
                         var e = sme as Entity;
                         createEntityItems(smeItem, e, i);
                     }
-                    if(sme is AnnotatedRelationshipElement annotatedRelationshipElement)
+                    if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
                     {
                         CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
                     }

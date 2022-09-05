@@ -1,4 +1,5 @@
 ﻿using AasCore.Aas3_0_RC02;
+using AasxServerStandardBib.Exceptions;
 using IO.Swagger.V1RC03.APIModels.Core;
 using System;
 using System.Collections.Generic;
@@ -59,6 +60,11 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             {
                 if (source.SubmodelElements.Any())
                 {
+                    //First check if number of elements in source and that are equal
+                    if (that.SubmodelElements == null || that.SubmodelElements.Count != source.SubmodelElements.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("Submodel : " + that.IdShort, source.SubmodelElements.Count, that.SubmodelElements.Count);
+                    }
                     for (int i = 0; i < source.SubmodelElements.Count; i++)
                     {
                         UpdateImplementation.Update(that.SubmodelElements[i], source.SubmodelElements[i], outputModifierContext);
@@ -79,11 +85,23 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.Qualifiers = source.Qualifiers;
             that.DataSpecifications = source.DataSpecifications;
 
-            if (source.SubmodelElements.Any())
+            if (outputModifierContext.IncludeChildren)
             {
-                for (int i = 0; i < source.SubmodelElements.Count; i++)
+                if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
                 {
-                    UpdateImplementation.Update(that.SubmodelElements[i], source.SubmodelElements[i], outputModifierContext);
+                    outputModifierContext.IncludeChildren = false;
+                }
+                if (source.SubmodelElements.Any())
+                {
+                    //First check if number of elements in source and that are equal
+                    if (that.SubmodelElements == null || that.SubmodelElements.Count != source.SubmodelElements.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("Submodel : " + that.IdShort, source.SubmodelElements.Count, that.SubmodelElements.Count);
+                    }
+                    for (int i = 0; i < source.SubmodelElements.Count; i++)
+                    {
+                        UpdateImplementation.Update(that.SubmodelElements[i], source.SubmodelElements[i], outputModifierContext);
+                    }
                 }
             }
 
@@ -124,17 +142,17 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 
         public IClass Transform(SubmodelElementList that, UpdateContext context)
         {
-            throw new NotImplementedException();
-        }
-
-        public IClass Transform(SubmodelElementCollection that, UpdateContext context)
-        {
             var source = context.Source as SubmodelElementCollection;
             var outputModifierContext = context.OutputModifierContext;
             if (outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
                 if (source.Value.Any())
                 {
+                    //First check if number of elements in source and that are equal
+                    if (that.Value == null || that.Value.Count != source.Value.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("SubmodelElementList : " + that.IdShort, source.Value.Count, that.Value.Count);
+                    }
                     for (int i = 0; i < source.Value.Count; i++)
                     {
                         UpdateImplementation.Update(that.Value[i], source.Value[i], outputModifierContext);
@@ -155,10 +173,75 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.Qualifiers = source.Qualifiers;
             that.DataSpecifications = source.DataSpecifications;
 
-            if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
+            if (outputModifierContext.IncludeChildren)
+            {
+                if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
+                {
+                    outputModifierContext.IncludeChildren = false;
+                }
+                if (source.Value.Any())
+                {
+                    //First check if number of elements in source and that are equal
+                    if (that.Value == null || that.Value.Count != source.Value.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("SubmodelElementList : " + that.IdShort, source.Value.Count, that.Value.Count);
+                    }
+                    for (int i = 0; i < source.Value.Count; i++)
+                    {
+                        UpdateImplementation.Update(that.Value[i], source.Value[i], outputModifierContext);
+                    }
+                }
+            }
+
+            return that;
+        }
+
+        public IClass Transform(SubmodelElementCollection that, UpdateContext context)
+        {
+            var source = context.Source as SubmodelElementCollection;
+            var outputModifierContext = context.OutputModifierContext;
+            if (outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
                 if (source.Value.Any())
                 {
+                    //First check if number of elements in source and that are equal
+                    if (that.Value == null || that.Value.Count != source.Value.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("SubmodelElementCollection : " + that.IdShort, source.Value.Count, that.Value.Count);
+                    }
+                    for (int i = 0; i < source.Value.Count; i++)
+                    {
+                        UpdateImplementation.Update(that.Value[i], source.Value[i], outputModifierContext);
+                    }
+                }
+                return that;
+            }
+
+            that.Extensions = source.Extensions;
+            that.Category = source.Category;
+            that.IdShort = source.IdShort;
+            that.DisplayName = source.DisplayName;
+            that.Description = source.Description;
+            that.Checksum = source.Checksum;
+            that.Kind = source.Kind;
+            that.SemanticId = source.SemanticId;
+            that.SupplementalSemanticIds = source.SupplementalSemanticIds;
+            that.Qualifiers = source.Qualifiers;
+            that.DataSpecifications = source.DataSpecifications;
+
+            if (outputModifierContext.IncludeChildren)
+            {
+                if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
+                {
+                    outputModifierContext.IncludeChildren = false;
+                }
+                if (source.Value.Any())
+                {
+                    //First check if number of elements in source and that are equal
+                    if (that.Value == null || that.Value.Count != source.Value.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("SubmodelElementCollection : " + that.IdShort, source.Value.Count, that.Value.Count);
+                    }
                     for (int i = 0; i < source.Value.Count; i++)
                     {
                         UpdateImplementation.Update(that.Value[i], source.Value[i], outputModifierContext);
@@ -372,7 +455,11 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 that.Second = source.Second;
                 if (source.Annotations.Any())
                 {
-                    var annotations = new List<IDataElement>();
+                    //First check if number of elements in source and that are equal
+                    if (that.Annotations == null || that.Annotations.Count != source.Annotations.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("AnnotedRelationshipElement : " + that.IdShort, source.Annotations.Count, that.Annotations.Count);
+                    }
                     for (int i = 0; i < source.Annotations.Count; i++)
                     {
                         UpdateImplementation.Update(that.Annotations[i], source.Annotations[i], outputModifierContext);
@@ -397,9 +484,21 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             {
                 that.First = source.First;
                 that.Second = source.Second;
+            }
+
+            if (outputModifierContext.IncludeChildren)
+            {
+                if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
+                {
+                    outputModifierContext.IncludeChildren = false;
+                }
                 if (source.Annotations.Any())
                 {
-                    var annotations = new List<IDataElement>();
+                    //First check if number of elements in source and that are equal
+                    if (that.Annotations == null || that.Annotations.Count != source.Annotations.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("AnnotedRelationshipElement : " + that.IdShort, source.Annotations.Count, that.Annotations.Count);
+                    }
                     for (int i = 0; i < source.Annotations.Count; i++)
                     {
                         UpdateImplementation.Update(that.Annotations[i], source.Annotations[i], outputModifierContext);
@@ -417,18 +516,22 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             if (outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
                 that.EntityType = source.EntityType;
-                if(source.GlobalAssetId != null)
+                if (source.GlobalAssetId != null)
                 {
                     that.GlobalAssetId = source.GlobalAssetId;
                 }
 
-                if(source.SpecificAssetId != null)
+                if (source.SpecificAssetId != null)
                 {
                     that.SpecificAssetId = source.SpecificAssetId;
                 }
 
                 if (source.Statements.Any())
                 {
+                    if (that.Statements == null || that.Statements.Count != source.Statements.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("Entity : " + that.IdShort, source.Statements.Count, that.Statements.Count);
+                    }
                     for (int i = 0; i < source.Statements.Count; i++)
                     {
                         UpdateImplementation.Update(that.Statements[i], source.Statements[i], outputModifierContext);
@@ -450,23 +553,38 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.DataSpecifications = source.DataSpecifications;
 
             that.EntityType = source.EntityType;
-            if (source.GlobalAssetId != null)
+            if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
-                that.GlobalAssetId = source.GlobalAssetId;
-            }
-
-            if (source.SpecificAssetId != null)
-            {
-                that.SpecificAssetId = source.SpecificAssetId;
-            }
-
-            if (source.Statements.Any())
-            {
-                for (int i = 0; i < source.Statements.Count; i++)
+                if (source.GlobalAssetId != null)
                 {
-                    UpdateImplementation.Update(that.Statements[i], source.Statements[i], outputModifierContext);
+                    that.GlobalAssetId = source.GlobalAssetId;
+                }
+
+                if (source.SpecificAssetId != null)
+                {
+                    that.SpecificAssetId = source.SpecificAssetId;
                 }
             }
+
+            if (outputModifierContext.IncludeChildren)
+            {
+                if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
+                {
+                    outputModifierContext.IncludeChildren = false;
+                }
+                if (source.Statements.Any())
+                {
+                    if (that.Statements == null || that.Statements.Count != source.Statements.Count)
+                    {
+                        throw new InvalidNumberOfChildElementsException("Entity : " + that.IdShort, source.Statements.Count, that.Statements.Count);
+                    }
+                    for (int i = 0; i < source.Statements.Count; i++)
+                    {
+                        UpdateImplementation.Update(that.Statements[i], source.Statements[i], outputModifierContext);
+                    }
+                }
+            }
+
 
             return that;
         }
@@ -498,7 +616,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.Qualifiers = source.Qualifiers;
             that.DataSpecifications = source.DataSpecifications;
 
-            if(!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
+            if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
                 that.Observed = source.Observed;
             }

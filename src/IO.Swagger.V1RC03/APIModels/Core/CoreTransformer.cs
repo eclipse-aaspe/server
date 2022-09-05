@@ -344,6 +344,10 @@ namespace IO.Swagger.V1RC03.APIModels.Core
                 var valueOnlyResult = new JsonObject();
                 if (that.SubmodelElements != null)
                 {
+                    if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.IncludeChildren = false;
+                    }
                     foreach (ISubmodelElement item in that.SubmodelElements)
                     {
                         if (item is Property property)
@@ -635,19 +639,26 @@ namespace IO.Swagger.V1RC03.APIModels.Core
                 if (that.Value != null)
                 {
 
-                    foreach (ISubmodelElement item in that.Value)
+                    if (context.IncludeChildren)
                     {
-                        if (item is Property property)
+                        if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
                         {
-                            jsonArray.Add(JsonValue.Create(property.Value));
+                            context.IncludeChildren = false;
                         }
-                        else if (item is MultiLanguageProperty multiLanguageProperty)
+                        foreach (ISubmodelElement item in that.Value)
                         {
-                            jsonArray.Add(_valueTransformer.TransformValue(multiLanguageProperty.Value, context));
-                        }
-                        else
-                        {
-                            jsonArray.Add(_valueTransformer.Transform(item, context));
+                            if (item is Property property)
+                            {
+                                jsonArray.Add(JsonValue.Create(property.Value));
+                            }
+                            else if (item is MultiLanguageProperty multiLanguageProperty)
+                            {
+                                jsonArray.Add(_valueTransformer.TransformValue(multiLanguageProperty.Value, context));
+                            }
+                            else
+                            {
+                                jsonArray.Add(_valueTransformer.Transform(item, context));
+                            }
                         }
                     }
                 }
@@ -814,6 +825,7 @@ namespace IO.Swagger.V1RC03.APIModels.Core
                 };
                 return valueOnlyResult;
             }
+
             var result = new JsonObject();
 
             if (that.Extensions != null)
@@ -1839,10 +1851,17 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
                 result["second"] = Transform(
                     that.Second, context);
+            }
 
-                if (that.Annotations != null)
+            if (that.Annotations != null)
+            {
+                if (context.IncludeChildren)
                 {
                     var arrayAnnotations = new JsonArray();
+                    if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.IncludeChildren = false;
+                    }
                     foreach (IDataElement item in that.Annotations)
                     {
                         arrayAnnotations.Add(

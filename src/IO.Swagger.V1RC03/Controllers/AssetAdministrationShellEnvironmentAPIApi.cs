@@ -259,7 +259,14 @@ namespace IO.Swagger.V1RC03.Controllers
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var output = _aasEnvService.GetAllSubmodelElements(decodedAasId, decodedSubmodelId);
+            //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
+            OutputModifierContext outputModifierContext = null;
+            if (content != null && content.Equals("path", StringComparison.OrdinalIgnoreCase))
+            {
+                outputModifierContext = new OutputModifierContext(level, content, extent);
+            }
+
+            var output = _aasEnvService.GetAllSubmodelElements(decodedAasId, decodedSubmodelId, outputModifierContext);
 
             return new ObjectResult(output);
 
@@ -284,7 +291,14 @@ namespace IO.Swagger.V1RC03.Controllers
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var output = _aasEnvService.GetAllSubmodelElementsFromSubmodel(decodedSubmodelId);
+            //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
+            OutputModifierContext outputModifierContext = null;
+            if (content != null && content.Equals("path", StringComparison.OrdinalIgnoreCase))
+            {
+                outputModifierContext = new OutputModifierContext(level, content, extent);
+            }
+
+            var output = _aasEnvService.GetAllSubmodelElementsFromSubmodel(decodedSubmodelId, outputModifierContext);
 
             return new ObjectResult(output);
         }

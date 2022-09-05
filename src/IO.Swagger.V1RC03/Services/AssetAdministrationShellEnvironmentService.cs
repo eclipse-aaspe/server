@@ -390,9 +390,9 @@ namespace IO.Swagger.V1RC03.Services
             return output;
         }
 
-        public List<ISubmodelElement> GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier)
+        public object GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier, OutputModifierContext outputModifierContext)
         {
-            List<ISubmodelElement> output = null;
+            object output = null;
             //Find AAS
             var aas = GetAssetAdministrationShellById(aasIdentifier, out _);
             if (aas != null)
@@ -403,7 +403,7 @@ namespace IO.Swagger.V1RC03.Services
                     throw new NotFoundException($"Requested submodel: {submodelIdentifier} not found in AAS: {aasIdentifier}");
                 }
 
-                output = GetAllSubmodelElementsFromSubmodel(submodelIdentifier);
+                output = GetAllSubmodelElementsFromSubmodel(submodelIdentifier, outputModifierContext);
             }
 
             return output;
@@ -664,26 +664,35 @@ namespace IO.Swagger.V1RC03.Services
             var submodelElement = GetSubmodelElementByPathSubmodelRepo(submodelIdentifier, idShortPath, out object smeParent);
             if (submodelElement != null && smeParent != null)
             {
-                UpdateImplementation.Update(submodelElement, body, outputModifierContext);
-                //if (smeParent is SubmodelElementCollection collection)
-                //{
-                //    var smeIndex = collection.Value.IndexOf(submodelElement);
-                //    collection.Value.Remove(submodelElement);
-                //    collection.Value.Insert(smeIndex, body);
-                //}
-                //else if (smeParent is SubmodelElementList list)
-                //{
-                //    var smeIndex = list.Value.IndexOf(submodelElement);
-                //    list.Value.Remove(submodelElement);
-                //    list.Value.Insert(smeIndex, body);
-                //}
-                ////Added support for submodel here, as no other api found for this functionality
-                //else if (smeParent is Submodel submodel)
-                //{
-                //    var smeIndex = submodel.SubmodelElements.IndexOf(submodelElement);
-                //    submodel.SubmodelElements.Remove(submodelElement);
-                //    submodel.SubmodelElements.Insert(smeIndex, body);
-                //}
+                //If level = core and/or content = value/metadata, do not replace the resource, do fieldwise update
+                if (outputModifierContext != null && !outputModifierContext.IsDefault())
+                {
+                    UpdateImplementation.Update(submodelElement, body, outputModifierContext);
+                }
+                //Default or null modifiers, so replace the complete resource as per standard HTTP/PUT
+                else
+                {
+                    if (smeParent is SubmodelElementCollection collection)
+                    {
+                        var smeIndex = collection.Value.IndexOf(submodelElement);
+                        collection.Value.Remove(submodelElement);
+                        collection.Value.Insert(smeIndex, body);
+                    }
+                    else if (smeParent is SubmodelElementList list)
+                    {
+                        var smeIndex = list.Value.IndexOf(submodelElement);
+                        list.Value.Remove(submodelElement);
+                        list.Value.Insert(smeIndex, body);
+                    }
+                    //Added support for submodel here, as no other api found for this functionality
+                    else if (smeParent is Submodel submodel)
+                    {
+                        var smeIndex = submodel.SubmodelElements.IndexOf(submodelElement);
+                        submodel.SubmodelElements.Remove(submodelElement);
+                        submodel.SubmodelElements.Insert(smeIndex, body);
+                    }
+                }
+
 
                 AasxServer.Program.signalNewData(1);
             }
@@ -706,9 +715,17 @@ namespace IO.Swagger.V1RC03.Services
             var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
             if (submodel != null)
             {
-                UpdateImplementation.Update(submodel, body, outputModifierContext);
-                //_packages[packageIndex].AasEnv.Submodels.Remove(submodel);
-                //_packages[packageIndex].AasEnv.Submodels.Add(body);
+                //If level = core and/or content = value/metadata, do not replace the resource, do fieldwise update
+                if (outputModifierContext != null && !outputModifierContext.IsDefault())
+                {
+                    UpdateImplementation.Update(submodel, body, outputModifierContext);
+                }
+                //Default or null modifiers, so replace the complete resource as per standard HTTP/PUT
+                else
+                {
+                    _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
+                    _packages[packageIndex].AasEnv.Submodels.Add(body);
+                }
                 AasxServer.Program.signalNewData(1);
             }
         }
@@ -862,14 +879,39 @@ namespace IO.Swagger.V1RC03.Services
             return false;
         }
 
-        public List<ISubmodelElement> GetAllSubmodelElementsFromSubmodel(string submodelIdentifier)
+        public object GetAllSubmodelElementsFromSubmodel(string submodelIdentifier, OutputModifierContext outputModifierContext = null)
         {
-            List<ISubmodelElement> output = null;
+            object output = null;
             //Find Submodel
             var submodel = GetSubmodelById(submodelIdentifier, out _);
             if (submodel != null)
             {
                 output = submodel.SubmodelElements;
+            }
+
+            if (submodel != null)
+            {
+                if (outputModifierContext != null)
+                {
+                    if (outputModifierContext.Content.Equals("path", StringComparison.OrdinalIgnoreCase))
+                    {
+                        //Need to handle this here it self, to append idShort of Submodel to every SME in the list.
+                        //level = core, then indirect children should be avoided.
+                        //Hence, setting IncludeChildren = false here itself.
+                        if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
+                        {
+                            outputModifierContext.IncludeChildren = false;
+                        }
+                        foreach (var submodelElement in submodel.SubmodelElements)
+                        {
+                            outputModifierContext.ParentPath = submodel.IdShort;
+                            PathSerializer.ToIdShortPath(submodelElement, outputModifierContext);
+                            //output.Add(idShortPath);
+                        }
+
+                        return outputModifierContext.IdShortPaths;
+                    }
+                }
             }
 
             return output;
@@ -1013,6 +1055,26 @@ namespace IO.Swagger.V1RC03.Services
                         return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
                     }
                 }
+                else if (parent is Entity entity)
+                {
+                    var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+                    if (submodelElement != null)
+                    {
+                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                    }
+                }
+                else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
+                {
+                    var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+                    if (submodelElement != null)
+                    {
+                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Parent of type {parent.GetType()} not supported.");
+                }
             }
             else
             {
@@ -1040,6 +1102,26 @@ namespace IO.Swagger.V1RC03.Services
                         return submodelElement;
                     }
                 }
+                else if (parent is Entity entity)
+                {
+                    var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+                    if (submodelElement != null)
+                    {
+                        return submodelElement;
+                    }
+                }
+                else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
+                {
+                    var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+                    if (submodelElement != null)
+                    {
+                        return submodelElement;
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Parent of type {parent.GetType()} not supported.");
+                }
             }
             return null;
         }
@@ -1056,6 +1138,14 @@ namespace IO.Swagger.V1RC03.Services
                 else if (smeParent is SubmodelElementList parentList)
                 {
                     parentList.Value.Remove(submodelElement);
+                }
+                else if (smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
+                {
+                    annotatedRelationshipElement.Annotations.Remove((IDataElement)submodelElement);
+                }
+                else if (smeParent is Entity entity)
+                {
+                    entity.Statements.Remove(submodelElement);
                 }
                 else if (smeParent is Submodel parentSubmodel)
                 {

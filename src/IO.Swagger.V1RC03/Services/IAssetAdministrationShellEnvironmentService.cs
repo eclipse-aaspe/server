@@ -11,8 +11,8 @@ namespace IO.Swagger.V1RC03.Services
         Submodel GetSubmodelById(string submodelIdentifier, out int packageIndex);
         List<AssetAdministrationShell> GetAllAssetAdministrationShells(List<SpecificAssetId> assetIds = null, string idShort = null);
         List<ConceptDescription> GetAllConceptDescriptions(string idShort = null, Reference reqIsCaseOf = null, Reference reqDataSpecificationRef = null);
-        List<ISubmodelElement> GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier);
-        List<ISubmodelElement> GetAllSubmodelElementsFromSubmodel(string submodelIdentifier);
+        object GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier, APIModels.Core.OutputModifierContext outputModifierContext = null);
+        object GetAllSubmodelElementsFromSubmodel(string submodelIdentifier, APIModels.Core.OutputModifierContext outputModifierContext = null);
         List<Reference> GetAllSubmodelReferences(string aasIdentifier);
         List<Submodel> GetAllSubmodels(Reference reqSemanticId = null, string idShort = null);
         AssetInformation GetAssetInformationFromAas(string aasIdentifier);

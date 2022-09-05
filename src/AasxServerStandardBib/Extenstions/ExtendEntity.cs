@@ -11,12 +11,12 @@ namespace Extenstions
     {
         public static Entity ConvertFromV20(this Entity entity, AasxCompatibilityModels.AdminShellV20.Entity sourceEntity)
         {
-            if(sourceEntity == null)
+            if (sourceEntity == null)
             {
                 return null;
             }
 
-            if(sourceEntity.statements != null)
+            if (sourceEntity.statements != null)
             {
                 entity.Statements ??= new List<ISubmodelElement>();
                 foreach (var submodelElementWrapper in sourceEntity.statements)
@@ -31,7 +31,7 @@ namespace Extenstions
                 }
             }
 
-            if(sourceEntity.assetRef != null)
+            if (sourceEntity.assetRef != null)
             {
                 //TODO:jtikekar whether to convert to Global or specific asset id
                 var assetRef = ExtensionsUtil.ConvertReferenceFromV20(sourceEntity.assetRef, ReferenceTypes.GlobalReference);
@@ -39,6 +39,19 @@ namespace Extenstions
             }
 
             return entity;
+        }
+
+        public static T FindFirstIdShortAs<T>(this Entity entity, string idShort) where T : ISubmodelElement
+        {
+
+            var submodelElements = entity.Statements.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));
+
+            if (submodelElements.Any())
+            {
+                return (T)submodelElements.First();
+            }
+
+            return default;
         }
     }
 }

@@ -34,5 +34,18 @@ namespace AasxServerStandardBib.Extenstions
 
             return annotatedRelationshipElement;
         }
+
+        public static T FindFirstIdShortAs<T>(this AnnotatedRelationshipElement annotedRelationshipElement, string idShort) where T : ISubmodelElement
+        {
+
+            var submodelElements = annotedRelationshipElement.Annotations.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));
+
+            if (submodelElements.Any())
+            {
+                return (T)submodelElements.First();
+            }
+
+            return default;
+        }
     }
 }

@@ -9,6 +9,8 @@ using IO.Swagger.V1RC03.Services;
 using IO.Swagger.V1RC03.APIModels.ValueOnly;
 using Microsoft.Extensions.Primitives;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using IO.Swagger.V1RC03.APIModels.Metadata;
 
 namespace IO.Swagger.V1RC03
 {
@@ -51,6 +53,9 @@ namespace IO.Swagger.V1RC03
             //TODO: jtikekar refactor
             if (!string.IsNullOrEmpty(content) && content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
+                var serviceProvider = context.HttpContext.RequestServices;
+                var aasEnvService = serviceProvider.GetRequiredService<IAssetAdministrationShellEnvironmentService>();
+                ValueOnlyDeserializer.ConfigureAasEnvService(aasEnvService);
                 if (type == typeof(Submodel))
                 {
                     result = ValueOnlyDeserializer.DeserializeSubmodel(node);
@@ -77,7 +82,14 @@ namespace IO.Swagger.V1RC03
             }
             else if (type == typeof(AasCore.Aas3_0_RC02.ISubmodelElement))
             {
-                result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ISubmodelElementFrom(node);
+                if (!string.IsNullOrEmpty(content) && content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = MetadataDeserializer.DeserializeISubmodelElement(node);
+                }
+                else
+                {
+                    result = AasCore.Aas3_0_RC02.Jsonization.Deserialize.ISubmodelElementFrom(node);
+                }
             }
             else if (type == typeof(AasCore.Aas3_0_RC02.Reference))
             {
