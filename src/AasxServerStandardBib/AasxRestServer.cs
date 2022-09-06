@@ -58,10 +58,10 @@ namespace AasxRestServerLibrary
                 {
                     firstListOfRepositories = false;
 
-                    listofRepositories.Add("https://h2894164.stratoserver.net/51416");
                     // listofRepositories.Add("https://h2894164.stratoserver.net/51416");
-                    listofRepositories.Add("http://localhost:51310");
-                    return;
+                    // listofRepositories.Add("https://h2894164.stratoserver.net/51416");
+                    // listofRepositories.Add("http://localhost:51310");
+                    // return;
                     
                     int aascount = AasxServer.Program.env.Length;
                     for (int i = 0; i < aascount; i++)
@@ -72,7 +72,7 @@ namespace AasxRestServerLibrary
 
                         foreach (var aas in env.AasEnv.AssetAdministrationShells)
                         {
-                            if (aas.IdShort != "Registry")
+                            if (aas.IdShort != "REGISTRY")
                                 continue;
 
                             foreach (var smr in aas.Submodels)
@@ -82,7 +82,7 @@ namespace AasxRestServerLibrary
                                 if (sm == null)
                                     continue;
 
-                                if (sm.IdShort != "Repositories")
+                                if (sm.IdShort != "REPOSITORIES")
                                     continue;
 
                                 foreach (var sme in sm.SubmodelElements)
@@ -90,6 +90,7 @@ namespace AasxRestServerLibrary
                                     if (sme is Property p)
                                     {
                                         listofRepositories.Add(p.Value);
+                                        Console.WriteLine("listofRepositories.Add " + p.Value);
                                     }
                                 }
                             }
@@ -100,7 +101,7 @@ namespace AasxRestServerLibrary
 
             // query
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")]
-
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/queryregistry/(/|)$")]
             public IHttpContext Queryregistry(IHttpContext context)
             {
                 allowCORS(context);
@@ -123,14 +124,27 @@ namespace AasxRestServerLibrary
                 HttpResponseMessage response = null;
                 foreach (var r in listofRepositories)
                 {
-                    string requestPath = r + "/query/" + query;
+                    string requestPath = r + "/query/";
+                    if (query != "")
+                        requestPath += query;
                     try
                     {
-                        task = Task.Run( async () =>
-                                {
-                                    response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead);
-                                }
-                            );
+                        if (query != "")
+                        {
+                            task = Task.Run(async () =>
+                                    {
+                                        response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead);
+                                    }
+                                );
+                        }
+                        else
+                        {
+                            task = Task.Run(async () =>
+                                    {
+                                        response = await client.PostAsync(requestPath, new StringContent(context.Request.Payload));
+                                    }
+                                );
+                        }
                         task.Wait();
                         if (response.IsSuccessStatusCode)
                         {
