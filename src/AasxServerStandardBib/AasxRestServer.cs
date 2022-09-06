@@ -171,8 +171,39 @@ namespace AasxRestServerLibrary
                 switch (op)
                 {
                     case "==":
-                        return left == right;
                     case "!=":
+                        int leftlen = left.Length;
+                        int rightlen = right.Length;
+                        if (rightlen > 0)
+                        {
+                            if (right.Substring(0, 1) == "*")
+                            {
+                                // check right string
+                                string check = right.Substring(1, rightlen - 1);
+                                int checkLen = check.Length;
+                                if (leftlen >= checkLen)
+                                {
+                                    left = left.Substring(leftlen - checkLen, checkLen);
+                                    right = check;
+                                }
+                            }
+                            else
+                            {
+                                if (right.Substring(rightlen - 1, 1) == "*")
+                                {
+                                    // check left string
+                                    string check = right.Substring(0, rightlen - 1);
+                                    int checkLen = check.Length;
+                                    if (leftlen >= checkLen)
+                                    {
+                                        left = left.Substring(0, checkLen);
+                                        right = check;
+                                    }
+                                }
+                            }
+                        }
+                        if (op == "==")
+                            return left == right;
                         return left != right;
                     case ">":
                     case "<":
@@ -210,7 +241,7 @@ namespace AasxRestServerLibrary
                     case "contains":
                         return left.Contains(right);
                     case "!contains":
-                        return left.Contains(right);
+                        return !left.Contains(right);
                 }
 
                 return false;
