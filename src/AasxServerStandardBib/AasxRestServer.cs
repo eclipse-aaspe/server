@@ -24,6 +24,7 @@ using Grapevine.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
 using IdentityModel.Client;
+using Jose;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
@@ -351,6 +352,7 @@ namespace AasxRestServerLibrary
                 foreach (string n in nested)
                 {
                     string select = "";
+                    string selectParameters = "";
                     string from = "";
                     string fromId = "";
                     string whereElement = "";
@@ -385,7 +387,9 @@ namespace AasxRestServerLibrary
                         switch (last)
                         {
                             case "select:":
-                                select = s;
+                                var sSplit = s.Split(' ');
+                                select = sSplit[0];
+                                selectParameters = s.Substring(select.Length);
                                 break;
                             case "from:":
                                 var fromsplit = sp.Split(' ');
@@ -441,7 +445,7 @@ namespace AasxRestServerLibrary
                     result += "repository endpoint " + AasxServer.Program.externalRest + "\n";
                     if (storeResult)
                         result += "store result\n";
-                    result += "select = \"" + select + "\"\n";
+                    result += "select = \"" + select + selectParameters + "\n";
                     result += "from = \"" + from + "\"\n";
                     if (fromId != "")
                         result += "fromId = \"" + fromId + "\"\n";
@@ -727,9 +731,40 @@ namespace AasxRestServerLibrary
                                                             if (!storeSmes.Contains(sme))
                                                                 storeSmes.Add(sme);
                                                         }
-                                                        result += "submodelelement found" + " 1 " + AasxServer.Program.externalRest +
-                                                            "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort +
-                                                            "/elements/" + path + sme.IdShort + "\n";
+                                                        result += "submodelelement found" + " 1";
+                                                        if (!selectParameters.Contains("!endpoint"))
+                                                        {
+                                                            result += "  " + AasxServer.Program.externalRest +
+                                                                "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort +
+                                                                "/elements/" + path + sme.IdShort;
+                                                        }
+                                                        if (selectParameters.Contains("%idshort"))
+                                                        {
+                                                            result += " " + sme.IdShort;
+                                                        }
+                                                        if (selectParameters.Contains("%value"))
+                                                        {
+                                                            if (sme is Property p)
+                                                                result += " " + p.Value;
+                                                            if (sme is MultiLanguageProperty mlp)
+                                                            {
+                                                                if (mlp.Value != null && mlp.Value.LangStrings != null)
+                                                                {
+                                                                    for (int iMlp = 0; iMlp < mlp.Value.LangStrings.Count; iMlp++)
+                                                                    {
+                                                                        result += " [" + mlp.Value.LangStrings[iMlp].Language + "]" +
+                                                                            mlp.Value.LangStrings[iMlp].Text;
+                                                                    }
+
+                                                                }
+                                                            }
+                                                        }
+                                                        if (selectParameters.Contains("%semanticid"))
+                                                        {
+                                                            if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
+                                                                result += " " + sme.SemanticId.Keys[0].Value;
+                                                        }
+                                                        result += "\n";
                                                         totalFound++;
                                                     }
                                                     if (select == "submodel" || select == "submodelid")
@@ -794,8 +829,25 @@ namespace AasxRestServerLibrary
                                 }
 
                                 if (select == "submodel" && foundInSubmodel != 0)
-                                    result += select + " found " + foundInSubmodel + " " + AasxServer.Program.externalRest
-                                        + "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort + "\n";
+                                {
+                                    result += select + " found " + foundInSubmodel;
+
+                                    if (!selectParameters.Contains("!endpoint"))
+                                    {
+                                        result += " " + AasxServer.Program.externalRest
+                                                + "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort;
+                                    }
+                                    if (selectParameters.Contains("%idshort"))
+                                    {
+                                        result += " " + sm.IdShort;
+                                    }
+                                    if (selectParameters.Contains("%semanticid"))
+                                    {
+                                        if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
+                                            result += " " + sm.SemanticId.Keys[0].Value;
+                                    }
+                                    result += "\n";
+                                }
                                 if (select == "submodelid" && foundInSubmodel != 0)
                                     result += "%id == \"" + sm.Id + "\"\n";
                             } // submodels
