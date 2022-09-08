@@ -31,6 +31,7 @@ using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Ocsp;
 using ScottPlot.Drawing.Colormaps;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 using static QRCoder.PayloadGenerator;
 using HttpMethod = Grapevine.Shared.HttpMethod;
 
@@ -163,7 +164,7 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            private bool comp(string op, string left, string right)
+            private static bool comp(string op, string left, string right)
             {
                 switch (op)
                 {
@@ -280,19 +281,9 @@ namespace AasxRestServerLibrary
                 return false;
             }
 
-            // query
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/query/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/query/(/|)$")]
-
-            public IHttpContext Query(IHttpContext context)
+            public static string runQuery(string query, string restPayload)
             {
-                allowCORS(context);
-
                 string result = "";
-
-
-                string restPath = context.Request.PathInfo;
-                string query = restPath.Replace("/query/", "");
 
                 if (query == "help")
                 {
@@ -324,14 +315,16 @@ namespace AasxRestServerLibrary
                     result += "%idshort contains \"ManufacturerName\"\n";
                     result += "%idshort contains \"Weight\"\n";
 
-                    context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.Ok, result);
-                    return context;
+                    return result;
                 }
 
                 string[] split = new string[0];
                 if (query == "") // POST
                 {
-                    query = context.Request.Payload.Replace("\r", "");
+                    if (restPayload == "")
+                        return result;
+
+                    query = restPayload.Replace("\r", "");
                     split = query.Split('\n');
                 }
                 else // GET with BASE64URL encoded string
@@ -354,21 +347,21 @@ namespace AasxRestServerLibrary
                 {
                     if (sp == "")
                         continue;
-                    
+
                     string s = sp.ToLower();
                     if ((s == "store:" || s == "select:") && last != "store:" && last != "")
                     {
                         nested.Add(next);
                         next = "";
                     }
-                    next  += sp + "\n";
+                    next += sp + "\n";
                     last = s;
                 }
                 if (next != "")
                     nested.Add(next);
 
                 bool storeResult = false;
-                List <AssetAdministrationShell> storeAas = new List <AssetAdministrationShell>();
+                List<AssetAdministrationShell> storeAas = new List<AssetAdministrationShell>();
                 List<Submodel> storeSubmodels = new List<Submodel>();
                 List<ISubmodelElement> storeSmes = new List<ISubmodelElement>();
                 List<AssetAdministrationShell> storeAasLast = new List<AssetAdministrationShell>();
@@ -951,6 +944,25 @@ namespace AasxRestServerLibrary
                         result += "\n";
                     }
                 }
+
+                return result;
+            }
+
+            // query
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/query/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/query/(/|)$")]
+
+            public IHttpContext Query(IHttpContext context)
+            {
+                allowCORS(context);
+
+                string result = "";
+
+                string restPath = context.Request.PathInfo;
+                string query = restPath.Replace("/query/", "");
+
+                result = runQuery(query, context.Request.Payload);
+
                 context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.Ok, result);
 
                 // context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.NotFound, $"Operation not allowed!");

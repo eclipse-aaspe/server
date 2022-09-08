@@ -1,4 +1,6 @@
-﻿using IO.Swagger.V1RC03.ApiModel;
+﻿using AasxRestServerLibrary;
+using Grapevine.Interfaces.Server;
+using IO.Swagger.V1RC03.ApiModel;
 using IO.Swagger.V1RC03.Attributes;
 using IO.Swagger.V1RC03.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +8,9 @@ using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,8 +34,12 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetQuery([FromRoute][Required] string searchQuery)
         {
-            var decodedQuery = _decoderService.Decode("searchQuery", searchQuery);
-            return NoContent();
+            // var decodedQuery = _decoderService.Decode("searchQuery", searchQuery);
+
+            string result = AasxRestServer.TestResource.runQuery(searchQuery, "");
+
+            return new ObjectResult(result);
+            // return NoContent();
         }
 
         [HttpPost]
@@ -43,9 +51,15 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Invoke only valid for Operation submodel element")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostQuery([FromBody][Required] string searchQuery)
+
+        // public virtual IActionResult PostQuery([FromBody][Required] string searchQuery)
+        public virtual async Task<IActionResult> PostQueryAsync()
         {
-            return NoContent();
+            string content = await new StreamReader(Request.Body).ReadToEndAsync();
+            string result = AasxRestServer.TestResource.runQuery("", content);
+
+            return new ObjectResult(result);
+            // return NoContent();
         }
 
         [HttpGet]
