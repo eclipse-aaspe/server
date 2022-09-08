@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -96,7 +97,7 @@ namespace AasxRestServerLibrary
             }
 
             // query
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")]
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")] 
             [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/queryregistry/(/|)$")]
             public IHttpContext Queryregistry(IHttpContext context)
             {
@@ -207,11 +208,47 @@ namespace AasxRestServerLibrary
                     case "<=":
                         if (left == "" || right == "")
                             return false;
+
+                        if (left.Contains(".") || right.Contains(".")) // double
+                        {
+                            try
+                            {
+                                string legal = "012345679.";
+
+                                foreach (var c in left+right)
+                                {
+                                    if (Char.IsDigit(c))
+                                        continue;
+                                    if (c == '.')
+                                        continue;
+                                    if (!legal.Contains(c))
+                                        return false;
+                                }
+                                double l = Convert.ToDouble(left.Replace(".", ","));
+                                double r = Convert.ToDouble(right.Replace(".", ","));
+                                switch (op)
+                                {
+                                    case ">":
+                                        return l > r;
+                                    case "<":
+                                        return l < r;
+                                    case ">=":
+                                        return l >= r;
+                                    case "<=":
+                                        return l <= r;
+                                }
+                            }
+                            catch
+                            {
+                                return false;
+                            }
+                            return (false);
+                        }
+
                         if (!left.All(char.IsDigit))
                             return false;
                         if (!right.All(char.IsDigit))
                             return false;
-
                         try
                         {
                             int l = Convert.ToInt32(left);
@@ -233,7 +270,7 @@ namespace AasxRestServerLibrary
                         {
                             return false;
                         }
-                        break;
+                        return (false);
                     case "contains":
                         return left.Contains(right);
                     case "!contains":
@@ -516,6 +553,13 @@ namespace AasxRestServerLibrary
                                     if (comp(op, compare, attrValue))
                                     {
                                         conditionsTrue++;
+                                        if (whereAasCondition == "or")
+                                            break;
+                                    }
+                                    else
+                                    {
+                                        if (whereAasCondition == "and")
+                                            break;
                                     }
                                 }
                                 if ((whereAasCondition == "and" && conditionsTrue == whereAasOperations.Count)
@@ -606,6 +650,13 @@ namespace AasxRestServerLibrary
                                             if (comp(op, compare, attrValue))
                                             {
                                                 conditionsTrue++;
+                                                if (whereSmCondition == "or")
+                                                    break;
+                                            }
+                                            else
+                                            {
+                                                if (whereSmCondition == "and")
+                                                    break;
                                             }
                                         }
                                     }
@@ -705,6 +756,13 @@ namespace AasxRestServerLibrary
                                                 if (comp(op, compare, attrValue))
                                                 {
                                                     conditionsTrue++;
+                                                    if (whereSmeCondition == "or")
+                                                        break;
+                                                }
+                                                else
+                                                {
+                                                    if (whereSmeCondition == "and")
+                                                        break;
                                                 }
                                             }
 
