@@ -59,11 +59,6 @@ namespace AasxRestServerLibrary
                 {
                     firstListOfRepositories = false;
 
-                    // listofRepositories.Add("https://h2894164.stratoserver.net/51416");
-                    // listofRepositories.Add("https://h2894164.stratoserver.net/51416");
-                    // listofRepositories.Add("http://localhost:51310");
-                    // return;
-                    
                     int aascount = AasxServer.Program.env.Length;
                     for (int i = 0; i < aascount; i++)
                     {
@@ -264,37 +259,33 @@ namespace AasxRestServerLibrary
 
                 if (query == "help")
                 {
-                    result = "Please add BASE64 coded query, e.g. use https://www.base64encode.org/\n\n";
+                    result = "Please use POST or add BASE64 coded query to /query/, e.g. use https://www.base64encode.org/\n\n";
+                    result += "[ STORE: ] (result of query will be used to search inside by directly following query)\n";
                     result += "SELECT:\n";
                     result += "repository | aas | aasid | submodel | submodelid | submodelelement (what will be returned)\n";
                     result += "FROM:\n";
-                    result += "repository | aas \"aas-id\" | submodel \"submodel-id\" (what will be searched)\n";
+                    result += "repository | aas \"aasid\" | submodel \"submodelid\" (what will be searched)\n";
                     result += "WHERE:\n";
                     result += "aas | submodel | submodelelement (element to search for)\n";
                     result += "OR | AND\n";
                     result += "%id | %assetid | %idshort | %value | %semanticid | %path | %semanticidpath <space> == | != | > | >= | < | <= | contains | !contains <space> \"value\"\n";
-                    result += "(last line may be repeated)\n\n";
+                    result += "(last line may be repeated after OR and AND)\n";
+                    result += "(options after SELECT: aas [ %id | %idshort | %assetid | !endpoint ])\n";
+                    result += "(options after SELECT: submodel [ %id | %idshort | %semanticid | !endpoint ])\n";
+                    result += "(options after SELECT: submodelelement [ %idshort | %semanticid | %value | !endpoint ])\n";
+                    result += "(WHERE: aas, WHERE: submodel, WHERE: submodelelement may be combined)\n";
+                    result += "\n";
 
                     result += "EXAMPLE:\n\n";
                     result += "SELECT:\n";
                     result += "submodel\n";
                     result += "FROM:\n";
-                    result += "submodel \"www.company.com/ids/sm/4343_5072_7091_3242\"\n";
+                    result += "repository\n";
                     result += "WHERE:\n";
                     result += "submodelelement\n";
                     result += "OR\n";
                     result += "%idshort contains \"ManufacturerName\"\n";
                     result += "%idshort contains \"Weight\"\n";
-
-                    result += "\nhttp://localhost:51310/query/U0VMRUNUOgpzdWJtb2RlbApGUk9NOgpzdWJtb2RlbCAid3d3LmNvbXBhbnkuY29tL2lkcy9zbS80MzQzXzUwNzJfNzA5MV8zMjQyIgpXSEVSRToKc3VibW9kZWxlbGVtZW50Ck9SCiVpZHNob3J0IGNvbnRhaW5zICJNYW51ZmFjdHVyZXJOYW1lIgolaWRzaG9ydCBjb250YWlucyAiV2VpZ2h0Igo=\n";
-
-                    result += "\nEXAMPLE result:\n\n";
-                    result += "submodel 1 http://localhost:51310/aas/Festo_3S7PM0CP4BD/submodels/Nameplate\n";
-                    result += "submodel 1 http://localhost:51310/aas/NutRunner_0608842005_755003377/submodels/Nameplate\n";
-                    result += "submodel 1 http://localhost:51310/aas/R901278815_25/submodels/Nameplate\n";
-                    result += "submodel 1 http://localhost:51310/aas/R901278815_25xx/submodels/Nameplate\n";
-                    result += "totalfound 4 http://localhost:51310\n";
-                    result += "(Selected scope <space> how often found in this <space> endpoint to get the data)\n";
 
                     context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.Ok, result);
                     return context;
@@ -310,8 +301,6 @@ namespace AasxRestServerLibrary
                 {
                     try
                     {
-                        // var bytes = Convert.FromBase64String(query);
-                        // query = System.Text.Encoding.UTF8.GetString(bytes);
                         query = Base64UrlEncoder.Decode(query);
                         split = query.Split('\n');
                     }
@@ -837,6 +826,10 @@ namespace AasxRestServerLibrary
                                         result += " " + AasxServer.Program.externalRest
                                                 + "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort;
                                     }
+                                    if (selectParameters.Contains("%id "))
+                                    {
+                                        result += " " + sm.Id;
+                                    }
                                     if (selectParameters.Contains("%idshort"))
                                     {
                                         result += " " + sm.IdShort;
@@ -853,7 +846,28 @@ namespace AasxRestServerLibrary
                             } // submodels
 
                             if (select == "aas" && foundInAas != 0)
-                                result += select + " found " + foundInAas + " " + AasxServer.Program.externalRest + "/aas/" + aas.IdShort + "\n";
+                            {
+                                if (!selectParameters.Contains("!endpoint"))
+                                {
+                                    result += " " + AasxServer.Program.externalRest
+                                            + "/aas/" + aas.IdShort;
+                                }
+                                if (selectParameters.Contains("%id "))
+                                {
+                                    result += " " + aas.Id;
+                                }
+                                if (selectParameters.Contains("%idshort"))
+                                {
+                                    result += " " + aas.IdShort;
+                                }
+                                if (selectParameters.Contains("%assetid"))
+                                {
+                                    if (aas.AssetInformation.GlobalAssetId != null &&
+                                            aas.AssetInformation.GlobalAssetId.Keys != null && aas.AssetInformation.GlobalAssetId.Keys.Count != 0)
+                                        result += " " + aas.AssetInformation.GlobalAssetId.Keys[0].Value;
+                                }
+                                result += "\n";
+                            }
                             if (select == "aasid" && foundInAas != 0)
                                 result += "%id == \"" + aas.Id + "\"\n";
                         } // AAS
