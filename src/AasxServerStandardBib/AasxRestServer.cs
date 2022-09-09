@@ -53,9 +53,9 @@ namespace AasxRestServerLibrary
         [RestResource]
         public class TestResource
         {
-            private static List<string> listofRepositories = new List<string>();
+            public static List<string> listofRepositories = new List<string>();
             private static bool firstListOfRepositories = true;
-            private void initListOfRepositories()
+            public static void initListOfRepositories()
             {
                 if (firstListOfRepositories)
                 {
@@ -287,7 +287,7 @@ namespace AasxRestServerLibrary
 
                 if (query == "help")
                 {
-                    result = "Please use POST or add BASE64 coded query to /query/, e.g. use https://www.base64encode.org/\n\n";
+                    result = "Please use POST or add BASE64URL coded query to /query/, e.g. use https://www.base64url.com/\n\n";
                     result += "[ STORE: ] (result of query will be used to search inside by directly following query)\n";
                     result += "SELECT:\n";
                     result += "repository | aas | aasid | submodel | submodelid | submodelelement (what will be returned)\n";

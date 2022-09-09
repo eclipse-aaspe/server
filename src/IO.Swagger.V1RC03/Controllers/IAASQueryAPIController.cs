@@ -10,6 +10,7 @@ namespace IO.Swagger.V1RC03.Controllers
         IActionResult GetQueryRegistry([FromRoute, Required] string searchQuery);
         // IActionResult PostQuery([FromBody, Required] string searchQuery);
         Task<IActionResult> PostQueryAsync();
-        IActionResult PostQueryRegistry([FromBody, Required] string queryRegistry);
+        Task<IActionResult> PostQueryRegistryAsync();
+        // IActionResult PostQueryRegistry([FromBody, Required] string queryRegistry);
     }
 }
