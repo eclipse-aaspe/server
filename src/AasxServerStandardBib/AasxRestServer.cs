@@ -166,38 +166,72 @@ namespace AasxRestServerLibrary
 
             private static bool comp(string op, string left, string right)
             {
+                int leftlen = left.Length;
+                int rightlen = right.Length;
+
+                if (rightlen > 2 && right.Substring(0, 1) == "<" && right.Substring(rightlen - 1, 1) == ">")
+                {
+                    // Filter parameter
+                    right = right.Substring(1, rightlen - 2);
+                    right = right.Replace("><", " ");
+                    var split = right.Split(' ');
+                    if (split.Count() == 3 && split[0] == "right")
+                    {
+                        if (left.Contains(split[1]))
+                        {
+                            right = split[2];
+                            rightlen = right.Length;
+                            int found = left.IndexOf(split[1]);
+                            found += split[1].Length;
+                            string l = "";
+                            while (char.IsWhiteSpace(left[found]) && found < leftlen - 1)
+                                found++;
+                            while (char.IsDigit(left[found]) && found < leftlen - 1)
+                            {
+                                l += left[found];
+                                found++;
+                            }
+                            left = l;
+                            leftlen = left.Length;
+                        }
+                        else
+                            return false;
+                    }
+                }
+
                 switch (op)
                 {
                     case "==":
                     case "!=":
-                        int leftlen = left.Length;
-                        int rightlen = right.Length;
                         if (rightlen > 0)
                         {
-                            if (right.Substring(0, 1) == "*")
+                            string check = "";
+                            int checkLen = 0;
+                            switch (right.Substring(0, 1))
                             {
-                                // check right string
-                                string check = right.Substring(1, rightlen - 1);
-                                int checkLen = check.Length;
-                                if (leftlen >= checkLen)
-                                {
-                                    left = left.Substring(leftlen - checkLen, checkLen);
-                                    right = check;
-                                }
-                            }
-                            else
-                            {
-                                if (right.Substring(rightlen - 1, 1) == "*")
-                                {
-                                    // check left string
-                                    string check = right.Substring(0, rightlen - 1);
-                                    int checkLen = check.Length;
+                                case "*":
+                                    // check right string
+                                    check = right.Substring(1, rightlen - 1);
+                                    checkLen = check.Length;
                                     if (leftlen >= checkLen)
                                     {
-                                        left = left.Substring(0, checkLen);
+                                        left = left.Substring(leftlen - checkLen, checkLen);
                                         right = check;
                                     }
-                                }
+                                    break;
+                                default:
+                                    if (right.Substring(rightlen - 1, 1) == "*")
+                                    {
+                                        // check left string
+                                        check = right.Substring(0, rightlen - 1);
+                                        checkLen = check.Length;
+                                        if (leftlen >= checkLen)
+                                        {
+                                            left = left.Substring(0, checkLen);
+                                            right = check;
+                                        }
+                                    }
+                                    break;
                             }
                         }
                         if (op == "==")
@@ -900,6 +934,8 @@ namespace AasxRestServerLibrary
 
                             if (select == "aas" && foundInAas != 0)
                             {
+                                result += select + " found " + foundInAas;
+
                                 if (!selectParameters.Contains("!endpoint"))
                                 {
                                     result += " " + AasxServer.Program.externalRest

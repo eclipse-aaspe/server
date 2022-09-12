@@ -3902,6 +3902,8 @@ namespace AasxRestServerLibrary
                                     for (int iSme = 0; iSme < countSme; iSme++)
                                     {
                                         var sme = sm.SubmodelElements[iSme];
+                                        if (sme is Property)
+                                            continue;
                                         var smec = sme as SubmodelElementCollection;
                                         int countSmec = smec.Value.Count;
                                         switch (smec.IdShort)
@@ -4016,8 +4018,8 @@ namespace AasxRestServerLibrary
                                             if (smc6?.Value[iRole] is Property rp)
                                             {
                                                 role.Add(rp);
-                                                iRole++;
                                             }
+                                            iRole++;
                                         }
                                         smc6 = smc5?.FindFirstIdShortAs<SubmodelElementCollection>("permissionsPerObject");
                                         var smc7 = smc6?.Value[0] as SubmodelElementCollection;
