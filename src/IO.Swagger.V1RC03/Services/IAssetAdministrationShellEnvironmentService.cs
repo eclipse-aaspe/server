@@ -1,7 +1,9 @@
 ﻿using AasCore.Aas3_0_RC02;
 using IO.Swagger.V1RC03.ApiModel;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace IO.Swagger.V1RC03.Services
 {
@@ -47,5 +49,7 @@ namespace IO.Swagger.V1RC03.Services
         void UpdateSubmodel(Submodel body, string aasIdentifier, string submodelIdentifier, APIModels.Core.OutputModifierContext outputModifierContext);
         void UpdateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath, APIModels.Core.OutputModifierContext outputModifierContext);
         void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, APIModels.Core.OutputModifierContext outputModifierContext);
+        void UpdateFileByPathSubmodelRepo(string decodedSubmodelId, string idShortPath, string fileName, string contentType, Stream fileContent);
+        void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, Stream stream);
     }
 }

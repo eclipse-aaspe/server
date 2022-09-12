@@ -253,6 +253,10 @@ namespace AasxServerBlazor.Data
                     smeItem.Type = "In";
                     smeItem.Tag = s;
                     smChilds.Add(smeItem);
+                    if (s is SubmodelElementCollection collection)
+                    {
+                        createSMECItems(smeItem, collection, i);
+                    }
                 }
             }
             smeRootItem.Childs = smChilds;

@@ -1,4 +1,6 @@
 ﻿using AasCore.Aas3_0_RC02;
+using AasxServerStandardBib.Exceptions;
+using IO.Swagger.V1RC03.Logging;
 using IO.Swagger.V1RC03.Services;
 using System;
 using System.Collections.Generic;
@@ -9,15 +11,24 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 {
-    internal static class ValueOnlyDeserializer
+    public class ValueOnlyDeserializerService : IValueOnlyDeserializerService
     {
-        private static IAssetAdministrationShellEnvironmentService _aasEnvService;
+        private IAssetAdministrationShellEnvironmentService _aasEnvService;
+        private readonly IBase64UrlDecoderService _decoderService;
+        private readonly IAppLogger<ValueOnlyDeserializerService> _logger;
 
-        public static void ConfigureAasEnvService(IAssetAdministrationShellEnvironmentService aasEnvService)
+        public void ConfigureAasEnvService(IAssetAdministrationShellEnvironmentService aasEnvService)
         {
             _aasEnvService = aasEnvService;
         }
-        public static ISubmodelElement DeserializeISubmodelElement(JsonNode jsonNode)
+
+        public ValueOnlyDeserializerService(IAppLogger<ValueOnlyDeserializerService> logger, IAssetAdministrationShellEnvironmentService aasEnvService, IBase64UrlDecoderService decoderService)
+        {
+            _logger = logger;
+            _aasEnvService = aasEnvService;
+            _decoderService = decoderService;
+        }
+        public ISubmodelElement DeserializeISubmodelElement(JsonNode jsonNode, string encodedSubmodelIdentifier = null, string idShortPath = null)
         {
             ISubmodelElement output = null;
             var obj = jsonNode as JsonObject;
@@ -49,18 +60,30 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                             {
                                 output = CreateRange(item.Key, jsonObject);
                             }
-                            else if (jsonObject.ContainsKey("contentType") && jsonObject.ContainsKey("value"))
-                            {
-                                //If it contains both contentType and Value, both File and Blob are possible. Hence, we need to retrieve actual elements from the server
-                                output = CreateFile(item.Key, jsonObject);  // TODO: jtikekar Blob
-                            }
                             else if (jsonObject.ContainsKey("contentType"))
                             {
-                                output = CreateBlob(item.Key, jsonObject); //What is value is present
+                                //If it contains both contentType and Value, both File and Blob are possible. Hence, we need to retrieve actual elements from the server
+                                var decodedSubmodelId = _decoderService.Decode("submodelId", encodedSubmodelIdentifier);
+                                var element = _aasEnvService.GetSubmodelElementByPathSubmodelRepo(decodedSubmodelId, idShortPath, out _);
+                                if (element != null)
+                                {
+                                    if (element is File)
+                                    {
+                                        output = CreateFile(item.Key, jsonObject);
+                                    }
+                                    else if (element is Blob)
+                                    {
+                                        output = CreateBlob(item.Key, jsonObject);
+                                    }
+                                    else
+                                    {
+                                        throw new JsonDeserializationException(item.Key, "Element is not File or Blob");
+                                    }
+                                }
                             }
                             else if (jsonObject.ContainsKey("first") && jsonObject.ContainsKey("second") && jsonObject.ContainsKey("annotations"))
                             {
-                                output = CreateAnnotedRelationshipElement(item.Key, jsonObject);
+                                output = CreateAnnotedRelationshipElement(item.Key, jsonObject, encodedSubmodelIdentifier, idShortPath);
                             }
                             else if (jsonObject.ContainsKey("first") && jsonObject.ContainsKey("second"))
                             {
@@ -72,7 +95,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                             }
                             else if (jsonObject.ContainsKey("entityType"))
                             {
-                                output = CreateEntity(item.Key, jsonObject);
+                                output = CreateEntity(item.Key, jsonObject, encodedSubmodelIdentifier, idShortPath);
                             }
                             else if (jsonObject.ContainsKey("observed"))
                             {
@@ -81,7 +104,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                             else
                             {
                                 //This can be SubmodelElementCollection
-                                output = CreateSubmodelElementCollection(item.Key, jsonObject);
+                                output = CreateSubmodelElementCollection(item.Key, jsonObject, encodedSubmodelIdentifier, idShortPath);
                             }
                             break;
                         }
@@ -92,7 +115,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return output;
         }
 
-        private static ISubmodelElement CreateBasicEventElement(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateBasicEventElement(string idShort, JsonObject jsonObject)
         {
             Reference observed = null;
             var observedNode = jsonObject["observed"] as JsonNode;
@@ -104,7 +127,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return output;
         }
 
-        private static ISubmodelElement CreateEntity(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateEntity(string idShort, JsonObject jsonObject, string encodedSubmodelId, string idShortPath)
         {
             string entityType = null;
             var entityTypeNode = jsonObject["entityType"] as JsonValue;
@@ -129,7 +152,8 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 foreach (var item in statementsNode)
                 {
                     var newNode = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
-                    var statement = DeserializeISubmodelElement(newNode);
+                    var newIdShortPath = idShortPath + "." + item.Key;
+                    var statement = DeserializeISubmodelElement(newNode, encodedSubmodelId, newIdShortPath);
                     statements.Add(statement);
                 }
                 output.Statements = statements;
@@ -137,7 +161,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return output;
         }
 
-        private static ISubmodelElement CreateBlob(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateBlob(string idShort, JsonObject jsonObject)
         {
             string contentType = null;
             var contentTypeNode = jsonObject["contentType"] as JsonValue;
@@ -145,17 +169,19 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             {
                 contentTypeNode.TryGetValue(out contentType);
             }
-            //TODO jtikekar Support Value from Blob
-            //var valueNode = jsonObject["value"] as JsonValue;
-            //if (valueNode != null)
-            //{
-            //    valueNode.TryGetValue(out value);
-            //}
 
-            return new Blob(contentType, idShort: idShort);
+            var blob = new Blob(contentType, idShort: idShort);
+            var valueNode = jsonObject["value"] as JsonValue;
+            if (valueNode != null)
+            {
+                valueNode.TryGetValue(out string value);
+                blob.Value = System.Convert.FromBase64String(value); ;
+            }
+
+            return blob;
         }
 
-        private static ISubmodelElement CreateSubmodelElementCollection(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateSubmodelElementCollection(string idShort, JsonObject jsonObject, string encodedSubmodelId, string idShortPath)
         {
             var output = new SubmodelElementCollection(idShort: idShort);
             var submodelElements = new List<ISubmodelElement>();
@@ -163,7 +189,8 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             foreach (var item in jsonObject)
             {
                 var newNode = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
-                var submodelElement = DeserializeISubmodelElement(newNode);
+                var newIdShortPath = idShortPath + "." + item.Key;
+                var submodelElement = DeserializeISubmodelElement(newNode, encodedSubmodelId, newIdShortPath);
                 submodelElements.Add(submodelElement);
             }
             output.Value = submodelElements;
@@ -171,7 +198,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return output;
         }
 
-        private static ISubmodelElement CreateReferenceElement(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateReferenceElement(string idShort, JsonObject jsonObject)
         {
             var output = new ReferenceElement(idShort: idShort);
             Reference reference = Jsonization.Deserialize.ReferenceFrom(jsonObject);
@@ -182,7 +209,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return output;
         }
 
-        private static ISubmodelElement CreateAnnotedRelationshipElement(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateAnnotedRelationshipElement(string idShort, JsonObject jsonObject, string encodedSubmodelIdentifier, string idShortPath)
         {
             Reference first = null, second = null;
             var firstNode = jsonObject["first"] as JsonNode;
@@ -203,7 +230,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 var annotations = new List<IDataElement>();
                 foreach (var annotationNode in annotationsNode)
                 {
-                    var annotation = DeserializeISubmodelElement(annotationNode);
+                    var annotation = DeserializeISubmodelElement(annotationNode, encodedSubmodelIdentifier, idShortPath);
                     annotations.Add((IDataElement)annotation);
                 }
                 output.Annotations = annotations;
@@ -211,7 +238,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return output;
         }
 
-        private static ISubmodelElement CreateRelationshipElement(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateRelationshipElement(string idShort, JsonObject jsonObject)
         {
             Reference first = null, second = null;
             var firstNode = jsonObject["first"] as JsonNode;
@@ -228,7 +255,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return new RelationshipElement(first, second, idShort: idShort);
         }
 
-        private static ISubmodelElement CreateFile(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateFile(string idShort, JsonObject jsonObject)
         {
             string contentType = null, value = null;
             var contentTypeNode = jsonObject["contentType"] as JsonValue;
@@ -245,7 +272,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return new File(contentType, idShort: idShort, value: value);
         }
 
-        private static ISubmodelElement CreateRange(string idShort, JsonObject jsonObject)
+        private ISubmodelElement CreateRange(string idShort, JsonObject jsonObject)
         {
             string min = null, max = null;
             var minNode = jsonObject["min"] as JsonValue;
@@ -262,7 +289,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return new AasCore.Aas3_0_RC02.Range(DataTypeDefXsd.String, idShort: idShort, min: min, max: max);
         }
 
-        private static ISubmodelElement CreateMultilanguageProperty(string idShort, JsonArray jsonArray)
+        private ISubmodelElement CreateMultilanguageProperty(string idShort, JsonArray jsonArray)
         {
             var langStrings = new List<LangString>();
             var langStringSet = new LangStringSet(langStrings);
@@ -278,7 +305,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return new MultiLanguageProperty(idShort: idShort, value: langStringSet);
         }
 
-        private static void GetPropertyFromJsonObject(JsonObject item, out string propertyName, out string propertyValue)
+        private void GetPropertyFromJsonObject(JsonObject item, out string propertyName, out string propertyValue)
         {
             propertyName = propertyValue = null;
             var enumerator = item.GetEnumerator();
@@ -290,7 +317,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             }
         }
 
-        internal static object DeserializeSubmodel(JsonNode node)
+        public object DeserializeSubmodel(JsonNode node)
         {
             var submodel = new Submodel("");  //Attached dummy id
             submodel.SubmodelElements = new List<ISubmodelElement>();
