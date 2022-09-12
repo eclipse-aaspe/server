@@ -9,6 +9,7 @@ using IO.Swagger.V1RC03.APIModels.ValueOnly;
 using IO.Swagger.V1RC03.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
@@ -16,6 +17,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using File = AasCore.Aas3_0_RC02.File;
 
@@ -37,6 +39,18 @@ namespace IO.Swagger.V1RC03.Services
         }
 
         #region AssetAdministrationShell
+
+        public void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, Stream fileContent)
+        {
+            var aas = GetAssetAdministrationShellById(aasIdentifier, out _);
+            if (aas != null)
+            {
+                if (IsSubmodelPresentInAAS(aas, submodelIdentifier))
+                {
+                    UpdateFileByPathSubmodelRepo(submodelIdentifier, idShortPath, fileName, contentType, fileContent);
+                }
+            }
+        }
 
         public void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, OutputModifierContext outputModifierContext)
         {
@@ -1185,6 +1199,37 @@ namespace IO.Swagger.V1RC03.Services
             return fileName;
         }
 
+        public void UpdateFileByPathSubmodelRepo(string submodelIdentifier, string idShortPath, string fileName, string contentType, Stream fileContent)
+        {
+            _ = GetSubmodelById(submodelIdentifier, out int packageIndex);
+
+            var fileElement = GetSubmodelElementByPathSubmodelRepo(submodelIdentifier, idShortPath, out _);
+            if (fileElement != null)
+            {
+                if (fileElement is File file)
+                {
+                    var sourcePath = Path.GetDirectoryName(file.Value);
+                    var targetFile = Path.Combine(sourcePath, fileName);
+                    Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
+                    file.Value = FormatFileName(targetFile);
+                    AasxServer.Program.signalNewData(2);
+                }
+                else
+                {
+                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
+                }
+            }
+        }
+
+        private string FormatFileName(string fileName)
+        {
+            string fileNameTemp = fileName;
+
+            string output = Regex.Replace(fileNameTemp, @"\\", "/");
+
+            return output;
+        }
+
         public OperationResult GetOperationAsyncResultSubmodelRepo(string decodedSubmodelId, string idShortPath, string handleId)
         {
             var operationElement = GetSubmodelElementByPathSubmodelRepo(decodedSubmodelId, idShortPath, out _);
@@ -1302,6 +1347,10 @@ namespace IO.Swagger.V1RC03.Services
 
             return false;
         }
+
+
+
+
 
         #endregion
 

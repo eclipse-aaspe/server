@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.V1RC03.ApiModel;
 using AasCore.Aas3_0_RC02;
+using Microsoft.AspNetCore.Http;
 
 namespace IO.Swagger.V1RC03.Controllers
 {
@@ -454,7 +455,17 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="0">Default error handling for unmentioned status codes</response>
         IActionResult PutConceptDescriptionById([FromBody] ConceptDescription body, [FromRoute][Required] string cdIdentifier);
 
-
+        /// <summary>
+        /// Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy
+        /// </summary>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+        /// <param name="file">File to upload</param>
+        /// <response code="204">Submodel element updated successfully</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        IActionResult PutFileByPathSubmodelRepo([FromRoute, Required] string submodelIdentifier, [FromRoute] string idShortPath, [FromForm, Required] IFormFile file);
 
         /// <summary>
         /// Updates the Submodel

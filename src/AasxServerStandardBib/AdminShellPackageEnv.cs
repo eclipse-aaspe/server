@@ -14,6 +14,7 @@ using System.IO.Packaging;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using AasCore.Aas3_0_RC02;
@@ -1122,11 +1123,28 @@ namespace AdminShellNS
                 throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
 
             // gte part
-            var part = _openPackage.GetPart(new Uri(uriString, UriKind.RelativeOrAbsolute));
+            var uri = PackUriHelper.CreatePartUri(new Uri(uriString, UriKind.RelativeOrAbsolute));
+            var part = _openPackage.GetPart(uri);
             if (part == null)
                 throw (new Exception(
                     string.Format($"Cannot access URI {uriString} in {_fn} not opened. Aborting!")));
             return part.GetStream(mode);
+        }
+
+        public async Task ReplaceSupplementaryFileInPackageAsync(string sourceUri, string targetFile, string targetContentType, Stream fileContent)
+        {
+            // access
+            if (_openPackage == null)
+                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+
+            _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+            var targetUri = PackUriHelper.CreatePartUri(new Uri(targetFile, UriKind.RelativeOrAbsolute));
+            PackagePart packagePart = _openPackage.CreatePart(targetUri, targetContentType);
+            fileContent.Position = 0;
+            using (Stream dest = packagePart.GetStream())
+            {
+                fileContent.CopyTo(dest);
+            }
         }
 
         public long GetStreamSizeFromPackage(string uriString)

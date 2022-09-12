@@ -54,15 +54,16 @@ namespace IO.Swagger.V1RC03
             if (!string.IsNullOrEmpty(content) && content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
                 var serviceProvider = context.HttpContext.RequestServices;
-                var aasEnvService = serviceProvider.GetRequiredService<IAssetAdministrationShellEnvironmentService>();
-                ValueOnlyDeserializer.ConfigureAasEnvService(aasEnvService);
+                var valueOnlyDeserializerService = serviceProvider.GetRequiredService<IValueOnlyDeserializerService>();
                 if (type == typeof(Submodel))
                 {
-                    result = ValueOnlyDeserializer.DeserializeSubmodel(node);
+                    result = valueOnlyDeserializerService.DeserializeSubmodel(node);
                 }
                 if (type == typeof(ISubmodelElement))
                 {
-                    result = ValueOnlyDeserializer.DeserializeISubmodelElement(node);
+                    var encodedSubmodelIdentifier = request.RouteValues["submodelIdentifier"];
+                    string idShortPath = (string)request.RouteValues["idShortPath"];
+                    result = valueOnlyDeserializerService.DeserializeISubmodelElement(node, (string)encodedSubmodelIdentifier, idShortPath);
                 }
 
                 return InputFormatterResult.SuccessAsync(result);

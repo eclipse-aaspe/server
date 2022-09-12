@@ -31,6 +31,7 @@ using System.Text;
 using IO.Swagger.V1RC03.ModelBinder;
 using System.Net.Mime;
 using IO.Swagger.V1RC03.APIModels.Core;
+using Microsoft.AspNetCore.Http;
 
 namespace IO.Swagger.V1RC03.Controllers
 {
@@ -1116,6 +1117,72 @@ namespace IO.Swagger.V1RC03.Controllers
             var outputModifierContext = new OutputModifierContext(level, content, extent);
 
             _aasEnvService.UpdateSubmodelElementByPathSubmodelRepo(body, decodedSubmodelId, idShortPath, outputModifierContext);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy
+        /// </summary>
+        /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+        /// <param name="file">File to upload</param>
+        /// <response code="204">Submodel element updated successfully</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [ValidateModelState]
+        [SwaggerOperation("PutFileByPath")]
+        [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PutFileByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute] string idShortPath, [Required][FromForm] IFormFile file)
+        {
+            var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            var stream = new MemoryStream();
+            file.CopyTo(stream);
+            string fileName = file.FileName;
+            string contentType = file.ContentType;
+
+            _aasEnvService.UpdateFileByPath(decodedAasId, decodedSubmodelId, idShortPath, fileName, contentType, stream);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy
+        /// </summary>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+        /// <param name="file">File to upload</param>
+        /// <response code="204">Submodel element updated successfully</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [ValidateModelState]
+        [SwaggerOperation("PutFileByPathSubmodelRepo")]
+        [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PutFileByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute] string idShortPath, [Required][FromForm] IFormFile file)
+        {
+            var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            var stream = new MemoryStream();
+            file.CopyTo(stream);
+            string fileName = file.FileName;
+            string contentType = file.ContentType;
+
+            _aasEnvService.UpdateFileByPathSubmodelRepo(decodedSubmodelId, idShortPath, fileName, contentType, stream);
 
             return NoContent();
         }

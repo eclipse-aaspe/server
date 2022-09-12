@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AasxServerBlazor.Data;
 using IO.Swagger.V1RC03;
+using IO.Swagger.V1RC03.APIModels.ValueOnly;
 using IO.Swagger.V1RC03.Controllers;
 using IO.Swagger.V1RC03.Filters;
 using IO.Swagger.V1RC03.Logging;
@@ -66,6 +67,7 @@ namespace AasxServerBlazor
             services.AddTransient<IOutputModifiersService, OutputModifiersService>();
             services.AddTransient<IInputModifierService, InputModifierService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
+            services.AddTransient<IValueOnlyDeserializerService, ValueOnlyDeserializerService>();
 
             // Add framework services.
             services
