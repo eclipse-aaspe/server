@@ -786,6 +786,8 @@ namespace AasxRestServerLibrary
                                                         {
                                                             if (sme is Property p)
                                                                 result += " " + p.Value;
+                                                            if (sme is AasCore.Aas3_0_RC02.File f)
+                                                                result += " " + f.Value;
                                                             if (sme is MultiLanguageProperty mlp)
                                                             {
                                                                 if (mlp.Value != null && mlp.Value.LangStrings != null)
