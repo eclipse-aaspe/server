@@ -83,11 +83,21 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             {
                 if (context.IncludeChildren)
                 {
-                    var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
+                    if (context.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.IncludeChildren = false;    //This will be set for indirect children
+                    }
                     for (int i = 0; i < that.Value.Count; i++)
                     {
-                        context.ParentPath = currentParentPath;
-                        context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort + $"[{i}]");
+                        if (string.IsNullOrEmpty(context.ParentPath))
+                        {
+                            //No need of prefix
+                            context.IdShortPaths.Add(that.IdShort + $"[{i}]");
+                        }
+                        else
+                        {
+                            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort + $"[{i}]");
+                        }
                     }
                 }
             }
