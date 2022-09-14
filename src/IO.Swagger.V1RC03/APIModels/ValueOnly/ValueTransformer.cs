@@ -65,6 +65,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             throw new System.NotImplementedException();
         }
 
+
         public JsonObject Transform(SubmodelElementCollection that, OutputModifierContext context)
         {
             var value = new JsonObject();
@@ -83,6 +84,10 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     else if (item is MultiLanguageProperty multiLanguageProperty)
                     {
                         value[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                    }
+                    else if (item is SubmodelElementList submodelElementList)
+                    {
+                        value[item.IdShort] = TransformValue(submodelElementList, context);
                     }
                     else
                     {
@@ -216,6 +221,10 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                         else if (item is MultiLanguageProperty multiLanguageProperty)
                         {
                             statementValue[item.IdShort] = TransformValue(multiLanguageProperty.Value, context);
+                        }
+                        else if (item is SubmodelElementList submodelElementList)
+                        {
+                            value[item.IdShort] = TransformValue(submodelElementList, context);
                         }
                         else
                         {
@@ -353,11 +362,31 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
         internal JsonNode TransformValue(SubmodelElementList that, OutputModifierContext context)
         {
             var arrayValues = new Nodes.JsonArray();
-            foreach (var item in that.Value)
+            if (context.IncludeChildren)
             {
-                arrayValues.Add(
-                    Transform(
-                        item, context));
+                if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    context.IncludeChildren = false;
+                }
+                foreach (var item in that.Value)
+                {
+                    if (item is Property property)
+                    {
+                        arrayValues.Add(JsonValue.Create(property.Value));
+                    }
+                    else if (item is MultiLanguageProperty multiLanguageProperty)
+                    {
+                        arrayValues.Add(TransformValue(multiLanguageProperty.Value, context));
+                    }
+                    else if (item is SubmodelElementList submodelElementList)
+                    {
+                        arrayValues.Add(TransformValue(submodelElementList, context));
+                    }
+                    else
+                    {
+                        arrayValues.Add(Transform(item, context));
+                    }
+                }
             }
 
             return arrayValues;

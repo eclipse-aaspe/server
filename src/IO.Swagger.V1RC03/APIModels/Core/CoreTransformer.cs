@@ -358,6 +358,10 @@ namespace IO.Swagger.V1RC03.APIModels.Core
                         {
                             valueOnlyResult[item.IdShort] = _valueTransformer.TransformValue(multiLanguageProperty.Value, context);
                         }
+                        else if (item is SubmodelElementList submodelElementList)
+                        {
+                            valueOnlyResult[item.IdShort] = _valueTransformer.TransformValue(submodelElementList, context);
+                        }
                         else
                         {
                             valueOnlyResult[item.IdShort] = _valueTransformer.Transform(item, context);
@@ -634,36 +638,10 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             //if content is Value
             if (context.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
-                var valueOnlyResult = new JsonObject();
-                var jsonArray = new JsonArray();
-                if (that.Value != null)
+                var valueOnlyResult = new JsonObject
                 {
-
-                    if (context.IncludeChildren)
-                    {
-                        if (context.Level.Equals("core", System.StringComparison.OrdinalIgnoreCase))
-                        {
-                            context.IncludeChildren = false;
-                        }
-                        foreach (ISubmodelElement item in that.Value)
-                        {
-                            if (item is Property property)
-                            {
-                                jsonArray.Add(JsonValue.Create(property.Value));
-                            }
-                            else if (item is MultiLanguageProperty multiLanguageProperty)
-                            {
-                                jsonArray.Add(_valueTransformer.TransformValue(multiLanguageProperty.Value, context));
-                            }
-                            else
-                            {
-                                jsonArray.Add(_valueTransformer.Transform(item, context));
-                            }
-                        }
-                    }
-                }
-                valueOnlyResult[that.IdShort] = jsonArray;
-
+                    [that.IdShort] = _valueTransformer.TransformValue(that, context)
+                };
                 return valueOnlyResult;
             }
             var result = new JsonObject();

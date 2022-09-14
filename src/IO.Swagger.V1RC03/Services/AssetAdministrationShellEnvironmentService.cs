@@ -764,30 +764,38 @@ namespace IO.Swagger.V1RC03.Services
                     submodel.SubmodelElements ??= new List<ISubmodelElement>();
 
                     submodel.SubmodelElements.Add(body);
+
+                    body.Parent = submodel;
                 }
                 else if (smeParent != null && smeParent is SubmodelElementCollection collection)
                 {
                     collection.Value ??= new List<ISubmodelElement>();
 
                     collection.Value.Add(body);
+
+                    body.Parent = collection;
                 }
                 else if (smeParent != null && smeParent is SubmodelElementList list)
                 {
                     list.Value ??= new List<ISubmodelElement>();
 
                     list.Value.Add(body);
+
+                    body.Parent = list;
                 }
                 else if (smeParent != null && smeParent is Entity entity)
                 {
                     entity.Statements ??= new List<ISubmodelElement>();
 
                     entity.Statements.Add(body);
+                    body.Parent = entity;
                 }
                 else if (smeParent != null && smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
                 {
                     annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
 
                     annotatedRelationshipElement.Annotations.Add((IDataElement)body);
+                    body.Parent = annotatedRelationshipElement;
                 }
 
                 AasxServer.Program.signalNewData(1);
@@ -817,6 +825,8 @@ namespace IO.Swagger.V1RC03.Services
                     submodel.SubmodelElements ??= new List<ISubmodelElement>();
 
                     submodel.SubmodelElements.Add(body);
+
+                    body.Parent = submodel;
 
                     AasxServer.Program.signalNewData(1);
 

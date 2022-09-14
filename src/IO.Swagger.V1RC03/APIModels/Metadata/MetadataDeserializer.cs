@@ -68,6 +68,8 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                     return BlobFrom(node, out error);
                 case "File":
                     return FileFrom(node, out error);
+                case "SubmodelElementList":
+                    return SubmodelElementListFrom(node, out error);
                 case "SubmodelElementCollection":
                     return SubmodelElementCollectionFrom(node, out error);
                 case "Operation":
@@ -77,13 +79,435 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 case "Property":
                 case "Range":
                 case "ReferenceElement":
-                case "SubmodelElementList":
                     return Jsonization.Deserialize.ISubmodelElementFrom(node);
                 default:
                     error = new Reporting.Error(
                         $"Unexpected model type for ISubmodelElement: {modelType}");
                     return null;
             }
+        }
+
+        private static ISubmodelElement SubmodelElementListFrom(JsonNode node, out Reporting.Error error)
+        {
+
+            error = null;
+
+            JsonObject? obj = node as JsonObject;
+            if (obj == null)
+            {
+                error = new Reporting.Error(
+                    $"Expected a JsonObject, but got {node.GetType()}");
+                return null;
+            }
+
+            JsonNode? nodeExtensions = obj["extensions"];
+            List<Extension>? theExtensions = null;
+            if (nodeExtensions != null)
+            {
+                JsonArray? arrayExtensions = nodeExtensions as JsonArray;
+                if (arrayExtensions == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonArray, but got {nodeExtensions.GetType()}");
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "extensions"));
+                    return null;
+                }
+                theExtensions = new List<Extension>(
+                    arrayExtensions.Count);
+                int indexExtensions = 0;
+                foreach (JsonNode? item in arrayExtensions)
+                {
+                    if (item == null)
+                    {
+                        error = new Reporting.Error(
+                            "Expected a non-null item, but got a null");
+                        error.PrependSegment(
+                            new Reporting.IndexSegment(
+                                indexExtensions));
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "extensions"));
+                        return null;
+                    }
+                    Extension? parsedItem = Jsonization.Deserialize.ExtensionFrom(item);
+                    theExtensions.Add(
+                        parsedItem
+                            ?? throw new System.InvalidOperationException(
+                                "Unexpected result null when error is null"));
+                    indexExtensions++;
+                }
+            }
+
+            JsonNode? nodeCategory = obj["category"];
+            string? theCategory = null;
+            if (nodeCategory != null)
+            {
+                theCategory = StringFrom(nodeCategory, out error);
+                if (error != null)
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "category"));
+                    return null;
+                }
+                if (theCategory == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theCategory null when error is also null");
+                }
+            }
+
+            JsonNode? nodeIdShort = obj["idShort"];
+            string? theIdShort = null;
+            if (nodeIdShort != null)
+            {
+                theIdShort = StringFrom(nodeIdShort, out error);
+                if (error != null)
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "idShort"));
+                    return null;
+                }
+                if (theIdShort == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theIdShort null when error is also null");
+                }
+            }
+
+            JsonNode? nodeDisplayName = obj["displayName"];
+            LangStringSet? theDisplayName = null;
+            if (nodeDisplayName != null)
+            {
+                theDisplayName = Jsonization.Deserialize.LangStringSetFrom(nodeDisplayName);
+                if (error != null)
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "displayName"));
+                    return null;
+                }
+                if (theDisplayName == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theDisplayName null when error is also null");
+                }
+            }
+
+            JsonNode? nodeDescription = obj["description"];
+            LangStringSet? theDescription = null;
+            if (nodeDescription != null)
+            {
+                theDescription = Jsonization.Deserialize.LangStringSetFrom(nodeDescription);
+                if (error != null)
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "description"));
+                    return null;
+                }
+                if (theDescription == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theDescription null when error is also null");
+                }
+            }
+
+            JsonNode? nodeChecksum = obj["checksum"];
+            string? theChecksum = null;
+            if (nodeChecksum != null)
+            {
+                theChecksum = StringFrom(nodeChecksum, out error);
+                if (error != null)
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "checksum"));
+                    return null;
+                }
+                if (theChecksum == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theChecksum null when error is also null");
+                }
+            }
+
+            JsonNode? nodeKind = obj["kind"];
+            ModelingKind? theKind = null;
+            if (nodeKind != null)
+            {
+                theKind = Jsonization.Deserialize.ModelingKindFrom(nodeKind);
+                if (theKind == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theKind null when error is also null");
+                }
+            }
+
+            JsonNode? nodeSemanticId = obj["semanticId"];
+            Reference? theSemanticId = null;
+            if (nodeSemanticId != null)
+            {
+                theSemanticId = Jsonization.Deserialize.ReferenceFrom(nodeSemanticId);
+                if (theSemanticId == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theSemanticId null when error is also null");
+                }
+            }
+
+            JsonNode? nodeSupplementalSemanticIds = obj["supplementalSemanticIds"];
+            List<Reference>? theSupplementalSemanticIds = null;
+            if (nodeSupplementalSemanticIds != null)
+            {
+                JsonArray? arraySupplementalSemanticIds = nodeSupplementalSemanticIds as JsonArray;
+                if (arraySupplementalSemanticIds == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonArray, but got {nodeSupplementalSemanticIds.GetType()}");
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "supplementalSemanticIds"));
+                    return null;
+                }
+                theSupplementalSemanticIds = new List<Reference>(
+                    arraySupplementalSemanticIds.Count);
+                int indexSupplementalSemanticIds = 0;
+                foreach (JsonNode? item in arraySupplementalSemanticIds)
+                {
+                    if (item == null)
+                    {
+                        error = new Reporting.Error(
+                            "Expected a non-null item, but got a null");
+                        error.PrependSegment(
+                            new Reporting.IndexSegment(
+                                indexSupplementalSemanticIds));
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "supplementalSemanticIds"));
+                        return null;
+                    }
+                    Reference? parsedItem = Jsonization.Deserialize.ReferenceFrom(item);
+                    theSupplementalSemanticIds.Add(
+                        parsedItem
+                            ?? throw new System.InvalidOperationException(
+                                "Unexpected result null when error is null"));
+                    indexSupplementalSemanticIds++;
+                }
+            }
+
+            JsonNode? nodeQualifiers = obj["qualifiers"];
+            List<Qualifier>? theQualifiers = null;
+            if (nodeQualifiers != null)
+            {
+                JsonArray? arrayQualifiers = nodeQualifiers as JsonArray;
+                if (arrayQualifiers == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonArray, but got {nodeQualifiers.GetType()}");
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "qualifiers"));
+                    return null;
+                }
+                theQualifiers = new List<Qualifier>(
+                    arrayQualifiers.Count);
+                int indexQualifiers = 0;
+                foreach (JsonNode? item in arrayQualifiers)
+                {
+                    if (item == null)
+                    {
+                        error = new Reporting.Error(
+                            "Expected a non-null item, but got a null");
+                        error.PrependSegment(
+                            new Reporting.IndexSegment(
+                                indexQualifiers));
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "qualifiers"));
+                        return null;
+                    }
+                    Qualifier? parsedItem = Jsonization.Deserialize.QualifierFrom(item);
+                    theQualifiers.Add(
+                        parsedItem
+                            ?? throw new System.InvalidOperationException(
+                                "Unexpected result null when error is null"));
+                    indexQualifiers++;
+                }
+            }
+
+            JsonNode? nodeDataSpecifications = obj["dataSpecifications"];
+            List<Reference>? theDataSpecifications = null;
+            if (nodeDataSpecifications != null)
+            {
+                JsonArray? arrayDataSpecifications = nodeDataSpecifications as JsonArray;
+                if (arrayDataSpecifications == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonArray, but got {nodeDataSpecifications.GetType()}");
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "dataSpecifications"));
+                    return null;
+                }
+                theDataSpecifications = new List<Reference>(
+                    arrayDataSpecifications.Count);
+                int indexDataSpecifications = 0;
+                foreach (JsonNode? item in arrayDataSpecifications)
+                {
+                    if (item == null)
+                    {
+                        error = new Reporting.Error(
+                            "Expected a non-null item, but got a null");
+                        error.PrependSegment(
+                            new Reporting.IndexSegment(
+                                indexDataSpecifications));
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "dataSpecifications"));
+                        return null;
+                    }
+                    Reference? parsedItem = Jsonization.Deserialize.ReferenceFrom(item);
+                    theDataSpecifications.Add(
+                        parsedItem
+                            ?? throw new System.InvalidOperationException(
+                                "Unexpected result null when error is null"));
+                    indexDataSpecifications++;
+                }
+            }
+
+            JsonNode? nodeOrderRelevant = obj["orderRelevant"];
+            bool? theOrderRelevant = null;
+            if (nodeOrderRelevant != null)
+            {
+                theOrderRelevant = BoolFrom(nodeOrderRelevant, out error);
+                if (error != null)
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "orderRelevant"));
+                    return null;
+                }
+                if (theOrderRelevant == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theOrderRelevant null when error is also null");
+                }
+            }
+
+            JsonNode? nodeValue = obj["value"];
+            List<ISubmodelElement>? theValue = null;
+            if (nodeValue != null)
+            {
+                JsonArray? arrayValue = nodeValue as JsonArray;
+                if (arrayValue == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonArray, but got {nodeValue.GetType()}");
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "value"));
+                    return null;
+                }
+                theValue = new List<ISubmodelElement>(
+                    arrayValue.Count);
+                int indexValue = 0;
+                foreach (JsonNode? item in arrayValue)
+                {
+                    if (item == null)
+                    {
+                        error = new Reporting.Error(
+                            "Expected a non-null item, but got a null");
+                        error.PrependSegment(
+                            new Reporting.IndexSegment(
+                                indexValue));
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "value"));
+                        return null;
+                    }
+                    ISubmodelElement? parsedItem = ISubmodelElementFrom(
+                        item ?? throw new System.InvalidOperationException(),
+                        out error);
+                    if (error != null)
+                    {
+                        error.PrependSegment(
+                            new Reporting.IndexSegment(
+                                indexValue));
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "value"));
+                        return null;
+                    }
+                    theValue.Add(
+                        parsedItem
+                            ?? throw new System.InvalidOperationException(
+                                "Unexpected result null when error is null"));
+                    indexValue++;
+                }
+            }
+
+            JsonNode? nodeSemanticIdListElement = obj["semanticIdListElement"];
+            Reference? theSemanticIdListElement = null;
+            if (nodeSemanticIdListElement != null)
+            {
+                theSemanticIdListElement = Jsonization.Deserialize.ReferenceFrom(nodeSemanticIdListElement);
+                if (theSemanticIdListElement == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theSemanticIdListElement null when error is also null");
+                }
+            }
+
+            JsonNode? nodeTypeValueListElement = obj["typeValueListElement"];
+            if (nodeTypeValueListElement == null)
+            {
+                error = new Reporting.Error(
+                    "Required property \"typeValueListElement\" is missing ");
+                return null;
+            }
+            AasSubmodelElements? theTypeValueListElement = Jsonization.Deserialize.AasSubmodelElementsFrom(nodeTypeValueListElement);
+            if (theTypeValueListElement == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Unexpected theTypeValueListElement null when error is also null");
+            }
+
+            JsonNode? nodeValueTypeListElement = obj["valueTypeListElement"];
+            DataTypeDefXsd? theValueTypeListElement = null;
+            if (nodeValueTypeListElement != null)
+            {
+                theValueTypeListElement = Jsonization.Deserialize.DataTypeDefXsdFrom(nodeValueTypeListElement);
+                if (theValueTypeListElement == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected theValueTypeListElement null when error is also null");
+                }
+            }
+
+            return new SubmodelElementList(
+                theTypeValueListElement
+                     ?? throw new System.InvalidOperationException(
+                        "Unexpected null, had to be handled before"),
+                theExtensions,
+                theCategory,
+                theIdShort,
+                theDisplayName,
+                theDescription,
+                theChecksum,
+                theKind,
+                theSemanticId,
+                theSupplementalSemanticIds,
+                theQualifiers,
+                theDataSpecifications,
+                theOrderRelevant,
+                theValue,
+                theSemanticIdListElement,
+                theValueTypeListElement);
+
         }
 
         private static ISubmodelElement SubmodelElementCollectionFrom(JsonNode node, out Reporting.Error error)
@@ -427,6 +851,29 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 theDataSpecifications,
                 theValue);
 
+        }
+
+        private static bool? BoolFrom(
+                JsonNode node,
+                out Reporting.Error? error)
+        {
+            error = null;
+            JsonValue? value = node as JsonValue;
+            if (value == null)
+            {
+                error = new Reporting.Error(
+                    $"Expected a JsonValue, but got {node.GetType()}");
+                return null;
+            }
+            bool ok = value.TryGetValue<bool>(out bool result);
+            if (!ok)
+            {
+                error = new Reporting.Error(
+                    "Expected a boolean, but the conversion failed " +
+                    $"from {value.ToJsonString()}");
+                return null;
+            }
+            return result;
         }
 
         private static string? StringFrom(JsonNode node, out Reporting.Error? error)

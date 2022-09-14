@@ -50,8 +50,25 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                         }
                     case JsonArray jsonArray:
                         {
-                            //This is Multilingual Property
-                            output = CreateMultilanguageProperty(item.Key, jsonArray);
+                            //This is Multilingual Property or SMEList
+                            var decodedSubmodelId = _decoderService.Decode("submodelId", encodedSubmodelIdentifier);
+                            var element = _aasEnvService.GetSubmodelElementByPathSubmodelRepo(decodedSubmodelId, idShortPath, out _);
+                            if (element != null)
+                            {
+                                if (element is MultiLanguageProperty)
+                                {
+                                    output = CreateMultilanguageProperty(item.Key, jsonArray);
+                                }
+                                else if (element is SubmodelElementList smeList)
+                                {
+                                    output = CreateSubmodelElementList(item.Key, jsonArray, smeList, encodedSubmodelIdentifier, idShortPath);
+                                }
+                                else
+                                {
+                                    throw new JsonDeserializationException(item.Key, "Element is not MutlilanguageProperty or SubmodelElementList");
+                                }
+                            }
+
                             break;
                         }
                     case JsonObject jsonObject:
@@ -111,6 +128,88 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 }
 
             }
+
+            return output;
+        }
+
+        private ISubmodelElement CreateSubmodelElementList(string idShort, JsonArray jsonArray, SubmodelElementList smeList, string encodedSubmodelIdentifier, string idShortPath)
+        {
+            var smeListType = smeList.TypeValueListElement;
+            var output = new SubmodelElementList(smeListType, idShort: idShort);
+            output.Value = new List<ISubmodelElement>();
+            foreach (var item in jsonArray)
+            {
+                ISubmodelElement submodelElement = null;
+                switch (smeListType)
+                {
+                    case AasSubmodelElements.Property:
+                        {
+                            var value = item as JsonValue;
+                            if (value != null)
+                            {
+                                value.TryGetValue(out string propertyValue);
+                                submodelElement = new Property(DataTypeDefXsd.String, value: propertyValue);
+                            }
+                            break;
+                        }
+                    case AasSubmodelElements.MultiLanguageProperty:
+                        {
+                            var value = item as JsonArray;
+                            if (value != null)
+                            {
+                                submodelElement = CreateMultilanguageProperty("", value);
+                            }
+                            break;
+                        }
+                    case AasSubmodelElements.Range:
+                        {
+                            var value = item as JsonObject;
+                            if (value != null)
+                            {
+                                submodelElement = CreateRange("", value);
+                            }
+                            break;
+                        }
+                    case AasSubmodelElements.File:
+                        {
+                            var value = item as JsonObject;
+                            if (value != null)
+                            {
+                                submodelElement = CreateFile("", value);
+                            }
+                            break;
+                        }
+                    case AasSubmodelElements.Blob:
+                        {
+                            var value = item as JsonObject;
+                            if (value != null)
+                            {
+                                submodelElement = CreateBlob("", value);
+                            }
+                            break;
+                        }
+                    case AasSubmodelElements.AnnotatedRelationshipElement:
+                        {
+                            var value = item as JsonObject;
+                            if (value != null)
+                            {
+                                submodelElement = CreateAnnotedRelationshipElement("", value, encodedSubmodelIdentifier, idShortPath);
+                            }
+                            break;
+                        }
+                    default:
+                        {
+                            break;
+                        }
+                }
+
+                if (submodelElement != null)
+                {
+                    output.Value.Add(submodelElement);
+                }
+            }
+
+
 
             return output;
         }

@@ -116,6 +116,10 @@ namespace AasxServerBlazor.Data
                                                 {
                                                     CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
                                                 }
+                                                if (sme is SubmodelElementList smeList)
+                                                {
+                                                    CreateSMEListItems(smeItem, smeList, i);
+                                                }
                                             }
                                         smItem.Childs = smChilds;
                                         foreach (var c in smChilds)
@@ -136,6 +140,49 @@ namespace AasxServerBlazor.Data
                 }
             }
             viewItems = items;
+        }
+
+        private void CreateSMEListItems(Item smeRootItem, SubmodelElementList smeList, int i)
+        {
+            List<Item> smChilds = new List<Item>();
+            foreach (var s in smeList.Value)
+            {
+                if (s != null && s != null)
+                {
+                    var smeItem = new Item();
+                    smeItem.envIndex = i;
+                    smeItem.Text = s.IdShort;
+                    //smeItem.Type = "In";
+                    smeItem.Tag = s;
+                    smChilds.Add(smeItem);
+                    if (s is SubmodelElementCollection)
+                    {
+                        var smecNext = s as SubmodelElementCollection;
+                        createSMECItems(smeItem, smecNext, i);
+                    }
+                    if (s is Operation)
+                    {
+                        var o = s as Operation;
+                        createOperationItems(smeItem, o, i);
+                    }
+                    if (s is Entity)
+                    {
+                        var e = s as Entity;
+                        createEntityItems(smeItem, e, i);
+                    }
+                    if (s is AnnotatedRelationshipElement annotatedRelationshipElement)
+                    {
+                        CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                    }
+                    if (s is SubmodelElementList childSmeList)
+                    {
+                        CreateSMEListItems(smeItem, childSmeList, i);
+                    }
+                }
+            }
+            smeRootItem.Childs = smChilds;
+            foreach (var c in smChilds)
+                c.parent = smeRootItem;
         }
 
         private void CreateAnnotedRelationshipElementItems(Item smeRootItem, AnnotatedRelationshipElement annotatedRelationshipElement, int i)
@@ -188,6 +235,10 @@ namespace AasxServerBlazor.Data
                     if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
                     {
                         CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                    }
+                    if (sme is SubmodelElementList smeList)
+                    {
+                        CreateSMEListItems(smeItem, smeList, i);
                     }
                 }
             }
@@ -256,6 +307,11 @@ namespace AasxServerBlazor.Data
                     if (s is SubmodelElementCollection collection)
                     {
                         createSMECItems(smeItem, collection, i);
+                    }
+
+                    if (s is SubmodelElementList smeList)
+                    {
+                        CreateSMEListItems(smeItem, smeList, i);
                     }
                 }
             }

@@ -142,7 +142,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 
         public IClass Transform(SubmodelElementList that, UpdateContext context)
         {
-            var source = context.Source as SubmodelElementCollection;
+            var source = context.Source as SubmodelElementList;
             var outputModifierContext = context.OutputModifierContext;
             if (outputModifierContext.Content.Equals("value", StringComparison.OrdinalIgnoreCase))
             {

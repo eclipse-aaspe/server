@@ -36,6 +36,17 @@ namespace IO.Swagger.V1RC03
             return sm;
         }
 
+        public static SubmodelElementList GetSubmodelElementList()
+        {
+            var list = new SubmodelElementList(AasSubmodelElements.Property, idShort: "TestSmeList_Level1");
+            var prop1 = new Property(valueType: DataTypeDefXsd.String, idShort: "TestProp_Level2", value: "TestProp_Level2");
+            var prop2 = new Property(valueType: DataTypeDefXsd.String, idShort: "TestProp2_Level2", value: "TestProp2_Level2");
+            list.Value = new List<ISubmodelElement>();
+            list.Value.Add(prop1);
+            list.Value.Add(prop2);
+            return list;
+        }
+
         internal static void InvokeTestOperation(OperationHandle operationHandle)
         {
             //First invokation
