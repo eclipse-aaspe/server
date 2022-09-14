@@ -26,7 +26,7 @@ namespace IO.Swagger.V1RC03.Controllers
             _decoderService = decoderService;
         }
 
-
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet]
         [Route("/query/{searchQuery}")]
         [ValidateModelState]
@@ -42,6 +42,7 @@ namespace IO.Swagger.V1RC03.Controllers
             return new ObjectResult(result);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost]
         [Route("/query")]
         [ValidateModelState]
@@ -61,6 +62,7 @@ namespace IO.Swagger.V1RC03.Controllers
             return new ObjectResult(result);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet]
         [Route("/queryregistry/{searchQuery}")]
         [ValidateModelState]
@@ -116,6 +118,7 @@ namespace IO.Swagger.V1RC03.Controllers
             return new ObjectResult(result);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost]
         [Route("/queryregistry")]
         [ValidateModelState]
