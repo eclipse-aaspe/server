@@ -4466,6 +4466,8 @@ namespace AasxRestServerLibrary
                                         {
                                             role = getValue(env, smc6?.value[0].submodelElement);
                                         }
+                                        if (role == null)
+                                            continue;
                                         smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permissionsPerObject");
                                         var smc7 = smc6?.value[0].submodelElement as AdminShell.SubmodelElementCollection;
                                         var objProp = smc7?.value.FindFirstIdShortAs<AdminShell.Property>("object");
@@ -4475,8 +4477,11 @@ namespace AasxRestServerLibrary
                                         {
                                             aasObject = env.AasEnv.FindReferableByReference(objRef.value);
                                         }
+                                        if (objProp == null && aasObject == null)
+                                            continue;
                                         var smc8 = smc7?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permission");
-
+                                        if (smc8 == null)
+                                            continue;
                                         int countSmc8 = smc8.value.Count;
                                         List<string> listPermission = new List<string>();
                                         AdminShell.Property kind = null;
@@ -4495,23 +4500,35 @@ namespace AasxRestServerLibrary
                                                 listPermission.Add(p.idShort);
                                             }
                                         }
+                                        smc8 = smc7?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("targetObjectAttributes");
+                                        if (smc8 == null)
+                                            continue;
+                                        countSmc8 = smc8.value.Count;
+                                        List<string> listAttributes = new List<string>();
+                                        for (int iSmc8 = 0; iSmc8 < countSmc8; iSmc8++)
+                                        {
+                                            var sme9 = smc8.value[iSmc8].submodelElement;
+                                            if (sme9 is AdminShell.Property)
+                                                listAttributes.Add(sme9.idShort);
+                                        }
 
                                         string[] split = null;
                                         foreach (var l in listPermission)
                                         {
-                                            foreach (var r in role)
+                                            // foreach (var r in role)
+                                            var r = role;
                                             {
                                                 securityRoleClass src = new securityRoleClass();
-                                                if (r.idShort.Contains(":"))
+                                                if (r.Contains(":"))
                                                 {
-                                                    split = r.idShort.Split(':');
+                                                    split = r.Split(':');
                                                     src.condition = split[0].ToLower();
                                                     src.name = split[1];
                                                 }
                                                 else
                                                 {
                                                     src.condition = "";
-                                                    src.name = r.idShort;
+                                                    src.name = r;
                                                 }
                                                 if (objProp != null)
                                                 {
@@ -4556,6 +4573,10 @@ namespace AasxRestServerLibrary
                                                 src.permission = l.ToUpper();
                                                 if (kind != null)
                                                     src.kind = kind.value.ToLower();
+                                                foreach (var a in listAttributes)
+                                                {
+                                                    src.attributeNames.Add(a);
+                                                }
                                                 securityRole.Add(src);
                                             }
                                         }
