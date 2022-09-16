@@ -3067,11 +3067,11 @@ namespace AasxRestServerLibrary
 
             if (!error)
             {
-                int userCount = securityUserName.Count;
+                int userCount = securityUserPassword.Count;
 
                 for (int i = 0; i < userCount; i++)
                 {
-                    if (user == securityUserName[i] && password == securityUserPassword[i])
+                    if (user == securityUserPassword[i].user && password == securityUserPassword[i].password)
                     {
                         userFound = true;
                         break;
@@ -3597,11 +3597,11 @@ namespace AasxRestServerLibrary
                             string username = credentials[0];
                             string password = credentials[1];
 
-                            int userCount = securityUserName.Count;
+                            int userCount = securityUserPassword.Count;
 
                             for (int i = 0; i < userCount; i++)
                             {
-                                if (username == securityUserName[i] && password == securityUserPassword[i])
+                                if (username == securityUserPassword[i].user && password == securityUserPassword[i].password)
                                 {
                                     user = username;
                                     break;
@@ -4053,8 +4053,16 @@ namespace AasxRestServerLibrary
             SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
         }
 
-        public static List<string> securityUserName = new List<string>();
-        public static List<string> securityUserPassword = new List<string>();
+        public class securityUserPasswordClass
+        {
+            public string user = null;
+            public string password = null;
+            public string role = null;
+            public List<string> attributeNames = new List<string>();
+            public List<string> attributeValues = new List<string>();
+        }
+        public static List<securityUserPasswordClass> securityUserPassword = new List<securityUserPasswordClass>();
+        public static List<string> securityRoles = new List<string>();
 
         public static string[] serverCertfileNames = null;
         public static X509Certificate2[] serverCerts = null;
@@ -4079,10 +4087,36 @@ namespace AasxRestServerLibrary
             public string objPath = "";
             public string permission = null;
             public string kind = null;
+            public List<string> attributeNames = new List<string>();
             public securityRoleClass() { }
         }
         public static List<securityRoleClass> securityRole = null;
 
+        public class securitySettingsForObjectClass
+        {
+            public string attributeName = null;
+            public string attributeValue = null;
+        }
+        public static Dictionary<object, securitySettingsForObjectClass> securitySettingsForObject = new Dictionary<object, securitySettingsForObjectClass>();
+
+        private static string getValue(AdminShellPackageEnv env, AdminShell.SubmodelElement se)
+        {
+            string value = null;
+            if (se is AdminShell.Property p)
+            {
+                value = p.value;
+            }
+            if (se is AdminShell.ReferenceElement r)
+            {
+                var refer = env.AasEnv.FindReferableByReference(r.value);
+                if (refer != null && refer is AdminShell.Property p1)
+                {
+                    value = p1.value;
+                }
+            }
+
+            return value;
+        }
         public static void securityInit()
         {
             withAuthentification = !Program.noSecurity;
@@ -4107,6 +4141,29 @@ namespace AasxRestServerLibrary
                                 if (!sm.idShort.ToLower().Contains("Security"))
                                 {
                                     sm.SetAllParents();
+                                }
+                                if (sm.idShort == "SecuritySettingsForObject")
+                                {
+                                    int countSme = sm.submodelElements.Count;
+                                    for (int iSme = 0; iSme < countSme; iSme++)
+                                    {
+                                        var sme = sm.submodelElements[iSme].submodelElement;
+                                        if (sme is AdminShell.SubmodelElementCollection smec && smec.idShort == "attributes")
+                                        {
+                                            int countSmec = smec.value.Count;
+                                            for (int iSmec = 0; iSmec < countSmec; iSmec++)
+                                            {
+                                                var sme2 = smec.value[iSmec].submodelElement;
+                                                if (sme2 is AdminShell.Property p)
+                                                {
+                                                    var sfo = new securitySettingsForObjectClass();
+                                                    sfo.attributeName = p.idShort;
+                                                    sfo.attributeValue = p.value;
+                                                    securitySettingsForObject.Add(aas, sfo);
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4202,7 +4259,7 @@ namespace AasxRestServerLibrary
                                                                     {
                                                                         securityRightsClass sr = new securityRightsClass();
                                                                         sr.name = s;
-                                                                        sr.role = p.idShort;
+                                                                        sr.role = p.value;
                                                                         securityRights.Add(sr);
                                                                     }
                                                                 }
@@ -4216,8 +4273,54 @@ namespace AasxRestServerLibrary
                                                 {
                                                     if (smec.value[iSmec].submodelElement is AdminShell.Property p)
                                                     {
-                                                        securityUserName.Add(p.idShort);
-                                                        securityUserPassword.Add(p.value);
+                                                        var sun = new securityUserPasswordClass();
+                                                        sun.user = p.idShort;
+                                                        sun.password = p.value;
+                                                        securityUserPassword.Add(sun);
+                                                    }
+                                                }
+                                                break;
+                                            case "subjects":
+                                                for (int iSmec = 0; iSmec < countSmec; iSmec++)
+                                                {
+                                                    if (smec.value[iSmec].submodelElement is AdminShell.SubmodelElementCollection subject)
+                                                    {
+                                                        var sun = new securityUserPasswordClass();
+                                                        int countSubjects = subject.value.Count;
+                                                        for (int iSubj = 0; iSubj < countSubjects; iSubj++)
+                                                        {
+                                                            var se = subject.value[iSubj].submodelElement;
+                                                            string idshort = se.idShort;
+                                                            string value = getValue(env, se);
+                                                            switch (idshort)
+                                                            {
+                                                                case "user":
+                                                                    sun.user = value;
+                                                                    break;
+                                                                case "password":
+                                                                    sun.password = value;
+                                                                    break;
+                                                                case "role":
+                                                                    sun.role = value;
+                                                                    break;
+                                                                case "attributes":
+                                                                    if (se is AdminShell.SubmodelElementCollection sec && sec.idShort == "attributes")
+                                                                    {
+                                                                        int countSec = sec.value.Count;
+                                                                        for (int iSec = 0; iSec < countSec; iSec++)
+                                                                        {
+                                                                            var sme2 = sec.value[iSec].submodelElement;
+                                                                            if (sme2 is AdminShell.Property p2)
+                                                                            {
+                                                                                sun.attributeNames.Add(p2.idShort);
+                                                                                sun.attributeValues.Add(p2.value);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    break;
+                                                            }
+                                                        }
+                                                        securityUserPassword.Add(sun);
                                                     }
                                                 }
                                                 break;
@@ -4245,8 +4348,123 @@ namespace AasxRestServerLibrary
                                             if (smc6?.value[iRole].submodelElement is AdminShell.Property rp)
                                             {
                                                 role.Add(rp);
-                                                iRole++;
                                             }
+                                            iRole++;
+                                        }
+                                        smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permissionsPerObject");
+                                        var smc7 = smc6?.value[0].submodelElement as AdminShell.SubmodelElementCollection;
+                                        var objProp = smc7?.value.FindFirstIdShortAs<AdminShell.Property>("object");
+                                        var objRef = smc7?.value.FindFirstIdShortAs<AdminShell.ReferenceElement>("object");
+                                        object aasObject = null;
+                                        if (objRef != null)
+                                        {
+                                            aasObject = env.AasEnv.FindReferableByReference(objRef.value);
+                                        }
+                                        var smc8 = smc7?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permission");
+
+                                        int countSmc8 = smc8.value.Count;
+                                        List<string> listPermission = new List<string>();
+                                        AdminShell.Property kind = null;
+                                        for (int iSmc8 = 0; iSmc8 < countSmc8; iSmc8++)
+                                        {
+                                            var sme9 = smc8.value[iSmc8].submodelElement;
+                                            if (sme9 is AdminShell.Property)
+                                                kind = sme9 as AdminShell.Property;
+                                            if (sme9 is AdminShell.ReferenceElement)
+                                            {
+                                                var refer = sme9 as AdminShell.ReferenceElement;
+                                                var permission = env.AasEnv.FindReferableByReference(refer.value);
+                                                if (!(permission is AdminShell.Property))
+                                                    continue;
+                                                var p = permission as AdminShell.Property;
+                                                listPermission.Add(p.idShort);
+                                            }
+                                        }
+
+                                        string[] split = null;
+                                        foreach (var l in listPermission)
+                                        {
+                                            foreach (var r in role)
+                                            {
+                                                securityRoleClass src = new securityRoleClass();
+                                                if (r.idShort.Contains(":"))
+                                                {
+                                                    split = r.idShort.Split(':');
+                                                    src.condition = split[0].ToLower();
+                                                    src.name = split[1];
+                                                }
+                                                else
+                                                {
+                                                    src.condition = "";
+                                                    src.name = r.idShort;
+                                                }
+                                                if (objProp != null)
+                                                {
+                                                    string value = objProp.value.ToLower();
+                                                    src.objType = value;
+                                                    if (value.Contains("api"))
+                                                    {
+                                                        split = value.Split(':');
+                                                        if (split[0] == "api")
+                                                        {
+                                                            src.objType = split[0];
+                                                            src.apiOperation = split[1];
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (aasObject != null)
+                                                    {
+                                                        src.objReference = aasObject;
+                                                        if (aasObject is AdminShell.AdministrationShell)
+                                                            src.objType = "aas";
+                                                        if (aasObject is AdminShell.Submodel)
+                                                        {
+                                                            src.objType = "sm";
+                                                            src.objPath = (aasObject as AdminShell.Submodel).idShort;
+                                                        }
+                                                        if (aasObject is AdminShell.SubmodelElement smep)
+                                                        {
+                                                            AdminShell.Referable rp = smep;
+                                                            src.objType = "submodelElement";
+                                                            string path = rp.idShort;
+                                                            while (rp.parent != null)
+                                                            {
+                                                                rp = rp.parent;
+                                                                path = rp.idShort + "." + path;
+                                                            }
+                                                            src.objPath = path;
+                                                        }
+                                                    }
+                                                }
+                                                src.permission = l.ToUpper();
+                                                if (kind != null)
+                                                    src.kind = kind.value.ToLower();
+                                                securityRole.Add(src);
+                                            }
+                                        }
+                                        continue;
+                                    }
+                                }
+                                if (sm.idShort == "SecurityMetaModelForServerV2")
+                                {
+                                    var smc1 = sm.submodelElements.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("accessControlPolicyPoints");
+                                    var smc2 = smc1?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("policyAdministrationPoint");
+                                    var smc3 = smc2?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("localAccessControl");
+                                    var smc4 = smc3?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("accessPermissionRules");
+                                    if (smc4 == null) continue;
+
+                                    int countSme = smc4.value.Count;
+                                    for (int iSme = 0; iSme < countSme; iSme++)
+                                    {
+                                        var sme = smc4.value[iSme].submodelElement; // actual rule
+                                        var smc5 = sme as AdminShell.SubmodelElementCollection;
+                                        var smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("targetSubjectAttributes");
+                                        string role = null;
+                                        if (smc6?.value.Count == 1)
+                                        {
+                                            role = getValue(env, smc6?.value[0].submodelElement);
                                         }
                                         smc6 = smc5?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("permissionsPerObject");
                                         var smc7 = smc6?.value[0].submodelElement as AdminShell.SubmodelElementCollection;
@@ -4355,6 +4573,7 @@ namespace AasxRestServerLibrary
         {
             return;
 
+            /*
             if (Directory.Exists("./authservercerts"))
             {
                 serverCertfileNames = Directory.GetFiles("./authservercerts", "*.cer");
@@ -4367,6 +4586,7 @@ namespace AasxRestServerLibrary
                     Console.WriteLine("Loaded auth server certifcate: " + Path.GetFileName(serverCertfileNames[i]));
                 }
             }
+            */
         }
 
         public static X509Certificate2 serverCertFind(string authServerName)
