@@ -27,6 +27,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -1924,7 +1925,7 @@ namespace AasxRestServerLibrary
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodels", "READ"))
+                if (!checkAccessRights(context, accessrights, "/submodels", "READ", aasid))
                 {
                     return;
                 }
@@ -3413,23 +3414,101 @@ namespace AasxRestServerLibrary
                 " objPath = " + objPath
                 );
 
+            string crole = currentRole;
+            List<string> attributeNames = new List<string>();
+            List<string> attributeValues = new List<string>();
+            if (currentRole.Contains(" "))
+            {
+                string[] split = currentRole.Split(' ');
+                crole = split[0];
+                for (int i = 1; i < split.Length; i++)
+                {
+                    string[] attributeSplit = split[i].Split(':');
+                    attributeNames.Add(attributeSplit[0]);
+                    attributeValues.Add(attributeSplit[1]);
+                }
+
+                switch (operation)
+                {
+                    case "/submodels":
+                        aasOrSubmodel = "aas";
+                        foreach (var soc in securitySettingsForObject)
+                        {
+                            if (soc.Key is AdminShell.AdministrationShell aas)
+                            {
+                                if (aas.idShort == objPath)
+                                    objectAasOrSubmodel = aas;
+                            }
+                        }
+                        break;
+                }
+            }
+
             int iRole = 0;
             while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
             {
-                if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas" &&
-                    objectAasOrSubmodel != null && securityRole[iRole].objReference == objectAasOrSubmodel &&
-                    securityRole[iRole].permission == neededRights)
+                if (securityRole[iRole].attributeNames != null && securityRole[iRole].attributeNames.Count != 0)
                 {
-                    if ((securityRole[iRole].condition == "" && securityRole[iRole].name == currentRole) ||
-                        (securityRole[iRole].condition == "not" && securityRole[iRole].name != currentRole))
+                    int found = 0;
+                    foreach (string attribute in securityRole[iRole].attributeNames)
                     {
-                        if (securityRole[iRole].kind == "allow")
-                            return true;
-                        if (securityRole[iRole].kind == "deny")
-                            return false;
+                        if (attributeNames.Contains(attribute))
+                        {
+                            found++;
+                        }
+                    }
+                    if (!(found == securityRole[iRole].attributeNames.Count))
+                    {
+                        iRole++;
+                        continue;
                     }
                 }
-                if (securityRole[iRole].name == currentRole && securityRole[iRole].objType == "api" &&
+
+                if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas" &&
+                    objectAasOrSubmodel != null &&
+                    securityRole[iRole].permission == neededRights)
+                {
+                    bool valid = false;
+
+                    if (securityRole[iRole].objReference != null &&
+                        securityRole[iRole].objReference == objectAasOrSubmodel)
+                            valid = true;
+
+                    if (securityRole[iRole].objReference == null
+                        && securityRole[iRole].attributeNames != null
+                        && securityRole[iRole].attributeNames.Count != 0)
+                    {
+                        foreach (var soc in securitySettingsForObject)
+                        {
+                            if (soc.Key != objectAasOrSubmodel)
+                                continue;
+                            for (int i = 0; i < attributeNames.Count; i++)
+                            {
+                                if (attributeNames[i] == soc.Value.attributeName)
+                                {
+                                    if (attributeValues[i] == "*" ||
+                                            attributeValues[i] == soc.Value.attributeValue)
+                                    {
+                                        valid = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (valid)
+                    {
+                        if ((securityRole[iRole].condition == "" && securityRole[iRole].name == crole) ||
+                            (securityRole[iRole].condition == "not" && securityRole[iRole].name != crole))
+                        {
+                            if (securityRole[iRole].kind == "allow")
+                                return true;
+                            if (securityRole[iRole].kind == "deny")
+                                return false;
+                        }
+                    }
+                }
+                if (securityRole[iRole].name == crole && securityRole[iRole].objType == "api" &&
                     securityRole[iRole].permission == neededRights)
                 {
                     if (securityRole[iRole].apiOperation == "*" || securityRole[iRole].apiOperation == operation)
@@ -3539,6 +3618,7 @@ namespace AasxRestServerLibrary
             string random = null;
             string bearerToken = null;
             string user = null;
+            int userIndex = -1;
 
             index = -1; // not found
 
@@ -3604,6 +3684,7 @@ namespace AasxRestServerLibrary
                                 if (username == securityUserPassword[i].user && password == securityUserPassword[i].password)
                                 {
                                     user = username;
+                                    userIndex = i;
                                     break;
                                 }
                             }
@@ -3618,7 +3699,22 @@ namespace AasxRestServerLibrary
                 if (split != null && split.Length > 1 && split[1] != null)
                 {
                     Console.WriteLine("Received query string = " + split[1]);
-                    bearerToken = split[1];
+                    // bearerToken = split[1];
+                    var credentials = split[1].Split(new[] { ':' }, 2);
+                    string username = credentials[0];
+                    string password = credentials[1];
+
+                    int userCount = securityUserPassword.Count;
+
+                    for (int i = 0; i < userCount; i++)
+                    {
+                        if (username == securityUserPassword[i].user && password == securityUserPassword[i].password)
+                        {
+                            user = username;
+                            userIndex = i;
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -3735,6 +3831,17 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
+                }
+
+                if (userIndex != -1)
+                {
+                    accessrights = securityUserPassword[userIndex].role;
+                    for (int i = 0; i < securityUserPassword[userIndex].attributeNames.Count; i++)
+                    {
+                        accessrights += " " + securityUserPassword[userIndex].attributeNames[i]
+                            + ":" + securityUserPassword[userIndex].attributeValues[i];
+                    }
+                    return accessrights;
                 }
 
                 return accessrights;
