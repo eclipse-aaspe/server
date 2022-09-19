@@ -1712,25 +1712,25 @@ namespace AasxRestServerLibrary
             dynamic res1 = new ExpandoObject();
             int index = -1;
 
-            // check authentication
-            if (withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/submodels", "READ"))
-                {
-                    return;
-                }
-
-                res1.confirm = "Authorization = " + accessrights;
-            }
-
             // access the AAS
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             if (findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
+            }
+
+            // check authentication
+            if (withAuthentification)
+            {
+                string accessrights = SecurityCheck(context, ref index);
+
+                if (!checkAccessRights(context, accessrights, "/submodels", "READ", "", "submodel", findAasReturn.aas))
+                {
+                    return;
+                }
+
+                res1.confirm = "Authorization = " + accessrights;
             }
 
             // build a list of results
@@ -1920,12 +1920,20 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
+            // access the AAS
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                return;
+            }
+
             // check authentication
             if (withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodels", "READ", aasid))
+                if (!checkAccessRights(context, accessrights, "/submodels", "READ", aasid, "submodel", findAasReturn.aas))
                 {
                     return;
                 }
@@ -3428,6 +3436,7 @@ namespace AasxRestServerLibrary
                     attributeValues.Add(attributeSplit[1]);
                 }
 
+                /*
                 switch (operation)
                 {
                     case "/submodels":
@@ -3442,6 +3451,7 @@ namespace AasxRestServerLibrary
                         }
                         break;
                 }
+                */
             }
 
             int iRole = 0;
@@ -3464,7 +3474,8 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas" &&
+                if ((aasOrSubmodel == "aas" || aasOrSubmodel == "submodel") &&
+                    securityRole[iRole].objType == "aas" &&
                     objectAasOrSubmodel != null &&
                     securityRole[iRole].permission == neededRights)
                 {
@@ -3490,6 +3501,7 @@ namespace AasxRestServerLibrary
                                             attributeValues[i] == soc.Value.attributeValue)
                                     {
                                         valid = true;
+                                        break;
                                     }
                                 }
                             }
@@ -3658,6 +3670,7 @@ namespace AasxRestServerLibrary
 
             // Check bearer token
             token = context.Request.Headers.Get("Authorization");
+            // token = "basic user:password";
             if (token != null)
             {
                 split = token.Split(new Char[] { ' ', '\t' });
@@ -3674,6 +3687,7 @@ namespace AasxRestServerLibrary
                         {
                             var credentialBytes = Convert.FromBase64String(split[1]);
                             var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+                            // var credentials = split[1].Split(new[] { ':' }, 2); // basic user:password
                             string username = credentials[0];
                             string password = credentials[1];
 
