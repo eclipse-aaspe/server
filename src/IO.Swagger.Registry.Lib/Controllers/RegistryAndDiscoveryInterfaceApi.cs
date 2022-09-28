@@ -458,6 +458,24 @@ namespace IO.Swagger.Registry.Controllers
                                 sd.SemanticId = gr;
                             }
                         }
+                        // add searchData for registry
+                        foreach (var se in sm.submodelElements)
+                        {
+                            var sme = se.submodelElement;
+                            if (sme.qualifiers != null && sme.qualifiers.Count != 0)
+                            {
+                                if (sme.qualifiers[0].type == "searchTag")
+                                {
+                                    if (sd.SearchTag == null)
+                                        sd.SearchTag = new List<string>();
+                                    string tag = sme.idShort;
+                                    if (sme is AdminShell.Property p)
+                                        if (p.value != "")
+                                            tag += "=" + p.value;
+                                    sd.SearchTag.Add(tag);
+                                }
+                            }
+                        }
                         ad.SubmodelDescriptors.Add(sd);
                         if (sm.IdShort.ToLower() == "nameplate")
                         {

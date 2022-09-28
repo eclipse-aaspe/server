@@ -938,6 +938,11 @@
             Gets or Sets SemanticId
             </summary>
         </member>
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.SearchTag">
+            <summary>
+            Gets or Sets SearchData
+            </summary>
+        </member>
         <member name="M:IO.Swagger.Registry.Models.SubmodelDescriptor.ToString">
             <summary>
             Returns the string presentation of the object
