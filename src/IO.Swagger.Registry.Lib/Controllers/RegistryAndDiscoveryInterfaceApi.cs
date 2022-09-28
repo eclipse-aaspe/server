@@ -630,6 +630,7 @@ namespace IO.Swagger.Registry.Controllers
             p.Value = JsonConvert.SerializeObject(ad);
             c.Value.Add(p);
             // iterate submodels
+            int searchTagCount = 0;
             foreach (var sd in ad.SubmodelDescriptors)
             {
                 if (sd.IdShort == "NameplateVC")
@@ -642,6 +643,18 @@ namespace IO.Swagger.Registry.Controllers
                         p.TimeStamp = timestamp;
                         p.Value = ep;
                         c.Value.Add(p);
+                    }
+                }
+                if (sd.SearchTag != null && sd.SearchTag.Count != 0)
+                {
+                    foreach (var tag in sd.SearchTag)
+                    {
+                        searchTagCount++;
+                        p = AdminShell.Property.CreateNew("searchTag" + searchTagCount);
+                        p.TimeStampCreate = timestamp;
+                        p.TimeStamp = timestamp;
+                        p.value = tag;
+                        c.value.Add(p);
                     }
                 }
             }
