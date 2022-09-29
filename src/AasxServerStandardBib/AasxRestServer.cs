@@ -1526,9 +1526,14 @@ namespace AasxRestServerLibrary
             }
 
             // Contents of SubmodelElements
-
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
+            
+            [RestRoute(
+                HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/((?!fragments)[^/]+)){1,99}?" + 
+                    "(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
+            [RestRoute(
+                HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/((?!fragments)[^/]+)){1,99}?" + 
+                    "(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
+            
             public IHttpContext GetSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo.Replace("submodel/submodelElements", "elements"));
@@ -1640,6 +1645,30 @@ namespace AasxRestServerLibrary
                             elemids.Add(m.Groups[5].Captures[i].ToString());
 
                     helper.EvalDeleteSubmodelElementContents(context, aasid, smid, elemids.ToArray());
+                }
+                return context;
+            }
+
+            // fragment reference
+
+            [RestRoute(
+                HttpMethod = HttpMethod.GET,
+                PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?/fragments/([a-zA-Z0-9]+)/(.*)$")]
+            public IHttpContext GetSubmodelElementFragmentContents(IHttpContext context)
+            {
+                var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
+                if (m.Success && m.Groups.Count >= 7 && m.Groups[5].Captures.Count >= 1)
+                {
+                    var aasid = m.Groups[1].ToString();
+                    var smid = m.Groups[3].ToString();
+                    var elemids = new List<string>();
+                    var fragmentType = m.Groups[6].ToString();
+                    var fragment = m.Groups[7].ToString().TrimEnd(new[] { '/' });
+
+                    for (int i = 0; i < m.Groups[5].Captures.Count; i++)
+                        elemids.Add(m.Groups[5].Captures[i].ToString());
+
+                    helper.EvalGetSubmodelElementFragment(context, aasid, smid, elemids.ToArray(), fragmentType, fragment);
                 }
                 return context;
             }
