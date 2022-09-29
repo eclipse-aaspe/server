@@ -2301,8 +2301,17 @@ namespace AasxRestServerLibrary
                 res.confirm = "Authorization = " + accessrights;
             }
 
+            // access the first AAS
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
+                return;
+            }
+
             // access AAS and Submodel
-            var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            // var sm = this.FindSubmodelWithinAas(aasid, smid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(findAasReturn, smid, context.Request.QueryString, context.Request.RawUrl);
 
             if (sm == null)
             {
@@ -2320,7 +2329,7 @@ namespace AasxRestServerLibrary
             }
 
             // access
-            var packageStream = this.Packages[0].GetLocalStreamFromPackage(smef.value);
+            var packageStream = this.Packages[findAasReturn.iPackage].GetLocalStreamFromPackage(smef.value);
             if (packageStream == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No file contents available in package.");
@@ -2335,9 +2344,18 @@ namespace AasxRestServerLibrary
 
         public void EvalGetSubmodelElementFragment(IHttpContext context, string aasid, string smid, string[] elemids, string fragmentType, string fragment)
         {
+
+            // access the first AAS
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
+                return;
+            }
+
             // access AAS and Submodel
-            var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            var sm = this.FindSubmodelWithinAas(aas, smid, context.Request.QueryString, context.Request.RawUrl);
+            // var aas = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            var sm = this.FindSubmodelWithinAas(findAasReturn, smid, context.Request.QueryString, context.Request.RawUrl);
             if (sm == null)
             {
                 context.Response.SendResponse(
@@ -2358,7 +2376,7 @@ namespace AasxRestServerLibrary
             }
 
             // access
-            var packageStream = this.Packages[0].GetLocalStreamFromPackage(smef.value);
+            var packageStream = this.Packages[findAasReturn.iPackage].GetLocalStreamFromPackage(smef.value);
             if (packageStream == null)
             {
                 context.Response.SendResponse(
