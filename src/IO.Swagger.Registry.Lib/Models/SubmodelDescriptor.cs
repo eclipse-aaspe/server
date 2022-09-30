@@ -67,7 +67,7 @@ namespace IO.Swagger.Registry.Models
         /// </summary>
 
         [DataMember(Name = "searchTag")]
-        public List<String> SearchTag { get; set; }
+        public List<String> federatedElements { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

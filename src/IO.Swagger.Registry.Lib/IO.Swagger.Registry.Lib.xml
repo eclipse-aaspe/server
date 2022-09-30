@@ -938,7 +938,7 @@
             Gets or Sets SemanticId
             </summary>
         </member>
-        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.SearchTag">
+        <member name="P:IO.Swagger.Registry.Models.SubmodelDescriptor.federatedElements">
             <summary>
             Gets or Sets SearchData
             </summary>

@@ -464,15 +464,22 @@ namespace IO.Swagger.Registry.Controllers
                             var sme = se.submodelElement;
                             if (sme.qualifiers != null && sme.qualifiers.Count != 0)
                             {
-                                if (sme.qualifiers[0].type == "searchTag")
+                                if (sme.qualifiers[0].type == "federatedElement")
                                 {
-                                    if (sd.SearchTag == null)
-                                        sd.SearchTag = new List<string>();
+                                    if (sd.federatedElements == null)
+                                        sd.federatedElements = new List<string>();
+                                    string json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
+                                        new JsonSerializerSettings
+                                        {
+                                            NullValueHandling = NullValueHandling.Ignore
+                                        });
+                                    /*
                                     string tag = sme.idShort;
                                     if (sme is AdminShell.Property p)
                                         if (p.value != "")
                                             tag += "=" + p.value;
-                                    sd.SearchTag.Add(tag);
+                                    */
+                                    sd.federatedElements.Add(json);
                                 }
                             }
                         }
@@ -630,7 +637,7 @@ namespace IO.Swagger.Registry.Controllers
             p.Value = JsonConvert.SerializeObject(ad);
             c.Value.Add(p);
             // iterate submodels
-            int searchTagCount = 0;
+            int federatedElementsCount = 0;
             foreach (var sd in ad.SubmodelDescriptors)
             {
                 if (sd.IdShort == "NameplateVC")
@@ -645,16 +652,23 @@ namespace IO.Swagger.Registry.Controllers
                         c.Value.Add(p);
                     }
                 }
-                if (sd.SearchTag != null && sd.SearchTag.Count != 0)
+                if (sd.federatedElements != null && sd.federatedElements.Count != 0)
                 {
-                    foreach (var tag in sd.SearchTag)
+                    var smc = AdminShell.SubmodelElementCollection.CreateNew("federatedElements");
+                    smc.TimeStampCreate = timestamp;
+                    smc.TimeStamp = timestamp;
+                    c.value.Add(smc);
+                    foreach (var fe in sd.federatedElements)
                     {
-                        searchTagCount++;
-                        p = AdminShell.Property.CreateNew("searchTag" + searchTagCount);
-                        p.TimeStampCreate = timestamp;
-                        p.TimeStamp = timestamp;
-                        p.value = tag;
-                        c.value.Add(p);
+                        federatedElementsCount++;
+                        var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(
+                            fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+
+                        // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
+                        sme.TimeStampCreate = timestamp;
+                        sme.TimeStamp = timestamp;
+                        // p.value = fe;
+                        smc.value.Add(sme);
                     }
                 }
             }
