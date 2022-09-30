@@ -87,8 +87,8 @@ namespace AasxTimeSeries
                 if (env != null)
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[0];
-                    AasxCompatibilityModels.AdminShellV20.AdministrationShell aasV2 = new AasxCompatibilityModels.AdminShellV20.AdministrationShell();
-                    aasV2.TimeStampCreate = timeStamp;
+                    //AasxCompatibilityModels.AdministrationShell aasV2 = new AasxCompatibilityModels.AdministrationShell();
+                    //aasV2.TimeStampCreate = timeStamp;
 
                     aas.TimeStampCreate = timeStamp;
                     aas.SetTimeStamp(timeStamp);
@@ -490,20 +490,28 @@ namespace AasxTimeSeries
             string semanticIdKey,
             string smeValue = null) where T : ISubmodelElement
         {
-            var newElem = CreateSubmodelElementIstance(typeof(T));
+            var newElem = CreateSubmodelElementInstance(typeof(T));
             newElem.IdShort = idShort;
             newElem.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, new List<Key>() { new Key(KeyTypes.GlobalReference, semanticIdKey) });
             newElem.SetTimeStamp(timestamp);
             newElem.TimeStampCreate = timestamp;
-            if (smc?.value != null)
-                smc.value.Add(newElem);
-            if (smeValue != null && newElem is AdminShell.Property newP)
-                newP.value = smeValue;
-            if (smeValue != null && newElem is AdminShell.Blob newB)
-                newB.value = smeValue;
-            newElem.qualifiers = new AdminShellV20.QualifierCollection();
-            newElem.hasDataSpecification = new AdminShellV20.HasDataSpecification();
-            return newElem as T;
+            if (smc?.Value != null)
+                smc.Value.Add(newElem);
+            if (smeValue != null && newElem is Property newP)
+                newP.Value = smeValue;
+            if (smeValue != null && newElem is Blob newB)
+                newB.Value = Encoding.ASCII.GetBytes(smeValue);
+            newElem.Qualifiers = new List<Qualifier>();
+            newElem.DataSpecifications = new List<Reference>();
+            return (T)newElem;
+        }
+
+        private static ISubmodelElement CreateSubmodelElementInstance(Type type)
+        {
+            if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
+                return null;
+            var sme = Activator.CreateInstance(type) as ISubmodelElement;
+            return sme;
         }
 
         static public bool AcceptAllCertifications(
@@ -514,7 +522,7 @@ namespace AasxTimeSeries
             return true;
         }
 
-        private static void Sign(AdminShell.SubmodelElementCollection smc, DateTime timestamp)
+        private static void Sign(SubmodelElementCollection smc, DateTime timestamp)
         {
             string certFile = "Andreas_Orzelski_Chain.pfx";
             string certPW = "i40";
@@ -525,29 +533,29 @@ namespace AasxTimeSeries
 
                 var certificate = new X509Certificate2(certFile, certPW);
 
-                AdminShell.SubmodelElementCollection smec = AdminShell.SubmodelElementCollection.CreateNew("signature");
-                smec.setTimeStamp(timestamp);
+                SubmodelElementCollection smec = new SubmodelElementCollection(idShort:"signature");
+                smec.SetTimeStamp(timestamp);
                 smec.TimeStampCreate = timestamp;
-                AdminShell.Property json = AdminShellV20.Property.CreateNew("submodelJson");
-                json.setTimeStamp(timestamp);
+                Property json = new Property(DataTypeDefXsd.String, idShort:"submodelJson");
+                json.SetTimeStamp(timestamp);
                 json.TimeStampCreate = timestamp;
-                AdminShell.Property canonical = AdminShellV20.Property.CreateNew("submodelJsonCanonical");
-                canonical.setTimeStamp(timestamp);
+                Property canonical = new Property(DataTypeDefXsd.String, idShort: "submodelJsonCanonical");
+                canonical.SetTimeStamp(timestamp);
                 canonical.TimeStampCreate = timestamp;
-                AdminShell.Property subject = AdminShellV20.Property.CreateNew("subject");
-                subject.setTimeStamp(timestamp);
+                Property subject = new Property(DataTypeDefXsd.String, idShort:"subject");
+                subject.SetTimeStamp(timestamp);
                 subject.TimeStampCreate = timestamp;
-                AdminShell.SubmodelElementCollection x5c = AdminShell.SubmodelElementCollection.CreateNew("x5c");
-                x5c.setTimeStamp(timestamp);
+                SubmodelElementCollection x5c = new SubmodelElementCollection(idShort:"x5c");
+                x5c.SetTimeStamp(timestamp);
                 x5c.TimeStampCreate = timestamp;
-                AdminShell.Property algorithm = AdminShellV20.Property.CreateNew("algorithm");
-                algorithm.setTimeStamp(timestamp);
+                Property algorithm = new Property(DataTypeDefXsd.String,idShort:"algorithm");
+                algorithm.SetTimeStamp(timestamp);
                 algorithm.TimeStampCreate = timestamp;
-                AdminShell.Property sigT = AdminShellV20.Property.CreateNew("sigT");
-                sigT.setTimeStamp(timestamp);
+                Property sigT = new Property(DataTypeDefXsd.String, idShort: "sigT");
+                sigT.SetTimeStamp(timestamp);
                 sigT.TimeStampCreate = timestamp;
-                AdminShell.Property signature = AdminShellV20.Property.CreateNew("signature");
-                signature.setTimeStamp(timestamp);
+                Property signature = new Property(DataTypeDefXsd.String, idShort: "signature");
+                signature.SetTimeStamp(timestamp);
                 signature.TimeStampCreate = timestamp;
                 smec.Add(json);
                 smec.Add(canonical);
@@ -558,11 +566,11 @@ namespace AasxTimeSeries
                 smec.Add(signature);
                 string s = null;
                 s = JsonConvert.SerializeObject(smc, Formatting.Indented);
-                json.value = s;
+                json.Value = s;
                 JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
                 string result = jsonCanonicalizer.GetEncodedString();
-                canonical.value = result;
-                subject.value = certificate.Subject;
+                canonical.Value = result;
+                subject.Value = certificate.Subject;
 
                 X509Certificate2Collection xc = new X509Certificate2Collection();
                 xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
@@ -570,10 +578,10 @@ namespace AasxTimeSeries
                 for (int j = xc.Count - 1; j >= 0; j--)
                 {
                     Console.WriteLine("Add certificate_" + (j + 1));
-                    AdminShell.Property c = AdminShellV20.Property.CreateNew("certificate_" + (j + 1));
-                    c.setTimeStamp(timestamp);
+                    Property c = new Property(DataTypeDefXsd.String, idShort: "certificate_" + (j + 1));
+                    c.SetTimeStamp(timestamp);
                     c.TimeStampCreate = timestamp;
-                    c.value = Convert.ToBase64String(xc[j].GetRawCertData());
+                    c.Value = Convert.ToBase64String(xc[j].GetRawCertData());
                     x5c.Add(c);
                 }
 
@@ -581,11 +589,11 @@ namespace AasxTimeSeries
                 {
                     using (RSA rsa = certificate.GetRSAPrivateKey())
                     {
-                        algorithm.value = "RS256";
+                        algorithm.Value = "RS256";
                         byte[] data = Encoding.UTF8.GetBytes(result);
                         byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                        signature.value = Convert.ToBase64String(signed);
-                        sigT.value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
+                        signature.Value = Convert.ToBase64String(signed);
+                        sigT.Value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
                     }
                 }
                 // ReSharper disable EmptyGeneralCatchClause
@@ -1035,7 +1043,7 @@ namespace AasxTimeSeries
                                     }
                                     Sign(nextCollection, timeStamp);
                                     tsb.data.Add(nextCollection);
-                                    tsb.data.setTimeStamp(timeStamp);
+                                    tsb.data.SetTimeStamp(timeStamp);
                                     AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
                                         nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                                     tsb.samplesValuesCount = 0;
@@ -1111,7 +1119,7 @@ namespace AasxTimeSeries
                             }
                             Sign(nextCollection, timeStamp);
                             tsb.data.Add(nextCollection);
-                            tsb.data.setTimeStamp(timeStamp);
+                            tsb.data.SetTimeStamp(timeStamp);
                             AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
                                 nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                             tsb.samplesValuesCount = 0;
