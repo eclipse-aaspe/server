@@ -158,7 +158,7 @@ namespace AasxDemonstration
             string smeValue = null) where T : ISubmodelElement
         {
             //var newElem = SubmodelElementWrapper.CreateAdequateType(typeof(T));
-            var newElem = CreateSubmodelElementIstance(typeof(T));
+            var newElem = CreateSubmodelElementInstance(typeof(T));
 
             newElem.IdShort = idShort;
             newElem.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, new List<Key>() { new Key(KeyTypes.GlobalReference, semanticIdKey) });
@@ -176,7 +176,7 @@ namespace AasxDemonstration
             return (T)newElem;
         }
 
-        private static ISubmodelElement CreateSubmodelElementIstance(Type type)
+        private static ISubmodelElement CreateSubmodelElementInstance(Type type)
         {
             if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
                 return null;
