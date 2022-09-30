@@ -301,7 +301,7 @@ namespace AasxTimeSeries
                                                                 tsb.opcNodes = new List<string>();
                                                             tsb.opcNodes.Add(split[1] + "," + split[2]);
                                                             var p = new Property(DataTypeDefXsd.String, idShort: split[0]);
-                                                            //var p = Property.CreateNew(split[0]);
+                                                            //var p = new Property(DataTypeDefXsd.String,idShort:split[0]);
                                                             tsb.samplesProperties.Add(p);
                                                             p.TimeStampCreate = timeStamp;
                                                             p.SetTimeStamp(timeStamp);
@@ -317,7 +317,7 @@ namespace AasxTimeSeries
                                                                 tsb.modbusNodes = new List<string>();
                                                             tsb.modbusNodes.Add(split[1] + "," + split[2] + "," + split[3] + "," + split[4]);
                                                             var p = new Property(DataTypeDefXsd.String, idShort: split[0]);
-                                                            //var p = Property.CreateNew(split[0]);
+                                                            //var p = new Property(DataTypeDefXsd.String,idShort:split[0]);
                                                             tsb.samplesProperties.Add(p);
                                                             p.TimeStampCreate = timeStamp;
                                                             p.SetTimeStamp(timeStamp);
@@ -346,7 +346,7 @@ namespace AasxTimeSeries
 
                                         if (tsb.data != null)
                                         {
-                                            //tsb.latestData = SubmodelElementCollection.CreateNew("latestData");
+                                            //tsb.latestData = new SubmodelElementCollection(idShort:"latestData");
                                             tsb.latestData = new SubmodelElementCollection(idShort: "latestData");
                                             tsb.latestData.SetTimeStamp(timeStamp);
                                             tsb.latestData.TimeStampCreate = timeStamp;
@@ -357,7 +357,7 @@ namespace AasxTimeSeries
                                             if (latestDataProperty == null)
                                             {
                                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "lowDataIndex", value: "0");
-                                                //latestDataProperty = Property.CreateNew("lowDataIndex");
+                                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"lowDataIndex");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.lowDataIndex = latestDataProperty as Property;
@@ -367,7 +367,7 @@ namespace AasxTimeSeries
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("highDataIndex");
                                             if (latestDataProperty == null)
                                             {
-                                                //latestDataProperty = Property.CreateNew("highDataIndex");
+                                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"highDataIndex");
                                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -378,7 +378,7 @@ namespace AasxTimeSeries
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("totalSamples");
                                             if (latestDataProperty == null)
                                             {
-                                                //latestDataProperty = Property.CreateNew("totalSamples");
+                                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"totalSamples");
                                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -389,7 +389,7 @@ namespace AasxTimeSeries
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("timeStamp");
                                             if (latestDataProperty == null)
                                             {
-                                                //latestDataProperty = Property.CreateNew("timeStamp");
+                                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"timeStamp");
                                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -535,29 +535,29 @@ namespace AasxTimeSeries
 
                 using (var certificate = new X509Certificate2(certFile, certPW))
                 {
-                    AdminShell.SubmodelElementCollection smec = AdminShell.SubmodelElementCollection.CreateNew("signature");
-                    smec.setTimeStamp(timestamp);
+                    SubmodelElementCollection smec = new SubmodelElementCollection(idShort:"signature");
+                    smec.SetTimeStamp(timestamp);
                     smec.TimeStampCreate = timestamp;
-                    AdminShell.Property json = AdminShellV20.Property.CreateNew("submodelJson");
-                    json.setTimeStamp(timestamp);
+                    Property json = new Property(DataTypeDefXsd.String,idShort:"submodelJson");
+                    json.SetTimeStamp(timestamp);
                     json.TimeStampCreate = timestamp;
-                    AdminShell.Property canonical = AdminShellV20.Property.CreateNew("submodelJsonCanonical");
-                    canonical.setTimeStamp(timestamp);
+                    Property canonical = new Property(DataTypeDefXsd.String,idShort:"submodelJsonCanonical");
+                    canonical.SetTimeStamp(timestamp);
                     canonical.TimeStampCreate = timestamp;
-                    AdminShell.Property subject = AdminShellV20.Property.CreateNew("subject");
-                    subject.setTimeStamp(timestamp);
+                    Property subject = new Property(DataTypeDefXsd.String,idShort:"subject");
+                    subject.SetTimeStamp(timestamp);
                     subject.TimeStampCreate = timestamp;
-                    AdminShell.SubmodelElementCollection x5c = AdminShell.SubmodelElementCollection.CreateNew("x5c");
-                    x5c.setTimeStamp(timestamp);
+                    SubmodelElementCollection x5c = new SubmodelElementCollection(idShort:"x5c");
+                    x5c.SetTimeStamp(timestamp);
                     x5c.TimeStampCreate = timestamp;
-                    AdminShell.Property algorithm = AdminShellV20.Property.CreateNew("algorithm");
-                    algorithm.setTimeStamp(timestamp);
+                    Property algorithm = new Property(DataTypeDefXsd.String,idShort:"algorithm");
+                    algorithm.SetTimeStamp(timestamp);
                     algorithm.TimeStampCreate = timestamp;
-                    AdminShell.Property sigT = AdminShellV20.Property.CreateNew("sigT");
-                    sigT.setTimeStamp(timestamp);
+                    Property sigT = new Property(DataTypeDefXsd.String,idShort:"sigT");
+                    sigT.SetTimeStamp(timestamp);
                     sigT.TimeStampCreate = timestamp;
-                    AdminShell.Property signature = AdminShellV20.Property.CreateNew("signature");
-                    signature.setTimeStamp(timestamp);
+                    Property signature = new Property(DataTypeDefXsd.String,idShort:"signature");
+                    signature.SetTimeStamp(timestamp);
                     signature.TimeStampCreate = timestamp;
                     smec.Add(json);
                     smec.Add(canonical);
@@ -568,11 +568,11 @@ namespace AasxTimeSeries
                     smec.Add(signature);
                     string s = null;
                     s = JsonConvert.SerializeObject(smc, Formatting.Indented);
-                    json.value = s;
+                    json.Value = s;
                     JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
                     string result = jsonCanonicalizer.GetEncodedString();
-                    canonical.value = result;
-                    subject.value = certificate.Subject;
+                    canonical.Value = result;
+                    subject.Value = certificate.Subject;
 
                     X509Certificate2Collection xc = new X509Certificate2Collection();
                     xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
@@ -580,10 +580,10 @@ namespace AasxTimeSeries
                     for (int j = xc.Count - 1; j >= 0; j--)
                     {
                         Console.WriteLine("Add certificate_" + (j + 1));
-                        AdminShell.Property c = AdminShellV20.Property.CreateNew("certificate_" + (j + 1));
-                        c.setTimeStamp(timestamp);
+                        Property c = new Property(DataTypeDefXsd.String,idShort:"certificate_" + (j + 1));
+                        c.SetTimeStamp(timestamp);
                         c.TimeStampCreate = timestamp;
-                        c.value = Convert.ToBase64String(xc[j].GetRawCertData());
+                        c.Value = Convert.ToBase64String(xc[j].GetRawCertData());
                         x5c.Add(c);
                     }
 
@@ -591,11 +591,11 @@ namespace AasxTimeSeries
                     {
                         using (RSA rsa = certificate.GetRSAPrivateKey())
                         {
-                            algorithm.value = "RS256";
+                            algorithm.Value = "RS256";
                             byte[] data = Encoding.UTF8.GetBytes(result);
                             byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                            signature.value = Convert.ToBase64String(signed);
-                            sigT.value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
+                            signature.Value = Convert.ToBase64String(signed);
+                            sigT.Value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
                         }
                     }
                     // ReSharper disable EmptyGeneralCatchClause
@@ -759,7 +759,7 @@ namespace AasxTimeSeries
                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("lowDataIndex");
                             if (latestDataProperty == null)
                             {
-                                //latestDataProperty = Property.CreateNew("lowDataIndex");
+                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"lowDataIndex");
                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "lowDataIndex", value: "0");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -771,7 +771,7 @@ namespace AasxTimeSeries
                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("highDataIndex");
                             if (latestDataProperty == null)
                             {
-                                //latestDataProperty = Property.CreateNew("highDataIndex");
+                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"highDataIndex");
                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -783,7 +783,7 @@ namespace AasxTimeSeries
                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("totalSamples");
                             if (latestDataProperty == null)
                             {
-                                //latestDataProperty = Property.CreateNew("totalSamples");
+                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"totalSamples");
                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -795,7 +795,7 @@ namespace AasxTimeSeries
                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("timeStamp");
                             if (latestDataProperty == null)
                             {
-                                //latestDataProperty = Property.CreateNew("timeStamp");
+                                //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"timeStamp");
                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
@@ -893,7 +893,7 @@ namespace AasxTimeSeries
                                 latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>(latestDataName);
                                 if (latestDataProperty == null)
                                 {
-                                    //latestDataProperty = Property.CreateNew(latestDataName);
+                                    //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:latestDataName);
                                     latestDataProperty = new Property(DataTypeDefXsd.String, idShort: latestDataName);
                                     latestDataProperty.TimeStampCreate = timeStamp;
                                     string val =
@@ -987,11 +987,11 @@ namespace AasxTimeSeries
                                     }
                                     else
                                     {
-                                        // nextCollection = SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
-                                        //nextCollection = SubmodelElementCollection.CreateNew("data" + tsb.highDataIndex.Value);
+                                        // nextCollection = new SubmodelElementCollection(idShort:"data" + tsb.samplesCollectionsCount++);
+                                        //nextCollection = new SubmodelElementCollection(idShort:"data" + tsb.highDataIndex.Value);
                                         nextCollection = new SubmodelElementCollection(idShort: "data" + tsb.highDataIndex.Value);
                                         var p = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
-                                        //var p = Property.CreateNew("timeStamp");
+                                        //var p = new Property(DataTypeDefXsd.String,idShort:"timeStamp");
                                         p.Value = tsb.samplesTimeStamp;
                                         p.SetTimeStamp(timeStamp);
                                         p.TimeStampCreate = timeStamp;
@@ -1034,7 +1034,7 @@ namespace AasxTimeSeries
                                         }
                                         else
                                         {
-                                            //var p = Property.CreateNew(tsb.samplesProperties[i].IdShort);
+                                            //var p = new Property(DataTypeDefXsd.String,idShort:tsb.samplesProperties[i].IdShort);
                                             var p = new Property(DataTypeDefXsd.String, idShort: tsb.samplesProperties[i].IdShort);
                                             nextCollection.Value.Add(p);
                                             p.Value = tsb.samplesValues[i];
@@ -1099,8 +1099,8 @@ namespace AasxTimeSeries
                             }
                             else
                             {
-                                // nextCollection = SubmodelElementCollection.CreateNew("data" + tsb.samplesCollectionsCount++);
-                                //nextCollection = SubmodelElementCollection.CreateNew("data" + tsb.highDataIndex.Value);
+                                // nextCollection = new SubmodelElementCollection(idShort:"data" + tsb.samplesCollectionsCount++);
+                                //nextCollection = new SubmodelElementCollection(idShort:"data" + tsb.highDataIndex.Value);
                                 nextCollection = new SubmodelElementCollection(idShort: "data" + tsb.highDataIndex.Value);
                                 var p = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                 p.Value = tsb.samplesTimeStamp;
