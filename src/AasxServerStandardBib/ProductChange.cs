@@ -6,7 +6,9 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Xml;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
+using Extenstions;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
@@ -44,8 +46,8 @@ namespace ProductChange
                 Console.WriteLine("Checking Emails for Product Change Notifications: " + timeStamp + "Z");
 
                 AdminShellPackageEnv pcnEnv = null;
-                AdminShell.Submodel pcnSub = null;
-                AdminShell.SubmodelElementCollection imported = null;
+                Submodel pcnSub = null;
+                SubmodelElementCollection imported = null;
                 int aascount = AasxServer.Program.env.Length;
 
                 for (int i = 0; i < aascount; i++)
@@ -53,22 +55,22 @@ namespace ProductChange
                     var env = AasxServer.Program.env[i];
                     if (env != null)
                     {
-                        var aas = env.AasEnv.AdministrationShells[0];
-                        if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                        var aas = env.AasEnv.AssetAdministrationShells[0];
+                        if (aas.Submodels != null && aas.Submodels.Count > 0)
                         {
-                            foreach (var smr in aas.submodelRefs)
+                            foreach (var smr in aas.Submodels)
                             {
                                 var sm = env.AasEnv.FindSubmodel(smr);
-                                if (sm != null && sm.idShort != null && sm.idShort.ToLower().Contains("pcn"))
+                                if (sm != null && sm.IdShort != null && sm.IdShort.ToLower().Contains("pcn"))
                                 {
                                     pcnEnv = env;
                                     pcnSub = sm;
 
-                                    foreach (var sme in sm.submodelElements)
+                                    foreach (var sme in sm.SubmodelElements)
                                     {
-                                        if (sme.submodelElement is AdminShell.SubmodelElementCollection smc)
+                                        if (sme is SubmodelElementCollection smc)
                                         {
-                                            if (smc.idShort == "imported")
+                                            if (smc.IdShort == "imported")
                                             {
                                                 imported = smc;
                                                 break;
@@ -77,7 +79,7 @@ namespace ProductChange
                                     }
                                     if (imported == null)
                                     {
-                                        imported = AdminShell.SubmodelElementCollection.CreateNew("imported");
+                                        imported = new SubmodelElementCollection(idShort:"imported");
                                         sm.Add(imported);
                                     }
                                 }
@@ -99,7 +101,7 @@ namespace ProductChange
                     string username = "";
                     string password = "";
                     string emailFile = "email.txt";
-                    if (File.Exists(emailFile))
+                    if (System.IO.File.Exists(emailFile))
                     {
                         try
                         {   // Open the text file using a stream reader.
@@ -116,7 +118,7 @@ namespace ProductChange
                         }
                     }
 
-                    if (File.Exists(emailFile))
+                    if (System.IO.File.Exists(emailFile))
                     {
                         Console.WriteLine("Read email login data: " + emailFile);
                         try
@@ -196,17 +198,17 @@ namespace ProductChange
                                                     int iFile = fNameUrl.IndexOf("/$File/");
                                                     if (iFile != -1)
                                                     {
-                                                        AdminShell.SubmodelElementCollection c = null;
+                                                        SubmodelElementCollection c = null;
                                                         string fName = fNameUrl.Substring(iFile + "/$File/".Length);
                                                         fName = System.Text.RegularExpressions.Regex.Replace(fName, @"[\\/:*?,""<>|]", string.Empty);
                                                         fName = System.Text.RegularExpressions.Regex.Replace(fName, @" -", "_");
                                                         string name = Path.GetFileNameWithoutExtension(fName);
                                                         bool import = true;
-                                                        foreach (var sme in imported.value)
+                                                        foreach (var sme in imported.Value)
                                                         {
-                                                            if (sme.submodelElement is AdminShell.Property p)
+                                                            if (sme is Property p)
                                                             {
-                                                                if (p.idShort == name)
+                                                                if (p.IdShort == name)
                                                                 {
                                                                     import = false;
                                                                     break;
@@ -217,10 +219,10 @@ namespace ProductChange
                                                         {
                                                             Console.WriteLine("Import: " + name);
                                                             importedCount++;
-                                                            var p = AdminShell.Property.CreateNew(name);
+                                                            var p = new Property(DataTypeDefXsd.String, idShort:name);
                                                             imported.Add(p);
                                                             p.TimeStampCreate = timeStamp;
-                                                            p.setTimeStamp(timeStamp); getTask = httpClient.GetAsync(fNameUrl);
+                                                            p.SetTimeStamp(timeStamp); getTask = httpClient.GetAsync(fNameUrl);
                                                             getTask.Wait(30000);
                                                             if (getTask.Result.IsSuccessStatusCode)
                                                             {
@@ -232,13 +234,13 @@ namespace ProductChange
                                                                 if (pcnEnv != null && pcnSub != null)
                                                                 {
                                                                     pcnEnv.AddSupplementaryFileToStore("./pcn/" + fName, "/aasx", fName, false);
-                                                                    c = AdminShell.SubmodelElementCollection.CreateNew(name);
+                                                                    c = new SubmodelElementCollection(idShort:name);
                                                                     c.TimeStampCreate = timeStamp;
-                                                                    c.setTimeStamp(timeStamp);
-                                                                    var f = AdminShell.File.CreateNew(name);
+                                                                    c.SetTimeStamp(timeStamp);
+                                                                    var f = new AasCore.Aas3_0_RC02.File(contentType:"",idShort:name);
                                                                     f.TimeStampCreate = timeStamp;
-                                                                    f.setTimeStamp(timeStamp);
-                                                                    f.value = "/aasx/" + fName;
+                                                                    f.SetTimeStamp(timeStamp);
+                                                                    f.Value = "/aasx/" + fName;
                                                                     pcnSub.Add(c);
                                                                     c.Add(f);
                                                                 }
@@ -295,8 +297,8 @@ namespace ProductChange
                                                                             { "", "", "", "", "", "", "", "", "", "" };
                                                                         string[] readerValue = new string[10]
                                                                             { "", "", "", "", "", "", "", "", "", "" };
-                                                                        AdminShell.SubmodelElementCollection[] smc =
-                                                                            new AdminShell.SubmodelElementCollection[10]
+                                                                        SubmodelElementCollection[] smc =
+                                                                            new SubmodelElementCollection[10]
                                                                             { null, null, null, null, null, null, null, null, null, null };
                                                                         while (reader != null && reader.Read())
                                                                         {
@@ -308,9 +310,9 @@ namespace ProductChange
                                                                                 case XmlNodeType.Element: // The node is an element.
                                                                                     if (stack >= 0 && smc[stack] == null)
                                                                                     {
-                                                                                        smc[stack] = AdminShell.SubmodelElementCollection.CreateNew(readerName[stack]);
+                                                                                        smc[stack] = new SubmodelElementCollection(idShort: readerName[stack]);
                                                                                         smc[stack].TimeStampCreate = timeStamp;
-                                                                                        smc[stack].setTimeStamp(timeStamp);
+                                                                                        smc[stack].SetTimeStamp(timeStamp);
                                                                                         if (stack == 0)
                                                                                         {
                                                                                             if (c != null)
@@ -335,11 +337,10 @@ namespace ProductChange
                                                                                     {
                                                                                         if (readerName[stack] != "" && readerValue[stack] != "")
                                                                                         {
-                                                                                            var pxml = AdminShell.Property.CreateNew(readerName[stack]);
+                                                                                            var pxml = new Property(DataTypeDefXsd.String, idShort: readerName[stack]);
                                                                                             pxml.TimeStampCreate = timeStamp;
-                                                                                            pxml.setTimeStamp(timeStamp);
-                                                                                            pxml.valueType = "string";
-                                                                                            pxml.value = readerValue[stack];
+                                                                                            pxml.SetTimeStamp(timeStamp);
+                                                                                            pxml.Value = readerValue[stack];
                                                                                             if (stack == 0)
                                                                                             {
                                                                                                 if (c != null)
@@ -412,8 +413,8 @@ namespace ProductChange
             Console.WriteLine("Importing xml files from ./xml to submodel xml");
 
             AdminShellPackageEnv xmlEnv = null;
-            AdminShell.Submodel xmlSub = null;
-            AdminShell.SubmodelElementCollection imported = null;
+            Submodel xmlSub = null;
+            SubmodelElementCollection imported = null;
             int aascount = AasxServer.Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
@@ -421,22 +422,22 @@ namespace ProductChange
                 var env = AasxServer.Program.env[i];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AdministrationShells[0];
-                    if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
-                        foreach (var smr in aas.submodelRefs)
+                        foreach (var smr in aas.Submodels)
                         {
                             var sm = env.AasEnv.FindSubmodel(smr);
-                            if (sm != null && sm.idShort != null && sm.idShort.ToLower().Contains("xml"))
+                            if (sm != null && sm.IdShort != null && sm.IdShort.ToLower().Contains("xml"))
                             {
                                 xmlEnv = env;
                                 xmlSub = sm;
 
-                                foreach (var sme in sm.submodelElements)
+                                foreach (var sme in sm.SubmodelElements)
                                 {
-                                    if (sme.submodelElement is AdminShell.SubmodelElementCollection smc)
+                                    if (sme is SubmodelElementCollection smc)
                                     {
-                                        if (smc.idShort == "imported")
+                                        if (smc.IdShort == "imported")
                                         {
                                             imported = smc;
                                             break;
@@ -445,7 +446,7 @@ namespace ProductChange
                                 }
                                 if (imported == null)
                                 {
-                                    imported = AdminShell.SubmodelElementCollection.CreateNew("imported");
+                                    imported = new SubmodelElementCollection(idShort:"imported");
                                     sm.Add(imported);
                                 }
                             }
@@ -462,13 +463,13 @@ namespace ProductChange
                 foreach (System.IO.FileInfo fi in ParentDirectory.GetFiles("*.xml"))
                 {
                     string name = fi.Name;
-                    var c = AdminShell.SubmodelElementCollection.CreateNew(name.Replace(".", "_"));
+                    var c = new SubmodelElementCollection(idShort:name.Replace(".", "_"));
                     c.TimeStampCreate = timeStamp;
-                    c.setTimeStamp(timeStamp);
+                    c.SetTimeStamp(timeStamp);
                     /*
-                    var f = AdminShell.File.CreateNew(name);
+                    var f = File.CreateNew(name);
                     f.TimeStampCreate = timeStamp;
-                    f.setTimeStamp(timeStamp);
+                    f.SetTimeStamp(timeStamp);
                     f.value = "/aasx/" + name;
                     c.Add(f);
                     */
@@ -478,8 +479,8 @@ namespace ProductChange
                     int stack = -1;
                     string[] readerName = new string[100];
                     string[] readerValue = new string[100];
-                    AdminShell.SubmodelElementCollection[] smc =
-                        new AdminShell.SubmodelElementCollection[100];
+                    SubmodelElementCollection[] smc =
+                        new SubmodelElementCollection[100];
                     while (reader != null && reader.Read())
                     {
                         // if (emptyElements.Contains(reader.Name))
@@ -492,9 +493,9 @@ namespace ProductChange
                                     break;
                                 if (stack >= 0 && smc[stack] == null)
                                 {
-                                    smc[stack] = AdminShell.SubmodelElementCollection.CreateNew(readerName[stack]);
+                                    smc[stack] = new SubmodelElementCollection(idShort: readerName[stack]);
                                     smc[stack].TimeStampCreate = timeStamp;
-                                    smc[stack].setTimeStamp(timeStamp);
+                                    smc[stack].SetTimeStamp(timeStamp);
                                     if (stack == 0)
                                     {
                                         if (c != null)
@@ -511,13 +512,12 @@ namespace ProductChange
                                 {
                                     if (reader.HasAttributes)
                                     {
-                                        smc[stack] = AdminShell.SubmodelElementCollection.CreateNew(reader.Name);
+                                        smc[stack] = new SubmodelElementCollection(idShort:reader.Name);
                                         smc[stack].TimeStampCreate = timeStamp;
-                                        smc[stack].setTimeStamp(timeStamp);
-                                        AdminShell.Qualifier q = new AdminShellV20.Qualifier();
-                                        q.type = "XmlHasAttributes";
-                                        smc[stack].qualifiers = new AdminShellV20.QualifierCollection();
-                                        smc[stack].qualifiers.Add(q);
+                                        smc[stack].SetTimeStamp(timeStamp);
+                                        Qualifier q = new Qualifier("XmlHasAttributes", DataTypeDefXsd.String);
+                                        smc[stack].Qualifiers = new List<Qualifier>();
+                                        smc[stack].Qualifiers.Add(q);
                                         if (stack == 0)
                                         {
                                             if (c != null)
@@ -534,15 +534,13 @@ namespace ProductChange
                                             reader.MoveToAttribute(i);
                                             string n = reader.Name;
                                             string v = reader.Value;
-                                            var p = AdminShell.Property.CreateNew(n);
+                                            var p = new Property(DataTypeDefXsd.String, idShort: n);
                                             p.TimeStampCreate = timeStamp;
-                                            p.setTimeStamp(timeStamp);
-                                            p.valueType = "string";
-                                            p.value = v;
-                                            q = new AdminShellV20.Qualifier();
-                                            q.type = "XmlAttribute";
-                                            p.qualifiers = new AdminShellV20.QualifierCollection();
-                                            p.qualifiers.Add(q);
+                                            p.SetTimeStamp(timeStamp);
+                                            p.Value = v;
+                                            q = new Qualifier("XmlAttribute", DataTypeDefXsd.String);
+                                            p.Qualifiers = new List<Qualifier>();
+                                            p.Qualifiers.Add(q);
                                             if (smc[stack] != null)
                                                 smc[stack].Add(p);
                                         }
@@ -557,13 +555,12 @@ namespace ProductChange
                                 {
                                     if (smc[stack] != null)
                                     {
-                                        string n = smc[stack].idShort;
+                                        string n = smc[stack].IdShort;
                                         string v = reader.Value;
-                                        var p = AdminShell.Property.CreateNew(n);
+                                        var p = new Property(DataTypeDefXsd.String,idShort:n);
                                         p.TimeStampCreate = timeStamp;
-                                        p.setTimeStamp(timeStamp);
-                                        p.valueType = "string";
-                                        p.value = v;
+                                        p.SetTimeStamp(timeStamp);
+                                        p.Value = v;
                                         smc[stack].Add(p);
                                     }
                                     else
@@ -575,11 +572,10 @@ namespace ProductChange
                                 {
                                     if (readerName[stack] != null && readerValue[stack] != null)
                                     {
-                                        var pxml = AdminShell.Property.CreateNew(readerName[stack]);
+                                        var pxml = new Property(DataTypeDefXsd.String, idShort: readerName[stack]);
                                         pxml.TimeStampCreate = timeStamp;
-                                        pxml.setTimeStamp(timeStamp);
-                                        pxml.valueType = "string";
-                                        pxml.value = readerValue[stack];
+                                        pxml.SetTimeStamp(timeStamp);
+                                        pxml.Value = readerValue[stack];
                                         if (stack == 0)
                                         {
                                             if (c != null)

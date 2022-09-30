@@ -1376,7 +1376,7 @@
             {
                 ret += " #" + sme.Value.Count;
             }
-            if (sme.qualifiers != null && sme.qualifiers.Count > 0)
+            if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
             {
                 ret += " @QUALIFIERS";
             }
@@ -1567,7 +1567,7 @@
                     }
                     break;
                 case 2:
-                    ret = getQualifiers(sm.qualifiers, col);
+                    ret = getQualifiers(sm.Qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1615,7 +1615,7 @@
                         ret = prop.Value + "";
                     break;
                 case 3:
-                    ret = getQualifiers(prop.qualifiers, col);
+                    ret = getQualifiers(prop.Qualifiers, col);
                     break;
                 case 4:
                     if (col == 0)
@@ -1691,7 +1691,7 @@
                     }
                     break;
                 case 3:
-                    ret = getQualifiers(e.qualifiers, col);
+                    ret = getQualifiers(e.Qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1730,7 +1730,7 @@
                         ret = f.Value;
                     break;
                 case 2:
-                    ret = getQualifiers(f.qualifiers, col);
+                    ret = getQualifiers(f.Qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -1776,7 +1776,7 @@
                         ret = System.Text.Encoding.ASCII.GetString(b.Value);
                     break;
                 case 3:
-                    ret = getQualifiers(b.qualifiers, col);
+                    ret = getQualifiers(b.Qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -1822,7 +1822,7 @@
                         ret = r.Max + "";
                     break;
                 case 3:
-                    ret = getQualifiers(r.qualifiers, col);
+                    ret = getQualifiers(r.Qualifiers, col);
                     break;
                 case 4:
                     if (col == 0)
@@ -1883,7 +1883,7 @@
                     }
                     break;
                 case 3:
-                    ret = getQualifiers(op.qualifiers, col);
+                    ret = getQualifiers(op.Qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -2003,7 +2003,7 @@
                     }
                     break;
                 case 3:
-                    ret = getQualifiers(r.qualifiers, col);
+                    ret = getQualifiers(r.Qualifiers, col);
                     break;
                 case 4:
                 case 5:
@@ -2053,7 +2053,7 @@
                     }
                     break;
                 case 2:
-                    ret = getQualifiers(r.qualifiers, col);
+                    ret = getQualifiers(r.Qualifiers, col);
                     break;
                 case 3:
                 case 4:
@@ -2105,7 +2105,7 @@
                     }
                     break;
                 case 5:
-                    ret = getQualifiers(mlp.qualifiers, col);
+                    ret = getQualifiers(mlp.Qualifiers, col);
                     break;
                 case 6:
                 case 7:
@@ -2137,7 +2137,7 @@
                     }
                     break;
                 case 1:
-                    ret = getQualifiers(sme.qualifiers, col);
+                    ret = getQualifiers(sme.Qualifiers, col);
                     break;
                 case 2:
                 case 3:
@@ -2171,13 +2171,13 @@
                 {
                     if (i != 0)
                         ret += ", ";
-                    if (q[i].type != null && q[i].type != "")
+                    if (q[i].Type != null && q[i].Type != "")
                     {
-                        ret += q[i].type + " ";
+                        ret += q[i].Type + " ";
                     }
-                    if (q[i].value != null && q[i].value != "")
+                    if (q[i].Value != null && q[i].Value != "")
                     {
-                        ret += "= " + q[i].value;
+                        ret += "= " + q[i].Value;
                     }
                 }
             }
