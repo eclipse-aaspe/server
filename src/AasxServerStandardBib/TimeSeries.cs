@@ -506,6 +506,14 @@ namespace AasxTimeSeries
             return (T)newElem;
         }
 
+        private static ISubmodelElement CreateSubmodelElementInstance(Type type)
+        {
+            if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
+                return null;
+            var sme = Activator.CreateInstance(type) as ISubmodelElement;
+            return sme;
+        }
+
         /*
         static public bool AcceptAllCertifications(
             object sender, System.Security.Cryptography.X509Certificates.X509Certificate certification,
@@ -533,8 +541,8 @@ namespace AasxTimeSeries
                     if (certificate == null)
                         return;
 
-                    AdminShell.SubmodelElementCollection smec = AdminShell.SubmodelElementCollection.CreateNew("signature");
-                    smec.setTimeStamp(timestamp);
+                    SubmodelElementCollection smec = new SubmodelElementCollection(idShort: "signature");
+                    smec.SetTimeStamp(timestamp);
                     smec.TimeStampCreate = timestamp;
                     Property json = new Property(DataTypeDefXsd.String,idShort:"submodelJson");
                     json.SetTimeStamp(timestamp);
@@ -595,7 +603,7 @@ namespace AasxTimeSeries
                             if (rsa == null)
                                 return;
 
-                            algorithm.value = "RS256";
+                            algorithm.Value = "RS256";
                             byte[] data = Encoding.UTF8.GetBytes(result);
                             byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                             signature.Value = Convert.ToBase64String(signed);
