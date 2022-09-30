@@ -4011,10 +4011,10 @@ namespace AasxRestServerLibrary
                                             case "basicAuth":
                                                 for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                                 {
-                                                    if (smec.value[iSmec].submodelElement is AdminShell.Property p)
+                                                    if (smec.Value[iSmec] is Property p)
                                                     {
-                                                        securityUserName.Add(p.idShort);
-                                                        securityUserPassword.Add(p.value);
+                                                        securityUserName.Add(p.IdShort);
+                                                        securityUserPassword.Add(p.Value);
                                                     }
                                                 }
                                                 break;
