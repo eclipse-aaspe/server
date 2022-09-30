@@ -466,8 +466,8 @@ namespace IO.Swagger.Registry.Controllers
                             {
                                 if (sme.qualifiers[0].type == "federatedElement")
                                 {
-                                    if (sd.federatedElements == null)
-                                        sd.federatedElements = new List<string>();
+                                    if (sd.FederatedElements == null)
+                                        sd.FederatedElements = new List<string>();
                                     string json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
                                         new JsonSerializerSettings
                                         {
@@ -479,7 +479,7 @@ namespace IO.Swagger.Registry.Controllers
                                         if (p.value != "")
                                             tag += "=" + p.value;
                                     */
-                                    sd.federatedElements.Add(json);
+                                    sd.FederatedElements.Add(json);
                                 }
                             }
                         }
@@ -652,13 +652,13 @@ namespace IO.Swagger.Registry.Controllers
                         c.Value.Add(p);
                     }
                 }
-                if (sd.federatedElements != null && sd.federatedElements.Count != 0)
+                if (sd.FederatedElements != null && sd.FederatedElements.Count != 0)
                 {
                     var smc = AdminShell.SubmodelElementCollection.CreateNew("federatedElements");
                     smc.TimeStampCreate = timestamp;
                     smc.TimeStamp = timestamp;
                     c.value.Add(smc);
-                    foreach (var fe in sd.federatedElements)
+                    foreach (var fe in sd.FederatedElements)
                     {
                         federatedElementsCount++;
                         var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(
