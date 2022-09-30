@@ -602,28 +602,12 @@ namespace AasxRestServerLibrary
         }
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
         {
-                var buffer = context.Request.ContentEncoding.GetBytes(json);
-                var length = buffer.Length;
-
-                var queryString = context.Request.QueryString;
-                string refresh = queryString["refresh"];
-                if (refresh != null && refresh != "")
-                {
-                    context.Response.Headers.Remove("Refresh");
-                    context.Response.Headers.Add("Refresh", refresh);
-                }
-
-                AasxRestServer.TestResource.allowCORS(context);
-
-                context.Response.ContentType = ContentType.JSON;
-                context.Response.ContentEncoding = Encoding.UTF8;
-                context.Response.ContentLength64 = length;
-                context.Response.SendResponse(buffer);
-            }
-            catch (Exception ex)
+            var queryString = context.Request.QueryString;
+            string refresh = queryString["refresh"];
+            if (refresh != null && refresh != "")
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                context.Response.Headers.Remove("Refresh");
+                context.Response.Headers.Add("Refresh", refresh);
             }
             string jsonld = queryString["jsonld"];
 
