@@ -13,7 +13,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AasCore.Aas3_0_RC02;
 using AdminShellNS;
+using Extenstions;
 using IdentityModel.Client;
 using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
@@ -250,27 +252,27 @@ namespace IO.Swagger.Registry.Controllers
             if (aasRegistry != null)
             {
                 AssetAdministrationShellDescriptor ad = null;
-                foreach (var sme in aasRegistry.submodelElements)
+                foreach (var sme in aasRegistry.SubmodelElements)
                 {
-                    if (sme.submodelElement is AdminShell.SubmodelElementCollection smc)
+                    if (sme is SubmodelElementCollection smc)
                     {
                         string aasID = "";
                         string assetID = "";
                         string descriptorJSON = "";
-                        foreach (var sme2 in smc.value)
+                        foreach (var sme2 in smc.Value)
                         {
-                            if (sme2.submodelElement is AdminShell.Property p)
+                            if (sme2 is Property p)
                             {
-                                switch (p.idShort)
+                                switch (p.IdShort)
                                 {
                                     case "aasID":
-                                        aasID = p.value;
+                                        aasID = p.Value;
                                         break;
                                     case "assetID":
-                                        assetID = p.value;
+                                        assetID = p.Value;
                                         break;
                                     case "descriptorJSON":
-                                        descriptorJSON = p.value;
+                                        descriptorJSON = p.Value;
                                         break;
                                 }
 
@@ -400,16 +402,16 @@ namespace IO.Swagger.Registry.Controllers
         static void addAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
 #pragma warning restore IDE1006 // Benennungsstile
         {
-            var aas = env.AasEnv.AdministrationShells[0];
+            var aas = env.AasEnv.AssetAdministrationShells[0];
 
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
-            //string asset = aas.assetRef?[0].value;
-            string globalAssetId = aas.assetInformation.globalAssetId.GetAsExactlyOneKey().value;
+            //string asset = aas.assetRef?[0].Value;
+            string globalAssetId = aas.AssetInformation.GlobalAssetId.GetAsExactlyOneKey().Value;
 
             // ad.Administration.Version = aas.administration.version;
             // ad.Administration.Revision = aas.administration.revision;
-            ad.IdShort = aas.idShort;
-            ad.Identification = aas.id.value;
+            ad.IdShort = aas.IdShort;
+            ad.Identification = aas.Id;
             var e = new Endpoint();
             e.ProtocolInformation = new ProtocolInformation();
             e.ProtocolInformation.EndpointAddress =
@@ -424,17 +426,17 @@ namespace IO.Swagger.Registry.Controllers
             gr.Value.Add(globalAssetId);
             ad.GlobalAssetId = gr;
             // Submodels
-            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+            if (aas.Submodels != null && aas.Submodels.Count > 0)
             {
                 ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
-                foreach (var smr in aas.submodelRefs)
+                foreach (var smr in aas.Submodels)
                 {
                     var sm = env.AasEnv.FindSubmodel(smr);
-                    if (sm != null && sm.idShort != null)
+                    if (sm != null && sm.IdShort != null)
                     {
                         SubmodelDescriptor sd = new SubmodelDescriptor();
-                        sd.IdShort = sm.idShort;
-                        sd.Identification = sm.id.value;
+                        sd.IdShort = sm.IdShort;
+                        sd.Identification = sm.Id;
                         var esm = new Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.EndpointAddress =
@@ -445,24 +447,24 @@ namespace IO.Swagger.Registry.Controllers
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Endpoint>();
                         sd.Endpoints.Add(esm);
-                        if (sm.semanticId != null)
+                        if (sm.SemanticId != null)
                         {
-                            var sid = sm.semanticId.GetAsExactlyOneKey();
+                            var sid = sm.SemanticId.GetAsExactlyOneKey();
                             if (sid != null)
                             {
                                 gr = new GlobalReference();
                                 gr.Value = new List<string>();
-                                gr.Value.Add(sid.value);
+                                gr.Value.Add(sid.Value);
                                 sd.SemanticId = gr;
                             }
                         }
                         ad.SubmodelDescriptors.Add(sd);
-                        if (sm.idShort.ToLower() == "nameplate")
+                        if (sm.IdShort.ToLower() == "nameplate")
                         {
                             // Add special entry for verifiable credentials
                             sd = new SubmodelDescriptor();
                             sd.IdShort = "NameplateVC";
-                            sd.Identification = sm.identification.id + "_VC";
+                            sd.Identification = sm.Id + "_VC";
                             esm = new Endpoint();
                             esm.ProtocolInformation = new ProtocolInformation();
                             esm.ProtocolInformation.EndpointAddress =
@@ -472,14 +474,14 @@ namespace IO.Swagger.Registry.Controllers
                             esm.Interface = "VC-1.0";
                             sd.Endpoints = new List<Endpoint>();
                             sd.Endpoints.Add(esm);
-                            if (sm.semanticId != null)
+                            if (sm.SemanticId != null)
                             {
-                                var sid = sm.semanticId.GetAsExactlyOneKey();
+                                var sid = sm.SemanticId.GetAsExactlyOneKey();
                                 if (sid != null)
                                 {
                                     gr = new GlobalReference();
                                     gr.Value = new List<string>();
-                                    gr.Value.Add(sid.value);
+                                    gr.Value.Add(sid.Value);
                                     sd.SemanticId = gr;
                                 }
                             }
@@ -554,32 +556,32 @@ namespace IO.Swagger.Registry.Controllers
             // overwrite existing entry, if assetID AND aasID are identical
             if (!initial)
             {
-                foreach (var e in aasRegistry?.submodelElements)
+                foreach (var e in aasRegistry?.SubmodelElements)
                 {
-                    if (e.submodelElement is AdminShell.SubmodelElementCollection ec)
+                    if (e is SubmodelElementCollection ec)
                     {
                         int found = 0;
-                        AdminShell.Property pjson = null;
-                        foreach (var e2 in ec.value)
+                        Property pjson = null;
+                        foreach (var e2 in ec.Value)
                         {
-                            if (e2.submodelElement is AdminShell.Property ep)
+                            if (e2 is Property ep)
                             {
-                                if (ep.idShort == "aasID" && ep.value == aasID)
+                                if (ep.IdShort == "aasID" && ep.Value == aasID)
                                     found++;
-                                if (ep.idShort == "assetID" && ep.value == assetID)
+                                if (ep.IdShort == "assetID" && ep.Value == assetID)
                                     found++;
-                                if (ep.idShort == "descriptorJSON")
+                                if (ep.IdShort == "descriptorJSON")
                                     pjson = ep;
                             }
                         }
                         if (found == 2 && pjson != null)
                         {
                             string s = JsonConvert.SerializeObject(ad);
-                            if (s != pjson.value)
+                            if (s != pjson.Value)
                             {
                                 pjson.TimeStampCreate = timestamp;
                                 pjson.TimeStamp = timestamp;
-                                pjson.value = s;
+                                pjson.Value = s;
                             }
                             return;
                         }
@@ -588,27 +590,27 @@ namespace IO.Swagger.Registry.Controllers
             }
 
             // add new entry
-            AdminShell.SubmodelElementCollection c = AdminShell.SubmodelElementCollection.CreateNew("ShellDescriptor_" + aasRegistryCount++);
+            SubmodelElementCollection c = new SubmodelElementCollection(idShort:"ShellDescriptor_" + aasRegistryCount++);
             c.TimeStampCreate = timestamp;
             c.TimeStamp = timestamp;
-            var p = AdminShell.Property.CreateNew("aasID");
+            var p = new Property(DataTypeDefXsd.String, idShort:"aasID");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
-            p.value = aasID;
-            c.value.Add(p);
-            p = AdminShell.Property.CreateNew("assetID");
+            p.Value = aasID;
+            c.Value.Add(p);
+            p = new Property(DataTypeDefXsd.String, idShort: "assetID");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
             if (assetID != "")
             {
-                p.value = assetID;
+                p.Value = assetID;
             }
-            c.value.Add(p);
-            p = AdminShell.Property.CreateNew("descriptorJSON");
+            c.Value.Add(p);
+            p = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
-            p.value = JsonConvert.SerializeObject(ad);
-            c.value.Add(p);
+            p.Value = JsonConvert.SerializeObject(ad);
+            c.Value.Add(p);
             // iterate submodels
             foreach (var sd in ad.SubmodelDescriptors)
             {
@@ -617,19 +619,19 @@ namespace IO.Swagger.Registry.Controllers
                     if (sd.Endpoints != null && sd.Endpoints.Count > 0)
                     {
                         var ep = sd.Endpoints[0].ProtocolInformation.EndpointAddress;
-                        p = AdminShell.Property.CreateNew("NameplateVC");
+                        p = new Property(DataTypeDefXsd.String, idShort: "NameplateVC");
                         p.TimeStampCreate = timestamp;
                         p.TimeStamp = timestamp;
-                        p.value = ep;
-                        c.value.Add(p);
+                        p.Value = ep;
+                        c.Value.Add(p);
                     }
                 }
             }
-            aasRegistry?.submodelElements.Add(c);
+            aasRegistry?.SubmodelElements.Add(c);
         }
 
-        static AdminShell.Submodel aasRegistry = null;
-        static AdminShell.Submodel submodelRegistry = null;
+        static Submodel aasRegistry = null;
+        static Submodel submodelRegistry = null;
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;
         static List<string> postRegistry = new List<string>();
@@ -651,19 +653,19 @@ namespace IO.Swagger.Registry.Controllers
                 {
                     if (env != null)
                     {
-                        var aas = env.AasEnv.AdministrationShells[0];
-                        if (aas.idShort == "REGISTRY")
+                        var aas = env.AasEnv.AssetAdministrationShells[0];
+                        if (aas.IdShort == "REGISTRY")
                         {
-                            if (aas.submodelRefs != null && aas.submodelRefs.Count > 0)
+                            if (aas.Submodels != null && aas.Submodels.Count > 0)
                             {
-                                foreach (var smr in aas.submodelRefs)
+                                foreach (var smr in aas.Submodels)
                                 {
                                     var sm = env.AasEnv.FindSubmodel(smr);
-                                    if (sm != null && sm.idShort != null)
+                                    if (sm != null && sm.IdShort != null)
                                     {
-                                        if (sm.idShort == "AASREGISTRY")
+                                        if (sm.IdShort == "AASREGISTRY")
                                             aasRegistry = sm;
-                                        if (sm.idShort == "SUBMODELREGISTRY")
+                                        if (sm.IdShort == "SUBMODELREGISTRY")
                                             submodelRegistry = sm;
                                     }
                                 }
@@ -673,14 +675,14 @@ namespace IO.Swagger.Registry.Controllers
                 }
                 if (aasRegistry != null)
                 {
-                    foreach (var sme in aasRegistry.submodelElements)
+                    foreach (var sme in aasRegistry.SubmodelElements)
                     {
-                        if (sme.submodelElement is AdminShell.Property p)
+                        if (sme is Property p)
                         {
-                            if (p.idShort.ToLower() == "postregistry")
+                            if (p.IdShort.ToLower() == "postregistry")
                             {
-                                Console.WriteLine("POST to Registry: " + p.value);
-                                postRegistry.Add(p.value);
+                                Console.WriteLine("POST to Registry: " + p.Value);
+                                postRegistry.Add(p.Value);
                             }
                         }
                     }
@@ -690,8 +692,8 @@ namespace IO.Swagger.Registry.Controllers
                         {
                             if (env != null)
                             {
-                                var aas = env.AasEnv.AdministrationShells[0];
-                                if (aas.idShort != "REGISTRY")
+                                var aas = env.AasEnv.AssetAdministrationShells[0];
+                                if (aas.IdShort != "REGISTRY")
                                 {
                                     addAasToRegistry(env, timestamp);
                                 }

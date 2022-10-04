@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "jsoncanonicalizer", "jsonca
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "es6numberserializer", "es6numberserializer\es6numberserializer.csproj", "{DA39CEE6-DA36-4D84-B7CB-8A29C04987B5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Registry", "IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj", "{142D8180-5B73-42EF-BD57-B2ECDB11FF52}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -162,6 +164,24 @@ Global
 		{DA39CEE6-DA36-4D84-B7CB-8A29C04987B5}.Release|x64.Build.0 = Release|Any CPU
 		{DA39CEE6-DA36-4D84-B7CB-8A29C04987B5}.Release|x86.ActiveCfg = Release|Any CPU
 		{DA39CEE6-DA36-4D84-B7CB-8A29C04987B5}.Release|x86.Build.0 = Release|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Debug|x64.Build.0 = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Debug|x86.Build.0 = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.DebugSlow|x64.Build.0 = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.DebugSlow|x86.Build.0 = Debug|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Release|x64.ActiveCfg = Release|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Release|x64.Build.0 = Release|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Release|x86.ActiveCfg = Release|Any CPU
+		{142D8180-5B73-42EF-BD57-B2ECDB11FF52}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
