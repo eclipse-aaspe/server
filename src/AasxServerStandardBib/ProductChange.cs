@@ -79,7 +79,7 @@ namespace ProductChange
                                     }
                                     if (imported == null)
                                     {
-                                        imported = new SubmodelElementCollection(idShort:"imported");
+                                        imported = new SubmodelElementCollection(idShort: "imported");
                                         sm.Add(imported);
                                     }
                                 }
@@ -219,7 +219,7 @@ namespace ProductChange
                                                         {
                                                             Console.WriteLine("Import: " + name);
                                                             importedCount++;
-                                                            var p = new Property(DataTypeDefXsd.String, idShort:name);
+                                                            var p = new Property(DataTypeDefXsd.String, idShort: name);
                                                             imported.Add(p);
                                                             p.TimeStampCreate = timeStamp;
                                                             p.SetTimeStamp(timeStamp); getTask = httpClient.GetAsync(fNameUrl);
@@ -234,10 +234,10 @@ namespace ProductChange
                                                                 if (pcnEnv != null && pcnSub != null)
                                                                 {
                                                                     pcnEnv.AddSupplementaryFileToStore("./pcn/" + fName, "/aasx", fName, false);
-                                                                    c = new SubmodelElementCollection(idShort:name);
+                                                                    c = new SubmodelElementCollection(idShort: name);
                                                                     c.TimeStampCreate = timeStamp;
                                                                     c.SetTimeStamp(timeStamp);
-                                                                    var f = new AasCore.Aas3_0_RC02.File(contentType:"",idShort:name);
+                                                                    var f = new AasCore.Aas3_0_RC02.File(contentType: "", idShort: name);
                                                                     f.TimeStampCreate = timeStamp;
                                                                     f.SetTimeStamp(timeStamp);
                                                                     f.Value = "/aasx/" + fName;
@@ -446,7 +446,7 @@ namespace ProductChange
                                 }
                                 if (imported == null)
                                 {
-                                    imported = new SubmodelElementCollection(idShort:"imported");
+                                    imported = new SubmodelElementCollection(idShort: "imported");
                                     sm.Add(imported);
                                 }
                             }
@@ -463,7 +463,7 @@ namespace ProductChange
                 foreach (System.IO.FileInfo fi in ParentDirectory.GetFiles("*.xml"))
                 {
                     string name = fi.Name;
-                    var c = new SubmodelElementCollection(idShort:name.Replace(".", "_"));
+                    var c = new SubmodelElementCollection(idShort: name.Replace(".", "_"));
                     c.TimeStampCreate = timeStamp;
                     c.SetTimeStamp(timeStamp);
                     /*
@@ -512,7 +512,7 @@ namespace ProductChange
                                 {
                                     if (reader.HasAttributes)
                                     {
-                                        smc[stack] = new SubmodelElementCollection(idShort:reader.Name);
+                                        smc[stack] = new SubmodelElementCollection(idShort: reader.Name);
                                         smc[stack].TimeStampCreate = timeStamp;
                                         smc[stack].SetTimeStamp(timeStamp);
                                         Qualifier q = new Qualifier("XmlHasAttributes", DataTypeDefXsd.String);
@@ -557,7 +557,7 @@ namespace ProductChange
                                     {
                                         string n = smc[stack].IdShort;
                                         string v = reader.Value;
-                                        var p = new Property(DataTypeDefXsd.String,idShort:n);
+                                        var p = new Property(DataTypeDefXsd.String, idShort: n);
                                         p.TimeStampCreate = timeStamp;
                                         p.SetTimeStamp(timeStamp);
                                         p.Value = v;

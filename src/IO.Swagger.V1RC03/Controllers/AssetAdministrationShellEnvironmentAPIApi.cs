@@ -32,6 +32,7 @@ using IO.Swagger.V1RC03.ModelBinder;
 using System.Net.Mime;
 using IO.Swagger.V1RC03.APIModels.Core;
 using Microsoft.AspNetCore.Http;
+using IO.Swagger.V1RC03.APIModels;
 
 namespace IO.Swagger.V1RC03.Controllers
 {
@@ -255,16 +256,16 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllSubmodelElements")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
             OutputModifierContext outputModifierContext = null;
-            if (content != null && content.Equals("path", StringComparison.OrdinalIgnoreCase))
+            if (content.ToString() != null && content.ToString().Equals("path", StringComparison.OrdinalIgnoreCase))
             {
-                outputModifierContext = new OutputModifierContext(level, content, extent);
+                outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
             }
 
             var output = _aasEnvService.GetAllSubmodelElements(decodedAasId, decodedSubmodelId, outputModifierContext);
@@ -288,15 +289,15 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllSubmodelElementsSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
             OutputModifierContext outputModifierContext = null;
-            if (content != null && content.Equals("path", StringComparison.OrdinalIgnoreCase))
+            if (content.ToString() != null && content.ToString().Equals("path", StringComparison.OrdinalIgnoreCase))
             {
-                outputModifierContext = new OutputModifierContext(level, content, extent);
+                outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
             }
 
             var output = _aasEnvService.GetAllSubmodelElementsFromSubmodel(decodedSubmodelId, outputModifierContext);
@@ -558,7 +559,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetSubmodel")]
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
@@ -611,7 +612,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -639,7 +640,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -799,7 +800,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -832,7 +833,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -864,7 +865,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -893,7 +894,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1020,11 +1021,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("PutSubmodel")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodel([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PutSubmodel([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-            var outputModifierContext = new OutputModifierContext(level, content, extent);
+            var outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
 
             _aasEnvService.UpdateSubmodel(body, decodedAasId, decodedSubmodelId, outputModifierContext);
 
@@ -1078,12 +1079,12 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PutSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var outputModifierContext = new OutputModifierContext(level, content, extent);
+            var outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
 
             _aasEnvService.UpdateSubmodelElementByPath(body, decodedAasId, decodedSubmodelId, idShortPath, outputModifierContext);
 
@@ -1110,11 +1111,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string content, [FromQuery] string extent)
+        public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var outputModifierContext = new OutputModifierContext(level, content, extent);
+            var outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
 
             _aasEnvService.UpdateSubmodelElementByPathSubmodelRepo(body, decodedSubmodelId, idShortPath, outputModifierContext);
 

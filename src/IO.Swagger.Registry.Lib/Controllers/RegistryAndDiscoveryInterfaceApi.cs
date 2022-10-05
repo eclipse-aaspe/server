@@ -590,10 +590,10 @@ namespace IO.Swagger.Registry.Controllers
             }
 
             // add new entry
-            SubmodelElementCollection c = new SubmodelElementCollection(idShort:"ShellDescriptor_" + aasRegistryCount++);
+            SubmodelElementCollection c = new SubmodelElementCollection(idShort: "ShellDescriptor_" + aasRegistryCount++);
             c.TimeStampCreate = timestamp;
             c.TimeStamp = timestamp;
-            var p = new Property(DataTypeDefXsd.String, idShort:"aasID");
+            var p = new Property(DataTypeDefXsd.String, idShort: "aasID");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
             p.Value = aasID;

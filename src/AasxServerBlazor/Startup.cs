@@ -114,6 +114,8 @@ namespace AasxServerBlazor
                         TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
                     });
 
+                    c.SchemaFilter<EnumSchemaFilter>();
+
                     //c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
                     //{
                     //    Name = "Authorization",
