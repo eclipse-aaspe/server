@@ -544,25 +544,25 @@ namespace AasxTimeSeries
                     SubmodelElementCollection smec = new SubmodelElementCollection(idShort: "signature");
                     smec.SetTimeStamp(timestamp);
                     smec.TimeStampCreate = timestamp;
-                    Property json = new Property(DataTypeDefXsd.String,idShort:"submodelJson");
+                    Property json = new Property(DataTypeDefXsd.String, idShort: "submodelJson");
                     json.SetTimeStamp(timestamp);
                     json.TimeStampCreate = timestamp;
-                    Property canonical = new Property(DataTypeDefXsd.String,idShort:"submodelJsonCanonical");
+                    Property canonical = new Property(DataTypeDefXsd.String, idShort: "submodelJsonCanonical");
                     canonical.SetTimeStamp(timestamp);
                     canonical.TimeStampCreate = timestamp;
-                    Property subject = new Property(DataTypeDefXsd.String,idShort:"subject");
+                    Property subject = new Property(DataTypeDefXsd.String, idShort: "subject");
                     subject.SetTimeStamp(timestamp);
                     subject.TimeStampCreate = timestamp;
-                    SubmodelElementCollection x5c = new SubmodelElementCollection(idShort:"x5c");
+                    SubmodelElementCollection x5c = new SubmodelElementCollection(idShort: "x5c");
                     x5c.SetTimeStamp(timestamp);
                     x5c.TimeStampCreate = timestamp;
-                    Property algorithm = new Property(DataTypeDefXsd.String,idShort:"algorithm");
+                    Property algorithm = new Property(DataTypeDefXsd.String, idShort: "algorithm");
                     algorithm.SetTimeStamp(timestamp);
                     algorithm.TimeStampCreate = timestamp;
-                    Property sigT = new Property(DataTypeDefXsd.String,idShort:"sigT");
+                    Property sigT = new Property(DataTypeDefXsd.String, idShort: "sigT");
                     sigT.SetTimeStamp(timestamp);
                     sigT.TimeStampCreate = timestamp;
-                    Property signature = new Property(DataTypeDefXsd.String,idShort:"signature");
+                    Property signature = new Property(DataTypeDefXsd.String, idShort: "signature");
                     signature.SetTimeStamp(timestamp);
                     signature.TimeStampCreate = timestamp;
                     smec.Add(json);
@@ -588,7 +588,7 @@ namespace AasxTimeSeries
                     for (int j = xc.Count - 1; j >= 0; j--)
                     {
                         Console.WriteLine("Add certificate_" + (j + 1));
-                        Property c = new Property(DataTypeDefXsd.String,idShort:"certificate_" + (j + 1));
+                        Property c = new Property(DataTypeDefXsd.String, idShort: "certificate_" + (j + 1));
                         c.SetTimeStamp(timestamp);
                         c.TimeStampCreate = timestamp;
                         c.Value = Convert.ToBase64String(xc[j].GetRawCertData());
