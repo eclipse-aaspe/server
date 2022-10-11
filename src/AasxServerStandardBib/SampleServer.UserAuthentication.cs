@@ -29,6 +29,7 @@
 
 using System;
 using System.IdentityModel.Selectors;
+//using System.IdentityModel.Selectors;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 using Opc.Ua;
@@ -62,7 +63,7 @@ namespace AasOpcUaServer
                             configuration.SecurityConfiguration.RejectedCertificateStore);
 
                         // set custom validator for user certificates.
-                        m_certificateValidator = certificateValidator.GetChannelValidator();
+                        m_certificateValidator = (X509CertificateValidator)certificateValidator.GetChannelValidator();
                     }
                 }
             }
