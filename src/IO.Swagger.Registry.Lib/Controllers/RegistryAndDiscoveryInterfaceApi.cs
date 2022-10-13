@@ -468,18 +468,38 @@ namespace IO.Swagger.Registry.Controllers
                                 {
                                     if (sd.FederatedElements == null)
                                         sd.FederatedElements = new List<string>();
-                                    string json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
+                                    string json = null;
+                                    json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
                                         new JsonSerializerSettings
                                         {
                                             NullValueHandling = NullValueHandling.Ignore
                                         });
+                                    /*
+                                    if (sme is Property p)
+                                    {
+                                        json = JsonConvert.SerializeObject(p, Newtonsoft.Json.Formatting.Indented,
+                                            new JsonSerializerSettings
+                                            {
+                                                NullValueHandling = NullValueHandling.Ignore
+                                            });
+                                    }
+                                    if (sme is SubmodelElementCollection sec)
+                                    {
+                                        json = JsonConvert.SerializeObject(sec, Newtonsoft.Json.Formatting.Indented,
+                                            new JsonSerializerSettings
+                                            {
+                                                NullValueHandling = NullValueHandling.Ignore
+                                            });
+                                    }
+                                    */
                                     /*
                                     string tag = sme.idShort;
                                     if (sme is AdminShell.Property p)
                                         if (p.value != "")
                                             tag += "=" + p.value;
                                     */
-                                    sd.FederatedElements.Add(json);
+                                    if (json != null)
+                                        sd.FederatedElements.Add(json);
                                 }
                             }
                         }
@@ -615,7 +635,9 @@ namespace IO.Swagger.Registry.Controllers
             }
 
             // add new entry
-            SubmodelElementCollection c = new SubmodelElementCollection(idShort: "ShellDescriptor_" + aasRegistryCount++);
+            SubmodelElementCollection c = new SubmodelElementCollection(
+                idShort: "ShellDescriptor_" + aasRegistryCount++,
+                value: new List<ISubmodelElement>());
             c.TimeStampCreate = timestamp;
             c.TimeStamp = timestamp;
             var p = new Property(DataTypeDefXsd.String, idShort: "aasID");
