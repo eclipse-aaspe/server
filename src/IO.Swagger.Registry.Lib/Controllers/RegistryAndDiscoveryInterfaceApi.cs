@@ -459,12 +459,12 @@ namespace IO.Swagger.Registry.Controllers
                             }
                         }
                         // add searchData for registry
-                        foreach (var se in sm.submodelElements)
+                        foreach (var se in sm.SubmodelElements)
                         {
-                            var sme = se.submodelElement;
-                            if (sme.qualifiers != null && sme.qualifiers.Count != 0)
+                            var sme = se;
+                            if (sme.Qualifiers != null && sme.Qualifiers.Count != 0)
                             {
-                                if (sme.qualifiers[0].type == "federatedElement")
+                                if (sme.Qualifiers[0].Type == "federatedElement")
                                 {
                                     if (sd.FederatedElements == null)
                                         sd.FederatedElements = new List<string>();
@@ -654,21 +654,21 @@ namespace IO.Swagger.Registry.Controllers
                 }
                 if (sd.FederatedElements != null && sd.FederatedElements.Count != 0)
                 {
-                    var smc = AdminShell.SubmodelElementCollection.CreateNew("federatedElements");
+                    var smc = new SubmodelElementCollection(idShort: "federatedElements");
                     smc.TimeStampCreate = timestamp;
                     smc.TimeStamp = timestamp;
-                    c.value.Add(smc);
+                    c.Value.Add(smc);
                     foreach (var fe in sd.FederatedElements)
                     {
                         federatedElementsCount++;
-                        var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.SubmodelElement>(
+                        var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<ISubmodelElement>(
                             fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
 
                         // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
                         sme.TimeStampCreate = timestamp;
                         sme.TimeStamp = timestamp;
                         // p.value = fe;
-                        smc.value.Add(sme);
+                        smc.Value.Add(sme);
                     }
                 }
             }
