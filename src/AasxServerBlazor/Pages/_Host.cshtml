@@ -212,7 +212,10 @@
 
     <script>
         window.resize = () => {
-            $('.resize').resizable({ grid: [1, 10000] });
+            $('.resize').resizable({
+                containment: "#con", grid: [1, 10000]
+            });
+            
             $('.ui-resizable-se').css({"visibility": "hidden"})
         }
         
