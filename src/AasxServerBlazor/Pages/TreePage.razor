@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject AASService SubmodelService
+@inject Microsoft.JSInterop.IJSRuntime JsRuntime;
 @using Microsoft.IdentityModel.Tokens;
 @using System
 @using System.Net;
@@ -12,9 +13,21 @@
 
 @implements IDisposable
 
-<div class="col-12 row">
+@functions {
+    protected async override Task OnAfterRenderAsync(bool firstRender) 
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeAsync<object>("resize");
+        }
+    }
+}
+
+<div style="display: flex">
+    
     <br />
-    <div class="col-4" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; word-wrap: break-word; word-break: break-all; position: sticky">
+    <div class="resize" style="width: 33%; border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; word-wrap: break-word; word-break: break-all; position: sticky">
+        
         @updateVisibleTree(Items, selectedNode)
         @if (Program.isLoading)
         {<span style="color:white;background-color:blue;">Loading...</span>}
@@ -28,18 +41,19 @@
             <TitleTemplate>
                 @{ //// SubmodelService.syncSubTree(context);
                 }
-                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                @ViewNodeID(context)@ViewNodeInfo(context)
-                <strong><span style="color:blue">@getSymbols(context)</span></strong>
-                <span style="color:lightgray;">@ViewTimeStamp(context)</span>
+                <span style="color:white;background-color:purple;">@ViewNodeType(context)</span>
+                ID: @ViewNodeID(context) Info: @ViewNodeInfo(context)
+                <strong><span class="test">@getSymbols(context)</span></strong>
+                <span style="color:green;">@ViewTimeStamp(context)</span>
             </TitleTemplate>
         </Tree>
     </div>
-    <div class="col-8" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
+    
+    <div class="resize" style="flex-grow: 100; border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
-                <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
-                <span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span><br>
+                                                                                                    <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
+                                                                                                    <span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span><br>
                 for (int line = 0; line < 6; line++)
                 {
                     string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
@@ -48,22 +62,22 @@
                     if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
                         string detailsId="SelectedNodeDetailsLeft_" + line;
-                        <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
+                                                                                                            <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
-                        <span id="@detailsId">@nodeDetails1 @nodeDetails2</span><br>
+                                                                                                            <span id="@detailsId">@nodeDetails1 @nodeDetails2</span><br>
                     }
                 }
                 if (selectedNode != null && selectedNode.Tag is Referable r)
                 {
-                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
-                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    @code {
+                                                                                                        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                                                                                                        <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
+                                                                                                        <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                                                                                                        @code {
                         private void setTimeStamp()
                         {
                             (selectedNode.Tag as Referable).setTimeStamp(DateTime.UtcNow);
                         }
-                    }
+                                                                                                        }
                 }
                 // if (selectedNode != null && hasDownloadFile(selectedNode))
                 // {
@@ -77,11 +91,11 @@
                     // if (externalLink)
                     if (true)
                     {
-                        <a href="@link" target="_blank">@link</a><br>
+                                                                                                            <a href="@link" target="_blank">@link</a><br>
                     }
                     else
                     {
-                        <button onclick="window.location.href = '@link'; ">Download</button><br>
+                                                                                                            <button onclick="window.location.href = '@link'; ">Download</button><br>
                     }
                     if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
                     {
@@ -89,22 +103,22 @@
                         bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
                         if (toPublish)
                         {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                                                                                                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
                         }
                         else
                         {
-                            <button @onclick="setSubmodelToPublish">Publish</button>
+                                                                                                                <button @onclick="setSubmodelToPublish">Publish</button>
                         }
                         if (toSubscribe)
                         {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                                                                                                                <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
                         }
                         else
                         {
-                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
+                                                                                                                <button @onclick="setSubmodelToSubscribe">Subscribe</button>
                         }
                         // <button onclick="window.location.href = '@link';">Subscribe</button><br>
-                        @code {
+                                                                                                            @code {
                             private void resetSubmodelToPublish()
                             {
                                 Program.submodelsToPublish.Remove(selectedNode.Tag);
@@ -125,14 +139,14 @@
                                 if (!toPublish)
                                     Program.submodelsToSubscribe.Add(selectedNode.Tag);
                             }
-                        }
+                                                                                                            }
                     }
                 }
                 if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                 {
                     // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                    <input @bind="CurrentValue" /> <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span><br>
-                    @code { private string CurrentValue { get; set; } }
+                                                                                                        <input @bind="CurrentValue" /> <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span><br>
+                                                                                                        @code { private string CurrentValue { get; set; } }
                     if (CurrentValue != null && CurrentValue != "")
                     {
                         if (selectedNode.Tag is Property)
@@ -148,30 +162,30 @@
                 {
                     if (selectedNode.Tag is AdministrationShell)
                     {
-                        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
+                                                                                                            <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
                         string qrcodeLink = getQRCodeLink(selectedNode);
                         if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
                         {
                             string qrcodeImage = getQRCodeImage(selectedNode);
                             if (qrcodeImage != "")
                             {
-                                <a href="@qrcodeLink" target="_blank">
-                                    <div>
-                                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image" />
-                                    </div>
-                                </a>
+                                                                                                                    <a href="@qrcodeLink" target="_blank">
+                                                                                                                        <div>
+                                                                                                                            <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image" />
+                                                                                                                        </div>
+                                                                                                                    </a>
                             }
                         }
                         else
                         {
-                            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
+                                                                                                                <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
                         }
-                        @code {
-                            private void runCreateQRCodeImage()
-                            {
-                                createQRCodeImage(selectedNode);
-                            }
-                        }
+                                            @code {
+                    private void runCreateQRCodeImage()
+                    {
+                        createQRCodeImage(selectedNode);
+                    }
+                    }
                     }
                 }
 
@@ -259,49 +273,49 @@
 
                         if (System.IO.File.Exists(scottplotImgPath))
                         {
-                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
-                                <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
-                                <input type="time" @bind-value="plotFilter.fromTime" />
-                                <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
-                                <input type="time" @bind-value="plotFilter.toTime" />
-                                <div>
-                                    <button type="submit">Apply</button>
-                                    <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
-                                </div>
-                            </EditForm>
+                                                        <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+                                                            <label for="filterFromDate">Filter from</label>
+                                                            <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
+                                                            <input type="time" @bind-value="plotFilter.fromTime" />
+                                                            <label for="filterToDate">Filter to</label>
+                                                            <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
+                                                            <input type="time" @bind-value="plotFilter.toTime" />
+                                                            <div>
+                                                                <button type="submit">Apply</button>
+                                                                <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
+                                                                <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
+                                                                <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
+                                                                <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
+                                                                <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
+                                                            </div>
+                                                        </EditForm>
 
-                            <div class="d-flex flex-column">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
-                                <span class="text-muted" style="font-size:14px;">
-                                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
-                                </span>
-                            </div>
+                                                        <div class="d-flex flex-column">
+                                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
+                                                            <span class="text-muted" style="font-size:14px;">
+                                                                Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+                                                            </span>
+                                                        </div>
 
-                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Visualization of time series</h5>
-                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                                        <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">Visualization of time series</h5>
+                                                                        <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                                                                            <span aria-hidden="true">&times;</span>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="modal-body text-center">
+                                                                        <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                         }
                         else
                         {
-                            <div class="my-2">Rendering time series...</div>
+                                                        <div class="my-2">Rendering time series...</div>
                         }
                     }
                     else
@@ -315,10 +329,10 @@
                 string detailsImage = createDetailsImage(selectedNode);
                 if (detailsImage != "")
                 {
-                    <br />
-                    <div>
-                        <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
-                    </div>
+                                                                                                        <br />
+                                                                                                        <div>
+                                                                                                            <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                                                                                                        </div>
                 }
 
                 if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.BasicEvent be))
@@ -326,17 +340,17 @@
                     if (be.observed != null)
                     {
                         string okey = be.observed.GetAsExactlyOneKey().ToString();
-                        <span style="color:white;background-color:blue;">Observed</span>
-                        <span>@(" " + okey)</span><br />
+                                                                                                            <span style="color:white;background-color:blue;">Observed</span>
+                                                                                                            <span>@(" " + okey)</span><br />
                         var refsme = Program.env[0].AasEnv.FindReferableByReference(be.observed);
                         if (refsme != null)
                         {
-                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                                                                                                                <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                                                                                                                <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
                         }
                         else
                         {
-                            <span>Referenced element does not exist!</span><br />
+                                                                                                                <span>Referenced element does not exist!</span><br />
                         }
                     }
                 }
@@ -344,6 +358,8 @@
         </div>
     </div>
 </div>
+
+
 
 
 @inject IJSRuntime js
@@ -2091,4 +2107,8 @@
 .modal-fullscreen .modal-body {
   overflow-y: auto;
 }
+.resize {
+    min-width: 20%;
+}
+
 </style>

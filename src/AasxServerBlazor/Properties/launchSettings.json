@@ -18,13 +18,13 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path \"C:\\Development\\AASX\" --edit --external-blazor http://localhost:5001 --no-security",
+      "commandLineArgs": "--rest --data-path \"C:\\Users\\Mateusz Pawelczyk\\Documents\\Arbeit\\aasx_files\" --edit --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5001",
-      "jsWebView2Debugging": true
+      "jsWebView2Debugging": true,
+      "applicationUrl": "http://localhost:5001"
     }
   }
 }
