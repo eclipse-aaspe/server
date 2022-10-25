@@ -315,6 +315,61 @@ namespace AasxRestServerLibrary
                 return false;
             }
 
+            public static string runQueryRegistryOnly(string query, string restPayload, Submodel aasRegistry)
+            {
+                string result = "";
+
+                if (aasRegistry != null)
+                {
+                    result += "query: " + query + "\n";
+                    foreach (var sme in aasRegistry.SubmodelElements)
+                    {
+                        if (sme is SubmodelElementCollection smc
+                            && sme.IdShort.Contains("Descriptor"))
+                        {
+                            string aasID = "";
+                            string assetID = "";
+                            string descriptorJSON = "";
+                            SubmodelElementCollection federatedElements = new SubmodelElementCollection();
+                            foreach (var sme2 in smc.Value)
+                            {
+                                if (sme2 is Property p)
+                                {
+                                    switch (p.IdShort)
+                                    {
+                                        case "aasID":
+                                            aasID = p.Value;
+                                            break;
+                                        case "assetID":
+                                            assetID = p.Value;
+                                            break;
+                                        case "descriptorJSON":
+                                            descriptorJSON = p.Value;
+                                            break;
+                                    }
+                                }
+                                if (sme2 is SubmodelElementCollection smc2)
+                                {
+                                    switch (smc2.IdShort)
+                                    {
+                                        case "federatedElements":
+                                            federatedElements = smc2;
+                                            foreach (var sme3 in smc2.Value)
+                                            {
+                                                result += sme.IdShort + ".";
+                                                result += sme3.IdShort + "\n";
+                                            }
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return result;
+            }
+
             public static string runQuery(string query, string restPayload)
             {
                 string result = "";

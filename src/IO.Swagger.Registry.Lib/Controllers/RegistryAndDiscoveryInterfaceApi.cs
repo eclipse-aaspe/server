@@ -10,8 +10,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AasCore.Aas3_0_RC02;
 using AdminShellNS;
@@ -22,7 +25,9 @@ using IO.Swagger.Registry.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -474,6 +479,8 @@ namespace IO.Swagger.Registry.Controllers
                                         {
                                             NullValueHandling = NullValueHandling.Ignore
                                         });
+                                    var j = Jsonization.Serialize.ToJsonObject(sme);
+                                    json = j.ToJsonString();
                                     /*
                                     if (sme is Property p)
                                     {
@@ -676,15 +683,22 @@ namespace IO.Swagger.Registry.Controllers
                 }
                 if (sd.FederatedElements != null && sd.FederatedElements.Count != 0)
                 {
-                    var smc = new SubmodelElementCollection(idShort: "federatedElements");
+                    var smc = new SubmodelElementCollection(
+                        idShort: "federatedElements",
+                        value: new List<ISubmodelElement>());
                     smc.TimeStampCreate = timestamp;
                     smc.TimeStamp = timestamp;
                     c.Value.Add(smc);
                     foreach (var fe in sd.FederatedElements)
                     {
                         federatedElementsCount++;
+                        /*
                         var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<ISubmodelElement>(
                             fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                        */
+                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
+                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                        var sme = Jsonization.Deserialize.ISubmodelElementFrom(node);
 
                         // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
                         sme.TimeStampCreate = timestamp;
@@ -697,7 +711,7 @@ namespace IO.Swagger.Registry.Controllers
             aasRegistry?.SubmodelElements.Add(c);
         }
 
-        static Submodel aasRegistry = null;
+        public static Submodel aasRegistry = null;
         static Submodel submodelRegistry = null;
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;

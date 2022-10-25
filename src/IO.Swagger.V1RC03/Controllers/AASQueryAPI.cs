@@ -3,6 +3,7 @@ using Grapevine.Interfaces.Server;
 using IO.Swagger.V1RC03.ApiModel;
 using IO.Swagger.V1RC03.Attributes;
 using IO.Swagger.V1RC03.Services;
+using IO.Swagger.Registry.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -118,6 +119,22 @@ namespace IO.Swagger.V1RC03.Controllers
             return new ObjectResult(result);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [HttpGet]
+        [Route("/queryregistryonly/{searchQuery}")]
+        [ValidateModelState]
+        [SwaggerOperation("GetQueryRegistryOnly")]
+        [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Query Result")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult GetQueryRegistryOnly([FromRoute][Required] string searchQuery)
+        {
+            var aasRegistry = RegistryAndDiscoveryInterfaceApiController.aasRegistry;
+
+            string result = AasxRestServer.TestResource.runQueryRegistryOnly(searchQuery, "", aasRegistry);
+
+            return new ObjectResult(result);
+        }
+        
         [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost]
         [Route("/queryregistry")]
