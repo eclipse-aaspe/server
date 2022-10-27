@@ -421,8 +421,7 @@ namespace IO.Swagger.Registry.Controllers
             e.ProtocolInformation = new ProtocolInformation();
             e.ProtocolInformation.EndpointAddress =
                 AasxServer.Program.externalBlazor + "/shells/" +
-                Base64UrlEncoder.Encode(ad.Identification) +
-                "/aas";
+                Base64UrlEncoder.Encode(ad.Identification);
             e.Interface = "AAS-1.0";
             ad.Endpoints = new List<Endpoint>();
             ad.Endpoints.Add(e);
@@ -467,47 +466,56 @@ namespace IO.Swagger.Registry.Controllers
                         foreach (var se in sm.SubmodelElements)
                         {
                             var sme = se;
+                            bool federate = false;
+                            if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0 && sme.SemanticId.Keys[0] != null)
+                            {
+                                if (federatedElemensSemanticId.Contains(sme.SemanticId.Keys[0].Value))
+                                    federate = true;
+                            }
                             if (sme.Qualifiers != null && sme.Qualifiers.Count != 0)
                             {
                                 if (sme.Qualifiers[0].Type == "federatedElement")
+                                    federate = true;
+                            }
+
+                            if (federate)
+                            {
+                                if (sd.FederatedElements == null)
+                                    sd.FederatedElements = new List<string>();
+                                string json = null;
+                                json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
+                                    new JsonSerializerSettings
+                                    {
+                                        NullValueHandling = NullValueHandling.Ignore
+                                    });
+                                var j = Jsonization.Serialize.ToJsonObject(sme);
+                                json = j.ToJsonString();
+                                /*
+                                if (sme is Property p)
                                 {
-                                    if (sd.FederatedElements == null)
-                                        sd.FederatedElements = new List<string>();
-                                    string json = null;
-                                    json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
+                                    json = JsonConvert.SerializeObject(p, Newtonsoft.Json.Formatting.Indented,
                                         new JsonSerializerSettings
                                         {
                                             NullValueHandling = NullValueHandling.Ignore
                                         });
-                                    var j = Jsonization.Serialize.ToJsonObject(sme);
-                                    json = j.ToJsonString();
-                                    /*
-                                    if (sme is Property p)
-                                    {
-                                        json = JsonConvert.SerializeObject(p, Newtonsoft.Json.Formatting.Indented,
-                                            new JsonSerializerSettings
-                                            {
-                                                NullValueHandling = NullValueHandling.Ignore
-                                            });
-                                    }
-                                    if (sme is SubmodelElementCollection sec)
-                                    {
-                                        json = JsonConvert.SerializeObject(sec, Newtonsoft.Json.Formatting.Indented,
-                                            new JsonSerializerSettings
-                                            {
-                                                NullValueHandling = NullValueHandling.Ignore
-                                            });
-                                    }
-                                    */
-                                    /*
-                                    string tag = sme.idShort;
-                                    if (sme is AdminShell.Property p)
-                                        if (p.value != "")
-                                            tag += "=" + p.value;
-                                    */
-                                    if (json != null)
-                                        sd.FederatedElements.Add(json);
                                 }
+                                if (sme is SubmodelElementCollection sec)
+                                {
+                                    json = JsonConvert.SerializeObject(sec, Newtonsoft.Json.Formatting.Indented,
+                                        new JsonSerializerSettings
+                                        {
+                                            NullValueHandling = NullValueHandling.Ignore
+                                        });
+                                }
+                                */
+                                /*
+                                string tag = sme.idShort;
+                                if (sme is AdminShell.Property p)
+                                    if (p.value != "")
+                                        tag += "=" + p.value;
+                                */
+                                if (json != null)
+                                    sd.FederatedElements.Add(json);
                             }
                         }
                         ad.SubmodelDescriptors.Add(sd);
@@ -543,11 +551,18 @@ namespace IO.Swagger.Registry.Controllers
                 }
             }
             // add to internal registry
-            addAasDescriptorToRegistry(ad, timestamp, true);
+            if (postRegistry.Contains("this"))
+                addAasDescriptorToRegistry(ad, timestamp, true);
 
             // POST Descriptor to Registry
             foreach (var pr in postRegistry)
             {
+                if (pr == "this")
+                {
+
+                    continue;
+                }
+
                 string accessToken = null;
                 string requestPath = pr + "/registry/shell-descriptors";
                 string json = JsonConvert.SerializeObject(ad);
@@ -605,6 +620,11 @@ namespace IO.Swagger.Registry.Controllers
             {
                 assetID = gr.Value[0];
             }
+            string endpoint = "";
+            if (ad.Endpoints != null && ad.Endpoints.Count != 0)
+            {
+                endpoint = ad.Endpoints[0].ProtocolInformation.EndpointAddress;
+            }
             // overwrite existing entry, if assetID AND aasID are identical
             if (!initial)
             {
@@ -660,13 +680,23 @@ namespace IO.Swagger.Registry.Controllers
                 p.Value = assetID;
             }
             c.Value.Add(p);
-            p = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
+            p = new Property(DataTypeDefXsd.String, idShort: "endpoint");
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            p.Value = endpoint;
+            c.Value.Add(p); p = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
             p.Value = JsonConvert.SerializeObject(ad);
             c.Value.Add(p);
             // iterate submodels
             int federatedElementsCount = 0;
+            var smc = new SubmodelElementCollection(
+                idShort: "federatedElements",
+                value: new List<ISubmodelElement>());
+            smc.TimeStampCreate = timestamp;
+            smc.TimeStamp = timestamp;
+            c.Value.Add(smc);
             foreach (var sd in ad.SubmodelDescriptors)
             {
                 if (sd.IdShort == "NameplateVC")
@@ -683,12 +713,6 @@ namespace IO.Swagger.Registry.Controllers
                 }
                 if (sd.FederatedElements != null && sd.FederatedElements.Count != 0)
                 {
-                    var smc = new SubmodelElementCollection(
-                        idShort: "federatedElements",
-                        value: new List<ISubmodelElement>());
-                    smc.TimeStampCreate = timestamp;
-                    smc.TimeStamp = timestamp;
-                    c.Value.Add(smc);
                     foreach (var fe in sd.FederatedElements)
                     {
                         federatedElementsCount++;
@@ -716,6 +740,7 @@ namespace IO.Swagger.Registry.Controllers
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;
         static List<string> postRegistry = new List<string>();
+        static List<string> federatedElemensSemanticId = new List<string>();
 
         static bool init = false;
 #pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
@@ -764,6 +789,20 @@ namespace IO.Swagger.Registry.Controllers
                             {
                                 Console.WriteLine("POST to Registry: " + p.Value);
                                 postRegistry.Add(p.Value);
+                            }
+                        }
+                        if (sme is SubmodelElementCollection smc)
+                        {
+                            if (smc.IdShort == "federatedElements")
+                            {
+                                foreach (var sme2 in smc.Value)
+                                {
+                                    if (sme2 is Property p2)
+                                    {
+                                        if (p2.IdShort.Contains("semanticId"))
+                                            federatedElemensSemanticId.Add(p2.Value);
+                                    }
+                                }
                             }
                         }
                     }
