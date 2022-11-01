@@ -1,12 +1,4 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:56189",
-      "sslPort": 0
-    }
-  },
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
@@ -18,13 +10,21 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--rest --data-path \"C:\\Development\\AASX\" --edit --external-blazor http://localhost:5001 --no-security",
+      "commandLineArgs": "--rest --data-path \"C:\\Benutzer\\Mateusz\\Desktop\\aasx_files\" --edit --no-security",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5001",
-      "jsWebView2Debugging": true
+      "jsWebView2Debugging": true,
+      "applicationUrl": "http://localhost:5001"
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:56189",
+      "sslPort": 0
     }
   }
 }
