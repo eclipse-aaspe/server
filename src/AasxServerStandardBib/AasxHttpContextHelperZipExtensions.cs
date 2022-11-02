@@ -27,19 +27,20 @@ namespace AasxRestServerLibrary
             try
             {
                 ZipArchive archive = LoadZipArchive(zipFileStream);
-                
+
                 var fragmentObject = FindFragmentObject(archive, zipFragment);
 
                 var content = context.Request.QueryString.Get("content") ?? "normal";
                 var level = context.Request.QueryString.Get("level") ?? "deep";
                 var extent = context.Request.QueryString.Get("extent") ?? "withoutBlobValue";
-                
+
                 if (fragmentObject == null)
                 {
                     throw new ZipFragmentEvaluationException($"Fragment evaluation did not return an element.");
                 }
 
-                if (content == "raw") {
+                if (content == "raw")
+                {
 
                     if (fragmentObject is string)
                     {
@@ -55,12 +56,13 @@ namespace AasxRestServerLibrary
 
                     SendStreamResponse(context, decompressedStream, fragmentObject.Name);
 
-                } else
+                }
+                else
                 {
 
                     JsonConverter converter = new ZipJsonConverter(archive, content, extent, level);
                     string json = JsonConvert.SerializeObject(fragmentObject, Newtonsoft.Json.Formatting.Indented, converter);
-                
+
                     SendJsonResponse(context, json);
                 }
 
@@ -91,7 +93,8 @@ namespace AasxRestServerLibrary
         {
             var zipPath = HttpUtility.UrlDecode(zipFragment.Trim('/'));
 
-            if (zipPath.Length == 0) {
+            if (zipPath.Length == 0)
+            {
                 return zipPath;
             }
 
@@ -104,12 +107,14 @@ namespace AasxRestServerLibrary
                     if (!entry.FullName.EndsWith("/") && !entry.FullName.EndsWith("\\"))
                     {
                         return entry;
-                    } else
+                    }
+                    else
                     {
                         // path represents a directory
                         return zipPath;
                     }
-                } else
+                }
+                else
                 {
                     // might be a directory that does not have its own entry
                     var entries = archive.Entries.Where(e => e.FullName.StartsWith(zipPath));
@@ -117,7 +122,8 @@ namespace AasxRestServerLibrary
                     if (entries.Count() > 0)
                     {
                         return zipPath;
-                    } else
+                    }
+                    else
                     {
                         return null;
                     }
@@ -210,7 +216,8 @@ namespace AasxRestServerLibrary
                 if (zipEntry != null)
                 {
                     basePath = zipEntry.FullName;
-                } else
+                }
+                else
                 {
                     basePath = value as string;
                 }
@@ -273,7 +280,7 @@ namespace AasxRestServerLibrary
 
                         foreach (var child in children)
                         {
-                            childArray.Add(BuildJsonRecursively(archive, child, deep, level+1));
+                            childArray.Add(BuildJsonRecursively(archive, child, deep, level + 1));
                         }
 
                         result["subEntries"] = childArray;
@@ -295,7 +302,7 @@ namespace AasxRestServerLibrary
 
             foreach (var entry in archive?.Entries)
             {
-                string entryPath = entry.FullName?.TrimEnd(PathSeparators).Replace("\\\\", "\\");                
+                string entryPath = entry.FullName?.TrimEnd(PathSeparators).Replace("\\\\", "\\");
                 string relativeEntryPath = GetRelativePath(path, entryPath);
 
                 if (relativeEntryPath == null)
@@ -323,7 +330,8 @@ namespace AasxRestServerLibrary
 
         private string GetRelativePath(string sourcePath, string targetPath)
         {
-            if (targetPath == null || !targetPath.StartsWith(sourcePath) || sourcePath == targetPath) {
+            if (targetPath == null || !targetPath.StartsWith(sourcePath) || sourcePath == targetPath)
+            {
                 return null;
             }
 
@@ -332,7 +340,7 @@ namespace AasxRestServerLibrary
                 return targetPath;
             }
 
-            string relativePath =  targetPath.Substring(sourcePath.Length, targetPath.Length - sourcePath.Length);
+            string relativePath = targetPath.Substring(sourcePath.Length, targetPath.Length - sourcePath.Length);
 
             if (relativePath.Length == 1 && PathSeparators.Contains(relativePath[0]))
             {
@@ -347,7 +355,8 @@ namespace AasxRestServerLibrary
     /**
      * An exception that indicates that something went wrong while evaluating a ZIP fragment.
      */
-    public class ZipFragmentEvaluationException : ArgumentException {
+    public class ZipFragmentEvaluationException : ArgumentException
+    {
 
         public ZipFragmentEvaluationException(string message) : base(message)
         {

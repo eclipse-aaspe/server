@@ -45,7 +45,8 @@ namespace AasxRestServerLibrary
                     DeeplyNestedXmlElementsRemover.RemoveDeeplements(fragmentObject);
                 }
 
-                if (content == "xml") {
+                if (content == "xml")
+                {
 
                     if (fragmentObject.NodeType != XPathNodeType.Element)
                     {
@@ -55,12 +56,13 @@ namespace AasxRestServerLibrary
 
                     SendXmlResponse(context, xmlElement);
 
-                } else
+                }
+                else
                 {
 
                     JsonConverter converter = new XmlJsonConverter(xmlFragment, content, extent);
                     string json = JsonConvert.SerializeObject(fragmentObject, Newtonsoft.Json.Formatting.Indented, converter);
-                
+
                     SendJsonResponse(context, json);
                 }
 
@@ -165,16 +167,16 @@ namespace AasxRestServerLibrary
      * 'extent' as defined by "Details of the AAS, part 2".
      * 
      * Note: The serialization algorithm for 'content=normal' is based on directly converting the XML node to JSON.
-     */ 
+     */
     class XmlJsonConverter : JsonConverter
     {
         string BaseXpath;
         string Content;
         string Extent;
-        
+
         public XmlJsonConverter(string xmlFragment, string content = "normal", string extent = "withoutBlobValue")
         {
-            this.BaseXpath = HttpUtility.UrlDecode(xmlFragment.Trim('/')); ; 
+            this.BaseXpath = HttpUtility.UrlDecode(xmlFragment.Trim('/')); ;
             this.Content = content;
             this.Extent = extent;
         }
@@ -209,7 +211,8 @@ namespace AasxRestServerLibrary
             {
                 result = new JObject();
                 result["value"] = navigator.InnerXml;
-            } else
+            }
+            else
             {
                 if (navigator.NodeType != XPathNodeType.Element)
                 {
@@ -221,11 +224,14 @@ namespace AasxRestServerLibrary
                 if (Content == "normal")
                 {
                     result = JObject.FromObject(xmlElement);
-                } else if (Content == "path") { 
+                }
+                else if (Content == "path")
+                {
 
                     List<string> paths = CollectChildXpathPathsRecursively(xmlElement, BaseXpath);
                     result = JArray.FromObject(paths);
-                } else
+                }
+                else
                 {
                     throw new XmlFragmentEvaluationException("Unsupported content modifier: " + Content);
                 }
@@ -293,7 +299,7 @@ namespace AasxRestServerLibrary
 
         public static void RemoveDeeplements(XPathNavigator fragmentObject)
         {
-            
+
             if (fragmentObject.NodeType == XPathNodeType.Element)
             {
                 XPathNodeIterator nodesToDelete;
@@ -317,7 +323,8 @@ namespace AasxRestServerLibrary
     /**
      * An exception that indicates that something went wrong while evaluating an XML fragment.
      */
-    public class XmlFragmentEvaluationException : ArgumentException {
+    public class XmlFragmentEvaluationException : ArgumentException
+    {
 
         public XmlFragmentEvaluationException(string message) : base(message)
         {

@@ -1526,14 +1526,14 @@ namespace AasxRestServerLibrary
             }
 
             // Contents of SubmodelElements
-            
+
             [RestRoute(
-                HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/((?!fragments)[^/]+)){1,99}?" + 
+                HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/((?!fragments)[^/]+)){1,99}?" +
                     "(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
             [RestRoute(
-                HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/((?!fragments)[^/]+)){1,99}?" + 
+                HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/((?!fragments)[^/]+)){1,99}?" +
                     "(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
-            
+
             public IHttpContext GetSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo.Replace("submodel/submodelElements", "elements"));
