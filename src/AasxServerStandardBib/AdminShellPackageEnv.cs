@@ -808,7 +808,7 @@ namespace AdminShellNS
             var part = this.openPackage.GetPart(new Uri(uriString, UriKind.RelativeOrAbsolute));
             if (part == null)
                 throw (new Exception(string.Format($"Cannot access URI {uriString} in {this.fn} not opened. Aborting!")));
-            return part.GetStream(FileMode.Open);
+            return part.GetStream(FileMode.Open, FileAccess.Read);
         }
 
         public long GetStreamSizeFromPackage(string uriString)
