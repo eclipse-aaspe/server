@@ -248,8 +248,7 @@ namespace AasxServer
             {
                 threadDelegate = new ThreadStart(nextTick);
                 i40LanguageThread = new Thread(threadDelegate);
-                // MICHA
-                // i40LanguageThread.Start();
+                i40LanguageThread.Start();
             }
         }
 
@@ -601,7 +600,9 @@ namespace AasxServer
                                 (sme1 as AdminShell.Property).value = "";
                                 foreach (var s in auto.actualStates)
                                 {
-                                    (sme1 as AdminShell.Property).value += s + " ";
+                                    var p = sme1 as AdminShell.Property;
+                                    p.value += s + " ";
+                                    p.TimeStamp = DateTime.UtcNow;
                                 }
                             }
                             if (sme1 is AdminShell.Property && sme1.idShort == "getTransitionsEnabled")
