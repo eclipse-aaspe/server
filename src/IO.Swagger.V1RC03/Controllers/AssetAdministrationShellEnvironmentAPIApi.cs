@@ -33,6 +33,14 @@ using System.Net.Mime;
 using IO.Swagger.V1RC03.APIModels.Core;
 using Microsoft.AspNetCore.Http;
 using IO.Swagger.V1RC03.APIModels;
+using System.Collections.Specialized;
+using Grapevine.Client;
+using System.Web;
+using AasxServer;
+using Grapevine.Interfaces.Server;
+using System.Dynamic;
+using HttpContext = Microsoft.AspNetCore.Http.HttpContext;
+using AasxServerStandardBib.Exceptions;
 
 namespace IO.Swagger.V1RC03.Controllers
 {
@@ -40,7 +48,7 @@ namespace IO.Swagger.V1RC03.Controllers
     /// 
     /// </summary>
     [ApiController]
-    public class AssetAdministrationShellEnvironmentAPIController : ControllerBase, IAssetAdministrationShellEnvironmentAPIController
+    public partial class AssetAdministrationShellEnvironmentAPIController : ControllerBase, IAssetAdministrationShellEnvironmentAPIController
     {
         private readonly IAppLogger<AssetAdministrationShellEnvironmentAPIController> _logger;
         private readonly IAssetAdministrationShellEnvironmentService _aasEnvService;
@@ -132,7 +140,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteSubmodelElementByPath")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
@@ -156,7 +164,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteSubmodelElementByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
@@ -211,6 +219,9 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<SpecificAssetId> assetIds, [FromQuery] string idShort)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
+            _aasEnvService.SecurityCheck();
+
             var output = _aasEnvService.GetAllAssetAdministrationShells(assetIds, idShort);
 
             return new ObjectResult(output);
@@ -232,6 +243,9 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllConceptDescriptions([FromQuery] string idShort, [FromQuery] string isCaseOf, [FromQuery] string dataSpecificationRef)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/concept-descriptions", "GET");
+            _aasEnvService.SecurityCheck();
+
             var reqIsCaseOf = _jsonQueryDeserializer.DeserializeReference("isCaseOf", isCaseOf);
 
             var reqDataSpecificationRef = _jsonQueryDeserializer.DeserializeReference("dataSpecificationRef", dataSpecificationRef);
@@ -251,13 +265,15 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">List of found submodel elements</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElements")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -284,13 +300,15 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">List of found submodel elements</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
+
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
@@ -319,6 +337,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelReferences([FromRoute][Required] string aasIdentifier)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             var output = _aasEnvService.GetAllSubmodelReferences(decodedAasId);
@@ -341,6 +361,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
+
             var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
             var output = _aasEnvService.GetAllSubmodels(reqSemanticId, idShort);
@@ -364,6 +386,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
+            
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             var output = _aasEnvService.GetAssetAdministrationShellById(decodedAasId, out _);
@@ -385,6 +409,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAssetInformation([FromRoute][Required] string aasIdentifier)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             var output = _aasEnvService.GetAssetInformationFromAas(decodedAasId);
@@ -408,6 +434,9 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetConceptDescriptionById([FromRoute][Required] string cdIdentifier)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/concept-descriptions", "GET");
+            _aasEnvService.SecurityCheck();
+
             var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
 
             var output = _aasEnvService.GetConceptDescriptionById(decodedCdId, out _);
@@ -426,7 +455,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="405">Method not allowed - Download only valid for File submodel element</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/attachment")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("GetFileByPath")]
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Requested file")]
@@ -435,6 +464,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetFileByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -462,7 +493,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="405">Method not allowed - Download only valid for File submodel element</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("GetFileByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(string), description: "Requested file")]
@@ -471,6 +502,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetFileByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
+
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             var fileName = _aasEnvService.GetFileByPathSubmodelRepo(decodedSubmodelId, idShortPath, out byte[] content, out long fileSize);
@@ -499,7 +532,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/operation-results/{handleId}")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}/operation-results/{handleId}")]
         [ValidateModelState]
         [SwaggerOperation("GetOperationAsyncResult")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -507,6 +540,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetOperationAsyncResult([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromRoute][Required] string handleId, [FromQuery] string content)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             var decodedHandleId = _decoderService.Decode("handleId", handleId);
@@ -527,7 +562,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/operation-results/{handleId}")]
         [ValidateModelState]
         [SwaggerOperation("GetOperationAsyncResultSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -535,6 +570,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetOperationAsyncResultSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromRoute][Required] string handleId, [FromQuery] string content)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
+
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             var decodedHandleId = _decoderService.Decode("handleId", handleId);
 
@@ -561,11 +598,15 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             var output = _aasEnvService.GetSubmodel(decodedAasId, decodedSubmodelId);
+
+            _aasEnvService.SecurityCheck(output.IdShort, "submodel", output);
 
             return new ObjectResult(output);
         }
@@ -586,9 +627,13 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelById([FromRoute][Required] string submodelIdentifier)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
+
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             var output = _aasEnvService.GetSubmodelById(decodedSubmodelId, out _);
+
+            _aasEnvService.SecurityCheck(output.IdShort, "submodel", output);
 
             return new ObjectResult(output);
         }
@@ -606,7 +651,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPath")]
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
@@ -614,6 +659,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -634,7 +681,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
@@ -642,6 +689,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
+
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             var output = _aasEnvService.GetSubmodelElementByPathSubmodelRepo(decodedSubmodelId, idShortPath, out _);
@@ -664,7 +713,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="405">Method not allowed - Invoke only valid for Operation submodel element</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}/invoke")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}/invoke")]
         [ValidateModelState]
         [SwaggerOperation("InvokeOperation")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -694,7 +743,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="405">Method not allowed - Invoke only valid for Operation submodel element</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/invoke")]
         [ValidateModelState]
         [SwaggerOperation("InvokeOperationSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -794,7 +843,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElement")]
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -826,7 +875,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElementByPath")]
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -858,7 +907,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElementByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -888,7 +937,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElementSubmodelRepo")]
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -1073,7 +1122,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodel-elements/{idShortPath}")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PutSubmodelElementByPath")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
@@ -1105,7 +1154,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PutSubmodelElementByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
@@ -1134,7 +1183,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("PutFileByPath")]
         [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
@@ -1167,7 +1216,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("PutFileByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]

@@ -63,6 +63,15 @@ namespace IO.Swagger.V1RC03.Middleware
                         message.MessageType = Message.MessageTypeEnum.ErrorEnum;
                         break;
                     }
+                case NotAllowed:
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                        message.Code = HttpStatusCode.Forbidden.ToString();
+                        message.Text = exception.Message;
+                        message.Timestamp = DateTime.Now.ToString();
+                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        break;
+                    }
                 case InvalidNumberOfChildElementsException:
                 case NoIdentifierException:
                 case ArgumentNullException:

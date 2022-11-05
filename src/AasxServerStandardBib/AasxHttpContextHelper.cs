@@ -29,6 +29,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
+using System.Collections.Specialized;
+using JetBrains.Annotations;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -2959,7 +2961,7 @@ namespace AasxRestServerLibrary
         private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
 
         public int sessionCount = 0;
-        public char[] sessionUserType = new char[100];
+        public static char[] sessionUserType = new char[100];
         public static string[] sessionUserName = new string[100];
         public static RSA[] sessionUserPulicKey = new RSA[100];
         public static string[] sessionRandom = new string[100];
@@ -3356,7 +3358,7 @@ namespace AasxRestServerLibrary
             SendJsonResponse(context, res);
         }
 
-        public bool checkAccessLevel(string currentRole, string operation, string neededRights,
+        public static bool checkAccessLevel(string currentRole, string operation, string neededRights,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             if (Program.secretStringAPI != null)
@@ -3377,36 +3379,42 @@ namespace AasxRestServerLibrary
                 " objPath = " + objPath
                 );
 
-            int iRole = 0;
-            while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
+            if (objPath == "")
             {
-                if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas" &&
-                    objectAasOrSubmodel != null && securityRole[iRole].objReference == objectAasOrSubmodel &&
-                    securityRole[iRole].permission == neededRights)
+                int iRole = 0;
+                while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
                 {
-                    if ((securityRole[iRole].condition == "" && securityRole[iRole].name == currentRole) ||
-                        (securityRole[iRole].condition == "not" && securityRole[iRole].name != currentRole))
+                    if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas") 
+                        /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
                     {
-                        if (securityRole[iRole].kind == "allow")
-                            return true;
-                        if (securityRole[iRole].kind == "deny")
-                            return false;
-                    }
-                }
-                if (securityRole[iRole].name == currentRole && securityRole[iRole].objType == "api" &&
-                    securityRole[iRole].permission == neededRights)
-                {
-                    if (securityRole[iRole].apiOperation == "*" || securityRole[iRole].apiOperation == operation)
-                    {
-                        if (securityRole[iRole].permission == neededRights)
+                        if (objectAasOrSubmodel != null && securityRole[iRole].objReference == objectAasOrSubmodel &&
+                        securityRole[iRole].permission == neededRights)
                         {
-                            return true;
+                            if ((securityRole[iRole].condition == "" && securityRole[iRole].name == currentRole) ||
+                                (securityRole[iRole].condition == "not" && securityRole[iRole].name != currentRole))
+                            {
+                                if (securityRole[iRole].kind == "allow")
+                                    return true;
+                                if (securityRole[iRole].kind == "deny")
+                                    return false;
+                            }
                         }
                     }
+                    if (securityRole[iRole].name == currentRole && securityRole[iRole].objType == "api" &&
+                        securityRole[iRole].permission == neededRights)
+                    {
+                        if (securityRole[iRole].apiOperation == "*" || securityRole[iRole].apiOperation == operation)
+                        {
+                            if (securityRole[iRole].permission == neededRights)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    iRole++;
                 }
-                iRole++;
             }
-            if (operation == "/submodelelements" && objPath != "")
+            if (objPath != "" && (operation == "/submodels" || operation == "/submodelelements"))
             {
                 // next object with rule must have allow
                 // no objects below must have deny
@@ -3486,7 +3494,12 @@ namespace AasxRestServerLibrary
 
             return false;
         }
-        public string SecurityCheck(IHttpContext context, ref int index)
+
+        public static string SecurityCheck(IHttpContext context, ref int index)
+        {
+            return SecurityCheck(context.Request.QueryString, context.Request.Headers, ref index);
+        }
+        public static string SecurityCheck(NameValueCollection queryString, NameValueCollection headers, ref int index)
         {
             Console.WriteLine("SecurityCheck");
             bool error = false;
@@ -3514,7 +3527,6 @@ namespace AasxRestServerLibrary
                 accessrights = "READ";
 
                 // Query string with Secret?
-                var queryString = context.Request.QueryString;
                 string s = queryString["s"];
                 if (s != null && s != "")
                 {
@@ -3522,7 +3534,7 @@ namespace AasxRestServerLibrary
                         accessrights = "UPDATE";
                 }
                 /*
-                split = context.Request.Url.ToString().Split(new char[] { '?' });
+                split = request.Url.ToString().Split(new char[] { '?' });
                 if (split != null && split.Length > 1 && split[1] != null)
                 {
                     Console.WriteLine("Received query string = " + split[1]);
@@ -3538,10 +3550,10 @@ namespace AasxRestServerLibrary
                 return accessrights;
             }
 
-            string headers = context.Request.Headers.ToString();
+            // string headers = request.Headers.ToString();
 
             // Check bearer token
-            token = context.Request.Headers.Get("Authorization");
+            token = headers["Authorization"];
             if (token != null)
             {
                 split = token.Split(new Char[] { ' ', '\t' });
@@ -3578,12 +3590,15 @@ namespace AasxRestServerLibrary
             }
             else // check query string for bearer token
             {
-                split = context.Request.Url.ToString().Split(new char[] { '?' });
+                /*
+                split = request.Url.ToString().Split(new char[] { '?' });
                 if (split != null && split.Length > 1 && split[1] != null)
                 {
                     Console.WriteLine("Received query string = " + split[1]);
                     bearerToken = split[1];
                 }
+                */
+                bearerToken = queryString["bearer"];
             }
 
             if (bearerToken == null)
@@ -3592,7 +3607,7 @@ namespace AasxRestServerLibrary
             }
 
             // Check email token
-            token = context.Request.Headers.Get("Email");
+            token = headers["Email"];
             if (token != null)
             {
                 Console.WriteLine("Received Email token = " + token);
@@ -4223,7 +4238,7 @@ namespace AasxRestServerLibrary
                                         object aasObject = null;
                                         if (objRef != null)
                                         {
-                                            aasObject = env.AasEnv.FindReferableByReference(objRef.GetModelReference());
+                                            aasObject = env.AasEnv.FindReferableByReference(objRef.Value);
                                         }
                                         var smc8 = smc7?.FindFirstIdShortAs<SubmodelElementCollection>("permission");
 
@@ -4238,7 +4253,7 @@ namespace AasxRestServerLibrary
                                             if (sme9 is ReferenceElement)
                                             {
                                                 var refer = sme9 as ReferenceElement;
-                                                var permission = env.AasEnv.FindReferableByReference(refer.GetModelReference());
+                                                var permission = env.AasEnv.FindReferableByReference(refer.Value);
                                                 if (!(permission is Property))
                                                     continue;
                                                 var p = permission as Property;

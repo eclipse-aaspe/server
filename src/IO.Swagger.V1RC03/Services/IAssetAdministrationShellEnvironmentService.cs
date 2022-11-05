@@ -1,9 +1,11 @@
 ﻿using AasCore.Aas3_0_RC02;
 using IO.Swagger.V1RC03.ApiModel;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using static IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController;
 
 namespace IO.Swagger.V1RC03.Services
 {
@@ -51,5 +53,7 @@ namespace IO.Swagger.V1RC03.Services
         void UpdateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, APIModels.Core.OutputModifierContext outputModifierContext);
         void UpdateFileByPathSubmodelRepo(string decodedSubmodelId, string idShortPath, string fileName, string contentType, Stream fileContent);
         void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, Stream stream);
+        void SecurityCheckInit(HttpContext _context, string _route, string _httpOperation);
+        void SecurityCheck(string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null);
     }
 }

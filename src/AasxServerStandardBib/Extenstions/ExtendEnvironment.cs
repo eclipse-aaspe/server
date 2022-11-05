@@ -468,6 +468,8 @@ namespace Extenstions
 
                         return environment.FindReferableByReference(reference, ++keyIndex, submodel.SubmodelElements);
                     }
+                case KeyTypes.SubmodelElementCollection:
+                case KeyTypes.Property:
                 case KeyTypes.SubmodelElement:
                     {
                         if (submodelElementList != null)

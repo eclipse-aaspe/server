@@ -635,56 +635,6 @@
             </summary>
             <param name="context"></param>
         </member>
-        <member name="T:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController">
-            <summary>
-            
-            </summary>
-        </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.DeleteAASXByPackageId(System.String)">
-            <summary>
-            Deletes a specific AASX package from the server
-            </summary>
-            <param name="packageId">The Package Id (UTF8-BASE64-URL-encoded)</param>
-            <response code="204">Deleted successfully</response>
-            <response code="404">Not Found</response>
-            <response code="0">Default error handling for unmentioned status codes</response>
-        </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.GetAASXByPackageId(System.String)">
-            <summary>
-            Returns a specific AASX package from the server
-            </summary>
-            <param name="packageId">The package Id (UTF8-BASE64-URL-encoded)</param>
-            <response code="200">Requested AASX package</response>
-            <response code="404">Not Found</response>
-            <response code="0">Default error handling for unmentioned status codes</response>
-        </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.GetAllAASXPackageIds(System.String)">
-            <summary>
-            Returns a list of available AASX packages at the server
-            </summary>
-            <param name="aasId">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-            <response code="200">Requested package list</response>
-            <response code="0">Default error handling for unmentioned status codes</response>
-        </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.PostAASXPackage(System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
-            <summary>
-            Creates an AASX package at the server
-            </summary>
-            <param name="fileName">Filename of the AASX package</param>
-            <param name="aasIds">Included AAS Ids</param>
-            <param name="file">AASX PAckage</param>
-            <returns></returns>
-        </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.PutAASXPackageById(System.String,System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
-            <summary>
-            Updates the AASX package at the server
-            </summary>
-            <param name="packageId">Package ID from the package list (BASE64-URL-encoded)</param>
-            <param name="fileName">AASX Package Name</param>
-            <param name="file">AASX Package</param>
-            <param name="aasIds">Included AAS Identifiers</param>
-            <returns></returns>
-        </member>
         <member name="T:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController">
             <summary>
             
@@ -1167,6 +1117,56 @@
             <response code="400">Bad Request</response>
             <response code="404">Not Found</response>
             <response code="0">Default error handling for unmentioned status codes</response>
+        </member>
+        <member name="T:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.DeleteAASXByPackageId(System.String)">
+            <summary>
+            Deletes a specific AASX package from the server
+            </summary>
+            <param name="packageId">The Package Id (UTF8-BASE64-URL-encoded)</param>
+            <response code="204">Deleted successfully</response>
+            <response code="404">Not Found</response>
+            <response code="0">Default error handling for unmentioned status codes</response>
+        </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.GetAASXByPackageId(System.String)">
+            <summary>
+            Returns a specific AASX package from the server
+            </summary>
+            <param name="packageId">The package Id (UTF8-BASE64-URL-encoded)</param>
+            <response code="200">Requested AASX package</response>
+            <response code="404">Not Found</response>
+            <response code="0">Default error handling for unmentioned status codes</response>
+        </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.GetAllAASXPackageIds(System.String)">
+            <summary>
+            Returns a list of available AASX packages at the server
+            </summary>
+            <param name="aasId">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+            <response code="200">Requested package list</response>
+            <response code="0">Default error handling for unmentioned status codes</response>
+        </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.PostAASXPackage(System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
+            <summary>
+            Creates an AASX package at the server
+            </summary>
+            <param name="fileName">Filename of the AASX package</param>
+            <param name="aasIds">Included AAS Ids</param>
+            <param name="file">AASX PAckage</param>
+            <returns></returns>
+        </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.PutAASXPackageById(System.String,System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
+            <summary>
+            Updates the AASX package at the server
+            </summary>
+            <param name="packageId">Package ID from the package list (BASE64-URL-encoded)</param>
+            <param name="fileName">AASX Package Name</param>
+            <param name="file">AASX Package</param>
+            <param name="aasIds">Included AAS Identifiers</param>
+            <returns></returns>
         </member>
         <member name="T:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentSerializationAPIController">
             <summary>
