@@ -70,8 +70,17 @@ namespace IO.Swagger.V1RC03.Services
                 objPath, aasOrSubmodel, objectAasOrSubmodel);
        }
 
+        public bool SecurityCheckTestOnly(string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+        {
+            if (!AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
+                return(true);
+
+            return checkAccessRights(_securityContext.accessRights, _securityContext.route, _securityContext.neededRights,
+                objPath, aasOrSubmodel, objectAasOrSubmodel, true);
+        }
+
         public static bool checkAccessRights(string currentRole, string operation, string neededRights,
-            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, bool testOnly = false)
         {
             if (Program.secretStringAPI != null)
             {
@@ -111,7 +120,8 @@ namespace IO.Swagger.V1RC03.Services
             */
 
             // Exception
-            throw new NotAllowed("Access not allowed");
+            if (!testOnly)
+                throw new NotAllowed("Access not allowed");
 
             return false;
         }
@@ -1036,9 +1046,10 @@ namespace IO.Swagger.V1RC03.Services
                     if (env != null)
                     {
                         foreach (var s in env.Submodels)
-                            SecurityCheck("", "", s);
-
-                        output.AddRange(env.Submodels);
+                        {
+                            if (SecurityCheckTestOnly(s.IdShort, "", s))
+                                output.Add(s);
+                        }
                     }
                 }
             }
