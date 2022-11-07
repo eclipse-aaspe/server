@@ -31,6 +31,7 @@ using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
 using System.Collections.Specialized;
 using JetBrains.Annotations;
+using System.Data;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -3361,6 +3362,13 @@ namespace AasxRestServerLibrary
         public static bool checkAccessLevel(string currentRole, string operation, string neededRights,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
+            string error = "";
+            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel);
+        }
+        public static bool checkAccessLevelWithError(out string error, string currentRole, string operation, string neededRights,
+            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+        {
+            error = "";
             if (Program.secretStringAPI != null)
             {
                 if (neededRights == "READ")
@@ -3396,7 +3404,10 @@ namespace AasxRestServerLibrary
                                 if (securityRole[iRole].kind == "allow")
                                     return true;
                                 if (securityRole[iRole].kind == "deny")
+                                {
+                                    error = "DENY AAS " + (objectAasOrSubmodel as AssetAdministrationShell).Id;
                                     return false;
+                                }
                             }
                         }
                     }
@@ -3423,7 +3434,7 @@ namespace AasxRestServerLibrary
                 foreach (var role in securityRole)
                 {
                     if ((role.objType == "sm" || role.objType == "submodelElement") &&
-                        role.permission == neededRights)
+                        role.submodel == objectAasOrSubmodel && role.permission == neededRights)
                     {
                         if (role.kind == "deny")
                         {
@@ -3435,7 +3446,10 @@ namespace AasxRestServerLibrary
                             if (role.objPath.Length >= objPath.Length) // deny in tree below
                             {
                                 if (objPath == role.objPath.Substring(0, objPath.Length))
+                                {
+                                    error = "DENY " + role.objPath;
                                     return false;
+                                }
                             }
                         }
                         if (role.kind == "allow")
@@ -3448,11 +3462,20 @@ namespace AasxRestServerLibrary
                         }
                     }
                 }
-                if (deepestAllow == "" || (deepestDeny.Length > deepestAllow.Length))
+                if (deepestAllow == "")
+                {
+                    error = "ALLOW not defined";
                     return false;
+                }
+                if (deepestDeny.Length > deepestAllow.Length)
+                {
+                    error = "DENY " + deepestDeny;
+                    return false;
+                }
                 return true;
             }
 
+            error = "ALLOW not defined";
             return false;
         }
 
@@ -4059,6 +4082,7 @@ namespace AasxRestServerLibrary
             public string objPath = "";
             public string permission = null;
             public string kind = null;
+            public Submodel submodel = null;
             public securityRoleClass() { }
         }
         public static List<securityRoleClass> securityRole = null;
@@ -4302,7 +4326,8 @@ namespace AasxRestServerLibrary
                                                         if (aasObject is Submodel)
                                                         {
                                                             src.objType = "sm";
-                                                            src.objPath = (aasObject as Submodel).IdShort;
+                                                            src.submodel = aasObject as Submodel;
+                                                            src.objPath = src.submodel.IdShort;
                                                         }
                                                         if (aasObject is ISubmodelElement smep)
                                                         {
@@ -4314,6 +4339,7 @@ namespace AasxRestServerLibrary
                                                                 rp = (IReferable)rp.Parent;
                                                                 path = rp.IdShort + "." + path;
                                                             }
+                                                            src.submodel = rp as Submodel;
                                                             src.objPath = path;
                                                         }
                                                     }

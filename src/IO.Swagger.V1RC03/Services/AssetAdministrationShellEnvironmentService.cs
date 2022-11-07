@@ -82,6 +82,8 @@ namespace IO.Swagger.V1RC03.Services
         public static bool checkAccessRights(string currentRole, string operation, string neededRights,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, bool testOnly = false)
         {
+            string error = "Access not allowed";
+
             if (Program.secretStringAPI != null)
             {
                 if (neededRights == "READ")
@@ -91,8 +93,9 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
-                if (AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevel(currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel))
-                    return true;
+                if (AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, currentRole, operation, neededRights, objPath,
+                    aasOrSubmodel, objectAasOrSubmodel))
+                        return true;
 
                 if (currentRole == null)
                 {
@@ -121,7 +124,9 @@ namespace IO.Swagger.V1RC03.Services
 
             // Exception
             if (!testOnly)
-                throw new NotAllowed("Access not allowed");
+            {
+                throw new NotAllowed(error);
+            }
 
             return false;
         }
@@ -1132,7 +1137,7 @@ namespace IO.Swagger.V1RC03.Services
 
             if (submodel != null)
             {
-                SecurityCheck(submodel.IdShort + "." + idShortPath);
+                SecurityCheck(submodel.IdShort + "." + idShortPath, "", submodel);
 
                 output = GetSubmodelElementByPath(submodel, idShortPath, out object parent);
                 smeParent = parent;
