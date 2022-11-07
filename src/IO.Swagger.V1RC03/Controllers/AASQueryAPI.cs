@@ -15,6 +15,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using static IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController;
 
 namespace IO.Swagger.V1RC03.Controllers
 {
