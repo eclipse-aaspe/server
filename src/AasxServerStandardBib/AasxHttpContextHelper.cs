@@ -3433,6 +3433,28 @@ namespace AasxRestServerLibrary
                 string deepestAllow = "";
                 foreach (var role in securityRole)
                 {
+                    if (role.objType == "semanticid")
+                    {
+                        if (objectAasOrSubmodel is Submodel s)
+                        {
+                            if (s.SemanticId != null && s.SemanticId.Keys != null && s.SemanticId.Keys.Count != 0)
+                            {
+                                if (role.semanticId == s.SemanticId.Keys[0].Value)
+                                {
+                                    if (role.kind == "allow")
+                                    {
+                                        if (deepestAllow == "")
+                                            deepestAllow = s.IdShort;
+                                    }
+                                    if (role.kind == "deny")
+                                    {
+                                        if (deepestDeny == "")
+                                            deepestDeny = s.IdShort;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if ((role.objType == "sm" || role.objType == "submodelElement") &&
                         role.submodel == objectAasOrSubmodel && role.permission == neededRights)
                     {
@@ -4083,6 +4105,7 @@ namespace AasxRestServerLibrary
             public string permission = null;
             public string kind = null;
             public Submodel submodel = null;
+            public string semanticId = "";
             public securityRoleClass() { }
         }
         public static List<securityRoleClass> securityRole = null;
@@ -4313,6 +4336,17 @@ namespace AasxRestServerLibrary
                                                         {
                                                             src.objType = split[0];
                                                             src.apiOperation = split[1];
+                                                        }
+                                                    }
+                                                    if (value.Contains("semanticid"))
+                                                    {
+                                                        split = value.Split(':');
+                                                        if (split[0] == "semanticid")
+                                                        {
+                                                            src.objType = split[0];
+                                                            src.semanticId = split[1];
+                                                            for (int j = 2; j < split.Length; j++)
+                                                                src.semanticId += ":" + split[j];
                                                         }
                                                     }
                                                 }
