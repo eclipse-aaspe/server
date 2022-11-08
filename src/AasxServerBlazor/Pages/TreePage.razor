@@ -49,11 +49,6 @@
 				<strong><span style="color:blue">@getSymbols(context)</span></strong>
 				<div class="text-[#72726B] inline">@ViewTimeStamp(context)</div>
 
-
-
-
-
-
 			</TitleTemplate>
 		</Tree>
 	</div>
@@ -63,25 +58,34 @@
 		<div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
 			@{
 				// TODO: REFACTORING!
-				<span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
-				<span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span>
 
-				<br>
+				// ideas:
+				// - get rid of spans -> better: use inline divs with tailwind classes instead of style paramters
+				// - use tailwind grid
+				// - making private methods and/or components
+
+				// Displaying node type and node name
+				<div>
+					<span class="text-white bg-[blue]" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
+					<span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span>
+				</div>
+
 				for (int line = 0; line < 6; line++)
 				{
-					string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
-					string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
-					string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
-					if (nodeDetails0 != "" && nodeDetails1 != "")
-					{
-						string detailsId = "SelectedNodeDetailsLeft_" + line;
-						<span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
-						detailsId = "SelectedNodeDetailsRight_" + line;
-						<span id="@detailsId">@nodeDetails1 @nodeDetails2</span>
+					string nodeType = ViewNodeDetails(selectedNode, line, 0);
+					string nodeValue = ViewNodeDetails(selectedNode, line, 1);
+					string additionalInformationOfNode = ViewNodeDetails(selectedNode, line, 2);
 
-						<br>
+					if (nodeType != string.Empty && nodeValue != string.Empty)
+					{
+						<div>
+							<span class="@informationType" id="@($"SelectedNodeDetailsLeft_{line}")">@nodeType</span>
+							<span id="@($"SelectedNodeDetailsRight_{line}")">@nodeValue @additionalInformationOfNode"</span>
+						</div>
 					}
 				}
+
+
 				if (selectedNode != null && selectedNode.Tag is Referable r)
 				{
 					<span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
@@ -422,6 +426,8 @@
 	ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
 	int plotFilterTsdOffset = 0;
 
+	string informationType = "text-white bg-[blue]";
+
 	private class PlotFilter
 	{
 		public DateTime fromDate { get; set; }
@@ -521,10 +527,10 @@
 		*/
 		/*
 		await js.InvokeAsync<object>(
-			"download",
-			data,
-			filename,
-			"application/pdf"
+		"download",
+		data,
+		filename,
+		"application/pdf"
 	);
 	*/
 	}
@@ -589,10 +595,10 @@
 
 		/*
 		refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
-			{
-			// Note that the following line is necessary because otherwise
-			// Blazor would not recognize the state change and not refresh the UI
-			// InvokeAsync(() => this.StateHasChanged());
+		{
+		// Note that the following line is necessary because otherwise
+		// Blazor would not recognize the state change and not refresh the UI
+		// InvokeAsync(() => this.StateHasChanged());
 		}), null, 5000, 5000);
 	*/
 	}
@@ -1515,8 +1521,8 @@
 						ret = "ISSUER";
 				if (col == 1)
 			ret = s[1];
-		}
-		}
+			}
+			}
 			break;
 			*/
 				case 5:
