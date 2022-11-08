@@ -25,7 +25,7 @@
 
 <div id="con" class="flex">
 
-	<div class="resize" style="width: 33%; border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; word-wrap: break-word; word-break: break-all; position: sticky">
+	<div class="resize" style="width: 33%; border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
 
 		@updateVisibleTree(Items, selectedNode)
 		@if (Program.isLoading)
@@ -43,17 +43,11 @@
 				@{
 				//// SubmodelService.syncSubTree(context);
 				}
-				
-					<div class="shrink-0">
-						<span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-					</div>
-					<div>
-						<div class="text-xl font-medium text-black">
-							@ViewNodeID(context)@ViewNodeInfo(context)
-							<strong><span style="color:blue">@getSymbols(context)</span></strong>
-						</div>
-						<p class="text-slate-500"><span style="color:lightgray;">@ViewTimeStamp(context)</span></p>
-					</div>
+
+				<div class="bg-[#4370B3] inline rounded-sm text-white font-bold p-[2px]">@ViewNodeType(context)</div>
+				@ViewNodeID(context)@ViewNodeInfo(context)
+				<strong><span style="color:blue">@getSymbols(context)</span></strong>
+				<div class="text-[#72726B] inline">@ViewTimeStamp(context)</div>
 
 
 
@@ -68,6 +62,7 @@
 	<div class="resize" style="flex-grow: 100; border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
 		<div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
 			@{
+				// TODO: REFACTORING!
 				<span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
 				<span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span>
 
