@@ -74,15 +74,8 @@
                 string link = getLink(selectedNode, out externalLink);
                 if (selectedNode != null && link != "")
                 {
-                    // if (externalLink)
-                    if (true)
-                    {
-                        <a href="@link" target="_blank">@link</a><br>
-                    }
-                    else
-                    {
-                        <button onclick="window.location.href = '@link'; ">Download</button><br>
-                    }
+                    <button style="margin-bottom: 5px" onclick="window.location.href = '@link'; ">Download</button>
+                    <button style="margin-bottom: 5px" @onclick="save"> Save </button>
                     if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
                     {
                         bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
@@ -125,6 +118,12 @@
                                 if (!toPublish)
                                     Program.submodelsToSubscribe.Add(selectedNode.Tag);
                             }
+                            private void save()
+                            {
+                                string fname = Path.GetFileName(Program.envFileName[selectedNode.envIndex]);
+                                Program.env[selectedNode.envIndex].SaveAs("./temp/" + fname);
+                                System.IO.File.Copy("./temp/" + fname, Path.Combine(Program.DataPath, fname), true);
+                            }
                         }
                     }
                 }
@@ -141,6 +140,9 @@
                             (selectedNode.Tag as Property).setTimeStamp(DateTime.UtcNow);
                             this.StateHasChanged();
                         }
+                        string fname = Path.GetFileName(Program.envFileName[selectedNode.envIndex]);
+                        Program.env[selectedNode.envIndex].SaveAs("./temp/" + fname);
+                        System.IO.File.Copy("./temp/" + fname, Path.Combine(Program.DataPath, fname), true);
                         CurrentValue = "";
                     }
                 }

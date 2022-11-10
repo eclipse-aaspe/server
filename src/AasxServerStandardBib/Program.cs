@@ -167,6 +167,8 @@ namespace AasxServer
 
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
+        public static string DataPath { get; set; }
+
         private class CommandLineArguments
 
         {
@@ -281,6 +283,7 @@ namespace AasxServer
 
             if (a.DataPath != null)
             {
+                DataPath = a.DataPath;
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
             }
