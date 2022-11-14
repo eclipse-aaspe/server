@@ -27,6 +27,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
+using Microsoft.IdentityModel.Tokens;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -2345,6 +2346,17 @@ namespace AasxRestServerLibrary
         public void EvalGetSubmodelElementFragment(IHttpContext context, string aasid, string smid, string[] elemids, string fragmentType, string fragment)
         {
 
+            string decodedFragment;
+            try
+            {
+                decodedFragment = Base64UrlEncoder.Decode(fragment);
+            }
+            catch (FormatException)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Unable to Base64URL-decode fragment '{fragment}'!");
+                return;
+            }
+
             // access the first AAS
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             if (findAasReturn.aas == null)
@@ -2390,17 +2402,17 @@ namespace AasxRestServerLibrary
                 case "aml":
                 case "aml20":
                 case "aml21":
-                    this.EvalGetAMLFragment(context, packageStream, fragment);
+                    this.EvalGetAMLFragment(context, packageStream, decodedFragment);
                     break;
                 case "xml":
-                    this.EvalGetXMLFragment(context, packageStream, fragment);
+                    this.EvalGetXMLFragment(context, packageStream, decodedFragment);
                     break;
                 case "zip":
-                    this.EvalGetZIPFragment(context, packageStream, fragment);
+                    this.EvalGetZIPFragment(context, packageStream, decodedFragment);
                     break;
                 case "xls":
                 case "xlsx":
-                    this.EvalGetXLSFragment(context, packageStream, fragment);
+                    this.EvalGetXLSFragment(context, packageStream, decodedFragment);
                     break;
                 // possibility to add support for more fragment types in the future
                 default:
