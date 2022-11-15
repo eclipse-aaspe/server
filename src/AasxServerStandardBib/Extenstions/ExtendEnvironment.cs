@@ -471,8 +471,6 @@ namespace Extenstions
                 case KeyTypes.SubmodelElementCollection:
                 case KeyTypes.Property:
                 case KeyTypes.SubmodelElement:
-                case KeyTypes.SubmodelElementCollection:
-                case KeyTypes.Property:
                     {
                         if (submodelElementList != null)
                         {
