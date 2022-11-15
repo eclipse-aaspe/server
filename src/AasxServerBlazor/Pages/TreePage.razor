@@ -194,7 +194,7 @@
 
                     try
                     {
-                        semanticId = smc.SemanticId.GetAsIdentifier();
+                        semanticId = smc.SemanticId?.GetAsIdentifier();
                     }
                     catch { }
                     if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||

@@ -445,9 +445,8 @@ namespace IO.Swagger.Registry.Controllers
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.EndpointAddress =
                             AasxServer.Program.externalBlazor + "/shells/" +
-                            Base64UrlEncoder.Encode(ad.Identification) + "/aas/submodels/" +
-                            Base64UrlEncoder.Encode(sd.Identification) +
-                            "/submodel/submodel-elements";
+                            Base64UrlEncoder.Encode(ad.Identification) + "/submodels/" +
+                            Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Endpoint>();
                         sd.Endpoints.Add(esm);
@@ -648,6 +647,7 @@ namespace IO.Swagger.Registry.Controllers
                         }
                         if (found == 2 && pjson != null)
                         {
+                            /*
                             string s = JsonConvert.SerializeObject(ad);
                             if (s != pjson.Value)
                             {
@@ -655,6 +655,7 @@ namespace IO.Swagger.Registry.Controllers
                                 pjson.TimeStamp = timestamp;
                                 pjson.Value = s;
                             }
+                            */
                             return;
                         }
                     }
@@ -667,7 +668,12 @@ namespace IO.Swagger.Registry.Controllers
                 value: new List<ISubmodelElement>());
             c.TimeStampCreate = timestamp;
             c.TimeStamp = timestamp;
-            var p = new Property(DataTypeDefXsd.String, idShort: "aasID");
+            var p = new Property(DataTypeDefXsd.String, idShort: "idShort");
+            p.TimeStampCreate = timestamp;
+            p.TimeStamp = timestamp;
+            p.Value = ad.IdShort;
+            c.Value.Add(p);
+            p = new Property(DataTypeDefXsd.String, idShort: "aasID");
             p.TimeStampCreate = timestamp;
             p.TimeStamp = timestamp;
             p.Value = aasID;
@@ -689,7 +695,8 @@ namespace IO.Swagger.Registry.Controllers
             p.TimeStamp = timestamp;
             p.Value = JsonConvert.SerializeObject(ad);
             c.Value.Add(p);
-            // iterate submodels
+            aasRegistry?.SubmodelElements.Add(c);
+            /*
             int federatedElementsCount = 0;
             var smc = new SubmodelElementCollection(
                 idShort: "federatedElements",
@@ -697,8 +704,75 @@ namespace IO.Swagger.Registry.Controllers
             smc.TimeStampCreate = timestamp;
             smc.TimeStamp = timestamp;
             c.Value.Add(smc);
+            */
+            // iterate submodels
+            int iSubmodel = 0;
             foreach (var sd in ad.SubmodelDescriptors)
             {
+                // add new entry
+                SubmodelElementCollection cs = new SubmodelElementCollection(
+                    idShort: "SubmodelDescriptor_" + submodelRegistryCount++,
+                    value: new List<ISubmodelElement>());
+                cs.TimeStampCreate = timestamp;
+                cs.TimeStamp = timestamp;
+                var ps = new Property(DataTypeDefXsd.String, idShort: "idShort");
+                ps.TimeStampCreate = timestamp;
+                ps.TimeStamp = timestamp;
+                ps.Value = sd.IdShort;
+                cs.Value.Add(ps);
+                ps = new Property(DataTypeDefXsd.String, idShort: "submodelID");
+                ps.TimeStampCreate = timestamp;
+                ps.TimeStamp = timestamp;
+                ps.Value = sd.Identification;
+                cs.Value.Add(ps);
+                ps = new Property(DataTypeDefXsd.String, idShort: "semanticID");
+                ps.TimeStampCreate = timestamp;
+                ps.TimeStamp = timestamp;
+                if (sd.SemanticId != null && sd.SemanticId.Value != null)
+                    ps.Value = sd.SemanticId.Value[0];
+                cs.Value.Add(ps);
+                if (sd.Endpoints != null && sd.Endpoints.Count != 0)
+                {
+                    endpoint = sd.Endpoints[0].ProtocolInformation.EndpointAddress;
+                }
+                ps = new Property(DataTypeDefXsd.String, idShort: "endpoint");
+                ps.TimeStampCreate = timestamp;
+                ps.TimeStamp = timestamp;
+                ps.Value = endpoint;
+                cs.Value.Add(ps);
+                ps = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
+                ps.TimeStampCreate = timestamp;
+                ps.TimeStamp = timestamp;
+                ps.Value = JsonConvert.SerializeObject(sd);
+                cs.Value.Add(ps);
+                // iterate submodels
+                int federatedElementsCount = 0;
+                var smc = new SubmodelElementCollection(
+                    idShort: "federatedElements",
+                    value: new List<ISubmodelElement>());
+                smc.TimeStampCreate = timestamp;
+                smc.TimeStamp = timestamp;
+                cs.Value.Add(smc);
+                submodelRegistry?.SubmodelElements.Add(cs);
+                submodelRegistry?.SetAllParents(timestamp);
+                var r = new ReferenceElement(idShort: "ref_Submodel_" + iSubmodel++);
+                r.TimeStampCreate = timestamp;
+                r.TimeStamp = timestamp;
+                var mr = cs.GetModelReference(true);
+                r.Value = mr;
+                // revert order in references
+                int first = 0;
+                int last = r.Value.Keys.Count - 1;
+                while (first < last)
+                {
+                    var temp = r.Value.Keys[first];
+                    r.Value.Keys[first] = r.Value.Keys[last];
+                    r.Value.Keys[last] = temp;
+                    first++;
+                    last--;
+                }
+                c.Value.Add(r);
+
                 if (sd.IdShort == "NameplateVC")
                 {
                     if (sd.Endpoints != null && sd.Endpoints.Count > 0)
@@ -708,7 +782,7 @@ namespace IO.Swagger.Registry.Controllers
                         p.TimeStampCreate = timestamp;
                         p.TimeStamp = timestamp;
                         p.Value = ep;
-                        c.Value.Add(p);
+                        cs.Value.Add(p);
                     }
                 }
                 if (sd.FederatedElements != null && sd.FederatedElements.Count != 0)
@@ -732,11 +806,11 @@ namespace IO.Swagger.Registry.Controllers
                     }
                 }
             }
-            aasRegistry?.SubmodelElements.Add(c);
         }
 
+        public static AasCore.Aas3_0_RC02.Environment envRegistry = null;
         public static Submodel aasRegistry = null;
-        static Submodel submodelRegistry = null;
+        public static Submodel submodelRegistry = null;
         static int aasRegistryCount = 0;
         static int submodelRegistryCount = 0;
         static List<string> postRegistry = new List<string>();
@@ -762,6 +836,7 @@ namespace IO.Swagger.Registry.Controllers
                         var aas = env.AasEnv.AssetAdministrationShells[0];
                         if (aas.IdShort == "REGISTRY")
                         {
+                            envRegistry = env.AasEnv;
                             if (aas.Submodels != null && aas.Submodels.Count > 0)
                             {
                                 foreach (var smr in aas.Submodels)

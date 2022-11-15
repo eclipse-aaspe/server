@@ -129,9 +129,10 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetQueryRegistryOnly([FromRoute][Required] string searchQuery)
         {
+            var envRegistry = RegistryAndDiscoveryInterfaceApiController.envRegistry;
             var aasRegistry = RegistryAndDiscoveryInterfaceApiController.aasRegistry;
 
-            string result = AasxRestServer.TestResource.runQueryRegistryOnly(searchQuery, "", aasRegistry);
+            string result = AasxRestServer.TestResource.runQueryRegistryOnly(searchQuery, "", aasRegistry, envRegistry);
 
             return new ObjectResult(result);
         }
