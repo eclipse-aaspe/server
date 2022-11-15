@@ -1757,12 +1757,21 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
+            // access the AAS
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
+                return;
+            }
+
             // check authentication
             if (withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodels", "UPDATE"))
+                if (!checkAccessRights(context, accessrights, "/submodels", "UPDATE", "", "submodel", findAasReturn.aas))
                 {
                     return;
                 }
@@ -1775,15 +1784,6 @@ namespace AasxRestServerLibrary
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
                 Console.WriteLine("ERROR PUT: No payload or content type is not JSON.");
-                return;
-            }
-
-            // access the AAS
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (findAasReturn.aas == null)
-            {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
-                Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
                 return;
             }
 
@@ -1856,12 +1856,20 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             int index = -1;
 
+            // access the AAS (absolutely mandatory)
+            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+            if (findAasReturn.aas == null)
+            {
+                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                return;
+            }
+
             // check authentication
             if (withAuthentification)
             {
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodels", "DELETE"))
+                if (!checkAccessRights(context, accessrights, "/submodels", "DELETE", "", "submodel", findAasReturn.aas))
                 {
                     return;
                 }
@@ -1873,14 +1881,6 @@ namespace AasxRestServerLibrary
             if (context.Request.Payload == null || context.Request.ContentType != ContentType.JSON)
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"No payload or content type is not JSON.");
-                return;
-            }
-
-            // access the AAS (absolutely mandatory)
-            var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (findAasReturn.aas == null)
-            {
-                context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
                 return;
             }
 
@@ -4622,15 +4622,16 @@ namespace AasxRestServerLibrary
                                             }
                                         }
                                         smc8 = smc7?.value.FindFirstIdShortAs<AdminShell.SubmodelElementCollection>("targetObjectAttributes");
-                                        if (smc8 == null)
-                                            continue;
-                                        countSmc8 = smc8.value.Count;
                                         List<string> listAttributes = new List<string>();
-                                        for (int iSmc8 = 0; iSmc8 < countSmc8; iSmc8++)
+                                        if (smc8 != null && smc8.value != null)
                                         {
-                                            var sme9 = smc8.value[iSmc8].submodelElement;
-                                            if (sme9 is AdminShell.Property)
-                                                listAttributes.Add(sme9.idShort);
+                                            countSmc8 = smc8.value.Count;
+                                            for (int iSmc8 = 0; iSmc8 < countSmc8; iSmc8++)
+                                            {
+                                                var sme9 = smc8.value[iSmc8].submodelElement;
+                                                if (sme9 is AdminShell.Property)
+                                                    listAttributes.Add(sme9.idShort);
+                                            }
                                         }
 
                                         string[] split = null;
