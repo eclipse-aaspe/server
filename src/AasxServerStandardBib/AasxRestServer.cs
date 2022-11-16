@@ -537,6 +537,15 @@ namespace AasxRestServerLibrary
                                     }
                                 }
 
+                                // check, if access to submodel is allowed
+                                var accessSubmodel = !AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification ||
+                                    AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevel(
+                                        null, "/submodels", "READ",
+                                        submodelIdShort, "semanticid", semanticID);
+
+                                if (!accessSubmodel)
+                                    continue;
+
                                 int foundInSubmodel = 0;
                                 if (whereSmCondition != "")
                                 {

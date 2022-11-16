@@ -3454,6 +3454,25 @@ namespace AasxRestServerLibrary
                                 }
                             }
                         }
+                        if (objectAasOrSubmodel is string s2)
+                        {
+                            if (s2 != null && s2 != "")
+                            {
+                                if (role.semanticId == s2)
+                                {
+                                    if (role.kind == "allow")
+                                    {
+                                        if (deepestAllow == "")
+                                            deepestAllow = objPath;
+                                    }
+                                    if (role.kind == "deny")
+                                    {
+                                        if (deepestDeny == "")
+                                            deepestDeny = objPath;
+                                    }
+                                }
+                            }
+                        }
                     }
                     if ((role.objType == "sm" || role.objType == "submodelElement") &&
                         role.submodel == objectAasOrSubmodel && role.permission == neededRights)
