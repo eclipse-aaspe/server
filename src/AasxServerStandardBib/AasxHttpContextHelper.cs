@@ -3483,7 +3483,7 @@ namespace AasxRestServerLibrary
 
                     if (securityRole[iRole].objReference != null &&
                         securityRole[iRole].objReference == objectAasOrSubmodel)
-                            valid = true;
+                        valid = true;
 
                     if (securityRole[iRole].objReference == null
                         && securityRole[iRole].attributeNames != null
