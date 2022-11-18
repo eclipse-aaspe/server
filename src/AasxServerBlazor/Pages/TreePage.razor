@@ -76,6 +76,7 @@
                 {
                     <button style="margin-bottom: 5px" onclick="window.location.href = '@link'; ">Download</button>
                     <button style="margin-bottom: 5px" @onclick="save"> Save </button>
+                    <br />
                     if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
                     {
                         bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
