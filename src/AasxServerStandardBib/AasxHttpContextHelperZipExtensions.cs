@@ -92,7 +92,7 @@ namespace AasxRestServerLibrary
         private static dynamic FindFragmentObject(ZipArchive archive, string zipFragment)
         {
             zipFragment = zipFragment.Trim('/');
-            
+
             if (zipFragment.Length == 0)
             {
                 return zipFragment;
