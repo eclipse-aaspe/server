@@ -89,7 +89,7 @@ namespace AasxRestServerLibrary
         {
             CAEXBasicObject fragmentObject;
 
-            String caexPath = HttpUtility.UrlDecode(amlFragment.Trim('/'));
+            String caexPath = amlFragment.Trim('/');
             if (caexPath.Length == 0)
             {
                 fragmentObject = caexDocument.CAEXFile;
