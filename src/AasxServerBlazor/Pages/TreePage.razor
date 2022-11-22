@@ -1205,6 +1205,11 @@
 
         object o = item.Tag;
 
+        if (o is string)
+        {
+            ret = item.Text;
+        }
+
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
             ret = item.Text;
@@ -1286,6 +1291,11 @@
         string ret = "";
 
         object o = item.Tag;
+
+        if (o is string)
+        {
+            ret = "<string>";
+        }
 
         if (o is AdministrationShell)
         {
@@ -1384,6 +1394,12 @@
         if (o == null)
         {
             return "";
+        }
+
+        if (o is string)
+        {
+            if (line == 0 && (col == 0 || col == 1))
+                ret = o as string;
         }
 
         if (o is AdministrationShell)

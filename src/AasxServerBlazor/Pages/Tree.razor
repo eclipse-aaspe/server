@@ -17,6 +17,21 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         var hasChilds = HasChildNodes(node);
         // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
 
+        var item = node as Item;
+        if (item.Tag is File)
+        {
+            if (item.Childs == null)
+            {
+                var newItem = new Item();
+                newItem.envIndex = item.envIndex;
+                newItem.Text = "newItem";
+                newItem.Tag = "new object here";
+                var newList = new List<Item>();
+                newList.Add(newItem);
+                item.Childs = newList;
+            }
+        }
+
         <div>
             @if (hasChilds)
             {
