@@ -781,7 +781,7 @@ namespace AasxRestServerLibrary
 
             // access the first AAS
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (findAasReturn.aas == null)
+            if (findAasReturn == null || findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
                 return;
@@ -2795,6 +2795,7 @@ namespace AasxRestServerLibrary
                 o.shortName = cd.GetDefaultShortName();
                 o.identification = cd.identification;
                 o.isCaseOf = cd.IsCaseOf;
+                o.embeddedDataSpecifications = cd.JsonEmbeddedDataSpecifications;
 
                 // add
                 res.Add(o);
