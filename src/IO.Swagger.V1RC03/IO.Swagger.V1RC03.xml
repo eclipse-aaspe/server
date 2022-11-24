@@ -750,7 +750,7 @@
             <response code="200">Requested submodel references</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetAllSubmodels(System.String,System.String)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetAllSubmodels(System.String,System.String,System.String)">
             <summary>
             Returns all Submodels
             </summary>
@@ -1329,7 +1329,7 @@
             <response code="200">Requested submodel references</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.GetAllSubmodels(System.String,System.String)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.GetAllSubmodels(System.String,System.String,System.String)">
             <summary>
             Returns all Submodels
             </summary>

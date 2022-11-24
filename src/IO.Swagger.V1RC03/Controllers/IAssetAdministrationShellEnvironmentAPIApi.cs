@@ -152,7 +152,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="idShort">The Submodel’s idShort</param>
         /// <response code="200">Requested Submodels</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort);
+        IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort, [FromQuery] string diff);
 
         /// <summary>
         /// Returns a specific Asset Administration Shell
