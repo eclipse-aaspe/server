@@ -119,7 +119,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="extent">Determines to which extent the resource is being serialized</param>
         /// <response code="200">List of found submodel elements</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] string diff);
 
         /// <summary>
         /// Returns all submodel elements including their hierarchy
@@ -150,7 +151,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="idShort">The Submodel’s idShort</param>
         /// <response code="200">Requested Submodels</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort);
+        IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort, [FromQuery] string diff);
 
         /// <summary>
         /// Returns a specific Asset Administration Shell

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScottPlot.Drawing.Colormaps;
+using System;
 using System.Collections.Generic;
 
 namespace IO.Swagger.V1RC03.APIModels.Core
@@ -6,6 +7,7 @@ namespace IO.Swagger.V1RC03.APIModels.Core
     public class OutputModifierContext
     {
         private string _level, _content, _extent;
+        private DateTime _diff;
         private bool _includeChildren = true;
         private List<string> idShortPaths;
         public string Level
@@ -65,14 +67,29 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             }
         }
 
+        public DateTime Diff
+        {
+            get => _diff;
+        }
+
         public List<string> IdShortPaths { get => idShortPaths; set => idShortPaths = value; }
         public string ParentPath { get; internal set; }
 
-        public OutputModifierContext(string level, string content, string extent)
+        public OutputModifierContext(string level, string content, string extent, string diff = null)
         {
             Level = level;
             Content = content;
             Extent = extent;
+
+            _diff = new DateTime();
+            if (diff != null && diff != "")
+            {
+                try
+                {
+                    _diff = DateTime.Parse(diff).ToUniversalTime();
+                }
+                catch { }
+            }
 
             //if (Level.Equals("core", StringComparison.OrdinalIgnoreCase) && Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             //{
