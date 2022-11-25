@@ -1019,6 +1019,9 @@ namespace IO.Swagger.V1RC03.Services
             object output = null;
             //Find Submodel
             var submodel = GetSubmodelById(submodelIdentifier, out _);
+
+            SecurityCheck(submodel.IdShort, "submodel", submodel);
+
             if (submodel != null)
             {
                 output = submodel.SubmodelElements;
