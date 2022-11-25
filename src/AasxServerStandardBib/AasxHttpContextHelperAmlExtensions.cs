@@ -63,7 +63,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        private static CAEXDocument LoadCaexDocument(Stream amlFileStream)
+        public static CAEXDocument LoadCaexDocument(Stream amlFileStream)
         {
             try
             {
