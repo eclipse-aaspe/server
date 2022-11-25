@@ -45,7 +45,7 @@
                     string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
                     string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
                     string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
-                    if (nodeDetails0 != "" && nodeDetails1 != "")
+                    if (nodeDetails0?.Length > 0 && nodeDetails1?.Length > 0)
                     {
                         string detailsId="SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
@@ -486,8 +486,11 @@
         public int envIndex { get; set; }
     }
 
-    // These items are provided by extensions and can be represented in the Tree/TreePage without any additonal knowledge.
-    public class ExtensionItem : Item { }
+    // An Item that was created by an extension. Rendering the item is realized by the extension as well.
+    public class ExtensionItem : Item
+    {
+        public IAASServiceExtension extension { get; set; }
+    }
 
     List<Item> Items = null;
 
@@ -1100,7 +1103,7 @@
 
         if (item is ExtensionItem)
         {
-            return item.Type;
+            return (item as ExtensionItem).extension?.ViewNodeType(item);
         }
 
         string ret = "";
@@ -1211,7 +1214,7 @@
 
         if (item is ExtensionItem)
         {
-            return item.Text;
+            return (item as ExtensionItem).extension?.ViewNodeID(item);
         }
 
         string ret = "NULL";
@@ -1299,6 +1302,11 @@
         if (item == null)
         {
             return "";
+        }
+
+        if (item is ExtensionItem)
+        {
+            return (item as ExtensionItem).extension?.ViewNodeInfo(item);
         }
 
         string ret = "";
@@ -1397,6 +1405,11 @@
         if (item == null)
         {
             return "";
+        }
+
+        if (item is ExtensionItem)
+        {
+            return (item as ExtensionItem).extension?.ViewNodeDetails(item, line, col);
         }
 
         // string ret = "NULL";

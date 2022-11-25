@@ -22,5 +22,25 @@ namespace AasxServerBlazor.Data
          * Recursively generates the child items for the given file and adds them to the given fileItem.
          */
         public abstract void CreateItems(Item fileItem, File file);
+
+        /**
+         * Method 'TreePage.ViewNodeID(...)' will delegate to this implementation for items created by the specific extension.
+         */
+        public string ViewNodeID(Item item);
+
+        /**
+         * Method 'TreePage.ViewNodeType(...)' will delegate to this implementation for items created by the specific extension.
+         */
+        public string ViewNodeType(Item item);
+
+        /**
+         * Method 'TreePage.ViewNodeDetails(...)' will delegate to this implementation for items created by the specific extension.
+         */
+        public string ViewNodeDetails(Item item, int line, int col);
+
+        /**
+         * Method 'TreePage.ViewNodeInfo(...)' will delegate to this implementation for items created by the specific extension.
+         */
+        public string ViewNodeInfo(Item item);
     }
 }
