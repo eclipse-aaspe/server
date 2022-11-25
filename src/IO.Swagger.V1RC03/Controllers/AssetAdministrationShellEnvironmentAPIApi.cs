@@ -427,15 +427,13 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllSubmodels")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<Submodel>), description: "Requested Submodels")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort, [FromQuery] string diff)
+        public virtual IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
 
             var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
             var output = _aasEnvService.GetAllSubmodels(reqSemanticId, idShort);
-
-            output = filterSubmodels(output, diff);
 
             return new ObjectResult(output);
         }
