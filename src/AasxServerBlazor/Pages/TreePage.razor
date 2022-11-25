@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @inject AASService SubmodelService
 @using Microsoft.IdentityModel.Tokens;
 @using System
@@ -485,6 +485,9 @@
         public object Tag { get; set; }
         public int envIndex { get; set; }
     }
+
+    // These items are provided by extensions and can be represented in the Tree/TreePage without any additonal knowledge.
+    public class ExtensionItem : Item { }
 
     List<Item> Items = null;
 
@@ -1095,6 +1098,11 @@
             return "";
         }
 
+        if (item is ExtensionItem)
+        {
+            return item.Type;
+        }
+
         string ret = "";
 
         if (item.Type != null)
@@ -1199,6 +1207,11 @@
         if (item == null)
         {
             return "";
+        }
+
+        if (item is ExtensionItem)
+        {
+            return item.Text;
         }
 
         string ret = "NULL";

@@ -1,9 +1,12 @@
-﻿@*
-https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
+@*
+    https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 *@
-
-@using Microsoft.AspNetCore.Components.Web
-@using MW.Blazor
+@inject AASService SubmodelService
+@using Microsoft.AspNetCore.Components.Web;
+@using MW.Blazor;
+@using AasxServer;
+@using AasxRestServerLibrary;
+@using AasxServerBlazor.Data;
 
 @typeparam TNode
 @using static AdminShellNS.AdminShellV20;
@@ -18,18 +21,10 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
 
         var item = node as Item;
-        if (item.Tag is File)
+        if (item.Tag is File && item.Childs == null)
         {
-            if (item.Childs == null)
-            {
-                var newItem = new Item();
-                newItem.envIndex = item.envIndex;
-                newItem.Text = "newItem";
-                newItem.Tag = "new object here";
-                var newList = new List<Item>();
-                newList.Add(newItem);
-                item.Childs = newList;
-            }
+            // if supported for the type of file, allow to browse into the file contents
+            SubmodelService.CreateFileItems(item, (item.Tag as File));
         }
 
         <div>

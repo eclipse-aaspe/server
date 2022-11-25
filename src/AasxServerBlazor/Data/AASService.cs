@@ -33,6 +33,8 @@ namespace AasxServerBlazor.Data
         public static List<Item> items = null;
         public static List<Item> viewItems = null;
 
+        public static List<IAASServiceExtension> fileExtensions = new List<IAASServiceExtension>();
+
         public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
         {
             // buildTree();
@@ -225,6 +227,27 @@ namespace AasxServerBlazor.Data
         public List<Submodel> GetSubmodels()
         {
             return Program.env[0].AasEnv.Submodels;
+        }
+
+        public void CreateFileItems(Item parentItem, File file)
+        {
+            var extension = GetServiceExtension(file);
+
+            extension?.CreateItems(parentItem, file);
+        }
+
+        private IAASServiceExtension GetServiceExtension(File file)
+        {
+            foreach (var extension in fileExtensions)
+            {
+                if (extension.IsSuitableFor(file))
+                {
+                    return extension;
+                }
+            }
+
+            // no suitable extension found -> file will not be browsed
+            return null;
         }
     }
 }
