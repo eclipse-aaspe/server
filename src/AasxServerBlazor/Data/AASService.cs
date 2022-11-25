@@ -33,7 +33,11 @@ namespace AasxServerBlazor.Data
         public static List<Item> items = null;
         public static List<Item> viewItems = null;
 
-        public static List<IAASServiceExtension> fileExtensions = new List<IAASServiceExtension>();
+        public static List<IAASServiceExtension> fileExtensions = new List<IAASServiceExtension>()
+        {
+            new AASServiceAMLExtension()
+            // further extensions that allow browsing into certain file type can be added here
+        };
 
         public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
         {
