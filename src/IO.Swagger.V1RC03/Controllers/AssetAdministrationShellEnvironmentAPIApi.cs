@@ -287,6 +287,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="level">Determines the structural depth of the respective resource content</param>
         /// <param name="content">Determines the request or response kind of the resource</param>
         /// <param name="extent">Determines to which extent the resource is being serialized</param>
+        /// <param name="diff">Filters response, only elements changed after DateTime</param>
         /// <response code="200">List of found submodel elements</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
@@ -324,6 +325,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="level">Determines the structural depth of the respective resource content</param>
         /// <param name="content">Determines the request or response kind of the resource</param>
         /// <param name="extent">Determines to which extent the resource is being serialized</param>
+        /// <param name="diff">Filters response, only elements changed after DateTime</param>
         /// <response code="200">List of found submodel elements</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
