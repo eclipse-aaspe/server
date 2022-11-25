@@ -1000,6 +1000,20 @@ namespace IO.Swagger.V1RC03.Services
             return false;
         }
 
+        private List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> output, DateTime diff = new DateTime())
+        {
+            List<ISubmodelElement> filtered = new List<ISubmodelElement>();
+            if (output != null)
+            {
+                foreach (var o in output)
+                {
+                    if (o.TimeStamp >= diff)
+                        filtered.Add(o);
+                }
+            }
+
+            return filtered;
+        }
         public object GetAllSubmodelElementsFromSubmodel(string submodelIdentifier, OutputModifierContext outputModifierContext = null)
         {
             object output = null;
@@ -1008,6 +1022,10 @@ namespace IO.Swagger.V1RC03.Services
             if (submodel != null)
             {
                 output = submodel.SubmodelElements;
+                if (outputModifierContext != null)
+                {
+                    output = filterSubmodelElements(submodel.SubmodelElements, outputModifierContext.Diff);
+                }
             }
 
             if (submodel != null)
@@ -1025,9 +1043,12 @@ namespace IO.Swagger.V1RC03.Services
                         }
                         foreach (var submodelElement in submodel.SubmodelElements)
                         {
-                            outputModifierContext.ParentPath = submodel.IdShort;
-                            PathSerializer.ToIdShortPath(submodelElement, outputModifierContext);
-                            //output.Add(idShortPath);
+                            if (outputModifierContext.Diff == null || submodelElement.TimeStamp >= outputModifierContext.Diff)
+                            {
+                                outputModifierContext.ParentPath = submodel.IdShort;
+                                PathSerializer.ToIdShortPath(submodelElement, outputModifierContext);
+                                //output.Add(idShortPath);
+                            }
                         }
 
                         return outputModifierContext.IdShortPaths;

@@ -717,7 +717,7 @@
             <response code="200">Requested Concept Descriptions</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElements(System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElements(System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.String)">
             <summary>
             Returns all submodel elements including their hierarchy
             </summary>
@@ -729,7 +729,7 @@
             <response code="200">List of found submodel elements</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElementsSubmodelRepo(System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElementsSubmodelRepo(System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.String)">
             <summary>
             Returns all submodel elements including their hierarchy
             </summary>
@@ -1296,7 +1296,7 @@
             <response code="200">Requested Concept Descriptions</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElements(System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElements(System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.String)">
             <summary>
             Returns all submodel elements including their hierarchy
             </summary>
@@ -1308,7 +1308,7 @@
             <response code="200">List of found submodel elements</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElementsSubmodelRepo(System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.GetAllSubmodelElementsSubmodelRepo(System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.String)">
             <summary>
             Returns all submodel elements including their hierarchy
             </summary>

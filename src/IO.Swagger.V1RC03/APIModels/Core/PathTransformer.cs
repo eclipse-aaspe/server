@@ -50,6 +50,9 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(Submodel that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(that.IdShort);
 
             if (that.SubmodelElements != null)
@@ -73,12 +76,19 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(RelationshipElement that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+
             return context.IdShortPaths;
         }
 
         public List<string> Transform(SubmodelElementList that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             if (that.Value != null)
             {
                 if (context.IncludeChildren)
@@ -107,6 +117,9 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(SubmodelElementCollection that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             if (context.IdShortPaths.Count == 0)
             {
                 context.IdShortPaths.Add(that.IdShort);
@@ -138,42 +151,63 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(Property that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(MultiLanguageProperty that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(AasCore.Aas3_0_RC02.Range that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(ReferenceElement that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(Blob that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(File that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(AnnotatedRelationshipElement that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             if (context.IdShortPaths.Count == 0)
             {
                 context.IdShortPaths.Add(that.IdShort);
@@ -205,6 +239,9 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(Entity that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             if (context.IdShortPaths.Count == 0)
             {
                 context.IdShortPaths.Add(that.IdShort);
@@ -241,12 +278,18 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(BasicEventElement that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
 
         public List<string> Transform(Operation that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }
@@ -258,6 +301,9 @@ namespace IO.Swagger.V1RC03.APIModels.Core
 
         public List<string> Transform(Capability that, OutputModifierContext context)
         {
+            if (context != null && that.TimeStamp < context.Diff)
+                return context.IdShortPaths;
+
             context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
             return context.IdShortPaths;
         }

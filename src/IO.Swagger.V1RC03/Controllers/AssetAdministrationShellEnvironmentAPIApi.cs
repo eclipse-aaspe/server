@@ -56,7 +56,8 @@ namespace IO.Swagger.V1RC03.Controllers
         private readonly IBase64UrlDecoderService _decoderService;
         private readonly IOutputModifiersService _modifiersService;
 
-        public AssetAdministrationShellEnvironmentAPIController(IAppLogger<AssetAdministrationShellEnvironmentAPIController> logger, IAssetAdministrationShellEnvironmentService aasEnvService, IJsonQueryDeserializer jsonQueryDeserializer, IBase64UrlDecoderService decoderService, IOutputModifiersService modifiersService)
+        public AssetAdministrationShellEnvironmentAPIController(IAppLogger<AssetAdministrationShellEnvironmentAPIController> logger,
+            IAssetAdministrationShellEnvironmentService aasEnvService, IJsonQueryDeserializer jsonQueryDeserializer, IBase64UrlDecoderService decoderService, IOutputModifiersService modifiersService)
         {
             _logger = logger;
             _aasEnvService = aasEnvService;
@@ -254,6 +255,30 @@ namespace IO.Swagger.V1RC03.Controllers
             return new ObjectResult(output);
         }
 
+        private List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> output, string diff)
+        {
+            DateTime minimumDate = new DateTime();
+            if (diff != null && diff != "")
+            {
+                try
+                {
+                    minimumDate = DateTime.Parse(diff).ToUniversalTime();
+                }
+                catch { }
+            }
+            List<ISubmodelElement> filtered = new List<ISubmodelElement>();
+            if (output != null)
+            {
+                foreach (var o in output)
+                {
+                    if (o.TimeStamp >= minimumDate)
+                        filtered.Add(o);
+                }
+            }
+
+            return filtered;
+        }
+
         /// <summary>
         /// Returns all submodel elements including their hierarchy
         /// </summary>
@@ -270,7 +295,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllSubmodelElements")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] string diff)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
 
@@ -279,15 +305,16 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
             OutputModifierContext outputModifierContext = null;
-            if (content.ToString() != null && content.ToString().Equals("path", StringComparison.OrdinalIgnoreCase))
+            // if (diff != null || (content.ToString() != null && content.ToString().Equals("path", StringComparison.OrdinalIgnoreCase)))
             {
-                outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
+                outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString(), diff);
             }
 
             var output = _aasEnvService.GetAllSubmodelElements(decodedAasId, decodedSubmodelId, outputModifierContext);
 
-            return new ObjectResult(output);
+            // output = filterSubmodelElements(output as List<ISubmodelElement>, diff);
 
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -305,7 +332,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetAllSubmodelElementsSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElement>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] string diff)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
 
@@ -313,9 +341,9 @@ namespace IO.Swagger.V1RC03.Controllers
 
             //Need to handle path here, as Submodel IdShort needs to be appended before every SME from the list
             OutputModifierContext outputModifierContext = null;
-            if (content.ToString() != null && content.ToString().Equals("path", StringComparison.OrdinalIgnoreCase))
+            // if (content.ToString() != null && content.ToString().Equals("path", StringComparison.OrdinalIgnoreCase))
             {
-                outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString());
+                outputModifierContext = new OutputModifierContext(level.ToString(), content.ToString(), extent.ToString(), diff);
             }
 
             var output = _aasEnvService.GetAllSubmodelElementsFromSubmodel(decodedSubmodelId, outputModifierContext);
@@ -344,6 +372,44 @@ namespace IO.Swagger.V1RC03.Controllers
             var output = _aasEnvService.GetAllSubmodelReferences(decodedAasId);
 
             return new ObjectResult(output);
+        }
+
+        private Submodel filterSubmodel(Submodel output, string time)
+        {
+            DateTime minimumDate = new DateTime();
+            if (time != null && time != "")
+            {
+                try
+                {
+                    minimumDate = DateTime.Parse(time).ToUniversalTime();
+                }
+                catch { }
+            }
+
+            if (output.TimeStamp >= minimumDate)
+                return output;
+
+            return null;
+        }
+        private List<Submodel> filterSubmodels(List<Submodel> output, string time)
+        {
+            DateTime minimumDate = new DateTime();
+            if (time != null && time != "")
+            {
+                try
+                {
+                    minimumDate = DateTime.Parse(time).ToUniversalTime();
+                }
+                catch { }
+            }
+            List<Submodel> filtered = new List<Submodel>();
+            foreach (var o in output)
+            {
+                if (o.TimeStamp >= minimumDate)
+                    filtered.Add(o);
+            }
+
+            return filtered;
         }
 
         /// <summary>
@@ -596,7 +662,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetSubmodel")]
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier,[FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");
 
@@ -657,7 +724,9 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
 
@@ -687,7 +756,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "GET");
 
