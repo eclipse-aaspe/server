@@ -132,7 +132,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="extent">Determines to which extent the resource is being serialized</param>
         /// <response code="200">List of found submodel elements</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult GetAllSubmodelElementsSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level,
+            [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] string diff);
 
         /// <summary>
         /// Returns all submodel references
@@ -151,7 +152,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="idShort">The Submodel’s idShort</param>
         /// <response code="200">Requested Submodels</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort, [FromQuery] string diff);
+        IActionResult GetAllSubmodels([FromQuery] string semanticId, [FromQuery] string idShort);
 
         /// <summary>
         /// Returns a specific Asset Administration Shell
@@ -245,7 +246,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <param name="extent">Determines to which extent the resource is being serialized</param>
         /// <response code="200">Requested Submodel</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
 
         /// <summary>
         /// Returns a specific Submodel
@@ -270,7 +272,9 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested submodel element</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult GetSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
 
         /// <summary>
         /// Returns a specific submodel element from the Submodel at a specified path
@@ -284,7 +288,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="200">Requested submodel element</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
 
         /// <summary>
         /// Synchronously or asynchronously invokes an Operation at a specified path
