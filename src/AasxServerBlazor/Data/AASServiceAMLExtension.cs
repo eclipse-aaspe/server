@@ -44,6 +44,7 @@ namespace AasxServerBlazor.Data
             item.Tag = tag;
             item.Type = type;
             item.Childs = CreateChildren(item, tag);
+            item.extension = this;
 
             return item;
         }
@@ -279,6 +280,239 @@ namespace AasxServerBlazor.Data
         private Item CreateATItem(Item parentItem, AttributeFamilyType at)
         {
             return CreateItem(parentItem, at.Name, at, "AT");
+        }
+
+        public string ViewNodeID(Item item)
+        {
+            return item?.Text;
+        }
+
+        public string ViewNodeType(Item item)
+        {
+            return item?.Type;
+        }
+
+        public string ViewNodeDetails(Item item, int line, int col)
+        {
+            if (item is null || item.Tag is null)
+            {
+                return null;
+            }
+
+            var tag = item.Tag;
+
+            if (tag is CAEXFileType)
+            {
+                var caexFile = tag as CAEXFileType;
+
+                switch (line)
+                {
+                    case 0:
+                        if (col == 0)
+                            return "File name";
+                        if (col == 1)
+                            return caexFile.FileName;
+                        break;
+                    case 1:
+                        if (col == 0)
+                            return "Schema version";
+                        if (col == 1)
+                            return caexFile.SchemaVersion;
+                        break;
+                    case 2:
+                        if (col == 0)
+                            return "AutomationML version";
+                        if (col == 1)
+                            return string.Join(", ", caexFile.SuperiorStandardVersion?.Values);
+                        break;
+                    default:
+                        return null;
+                }
+            }
+
+            if (tag is CAEXObject)
+            {
+                switch (line)
+                {
+                    case 0:
+                        if (col == 0)
+                        {
+                            return "ID";
+                        }
+                        if (col == 1)
+                        {
+                            return (tag as CAEXObject).ID;
+                        }
+                        break;
+                    case 1:
+                        if (col == 0)
+                        {
+                            return "Version";
+                        }
+                        if (col == 1)
+                        {
+                            return (tag as CAEXObject).Version;
+                        }
+                        break;
+                }
+            }
+
+            if (tag is InternalElementType)
+            {
+                var ie = tag as InternalElementType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "RefBaseSystemUnitPath";
+                        if (col == 1)
+                            return ie.RefBaseSystemUnitPath;
+                        break;
+                }
+            }
+            else if (tag is SystemUnitFamilyType)
+            {
+                var suc = tag as SystemUnitFamilyType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "RefBaseClassPath";
+                        if (col == 1)
+                            return suc.RefBaseClassPath;
+                        break;
+                }
+            }
+            else if (tag is RoleFamilyType)
+            {
+                var rc = tag as RoleFamilyType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "RefBaseClassPath";
+                        if (col == 1)
+                            return rc.RefBaseClassPath;
+                        break;
+                }
+            }
+            else if (tag is InterfaceFamilyType)
+            {
+                var ic = tag as InterfaceFamilyType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "RefBaseClassPath";
+                        if (col == 1)
+                            return ic.RefBaseClassPath;
+                        break;
+                }
+            }
+            else if (tag is AttributeFamilyType)
+            {
+                var at = tag as AttributeFamilyType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "DataType";
+                        if (col == 1)
+                            return at.AttributeDataType;
+                        break;
+                    case 3:
+                        if (col == 0)
+                            return "RefAttributeType";
+                        if (col == 1)
+                            return at.RefAttributeType;
+                        break;
+                }
+            }
+            else if (tag is ExternalInterfaceType)
+            {
+                var ei = tag as ExternalInterfaceType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "RefBaseClassPath";
+                        if (col == 1)
+                            return ei.RefBaseClassPath;
+                        break;
+                }
+            }
+            else if (tag is InternalLinkType)
+            {
+                var il = tag as InternalLinkType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "RefPartnerSideA";
+                        if (col == 1)
+                            return il.RefPartnerSideA;
+                        break;
+                    case 3:
+                        if (col == 0)
+                            return "RefPartnerSideB";
+                        if (col == 1)
+                            return il.RefPartnerSideB;
+                        break;
+                }
+            }
+            else if (tag is AttributeType)
+            {
+                var att = tag as AttributeType;
+
+                switch (line)
+                {
+                    case 2:
+                        if (col == 0)
+                            return "DataType";
+                        if (col == 1)
+                            return att.AttributeDataType;
+                        break;
+                    case 3:
+                        if (col == 0)
+                            return "Value";
+                        if (col == 1)
+                            return att.Value;
+                        break;
+                    case 4:
+                        if (col == 0)
+                            return "DefaultValue";
+                        if (col == 1)
+                            return att.DefaultValue;
+                        break;
+                }
+            }
+
+            return null;
+        }
+
+        public string ViewNodeInfo(Item item)
+        {
+            if (item is null || item.Tag is null)
+            {
+                return null;
+            }
+
+            var tag = item.Tag;
+
+            if (tag is AttributeType)
+            {
+                var value = (tag as AttributeType).Value;
+                return value?.Length > 0 ? " = " + value : null;
+            }
+
+            return null;
         }
     }
 }
