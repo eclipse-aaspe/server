@@ -35,7 +35,8 @@ namespace AasxServerBlazor.Data
 
         public static List<IAASServiceExtension> fileExtensions = new List<IAASServiceExtension>()
         {
-            new AASServiceAMLExtension()
+            new AASServiceAMLExtension(),
+            new AASServiceZIPExtension()
             // further extensions that allow browsing into certain file type can be added here
         };
 
