@@ -12,9 +12,10 @@ namespace Extenstions
         public static void SetTimeStamp(this IReferable referable, DateTime timeStamp)
         {
             IReferable newReferable = referable;
+            newReferable.TimeStamp = timeStamp;
             do
             {
-                newReferable.TimeStamp = timeStamp;
+                newReferable.TimeStampTree = timeStamp;
                 if (newReferable != newReferable.Parent)
                 {
                     newReferable = (IReferable)newReferable.Parent;
@@ -109,6 +110,7 @@ namespace Extenstions
             referable.Parent = parent;
             referable.TimeStamp = timeStamp;
             referable.TimeStampCreate = timeStampCreate;
+            referable.TimeStampTree = timeStamp;
 
             foreach (var submodelElement in referable.EnumerateChildren())
             {

@@ -398,7 +398,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
-
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
     }
 
@@ -1045,6 +1046,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -1949,7 +1952,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
-
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -2452,6 +2456,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -2952,6 +2958,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -3428,6 +3436,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -3934,6 +3944,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -4404,6 +4416,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -4885,6 +4899,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -5325,6 +5341,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -5791,6 +5809,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -6239,6 +6259,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -6685,6 +6707,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -7206,6 +7230,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -8005,6 +8031,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -8466,6 +8494,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -9054,6 +9084,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>
@@ -9462,6 +9494,8 @@ namespace AasCore.Aas3_0_RC02
         public DateTime TimeStampCreate { get; set; }
         [JsonIgnore]
         public DateTime TimeStamp { get; set; }
+        [JsonIgnore]
+        public DateTime TimeStampTree { get; set; }
         #endregion
 
         /// <summary>

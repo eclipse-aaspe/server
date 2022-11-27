@@ -255,30 +255,6 @@ namespace IO.Swagger.V1RC03.Controllers
             return new ObjectResult(output);
         }
 
-        private List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> output, string diff)
-        {
-            DateTime minimumDate = new DateTime();
-            if (diff != null && diff != "")
-            {
-                try
-                {
-                    minimumDate = DateTime.Parse(diff).ToUniversalTime();
-                }
-                catch { }
-            }
-            List<ISubmodelElement> filtered = new List<ISubmodelElement>();
-            if (output != null)
-            {
-                foreach (var o in output)
-                {
-                    if (o.TimeStamp >= minimumDate)
-                        filtered.Add(o);
-                }
-            }
-
-            return filtered;
-        }
-
         /// <summary>
         /// Returns all submodel elements including their hierarchy
         /// </summary>
@@ -312,8 +288,6 @@ namespace IO.Swagger.V1RC03.Controllers
             }
 
             var output = _aasEnvService.GetAllSubmodelElements(decodedAasId, decodedSubmodelId, outputModifierContext);
-
-            // output = filterSubmodelElements(output as List<ISubmodelElement>, diff);
 
             return new ObjectResult(output);
         }
