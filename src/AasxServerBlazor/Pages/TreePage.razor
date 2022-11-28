@@ -28,7 +28,12 @@
             <TitleTemplate>
                 @{ //// SubmodelService.syncSubTree(context);
                 }
-                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                @{
+                    string color = "color:white;background-color:blue;";
+                    if (context is ExtensionItem)
+                        color = "color:white;background-color:green;";
+                }
+                <span style=@color>@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
                 <strong><span style="color:blue">@getSymbols(context)</span></strong>
                 <span style="color:lightgray;">@ViewTimeStamp(context)</span>
