@@ -1,4 +1,6 @@
-﻿using ScottPlot.Drawing.Colormaps;
+﻿using AasCore.Aas3_0_RC02;
+using IO.Swagger.V1RC03.Services;
+using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections.Generic;
 
@@ -10,6 +12,8 @@ namespace IO.Swagger.V1RC03.APIModels.Core
         private DateTime _diff;
         private bool _includeChildren = true;
         private List<string> idShortPaths;
+        public Submodel submodel = null;
+        public AssetAdministrationShellEnvironmentService aasEnvService= null;
         public string Level
         {
             get => _level;

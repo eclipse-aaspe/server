@@ -1000,15 +1000,37 @@ namespace IO.Swagger.V1RC03.Services
             return false;
         }
 
-        private List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> output, DateTime diff = new DateTime())
+        private List<ISubmodelElement> filterSubmodelElements(Submodel submodel, List<ISubmodelElement> output, DateTime diff = new DateTime())
         {
             List<ISubmodelElement> filtered = new List<ISubmodelElement>();
             if (output != null)
             {
                 foreach (var o in output)
                 {
-                    if (o.TimeStamp >= diff)
-                        filtered.Add(o);
+                    if (o.TimeStampTree >= diff)
+                    {
+                        if (SecurityCheckTestOnly(submodel.IdShort + "." + o.IdShort, "submodel", submodel))
+                            filtered.Add(o);
+                        // if further iteration into is needed
+                        /*
+                        if (o is SubmodelElementCollection sc)
+                        {
+                            if (o.TimeStamp >= diff)
+                                filtered.Add(o);
+                            filtered.AddRange(filterSubmodelElements(submodel, sc.Value, diff));
+                        }
+                        else
+                        if (o is SubmodelElementList sl)
+                        {
+                            if (o.TimeStamp >= diff)
+                                filtered.Add(o);
+                            filtered.AddRange(filterSubmodelElements(submodel, sl.Value, diff));
+                        }
+                        else
+                            if (o.TimeStamp >= diff)
+                                filtered.Add(o);
+                        */
+                    }
                 }
             }
 
@@ -1020,42 +1042,41 @@ namespace IO.Swagger.V1RC03.Services
             //Find Submodel
             var submodel = GetSubmodelById(submodelIdentifier, out _);
 
-            SecurityCheck(submodel.IdShort, "submodel", submodel);
+            if (submodel == null)
+                return null;
 
-            if (submodel != null)
+            output = submodel.SubmodelElements;
+            if (outputModifierContext == null)
             {
-                output = submodel.SubmodelElements;
-                if (outputModifierContext != null)
-                {
-                    output = filterSubmodelElements(submodel.SubmodelElements, outputModifierContext.Diff);
-                }
+                SecurityCheck(submodel.IdShort, "submodel", submodel);
             }
-
-            if (submodel != null)
+            else
             {
-                if (outputModifierContext != null)
+                if (!outputModifierContext.Content.Equals("path", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (outputModifierContext.Content.Equals("path", StringComparison.OrdinalIgnoreCase))
+                    output = filterSubmodelElements(submodel, submodel.SubmodelElements, outputModifierContext.Diff);
+                }
+                else
+                {
+                    //Need to handle this here it self, to append idShort of Submodel to every SME in the list.
+                    //level = core, then indirect children should be avoided.
+                    //Hence, setting IncludeChildren = false here itself.
+                    if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
                     {
-                        //Need to handle this here it self, to append idShort of Submodel to every SME in the list.
-                        //level = core, then indirect children should be avoided.
-                        //Hence, setting IncludeChildren = false here itself.
-                        if (outputModifierContext.Level.Equals("core", StringComparison.OrdinalIgnoreCase))
-                        {
-                            outputModifierContext.IncludeChildren = false;
-                        }
-                        foreach (var submodelElement in submodel.SubmodelElements)
-                        {
-                            if (outputModifierContext.Diff == null || submodelElement.TimeStamp >= outputModifierContext.Diff)
-                            {
-                                outputModifierContext.ParentPath = submodel.IdShort;
-                                PathSerializer.ToIdShortPath(submodelElement, outputModifierContext);
-                                //output.Add(idShortPath);
-                            }
-                        }
-
-                        return outputModifierContext.IdShortPaths;
+                        outputModifierContext.IncludeChildren = false;
                     }
+                    foreach (var submodelElement in submodel.SubmodelElements)
+                    {
+                        if (submodelElement.TimeStamp >= outputModifierContext.Diff || submodelElement.TimeStampTree >= outputModifierContext.Diff)
+                        {
+                            outputModifierContext.ParentPath = submodel.IdShort;
+                            outputModifierContext.submodel = submodel;
+                            outputModifierContext.aasEnvService = this;
+                            PathSerializer.ToIdShortPath(submodelElement, outputModifierContext);
+                        }
+                    }
+
+                    return outputModifierContext.IdShortPaths;
                 }
             }
 

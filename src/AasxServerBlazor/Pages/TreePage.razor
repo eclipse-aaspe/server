@@ -70,6 +70,9 @@
                     <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
                     <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
                     <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+
+                    <br />
                     @code {
                         private void setTimeStamp()
                         {
