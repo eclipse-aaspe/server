@@ -40,8 +40,15 @@ namespace IO.Swagger.V1RC03.Controllers
             // var decodedQuery = _decoderService.Decode("searchQuery", searchQuery);
 
             string result = AasxRestServer.TestResource.runQuery(searchQuery, "");
+            result = result.Replace("\n", "</br>\n");
 
-            return new ObjectResult(result);
+            return new ContentResult()
+            {
+                Content = result,
+                ContentType = "text/html",
+            };
+
+            // return new ObjectResult(result);
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]

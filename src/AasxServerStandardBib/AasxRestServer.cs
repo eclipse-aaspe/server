@@ -870,6 +870,8 @@ namespace AasxRestServerLibrary
 
                     foreach (var sp in split)
                     {
+                        result += "# " + sp + "\n";
+
                         if (sp == "")
                             continue;
 
@@ -943,7 +945,8 @@ namespace AasxRestServerLibrary
                             last = s;
                     }
 
-                    result += "repository endpoint " + AasxServer.Program.externalRest + "\n";
+                    result += "repository endpoint " + AasxServer.Program.externalBlazor + "\n";
+                    /*
                     if (storeResult)
                         result += "store result\n";
                     result += "select = \"" + select + selectParameters + "\n";
@@ -969,6 +972,7 @@ namespace AasxRestServerLibrary
                             result += "whereSmeOperation = \"" + wo + "\"\n";
                     }
                     result += "\n";
+                    */
 
                     int totalFound = 0;
                     int foundInRepository = 0;
@@ -1274,9 +1278,10 @@ namespace AasxRestServerLibrary
                                                             result += "submodelelement found" + " 1";
                                                             if (!selectParameters.Contains("!endpoint"))
                                                             {
-                                                                result += "  " + AasxServer.Program.externalRest +
-                                                                    "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort +
-                                                                    "/elements/" + path + sme.IdShort;
+                                                                string link = AasxServer.Program.externalBlazor +
+                                                                    "/submodels/" + Base64UrlEncoder.Encode(sm.Id) +
+                                                                    "/submodelelements/" + path.Replace("/", ".") + sme.IdShort;
+                                                                result += " " + "<a href=\"" + link + "\" target=\"_blank\">" + link + "</a>";
                                                             }
                                                             if (selectParameters.Contains("%idshort"))
                                                             {
@@ -1371,14 +1376,15 @@ namespace AasxRestServerLibrary
                                     }
                                 }
 
-                                if (select == "submodel" && foundInSubmodel != 0)
+                                if (select == "submodel" && foundInSubmodel != 0 && accessSubmodel)
                                 {
                                     result += select + " found " + foundInSubmodel;
 
                                     if (!selectParameters.Contains("!endpoint"))
                                     {
-                                        result += " " + AasxServer.Program.externalRest
-                                                + "/aas/" + aas.IdShort + "/submodels/" + sm.IdShort;
+                                        string link = AasxServer.Program.externalBlazor +
+                                            "/submodels/" + Base64UrlEncoder.Encode(sm.Id);
+                                        result += " " + "<a href=\"" + link + "\" target=\"_blank\">" + link + "</a>";
                                     }
                                     if (selectParameters.Contains("%id "))
                                     {
@@ -1395,7 +1401,7 @@ namespace AasxRestServerLibrary
                                     }
                                     result += "\n";
                                 }
-                                if (select == "submodelid" && foundInSubmodel != 0)
+                                if (select == "submodelid" && foundInSubmodel != 0 && accessSubmodel)
                                     result += "%id == \"" + sm.Id + "\"\n";
                             } // submodels
 
@@ -1405,8 +1411,9 @@ namespace AasxRestServerLibrary
 
                                 if (!selectParameters.Contains("!endpoint"))
                                 {
-                                    result += " " + AasxServer.Program.externalRest
-                                            + "/aas/" + aas.IdShort;
+                                    string link = AasxServer.Program.externalBlazor +
+                                        "/shells/" + Base64UrlEncoder.Encode(aas.Id);
+                                    result += " " + "<a href=\"" + link + "\" target=\"_blank\">" + link + "</a>";
                                 }
                                 if (selectParameters.Contains("%id "))
                                 {
@@ -1430,9 +1437,9 @@ namespace AasxRestServerLibrary
                     } // AAS-ENV
 
                     if (select == "repository" && foundInRepository != 0)
-                        result += select + " found " + foundInRepository + " " + AasxServer.Program.externalRest + "\n";
+                        result += select + " found " + foundInRepository + " " + AasxServer.Program.externalBlazor + "\n";
                     else
-                        result += "repository totalfound " + totalFound + " " + AasxServer.Program.externalRest + "\n";
+                        result += "repository totalfound " + totalFound + " " + AasxServer.Program.externalBlazor + "\n";
                     result += "\n";
 
                     if (storeResult)
