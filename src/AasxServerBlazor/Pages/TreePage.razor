@@ -317,6 +317,33 @@
                         collectionPlot = null;
                     }
                 }
+
+                if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.File))
+                {
+                    AdminShellNS.AdminShellV20.File file = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+                    
+                    <select @bind="SelectedExtensionKey">
+                        <option enabled="false" selected>default</option>
+                        @foreach (string extension in AASService.fileExtensions.Keys)
+                        {
+                        <option value="@extension">@extension</option>
+                        }
+                    </select>
+                    <button style="margin-bottom: 5px" @onclick="browseWithExtension">(Re)Browse With Extension</button><br />
+                    
+                    @code {
+                        private string SelectedExtensionKey { get; set; }
+                        private void browseWithExtension()
+                        {
+                            IAASServiceExtension extension = null;
+                            if (SelectedExtensionKey != null && SelectedExtensionKey != "default")
+                            {
+                                AASService.fileExtensions.TryGetValue(SelectedExtensionKey, out extension);
+                            }
+                            SubmodelService.CreateFileItems(selectedNode, (selectedNode.Tag as AdminShellNS.AdminShellV20.File), extension);
+                        }
+                    }
+                }
             }
 
             @{
