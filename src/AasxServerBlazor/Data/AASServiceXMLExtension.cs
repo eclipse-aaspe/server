@@ -18,7 +18,7 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("xml");
         }
 
-        public void CreateItems(Item xmlFileItem, File xmlFile)
+        public void CreateItems(Item xmlFileItem, File xmlFile, string fileRestURL)
         {
             try
             {
@@ -215,6 +215,16 @@ namespace AasxServerBlazor.Data
                 }
             }
 
+            return null;
+        }
+
+        public string GetFragmentType(Item item)
+        {
+            return "xml";
+        }
+
+        public string GetFragment(Item item)
+        {
             return null;
         }
     }

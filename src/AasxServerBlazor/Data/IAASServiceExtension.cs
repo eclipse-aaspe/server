@@ -21,7 +21,7 @@ namespace AasxServerBlazor.Data
         /**
          * Recursively generates the child items for the given file and adds them to the given fileItem.
          */
-        public abstract void CreateItems(Item fileItem, File file);
+        public abstract void CreateItems(Item fileItem, File file, string fileRestURL);
 
         /**
          * Method 'TreePage.ViewNodeID(...)' will delegate to this implementation for items created by the specific extension.
@@ -42,5 +42,15 @@ namespace AasxServerBlazor.Data
          * Method 'TreePage.ViewNodeInfo(...)' will delegate to this implementation for items created by the specific extension.
          */
         public string ViewNodeInfo(Item item);
+
+        /**
+         * Return the <fragment-type> to use in REST calls.
+         */
+        public string GetFragmentType(Item item);
+
+        /**
+         * Get the <fragment> to use in REST calls.
+         */
+        public string GetFragment(Item item);
     }
 }

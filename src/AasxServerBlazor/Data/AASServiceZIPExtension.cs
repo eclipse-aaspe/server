@@ -21,7 +21,7 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("zip");
         }
 
-        public void CreateItems(Item fileItem, File zipFile)
+        public void CreateItems(Item fileItem, File zipFile, string fileRestURL)
         {
             var filePath = zipFile.value;
             var fileStream = Program.env[fileItem.envIndex].GetLocalStreamFromPackage(filePath);
@@ -136,6 +136,16 @@ namespace AasxServerBlazor.Data
         }
 
         public string ViewNodeInfo(TreePage.Item item)
+        {
+            return null;
+        }
+
+        public string GetFragmentType(Item item)
+        {
+            return "zip";
+        }
+
+        public string GetFragment(Item item)
         {
             return null;
         }
