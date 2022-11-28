@@ -77,7 +77,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        private static XmlDocument LoadXmlDocument(Stream xmlFileStream)
+        public static XmlDocument LoadXmlDocument(Stream xmlFileStream)
         {
             try
             {

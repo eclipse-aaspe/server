@@ -36,7 +36,8 @@ namespace AasxServerBlazor.Data
         public static Dictionary<string, IAASServiceExtension> fileExtensions { get; } = new Dictionary<string, IAASServiceExtension>()
         {
             { "aml", new AASServiceAMLExtension() },
-            { "zip", new AASServiceZIPExtension() }
+            { "zip", new AASServiceZIPExtension() },
+            { "xml", new AASServiceXMLExtension() }
             // further extensions that allow browsing into certain file type can be added here
         };
 
