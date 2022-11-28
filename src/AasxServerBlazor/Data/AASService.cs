@@ -64,6 +64,17 @@ namespace AasxServerBlazor.Data
             lock (Program.changeAasxFile)
             {
                 items = new List<Item>();
+
+                // Check for README
+                if (System.IO.File.Exists("README.HTM"))
+                {
+                    Item demo = new Item();
+                    demo.envIndex = -1;
+                    demo.Text = "README, see details";
+                    demo.Tag = "README";
+                    items.Add(demo);
+                }
+
                 for (int i = 0; i < Program.envimax; i++)
                 {
                     Item root = new Item();

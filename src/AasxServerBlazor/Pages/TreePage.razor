@@ -50,8 +50,33 @@
     <div class="col-8" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
-                <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
-                <span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span><br>
+                if (selectedNode != null)
+                {
+                    if (!(selectedNode.Tag is string))
+                    {
+                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
+                        <span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span>
+                        <br>
+                    }
+                    else
+                    {
+                        if (selectedNode.Tag is string && selectedNode.Text.Contains("README"))
+                        {
+                            string[] lines = System.IO.File.ReadAllLines("README.HTM");
+                            string text = "";
+                            foreach (string l in lines)
+                            {
+                                string l2 = l;
+                                if (l2.Contains("%BLAZOR%"))
+                                {
+                                    l2 = l2.Replace("%BLAZOR%", Program.externalBlazor);
+                                }
+                                text += l2 + "<br />";
+                            }
+                            <span>@((MarkupString)text)</span>
+                        }
+                    }
+                }
                 for (int line = 0; line < 6; line++)
                 {
                     string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
@@ -465,11 +490,11 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
-    Convert.ToBase64String(data)
+            /*
+            await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            Convert.ToBase64String(data)
         );
         */
         /*
@@ -1172,8 +1197,13 @@
         {
         ret = (o as Referable).GetElementName();
         return (ret);
-    }
-    */
+        }
+        */
+
+        if (o is string && item.Text.Contains("README"))
+        {
+            ret += "README (click here)";
+        }
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
@@ -1279,6 +1309,11 @@
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
             ret = item.Text;
+        }
+
+        if (o is string && item.Text.Contains("README"))
+        {
+            ret = " ";
         }
 
         if (o is AssetAdministrationShell)
