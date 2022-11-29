@@ -62,7 +62,7 @@
                     {
                         if (selectedNode.Tag is string && selectedNode.Text.Contains("README"))
                         {
-                            string[] lines = System.IO.File.ReadAllLines("README.HTM");
+                            string[] lines = System.IO.File.ReadAllLines(selectedNode.Text);
                             string text = "";
                             foreach (string l in lines)
                             {
@@ -1202,7 +1202,7 @@
 
         if (o is string && item.Text.Contains("README"))
         {
-            ret += "README (click here)";
+            ret += item.Text;
         }
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")

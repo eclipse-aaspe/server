@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AasCore.Aas3_0_RC02;
+using AasxRestServerLibrary;
 using AasxServer;
 using AdminShellNS;
 using Extenstions;
@@ -66,11 +68,13 @@ namespace AasxServerBlazor.Data
                 items = new List<Item>();
 
                 // Check for README
-                if (System.IO.File.Exists("README.HTM"))
+                var fileNames = Directory.GetFiles(".", "README*.HTM");
+                Array.Sort(fileNames);
+                foreach (var fname in fileNames)
                 {
                     Item demo = new Item();
                     demo.envIndex = -1;
-                    demo.Text = "README, see details";
+                    demo.Text = fname;
                     demo.Tag = "README";
                     items.Add(demo);
                 }
