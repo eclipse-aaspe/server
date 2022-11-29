@@ -68,13 +68,14 @@ namespace AasxServerBlazor.Data
                 items = new List<Item>();
 
                 // Check for README
-                var fileNames = Directory.GetFiles(".", "README*.HTM");
+                var fileNames = Directory.GetFiles("./readme", "*.HTML");
                 Array.Sort(fileNames);
                 foreach (var fname in fileNames)
                 {
+                    var fname2 = fname.Replace("\\", "/");
                     Item demo = new Item();
                     demo.envIndex = -1;
-                    demo.Text = fname;
+                    demo.Text = fname2;
                     demo.Tag = "README";
                     items.Add(demo);
                 }

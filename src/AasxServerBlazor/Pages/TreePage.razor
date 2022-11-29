@@ -60,19 +60,10 @@
                     }
                     else
                     {
-                        if (selectedNode.Tag is string && selectedNode.Text.Contains("README"))
+                        if (selectedNode.Tag is string && selectedNode.Text.Contains("/readme"))
                         {
-                            string[] lines = System.IO.File.ReadAllLines(selectedNode.Text);
-                            string text = "";
-                            foreach (string l in lines)
-                            {
-                                string l2 = l;
-                                if (l2.Contains("%BLAZOR%"))
-                                {
-                                    l2 = l2.Replace("%BLAZOR%", Program.externalBlazor);
-                                }
-                                text += l2 + "<br />";
-                            }
+                            string text = System.IO.File.ReadAllText(selectedNode.Text);
+                            text = text.Replace("%BLAZOR%", Program.externalBlazor);
                             <span>@((MarkupString)text)</span>
                         }
                     }
@@ -1200,7 +1191,7 @@
         }
         */
 
-        if (o is string && item.Text.Contains("README"))
+        if (o is string && item.Text.Contains("/readme"))
         {
             ret += item.Text;
         }
@@ -1311,7 +1302,7 @@
             ret = item.Text;
         }
 
-        if (o is string && item.Text.Contains("README"))
+        if (o is string && item.Text.Contains("/readme"))
         {
             ret = " ";
         }
