@@ -80,7 +80,7 @@ namespace AasxRestServerLibrary
             }
         }
 
-        private static XDocument LoadXmlDocument(Stream xmlFileStream)
+        public static XDocument LoadXmlDocument(Stream xmlFileStream)
         {
             try
             {
@@ -356,6 +356,12 @@ namespace AasxRestServerLibrary
 
                     paths.AddRange(CollectChildXpathPathsRecursively(values[i], childXpath));
                 }
+            }
+
+            foreach(var attribute in xmlElement.Attributes())
+            {
+                var attributeXpath = baseXpath + "/@" + attribute.Name;
+                paths.Add(attributeXpath);
             }
 
             return paths;

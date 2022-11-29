@@ -7,7 +7,7 @@ using Aml.Engine.CAEX;
 
 namespace AasxServerBlazor.Data
 {
-    public class AASServiceAMLExtension : IAASServiceExtension
+    public class AASServiceAMLExtension : AASServiceExtensionBase, IAASServiceExtension
     {
         public bool IsSuitableFor(File file)
         {
@@ -18,7 +18,7 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("aml") || filePath.EndsWith("amlx") || filePath.EndsWith("mtp");
         }
 
-        public void CreateItems(Item caexFileItem, File caexFile)
+        public void CreateItems(Item caexFileItem, File caexFile, string fileRestURL)
         {
             try
             {
@@ -26,7 +26,7 @@ namespace AasxServerBlazor.Data
                 var fileStream = Program.env[caexFileItem.envIndex].GetLocalStreamFromPackage(filePath);
                 var caexDocument = AasxHttpContextHelperAmlExtensions.LoadCaexDocument(fileStream);
 
-                var aml = CreateCAEXDocumentItem(caexFileItem, caexDocument);
+                var aml = CreateCAEXDocumentItem(caexFileItem, caexDocument, fileRestURL);
 
                 caexFileItem.Childs = new List<Item>() { aml };
 
@@ -35,21 +35,7 @@ namespace AasxServerBlazor.Data
             { }
         }
 
-        private ExtensionItem CreateItem(Item parent, string text, object tag, string type = null)
-        {
-            var item = new ExtensionItem();
-            item.envIndex = parent.envIndex;
-            item.parent = parent;
-            item.Text = text;
-            item.Tag = tag;
-            item.Type = type;
-            item.Childs = CreateChildren(item, tag);
-            item.extension = this;
-
-            return item;
-        }
-
-        private List<Item> CreateChildren(Item item, object caexObject)
+        protected override List<Item> CreateChildren(Item item, object caexObject)
         {
             var children = new List<Item>();
 
@@ -202,9 +188,9 @@ namespace AasxServerBlazor.Data
         }
 
 
-        private Item CreateCAEXDocumentItem(Item parentItem, CAEXDocument doc)
+        private Item CreateCAEXDocumentItem(Item parentItem, CAEXDocument doc, string fileRestURL)
         {
-            return CreateItem(parentItem, doc.CAEXFile.FileName, doc.CAEXFile, "AML");
+            return CreateItem(parentItem, doc.CAEXFile.FileName, doc.CAEXFile, "AML", fileRestURL);
         }
 
         private Item CreateIHItem(Item parentItem, InstanceHierarchyType ih)
@@ -513,6 +499,26 @@ namespace AasxServerBlazor.Data
             }
 
             return null;
+        }
+
+        public string GetFragmentType(Item item)
+        {
+            return "aml";
+        }
+
+        public string GetFragment(Item item)
+        {
+            if (item.Tag is CAEXFileType)
+            {
+                return "";
+            }
+            else if (item.Tag is CAEXObject)
+            {
+                return (item.Tag as CAEXObject).CAEXPath();
+            } else
+            {
+                return null;
+            }
         }
     }
 }

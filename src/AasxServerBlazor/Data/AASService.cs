@@ -33,10 +33,11 @@ namespace AasxServerBlazor.Data
         public static List<Item> items = null;
         public static List<Item> viewItems = null;
 
-        public static List<IAASServiceExtension> fileExtensions = new List<IAASServiceExtension>()
+        public static Dictionary<string, IAASServiceExtension> fileExtensions { get; } = new Dictionary<string, IAASServiceExtension>()
         {
-            new AASServiceAMLExtension(),
-            new AASServiceZIPExtension()
+            { "aml", new AASServiceAMLExtension() },
+            { "zip", new AASServiceZIPExtension() },
+            { "xml", new AASServiceXMLExtension() }
             // further extensions that allow browsing into certain file type can be added here
         };
 
@@ -234,16 +235,27 @@ namespace AasxServerBlazor.Data
             return Program.env[0].AasEnv.Submodels;
         }
 
-        public void CreateFileItems(Item parentItem, File file)
+        public void CreateFileItems(Item parentItem, File file, string fileRestURL, IAASServiceExtension extension=null)
         {
-            var extension = GetServiceExtension(file);
+            if (extension == null)
+            {
+                extension = GetServiceExtensionByFileType(file);
+            }
 
-            extension?.CreateItems(parentItem, file);
+            parentItem.Childs = new List<Item>();
+            if (extension != null)
+            {
+                try
+                {
+                    extension.CreateItems(parentItem, file, fileRestURL);
+                }
+                catch { }
+            }
         }
 
-        private IAASServiceExtension GetServiceExtension(File file)
+        private IAASServiceExtension GetServiceExtensionByFileType(File file)
         {
-            foreach (var extension in fileExtensions)
+            foreach (var extension in fileExtensions.Values)
             {
                 if (extension.IsSuitableFor(file))
                 {

@@ -10,7 +10,7 @@ using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerBlazor.Data
 {
-    public class AASServiceZIPExtension : IAASServiceExtension
+    public class AASServiceZIPExtension : AASServiceExtensionBase, IAASServiceExtension
     {
         public bool IsSuitableFor(File file)
         {
@@ -21,21 +21,22 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("zip");
         }
 
-        public void CreateItems(Item fileItem, File zipFile)
+        public void CreateItems(Item fileItem, File zipFile, string fileRestURL)
         {
             var filePath = zipFile.value;
             var fileStream = Program.env[fileItem.envIndex].GetLocalStreamFromPackage(filePath);
             var zipArchive = AasxHttpContextHelperZipExtensions.LoadZipArchive(fileStream);
 
-            var zip = CreateArchiveItem(fileItem, zipArchive);
+            var zip = CreateArchiveItem(fileItem, zipArchive, fileRestURL);
 
             fileItem.Childs = new List<Item>() { zip };
         }
 
-        private List<Item> CreateChildren(Item item, JObject jObject)
+        protected override List<Item> CreateChildren(Item item, object tag)
         {
             var children = new List<Item>();
 
+            var jObject = tag as JObject;
             var subentries = jObject?.GetValue("subEntries") as JArray;
 
             if (subentries == null)
@@ -57,26 +58,12 @@ namespace AasxServerBlazor.Data
             return children;
         }
 
-        private ExtensionItem CreateItem(Item parent, string text, JObject tag, string type = null)
-        {
-            var item = new ExtensionItem();
-            item.envIndex = parent.envIndex;
-            item.parent = parent;
-            item.Text = text;
-            item.Tag = tag;
-            item.Type = type;
-            item.Childs = CreateChildren(item, tag);
-            item.extension = this;
-
-            return item;
-        }
-
-        private ExtensionItem CreateArchiveItem(Item parentItem, ZipArchive archive)
+        private ExtensionItem CreateArchiveItem(Item parentItem, ZipArchive archive, string fileRestURL)
         {
             ZipJsonConverter converter = new ZipJsonConverter(archive);
             JObject json = converter.BuildJsonRecursively(archive, "", true);
 
-            return CreateItem(parentItem, parentItem.Text, json, "ZIP");
+            return CreateItem(parentItem, parentItem.Text, json, "ZIP", fileRestURL);
         }
 
         public string ViewNodeDetails(TreePage.Item item, int line, int col)
@@ -138,6 +125,23 @@ namespace AasxServerBlazor.Data
         public string ViewNodeInfo(TreePage.Item item)
         {
             return null;
+        }
+
+        public string GetFragmentType(Item item)
+        {
+            return "zip";
+        }
+
+        public string GetFragment(Item item)
+        {
+            JObject jObject = item.Tag as JObject;
+
+            if (jObject is null)
+            {
+                return null;
+            }
+
+            return jObject.GetValue("fullName").ToString();
         }
     }
 }
