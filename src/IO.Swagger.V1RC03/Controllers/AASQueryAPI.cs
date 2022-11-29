@@ -67,8 +67,15 @@ namespace IO.Swagger.V1RC03.Controllers
         {
             string content = await new StreamReader(Request.Body).ReadToEndAsync();
             string result = AasxRestServer.TestResource.runQuery("", content);
+            result = result.Replace("\n", "</br>\n");
 
-            return new ObjectResult(result);
+            return new ContentResult()
+            {
+                Content = result,
+                ContentType = "text/html",
+            };
+
+            // return new ObjectResult(result);
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
@@ -124,7 +131,15 @@ namespace IO.Swagger.V1RC03.Controllers
                     result += "\nerror " + requestPath + "\n\n";
             }
 
-            return new ObjectResult(result);
+            result = result.Replace("\n", "</br>\n");
+
+            return new ContentResult()
+            {
+                Content = result,
+                ContentType = "text/html",
+            };
+
+            // return new ObjectResult(result);
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
