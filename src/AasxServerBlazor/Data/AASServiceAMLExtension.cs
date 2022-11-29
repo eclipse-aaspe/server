@@ -7,7 +7,7 @@ using Aml.Engine.CAEX;
 
 namespace AasxServerBlazor.Data
 {
-    public class AASServiceAMLExtension : IAASServiceExtension
+    public class AASServiceAMLExtension : AASServiceExtensionBase, IAASServiceExtension
     {
         public bool IsSuitableFor(File file)
         {
@@ -35,29 +35,7 @@ namespace AasxServerBlazor.Data
             { }
         }
 
-        private ExtensionItem CreateItem(Item parent, string text, object tag, string type = null, string fileRestUrl = null)
-        {
-            var item = new ExtensionItem();
-            item.envIndex = parent.envIndex;
-            item.parent = parent;
-            item.Text = text;
-            item.Tag = tag;
-            item.Type = type;
-            item.extension = this;
-            if (fileRestUrl != null)
-            {
-                item.restBaseURL = fileRestUrl;
-            } else if (parent is ExtensionItem)
-            {
-                item.restBaseURL = (parent as ExtensionItem).restBaseURL;
-            }
-
-            item.Childs = CreateChildren(item, tag);
-
-            return item;
-        }
-
-        private List<Item> CreateChildren(Item item, object caexObject)
+        protected override List<Item> CreateChildren(Item item, object caexObject)
         {
             var children = new List<Item>();
 
