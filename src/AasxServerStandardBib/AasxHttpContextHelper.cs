@@ -28,6 +28,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
 using Microsoft.IdentityModel.Tokens;
+using ScottPlot.Drawing.Colormaps;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -962,7 +963,23 @@ namespace AasxRestServerLibrary
             AdminShell.AdministrationShell aas = null;
             try
             {
-                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>(context.Request.Payload);
+                ITraceWriter traceWriter = new MemoryTraceWriter();
+
+                /*
+                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>
+                    (context.Request.Payload);
+                */
+
+                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>
+                    (context.Request.Payload, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+
+                /*
+                var settings = new JsonSerializerSettings { TraceWriter = traceWriter };
+                var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: true, complete: true);
+                settings.ContractResolver = cr;
+                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>
+                    (context.Request.Payload, settings);
+                */
             }
             catch (Exception ex)
             {
@@ -991,6 +1008,7 @@ namespace AasxRestServerLibrary
                     {
                         this.Packages[envi].AasEnv.AdministrationShells.Remove(existingAas);
                         this.Packages[envi].AasEnv.AdministrationShells.Add(aas);
+                        Program.signalNewData(2);
                         SendTextResponse(context, "OK (update, index=" + envi + ")");
                         return;
                     }
@@ -1009,6 +1027,7 @@ namespace AasxRestServerLibrary
             {
                 this.Packages[emptyPackageIndex] = new AdminShellPackageEnv();
                 this.Packages[emptyPackageIndex].AasEnv.AdministrationShells.Add(aas);
+                Program.signalNewData(2);
                 SendTextResponse(context, "OK (new, index=" + emptyPackageIndex + ")");
                 return;
             }
