@@ -7,7 +7,7 @@ using System.Xml;
 
 namespace AasxServerBlazor.Data
 {
-    public class AASServiceXMLExtension : IAASServiceExtension
+    public class AASServiceXMLExtension : AASServiceExtensionBase, IAASServiceExtension
     {
         public bool IsSuitableFor(File file)
         {
@@ -26,7 +26,7 @@ namespace AasxServerBlazor.Data
                 var fileStream = Program.env[xmlFileItem.envIndex].GetLocalStreamFromPackage(filePath);
                 var xmlDocument = AasxHttpContextHelperXmlExtensions.LoadXmlDocument(fileStream);
 
-                var xml = CreateXMLDocumentItem(xmlFileItem, xmlDocument);
+                var xml = CreateXMLDocumentItem(xmlFileItem, xmlDocument, fileRestURL);
 
                 xmlFileItem.Childs = new List<Item>() { xml };
 
@@ -35,21 +35,7 @@ namespace AasxServerBlazor.Data
             { }
         }
 
-        private ExtensionItem CreateItem(Item parent, string text, object tag, string type = null)
-        {
-            var item = new ExtensionItem();
-            item.envIndex = parent.envIndex;
-            item.parent = parent;
-            item.Text = text;
-            item.Tag = tag;
-            item.Type = type;
-            item.Childs = CreateChildren(item, tag);
-            item.extension = this;
-
-            return item;
-        }
-
-        private List<Item> CreateChildren(Item item, object xmlObject)
+        protected override List<Item> CreateChildren(Item item, object xmlObject)
         {
             var children = new List<Item>();
 
@@ -84,9 +70,9 @@ namespace AasxServerBlazor.Data
         }
 
 
-        private Item CreateXMLDocumentItem(Item parentItem, XmlDocument doc)
+        private Item CreateXMLDocumentItem(Item parentItem, XmlDocument doc, string fileRestURL)
         {
-            return CreateItem(parentItem, parentItem.Text, doc, "XML");
+            return CreateItem(parentItem, parentItem.Text, doc, "XML", fileRestURL);
         }
 
         private Item CreateXMLElementItem(Item parentItem, XmlElement node)
@@ -225,7 +211,64 @@ namespace AasxServerBlazor.Data
 
         public string GetFragment(Item item)
         {
-            return null;
+            if (item.Tag is XmlDocument)
+            {
+                return "//*";
+            } else if (item.Tag is XmlElement)
+            {
+                return CreateXpathRecursively(item.Tag as XmlElement);
+            }
+            else if (item.Tag is XmlAttribute)
+            {
+                return CreateXpathRecursively(item.Tag as XmlAttribute);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private string CreateXpathRecursively(XmlElement element)
+        {
+            XmlNode parent = element.ParentNode;
+            if (parent is XmlElement)
+            {
+                XmlElement parentElement = parent as XmlElement;
+                XmlNodeList childrenWithCorrectName = parentElement.GetElementsByTagName(element.Name);
+
+                string xPathSegment = "/" + element.Name;
+
+                if (childrenWithCorrectName.Count > 1)
+                {
+                    for (int i = 0; i < childrenWithCorrectName.Count; i++)
+                    {
+                        if (childrenWithCorrectName[i] == element)
+                        {
+                            xPathSegment += "[" + (i+1) + "]";
+                        }
+                    }
+                }
+
+                string parentXPathSegment = CreateXpathRecursively(parentElement);
+
+                return parentXPathSegment == null ? null : parentXPathSegment + xPathSegment;
+            } else if (parent is XmlDocument)
+            {
+                return "///" + element.Name;
+            } else
+            {
+                return null;
+            }
+        }
+
+        private string CreateXpathRecursively(XmlAttribute attribute)
+        {
+            XmlElement parent = attribute.OwnerElement;
+                       
+            string xPathSegment = "/@" + attribute.Name;
+            string parentXPathSegment = CreateXpathRecursively(parent as XmlElement);
+
+            return parentXPathSegment == null ? null : parentXPathSegment + xPathSegment;
         }
     }
 }
