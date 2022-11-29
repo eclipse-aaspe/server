@@ -52,10 +52,41 @@
                     string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
                     if (nodeDetails0?.Length > 0 && nodeDetails1?.Length > 0)
                     {
-                        string detailsId="SelectedNodeDetailsLeft_" + line;
+                        string detailsId = "SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
                         <span id="@detailsId">@nodeDetails1 @nodeDetails2</span><br>
+                    }
+                }
+                if (selectedNode is ExtensionItem && (selectedNode as ExtensionItem).extension != null)
+                {
+                    var fragment = (selectedNode as ExtensionItem).extension.GetFragment(selectedNode);
+                    if (fragment != null)
+                    {
+                        var encodedFragment = Base64UrlEncoder.Encode(fragment);
+
+                        string detailsId = "SelectedNodeDetailsLeft_fragment";
+                        <span style="color:white;background-color:blue;" id="@detailsId">Fragment</span>
+                        detailsId = "SelectedNodeDetailsRight_fragment";
+                        if (fragment.Length > 0)
+                        {
+                            <span id="@detailsId">"@fragment" ==> "@Base64UrlEncoder.Encode(fragment)"</span><br>
+
+                        }
+                        else
+                        {
+                            <span id="@detailsId">(empty string) ==> (empty string)</span><br>
+                        }
+
+                        var restBaseURL = (selectedNode as ExtensionItem).restBaseURL;
+                        var restURL = restBaseURL + "/fragments/" + (selectedNode as ExtensionItem).extension.GetFragmentType(selectedNode) + "/" + encodedFragment;
+
+                        if (restBaseURL != null)
+                        {
+                            <span style="color:white;background-color:blue;" id="@detailsId">Rest URL</span>
+                            <a href="@restURL" target="_blank">@restURL</a><br>
+                        }
+
                     }
                 }
                 if (selectedNode != null && selectedNode.Tag is Referable r)
@@ -224,99 +255,126 @@
                             //var tssReference = new Reference(k);
                             //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
 
-                            // is it a segment
-                            try
-                            {
-                                if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                                {
-                                    TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
-                                }
-                                else
-                                {
-                                    // search for segements on current level
-                                    var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
-
-                                    if (smcAllValues.Count() != 0)
-                                    {
-                                        foreach (var smcseg in smcAllValues)
-                                        {
-                                            TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
-                                        }
-                                    }
-                                }
-                            }
-                            catch
-                            {
-                            };
-
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
-                            watchTimeToProcessImage.Stop();
-                        }
-
-                        byte[] imageArray;
-                        string timeSeriesImageBase64 = "";
-                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
-
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-                        }
-
-                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
-
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
-                                <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
-                                <input type="time" @bind-value="plotFilter.fromTime" />
-                                <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
-                                <input type="time" @bind-value="plotFilter.toTime" />
-                                <div>
-                                    <button type="submit">Apply</button>
-                                    <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
-                                </div>
-                            </EditForm>
-
-                            <div class="d-flex flex-column">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
-                                <span class="text-muted" style="font-size:14px;">
-                                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
-                                </span>
-                            </div>
-
-                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Visualization of time series</h5>
-                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="my-2">Rendering time series...</div>
-                        }
-                    }
-                    else
-                    {
-                        collectionPlot = null;
-                    }
+            // is it a segment
+            try
+            {
+                if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+                {
+                    TimeSeriesAddSegmentData(pcts, mm, tsd, smc);
                 }
+                else
+                {
+                    // search for segements on current level
+                    var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+
+            if (smcAllValues.Count() != 0)
+            {
+                foreach (var smcseg in smcAllValues)
+                {
+                    TimeSeriesAddSegmentData(pcts, mm, tsd, smcseg);
+                }
+            }
+        }
+    }
+    catch
+    {
+    };
+
+    _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
+    watchTimeToProcessImage.Stop();
+}
+
+byte[] imageArray;
+string timeSeriesImageBase64 = "";
+string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+
+if (System.IO.File.Exists(scottplotImgPath))
+{
+    imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+    timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+}
+
+var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+
+if (System.IO.File.Exists(scottplotImgPath))
+{
+        <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+            <label for="filterFromDate">Filter from</label>
+            <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
+            <input type="time" @bind-value="plotFilter.fromTime" />
+            <label for="filterToDate">Filter to</label>
+            <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
+            <input type="time" @bind-value="plotFilter.toTime" />
+            <div>
+                <button type="submit">Apply</button>
+                <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
+                <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
+                <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
+                <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
+                <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
+            </div>
+        </EditForm>
+
+        <div class="d-flex flex-column">
+            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
+            <span class="text-muted" style="font-size:14px;">
+                Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+            </span>
+        </div>
+
+        <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Visualization of time series</h5>
+                        <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="my-2">Rendering time series...</div>
+    }
+}
+else
+{
+    collectionPlot = null;
+}
+}
+
+if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.File))
+{
+AdminShellNS.AdminShellV20.File file = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+
+        <select @bind="SelectedExtensionKey">
+            <option enabled="false" selected>default</option>
+            @foreach (string extension in AASService.fileExtensions.Keys)
+            {
+                <option value="@extension">@extension</option>
+            }
+        </select>
+        <button style="margin-bottom: 5px" @onclick="browseWithExtension">(Re)Browse With Extension</button><br />
+
+        @code {
+            private string SelectedExtensionKey { get; set; }
+            private void browseWithExtension()
+            {
+                IAASServiceExtension extension = null;
+                if (SelectedExtensionKey != null && SelectedExtensionKey != "default")
+                {
+                    AASService.fileExtensions.TryGetValue(SelectedExtensionKey, out extension);
+                }
+                SubmodelService.CreateFileItems(selectedNode, (selectedNode.Tag as AdminShellNS.AdminShellV20.File), TreePage.getRestURL(selectedNode), extension);
+            }
+        }
+    }
             }
 
             @{
@@ -495,6 +553,7 @@
     public class ExtensionItem : Item
     {
         public IAASServiceExtension extension { get; set; }
+        public string restBaseURL { get; set; }
     }
 
     List<Item> Items = null;
@@ -2120,6 +2179,32 @@
             }
         }
         return ret;
+    }
+
+    public static string getRestURL(Item item)
+    {
+        var endpoint = Program.externalRest;
+        var path = getPath(item);
+        string restURL = endpoint;
+
+        if (path.Count > 0)
+        {
+            // first path element should represent an AAS
+            restURL = restURL + "/aas/" + path[0];
+        }
+        if (path.Count > 1)
+        {
+            // second path element should represent a submodel
+            restURL = restURL + "/submodels/" + path[1];
+        }
+
+        if (path.Count > 2)
+        {
+            // the rest of the elements should represent submodel elements
+            restURL = restURL + "/elements/" + string.Join("/", path.Skip(2).ToList());
+        }
+
+        return restURL;
     }
 }
 
