@@ -176,7 +176,7 @@ namespace AasxRestServerLibrary
 
         public XmlJsonConverter(string xmlFragment, string content = "normal", string extent = "withoutBlobValue")
         {
-            this.BaseXpath = HttpUtility.UrlDecode(xmlFragment.Trim('/')); ;
+            this.BaseXpath = HttpUtility.UrlDecode(xmlFragment.TrimEnd('/')); ;
             this.Content = content;
             this.Extent = extent;
         }
@@ -204,7 +204,7 @@ namespace AasxRestServerLibrary
                 throw new XmlFragmentEvaluationException("Unable to convert object to XPathNavigator: " + value);
             }
 
-            JContainer result;
+            JContainer result = null;
 
 
             if (Content == "value")
@@ -214,30 +214,49 @@ namespace AasxRestServerLibrary
             }
             else
             {
-                if (navigator.NodeType != XPathNodeType.Element)
+                if (navigator.NodeType != XPathNodeType.Element && navigator.NodeType != XPathNodeType.Attribute)
                 {
-                    throw new XmlFragmentEvaluationException($"Unable to convert XML fragment to XElement. Xpath evaluation probably did return a(n) " + navigator.NodeType + " instead!");
+                    throw new XmlFragmentEvaluationException($"Unable to convert XML fragment to XElement/XAttribute. Xpath evaluation probably did return a(n) " + navigator.NodeType + " instead!");
                 }
 
-                XElement xmlElement = XElement.Parse(navigator.OuterXml);
-
-                if (Content == "normal")
-                {
-                    result = JObject.FromObject(xmlElement);
-                }
-                else if (Content == "path")
-                {
-
-                    List<string> paths = CollectChildXpathPathsRecursively(xmlElement, BaseXpath);
-                    result = JArray.FromObject(paths);
-                }
-                else
+                if (Content != "normal" && Content != "path")
                 {
                     throw new XmlFragmentEvaluationException("Unsupported content modifier: " + Content);
                 }
+
+                if (navigator.NodeType == XPathNodeType.Element)
+                {
+                    XElement xmlElement = XElement.Parse(navigator.OuterXml);
+
+                    if (Content == "normal")
+                    {
+                        result = JObject.FromObject(xmlElement);
+                    }
+                    else if (Content == "path")
+                    {
+
+                        List<string> paths = CollectChildXpathPathsRecursively(xmlElement, BaseXpath);
+                        result = JArray.FromObject(paths);
+                    }
+                } else if (navigator.NodeType == XPathNodeType.Attribute)
+                {
+                    if (Content == "normal")
+                    {
+                        result = new JObject();
+                        result["@" + navigator.Name] = navigator.Value;
+                    }
+                    else if (Content == "path")
+                    {
+                        List<string> paths = new List<string>() { BaseXpath };
+                        result = JArray.FromObject(paths);
+                    }
+                }
             }
 
-            result.WriteTo(writer);
+            if (result != null)
+            {
+                result.WriteTo(writer);
+            }
             return;
 
         }
@@ -264,6 +283,12 @@ namespace AasxRestServerLibrary
 
                     paths.AddRange(CollectChildXpathPathsRecursively(values[i], childXpath));
                 }
+            }
+
+            foreach(var attribute in xmlElement.Attributes())
+            {
+                var attributeXpath = baseXpath + "/@" + attribute.Name;
+                paths.Add(attributeXpath);
             }
 
             return paths;
