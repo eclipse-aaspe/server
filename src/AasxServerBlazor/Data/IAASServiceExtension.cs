@@ -52,5 +52,15 @@ namespace AasxServerBlazor.Data
          * Get the <fragment> to use in REST calls.
          */
         public string GetFragment(Item item);
+
+        /**
+         * Get the REST URL that can be used to retrieve the element that this item represents.
+         */
+        public string GetRestURL(Item item);
+
+        /**
+         * If the item represents a file (and if the extension supports file retrieval), returns a URL that can be used to retrieve the file; otherwise returns null.
+         */
+        public string GetDownloadLink(Item item);
     }
 }

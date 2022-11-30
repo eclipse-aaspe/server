@@ -70,7 +70,7 @@
                         detailsId = "SelectedNodeDetailsRight_fragment";
                         if (fragment.Length > 0)
                         {
-                            <span id="@detailsId">"@fragment" ==> "@Base64UrlEncoder.Encode(fragment)"</span><br>
+                            <span id="@detailsId">"@fragment" ==> "@encodedFragment"</span><br>
 
                         }
                         else
@@ -78,13 +78,18 @@
                             <span id="@detailsId">(empty string) ==> (empty string)</span><br>
                         }
 
-                        var restBaseURL = (selectedNode as ExtensionItem).restBaseURL;
-                        var restURL = restBaseURL + "/fragments/" + (selectedNode as ExtensionItem).extension.GetFragmentType(selectedNode) + "/" + encodedFragment;
+                        var restURL = (selectedNode as ExtensionItem).extension.GetRestURL(selectedNode);
 
-                        if (restBaseURL != null)
+                        if (restURL != null)
                         {
                             <span style="color:white;background-color:blue;" id="@detailsId">Rest URL</span>
                             <a href="@restURL" target="_blank">@restURL</a><br>
+                        }
+
+                        var downloadLink = (selectedNode as ExtensionItem).extension.GetDownloadLink(selectedNode);
+                        if (downloadLink != null)
+                        {
+                            <button style="margin-bottom: 5px" onclick="window.location.href = '@downloadLink'; ">Download</button>
                         }
 
                     }

@@ -143,5 +143,25 @@ namespace AasxServerBlazor.Data
 
             return jObject.GetValue("fullName").ToString();
         }
+
+        public override string GetDownloadLink(Item item)
+        {
+            var restURL = this.GetRestURL(item);
+
+            if (restURL == null)
+            {
+                return null;
+            }
+
+            JObject jObject = item.Tag as JObject;
+            if (jObject.GetValue("type").ToString() == "file")
+            {
+                return restURL + "?content=raw";
+            } else
+            {
+                return null;
+            }
+
+        }
     }
 }
