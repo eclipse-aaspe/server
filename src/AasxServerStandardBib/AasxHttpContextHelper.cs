@@ -29,6 +29,7 @@ using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
 using Microsoft.IdentityModel.Tokens;
 using ScottPlot.Drawing.Colormaps;
+using MailKit;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -938,16 +939,12 @@ namespace AasxRestServerLibrary
         {
             dynamic res = new ExpandoObject();
             int index = -1;
+            string accessrights = null;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/aas", "UPDATE"))
-                {
-                    return;
-                }
+                accessrights = SecurityCheck(context, ref index);
 
                 res.confirm = "Authorization = " + accessrights;
             }
@@ -1006,6 +1003,10 @@ namespace AasxRestServerLibrary
                     var existingAas = this.Packages[envi].AasEnv.FindAAS(aas.identification);
                     if (existingAas != null)
                     {
+                        if (withAuthentification)
+                            if (!checkAccessRights(context, accessrights, "/aas", "UPDATE", "", "aas", existingAas))
+                                return;
+
                         this.Packages[envi].AasEnv.AdministrationShells.Remove(existingAas);
                         this.Packages[envi].AasEnv.AdministrationShells.Add(aas);
                         Program.signalNewData(2);
@@ -1025,6 +1026,10 @@ namespace AasxRestServerLibrary
 
             if (emptyPackageAvailable)
             {
+                if (withAuthentification)
+                    if (!checkAccessRights(context, accessrights, "/aas", "CREATE"))
+                        return;
+
                 this.Packages[emptyPackageIndex] = new AdminShellPackageEnv();
                 this.Packages[emptyPackageIndex].AasEnv.AdministrationShells.Add(aas);
                 Program.signalNewData(2);
