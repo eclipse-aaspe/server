@@ -2465,6 +2465,15 @@ namespace AasxRestServerLibrary
             // check authentication
             if (withAuthentification)
             {
+                // access the AAS
+                var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+                if (findAasReturn.aas == null)
+                {
+                    context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                    Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
+                    return;
+                }
+
                 string objPath = smid;
                 foreach (var el in elemids)
                 {
@@ -2473,7 +2482,7 @@ namespace AasxRestServerLibrary
 
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE", objPath))
+                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE", objPath, "aas", findAasReturn.aas))
                 {
                     return;
                 }
