@@ -78,7 +78,8 @@
                         string detailsId="SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
-                        <span id="@detailsId">@nodeDetails1 @nodeDetails2</span><br>
+                        <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
+                        <br>
                     }
                 }
                 if (selectedNode != null && selectedNode.Tag is IReferable r)
@@ -481,11 +482,11 @@
      filename,
      data
      );
-            /*
-            await js.InvokeAsync<object>(
-            "saveAsFile",
-            filename,
-            Convert.ToBase64String(data)
+        /*
+        await js.InvokeAsync<object>(
+    "saveAsFile",
+    filename,
+        Convert.ToBase64String(data)
         );
         */
         /*
@@ -1401,9 +1402,12 @@
         {
             var sme = o as SubmodelElementCollection;
             // ret = sm.identification.ToString();
-            if (sme.Value.Count > 0)
+            if (sme.Value != null)
             {
-                ret += " #" + sme.Value.Count;
+                if (sme.Value.Count > 0)
+                {
+                    ret += " #" + sme.Value.Count;
+                }
             }
             if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
             {
@@ -1415,7 +1419,7 @@
             if (o is Property)
             {
                 var prop = o as Property;
-                if (prop.Value != "")
+                if (prop.Value!= null && prop.Value != "")
                 {
                     string v = prop.Value;
                     if (v.Length > 100)
@@ -1429,7 +1433,8 @@
             }
             if (o is AasCore.Aas3_0_RC02.File f)
             {
-                ret = " = " + f.Value;
+                if (f.Value != null)
+                    ret = " = " + f.Value;
                 if (f.Qualifiers != null && f.Qualifiers.Count > 0)
                 {
                     ret += " @QUALIFIERS";
@@ -1439,7 +1444,8 @@
         if (o is AasCore.Aas3_0_RC02.Range)
         {
             var r = o as AasCore.Aas3_0_RC02.Range;
-            ret = " = " + r.Min + " .. " + r.Max;
+            if (r.Min != null && r.Max != null)
+                ret = " = " + r.Min + " .. " + r.Max;
             if (r.Qualifiers != null && r.Qualifiers.Count > 0)
             {
                 ret += " @QUALIFIERS";
@@ -1449,12 +1455,15 @@
         {
             var mlp = o as MultiLanguageProperty;
             var ls = mlp.Value;
-            ret = " = ";
-            for (int i = 0; i < ls.LangStrings.Count; i++)
+            if (ls != null)
             {
-                ret += ls.LangStrings[i].Language + " ";
-                if (i == 0)
-                    ret += ls.LangStrings[i].Text + " ";
+                ret = " = ";
+                for (int i = 0; i < ls.LangStrings.Count; i++)
+                {
+                    ret += ls.LangStrings[i].Language + " ";
+                    if (i == 0)
+                        ret += ls.LangStrings[i].Text + " ";
+                }
             }
             if (mlp.Qualifiers != null && mlp.Qualifiers.Count > 0)
             {

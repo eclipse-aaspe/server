@@ -332,6 +332,9 @@ namespace AasxRestServerLibrary
                 {
                     query = Base64UrlEncoder.Decode(query);
                     var split = query.Split('\n');
+                    foreach (var s in split)
+                        result += "# " + s + "\n";
+                    result += "#\n";
 
                     bool error = false;
                     if (split.Length <= 7)
@@ -367,6 +370,8 @@ namespace AasxRestServerLibrary
                         result += "%id | %assetid | %idshort | %value | %semanticid | <space> == | != | > | >= | < | <= | contains | !contains <space> \"value\"\n";
                         return result;
                     }
+
+                    result += "registry endpoint " + AasxServer.Program.externalBlazor + "\n";
 
                     var sSplit = split[1].Split(' ');
                     string select = sSplit[0];
@@ -713,7 +718,7 @@ namespace AasxRestServerLibrary
                                         result += "submodel" + " found " + foundInSubmodel;
                                         if (!selectParameters.Contains("!endpoint"))
                                         {
-                                            result += "  " + submodelEndpoint;
+                                            result += " " + "<a href=\"" + submodelEndpoint + "\" target=\"_blank\">" + submodelEndpoint + "</a>";
                                         }
                                         if (selectParameters.Contains("%idshort"))
                                         {
@@ -738,7 +743,8 @@ namespace AasxRestServerLibrary
                                     result += "aas" + " found " + foundInAas;
                                     if (!selectParameters.Contains("!endpoint"))
                                     {
-                                        result += "  " + aasEndpoint;
+                                        result += " " + "<a href=\"" + aasEndpoint + "\" target=\"_blank\">" + aasEndpoint + "</a>";
+
                                     }
                                     if (selectParameters.Contains("%idshort"))
                                     {
@@ -757,7 +763,7 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
-                    result += "registry totalfound " + totalFound + "\n";
+                    result += "registry totalfound " + totalFound + " " + AasxServer.Program.externalBlazor + "\n";
                 }
 
                 return result;
@@ -986,6 +992,9 @@ namespace AasxRestServerLibrary
 
                         foreach (var aas in env.AasEnv.AssetAdministrationShells)
                         {
+                            if (aas.IdShort == "REGISTRY")
+                                continue;
+
                             if (storeAasLast.Count != 0)
                             {
                                 if (!storeAasLast.Contains(aas))

@@ -156,7 +156,15 @@ namespace IO.Swagger.V1RC03.Controllers
 
             string result = AasxRestServer.TestResource.runQueryRegistryOnly(searchQuery, "", aasRegistry, envRegistry);
 
-            return new ObjectResult(result);
+            result = result.Replace("\n", "</br>\n");
+
+            return new ContentResult()
+            {
+                Content = result,
+                ContentType = "text/html",
+            };
+
+            // return new ObjectResult(result);
         }
         
         [ApiExplorerSettings(IgnoreApi = true)]
