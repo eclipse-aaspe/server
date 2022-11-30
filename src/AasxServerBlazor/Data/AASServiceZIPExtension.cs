@@ -21,11 +21,9 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("zip");
         }
 
-        public void CreateItems(Item fileItem, File zipFile, string fileRestURL)
+        public void CreateItems(Item fileItem, System.IO.Stream zipFileStream, string fileRestURL)
         {
-            var filePath = zipFile.value;
-            var fileStream = Program.env[fileItem.envIndex].GetLocalStreamFromPackage(filePath);
-            var zipArchive = AasxHttpContextHelperZipExtensions.LoadZipArchive(fileStream);
+            var zipArchive = AasxHttpContextHelperZipExtensions.LoadZipArchive(zipFileStream);
 
             var zip = CreateArchiveItem(fileItem, zipArchive, fileRestURL);
 

@@ -247,7 +247,9 @@ namespace AasxServerBlazor.Data
             {
                 try
                 {
-                    extension.CreateItems(parentItem, file, fileRestURL);
+                    var filePath = file.value;
+                    var fileStream = Program.env[parentItem.envIndex].GetLocalStreamFromPackage(filePath);
+                    extension.CreateItems(parentItem, fileStream, fileRestURL);
                 }
                 catch { }
             }
