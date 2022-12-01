@@ -412,10 +412,14 @@ else
                         }
 
                         HttpWebRequest fileReq = HttpWebRequest.Create(downloadLink) as HttpWebRequest;
-                        HttpWebResponse fileResp = fileReq.GetResponse() as HttpWebResponse;
-                        Stream fileStream = fileResp.GetResponseStream();
+                        try
+                        {
+                            HttpWebResponse fileResp = fileReq.GetResponse() as HttpWebResponse;
+                            Stream fileStream = fileResp.GetResponseStream();
 
-                        SubmodelService.CreateFileItems(selectedNode, fileStream, TreePage.getRestURL(selectedNode), extension);
+                            SubmodelService.CreateFileItems(selectedNode, fileStream, TreePage.getRestURL(selectedNode), extension);
+                        }
+                        catch { }
                     }
                 }
             }
