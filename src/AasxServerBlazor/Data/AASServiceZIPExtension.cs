@@ -161,5 +161,11 @@ namespace AasxServerBlazor.Data
             }
 
         }
+
+        public override bool RepresentsFileToBeBrowsed(Item item)
+        {
+            JObject jObject = item.Tag as JObject;
+            return (jObject?.GetValue("type").ToString() == "file");
+        }
     }
 }

@@ -52,5 +52,10 @@ namespace AasxServerBlazor.Data
         {
             return null;
         }
+
+        public virtual bool RepresentsFileToBeBrowsed(Item item)
+        {
+            return false;
+        }
     }
 }

@@ -242,13 +242,23 @@ namespace AasxServerBlazor.Data
                 extension = GetServiceExtensionByFileType(file);
             }
 
+            try
+            {
+                var filePath = file.value;
+                var fileStream = Program.env[parentItem.envIndex].GetLocalStreamFromPackage(filePath);
+                extension.CreateItems(parentItem, fileStream, fileRestURL);
+            }
+            catch { }
+        }
+
+        public void CreateFileItems(Item parentItem, System.IO.Stream fileStream, string fileRestURL, IAASServiceExtension extension)
+        {
+
             parentItem.Childs = new List<Item>();
             if (extension != null)
             {
                 try
                 {
-                    var filePath = file.value;
-                    var fileStream = Program.env[parentItem.envIndex].GetLocalStreamFromPackage(filePath);
                     extension.CreateItems(parentItem, fileStream, fileRestURL);
                 }
                 catch { }

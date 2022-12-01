@@ -89,7 +89,7 @@
                         var downloadLink = (selectedNode as ExtensionItem).extension.GetDownloadLink(selectedNode);
                         if (downloadLink != null)
                         {
-                            <button style="margin-bottom: 5px" onclick="window.location.href = '@downloadLink'; ">Download</button>
+                            <button style="margin-bottom: 5px" onclick="window.location.href = '@downloadLink'; ">Download</button><br />
                         }
 
                     }
@@ -354,32 +354,72 @@ else
 }
 }
 
-if (selectedNode != null && (selectedNode.Tag is AdminShellNS.AdminShellV20.File))
-{
-AdminShellNS.AdminShellV20.File file = selectedNode.Tag as AdminShellNS.AdminShellV20.File;
+        if (showBrowseWithExtensionButton(selectedNode))
+        {
 
-        <select @bind="SelectedExtensionKey">
-            <option enabled="false" selected>default</option>
-            @foreach (string extension in AASService.fileExtensions.Keys)
-            {
-                <option value="@extension">@extension</option>
-            }
-        </select>
-        <button style="margin-bottom: 5px" @onclick="browseWithExtension">(Re)Browse With Extension</button><br />
-
-        @code {
-            private string SelectedExtensionKey { get; set; }
-            private void browseWithExtension()
-            {
-                IAASServiceExtension extension = null;
-                if (SelectedExtensionKey != null && SelectedExtensionKey != "default")
+            <select @bind="SelectedExtensionKey">
+                <option enabled="false" selected>default</option>
+                @foreach (string extension in AASService.fileExtensions.Keys)
                 {
-                    AASService.fileExtensions.TryGetValue(SelectedExtensionKey, out extension);
+                    <option value="@extension">@extension</option>
                 }
-                SubmodelService.CreateFileItems(selectedNode, (selectedNode.Tag as AdminShellNS.AdminShellV20.File), TreePage.getRestURL(selectedNode), extension);
+            </select>
+            <button style="margin-bottom: 5px" @onclick="browseWithExtension">(Re)Browse With Extension</button><br />
+
+            @code {
+                private string SelectedExtensionKey { get; set; }
+
+                private bool showBrowseWithExtensionButton(Item item)
+                {
+                    if (item == null)
+                    {
+                        return false;
+                    }
+
+                    if (item.Tag is AdminShellNS.AdminShellV20.File) {
+                        return true;
+                    }
+
+                    var extensionItem = item as ExtensionItem;
+                    if (extensionItem == null || extensionItem.extension == null)
+                    {
+                        return false;
+                    }
+
+                    return extensionItem.extension.RepresentsFileToBeBrowsed(item);
+
+                }
+
+                private void browseWithExtension()
+                {
+                    IAASServiceExtension extension = null;
+                    if (SelectedExtensionKey != null && SelectedExtensionKey != "default")
+                    {
+                        AASService.fileExtensions.TryGetValue(SelectedExtensionKey, out extension);
+                    }
+
+                    if (selectedNode.Tag is AdminShellNS.AdminShellV20.File)
+                    {
+                        SubmodelService.CreateFileItems(selectedNode, (selectedNode.Tag as AdminShellNS.AdminShellV20.File), TreePage.getRestURL(selectedNode), extension);
+                    } else if (selectedNode is ExtensionItem)
+                    {
+                        var parentExtension = (selectedNode as ExtensionItem).extension;
+                        
+                        var downloadLink = parentExtension.GetDownloadLink(selectedNode);
+                        if (downloadLink == null)
+                        {
+                            return;
+                        }
+
+                        HttpWebRequest fileReq = HttpWebRequest.Create(downloadLink) as HttpWebRequest;
+                        HttpWebResponse fileResp = fileReq.GetResponse() as HttpWebResponse;
+                        Stream fileStream = fileResp.GetResponseStream();
+
+                        SubmodelService.CreateFileItems(selectedNode, fileStream, TreePage.getRestURL(selectedNode), extension);
+                    }
+                }
             }
         }
-    }
             }
 
             @{
@@ -2188,6 +2228,11 @@ AdminShellNS.AdminShellV20.File file = selectedNode.Tag as AdminShellNS.AdminShe
 
     public static string getRestURL(Item item)
     {
+        if (item is ExtensionItem && (item as ExtensionItem).extension != null)
+        {
+            return (item as ExtensionItem).extension.GetRestURL(item);
+        }
+
         var endpoint = Program.externalRest;
         var path = getPath(item);
         string restURL = endpoint;

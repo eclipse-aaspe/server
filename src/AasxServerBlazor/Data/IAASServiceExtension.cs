@@ -60,7 +60,13 @@ namespace AasxServerBlazor.Data
 
         /**
          * If the item represents a file (and if the extension supports file retrieval), returns a URL that can be used to retrieve the file; otherwise returns null.
+         * This will probably be something like <GetRestURL(item)>?content=raw.
          */
         public string GetDownloadLink(Item item);
+
+        /**
+         * Whether the given item created by an extension represents a File that should be browsed deeper (possibly by another extension).
+         */
+        public bool RepresentsFileToBeBrowsed(Item item);
     }
 }
