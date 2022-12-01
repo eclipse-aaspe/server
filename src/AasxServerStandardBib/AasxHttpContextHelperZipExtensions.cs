@@ -41,21 +41,8 @@ namespace AasxRestServerLibrary
 
                 if (content == "raw")
                 {
-
-                    if (fragmentObject is string)
-                    {
-                        throw new ZipFragmentEvaluationException($"ZipFragment represents a folder. This is not supported when 'content' is set to 'raw'!");
-                    }
-
-                    var fragmentObjectStream = fragmentObject.Open();
-                    var decompressedStream = new MemoryStream();
-
-                    // this will decompress the file
-                    fragmentObjectStream.CopyTo(decompressedStream);
-                    decompressedStream.Position = 0;
-
-                    SendStreamResponse(context, decompressedStream, fragmentObject.Name);
-
+                    var stream = GetFragmentObjectAsStream(context, fragmentObject);
+                    SendStreamResponse(context, stream, fragmentObject.Name);
                 }
                 else
                 {
@@ -75,6 +62,43 @@ namespace AasxRestServerLibrary
                     e.Message);
                 return;
             }
+        }
+        public static Stream EvalGetZIPFragmentAsStream(this AasxHttpContextHelper helper, IHttpContext context, Stream zipFileStream, string zipFragment)
+        {
+            try
+            {
+                ZipArchive archive = LoadZipArchive(zipFileStream);
+
+                var fragmentObject = FindFragmentObject(archive, zipFragment);
+                var stream = GetFragmentObjectAsStream(context, fragmentObject);
+
+                return stream;
+            }
+            catch (ZipFragmentEvaluationException e)
+            {
+                context.Response.SendResponse(
+                    Grapevine.Shared.HttpStatusCode.NotFound,
+                    e.Message);
+                return null;
+            }
+        }
+
+
+        private static Stream GetFragmentObjectAsStream(IHttpContext context, dynamic fragmentObject)
+        {
+            if (fragmentObject is string)
+            {
+                throw new ZipFragmentEvaluationException($"ZipFragment represents a folder. This is not supported when 'content' is set to 'raw'!");
+            }
+
+            var fragmentObjectStream = fragmentObject.Open();
+            var decompressedStream = new MemoryStream();
+
+            // this will decompress the file
+            fragmentObjectStream.CopyTo(decompressedStream);
+            decompressedStream.Position = 0;
+
+            return decompressedStream;
         }
 
         private static ZipArchive LoadZipArchive(Stream zipFileStream)
