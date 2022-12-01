@@ -28,6 +28,8 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
 using Microsoft.IdentityModel.Tokens;
+using ScottPlot.Drawing.Colormaps;
+using MailKit;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -781,7 +783,7 @@ namespace AasxRestServerLibrary
 
             // access the first AAS
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
-            if (findAasReturn.aas == null)
+            if (findAasReturn == null || findAasReturn.aas == null)
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with id '{aasid}' found.");
                 return;
@@ -937,16 +939,12 @@ namespace AasxRestServerLibrary
         {
             dynamic res = new ExpandoObject();
             int index = -1;
+            string accessrights = null;
 
             // check authentication
             if (withAuthentification)
             {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/aas", "UPDATE"))
-                {
-                    return;
-                }
+                accessrights = SecurityCheck(context, ref index);
 
                 res.confirm = "Authorization = " + accessrights;
             }
@@ -962,7 +960,23 @@ namespace AasxRestServerLibrary
             AdminShell.AdministrationShell aas = null;
             try
             {
-                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>(context.Request.Payload);
+                ITraceWriter traceWriter = new MemoryTraceWriter();
+
+                /*
+                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>
+                    (context.Request.Payload);
+                */
+
+                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>
+                    (context.Request.Payload, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+
+                /*
+                var settings = new JsonSerializerSettings { TraceWriter = traceWriter };
+                var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: true, complete: true);
+                settings.ContractResolver = cr;
+                aas = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminShell.AdministrationShell>
+                    (context.Request.Payload, settings);
+                */
             }
             catch (Exception ex)
             {
@@ -989,8 +1003,13 @@ namespace AasxRestServerLibrary
                     var existingAas = this.Packages[envi].AasEnv.FindAAS(aas.identification);
                     if (existingAas != null)
                     {
+                        if (withAuthentification)
+                            if (!checkAccessRights(context, accessrights, "/aas", "UPDATE", "", "aas", existingAas))
+                                return;
+
                         this.Packages[envi].AasEnv.AdministrationShells.Remove(existingAas);
                         this.Packages[envi].AasEnv.AdministrationShells.Add(aas);
+                        Program.signalNewData(2);
                         SendTextResponse(context, "OK (update, index=" + envi + ")");
                         return;
                     }
@@ -1007,8 +1026,13 @@ namespace AasxRestServerLibrary
 
             if (emptyPackageAvailable)
             {
+                if (withAuthentification)
+                    if (!checkAccessRights(context, accessrights, "/aas", "CREATE"))
+                        return;
+
                 this.Packages[emptyPackageIndex] = new AdminShellPackageEnv();
                 this.Packages[emptyPackageIndex].AasEnv.AdministrationShells.Add(aas);
+                Program.signalNewData(2);
                 SendTextResponse(context, "OK (new, index=" + emptyPackageIndex + ")");
                 return;
             }
@@ -2441,6 +2465,15 @@ namespace AasxRestServerLibrary
             // check authentication
             if (withAuthentification)
             {
+                // access the AAS
+                var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
+                if (findAasReturn.aas == null)
+                {
+                    context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with idShort '{aasid}' found.");
+                    Console.WriteLine("ERROR PUT: No AAS with idShort '{0}' found.", aasid);
+                    return;
+                }
+
                 string objPath = smid;
                 foreach (var el in elemids)
                 {
@@ -2449,7 +2482,7 @@ namespace AasxRestServerLibrary
 
                 string accessrights = SecurityCheck(context, ref index);
 
-                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE", objPath))
+                if (!checkAccessRights(context, accessrights, "/submodelelements", "UPDATE", objPath, "aas", findAasReturn.aas))
                 {
                     return;
                 }
@@ -2795,6 +2828,7 @@ namespace AasxRestServerLibrary
                 o.shortName = cd.GetDefaultShortName();
                 o.identification = cd.identification;
                 o.isCaseOf = cd.IsCaseOf;
+                o.embeddedDataSpecifications = cd.JsonEmbeddedDataSpecifications;
 
                 // add
                 res.Add(o);
