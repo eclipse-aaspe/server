@@ -1673,7 +1673,7 @@ namespace AasxRestServerLibrary
 
                     List<(string fragmentType, string fragment)> nestedFragments = new List<(string, string)>();
 
-                    foreach(var fragment in nestedFragmentStrings)
+                    foreach (var fragment in nestedFragmentStrings)
                     {
                         var parts = fragment.Split(new[] { '/' }, 2);
                         nestedFragments.Add((parts[0], parts[1].TrimEnd(new[] { '/' })));
