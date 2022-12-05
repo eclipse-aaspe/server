@@ -21,11 +21,9 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("zip");
         }
 
-        public void CreateItems(Item fileItem, File zipFile, string fileRestURL)
+        public void CreateItems(Item fileItem, System.IO.Stream zipFileStream, string fileRestURL)
         {
-            var filePath = zipFile.value;
-            var fileStream = Program.env[fileItem.envIndex].GetLocalStreamFromPackage(filePath);
-            var zipArchive = AasxHttpContextHelperZipExtensions.LoadZipArchive(fileStream);
+            var zipArchive = AasxHttpContextHelperZipExtensions.LoadZipArchive(zipFileStream);
 
             var zip = CreateArchiveItem(fileItem, zipArchive, fileRestURL);
 
@@ -142,6 +140,32 @@ namespace AasxServerBlazor.Data
             }
 
             return jObject.GetValue("fullName").ToString();
+        }
+
+        public override string GetDownloadLink(Item item)
+        {
+            var restURL = this.GetRestURL(item);
+
+            if (restURL == null)
+            {
+                return null;
+            }
+
+            JObject jObject = item.Tag as JObject;
+            if (jObject.GetValue("type").ToString() == "file")
+            {
+                return restURL + "?content=raw";
+            } else
+            {
+                return null;
+            }
+
+        }
+
+        public override bool RepresentsFileToBeBrowsed(Item item)
+        {
+            JObject jObject = item.Tag as JObject;
+            return (jObject?.GetValue("type").ToString() == "file");
         }
     }
 }

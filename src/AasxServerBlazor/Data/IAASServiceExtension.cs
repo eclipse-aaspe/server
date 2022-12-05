@@ -21,7 +21,7 @@ namespace AasxServerBlazor.Data
         /**
          * Recursively generates the child items for the given file and adds them to the given fileItem.
          */
-        public abstract void CreateItems(Item fileItem, File file, string fileRestURL);
+        public abstract void CreateItems(Item fileItem, System.IO.Stream fileStream, string fileRestURL);
 
         /**
          * Method 'TreePage.ViewNodeID(...)' will delegate to this implementation for items created by the specific extension.
@@ -52,5 +52,21 @@ namespace AasxServerBlazor.Data
          * Get the <fragment> to use in REST calls.
          */
         public string GetFragment(Item item);
+
+        /**
+         * Get the REST URL that can be used to retrieve the element that this item represents.
+         */
+        public string GetRestURL(Item item);
+
+        /**
+         * If the item represents a file (and if the extension supports file retrieval), returns a URL that can be used to retrieve the file; otherwise returns null.
+         * This will probably be something like <GetRestURL(item)>?content=raw.
+         */
+        public string GetDownloadLink(Item item);
+
+        /**
+         * Whether the given item created by an extension represents a File that should be browsed deeper (possibly by another extension).
+         */
+        public bool RepresentsFileToBeBrowsed(Item item);
     }
 }
