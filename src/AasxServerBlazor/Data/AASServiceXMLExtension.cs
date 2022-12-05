@@ -18,13 +18,11 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("xml");
         }
 
-        public void CreateItems(Item xmlFileItem, File xmlFile, string fileRestURL)
+        public void CreateItems(Item xmlFileItem, System.IO.Stream xmlFileStream, string fileRestURL)
         {
             try
             {
-                var filePath = xmlFile.value;
-                var fileStream = Program.env[xmlFileItem.envIndex].GetLocalStreamFromPackage(filePath);
-                var xmlDocument = AasxHttpContextHelperXmlExtensions.LoadXmlDocument(fileStream);
+                var xmlDocument = AasxHttpContextHelperXmlExtensions.LoadXmlDocument(xmlFileStream);
 
                 var xml = CreateXMLDocumentItem(xmlFileItem, xmlDocument, fileRestURL);
 

@@ -18,13 +18,11 @@ namespace AasxServerBlazor.Data
             return filePath.EndsWith("aml") || filePath.EndsWith("amlx") || filePath.EndsWith("mtp");
         }
 
-        public void CreateItems(Item caexFileItem, File caexFile, string fileRestURL)
+        public void CreateItems(Item caexFileItem, System.IO.Stream caexFileStream, string fileRestURL)
         {
             try
             {
-                var filePath = caexFile.value;
-                var fileStream = Program.env[caexFileItem.envIndex].GetLocalStreamFromPackage(filePath);
-                var caexDocument = AasxHttpContextHelperAmlExtensions.LoadCaexDocument(fileStream);
+                var caexDocument = AasxHttpContextHelperAmlExtensions.LoadCaexDocument(caexFileStream);
 
                 var aml = CreateCAEXDocumentItem(caexFileItem, caexDocument, fileRestURL);
 
