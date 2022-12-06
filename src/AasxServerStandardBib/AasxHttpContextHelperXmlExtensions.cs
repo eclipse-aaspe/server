@@ -34,7 +34,7 @@ namespace AasxRestServerLibrary
 
                 if (level == "core")
                 {
-                    foreach(var fragmentObject in fragmentObjects)
+                    foreach (var fragmentObject in fragmentObjects)
                     {
                         if (fragmentObject.NodeType == XmlNodeType.Element)
                         {
@@ -51,7 +51,7 @@ namespace AasxRestServerLibrary
                     }
 
                     var fragmentObject = fragmentObjects.First();
-                    
+
                     if (fragmentObject.NodeType != XmlNodeType.Element)
                     {
                         throw new XmlFragmentEvaluationException($"Fragment evaluation did not return an Element but a(n) " + fragmentObject.NodeType + "!");
@@ -113,7 +113,8 @@ namespace AasxRestServerLibrary
             try
             {
                 nodes = ((IEnumerable<object>)result).Cast<XObject>();
-            } catch
+            }
+            catch
             {
                 throw new XmlFragmentEvaluationException($"Evaluating xPath query '" + xPath + "' did not return a node list.");
             }
@@ -152,7 +153,7 @@ namespace AasxRestServerLibrary
                 // select all children's children (the elements to be deleted)
                 XElement nodeToDelete;
 
-                while((nodeToDelete = fragmentObject.XPathSelectElement("./*/*")) != null)
+                while ((nodeToDelete = fragmentObject.XPathSelectElement("./*/*")) != null)
                 {
                     nodeToDelete.Remove();
                 }
@@ -220,8 +221,10 @@ namespace AasxRestServerLibrary
             IEnumerable<XObject> nodeList;
             try
             {
-                nodeList = (IEnumerable<XObject>) value;
-            } catch {
+                nodeList = (IEnumerable<XObject>)value;
+            }
+            catch
+            {
                 throw new XmlFragmentEvaluationException("Unable to convert object to IEnumerable<XObject>: " + value);
             }
 
@@ -237,11 +240,12 @@ namespace AasxRestServerLibrary
             if (nodeList.Count() == 1)
             {
                 return ConvertToJson(nodeList.First());
-            } else
+            }
+            else
             {
                 JArray result = new JArray();
 
-                foreach(var node in nodeList)
+                foreach (var node in nodeList)
                 {
                     result.Add(ConvertToJson(node));
                 }
@@ -295,11 +299,13 @@ namespace AasxRestServerLibrary
                 copy.Add(original.Nodes().Where(n => n.NodeType != XmlNodeType.Comment).Select(el => RemoveAllNamespacesAndComments(el)));
 
                 return copy;
-            } else if (xmlObject is XAttribute)
+            }
+            else if (xmlObject is XAttribute)
             {
                 XAttribute original = xmlObject as XAttribute;
                 return new XAttribute(original.Name.LocalName, original.Value);
-            } else
+            }
+            else
             {
                 return xmlObject;
             }
@@ -332,7 +338,7 @@ namespace AasxRestServerLibrary
         {
             var paths = new List<string>();
             paths.Add(baseXpath);
-            
+
             Dictionary<string, List<XElement>> childDict = GetChildrenSortedByName(xmlElement);
 
             foreach (var key in childDict?.Keys)
