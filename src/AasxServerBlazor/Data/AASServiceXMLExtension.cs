@@ -4,6 +4,8 @@ using static AdminShellNS.AdminShellV20;
 using AasxServer;
 using AasxRestServerLibrary;
 using System.Xml;
+using System.Xml.Linq;
+using System.Linq;
 
 namespace AasxServerBlazor.Data
 {
@@ -37,30 +39,22 @@ namespace AasxServerBlazor.Data
         {
             var children = new List<Item>();
 
-            if (xmlObject is XmlDocument)
+            if (xmlObject is XDocument)
             {
-                foreach (var child in (xmlObject as XmlDocument).ChildNodes)
+                foreach (var child in (xmlObject as XDocument).Elements())
                 {
-                    if (child is XmlElement)
-                    {
-                        children.Add(CreateXMLElementItem(item, child as XmlElement));
-                    }
+                    children.Add(CreateXMLElementItem(item, child));
                 }
-            } else if (xmlObject is XmlElement)
+            }
+            else if (xmlObject is XElement)
             {
-                foreach (var child in (xmlObject as XmlElement).ChildNodes)
+                foreach (var child in (xmlObject as XElement).Elements())
                 {
-                    if (child is XmlElement)
-                    {
-                        children.Add(CreateXMLElementItem(item, child as XmlElement));
-                    }
+                    children.Add(CreateXMLElementItem(item, child));
                 }
-                foreach (var child in (xmlObject as XmlElement).Attributes)
+                foreach (var child in (xmlObject as XElement).Attributes())
                 {
-                    if (child is XmlAttribute)
-                    {
-                        children.Add(CreateXMLAttributeItem(item, child as XmlAttribute));
-                    }
+                    children.Add(CreateXMLAttributeItem(item, child));
                 }
             }
 
@@ -68,19 +62,19 @@ namespace AasxServerBlazor.Data
         }
 
 
-        private Item CreateXMLDocumentItem(Item parentItem, XmlDocument doc, string fileRestURL)
+        private Item CreateXMLDocumentItem(Item parentItem, XDocument doc, string fileRestURL)
         {
             return CreateItem(parentItem, parentItem.Text, doc, "XML", fileRestURL);
         }
 
-        private Item CreateXMLElementItem(Item parentItem, XmlElement node)
+        private Item CreateXMLElementItem(Item parentItem, XElement node)
         {
-            return CreateItem(parentItem, node.Name, node, "Ele");
+            return CreateItem(parentItem, node.Name.ToString(), node, "Ele");
         }
 
-        private Item CreateXMLAttributeItem(Item parentItem, XmlAttribute node)
+        private Item CreateXMLAttributeItem(Item parentItem, XAttribute node)
         {
-            return CreateItem(parentItem, node.Name, node, "Att");
+            return CreateItem(parentItem, node.Name.ToString(), node, "Att");
         }
 
         public string ViewNodeID(Item item)
@@ -102,9 +96,9 @@ namespace AasxServerBlazor.Data
 
             var tag = item.Tag;
 
-            if (tag is XmlElement)
+            if (tag is XElement)
             {
-                var xmlElement = tag as XmlElement;
+                var xmlElement = tag as XElement;
 
                 switch (line)
                 {
@@ -124,14 +118,15 @@ namespace AasxServerBlazor.Data
                         if (col == 0)
                             return "Namespace URI";
                         if (col == 1)
-                            return xmlElement.NamespaceURI;
+                            return xmlElement.Name.NamespaceName;
                         break;
                     default:
                         return null;
                 }
-            } else if (tag is XmlAttribute)
+            }
+            else if (tag is XAttribute)
             {
-                var xmlAttribute = tag as XmlAttribute;
+                var xmlAttribute = tag as XAttribute;
 
                 switch (line)
                 {
@@ -145,7 +140,7 @@ namespace AasxServerBlazor.Data
                         if (col == 0)
                             return "Namespace URI";
                         if (col == 1)
-                            return xmlAttribute.NamespaceURI;
+                            return xmlAttribute.Name.NamespaceName;
                         break;
                     default:
                         return null;
@@ -165,37 +160,41 @@ namespace AasxServerBlazor.Data
             var tag = item.Tag;
 
             string value = null;
-            if (tag is XmlElement)
+            if (tag is XElement)
             {
-                value = getTextValue(tag as XmlElement);
+                value = getTextValue(tag as XElement);
 
-            } else if (tag is XmlAttribute)
+            }
+            else if (tag is XAttribute)
             {
-                value = (tag as XmlAttribute).Value;
+                value = (tag as XAttribute).Value;
             }
             return value?.Length > 0 ? " = " + value : null;
         }
 
-        private string getTextValue(XmlElement xmlElement)
+        private string getTextValue(XElement xmlElement)
         {
-            foreach (XmlNode child in xmlElement.ChildNodes)
+            foreach (XNode child in xmlElement.Nodes())
             {
-                if (child.NodeType == XmlNodeType.Text ||
-                    child.NodeType == XmlNodeType.CDATA)
+                if (child.NodeType == XmlNodeType.Text)
                 {
-                    return child.Value;
+                    return (child as XText).Value;
+                }
+                else if (child.NodeType == XmlNodeType.CDATA)
+                {
+                    return (child as XCData).Value;
                 }
             }
 
             return null;
         }
-        private string getComment(XmlElement xmlElement)
+        private string getComment(XElement xmlElement)
         {
-            foreach (XmlNode child in xmlElement.ChildNodes)
+            foreach (XNode child in xmlElement.Nodes())
             {
                 if (child.NodeType == XmlNodeType.Comment)
                 {
-                    return child.Value;
+                    return (child as XComment).Value;
                 }
             }
 
@@ -209,16 +208,17 @@ namespace AasxServerBlazor.Data
 
         public string GetFragment(Item item)
         {
-            if (item.Tag is XmlDocument)
+            if (item.Tag is XDocument)
             {
-                return "//*";
-            } else if (item.Tag is XmlElement)
-            {
-                return CreateXpathRecursively(item.Tag as XmlElement);
+                return "/*";
             }
-            else if (item.Tag is XmlAttribute)
+            else if (item.Tag is XElement)
             {
-                return CreateXpathRecursively(item.Tag as XmlAttribute);
+                return CreateXpathRecursively(item.Tag as XElement);
+            }
+            else if (item.Tag is XAttribute)
+            {
+                return CreateXpathRecursively(item.Tag as XAttribute);
             }
             else
             {
@@ -226,23 +226,23 @@ namespace AasxServerBlazor.Data
             }
         }
 
-        private string CreateXpathRecursively(XmlElement element)
+        private string CreateXpathRecursively(XElement element)
         {
-            XmlNode parent = element.ParentNode;
-            if (parent is XmlElement)
+            XNode parent = element.Parent;
+            if (parent is XElement)
             {
-                XmlElement parentElement = parent as XmlElement;
-                XmlNodeList childrenWithCorrectName = parentElement.GetElementsByTagName(element.Name);
+                XElement parentElement = parent as XElement;
+                List<XElement> childrenWithCorrectName = parentElement.Elements(element.Name).ToList();
 
-                string xPathSegment = "/" + element.Name;
+                string xPathSegment = "/" + GetLocalXpathExpression(element);
 
-                if (childrenWithCorrectName.Count > 1)
+                if (childrenWithCorrectName.Count() > 1)
                 {
-                    for (int i = 0; i < childrenWithCorrectName.Count; i++)
+                    for (int i = 0; i < childrenWithCorrectName.Count(); i++)
                     {
                         if (childrenWithCorrectName[i] == element)
                         {
-                            xPathSegment += "[" + (i+1) + "]";
+                            xPathSegment += "[" + (i + 1) + "]";
                         }
                     }
                 }
@@ -250,21 +250,41 @@ namespace AasxServerBlazor.Data
                 string parentXPathSegment = CreateXpathRecursively(parentElement);
 
                 return parentXPathSegment == null ? null : parentXPathSegment + xPathSegment;
-            } else if (parent is XmlDocument)
+            }
+            else
             {
-                return "///" + element.Name;
-            } else
-            {
-                return null;
+                return "/" + GetLocalXpathExpression(element);
             }
         }
 
-        private string CreateXpathRecursively(XmlAttribute attribute)
+        private string GetLocalXpathExpression(XElement node)
         {
-            XmlElement parent = attribute.OwnerElement;
-                       
+            var nodeName = node.Name;
+            if (nodeName.NamespaceName?.Length == 0)
+            {
+                // the node is not associated with a namespace, so we can simply use the local name as xPath expression
+                return nodeName.LocalName;
+            }
+
+            var ns = nodeName.Namespace;
+            var nsPrefix = node.GetPrefixOfNamespace(ns);
+
+            if (nsPrefix?.Length > 0)
+            {
+                // there is a prefix for the namespace of the node so we can use this for the xPath expression
+                return nsPrefix + ":" + nodeName.LocalName;
+            }
+
+            // the node is in the default namespace (without any prefix); hence, we need to use some special xPath syntax
+            // to be able to adress the node (see https://stackoverflow.com/a/2530023)
+            return "*[namespace-uri()='" + ns.NamespaceName + "' and local-name()='" + nodeName.LocalName + "']";
+        }
+
+        private string CreateXpathRecursively(XAttribute attribute)
+        {
+            XElement parent = attribute.Parent;
             string xPathSegment = "/@" + attribute.Name;
-            string parentXPathSegment = CreateXpathRecursively(parent as XmlElement);
+            string parentXPathSegment = CreateXpathRecursively(parent);
 
             return parentXPathSegment == null ? null : parentXPathSegment + xPathSegment;
         }
