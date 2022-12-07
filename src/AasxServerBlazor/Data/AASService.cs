@@ -242,6 +242,11 @@ namespace AasxServerBlazor.Data
                 extension = GetServiceExtensionByFileType(file);
             }
 
+            if (extension == null)
+            {
+                return;
+            }
+
             try
             {
                 var filePath = file.value;
