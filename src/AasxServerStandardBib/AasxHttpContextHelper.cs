@@ -2375,8 +2375,19 @@ namespace AasxRestServerLibrary
             packageStream.Close();
         }
 
-        public void EvalGetSubmodelElementFragment(IHttpContext context, string aasid, string smid, string[] elemids, List<(string fragmentType, string fragmentValue)> nestedFragments)
+        public void EvalGetSubmodelElementFragment(IHttpContext context, string aasid, string smid, string[] elemids, string fragmentType, string fragment)
         {
+
+            string decodedFragment;
+            try
+            {
+                decodedFragment = Base64UrlEncoder.Decode(fragment);
+            }
+            catch (FormatException)
+            {
+                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Unable to Base64URL-decode fragment '{fragment}'!");
+                return;
+            }
 
             // access the first AAS
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
@@ -2418,84 +2429,32 @@ namespace AasxRestServerLibrary
                 return;
             }
 
-            EvalGetSubmodelElementFragment(context, packageStream, nestedFragments);
+            switch (fragmentType)
+            {
+                case "aml":
+                case "aml20":
+                case "aml21":
+                    this.EvalGetAMLFragment(context, packageStream, decodedFragment);
+                    break;
+                case "xml":
+                    this.EvalGetXMLFragment(context, packageStream, decodedFragment);
+                    break;
+                case "zip":
+                    this.EvalGetZIPFragment(context, packageStream, decodedFragment);
+                    break;
+                case "xls":
+                case "xlsx":
+                    this.EvalGetXLSFragment(context, packageStream, decodedFragment);
+                    break;
+                // possibility to add support for more fragment types in the future
+                default:
+                    context.Response.SendResponse(
+                        Grapevine.Shared.HttpStatusCode.NotFound,
+                        $"Unsupported fragment format. Fragment type '" + fragmentType + "' is not supported.");
+                    break;
+            }
 
             packageStream.Close();
-        }
-
-        private void EvalGetSubmodelElementFragment(IHttpContext context, Stream fileStream, List<(string fragmentType, string fragmentValue)> nestedFragments)
-        {
-            var fragment = nestedFragments.First();
-
-            string decodedFragment;
-            try
-            {
-                decodedFragment = Base64UrlEncoder.Decode(fragment.fragmentValue);
-            }
-            catch (FormatException)
-            {
-                context.Response.SendResponse(HttpStatusCode.BadRequest, $"Unable to Base64URL-decode fragment '{fragment}'!");
-                return;
-            }
-
-            var otherFragments = nestedFragments.Skip(1).ToList();
-            if (otherFragments.Count == 0)
-            {
-                switch (fragment.fragmentType)
-                {
-                    case "aml":
-                    case "aml20":
-                    case "aml21":
-                        this.EvalGetAMLFragment(context, fileStream, decodedFragment);
-                        break;
-                    case "xml":
-                        this.EvalGetXMLFragment(context, fileStream, decodedFragment);
-                        break;
-                    case "zip":
-                        this.EvalGetZIPFragment(context, fileStream, decodedFragment);
-                        break;
-                    case "xls":
-                    case "xlsx":
-                        this.EvalGetXLSFragment(context, fileStream, decodedFragment);
-                        break;
-                    // possibility to add support for more fragment types in the future
-                    default:
-                        context.Response.SendResponse(
-                            Grapevine.Shared.HttpStatusCode.NotFound,
-                            $"Unsupported fragment format. Fragment type '" + fragment.fragmentType + "' is not supported.");
-                        break;
-                }
-            }
-            else
-            {
-                // the fragment represents an intermediate fragment in a set of nested fragment; consequently, evaluation
-                // is expected to return a stream to a file that will then be used for evaluation of the next fragment
-                Stream nestedFileStream = null;
-                switch (fragment.fragmentType)
-                {
-                    case "zip":
-                        nestedFileStream = this.EvalGetZIPFragmentAsStream(context, fileStream, decodedFragment);
-                        break;
-                    // possibility to add support for more fragment types in the future
-                    default:
-                        context.Response.SendResponse(
-                            Grapevine.Shared.HttpStatusCode.NotFound,
-                            $"Unsupported fragment format. Fragment type '" + fragment.fragmentType + "' does not support nested fragments.");
-                        break;
-                }
-
-                if (nestedFileStream == null)
-                {
-                    context.Response.SendResponse(
-                            Grapevine.Shared.HttpStatusCode.NotFound,
-                            $"Unable to retrieve nested file for fragment '" + fragment.fragmentValue + "'.");
-                    return;
-                }
-
-                EvalGetSubmodelElementFragment(context, nestedFileStream, otherFragments);
-
-                nestedFileStream.Close();
-            }
         }
 
         public void EvalPutSubmodelElementContents(IHttpContext context, string aasid, string smid, string[] elemids)
