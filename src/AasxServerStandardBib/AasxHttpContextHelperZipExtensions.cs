@@ -49,7 +49,6 @@ namespace AasxRestServerLibrary
 
                     JsonConverter converter = new ZipJsonConverter(archive, content, extent, level);
                     string json = JsonConvert.SerializeObject(fragmentObject, Newtonsoft.Json.Formatting.Indented, converter);
-
                     SendJsonResponse(context, json);
                 }
 
@@ -101,7 +100,7 @@ namespace AasxRestServerLibrary
             return decompressedStream;
         }
 
-        private static ZipArchive LoadZipArchive(Stream zipFileStream)
+        public static ZipArchive LoadZipArchive(Stream zipFileStream)
         {
             try
             {
@@ -193,7 +192,7 @@ namespace AasxRestServerLibrary
      * 
      * Note: The serialization algorithm for 'content=normal' is based on directly converting the XML node to JSON.
      */
-    class ZipJsonConverter : JsonConverter
+    public class ZipJsonConverter : JsonConverter
     {
         char[] PathSeparators = new char[] { '/', '\\' };
         string Content;
@@ -259,7 +258,7 @@ namespace AasxRestServerLibrary
 
         }
 
-        private JObject BuildJsonRecursively(ZipArchive archive, string path, bool deep, int level = 0)
+        public JObject BuildJsonRecursively(ZipArchive archive, string path, bool deep, int level = 0)
         {
 
             ZipArchiveEntry zipEntry = archive.GetEntry(path);

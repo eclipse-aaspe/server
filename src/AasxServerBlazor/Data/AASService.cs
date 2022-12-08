@@ -33,6 +33,14 @@ namespace AasxServerBlazor.Data
         public static List<Item> items = null;
         public static List<Item> viewItems = null;
 
+        public static Dictionary<string, IAASServiceExtension> fileExtensions { get; } = new Dictionary<string, IAASServiceExtension>()
+        {
+            { "aml", new AASServiceAMLExtension() },
+            { "zip", new AASServiceZIPExtension() },
+            { "xml", new AASServiceXMLExtension() }
+            // further extensions that allow browsing into certain file type can be added here
+        };
+
         public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
         {
             // buildTree();
@@ -225,6 +233,55 @@ namespace AasxServerBlazor.Data
         public List<Submodel> GetSubmodels()
         {
             return Program.env[0].AasEnv.Submodels;
+        }
+
+        public void CreateFileItems(Item parentItem, File file, string fileRestURL, IAASServiceExtension extension = null)
+        {
+            if (extension == null)
+            {
+                extension = GetServiceExtensionByFileType(file);
+            }
+
+            if (extension == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var filePath = file.value;
+                var fileStream = Program.env[parentItem.envIndex].GetLocalStreamFromPackage(filePath);
+                extension.CreateItems(parentItem, fileStream, fileRestURL);
+            }
+            catch { }
+        }
+
+        public void CreateFileItems(Item parentItem, System.IO.Stream fileStream, string fileRestURL, IAASServiceExtension extension)
+        {
+
+            parentItem.Childs = new List<Item>();
+            if (extension != null)
+            {
+                try
+                {
+                    extension.CreateItems(parentItem, fileStream, fileRestURL);
+                }
+                catch { }
+            }
+        }
+
+        private IAASServiceExtension GetServiceExtensionByFileType(File file)
+        {
+            foreach (var extension in fileExtensions.Values)
+            {
+                if (extension.IsSuitableFor(file))
+                {
+                    return extension;
+                }
+            }
+
+            // no suitable extension found -> file will not be browsed
+            return null;
         }
     }
 }
