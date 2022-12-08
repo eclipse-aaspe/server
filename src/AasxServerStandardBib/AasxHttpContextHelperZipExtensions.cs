@@ -49,7 +49,6 @@ namespace AasxRestServerLibrary
 
                     JsonConverter converter = new ZipJsonConverter(archive, content, extent, level);
                     string json = JsonConvert.SerializeObject(fragmentObject, Newtonsoft.Json.Formatting.Indented, converter);
-
                     SendJsonResponse(context, json);
                 }
 

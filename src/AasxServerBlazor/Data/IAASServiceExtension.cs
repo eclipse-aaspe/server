@@ -17,7 +17,6 @@ namespace AasxServerBlazor.Data
          * Whether this extension supports browsing into the given file.
          */
         public bool IsSuitableFor(File file);
-        
         /**
          * Recursively generates the child items for the given file and adds them to the given fileItem.
          */

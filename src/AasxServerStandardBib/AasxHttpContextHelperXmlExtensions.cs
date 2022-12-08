@@ -358,7 +358,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            foreach(var attribute in xmlElement.Attributes())
+            foreach (var attribute in xmlElement.Attributes())
             {
                 var attributeXpath = baseXpath + "/@" + attribute.Name;
                 paths.Add(attributeXpath);

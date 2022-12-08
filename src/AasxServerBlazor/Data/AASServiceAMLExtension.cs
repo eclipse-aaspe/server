@@ -513,7 +513,8 @@ namespace AasxServerBlazor.Data
             else if (item.Tag is CAEXObject)
             {
                 return (item.Tag as CAEXObject).CAEXPath();
-            } else
+            }
+            else
             {
                 return null;
             }

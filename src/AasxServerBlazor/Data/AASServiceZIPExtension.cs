@@ -49,7 +49,8 @@ namespace AasxServerBlazor.Data
             {
                 children.Add(CreateItem(item, entry.GetValue("name")?.ToString(), entry, "Dir"));
             }
-            foreach (var entry in files) {
+            foreach (var entry in files)
+            {
                 children.Add(CreateItem(item, entry.GetValue("name")?.ToString(), entry, "File"));
             }
 
@@ -89,7 +90,8 @@ namespace AasxServerBlazor.Data
                     break;
             }
 
-            if (type.ToString() == "file") {
+            if (type.ToString() == "file")
+            {
                 switch (line)
                 {
                     case 1:
@@ -155,7 +157,8 @@ namespace AasxServerBlazor.Data
             if (jObject.GetValue("type").ToString() == "file")
             {
                 return restURL + "?content=raw";
-            } else
+            }
+            else
             {
                 return null;
             }

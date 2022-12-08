@@ -235,7 +235,7 @@ namespace AasxServerBlazor.Data
             return Program.env[0].AasEnv.Submodels;
         }
 
-        public void CreateFileItems(Item parentItem, File file, string fileRestURL, IAASServiceExtension extension=null)
+        public void CreateFileItems(Item parentItem, File file, string fileRestURL, IAASServiceExtension extension = null)
         {
             if (extension == null)
             {

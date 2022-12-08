@@ -44,15 +44,12 @@ namespace AasxServerBlazor.Data
             }
             var extension = extensionItem.extension;
             var fragment = extension.GetFragment(item);
-            
             return extensionItem.restBaseURL + "/fragments/" + extension.GetFragmentType(item) + "/" + Base64UrlEncoder.Encode(fragment);
         }
-        
         public virtual string GetDownloadLink(Item item)
         {
             return null;
         }
-
         public virtual bool RepresentsFileToBeBrowsed(Item item)
         {
             return false;
