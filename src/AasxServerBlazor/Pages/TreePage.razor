@@ -40,6 +40,48 @@
                 {
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 }*@
+                @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
+                {
+                    var display = false;
+                    var access = false;
+                    if (context.Tag is Submodel sm)
+                    {
+                        // check, if access to submodel is allowed
+                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevel(
+                            null, "/submodels", "READ",
+                            sm.IdShort, "sm", sm);
+                        display = true;
+                    }
+                    if (context.Tag is ISubmodelElement sme)
+                    {
+                        string path = sme.IdShort;
+                        var p = sme.Parent;
+                        while (!(p is Submodel))
+                        {
+                            path = (p as ISubmodelElement).IdShort + "." + path;
+                            p = (p as ISubmodelElement).Parent;
+                        }
+                        path = (p as Submodel).IdShort + "." + path;
+                        // check, if access to submodelelement is allowed
+                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevel(
+                            null, "/submodelelements", "READ",
+                                path, "", p);
+                        display = true;
+                    }
+                    if (display)
+                    {
+                        if (access)
+                        {
+                            <span style="color:green;background-color:green;">&nbsp&nbsp</span>
+                            <span>&nbsp</span>
+                        }
+                        else
+                        {
+                            <span style="color:red;background-color:red;">&nbsp&nbsp</span>
+                            <span>&nbsp</span>
+                        }
+                    }
+                }
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
                 <strong><span style="color:blue">@getSymbols(context)</span></strong>
