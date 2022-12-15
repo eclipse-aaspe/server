@@ -3363,12 +3363,24 @@ namespace AasxRestServerLibrary
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             string error = "";
-            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel);
+            bool withAllow = false;
+            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow,
+                objPath, aasOrSubmodel, objectAasOrSubmodel);
         }
-        public static bool checkAccessLevelWithError(out string error, string currentRole, string operation, string neededRights,
+        public static bool checkAccessLevelWithAllow(string currentRole, string operation, string neededRights,
+            out bool withAllow, string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+        {
+            string error = "";
+            withAllow = false;
+            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow,
+                objPath, aasOrSubmodel, objectAasOrSubmodel);
+        }
+        public static bool checkAccessLevelWithError(out string error, string currentRole, string operation,
+            string neededRights, out bool withAllow,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             error = "";
+            withAllow = false;
             if (Program.secretStringAPI != null)
             {
                 if (neededRights == "READ")
@@ -3444,7 +3456,10 @@ namespace AasxRestServerLibrary
                                     if (role.kind == "allow")
                                     {
                                         if (deepestAllow == "")
+                                        {
                                             deepestAllow = s.IdShort;
+                                            withAllow = true;
+                                        }
                                     }
                                     if (role.kind == "deny")
                                     {
@@ -3463,7 +3478,10 @@ namespace AasxRestServerLibrary
                                     if (role.kind == "allow")
                                     {
                                         if (deepestAllow == "")
+                                        {
                                             deepestAllow = objPath;
+                                            withAllow = true;
+                                        }
                                     }
                                     if (role.kind == "deny")
                                     {
@@ -3498,7 +3516,10 @@ namespace AasxRestServerLibrary
                             if (objPath.Length >= role.objPath.Length) // allow in tree above
                             {
                                 if (role.objPath == objPath.Substring(0, role.objPath.Length))
+                                {
                                     deepestAllow = role.objPath;
+                                    withAllow = true;
+                                }
                             }
                         }
                     }
@@ -3532,8 +3553,9 @@ namespace AasxRestServerLibrary
             }
             else
             {
-                if (checkAccessLevel(currentRole, operation, neededRights, objPath, aasOrSubmodel, objectAasOrSubmodel))
-                    return true;
+                if (checkAccessLevel(currentRole, operation, neededRights,
+                    objPath, aasOrSubmodel, objectAasOrSubmodel))
+                        return true;
 
                 if (currentRole == null)
                 {

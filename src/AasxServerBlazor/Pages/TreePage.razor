@@ -44,12 +44,13 @@
                 {
                     var display = false;
                     var access = false;
+                    bool withAllow = false;
                     if (context.Tag is Submodel sm)
                     {
                         // check, if access to submodel is allowed
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevel(
-                            null, "/submodels", "READ",
-                            sm.IdShort, "sm", sm);
+                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+                            null, "/submodels", "READ", out withAllow,
+                                sm.IdShort, "sm", sm);
                         display = true;
                     }
                     if (context.Tag is ISubmodelElement sme)
@@ -63,13 +64,15 @@
                         }
                         path = (p as Submodel).IdShort + "." + path;
                         // check, if access to submodelelement is allowed
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevel(
-                            null, "/submodelelements", "READ",
+                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+                            null, "/submodelelements", "READ", out withAllow,
                                 path, "", p);
                         display = true;
                     }
                     if (display)
                     {
+                        if (context.Childs == null || context.Childs.Count() == 0)
+                            withAllow = false;
                         if (access)
                         {
                             <span style="color:green;background-color:green;">&nbsp&nbsp</span>
@@ -77,8 +80,16 @@
                         }
                         else
                         {
-                            <span style="color:red;background-color:red;">&nbsp&nbsp</span>
-                            <span>&nbsp</span>
+                            if (!withAllow)
+                            {
+                                <span style="color:red;background-color:red;">&nbsp&nbsp</span>
+                                <span>&nbsp</span>
+                            }
+                            else
+                            {
+                                <span style="color:red;background-color:red;">&nbsp</span><span style="color:green;background-color:green;">&nbsp</span>
+                                <span>&nbsp</span>
+                            }
                         }
                     }
                 }
@@ -247,6 +258,31 @@
                             }
                         }
                     }
+                }
+
+                if (selectedNode != null && selectedNode.Tag is Submodel sm)
+                {
+                    var idEncoded = Base64UrlEncoder.Encode(sm.Id);
+                    var path = Program.externalBlazor + "/submodels/" + idEncoded;
+                    <span style="color:white;background-color:blue;">URL:</span>
+                    <span>&nbsp</span>
+                    <a href="@path" target="_blank">@path</a><br>
+                }
+
+                if (selectedNode != null && selectedNode.Tag is ISubmodelElement sme)
+                {
+                    string path = sme.IdShort;
+                    var p = sme.Parent;
+                    while (!(p is Submodel))
+                    {
+                        path = (p as ISubmodelElement).IdShort + "." + path;
+                        p = (p as ISubmodelElement).Parent;
+                    }
+                    var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
+                    path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
+                    <span style="color:white;background-color:blue;">URL:</span>
+                    <span>&nbsp</span>
+                    <a href="@path" target="_blank">@path</a><br>
                 }
 
                 if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
