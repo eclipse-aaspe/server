@@ -124,7 +124,7 @@
                                     <thead>
                                         <tr>
                                             <th>Name</th>
-                                            <th white-space:nowrap>Kind</th>
+                                            <th nowrap>Kind</th>
                                             <th>Permission</th>
                                             <th>Type</th>
                                             <th>API</th>
@@ -139,12 +139,19 @@
                                             foreach (var l in lines)
                                             {
                                                 <tr>
-                                                @{
-                                                    var cols = l.Split('\t');
-                                                    foreach (var c in cols)
-                                                    {
-                                                        <td>@c</td>
-                                                    }
+                                                    @{
+                                                        var cols = l.Split('\t');
+                                                        for (int c = 0; c < cols.Count(); c++)
+                                                        {
+                                                            if (c != 1 && c!= 2)
+                                                            {
+                                                                <td>@cols[c]</td>
+                                                            }
+                                                            else
+                                                            {
+                                                                <td nowrap>@cols[c]</td>
+                                                            }
+                                                        }
                                                 }
                                                 </tr>
                                             }
