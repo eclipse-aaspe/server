@@ -4137,6 +4137,7 @@ namespace AasxRestServerLibrary
 
         public class securityRoleClass
         {
+            public string rulePath = null;
             public string condition = null;
             public string name = null;
             public string objType = null;
@@ -4151,6 +4152,35 @@ namespace AasxRestServerLibrary
         }
         public static List<securityRoleClass> securityRole = null;
 
+        public static string securityAccessRules()
+        {
+            string rules = "";
+
+            foreach (var r in securityRole)
+            {
+                if (r.condition != null)
+                    rules += r.condition + " ";
+                if (r.name != null)
+                    rules += r.name + " ";
+                if (r.kind != null)
+                    rules += r.kind + " ";
+                if (r.permission != null)
+                    rules += r.permission + " ";
+                if (r.objType != null)
+                    rules += r.objType + " ";
+                if (r.apiOperation != null)
+                    rules += r.apiOperation + " ";
+                if (r.objPath != null)
+                    rules += r.objPath + " ";
+                if (r.semanticId != null)
+                    rules += r.semanticId + " ";
+                if (r.rulePath != null)
+                    rules += "(from " + r.rulePath + ")";
+                rules += "\n";
+            }
+
+            return rules;
+        }
         public static void securityInit()
         {
             withAuthentification = !Program.noSecurity;
@@ -4422,6 +4452,7 @@ namespace AasxRestServerLibrary
                                                 src.permission = l.ToUpper();
                                                 if (kind != null)
                                                     src.kind = kind.Value.ToLower();
+                                                src.rulePath = aas.IdShort + "." + sm.IdShort + "..." + smc4.IdShort + "." + sme.IdShort;
                                                 securityRole.Add(src);
                                             }
                                         }

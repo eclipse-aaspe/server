@@ -117,6 +117,11 @@
                         {
                             string text = System.IO.File.ReadAllText(selectedNode.Text);
                             text = text.Replace("%BLAZOR%", Program.externalBlazor);
+                            if (text.Contains("%ACCESSRULES%"))
+                            {
+                                string accessRules = AasxRestServerLibrary.AasxHttpContextHelper.securityAccessRules();
+                                text = accessRules.Replace("\n", "<br>");
+                            }
                             <span>@((MarkupString)text)</span>
                         }
                     }
