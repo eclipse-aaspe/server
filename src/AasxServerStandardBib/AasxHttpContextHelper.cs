@@ -4159,23 +4159,30 @@ namespace AasxRestServerLibrary
             foreach (var r in securityRole)
             {
                 if (r.condition != null)
-                    rules += r.condition + " ";
+                    rules += r.condition;
                 if (r.name != null)
-                    rules += r.name + " ";
+                    rules += r.name;
+                rules += "\t";
                 if (r.kind != null)
-                    rules += r.kind + " ";
+                    rules += r.kind;
+                rules += "\t";
                 if (r.permission != null)
-                    rules += r.permission + " ";
+                    rules += r.permission;
+                rules += "\t";
                 if (r.objType != null)
-                    rules += r.objType + " ";
+                    rules += r.objType;
+                rules += "\t";
                 if (r.apiOperation != null)
-                    rules += r.apiOperation + " ";
+                    rules += r.apiOperation;
+                rules += "\t";
                 if (r.objPath != null)
-                    rules += r.objPath + " ";
+                    rules += r.objPath;
+                rules += "\t";
                 if (r.semanticId != null)
-                    rules += r.semanticId + " ";
+                    rules += r.semanticId;
+                rules += "\t";
                 if (r.rulePath != null)
-                    rules += "(from " + r.rulePath + ")";
+                    rules += r.rulePath;
                 rules += "\n";
             }
 

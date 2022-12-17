@@ -120,9 +120,42 @@
                             if (text.Contains("%ACCESSRULES%"))
                             {
                                 string accessRules = AasxRestServerLibrary.AasxHttpContextHelper.securityAccessRules();
-                                text = accessRules.Replace("\n", "<br>");
+                                <table border=1 cellpadding=4>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th white-space:nowrap>Kind</th>
+                                            <th>Permission</th>
+                                            <th>Type</th>
+                                            <th>API</th>
+                                            <th>Path</th>
+                                            <th>SemanticID</th>
+                                            <th>See</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            var lines = accessRules.Split('\n');
+                                            foreach (var l in lines)
+                                            {
+                                                <tr>
+                                                @{
+                                                    var cols = l.Split('\t');
+                                                    foreach (var c in cols)
+                                                    {
+                                                        <td>@c</td>
+                                                    }
+                                                }
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
                             }
-                            <span>@((MarkupString)text)</span>
+                            else
+                            {
+                                <span>@((MarkupString)text)</span>
+                            }
                         }
                     }
                 }
