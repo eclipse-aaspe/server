@@ -3430,7 +3430,7 @@ namespace AasxRestServerLibrary
                         {
                             if (securityRole[iRole].permission == neededRights)
                             {
-                                return true;
+                                return checkUsage(out error, securityRole[iRole]);
                             }
                         }
                     }
@@ -3538,6 +3538,93 @@ namespace AasxRestServerLibrary
             }
 
             error = "ALLOW not defined";
+            return false;
+        }
+
+        public static bool checkUsage(out string error, securityRoleClass sr)
+        {
+            error = "";
+
+            if (sr.usage == null)
+                return true;
+
+            foreach (var sme in sr.usage.Value)
+            {
+                switch (sme.IdShort)
+                {
+                    case "accessPerDuration":
+                        if (sme is SubmodelElementCollection smc)
+                        {
+                            Property maxCount = null;
+                            Property actualCount = null;
+                            Property duration = null;
+                            Property actualTime = null;
+                            foreach (var sme2 in smc.Value)
+                            {
+                                switch (sme2.IdShort)
+                                {
+                                    case "maxCount":
+                                        maxCount = sme2 as Property;
+                                        break;
+                                    case "duration":
+                                        duration = sme2 as Property;
+                                        break;
+                                    case "actualCount":
+                                        actualCount = sme2 as Property;
+                                        break;
+                                    case "actualTime":
+                                        actualTime = sme2 as Property;
+                                        break;
+                                }
+                            }
+                            if (maxCount == null || duration == null || actualCount == null || actualTime == null)
+                                return false;
+                            int d = 0;
+                            if (!int.TryParse(duration.Value, out d))
+                            {
+                                return false;
+                            }
+                            DateTime dt = new DateTime();
+                            if (actualTime.Value != null && actualTime.Value != "")
+                            {
+                                try
+                                {
+                                    dt = DateTime.Parse(actualTime.Value);
+                                    if (dt.AddSeconds(d) < DateTime.UtcNow)
+                                    {
+                                        actualTime.Value = null;
+                                    }
+                                }
+                                catch { }
+                            }
+                            if (actualTime.Value == null || actualTime.Value == "")
+                            {
+                                actualTime.Value =  DateTime.UtcNow.ToString();
+                                actualCount.Value = null;
+                            }
+                            if (actualCount.Value == null || actualCount.Value == "")
+                            {
+                                actualCount.Value = "0";
+                            }
+                            int ac = 0;
+                            if (!int.TryParse(actualCount.Value, out ac))
+                            {
+                                return false;
+                            }
+                            int mc = 0;
+                            if (!int.TryParse(maxCount.Value, out mc))
+                            {
+                                return false;
+                            }
+                            ac++;
+                            actualCount.Value = ac.ToString();
+                            if (ac <= mc)
+                                return true;
+                        }
+                        break;
+                }
+            }
+
             return false;
         }
 
@@ -3880,47 +3967,50 @@ namespace AasxRestServerLibrary
         {
             dynamic res = new ExpandoObject();
             int index = -1;
+            var aaslist = new List<string>();
 
             Console.WriteLine("Security 4 Server: /server/listaas");
 
             string accessrights = SecurityCheck(context, ref index);
 
-            // get the list
-            var aaslist = new List<string>();
-
-            int aascount = AasxServer.Program.env.Length;
-
-            for (int i = 0; i < aascount; i++)
+            if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ"))
             {
-                if (AasxServer.Program.env[i] != null)
+                // get the list
+                int aascount = AasxServer.Program.env.Length;
+
+                for (int i = 0; i < aascount; i++)
                 {
-                    var aas = AasxServer.Program.env[i].AasEnv.AssetAdministrationShells[0];
-                    string IdShort = aas.IdShort;
-                    string aasRights = "NONE";
-                    if (securityRightsAAS != null && securityRightsAAS.Count != 0)
-                        securityRightsAAS.TryGetValue(IdShort, out aasRights);
-                    // aasRights = securityRightsAAS[IdShort];
-
-                    bool addEntry = false;
-                    if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ", "", "aas", aas))
+                    if (AasxServer.Program.env[i] != null)
                     {
-                        addEntry = true;
-                    }
+                        var aas = AasxServer.Program.env[i].AasEnv.AssetAdministrationShells[0];
+                        string IdShort = aas.IdShort;
+                        string aasRights = "NONE";
+                        if (securityRightsAAS != null && securityRightsAAS.Count != 0)
+                            securityRightsAAS.TryGetValue(IdShort, out aasRights);
+                        // aasRights = securityRightsAAS[IdShort];
 
-                    if (addEntry)
-                    {
-                        string s = i.ToString() + " : "
-                            + IdShort + " : "
-                            + aas.Id + " : "
-                            + AasxServer.Program.envFileName[i];
-                        if (withasset)
+                        bool addEntry = false;
+                        // if (!withAuthentification || checkAccessLevel(accessrights, "", "READ", "", "aas", aas))
+                        // allow all AAS in list
                         {
-                            //var asset = Program.env[i].AasEnv.FindAsset(aas.assetRef);
-                            var asset = aas.AssetInformation;
-                            s += " : " + asset.GlobalAssetId?.Keys[0]?.Value;
-                            s += " : " + asset.AssetKind;
+                            addEntry = true;
                         }
-                        aaslist.Add(s);
+
+                        if (addEntry)
+                        {
+                            string s = i.ToString() + " : "
+                                + IdShort + " : "
+                                + aas.Id + " : "
+                                + AasxServer.Program.envFileName[i];
+                            if (withasset)
+                            {
+                                //var asset = Program.env[i].AasEnv.FindAsset(aas.assetRef);
+                                var asset = aas.AssetInformation;
+                                s += " : " + asset.GlobalAssetId?.Keys[0]?.Value;
+                                s += " : " + asset.AssetKind;
+                            }
+                            aaslist.Add(s);
+                        }
                     }
                 }
             }
@@ -4148,6 +4238,7 @@ namespace AasxRestServerLibrary
             public string kind = null;
             public Submodel submodel = null;
             public string semanticId = "";
+            public SubmodelElementCollection usage = null;
             public securityRoleClass() { }
         }
         public static List<securityRoleClass> securityRole = null;
@@ -4159,7 +4250,7 @@ namespace AasxRestServerLibrary
             foreach (var r in securityRole)
             {
                 if (r.condition != null)
-                    rules += r.condition.ToUpper() + " ";
+                    rules += r.condition;
                 if (r.name != null)
                     rules += r.name;
                 rules += "\t";
@@ -4170,12 +4261,7 @@ namespace AasxRestServerLibrary
                     rules += r.permission;
                 rules += "\t";
                 if (r.objType != null)
-                {
-                    string text = r.objType;
-                    if (text == "sm")
-                        text = "submodel";
-                    rules += text;
-                }
+                    rules += r.objType;
                 rules += "\t";
                 if (r.apiOperation != null)
                     rules += r.apiOperation;
@@ -4371,6 +4457,7 @@ namespace AasxRestServerLibrary
                                             aasObject = env.AasEnv.FindReferableByReference(objRef.Value);
                                         }
                                         var smc8 = smc7?.FindFirstIdShortAs<SubmodelElementCollection>("permission");
+                                        var smc9 = smc7?.FindFirstIdShortAs<SubmodelElementCollection>("usage");
 
                                         int countSmc8 = smc8.Value.Count;
                                         List<string> listPermission = new List<string>();
@@ -4397,6 +4484,8 @@ namespace AasxRestServerLibrary
                                             foreach (var r in role)
                                             {
                                                 securityRoleClass src = new securityRoleClass();
+                                                if (smc9 != null)
+                                                    src.usage = smc9;
                                                 if (r.IdShort.Contains(":"))
                                                 {
                                                     split = r.IdShort.Split(':');
