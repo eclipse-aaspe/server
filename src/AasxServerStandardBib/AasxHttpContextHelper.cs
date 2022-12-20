@@ -3592,6 +3592,7 @@ namespace AasxRestServerLibrary
                                     dt = DateTime.Parse(actualTime.Value);
                                     if (dt.AddSeconds(d) < DateTime.UtcNow)
                                     {
+                                        Program.signalNewData(0);
                                         actualTime.Value = null;
                                     }
                                 }
@@ -3609,22 +3610,28 @@ namespace AasxRestServerLibrary
                             int ac = 0;
                             if (!int.TryParse(actualCount.Value, out ac))
                             {
+                                Program.signalNewData(0);
                                 return false;
                             }
                             int mc = 0;
                             if (!int.TryParse(maxCount.Value, out mc))
                             {
+                                Program.signalNewData(0);
                                 return false;
                             }
                             ac++;
                             actualCount.Value = ac.ToString();
                             if (ac <= mc)
+                            {
+                                Program.signalNewData(0);
                                 return true;
+                            }
                         }
                         break;
                 }
             }
 
+            Program.signalNewData(0);
             return false;
         }
 
