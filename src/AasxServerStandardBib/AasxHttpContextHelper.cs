@@ -4159,7 +4159,7 @@ namespace AasxRestServerLibrary
             foreach (var r in securityRole)
             {
                 if (r.condition != null)
-                    rules += r.condition;
+                    rules += r.condition.ToUpper() + " ";
                 if (r.name != null)
                     rules += r.name;
                 rules += "\t";
@@ -4170,7 +4170,12 @@ namespace AasxRestServerLibrary
                     rules += r.permission;
                 rules += "\t";
                 if (r.objType != null)
-                    rules += r.objType;
+                {
+                    string text = r.objType;
+                    if (text == "sm")
+                        text = "submodel";
+                    rules += text;
+                }
                 rules += "\t";
                 if (r.apiOperation != null)
                     rules += r.apiOperation;
