@@ -605,10 +605,10 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
+    /*
+    await js.InvokeAsync<object>(
+        "saveAsFile",
+        filename,
         Convert.ToBase64String(data)
         );
         */
@@ -1172,6 +1172,9 @@
             {
                 value = (o as Property).Value;
             }
+
+            if (value == null || value == "")
+                return "";
 
             split = value.Split(new Char[] { ':' });
             if (split[0].ToLower() == "http" || split[0].ToLower() == "https")

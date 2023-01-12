@@ -11,10 +11,16 @@ namespace Extenstions
     {
         public static T FindFirstIdShortAs<T>(this SubmodelElementCollection submodelElementCollection, string idShort) where T : ISubmodelElement
         {
+            try
+            {
+                var submodelElement = submodelElementCollection.Value.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
-            var submodelElement = submodelElementCollection.Value.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-
-            return (T)submodelElement;
+                return (T)submodelElement;
+            }
+            catch
+            {
+                return default(T);
+            }
         }
 
         public static SubmodelElementCollection ConvertFromV10(this SubmodelElementCollection submodelElementCollection, AasxCompatibilityModels.AdminShellV10.SubmodelElementCollection sourceSmeCollection, bool shallowCopy = false)
