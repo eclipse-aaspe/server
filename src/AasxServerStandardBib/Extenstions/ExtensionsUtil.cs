@@ -50,7 +50,15 @@ namespace Extenstions
                     }
                     else
                     {
-                        Console.WriteLine($"KeyType value {refKey.type} not found.");
+                        if (refKey.type.Equals("Asset", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine($"KeyType value {refKey.type} not found. Setting KeyType to GlobalReference");
+                            keyList.Add(new Key(KeyTypes.GlobalReference, refKey.value));
+                        }
+                        else
+                        {
+                            Console.WriteLine($"KeyType value {refKey.type} not found.");
+                        }
                     }
                 }
                 outputReference = new Reference(referenceTypes, keyList);
