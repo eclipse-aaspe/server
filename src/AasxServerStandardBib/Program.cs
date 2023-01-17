@@ -2115,7 +2115,7 @@ namespace AasxServer
                                     while (smi < count)
                                     {
                                         var sme1 = sm.SubmodelElements[smi++];
-                                        if (sme1.Qualifiers.Count == 0)
+                                        if (sme1.Qualifiers == null || sme1.Qualifiers.Count == 0)
                                         {
                                             continue;
                                         }

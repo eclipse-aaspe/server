@@ -4213,7 +4213,9 @@ namespace AasxRestServerLibrary
             }
 
             context.Response.StatusCode = HttpStatusCode.Ok;
-            SendStreamResponse(context, Program.env[envIndex].GetLocalStreamFromPackage(filePath), Path.GetFileName(filePath));
+            string fname = Path.GetFileName(filePath);
+            var s = Program.env[envIndex].GetLocalStreamFromPackage(filePath);
+            SendStreamResponse(context, s, fname);
         }
 
         public static List<string> securityUserName = new List<string>();

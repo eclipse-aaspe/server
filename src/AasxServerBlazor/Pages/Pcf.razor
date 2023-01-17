@@ -4,6 +4,7 @@
 @using Data
 @inject AASService SubmodelService
 @using AasxServer;
+@using Microsoft.IdentityModel.Tokens;
 @using System.Drawing;
 @using System.Globalization;
 @implements IDisposable
@@ -224,31 +225,42 @@
                     }
                 }
 
-            </div>
-        }
+        </div>
+    }
 
-        string getImageLink(File f, int envIndex)
+    string getImageLink(File f, int envIndex)
+    {
+        if (f == null || envIndex == -1)
+            return null;
+
+        if (f.Value != "")
         {
-            if (f == null || envIndex == -1)
-                return null;
-
-            if (f.Value != "")
+            string[] split = f.Value.Split(new Char[] { '/' });
+            if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
             {
-                string[] split = f.Value.Split(new Char[] { '/' });
-                if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+                split = f.Value.Split(new Char[] { '.' });
+                switch (split.Last().ToLower())
                 {
-                    split = f.Value.Split(new Char[] { '.' });
-                    switch (split.Last().ToLower())
-                    {
-                        case "jpg":
-                        case "bmp":
-                        case "png":
-                            try
+                    case "jpg":
+                    case "bmp":
+                    case "png":
+                        try
+                        {
+                            // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
+                            var sme = f;
+                            string path = sme.IdShort;
+                            var p = sme.Parent;
+                            while (!(p is Submodel))
                             {
-                                return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
+                                path = (p as ISubmodelElement).IdShort + "." + path;
+                                p = (p as ISubmodelElement).Parent;
                             }
-                            catch { }
-                            break;
+                            var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
+                            path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
+                            return path + "/attachment";
+                        }
+                        catch { }
+                        break;
                     }
                 }
             }
