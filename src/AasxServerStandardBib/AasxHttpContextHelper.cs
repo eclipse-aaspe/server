@@ -3451,7 +3451,7 @@ namespace AasxRestServerLibrary
                         {
                             if (s.SemanticId != null && s.SemanticId.Keys != null && s.SemanticId.Keys.Count != 0)
                             {
-                                if (role.semanticId == s.SemanticId.Keys[0].Value)
+                                if (role.semanticId.ToLower() == s.SemanticId.Keys[0].Value.ToLower())
                                 {
                                     if (role.kind == "allow")
                                     {

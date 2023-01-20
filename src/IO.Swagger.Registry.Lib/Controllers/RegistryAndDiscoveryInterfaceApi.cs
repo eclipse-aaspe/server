@@ -17,12 +17,14 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AasCore.Aas3_0_RC02;
+using AasxTimeSeries;
 using AdminShellNS;
 using Extenstions;
 using IdentityModel.Client;
 using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
@@ -30,6 +32,7 @@ using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Key = AasCore.Aas3_0_RC02.Key;
 
 namespace IO.Swagger.Registry.Controllers
 {
@@ -417,13 +420,13 @@ namespace IO.Swagger.Registry.Controllers
             // ad.Administration.Revision = aas.administration.revision;
             ad.IdShort = aas.IdShort;
             ad.Identification = aas.Id;
-            var e = new Endpoint();
+            var e = new Models.Endpoint();
             e.ProtocolInformation = new ProtocolInformation();
             e.ProtocolInformation.EndpointAddress =
                 AasxServer.Program.externalBlazor + "/shells/" +
                 Base64UrlEncoder.Encode(ad.Identification);
             e.Interface = "AAS-1.0";
-            ad.Endpoints = new List<Endpoint>();
+            ad.Endpoints = new List<Models.Endpoint>();
             ad.Endpoints.Add(e);
             var gr = new GlobalReference();
             gr.Value = new List<string>();
@@ -441,14 +444,14 @@ namespace IO.Swagger.Registry.Controllers
                         SubmodelDescriptor sd = new SubmodelDescriptor();
                         sd.IdShort = sm.IdShort;
                         sd.Identification = sm.Id;
-                        var esm = new Endpoint();
+                        var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.EndpointAddress =
                             AasxServer.Program.externalBlazor + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Identification) + "/submodels/" +
                             Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
                         esm.Interface = "SUBMODEL-1.0";
-                        sd.Endpoints = new List<Endpoint>();
+                        sd.Endpoints = new List<Models.Endpoint>();
                         sd.Endpoints.Add(esm);
                         if (sm.SemanticId != null)
                         {
@@ -524,14 +527,14 @@ namespace IO.Swagger.Registry.Controllers
                             sd = new SubmodelDescriptor();
                             sd.IdShort = "NameplateVC";
                             sd.Identification = sm.Id + "_VC";
-                            esm = new Endpoint();
+                            esm = new Models.Endpoint();
                             esm.ProtocolInformation = new ProtocolInformation();
                             esm.ProtocolInformation.EndpointAddress =
                                 "https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
                                 "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
                                 Base64UrlEncoder.Encode(ad.Identification);
                             esm.Interface = "VC-1.0";
-                            sd.Endpoints = new List<Endpoint>();
+                            sd.Endpoints = new List<Models.Endpoint>();
                             sd.Endpoints.Add(esm);
                             if (sm.SemanticId != null)
                             {
@@ -815,6 +818,7 @@ namespace IO.Swagger.Registry.Controllers
         static int submodelRegistryCount = 0;
         static List<string> postRegistry = new List<string>();
         static List<string> federatedElemensSemanticId = new List<string>();
+        static List<string> getRegistry = new List<string>();
 
         static bool init = false;
 #pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
@@ -865,6 +869,11 @@ namespace IO.Swagger.Registry.Controllers
                                 Console.WriteLine("POST to Registry: " + p.Value);
                                 postRegistry.Add(p.Value);
                             }
+                            if (p.IdShort.ToLower() == "getregistry")
+                            {
+                                Console.WriteLine("GET from Registry: " + p.Value);
+                                getRegistry.Add(p.Value);
+                            }
                         }
                         if (sme is SubmodelElementCollection smc)
                         {
@@ -892,6 +901,187 @@ namespace IO.Swagger.Registry.Controllers
                                 {
                                     addAasToRegistry(env, timestamp);
                                 }
+                            }
+                        }
+                    }
+                }
+                if (getRegistry.Count != 0)
+                {
+                    foreach (var greg in getRegistry)
+                    {
+                        List<AssetAdministrationShellDescriptor> aasDescriptors = null;
+
+                        string json = null;
+                        string accessToken = null;
+                        string requestPath = greg + "/" + "registry/shell-descriptors";
+
+                        var handler = new HttpClientHandler();
+
+                        //
+                        if (AasxServer.AasxTask.proxy != null)
+                            handler.Proxy = AasxServer.AasxTask.proxy;
+                        else
+                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                        //
+
+                        var client = new HttpClient(handler);
+                        if (accessToken != null)
+                            client.SetBearerToken(accessToken);
+
+                        bool error = false;
+                        HttpResponseMessage response = new HttpResponseMessage();
+                        try
+                        {
+                            Console.WriteLine("GET" + requestPath);
+                            var task = Task.Run(async () =>
+                            {
+                                response = await client.GetAsync(requestPath);
+                            });
+                            task.Wait();
+                            json = response.Content.ReadAsStringAsync().Result;
+                            aasDescriptors = JsonConvert.DeserializeObject<List<AssetAdministrationShellDescriptor>>(json);
+                            error = !response.IsSuccessStatusCode;
+                        }
+                        catch
+                        {
+                            error = true;
+                        }
+                        if (error)
+                        {
+                            string r = "ERROR GET; " + response.StatusCode.ToString();
+                            r += " ; " + requestPath;
+                            if (response.Content != null)
+                                r += " ; " + response.Content.ReadAsStringAsync().Result;
+                            Console.WriteLine(r);
+                        }
+                        else
+                        {
+                            int i = 0;
+                            while (i < AasxServer.Program.env.Length)
+                            {
+                                var env = AasxServer.Program.env[i];
+                                if (env == null)
+                                {
+                                    break;
+                                }
+                                i++;
+                            }
+                            foreach (var ad in aasDescriptors)
+                            {
+                                if (ad.IdShort == "ZveiControlCabinetAas")
+                                    continue;
+
+                                var aas = new AssetAdministrationShell();
+                                aas.Extensions = new List<Extension> { new Extension("endpoint", value: ad.Endpoints[0].ProtocolInformation.EndpointAddress) };
+                                aas.TimeStamp = timestamp;
+                                aas.TimeStampCreate = timestamp;
+                                aas.Id = ad.Identification;
+                                aas.IdShort = ad.IdShort;
+                                aas.AssetInformation = new AssetInformation(AssetKind.Instance);
+                                string gid = ad.GlobalAssetId.Value[0];
+                                aas.AssetInformation.GlobalAssetId = new AasCore.Aas3_0_RC02.Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
+                                            new List<Key>() { new Key(KeyTypes.GlobalReference, gid) });
+                                var newEnv = new AdminShellNS.AdminShellPackageEnv();
+                                newEnv.AasEnv.AssetAdministrationShells.Add(aas);
+
+                                foreach (var sd in ad.SubmodelDescriptors)
+                                {
+                                    if (sd.IdShort == "NameplateVC")
+                                        continue;
+
+                                    bool success = false;
+                                    bool external = false;
+                                    string endpoint = sd.Endpoints[0].ProtocolInformation.EndpointAddress;
+                                    var s1 = endpoint.Split("/shells/");
+                                    if (s1.Length == 2)
+                                    {
+                                        var s2 = s1[1].Split("/submodels/");
+                                        if (s2.Length == 2)
+                                        {
+                                            var idEncoded = s2[1].Replace("/submodel/", ""); ;
+                                            endpoint = s1[0] + "/submodels/" + idEncoded;
+                                        }
+                                    }
+                                    requestPath = endpoint;
+
+                                    switch (sd.IdShort)
+                                    {
+                                        case "BillOfMaterial":
+                                        case "ProductCarbonFootprint":
+                                        case "TechnicalData":
+                                            // copy specific submodels locally
+                                            try
+                                            {
+                                                Console.WriteLine("GET Submodel " + requestPath);
+                                                var task1 = Task.Run(async () =>
+                                                {
+                                                    response = await client.GetAsync(requestPath);
+                                                });
+                                                task1.Wait();
+                                                if (response.IsSuccessStatusCode)
+                                                {
+                                                    json = response.Content.ReadAsStringAsync().Result;
+                                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                    var sm = new Submodel("");
+                                                    sm = Jsonization.Deserialize.SubmodelFrom(node);
+                                                    sm.Extensions = new List<Extension> { new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress) };
+                                                    sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                                    aas.AddSubmodelReference(sm.GetReference());
+                                                    newEnv.AasEnv.Submodels.Add(sm);
+                                                    success = true;
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                success = false;
+                                            }
+                                            break;
+                                        default:
+                                            // test if submodel is accessible
+                                            try
+                                            {
+                                                Console.WriteLine("GET Submodel Core " + requestPath + "?level=core");
+                                                var task2 = Task.Run(async () =>
+                                                {
+                                                    response = await client.GetAsync(requestPath);
+                                                });
+                                                task2.Wait();
+                                                if (response.IsSuccessStatusCode)
+                                                {
+                                                    success = true;
+                                                    external = true;
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                success = false;
+                                            }
+                                            break;
+                                    }
+
+                                    if (!success || external)
+                                    {
+                                        var sm = new Submodel(sd.Identification);
+                                        if (!success)
+                                        {
+                                            sm.IdShort = sd.IdShort + " - NOT ACCESSIBLE";
+                                        }
+                                        else
+                                        {
+                                            if (external)
+                                                sm.IdShort = sd.IdShort + " - EXTERNAL";
+                                        }
+                                        sm.Extensions = new List<Extension> { new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress) };
+                                        sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                        aas.AddSubmodelReference(sm.GetReference());
+                                        newEnv.AasEnv.Submodels.Add(sm);
+                                    }
+                                }
+
+                                AasxServer.Program.env[i] = newEnv;
+                                i++;
+
                             }
                         }
                     }
