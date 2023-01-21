@@ -339,7 +339,10 @@
                                 endpoint = Program.externalBlazor + "/submodels/" + idEncoded;
                             }
                             path = endpoint + "/submodelelements/" + path;
-                            return path + "/attachment";
+                            path += "/attachment";
+                            if (AasxServer.Program.Email != "")
+                                path += "?Email=" + AasxServer.Program.Email;
+                            return path;
                         }
                         catch { }
                         break;

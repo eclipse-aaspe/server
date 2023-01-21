@@ -1325,6 +1325,10 @@ namespace AasxServer
         {
             if (once)
                 return;
+
+            if (AasxServer.Program.initializingRegistry)
+                return;
+
             // Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
             // cfpNode root = null;
 

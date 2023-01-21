@@ -55,6 +55,17 @@
                                 <!-- toggle -->
                                 <!-- label -->
                                 <div class="ml-3 text-gray-700 font-medium">
+                                    <input @bind="CurrentValue" /> <span style="border-width: 1px; color: blue;">@CurrentValue</span>&nbsp&nbsp
+                                    @code { private string CurrentValue { get; set; } }
+                                    @{
+                                        if (CurrentValue != null && CurrentValue != "")
+                                        {
+                                            AasxServer.Program.Email = CurrentValue;
+                                            CurrentValue = "";
+                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow, true);
+                                            // this.StateHasChanged();
+                                        }
+                                    }
                                     Disclaimer: displayed PCF values are for demo purposes only
                                 </div>
                                 <div class="relative ml-2">
@@ -81,7 +92,7 @@
                             -->
                         </div>
                     </div>
-                </div>
+            </div>
         }
     }
 </div>

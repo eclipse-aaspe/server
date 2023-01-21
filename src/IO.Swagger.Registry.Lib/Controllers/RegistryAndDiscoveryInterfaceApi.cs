@@ -821,15 +821,31 @@ namespace IO.Swagger.Registry.Controllers
         static List<string> getRegistry = new List<string>();
 
         static bool init = false;
+        static int initiallyEmpty = 0;
 #pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
 #pragma warning disable IDE1006 // Benennungsstile
-        public static void initRegistry(DateTime timestamp)
+        public static void initRegistry(DateTime timestamp, bool initAgain = false)
 #pragma warning restore IDE1006 // Benennungsstile
 #pragma warning restore CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
         {
-            if (init)
+            if (!initAgain && init)
                 return;
+
+            AasxServer.Program.initializingRegistry= true;
+
             init = true;
+            if (initAgain)
+            {
+                aasRegistry = null;
+                submodelRegistry = null;
+
+                int i = initiallyEmpty;
+                while (i < AasxServer.Program.env.Length)
+                {
+                    AasxServer.Program.env[i] = null;
+                    i++;
+                }
+            }
 
             if (aasRegistry == null || submodelRegistry == null)
             {
@@ -860,6 +876,7 @@ namespace IO.Swagger.Registry.Controllers
                 }
                 if (aasRegistry != null)
                 {
+                    getRegistry.Clear();
                     foreach (var sme in aasRegistry.SubmodelElements)
                     {
                         if (sme is Property p)
@@ -966,11 +983,13 @@ namespace IO.Swagger.Registry.Controllers
                                 }
                                 i++;
                             }
+                            initiallyEmpty = i;
                             foreach (var ad in aasDescriptors)
                             {
                                 if (ad.IdShort == "ZveiControlCabinetAas")
                                     continue;
 
+                                // check, if AAS is exisiting and must be replaced
                                 var aas = new AssetAdministrationShell();
                                 aas.Extensions = new List<Extension> { new Extension("endpoint", value: ad.Endpoints[0].ProtocolInformation.EndpointAddress) };
                                 aas.TimeStamp = timestamp;
@@ -1003,6 +1022,9 @@ namespace IO.Swagger.Registry.Controllers
                                         }
                                     }
                                     requestPath = endpoint;
+                                    string queryPara = "";
+                                    if (AasxServer.Program.Email != "")
+                                        queryPara = "?Email=" + AasxServer.Program.Email;
 
                                     switch (sd.IdShort)
                                     {
@@ -1012,6 +1034,7 @@ namespace IO.Swagger.Registry.Controllers
                                             // copy specific submodels locally
                                             try
                                             {
+                                                requestPath += queryPara;
                                                 Console.WriteLine("GET Submodel " + requestPath);
                                                 var task1 = Task.Run(async () =>
                                                 {
@@ -1041,7 +1064,16 @@ namespace IO.Swagger.Registry.Controllers
                                             // test if submodel is accessible
                                             try
                                             {
-                                                Console.WriteLine("GET Submodel Core " + requestPath + "?level=core");
+                                                if (queryPara == "")
+                                                {
+                                                    queryPara = "?level=core";
+                                                }
+                                                else
+                                                {
+                                                    queryPara += "&level=core";
+                                                }
+                                                requestPath += queryPara;
+                                                Console.WriteLine("GET Submodel Core " + requestPath);
                                                 var task2 = Task.Run(async () =>
                                                 {
                                                     response = await client.GetAsync(requestPath);
@@ -1081,13 +1113,14 @@ namespace IO.Swagger.Registry.Controllers
 
                                 AasxServer.Program.env[i] = newEnv;
                                 i++;
-
                             }
                         }
                     }
                 }
             }
             AasxServer.Program.signalNewData(2);
+
+            AasxServer.Program.initializingRegistry = false;
         }
 
         /// <summary>
