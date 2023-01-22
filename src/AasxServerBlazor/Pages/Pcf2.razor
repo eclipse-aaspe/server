@@ -206,9 +206,13 @@
                                         }
                                     }
 
-                                    @{
-                                        string text = node.productDesignation;
-                                        if (viewCombination)
+                                @{
+                                    string text = node.productDesignation;
+                                    if (text.Contains(" - EXTERNAL"))
+                                    {
+                                        text = text.Replace(" - EXTERNAL", "");
+                                    }
+                                    if (viewCombination)
                                         {
                                             text = "Combination - " + text;
                                         }
@@ -228,9 +232,9 @@
                                                         if (sm.IdShort == "tasks")
                                                             continue;
                                                         string id = sm.IdShort;
-                                                        if (id.Contains(" - NOT ACCESSIBLE"))
+                                                        if (id.Contains(" - NO ACCESS"))
                                                         {
-                                                            id = id.Replace(" - NOT ACCESSIBLE", "");
+                                                            id = id.Replace(" - NO ACCESS", "");
                                                             colorList.Add("red");
                                                         }
                                                         else
@@ -238,6 +242,10 @@
                                                             if (id.Contains(" - EXTERNAL"))
                                                             {
                                                                 id = id.Replace(" - EXTERNAL", "");
+                                                            }
+                                                            if (id.Contains(" - COPY"))
+                                                            {
+                                                                id = id.Replace(" - COPY", "");
                                                             }
                                                             colorList.Add("green");
                                                         }

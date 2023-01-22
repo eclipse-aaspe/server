@@ -61,9 +61,16 @@
                                     @{
                                         if (CurrentValue != null && CurrentValue != "")
                                         {
-                                            AasxServer.Program.Email = CurrentValue;
+                                            if (CurrentValue == "count=0")
+                                            {
+                                                AasxServer.Program.submodelAPIcount = 0;
+                                            }
+                                            else
+                                            {
+                                                AasxServer.Program.Email = CurrentValue;
+                                                IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow, true);
+                                            }
                                             CurrentValue = "";
-                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow, true);
                                             this.StateHasChanged();
                                         }
                                     }

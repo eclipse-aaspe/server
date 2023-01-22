@@ -995,7 +995,7 @@ namespace IO.Swagger.Registry.Controllers
                                 aas.TimeStamp = timestamp;
                                 aas.TimeStampCreate = timestamp;
                                 aas.Id = ad.Identification;
-                                aas.IdShort = ad.IdShort;
+                                aas.IdShort = ad.IdShort + " - EXTERNAL";
                                 aas.AssetInformation = new AssetInformation(AssetKind.Instance);
                                 string gid = ad.GlobalAssetId.Value[0];
                                 aas.AssetInformation.GlobalAssetId = new AasCore.Aas3_0_RC02.Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
@@ -1049,6 +1049,7 @@ namespace IO.Swagger.Registry.Controllers
                                                     JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                                     var sm = new Submodel("");
                                                     sm = Jsonization.Deserialize.SubmodelFrom(node);
+                                                    sm.IdShort += " - COPY";
                                                     sm.Extensions = new List<Extension> { new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress) };
                                                     sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
                                                     aas.AddSubmodelReference(sm.GetReference());
@@ -1098,7 +1099,7 @@ namespace IO.Swagger.Registry.Controllers
                                         var sm = new Submodel(sd.Identification);
                                         if (!success)
                                         {
-                                            sm.IdShort = sd.IdShort + " - NOT ACCESSIBLE";
+                                            sm.IdShort = sd.IdShort + " - NO ACCESS";
                                         }
                                         else
                                         {
