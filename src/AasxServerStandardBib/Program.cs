@@ -155,6 +155,7 @@ namespace AasxServer
         public static string secretStringAPI = null;
         public static bool htmlId = false;
         public static string Email = "";
+        public static long submodelAPIcount = 0;
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();

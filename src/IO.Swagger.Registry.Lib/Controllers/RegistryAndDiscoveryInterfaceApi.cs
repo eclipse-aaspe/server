@@ -1025,6 +1025,7 @@ namespace IO.Swagger.Registry.Controllers
                                     string queryPara = "";
                                     if (AasxServer.Program.Email != "")
                                         queryPara = "?Email=" + AasxServer.Program.Email;
+                                    AasxServer.Program.submodelAPIcount++;
 
                                     switch (sd.IdShort)
                                     {
