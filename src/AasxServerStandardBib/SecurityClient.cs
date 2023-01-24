@@ -1153,7 +1153,7 @@ namespace AasxServer
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
-                                if (sm.IdShort == "ProductCarbonFootprint")
+                                if (sm.IdShort.Contains("ProductCarbonFootprint") && sm.SubmodelElements != null)
                                 {
                                     foreach (var v in sm.SubmodelElements)
                                     {
@@ -1219,7 +1219,7 @@ namespace AasxServer
                                         }
                                     }
                                 }
-                                if (sm.IdShort == "BillOfMaterial")
+                                if (sm.IdShort.Contains("BillOfMaterial") && sm.SubmodelElements != null)
                                 {
                                     List<string> bom = new List<string>();
                                     foreach (var v in sm.SubmodelElements)
@@ -1239,7 +1239,7 @@ namespace AasxServer
                                     // assetBOM.Add(assetId, bom);
                                     cfp.bom = bom;
                                 }
-                                if (sm.IdShort == "TechnicalData")
+                                if (sm.IdShort.Contains("TechnicalData") && sm.SubmodelElements != null)
                                 {
                                     foreach (var v in sm.SubmodelElements)
                                     {
@@ -1261,7 +1261,7 @@ namespace AasxServer
                                         }
                                     }
                                 }
-                                if (sm.IdShort == "Nameplate")
+                                if (sm.IdShort.Contains("Nameplate") && sm.SubmodelElements != null)
                                 {
                                     foreach (var v in sm.SubmodelElements)
                                     {
@@ -1325,6 +1325,10 @@ namespace AasxServer
         {
             if (once)
                 return;
+
+            if (AasxServer.Program.initializingRegistry)
+                return;
+
             // Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
             // cfpNode root = null;
 

@@ -32,6 +32,7 @@ using HttpStatusCode = Grapevine.Shared.HttpStatusCode;
 using System.Collections.Specialized;
 using JetBrains.Annotations;
 using System.Data;
+using Opc.Ua;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -1109,7 +1110,7 @@ namespace AasxRestServerLibrary
                         //aas.AssetInformation.SetIdentification(new AdminShellV30.Identifier(file.instancesIdentificationSuffix));
                         var assetIdKey = new Key(KeyTypes.GlobalReference, file.instancesIdentificationSuffix);
                         var keyList = new List<Key>() { assetIdKey };
-                        aas.AssetInformation.GlobalAssetId = new Reference(ReferenceTypes.GlobalReference, keyList);
+                        aas.AssetInformation.GlobalAssetId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, keyList);
                         foreach (var smref in aas.Submodels)
                         {
                             foreach (var key in smref.Keys)
@@ -1878,7 +1879,7 @@ namespace AasxRestServerLibrary
             // add SubmodelRef to AAS
             var key = new Key(KeyTypes.Submodel, submodel.Id);
             var KeyList = new List<Key>() { key };
-            Reference newsmr = new Reference(ReferenceTypes.ModelReference, KeyList);
+            Reference newsmr = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, KeyList);
             //var newsmr = SubmodelRef.CreateNew("Submodel", submodel.Id);
             var existsmr = findAasReturn.aas.HasSubmodelReference(newsmr);
             if (!existsmr)
@@ -3445,13 +3446,16 @@ namespace AasxRestServerLibrary
                 string deepestAllow = "";
                 foreach (var role in securityRole)
                 {
+                    if (role.name != currentRole)
+                        continue;
+
                     if (role.objType == "semanticid")
                     {
                         if (objectAasOrSubmodel is Submodel s)
                         {
-                            if (s.SemanticId != null && s.SemanticId.Keys != null && s.SemanticId.Keys.Count != 0)
+                            if (role.semanticId == "*" || (s.SemanticId != null && s.SemanticId.Keys != null && s.SemanticId.Keys.Count != 0))
                             {
-                                if (role.semanticId == s.SemanticId.Keys[0].Value)
+                                if (role.semanticId == "*" || (role.semanticId.ToLower() == s.SemanticId.Keys[0].Value.ToLower()))
                                 {
                                     if (role.kind == "allow")
                                     {
@@ -3791,6 +3795,14 @@ namespace AasxRestServerLibrary
             if (token != null)
             {
                 Console.WriteLine("Received Email token = " + token);
+                user = token;
+                error = false;
+            }
+            // Check email query string
+            token = queryString["Email"];
+            if (token != null)
+            {
+                Console.WriteLine("Received Email query string = " + token);
                 user = token;
                 error = false;
             }

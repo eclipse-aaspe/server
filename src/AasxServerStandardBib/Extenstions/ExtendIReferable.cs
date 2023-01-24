@@ -104,8 +104,8 @@ namespace Extenstions
 
         public static void SetAllParentsAndTimestamps(this IReferable referable, IReferable parent, DateTime timeStamp, DateTime timeStampCreate)
         {
-            if (parent == null)
-                return;
+            // if (parent == null)
+            //    return;
 
             referable.Parent = parent;
             referable.TimeStamp = timeStamp;

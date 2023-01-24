@@ -605,10 +605,10 @@
      filename,
      data
      );
-    /*
-    await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
+        /*
+        await js.InvokeAsync<object>(
+    "saveAsFile",
+    filename,
         Convert.ToBase64String(data)
         );
         */
@@ -1667,34 +1667,49 @@
                         }
                     }
                     break;
-                    /*
-                    case 3:
-                    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                        if (subjectIssuer != null)
-            {
-            string[] s = subjectIssuer.Split(';');
-            if (s.Length > 0 && s[0] != "")
-            {
-            ret = "SUBJECT";
-            if (col == 1)
-            ret = s[0];
-            }
+                /*
+                case 3:
+                subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+    if (subjectIssuer != null)
+    {
+    string[] s = subjectIssuer.Split(';');
+    if (s.Length > 0 && s[0] != "")
+    {
+    ret = "SUBJECT";
+    if (col == 1)
+    ret = s[0];
+    }
+    }
+    break;
+    case 4:
+    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+            if (subjectIssuer != null)
+                {
+                string[] s = subjectIssuer.Split(';');
+    if (s.Length > 1 && s[1] != "")
+    {
+    ret = "ISSUER";
+    if (col == 1)
+    ret = s[1];
+        }
             }
             break;
-            case 4:
-            subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                if (subjectIssuer != null)
-                    {
-                    string[] s = subjectIssuer.Split(';');
-                        if (s.Length > 1 && s[1] != "")
-                {
-            ret = "ISSUER";
-        if (col == 1)
-        ret = s[1];
-            }
-            }
-                break;
                 */
+                case 4:
+                    if (aas.Extensions != null)
+                    {
+                        if (col == 0)
+                            ret = "Extensions";
+                        if (col == 1)
+                        {
+                            ret = "";
+                            foreach (var e in aas.Extensions)
+                            {
+                                ret += e.Name + " : " + e.Value + "; ";
+                            }
+                        }
+                    }
+                    break;
                 case 5:
                 case 6:
                 case 7:
@@ -1737,6 +1752,20 @@
                     ret = getQualifiers(sm.Qualifiers, col);
                     break;
                 case 3:
+                    if (sm.Extensions != null)
+                    {
+                        if (col == 0)
+                            ret = "Extensions";
+                        if (col == 1)
+                        {
+                            ret = "";
+                            foreach (var e in sm.Extensions)
+                            {
+                                ret += e.Name + " : " + e.Value + "; ";
+                            }
+                        }
+                    }
+                    break;
                 case 4:
                 case 5:
                 case 6:

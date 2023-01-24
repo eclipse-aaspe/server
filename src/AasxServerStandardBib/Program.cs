@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -153,6 +154,8 @@ namespace AasxServer
         public static bool readTemp = false;
         public static string secretStringAPI = null;
         public static bool htmlId = false;
+        public static string Email = "";
+        public static long submodelAPIcount = 0;
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
         public static HashSet<object> submodelsToSubscribe = new HashSet<object>();
@@ -164,6 +167,8 @@ namespace AasxServer
 
         public static bool isLoading = true;
         public static int count = 0;
+
+        public static bool initializingRegistry = false;
 
         public static object changeAasxFile = new object();
 

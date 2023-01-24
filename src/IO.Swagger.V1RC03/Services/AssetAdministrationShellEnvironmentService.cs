@@ -1362,7 +1362,7 @@ namespace IO.Swagger.V1RC03.Services
 
             if (fileElement != null)
             {
-                SecurityCheck(submodel.IdShort + "." + idShortPath);
+                SecurityCheck(submodel.IdShort + "." + idShortPath, "", submodel);
 
                 if (fileElement is File file)
                 {
