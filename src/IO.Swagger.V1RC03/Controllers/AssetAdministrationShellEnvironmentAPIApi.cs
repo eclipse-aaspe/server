@@ -859,6 +859,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// Creates a new Submodel
         /// </summary>
         /// <param name="body">Submodel object</param>
+        /// <param name=""></param>
         /// <response code="201">Submodel created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
@@ -869,9 +870,11 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodel([FromBody] Submodel body)
+        public virtual IActionResult PostSubmodel([FromBody] Submodel body, [FromQuery] string aasIdentifier)
         {
-            var output = _aasEnvService.CreateSubmodel(body);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+
+            var output = _aasEnvService.CreateSubmodel(body, decodedAasIdentifier);
 
             return CreatedAtAction(nameof(PostSubmodel), output);
         }

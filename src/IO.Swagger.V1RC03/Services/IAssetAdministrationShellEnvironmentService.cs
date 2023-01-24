@@ -38,7 +38,7 @@ namespace IO.Swagger.V1RC03.Services
         OperationHandle InvokeOperationAsyncSubmodelRepo(string submodelIdentifier, string idShortPath, OperationRequest operationRequest);
         AssetAdministrationShell CreateAssetAdministrationShell(AssetAdministrationShell body);
         ConceptDescription CreateConceptDescription(ConceptDescription body);
-        Submodel CreateSubmodel(Submodel body);
+        Submodel CreateSubmodel(Submodel body, string aasIdentifier);
         ISubmodelElement CreateSubmodelElementSubmodelRepo(ISubmodelElement body, string submodelIdentifier);
         ISubmodelElement CreateSubmodelElement(ISubmodelElement body, string aasIdentifier, string submodelIdentifier);
         ISubmodelElement CreateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath);

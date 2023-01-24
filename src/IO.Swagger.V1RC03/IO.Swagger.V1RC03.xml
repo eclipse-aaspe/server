@@ -930,11 +930,12 @@
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodel(AasCore.Aas3_0_RC02.Submodel)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodel(AasCore.Aas3_0_RC02.Submodel,System.String)">
             <summary>
             Creates a new Submodel
             </summary>
             <param name="body">Submodel object</param>
+            <param name=""></param>
             <response code="201">Submodel created successfully</response>
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
@@ -1509,11 +1510,12 @@
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodel(AasCore.Aas3_0_RC02.Submodel)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodel(AasCore.Aas3_0_RC02.Submodel,System.String)">
             <summary>
             Creates a new Submodel
             </summary>
             <param name="body">Submodel object</param>
+            <param name=""></param>
             <response code="201">Submodel created successfully</response>
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>

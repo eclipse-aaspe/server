@@ -942,23 +942,36 @@ namespace IO.Swagger.V1RC03.Services
 
         }
 
-        public Submodel CreateSubmodel(Submodel body)
+        public Submodel CreateSubmodel(Submodel body, string aasIdentifier = null)
         {
             if (string.IsNullOrEmpty(body.Id))
             {
                 throw new NoIdentifierException("Submodel");
             }
 
-            //Check if AAS exists
+            //Check if Submodel exists
             var found = IsSubmodelPresent(body.Id, out _, out _);
             if (found)
             {
                 throw new DuplicateException($"Submodel with id {body.Id} already exists.");
             }
 
+            //Check if corresponding AAS exist. If yes, then add to the same environment
+            if(!string.IsNullOrEmpty(aasIdentifier))
+            {
+                var aasFound = IsAssetAdministrationShellPresent(aasIdentifier, out AssetAdministrationShell aas, out int packageIndex);
+                if(aasFound)
+                {
+                    body.SetAllParents(DateTime.UtcNow);
+                    _packages[packageIndex].AasEnv.Submodels.Add(body);
+                    AasxServer.Program.signalNewData(2);
+                    return body; // TODO: jtikekar find proper solution
+                }
+            }
+
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
+                body.SetAllParents(DateTime.UtcNow);
                 _packages[emptyPackageIndex].AasEnv.Submodels.Add(body);
                 AasxServer.Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is being added to empty package.

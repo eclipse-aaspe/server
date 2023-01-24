@@ -349,10 +349,11 @@ namespace IO.Swagger.V1RC03.Controllers
         /// </summary>
 
         /// <param name="body">Submodel object</param>
+        /// <param name=""></param>
         /// <response code="201">Submodel created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodel([FromBody] Submodel body);
+        IActionResult PostSubmodel([FromBody] Submodel body, [FromQuery] string aasIdentifier);
 
         /// <summary>
         /// Creates a new submodel element
