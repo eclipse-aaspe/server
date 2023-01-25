@@ -859,7 +859,7 @@ namespace IO.Swagger.V1RC03.Controllers
         /// Creates a new Submodel
         /// </summary>
         /// <param name="body">Submodel object</param>
-        /// <param name=""></param>
+        /// <param name="aasIdentifier">The AAS’s unique id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="201">Submodel created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
