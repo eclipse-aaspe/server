@@ -99,6 +99,7 @@ namespace IO.Swagger.V1RC03.Services
                     fileSize = content.Length;
 
                     System.IO.File.Copy(copyFileName, newFileName, true);
+                    Program.envFileName[packageIndex] = newFileName;
 
                     //Delete Temp file
                     System.IO.File.Delete(copyFileName);
