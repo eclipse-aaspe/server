@@ -1,4 +1,5 @@
 ﻿using AasxRestServerLibrary;
+using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AdminShellNS;
 using IO.Swagger.V1RC03.ApiModel;
@@ -77,6 +78,32 @@ namespace IO.Swagger.V1RC03.Services
                 //Delete Temp file
                 System.IO.File.Delete(copyFileName);
                 return fileName;
+            }
+            else if(requestedPackage != null && string.IsNullOrEmpty(requestedFileName))
+            {
+                //File does not exist, may be AAS is added by REST-API
+                //Check if AAS exists
+                if(requestedPackage.AasEnv.AssetAdministrationShells.Count != 0)
+                {
+                    string newFileName = Path.Combine(AasxHttpContextHelper.DataPath, requestedPackage.AasEnv.AssetAdministrationShells[0].IdShort + ".aasx");
+                    using (new FileStream(newFileName, FileMode.CreateNew)) { }
+                    Program.env[packageIndex].SetTempFn(newFileName);
+
+                    //Create Temp file
+                    string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
+                    System.IO.File.Copy(newFileName, copyFileName, true);
+                    Program.env[packageIndex].SaveAs(copyFileName);
+
+                    content = System.IO.File.ReadAllBytes(copyFileName);
+                    string fileName = Path.GetFileName(newFileName);
+                    fileSize = content.Length;
+
+                    System.IO.File.Copy(copyFileName, newFileName, true);
+
+                    //Delete Temp file
+                    System.IO.File.Delete(copyFileName);
+                    return fileName;
+                }
             }
 
             return null;

@@ -540,6 +540,22 @@ namespace AdminShellNS
             }
         }
 
+        public void SetTempFn(string fn)
+        {
+            try
+            {
+                _tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
+                System.IO.File.Copy(fn, _tempFn);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    $"While copying AASX {fn}" +
+                    $"at {AdminShellUtil.ShortLocation(ex)} gave: {ex.Message}");
+            }
+        }
+
         public void LoadFromAasEnvString(string content)
         {
             try
