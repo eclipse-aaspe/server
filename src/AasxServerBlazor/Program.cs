@@ -18,7 +18,7 @@ namespace AasxServerBlazor
         public static void Main(string[] args)
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
-            
+
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json").Build();
