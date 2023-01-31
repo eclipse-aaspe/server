@@ -32,6 +32,7 @@ namespace AasxServerBlazor
 {
     public class Startup
     {
+        private const string _corsPolicyName = "AllowAll";
         private readonly IWebHostEnvironment _hostingEnv;
 
         /*
@@ -54,7 +55,17 @@ namespace AasxServerBlazor
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
-            services.AddCors();
+            services.AddCors(options =>
+            {
+                options.AddPolicy(_corsPolicyName,
+                    builder =>
+                    {
+                        builder
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                    });
+            });
             services.AddScoped<BlazorSessionService>();
 
             services.AddControllers();
@@ -175,6 +186,8 @@ namespace AasxServerBlazor
             //app.UseAuthentication();
             //app.UseAuthorization();
 
+            app.UseCors(_corsPolicyName);
+
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -211,11 +224,6 @@ namespace AasxServerBlazor
                 endpoints.MapControllers();
             });
 
-            app.UseCors(x => x
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .SetIsOriginAllowed(origin => true) // allow any origin
-            .AllowCredentials());
         }
     }
 }
