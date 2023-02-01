@@ -432,6 +432,11 @@ namespace IO.Swagger.Registry.Controllers
             gr.Value = new List<string>();
             gr.Value.Add(globalAssetId);
             ad.GlobalAssetId = gr;
+            var kvp = new IO.Swagger.Registry.Models.IdentifierKeyValuePair();
+            kvp.Key = "assetKind";
+            kvp.Value = aas.AssetInformation.AssetKind.ToString();
+            ad.SpecificAssetIds = new List<IdentifierKeyValuePair>();
+            ad.SpecificAssetIds.Add(kvp);
             // Submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
             {
@@ -809,6 +814,8 @@ namespace IO.Swagger.Registry.Controllers
                     }
                 }
             }
+
+            aasRegistry?.SetAllParents();
         }
 
         public static AasCore.Aas3_0_RC02.Environment envRegistry = null;
