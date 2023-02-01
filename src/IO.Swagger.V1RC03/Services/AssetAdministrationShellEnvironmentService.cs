@@ -1390,11 +1390,54 @@ namespace IO.Swagger.V1RC03.Services
             {
                 if (fileElement is File file)
                 {
-                    var sourcePath = Path.GetDirectoryName(file.Value);
-                    var targetFile = Path.Combine(sourcePath, fileName);
-                    Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
-                    file.Value = FormatFileName(targetFile);
-                    AasxServer.Program.signalNewData(2);
+                    //Check if file has location
+                    if(!string.IsNullOrEmpty(file.Value))
+                    {
+                        //check if it is external location
+                        if(file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+                        {
+                            _logger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
+                            throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+                        }
+                        //Check if a directory
+                        else if(file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                        {
+                            _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+                            //check if the value consists file extension
+                            string sourcePath;
+                            if(Path.HasExtension(file.Value))
+                            {
+                                sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
+                            }
+                            else
+                            {
+                                sourcePath = Path.Combine(file.Value);
+                            }
+                           
+                            var targetFile = Path.Combine(sourcePath, fileName);
+                            targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
+                            Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
+                            file.Value = FormatFileName(targetFile);
+                            AasxServer.Program.signalNewData(2);
+                        }
+                        // incorrect value
+                        else
+                        {
+                            _logger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
+                            throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
+                        }
+                    }
+                    else
+                    {
+                        //The value is null, so store the file to default location "/aasx/files"
+                        _logger.LogError($"Null Value of the Submodel-Element File with IdShort {file.IdShort}");
+                        var targetFile = Path.Combine("/aasx/files", fileName);
+                        targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
+                        Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
+                        file.Value = FormatFileName(targetFile);
+                        AasxServer.Program.signalNewData(2);
+                    }
+                    
                 }
                 else
                 {

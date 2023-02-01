@@ -1219,8 +1219,10 @@
                     }
 
                     string currentUrl = NavigationManager.Uri;
-                    return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
-                    "/submodel/submodel-elements/" + idShortPath + "/attachment";
+                    //return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
+                    //"/submodel/submodel-elements/" + idShortPath + "/attachment";
+                    return currentUrl + "submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
+                    "/submodelelements/" + idShortPath + "/attachment";
 
                 }
             }

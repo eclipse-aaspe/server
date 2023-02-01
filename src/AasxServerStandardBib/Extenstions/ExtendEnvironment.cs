@@ -390,9 +390,13 @@ namespace Extenstions
                 return null;
             }
 
-            var aas = environment.AssetAdministrationShells.Where(a => a.Id.Equals(aasId)).First();
+            var aasList = environment.AssetAdministrationShells.Where(a => a.Id.Equals(aasId));
+            if(aasList.Any())
+            {
+                return aasList.First();
+            }
 
-            return aas;
+            return null;
         }
 
         #endregion
@@ -406,8 +410,13 @@ namespace Extenstions
                 return null;
             }
 
-            var conceptDescription = environment.ConceptDescriptions.Where(c => c.Id.Equals(conceptDescriptionId)).First();
-            return conceptDescription;
+            var conceptDescriptionList = environment.ConceptDescriptions.Where(c => c.Id.Equals(conceptDescriptionId));
+            if(conceptDescriptionList.Any())
+            {
+                return conceptDescriptionList.First();  
+            }
+
+            return null;
         }
 
         public static ConceptDescription FindConceptDescriptionByReference(this AasCore.Aas3_0_RC02.Environment environment, Reference reference)

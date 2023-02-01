@@ -1767,7 +1767,7 @@
             <param name="reqIsCaseOf"></param>
             <param name="reqDataSpecificationRef"></param>
             <returns></returns>
-            <exception cref="T:System.NotImplementedException"></exception>
+            <exception cref="T:AasxServerStandardBib.Exceptions.NotImplementedException"></exception>
         </member>
         <member name="T:IO.Swagger.V1RC03.Startup">
             <summary>

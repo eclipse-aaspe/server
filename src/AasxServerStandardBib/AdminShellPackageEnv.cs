@@ -7,23 +7,19 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using AasCore.Aas3_0_RC02;
+using Extenstions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-using Extenstions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using static System.Net.WebRequestMethods;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace AdminShellNS
 {
@@ -1135,16 +1131,24 @@ namespace AdminShellNS
         public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open)
         {
             // access
-            if (_openPackage == null)
-                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+            try
+            {
+                if (_openPackage == null)
+                    throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
 
-            // gte part
-            var uri = PackUriHelper.CreatePartUri(new Uri(uriString, UriKind.RelativeOrAbsolute));
-            var part = _openPackage.GetPart(uri);
-            if (part == null)
-                throw (new Exception(
-                    string.Format($"Cannot access URI {uriString} in {_fn} not opened. Aborting!")));
-            return part.GetStream(mode);
+                // gte part
+                var uri = PackUriHelper.CreatePartUri(new Uri(uriString, UriKind.RelativeOrAbsolute));
+                var part = _openPackage.GetPart(uri);
+                if (part == null)
+                    throw (new Exception(
+                        string.Format($"Cannot access URI {uriString} in {_fn} not opened. Aborting!")));
+                return part.GetStream(mode);
+            }
+            catch (InvalidOperationException ex)
+            {
+                //Considering the exception occurs at GetPart method
+                throw new AasxServerStandardBib.Exceptions.UnprocessableEntityException($"No File found at {uriString}");
+            }
         }
 
         public async Task ReplaceSupplementaryFileInPackageAsync(string sourceUri, string targetFile, string targetContentType, Stream fileContent)
@@ -1153,7 +1157,11 @@ namespace AdminShellNS
             if (_openPackage == null)
                 throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
 
-            _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+            if (!string.IsNullOrEmpty(sourceUri))
+            {
+                _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+
+            }            
             var targetUri = PackUriHelper.CreatePartUri(new Uri(targetFile, UriKind.RelativeOrAbsolute));
             PackagePart packagePart = _openPackage.CreatePart(targetUri, targetContentType);
             fileContent.Position = 0;

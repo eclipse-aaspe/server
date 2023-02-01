@@ -106,7 +106,7 @@ namespace SampleClient
 
             if (haveAppCertificate)
             {
-                config.ApplicationUri = Utils.GetApplicationUriFromCertificate(config.SecurityConfiguration.ApplicationCertificate.Certificate);
+                config.ApplicationUri = X509Utils.GetApplicationUriFromCertificate(config.SecurityConfiguration.ApplicationCertificate.Certificate);
                 if (config.SecurityConfiguration.AutoAcceptUntrustedCertificates)
                 {
                     autoAccept = true;
@@ -139,7 +139,7 @@ namespace SampleClient
             session.KeepAlive += Client_KeepAlive;
         }
 
-        private void Client_KeepAlive(Session sender, KeepAliveEventArgs e)
+        private void Client_KeepAlive(ISession sender, KeepAliveEventArgs e)
         {
             if (e.Status != null && ServiceResult.IsNotGood(e.Status))
             {
@@ -162,7 +162,7 @@ namespace SampleClient
                 return;
             }
 
-            session = reconnectHandler.Session;
+            session = (Session)reconnectHandler.Session;
             reconnectHandler.Dispose();
             reconnectHandler = null;
 

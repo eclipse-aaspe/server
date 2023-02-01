@@ -95,6 +95,24 @@ namespace IO.Swagger.V1RC03.Middleware
                         message.MessageType = Message.MessageTypeEnum.ErrorEnum;
                         break;
                     }
+                case NotImplementedException:
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotImplemented;
+                        message.Code = HttpStatusCode.NotImplemented.ToString();
+                        message.Text = exception.Message;
+                        message.Timestamp = DateTime.Now.ToString();
+                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        break;
+                    }
+                case UnprocessableEntityException:
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.UnprocessableEntity;
+                        message.Code = HttpStatusCode.UnprocessableEntity.ToString();
+                        message.Text = exception.Message;
+                        message.Timestamp = DateTime.Now.ToString();
+                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        break;
+                    }
                 default:
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;

@@ -1,23 +1,7 @@
 ﻿#define MICHA
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Reflection;
-using System.Runtime.Intrinsics.X86;
-using System.Security;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using AasCore.Aas3_0_RC02;
 using AasxMqttClient;
-using AasxServer;
 using AdminShellEvents;
 using AdminShellNS;
 using Extenstions;
@@ -25,16 +9,17 @@ using Grapevine.Interfaces.Server;
 using Grapevine.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
-using IdentityModel.Client;
-using Jose;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Ocsp;
-using ScottPlot;
-using ScottPlot.Drawing.Colormaps;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
-using static QRCoder.PayloadGenerator;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 using HttpMethod = Grapevine.Shared.HttpMethod;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister

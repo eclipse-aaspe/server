@@ -33,6 +33,8 @@ using System.Collections.Specialized;
 using JetBrains.Annotations;
 using System.Data;
 using Opc.Ua;
+using System.Text.Json.Nodes;
+using Namotion.Reflection;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -724,6 +726,26 @@ namespace AasxRestServerLibrary
                 }
             }
 
+            //TODO:jtikekar remove
+            if(context.Request.RawUrl.Equals("/aas/0/core") && obj is ExpandoObject findAasReturn)
+            {
+                var value = new JsonObject();
+                foreach (KeyValuePair<string, object> kvp in findAasReturn)
+                {
+                    if(kvp.Key.Equals("AAS"))
+                    {
+                        value["AAS"] = Jsonization.Serialize.ToJsonObject((AssetAdministrationShell)kvp.Value);
+                    }
+                    else if (kvp.Key.Equals("Asset"))
+                    {
+                        value["AssetInformation"] = Jsonization.Serialize.ToJsonObject((AssetInformation)kvp.Value);
+                    }
+                }
+
+                json = value.ToString();
+
+            }
+
             var buffer = context.Request.ContentEncoding.GetBytes(json);
             var length = buffer.Length;
 
@@ -819,7 +841,7 @@ namespace AasxRestServerLibrary
 
             // result
             res.AAS = findAasReturn.aas;
-            res.Asset = asset;
+            res.Asset = findAasReturn.aas.AssetInformation;
 
             // return as JSON
             var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);

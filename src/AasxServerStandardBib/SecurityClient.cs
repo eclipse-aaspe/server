@@ -1294,7 +1294,11 @@ namespace AasxServer
                             }
                         }
                     }
-                    assetCfp.Add(assetId, cfp);
+                    if (assetCfp.ContainsKey(assetId))
+                    {
+                        assetCfp.Add(assetId, cfp);
+
+                    }                   
                     if (i == envIndex)
                         root = cfp;
                 }
