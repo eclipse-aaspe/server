@@ -40,7 +40,7 @@ namespace IO.Swagger.Registry.Models
         [Required]
 
         [DataMember(Name = "subjectId")]
-        public Reference SubjectId { get; set; }
+        public GlobalReference SubjectId { get; set; }
 
         /// <summary>
         /// Gets or Sets Value

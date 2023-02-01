@@ -432,11 +432,17 @@ namespace IO.Swagger.Registry.Controllers
             gr.Value = new List<string>();
             gr.Value.Add(globalAssetId);
             ad.GlobalAssetId = gr;
+            /*
             var kvp = new IO.Swagger.Registry.Models.IdentifierKeyValuePair();
             kvp.Key = "assetKind";
             kvp.Value = aas.AssetInformation.AssetKind.ToString();
+            gr = new GlobalReference();
+            gr.Value = new List<string>();
+            gr.Value.Add("assetKind");
+            kvp.SubjectId = gr;
             ad.SpecificAssetIds = new List<IdentifierKeyValuePair>();
             ad.SpecificAssetIds.Add(kvp);
+            */
             // Submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
             {
@@ -560,6 +566,14 @@ namespace IO.Swagger.Registry.Controllers
             // add to internal registry
             if (postRegistry.Contains("this"))
                 addAasDescriptorToRegistry(ad, timestamp, true);
+
+            // Test serialize + deserialize;
+            bool test = false;
+            if (test)
+            {
+                string json = JsonConvert.SerializeObject(ad);
+                var adTest = JsonConvert.DeserializeObject<AssetAdministrationShellDescriptor>(json);
+            }
 
             // POST Descriptor to Registry
             foreach (var pr in postRegistry)
