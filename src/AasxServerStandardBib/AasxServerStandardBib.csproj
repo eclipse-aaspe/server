@@ -3,6 +3,7 @@
   <PropertyGroup>
     <!--<TargetFramework>netstandard2.0</TargetFramework>-->
     <TargetFramework>net6.0</TargetFramework>
+	<SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
     <UserSecretsId>ef550880-6a5f-4e0c-b634-8284f1dc5445</UserSecretsId>
   </PropertyGroup>
 
@@ -31,7 +32,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.13.1" />
     <PackageReference Include="System.IO.Packaging" Version="4.6.0" />
     <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
-	<PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
+	<PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0"/>
   </ItemGroup>
 
   <ItemGroup>
