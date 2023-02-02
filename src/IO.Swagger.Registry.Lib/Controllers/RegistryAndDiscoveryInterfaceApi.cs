@@ -432,7 +432,7 @@ namespace IO.Swagger.Registry.Controllers
             gr.Value = new List<string>();
             gr.Value.Add(globalAssetId);
             ad.GlobalAssetId = gr;
-            /*
+            //
             var kvp = new IO.Swagger.Registry.Models.IdentifierKeyValuePair();
             kvp.Key = "assetKind";
             kvp.Value = aas.AssetInformation.AssetKind.ToString();
@@ -442,7 +442,7 @@ namespace IO.Swagger.Registry.Controllers
             kvp.SubjectId = gr;
             ad.SpecificAssetIds = new List<IdentifierKeyValuePair>();
             ad.SpecificAssetIds.Add(kvp);
-            */
+            //
             // Submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
             {
@@ -568,7 +568,7 @@ namespace IO.Swagger.Registry.Controllers
                 addAasDescriptorToRegistry(ad, timestamp, true);
 
             // Test serialize + deserialize;
-            bool test = false;
+            bool test = true;
             if (test)
             {
                 string json = JsonConvert.SerializeObject(ad);
@@ -1172,6 +1172,12 @@ namespace IO.Swagger.Registry.Controllers
             // InitRegistry(timestamp);
 
             Console.WriteLine("POST /registry/shell-descriptors");
+            bool test = true;
+            if (test)
+            {
+                string s = JsonConvert.SerializeObject(body);
+                Console.WriteLine(s);
+            }
             addAasDescriptorToRegistry(body, timestamp);
 
             AasxServer.Program.signalNewData(2);

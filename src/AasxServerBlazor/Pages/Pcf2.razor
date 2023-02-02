@@ -221,8 +221,10 @@
                                         @{
                                             if (node.aas != null)
                                             {
-                                                List<string> textList = new List<string>();
-                                                List<string> colorList = new List<string>();
+                                                // List<string> textList = new List<string>();
+                                                // List<string> colorList = new List<string>();
+                                                string id = null;
+                                                string color = null;
 
                                                 foreach (var smr in node.aas.Submodels)
                                                 {
@@ -231,11 +233,12 @@
                                                     {
                                                         if (sm.IdShort == "tasks")
                                                             continue;
-                                                        string id = sm.IdShort;
+                                                        id = sm.IdShort;
                                                         if (id.Contains(" - NO ACCESS"))
                                                         {
                                                             id = id.Replace(" - NO ACCESS", "");
-                                                            colorList.Add("red");
+                                                            // colorList.Add("red");
+                                                            color = "red";
                                                         }
                                                         else
                                                         {
@@ -247,18 +250,29 @@
                                                             {
                                                                 id = id.Replace(" - COPY", "");
                                                             }
-                                                            colorList.Add("green");
+                                                            // colorList.Add("green");
+                                                            color = "green";
                                                         }
-                                                        textList.Add(id);
+                                                        // textList.Add(id);
+                                                        if (id != null && color != null)
+                                                        {
+                                                            string link = getSmLink(sm);
+                                                            if (AasxServer.Program.Email != "")
+                                                                link += "?Email=" + AasxServer.Program.Email;
+                                                            <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                        }
                                                     }
                                                 }
+                                                /*
                                                 if (textList.Count != 0)
                                                 {
                                                     @for (int i = 0; i < textList.Count; i++)
                                                     {
                                                         <span style="font-size:8pt; color:@colorList[i];">@(textList[i] + " ")</span>
+                                                        <a href="@link" target="_blank">@link</a>
                                                     }
                                                 }
+                                                */
                                             }
                                         }
                                         </div>
@@ -296,6 +310,33 @@
         </div>
     }
 
+    string getSmLink(Submodel sm)
+    {
+        string endpoint = null;
+        var idEncoded = Base64UrlEncoder.Encode(sm.Id);
+        if (sm.Extensions != null)
+        {
+            endpoint = sm.Extensions[0].Value;
+            var s1 = endpoint.Split("/shells/");
+            if (s1.Length == 2)
+            {
+                var s2 = s1[1].Split("/submodels/");
+                if (s2.Length == 2)
+                {
+                    idEncoded = s2[1].Replace("/submodel/", ""); ;
+                    endpoint = s1[0] + "/submodels/" + idEncoded;
+                }
+            }
+            // endpoint = endpoint.Replace("/submodel/", "");
+        }
+        else
+        {
+            endpoint = Program.externalBlazor + "/submodels/" + idEncoded;
+        }
+
+        return endpoint;
+    }
+
     string getImageLink(File f, int envIndex)
     {
         if (f == null || envIndex == -1)
@@ -324,28 +365,8 @@
                                 p = (p as ISubmodelElement).Parent;
                             }
                             var sm = p as Submodel;
-                            var idEncoded = Base64UrlEncoder.Encode(sm.Id);
                             // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
-                            string endpoint = "";
-                            if (sm.Extensions != null)
-                            {
-                                endpoint = sm.Extensions[0].Value;
-                                var s1 = endpoint.Split("/shells/");
-                                if (s1.Length == 2)
-                                {
-                                    var s2 = s1[1].Split("/submodels/");
-                                    if (s2.Length == 2)
-                                    {
-                                        idEncoded = s2[1].Replace("/submodel/", ""); ;
-                                        endpoint = s1[0] + "/submodels/" + idEncoded;
-                                    }
-                                }
-                                // endpoint = endpoint.Replace("/submodel/", "");
-                            }
-                            else
-                            {
-                                endpoint = Program.externalBlazor + "/submodels/" + idEncoded;
-                            }
+                            string endpoint = getSmLink(sm);
                             path = endpoint + "/submodelelements/" + path;
                             path += "/attachment";
                             if (AasxServer.Program.Email != "")

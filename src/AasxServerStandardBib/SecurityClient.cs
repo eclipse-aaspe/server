@@ -1294,7 +1294,7 @@ namespace AasxServer
                             }
                         }
                     }
-                    if (assetCfp.ContainsKey(assetId))
+                    if (!assetCfp.ContainsKey(assetId))
                     {
                         assetCfp.Add(assetId, cfp);
 
