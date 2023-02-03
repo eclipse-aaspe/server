@@ -39,10 +39,10 @@ namespace IO.Swagger.V1RC03.Services
         AssetAdministrationShell CreateAssetAdministrationShell(AssetAdministrationShell body);
         ConceptDescription CreateConceptDescription(ConceptDescription body);
         Submodel CreateSubmodel(Submodel body, string aasIdentifier);
-        ISubmodelElement CreateSubmodelElementSubmodelRepo(ISubmodelElement body, string submodelIdentifier);
-        ISubmodelElement CreateSubmodelElement(ISubmodelElement body, string aasIdentifier, string submodelIdentifier);
-        ISubmodelElement CreateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath);
-        ISubmodelElement CreateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath);
+        ISubmodelElement CreateSubmodelElementSubmodelRepo(ISubmodelElement body, string submodelIdentifier, int first);
+        ISubmodelElement CreateSubmodelElement(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, int first);
+        ISubmodelElement CreateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath, int first);
+        ISubmodelElement CreateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, int first);
         Reference CreateSubmodelReference(Reference body, string aasIdentifier);
         void UpdateAssetAdministrationShellById(AssetAdministrationShell body, string aasIdentifier);
         void UpdateAssetInformation(AssetInformation body, string aasIdentifier);

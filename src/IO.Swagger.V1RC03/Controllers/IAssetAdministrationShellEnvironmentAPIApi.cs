@@ -368,7 +368,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Submodel element created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first);
 
         /// <summary>
         /// Creates a new submodel element at a specified path within submodel elements hierarchy
@@ -385,7 +386,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first);
 
         /// <summary>
         /// Creates a new submodel element at a specified path within submodel elements hierarchy
@@ -401,7 +403,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first);
 
         /// <summary>
         /// Creates a new submodel element
@@ -415,7 +418,8 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="201">Submodel element created successfully</response>
         /// <response code="400">Bad Request</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
+        IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first);
 
         /// <summary>
         /// Creates a submodel reference at the Asset Administration Shell

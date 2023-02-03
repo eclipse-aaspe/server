@@ -248,7 +248,7 @@ namespace IO.Swagger.V1RC03.Services
             return null;
         }
 
-        public ISubmodelElement CreateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath)
+        public ISubmodelElement CreateSubmodelElementByPath(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, string idShortPath, int first = 0)
         {
             if (string.IsNullOrEmpty(body.IdShort))
             {
@@ -260,14 +260,14 @@ namespace IO.Swagger.V1RC03.Services
             {
                 if (IsSubmodelPresentInAAS(aas, submodelIdentifier))
                 {
-                    return CreateSubmodelElementByPathSubmodelRepo(body, submodelIdentifier, idShortPath);
+                    return CreateSubmodelElementByPathSubmodelRepo(body, submodelIdentifier, idShortPath, first);
                 }
             }
 
             return null;
         }
 
-        public ISubmodelElement CreateSubmodelElement(ISubmodelElement body, string aasIdentifier, string submodelIdentifier)
+        public ISubmodelElement CreateSubmodelElement(ISubmodelElement body, string aasIdentifier, string submodelIdentifier, int first = 0)
         {
             if (string.IsNullOrEmpty(body.IdShort))
             {
@@ -279,7 +279,7 @@ namespace IO.Swagger.V1RC03.Services
             {
                 if (IsSubmodelPresentInAAS(aas, submodelIdentifier))
                 {
-                    return CreateSubmodelElementSubmodelRepo(body, submodelIdentifier);
+                    return CreateSubmodelElementSubmodelRepo(body, submodelIdentifier, first);
                 }
             }
 
@@ -848,7 +848,7 @@ namespace IO.Swagger.V1RC03.Services
             }
         }
 
-        public ISubmodelElement CreateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath)
+        public ISubmodelElement CreateSubmodelElementByPathSubmodelRepo(ISubmodelElement body, string submodelIdentifier, string idShortPath, int first = 0)
         {
             if (string.IsNullOrEmpty(body.IdShort))
             {
@@ -863,45 +863,84 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
+                var timeStamp = DateTime.UtcNow;
                 if (smeParent != null && smeParent is Submodel submodel)
                 {
                     submodel.SubmodelElements ??= new List<ISubmodelElement>();
 
-                    submodel.SubmodelElements.Add(body);
+                    if (first == 0)
+                    {
+                        submodel.SubmodelElements.Add(body);
+                    }
+                    else
+                    {
+                        submodel.SubmodelElements.Insert(0, body);
+                    }
 
-                    body.Parent = submodel;
+                    body.SetAllParentsAndTimestamps(submodel, timeStamp, timeStamp);
                 }
                 else if (smeParent != null && smeParent is SubmodelElementCollection collection)
                 {
                     collection.Value ??= new List<ISubmodelElement>();
 
-                    collection.Value.Add(body);
+                    if (first == 0)
+                    {
+                        collection.Value.Add(body);
+                    }
+                    else
+                    {
+                        collection.Value.Insert(0, body);
+                    }
 
-                    body.Parent = collection;
+                    body.SetAllParentsAndTimestamps(collection, timeStamp, timeStamp);
                 }
                 else if (smeParent != null && smeParent is SubmodelElementList list)
                 {
                     list.Value ??= new List<ISubmodelElement>();
 
-                    list.Value.Add(body);
+                    if (first == 0)
+                    {
+                        list.Value.Add(body);
+                    }
+                    else
+                    {
+                        list.Value.Insert(0, body);
+                    }
 
-                    body.Parent = list;
+                    body.SetAllParentsAndTimestamps(list, timeStamp, timeStamp);
                 }
                 else if (smeParent != null && smeParent is Entity entity)
                 {
                     entity.Statements ??= new List<ISubmodelElement>();
 
-                    entity.Statements.Add(body);
-                    body.Parent = entity;
+                    if (first == 0)
+                    {
+                        entity.Statements.Add(body);
+                    }
+                    else
+                    {
+                        entity.Statements.Insert(0, body);
+                    }
+
+                    body.SetAllParentsAndTimestamps(entity, timeStamp, timeStamp);
                 }
                 else if (smeParent != null && smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
                 {
                     annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
 
-                    annotatedRelationshipElement.Annotations.Add((IDataElement)body);
-                    body.Parent = annotatedRelationshipElement;
+                    if (first == 0)
+                    {
+                        annotatedRelationshipElement.Annotations.Add((IDataElement)body);
+                    }
+                    else
+                    {
+                        annotatedRelationshipElement.Annotations.Insert(0, (IDataElement)body);
+                    }
+
+                    body.SetAllParentsAndTimestamps(annotatedRelationshipElement, timeStamp, timeStamp);
                 }
 
+                body.SetTimeStamp(timeStamp);
                 AasxServer.Program.signalNewData(1);
 
                 return body;
@@ -910,7 +949,7 @@ namespace IO.Swagger.V1RC03.Services
             return null;
         }
 
-        public ISubmodelElement CreateSubmodelElementSubmodelRepo(ISubmodelElement body, string submodelIdentifier)
+        public ISubmodelElement CreateSubmodelElementSubmodelRepo(ISubmodelElement body, string submodelIdentifier, int first = 0)
         {
             if (string.IsNullOrEmpty(body.IdShort))
             {
@@ -928,9 +967,18 @@ namespace IO.Swagger.V1RC03.Services
                 {
                     submodel.SubmodelElements ??= new List<ISubmodelElement>();
 
-                    submodel.SubmodelElements.Add(body);
+                    if (first == 0)
+                    {
+                        submodel.SubmodelElements.Add(body);
+                    }
+                    else
+                    {
+                        submodel.SubmodelElements.Insert(0, body);
+                    }
 
-                    body.Parent = submodel;
+                    var timeStamp = DateTime.UtcNow;
+                    body.SetAllParentsAndTimestamps(submodel, timeStamp, timeStamp);
+                    body.SetTimeStamp(timeStamp);
 
                     AasxServer.Program.signalNewData(1);
 

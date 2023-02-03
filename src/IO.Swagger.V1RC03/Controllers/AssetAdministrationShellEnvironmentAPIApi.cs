@@ -898,12 +898,13 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var output = _aasEnvService.CreateSubmodelElement(body, decodedAasId, decodedSubmodelId);
+            var output = _aasEnvService.CreateSubmodelElement(body, decodedAasId, decodedSubmodelId, first);
 
             //TODO:jtikekar handle output modifiers
             return CreatedAtAction(nameof(PostSubmodelElement), output);
@@ -931,12 +932,13 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first)
         {
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var output = _aasEnvService.CreateSubmodelElementByPath(body, decodedAasId, decodedSubmodelId, idShortPath);
+            var output = _aasEnvService.CreateSubmodelElementByPath(body, decodedAasId, decodedSubmodelId, idShortPath, first);
 
             //TODO:jtikekar Handle Output modifiers
             return CreatedAtAction(nameof(PostSubmodelElementByPath), output);
@@ -963,11 +965,12 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var output = _aasEnvService.CreateSubmodelElementByPathSubmodelRepo(body, decodedSubmodelId, idShortPath);
+            var output = _aasEnvService.CreateSubmodelElementByPathSubmodelRepo(body, decodedSubmodelId, idShortPath, first);
 
             //TODO:jtikekar Handle Output modifiers
             return CreatedAtAction(nameof(PostSubmodelElementByPathSubmodelRepo), output);
@@ -992,11 +995,12 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier,
+            [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            var output = _aasEnvService.CreateSubmodelElementSubmodelRepo(body, decodedSubmodelId);
+            var output = _aasEnvService.CreateSubmodelElementSubmodelRepo(body, decodedSubmodelId, first);
 
             //TODO:jtikekar handle output modifiers
             return CreatedAtAction(nameof(PostSubmodelElementSubmodelRepo), output);

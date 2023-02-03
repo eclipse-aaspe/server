@@ -940,7 +940,7 @@
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElement(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElement(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element
             </summary>
@@ -954,7 +954,7 @@
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPath(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPath(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -970,7 +970,7 @@
             <response code="404">Not Found</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPathSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPathSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -985,7 +985,7 @@
             <response code="404">Not Found</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElementSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PostSubmodelElementSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element
             </summary>
@@ -1520,7 +1520,7 @@
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElement(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElement(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element
             </summary>
@@ -1534,7 +1534,7 @@
             <response code="400">Bad Request</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPath(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPath(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -1550,7 +1550,7 @@
             <response code="404">Not Found</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPathSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElementByPathSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element at a specified path within submodel elements hierarchy
             </summary>
@@ -1565,7 +1565,7 @@
             <response code="404">Not Found</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElementSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.IAssetAdministrationShellEnvironmentAPIController.PostSubmodelElementSubmodelRepo(AasCore.Aas3_0_RC02.ISubmodelElement,System.String,IO.Swagger.V1RC03.APIModels.LevelEnum,IO.Swagger.V1RC03.APIModels.ContentEnum,IO.Swagger.V1RC03.APIModels.ExtentEnum,System.Int32)">
             <summary>
             Creates a new submodel element
             </summary>
