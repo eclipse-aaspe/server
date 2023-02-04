@@ -37,6 +37,18 @@ namespace AasxRestServerLibrary
 {
     public class AasxRestServer
     {
+        static string translateURL(string url)
+        {
+            // get from environment
+            if (url.Substring(0, 1) == "$")
+            {
+                string envVar = url.Substring(1);
+                url = System.Environment.GetEnvironmentVariable(envVar);
+            }
+
+            return url;
+        }
+
         [RestResource]
         public class TestResource
         {
@@ -74,8 +86,9 @@ namespace AasxRestServerLibrary
                                 {
                                     if (sme is Property p)
                                     {
-                                        listofRepositories.Add(p.Value);
-                                        Console.WriteLine("listofRepositories.Add " + p.Value);
+                                        string repositoryURL = translateURL(p.Value);
+                                        listofRepositories.Add(repositoryURL);
+                                        Console.WriteLine("listofRepositories.Add " + repositoryURL);
                                     }
                                 }
                             }

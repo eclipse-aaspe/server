@@ -843,6 +843,19 @@ namespace IO.Swagger.Registry.Controllers
 
         static bool init = false;
         static int initiallyEmpty = 0;
+
+        static string translateURL(string url)
+        {
+            // get from environment
+            if (url.Substring(0, 1) == "$")
+            {
+                string envVar = url.Substring(1);
+                url = System.Environment.GetEnvironmentVariable(envVar);
+            }
+
+            return url;
+        }
+
 #pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
 #pragma warning disable IDE1006 // Benennungsstile
         public static void initRegistry(DateTime timestamp, bool initAgain = false)
@@ -904,13 +917,15 @@ namespace IO.Swagger.Registry.Controllers
                         {
                             if (p.IdShort.ToLower() == "postregistry")
                             {
-                                Console.WriteLine("POST to Registry: " + p.Value);
-                                postRegistry.Add(p.Value);
+                                string registryURL = translateURL(p.Value);
+                                Console.WriteLine("POST to Registry: " + registryURL);
+                                postRegistry.Add(registryURL);
                             }
                             if (p.IdShort.ToLower() == "getregistry")
                             {
-                                Console.WriteLine("GET from Registry: " + p.Value);
-                                getRegistry.Add(p.Value);
+                                string registryURL = translateURL(p.Value);
+                                Console.WriteLine("GET from Registry: " + registryURL);
+                                getRegistry.Add(registryURL);
                             }
                         }
                         if (sme is SubmodelElementCollection smc)
