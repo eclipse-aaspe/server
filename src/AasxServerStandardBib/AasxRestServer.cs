@@ -1325,6 +1325,10 @@ namespace AasxRestServerLibrary
                                                                 if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
                                                                     result += " " + sme.SemanticId.Keys[0].Value;
                                                             }
+                                                            if (selectParameters.Contains("%path"))
+                                                            {
+                                                                result += " " + aas.IdShort + "/" + sm.IdShort + "/" + path + sme.IdShort;
+                                                            }
                                                             result += "\n";
                                                             totalFound++;
                                                         }
