@@ -40,7 +40,6 @@ namespace IO.Swagger.V1RC03.Controllers
             // var decodedQuery = _decoderService.Decode("searchQuery", searchQuery);
 
             string result = AasxRestServer.TestResource.runQuery(searchQuery, "");
-            result = result.Replace("\n", "</br>\n");
 
             return new ContentResult()
             {
@@ -131,7 +130,8 @@ namespace IO.Swagger.V1RC03.Controllers
                     result += "\nerror " + requestPath + "\n\n";
             }
 
-            result = result.Replace("\n", "</br>\n");
+            result = result.Replace("\r\n", "\n");
+            result = result.Replace("\n", "<br>");
 
             return new ContentResult()
             {
@@ -155,8 +155,7 @@ namespace IO.Swagger.V1RC03.Controllers
             var aasRegistry = RegistryAndDiscoveryInterfaceApiController.aasRegistry;
 
             string result = AasxRestServer.TestResource.runQueryRegistryOnly(searchQuery, "", aasRegistry, envRegistry);
-
-            result = result.Replace("\n", "</br>\n");
+            result = result.Replace("\n", "</br>");
 
             return new ContentResult()
             {
@@ -219,6 +218,9 @@ namespace IO.Swagger.V1RC03.Controllers
                 if (error)
                     result += "\nerror " + requestPath + "\n\n";
             }
+
+            result = result.Replace("\r\n", "\n");
+            result = result.Replace("\n", "<br>");
 
             return new ObjectResult(result);
 
