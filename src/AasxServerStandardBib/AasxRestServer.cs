@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -266,8 +267,14 @@ namespace AasxRestServerLibrary
                                     if (!legal.Contains(c))
                                         return false;
                                 }
-                                double l = Convert.ToDouble(left.Replace(".", ","));
-                                double r = Convert.ToDouble(right.Replace(".", ","));
+                                var decSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+                                // Console.WriteLine("seperator = " + decSep);
+                                left = left.Replace(".", decSep);
+                                left = left.Replace(",", decSep);
+                                right = right.Replace(".", decSep);
+                                right = right.Replace(",", decSep);
+                                double l = Convert.ToDouble(left);
+                                double r = Convert.ToDouble(right);
                                 switch (op)
                                 {
                                     case ">":
