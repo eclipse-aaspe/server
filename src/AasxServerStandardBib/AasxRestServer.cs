@@ -245,6 +245,8 @@ namespace AasxRestServerLibrary
                         if (op == "==")
                             return left == right;
                         return left != right;
+                    case "==num":
+                    case "!=num":
                     case ">":
                     case "<":
                     case ">=":
@@ -277,6 +279,10 @@ namespace AasxRestServerLibrary
                                 double r = Convert.ToDouble(right);
                                 switch (op)
                                 {
+                                    case "==num":
+                                        return l == r;
+                                    case "!=num":
+                                        return l != r;
                                     case ">":
                                         return l > r;
                                     case "<":
@@ -305,6 +311,10 @@ namespace AasxRestServerLibrary
 
                             switch(op)
                             {
+                                case "==num":
+                                    return l == r;
+                                case "!=num":
+                                    return l != r;
                                 case ">":
                                     return l > r;
                                 case "<":
