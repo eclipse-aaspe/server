@@ -75,7 +75,7 @@
                             @Body
                         </div>
                         <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
-                        <iframe src="getIframePath()"
+                        <iframe src="@getIframePath()"
                                     id="iframe" style="width: 100%; height: 100%;"></iframe>
                         </div>
                     </div>
@@ -84,11 +84,11 @@
     }
 </div>
 
-@{
-    string path = "https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=ZveiControlCabinetAas";
-    bool pathIntit = true;
+@code{
+    static string path = "https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=ZveiControlCabinetAas";
+    static bool pathIntit = true;
 
-    string getIframePath()
+    static string getIframePath()
     {
         if (pathIntit)
         {
