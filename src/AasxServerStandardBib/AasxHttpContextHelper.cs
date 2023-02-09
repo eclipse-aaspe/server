@@ -3732,6 +3732,7 @@ namespace AasxRestServerLibrary
                 string s = queryString["s"];
                 if (s != null && s != "")
                 {
+                    Console.WriteLine("secretStringAPI = " + Program.secretStringAPI + " s = " + s);
                     if (s == Program.secretStringAPI)
                         accessrights = "UPDATE";
                 }

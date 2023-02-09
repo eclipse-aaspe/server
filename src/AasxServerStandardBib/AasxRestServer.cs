@@ -121,6 +121,7 @@ namespace AasxRestServerLibrary
                     context.Response.ContentEncoding = Encoding.UTF8;
                     context.Response.ContentLength64 = txt.Length;
                     context.Response.SendResponse(txt);
+                    return context;
                 }
 
                 context.Response.SendResponse(Grapevine.Shared.HttpStatusCode.NotFound, $"Operation not allowed!");
