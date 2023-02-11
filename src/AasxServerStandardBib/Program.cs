@@ -197,6 +197,7 @@ namespace AasxServer
             public string ExternalBlazor { get; set; }
             public bool ReadTemp { get; set; }
             public string SecretStringAPI { get; set; }
+            public string Tag { get; set; }
             public bool HtmlId { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
@@ -204,6 +205,16 @@ namespace AasxServer
 
         private static int Run(CommandLineArguments a)
         {
+
+            // Wait for Debugger
+            if (a.DebugWait)
+            {
+                Console.WriteLine("Please attach debugger now to {0}!", a.Host);
+                while (!System.Diagnostics.Debugger.IsAttached)
+                    System.Threading.Thread.Sleep(100);
+                Console.WriteLine("Debugger attached");
+            }
+
             // Read environment variables
             string[] evlist = { "PLCNEXTTARGET" };
             foreach (var ev in evlist)
@@ -297,15 +308,9 @@ namespace AasxServer
             Program.readTemp = a.ReadTemp;
             Program.htmlId = a.HtmlId;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
-                secretStringAPI = a.SecretStringAPI;
-
-            // Wait for Debugger
-            if (a.DebugWait)
             {
-                Console.WriteLine("Please attach debugger now to {0}!", a.Host);
-                while (!System.Diagnostics.Debugger.IsAttached)
-                    System.Threading.Thread.Sleep(100);
-                Console.WriteLine("Debugger attached");
+                Console.WriteLine("secretStringAPI = " + secretStringAPI);
+                secretStringAPI = a.SecretStringAPI;
             }
 
             if (a.OpcClientRate != null && a.OpcClientRate < 200)
@@ -789,12 +794,16 @@ namespace AasxServer
                     "If set, reads existing AASX from temp at startup"),
 
                 new Option<string>(
-                    new[] {"--secret-string"},
+                    new[] {"--secret-string-api"},
                     "If set, allows UPDATE access by query parameter s="),
 
                 new Option<bool>(
                     new[] {"--html-id"},
-                    "If set, creates id for HTML objects in blazor tree for testing")
+                    "If set, creates id for HTML objects in blazor tree for testing"),
+
+                new Option<string>(
+                    new[] {"--tag"},
+                    "Only used to differ servers in task list")
             };
 
             if (args.Length == 0)

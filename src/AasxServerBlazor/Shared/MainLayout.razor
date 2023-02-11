@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
+@using System
 
 @*<div class="sidebar">
     <NavMenu />
@@ -95,7 +96,7 @@
                         </div>
                         <div class="content px-4 basis-3/3 hide-slim" style="padding: 0px !important;">
                             <!--
-                            <iframe src="https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=ZveiControlCabinetAas"
+                        <iframe src="@getIframePath()"
                                     id="iframe" style="width: 100%; height: 100%;"></iframe>
                             -->
                         </div>
@@ -104,3 +105,21 @@
         }
     }
 </div>
+
+@code{
+    static string path = "https://zvei-pcf.germanywestcentral.cloudapp.azure.com/dashboard/submodelView.html?id=ZveiControlCabinetAas";
+    static bool pathIntit = true;
+
+    static string getIframePath()
+    {
+        if (pathIntit)
+        {
+            pathIntit = false;
+            var p = Environment.GetEnvironmentVariable("IFRAMEPATH");
+            if (p != null)
+                path = p;
+        }
+
+        return path;
+    }
+}
