@@ -1153,7 +1153,8 @@ namespace AasxServer
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
-                                if (sm.IdShort.Contains("ProductCarbonFootprint") && sm.SubmodelElements != null)
+                                // ZVEI Level 1
+                                if (sm.IdShort == "ProductCarbonFootprint" && sm.SubmodelElements != null)
                                 {
                                     foreach (var v in sm.SubmodelElements)
                                     {
@@ -1204,6 +1205,77 @@ namespace AasxServer
                                                         break;
                                                     case "Distribution":
                                                         if (c.IdShort.Contains("FootprintInformationModule"))
+                                                        {
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                            cfp.distributionModule = co2eq;
+                                                        }
+                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                        {
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                            cfp.distributionCombination = co2eq;
+                                                        }
+                                                        break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                // ZVEI Level 2
+                                if (sm.IdShort == "CarbonFootprint" && sm.SubmodelElements != null)
+                                {
+                                    foreach (var v in sm.SubmodelElements)
+                                    {
+                                        if (v is SubmodelElementCollection c)
+                                        {
+                                            if (c.IdShort.Contains("CarbonFootprint"))
+                                            {
+                                                string lifeCyclePhase = "";
+                                                Property co2eq = null;
+                                                foreach (var v2 in c.Value)
+                                                {
+                                                    switch (v2.IdShort)
+                                                    {
+                                                        case "PCFLiveCyclePhase":
+                                                            lifeCyclePhase = v2.ValueAsText();
+                                                            break;
+                                                        case "PCFCO2eq":
+                                                        case "TCFCO2eq":
+                                                            co2eq = v2 as Property;
+                                                            break;
+                                                    }
+                                                }
+                                                if (c.IdShort == "TransportCarbonFootprint")
+                                                {
+                                                    lifeCyclePhase = "Distribution";
+                                                }
+                                                switch (lifeCyclePhase)
+                                                {
+                                                    case "Cradle-to-gate":
+                                                        if (c.IdShort.Contains("TotalCarbonFootprint"))
+                                                        {
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                            cfp.cradleToGateModule = co2eq;
+                                                        }
+                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                        {
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                            cfp.cradleToGateCombination = co2eq;
+                                                        }
+                                                        break;
+                                                    case "Production":
+                                                        if (c.IdShort.Contains("ProductCarbonFootprint"))
+                                                        {
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                            cfp.productionModule = co2eq;
+                                                        }
+                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                        {
+                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                            cfp.productionCombination = co2eq;
+                                                        }
+                                                        break;
+                                                    case "Distribution":
+                                                        if (c.IdShort.Contains("TransportCarbonFootprint"))
                                                         {
                                                             co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.distributionModule = co2eq;
