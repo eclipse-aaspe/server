@@ -1227,7 +1227,7 @@ namespace AasxServer
                                     {
                                         if (v is SubmodelElementCollection c)
                                         {
-                                            if (c.IdShort.Contains("CarbonFootprint"))
+                                            if (c.IdShort.Contains("ProductCarbonFootprint"))
                                             {
                                                 string lifeCyclePhase = "";
                                                 Property co2eq = null;
@@ -1235,23 +1235,19 @@ namespace AasxServer
                                                 {
                                                     switch (v2.IdShort)
                                                     {
-                                                        case "PCFLiveCyclePhase":
+                                                        case "PCFLifeCyclePhase":
                                                             lifeCyclePhase = v2.ValueAsText();
                                                             break;
                                                         case "PCFCO2eq":
-                                                        case "TCFCO2eq":
                                                             co2eq = v2 as Property;
                                                             break;
                                                     }
                                                 }
-                                                if (c.IdShort == "TransportCarbonFootprint")
-                                                {
-                                                    lifeCyclePhase = "Distribution";
-                                                }
                                                 switch (lifeCyclePhase)
                                                 {
                                                     case "Cradle-to-gate":
-                                                        if (c.IdShort.Contains("TotalCarbonFootprint"))
+                                                    case "A1-A3":
+                                                        if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                         {
                                                             co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.cradleToGateModule = co2eq;
@@ -1263,6 +1259,7 @@ namespace AasxServer
                                                         }
                                                         break;
                                                     case "Production":
+                                                    case "A3":
                                                         if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                         {
                                                             co2eq.Value = co2eq.Value.Replace(",", ".");
@@ -1275,7 +1272,8 @@ namespace AasxServer
                                                         }
                                                         break;
                                                     case "Distribution":
-                                                        if (c.IdShort.Contains("TransportCarbonFootprint"))
+                                                    case "A2":
+                                                        if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                         {
                                                             co2eq.Value = co2eq.Value.Replace(",", ".");
                                                             cfp.distributionModule = co2eq;
