@@ -1154,7 +1154,7 @@ namespace AasxServer
                             if (sm != null && sm.IdShort != null)
                             {
                                 // ZVEI Level 1
-                                if (sm.IdShort == "ProductCarbonFootprint" && sm.SubmodelElements != null)
+                                if (sm.IdShort.Contains("ProductCarbonFootprint") && sm.SubmodelElements != null)
                                 {
                                     foreach (var v in sm.SubmodelElements)
                                     {

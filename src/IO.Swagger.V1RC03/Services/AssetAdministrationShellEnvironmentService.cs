@@ -531,7 +531,7 @@ namespace IO.Swagger.V1RC03.Services
 
             if (found)
             {
-                SecurityCheck("", "aas", output);
+                // SecurityCheck("", "aas", output);
 
                 return output;
             }
