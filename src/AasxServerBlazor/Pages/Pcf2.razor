@@ -263,16 +263,11 @@
                                                         }
                                                     }
                                                 }
-                                                            /*
-                                                        if (textList.Count != 0)
-                                                {
-                                                @for (int i = 0; i < textList.Count; i++)
-                                                    {
-                                                    <span style="font-size:8pt; color:@colorList[i];">@(textList[i] + " ")</span>
-                                                        <a href="@link" target="_blank">@link</a>
-                                                        }
-                                                }
-                                                */
+
+                                                string aasLink = getAasLink(@node.aas);
+                                                if (AasxServer.Program.Email != "")
+                                                    aasLink += "?Email=" + AasxServer.Program.Email;
+                                                <a href="@aasLink" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
                                             }
                                         }
                                     </div>
