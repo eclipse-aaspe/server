@@ -1221,7 +1221,7 @@ namespace AasxServer
                                     }
                                 }
                                 // ZVEI Level 2
-                                if (sm.IdShort == "CarbonFootprint" && sm.SubmodelElements != null)
+                                if (sm.IdShort.Contains("CarbonFootprint") && sm.SubmodelElements != null)
                                 {
                                     foreach (var v in sm.SubmodelElements)
                                     {
