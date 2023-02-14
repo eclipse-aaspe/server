@@ -113,7 +113,7 @@
                                 var hideClass = "hidden";
                                 var hideCircle = hideClass; //always hide circle
                                 var hideElement = hideClass; //decide hiding of elements
-
+                                var aasIdEncoded = Base64UrlEncoder.Encode(node.aas.Id);
 
                                 <div class="node mb-2 flex flex-row space-x-2">
 
@@ -194,6 +194,8 @@
                                         <div class="self-center grow">
                                             <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
                                         </div>
+                                    
+                                        int i = 0;
                                     }
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
@@ -228,46 +230,50 @@
         </div>
     }
 
-    string getImageLink(File f, int envIndex)
-    {
-        if (f == null || envIndex == -1)
-            return null;
+}
 
-        if (f.Value != "")
+    @code {
+
+        static string getImageLink(File f, int envIndex)
         {
-            string[] split = f.Value.Split(new Char[] { '/' });
-            if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+            if (f == null || envIndex == -1)
+                return null;
+
+            if (f.Value != "")
             {
-                split = f.Value.Split(new Char[] { '.' });
-                switch (split.Last().ToLower())
+                string[] split = f.Value.Split(new Char[] { '/' });
+                if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
                 {
-                    case "jpg":
-                    case "bmp":
-                    case "png":
-                        try
-                        {
-                            // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
-                            var sme = f;
-                            string path = sme.IdShort;
-                            var p = sme.Parent;
-                            while (!(p is Submodel))
+                    split = f.Value.Split(new Char[] { '.' });
+                    switch (split.Last().ToLower())
+                    {
+                        case "jpg":
+                        case "bmp":
+                        case "png":
+                            try
                             {
-                                path = (p as ISubmodelElement).IdShort + "." + path;
-                                p = (p as ISubmodelElement).Parent;
+                                // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
+                                var sme = f;
+                                string path = sme.IdShort;
+                                var p = sme.Parent;
+                                while (!(p is Submodel))
+                                {
+                                    path = (p as ISubmodelElement).IdShort + "." + path;
+                                    p = (p as ISubmodelElement).Parent;
+                                }
+                                var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
+                                path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
+                                return path + "/attachment";
                             }
-                            var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
-                            path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
-                            return path + "/attachment";
-                        }
-                        catch { }
-                        break;
+                            catch { }
+                            break;
                     }
                 }
             }
             return null;
         }
 
-        string getImage(File f, int envIndex)
+        static string getImage(File f, int envIndex)
         {
             if (f == null || envIndex == -1)
                 return null;
@@ -304,9 +310,7 @@
             }
             return null;
         }
-    }
 
-    @code {
         protected override void OnInitialized()
         {
             SubmodelService.NewDataAvailable += NewData;
