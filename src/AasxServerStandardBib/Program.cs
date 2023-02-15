@@ -312,6 +312,7 @@ namespace AasxServer
                 Console.WriteLine("secretStringAPI = " + secretStringAPI);
                 secretStringAPI = a.SecretStringAPI;
             }
+            AasxCredentials.init();
 
             if (a.OpcClientRate != null && a.OpcClientRate < 200)
             {

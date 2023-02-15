@@ -17,6 +17,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AasCore.Aas3_0_RC02;
+using AasxServer;
 using AasxTimeSeries;
 using AdminShellNS;
 using Extenstions;
@@ -24,6 +25,7 @@ using IdentityModel.Client;
 using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -32,6 +34,7 @@ using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using static QRCoder.PayloadGenerator;
 using Key = AasCore.Aas3_0_RC02.Key;
 
 namespace IO.Swagger.Registry.Controllers
@@ -1059,8 +1062,10 @@ namespace IO.Swagger.Registry.Controllers
                                     }
                                     requestPath = endpoint;
                                     string queryPara = "";
-                                    if (AasxServer.Program.Email != "")
-                                        queryPara = "?Email=" + AasxServer.Program.Email;
+                                    AasxCredentials.get(requestPath, out queryPara);
+                                    // if (AasxServer.Program.Email != "")
+                                    //    queryPara = "?Email=" + AasxServer.Program.Email;
+                                    queryPara = "?" + queryPara;
                                     AasxServer.Program.submodelAPIcount++;
 
                                     switch (sd.IdShort)

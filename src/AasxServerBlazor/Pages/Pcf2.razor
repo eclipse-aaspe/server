@@ -97,6 +97,7 @@
 
                             if (view)
                             {
+                                string email2 = "";
                                 // string productImage = getImage(node.productImage, node.envIndex);
                                 // string manufacturerLogo = getImage(node.manufacturerLogo, node.envIndex);
                                 string productImage = null;
@@ -218,55 +219,65 @@
                                             }
                                             <div class="self-center grow">
                                             <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
-                                            @{
-                                                if (node.aas != null)
-                                                {
-                                                    // List<string> textList = new List<string>();
-                                                    // List<string> colorList = new List<string>();
-                                                    string id = null;
-                                                    string color = null;
+                                        @{
+                                            if (node.aas != null)
+                                            {
+                                                // List<string> textList = new List<string>();
+                                                // List<string> colorList = new List<string>();
+                                                string id = null;
+                                                string color = null;
 
-                                                    foreach (var smr in node.aas.Submodels)
+                                                foreach (var smr in node.aas.Submodels)
+                                                {
+                                                    var sm = Program.env[node.envIndex].AasEnv.FindSubmodel(smr);
+                                                    if (sm != null)
                                                     {
-                                                        var sm = Program.env[node.envIndex].AasEnv.FindSubmodel(smr);
-                                                        if (sm != null)
+                                                        if (sm.IdShort == "tasks")
+                                                            continue;
+                                                        id = sm.IdShort;
+                                                        if (id.Contains(" - NO ACCESS"))
                                                         {
-                                                            if (sm.IdShort == "tasks")
-                                                                continue;
-                                                            id = sm.IdShort;
-                                                            if (id.Contains(" - NO ACCESS"))
+                                                            id = id.Replace(" - NO ACCESS", "");
+                                                            // colorList.Add("red");
+                                                            color = "red";
+                                                        }
+                                                        else
+                                                        {
+                                                            if (id.Contains(" - EXTERNAL"))
                                                             {
-                                                                id = id.Replace(" - NO ACCESS", "");
-                                                                // colorList.Add("red");
-                                                                color = "red";
+                                                                id = id.Replace(" - EXTERNAL", "");
                                                             }
-                                                            else
+                                                            if (id.Contains(" - COPY"))
                                                             {
-                                                                if (id.Contains(" - EXTERNAL"))
-                                                                {
-                                                                    id = id.Replace(" - EXTERNAL", "");
-                                                                }
-                                                                if (id.Contains(" - COPY"))
-                                                                {
-                                                                    id = id.Replace(" - COPY", "");
-                                                                }
-                                                                // colorList.Add("green");
-                                                                color = "green";
+                                                                id = id.Replace(" - COPY", "");
                                                             }
-                                                            // textList.Add(id);
-                                                            if (id != null && color != null)
+                                                            // colorList.Add("green");
+                                                            color = "green";
+                                                        }
+                                                        // textList.Add(id);
+                                                        if (id != null && color != null)
+                                                        {
+                                                            string link = getSmLink(sm);
+                                                            string email = "";
+                                                            if (AasxCredentials.get(link, out email))
                                                             {
-                                                                string link = getSmLink(sm);
-                                                                if (AasxServer.Program.Email != "")
-                                                                    link += "?Email=" + AasxServer.Program.Email;
+                                                                link += "?" + email;
+                                                                // if (AasxServer.Program.Email != "")
+                                                                // link += "?Email=" + AasxServer.Program.Email;
+                                                            }
                                                                 <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
                                                             }
                                                         }
                                                     }
 
                                                     string aasLink = getAasLink(@node.aas);
-                                                    if (AasxServer.Program.Email != "")
-                                                        aasLink += "?Email=" + AasxServer.Program.Email;
+                                                    if (AasxCredentials.get(aasLink, out email2))
+                                                    {
+                                                        // if (AasxServer.Program.Email != "")
+                                                        aasLink += "?" + email2;
+                                                    }
+                                                    // if (AasxServer.Program.Email != "")
+                                                    //        aasLink += "?Email=" + AasxServer.Program.Email;
                                                     <a href="@aasLink" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
                                                 }
                                             }
@@ -276,7 +287,7 @@
                                     }
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
-                                            onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@aasUrl&Email=@AasxServer.Program.Email'"
+                                            onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@aasUrl&Email=@email2'"
                                                 style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
@@ -400,8 +411,13 @@
                             string endpoint = getSmLink(sm);
                             path = endpoint + "/submodelelements/" + path;
                             path += "/attachment";
-                            if (AasxServer.Program.Email != "")
-                                path += "?Email=" + AasxServer.Program.Email;
+                            string email = "";
+                            if (AasxCredentials.get(path, out email))
+                            {
+                                path += "?" + email;
+                            }
+                            // if (AasxServer.Program.Email != "")
+                            //    path += "?Email=" + AasxServer.Program.Email;
                             return path;
                         }
                         catch { }

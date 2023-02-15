@@ -57,19 +57,32 @@
                                 <!-- label -->
                                 <div class="ml-3 text-gray-700 font-medium">
                                     <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount</span>&nbsp&nbsp
-                                <input @bind="CurrentValue" /> <span style="border-width: 1px; color: blue;">@AasxServer.Program.Email</span>&nbsp&nbsp
-                                    @code { private string CurrentValue { get; set; } }
+                                <input @bind="CurrentValue" /> <span style="border-width: 1px; color: blue;">@input</span>&nbsp&nbsp
+                                @code {
+                                private string CurrentValue { get; set; }
+                            }
                                     @{
-                                        if (CurrentValue != null && CurrentValue != "")
+                                    if (CurrentValue != null && CurrentValue != "")
+                                    {
+                                        if (CurrentValue == "count=0")
                                         {
-                                            if (CurrentValue == "count=0")
+                                            AasxServer.Program.submodelAPIcount = 0;
+                                        }
+                                        else
+                                        {
+                                            if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
                                             {
-                                                AasxServer.Program.submodelAPIcount = 0;
-                                            }
-                                            else
-                                            {
+                                                CurrentValue.Replace("Email=", "");
                                                 AasxServer.Program.Email = CurrentValue;
-                                                IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow, true);
+                                                input = CurrentValue;
+                                            }
+                                            if (CurrentValue.Contains("CREDENTIALS-"))
+                                            {
+                                                input = CurrentValue;
+                                                AasxServer.AasxCredentials.init(CurrentValue);
+                                                AasxServer.Program.Email = "";
+                                            }
+                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow, true);
                                             }
                                             CurrentValue = "";
                                             this.StateHasChanged();
@@ -105,6 +118,7 @@
 </div>
 
 @code{
+    static string input = "";
     static string path = "";
     static bool pathIntit = true;
 
