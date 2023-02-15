@@ -220,8 +220,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<SpecificAssetId> assetIds, [FromQuery] string idShort)
         {
-            _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
-            _aasEnvService.SecurityCheck();
+            // _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
+            // _aasEnvService.SecurityCheck();
 
             var output = _aasEnvService.GetAllAssetAdministrationShells(assetIds, idShort);
 

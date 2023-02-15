@@ -206,77 +206,77 @@
                                         }
                                     }
 
-                                @{
-                                    string text = node.productDesignation;
-                                    if (text.Contains(" - EXTERNAL"))
-                                    {
-                                        text = text.Replace(" - EXTERNAL", "");
-                                    }
-                                    if (viewCombination)
+                                    @{
+                                        string text = node.productDesignation;
+                                        if (text.Contains(" - EXTERNAL"))
                                         {
-                                            text = "Combination - " + text;
+                                            text = text.Replace(" - EXTERNAL", "");
                                         }
-                                        <div class="self-center grow">
-                                        <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
-                                        @{
-                                            if (node.aas != null)
+                                        if (viewCombination)
                                             {
-                                                // List<string> textList = new List<string>();
-                                                // List<string> colorList = new List<string>();
-                                                string id = null;
-                                                string color = null;
-
-                                                foreach (var smr in node.aas.Submodels)
+                                                text = "Combination - " + text;
+                                            }
+                                            <div class="self-center grow">
+                                            <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
+                                            @{
+                                                if (node.aas != null)
                                                 {
-                                                    var sm = Program.env[node.envIndex].AasEnv.FindSubmodel(smr);
-                                                    if (sm != null)
+                                                    // List<string> textList = new List<string>();
+                                                    // List<string> colorList = new List<string>();
+                                                    string id = null;
+                                                    string color = null;
+
+                                                    foreach (var smr in node.aas.Submodels)
                                                     {
-                                                        if (sm.IdShort == "tasks")
-                                                            continue;
-                                                        id = sm.IdShort;
-                                                        if (id.Contains(" - NO ACCESS"))
+                                                        var sm = Program.env[node.envIndex].AasEnv.FindSubmodel(smr);
+                                                        if (sm != null)
                                                         {
-                                                            id = id.Replace(" - NO ACCESS", "");
-                                                            // colorList.Add("red");
-                                                            color = "red";
-                                                        }
-                                                        else
-                                                        {
-                                                            if (id.Contains(" - EXTERNAL"))
+                                                            if (sm.IdShort == "tasks")
+                                                                continue;
+                                                            id = sm.IdShort;
+                                                            if (id.Contains(" - NO ACCESS"))
                                                             {
-                                                                id = id.Replace(" - EXTERNAL", "");
+                                                                id = id.Replace(" - NO ACCESS", "");
+                                                                // colorList.Add("red");
+                                                                color = "red";
                                                             }
-                                                            if (id.Contains(" - COPY"))
+                                                            else
                                                             {
-                                                                id = id.Replace(" - COPY", "");
+                                                                if (id.Contains(" - EXTERNAL"))
+                                                                {
+                                                                    id = id.Replace(" - EXTERNAL", "");
+                                                                }
+                                                                if (id.Contains(" - COPY"))
+                                                                {
+                                                                    id = id.Replace(" - COPY", "");
+                                                                }
+                                                                // colorList.Add("green");
+                                                                color = "green";
                                                             }
-                                                            // colorList.Add("green");
-                                                            color = "green";
-                                                        }
-                                                        // textList.Add(id);
-                                                        if (id != null && color != null)
-                                                        {
-                                                            string link = getSmLink(sm);
-                                                            if (AasxServer.Program.Email != "")
-                                                                link += "?Email=" + AasxServer.Program.Email;
-                                                            <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                            // textList.Add(id);
+                                                            if (id != null && color != null)
+                                                            {
+                                                                string link = getSmLink(sm);
+                                                                if (AasxServer.Program.Email != "")
+                                                                    link += "?Email=" + AasxServer.Program.Email;
+                                                                <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                            }
                                                         }
                                                     }
-                                                }
 
-                                                string aasLink = getAasLink(@node.aas);
-                                                if (AasxServer.Program.Email != "")
-                                                    aasLink += "?Email=" + AasxServer.Program.Email;
-                                                <a href="@aasLink" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
+                                                    string aasLink = getAasLink(@node.aas);
+                                                    if (AasxServer.Program.Email != "")
+                                                        aasLink += "?Email=" + AasxServer.Program.Email;
+                                                    <a href="@aasLink" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
+                                                }
                                             }
-                                        }
-                                    </div>
-                                    string aasUrl = getAasLink(@node.aas);
-                                    string iframePath = getIframePath();
-                                }
+                                        </div>
+                                        string aasUrl = getAasLink(@node.aas);
+                                        string iframePath = getIframePath();
+                                    }
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
-                                                onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@aasUrl'"
+                                            onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@aasUrl&Email=@AasxServer.Program.Email'"
                                                 style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
