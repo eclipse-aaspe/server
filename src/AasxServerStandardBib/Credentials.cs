@@ -13,14 +13,20 @@ using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace AasxServer
 {
-    class AasxCredentialsEntry
+    public class AasxCredentialsEntry
     {
+        // input
         public string urlPrefix = string.Empty;
         public string type = string.Empty;
         public List<string> parameters = new List<string>();
+        // store state
+        public string bearer = string.Empty;
+        public DateTime bearerValidFrom = DateTime.MinValue;
+        public DateTime bearerValidTo = DateTime.MinValue;
     }
 
     public class AasxCredentials
@@ -67,7 +73,6 @@ namespace AasxServer
                     return;
                 }
             }
-            // bearerInit("https://admin-shell-io.com/50001", "Andreas_Orzelski_Chain.pfx", "i40");
         }
 
         public static bool get(string urlPath, out string queryPara, out string userPW)
@@ -110,20 +115,9 @@ namespace AasxServer
                             }
                             break;
                         case "bearer":
-                            if (!bearerInitialized)
-                            {
-                                string authServerEndPoint = credentials[i].parameters[0];
-                                string clientCertificate = credentials[i].parameters[1];
-                                string clientCertificatePW = credentials[i].parameters[2];
-
-                                bearerInit(authServerEndPoint, clientCertificate, clientCertificatePW);
-                            }
-                            if (bearer != null)
-                            {
-                                queryPara = "bearer=" + bearer;
-                                return true;
-                            }
-                            break;
+                            bearerCheckAndInit(credentials[i]);
+                            queryPara = "bearer=" + credentials[i].bearer;
+                            return true;
                     }
                 }
             }
@@ -131,24 +125,32 @@ namespace AasxServer
             return false; // no entry found
         }
 
-        public static bool bearerInitialized = false;
-        public static string bearer = null;
-        public static void bearerInit(string authServerEndPoint, string clientCertificate, string clientCertificatePW)
+        public static void bearerCheckAndInit(AasxCredentialsEntry c)
         {
-            if (bearerInitialized)
-                return;
-            bearerInitialized = true;
+            // check if existing bearer is still valid
+            if (c.bearer != string.Empty)
+            {
+                bool valid = true;
+                if (c.bearerValidFrom > DateTime.UtcNow || c.bearerValidTo < DateTime.UtcNow)
+                    valid = false;
+                if (valid)
+                    return;
+            }
 
+            string authServerEndPoint = c.parameters[0];
+            string clientCertificate = c.parameters[1];
+            string clientCertificatePW = c.parameters[2];
 
             if (authServerEndPoint != null && clientCertificate != null && clientCertificatePW != null)
             {
                 Console.WriteLine("authServerEndPoint " + authServerEndPoint);
                 Console.WriteLine("clientCertificate " + clientCertificate);
                 Console.WriteLine("clientCertificatePW " + clientCertificatePW);
-                if (bearer != null)
+
+                if (c.bearer != string.Empty)
                 {
                     bool valid = true;
-                    var jwtToken = new JwtSecurityToken(bearer);
+                    var jwtToken = new JwtSecurityToken(c.bearer);
                     if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
                         valid = false;
                     if (valid) return;
@@ -209,20 +211,19 @@ namespace AasxServer
 
                     var now = DateTime.UtcNow;
                     var token = new JwtSecurityToken(
-                            clientId,
-                            disco.TokenEndpoint,
-                            new List<Claim>()
-                            {
-                                                        new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
-                                                        new Claim(JwtClaimTypes.Subject, clientId),
-                                                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
-                                                        // OZ
-                                                        new Claim(JwtClaimTypes.Email, email)
-                            },
-                            now,
-                            now.AddMinutes(1),
-                            credential)
-                    ;
+                        clientId,
+                        disco.TokenEndpoint,
+                        new List<Claim>()
+                        {
+                            new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
+                            new Claim(JwtClaimTypes.Subject, clientId),
+                            new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
+                            // OZ
+                            new Claim(JwtClaimTypes.Email, email)
+                        },
+                        now,
+                        now.AddMinutes(1),
+                        credential);
 
                     token.Header.Add("x5c", x5c);
                     var tokenHandler = new JwtSecurityTokenHandler();
@@ -247,8 +248,18 @@ namespace AasxServer
 
                     if (response.IsError) return;
 
-                    bearer = response.AccessToken;
-                    Console.WriteLine("bearer = " + bearer);
+                    c.bearer = response.AccessToken;
+                    Console.WriteLine("bearer = " + c.bearer);
+                    var jwtToken = new JwtSecurityToken(c.bearer);
+                    if (jwtToken == null)
+                    {
+                        c.bearer = string.Empty;
+                        return;
+                    }
+                    c.bearerValidFrom = jwtToken.ValidFrom;
+                    c.bearerValidTo = jwtToken.ValidTo;
+                    Console.WriteLine("Valid from: " + jwtToken.ValidFrom);
+                    Console.WriteLine("Valid to: " + jwtToken.ValidTo);
                 }
             }
         }
