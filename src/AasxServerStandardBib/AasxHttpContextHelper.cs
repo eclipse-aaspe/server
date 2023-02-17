@@ -3779,14 +3779,26 @@ namespace AasxRestServerLibrary
                             string username = credentials[0];
                             string password = credentials[1];
 
-                            int userCount = securityUserName.Count;
-
-                            for (int i = 0; i < userCount; i++)
+                            if (username != null && password != null)
                             {
-                                if (username == securityUserName[i] && password == securityUserPassword[i])
+                                if (password == "EMAIL")
                                 {
                                     user = username;
-                                    break;
+                                    if (!user.Contains("@"))
+                                        user = "@" + user;
+                                }
+                            }
+                            else
+                            {
+                                int userCount = securityUserName.Count;
+
+                                for (int i = 0; i < userCount; i++)
+                                {
+                                    if (username == securityUserName[i] && password == securityUserPassword[i])
+                                    {
+                                        user = username;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -3827,6 +3839,26 @@ namespace AasxRestServerLibrary
                 Console.WriteLine("Received Email query string = " + token);
                 user = token;
                 error = false;
+            }
+            // Username+password query string
+            token = queryString["_up"];
+            if (token != null)
+            {
+                var credentialBytes = Convert.FromBase64String(token);
+                var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+                string username = credentials[0];
+                string password = credentials[1];
+
+                if (username != null && password != null)
+                {
+                    if (password == "EMAIL")
+                    {
+                        user = username;
+                        if (!user.Contains("@"))
+                            user = "@" + user;
+                    }
+                    Console.WriteLine("Received username+password query string = " + user);
+                }
             }
 
             if (!error)

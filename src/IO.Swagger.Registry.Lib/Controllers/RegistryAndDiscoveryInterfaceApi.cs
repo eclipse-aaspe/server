@@ -13,6 +13,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -1062,10 +1063,20 @@ namespace IO.Swagger.Registry.Controllers
                                     }
                                     requestPath = endpoint;
                                     string queryPara = "";
-                                    AasxCredentials.get(requestPath, out queryPara);
-                                    // if (AasxServer.Program.Email != "")
-                                    //    queryPara = "?Email=" + AasxServer.Program.Email;
-                                    queryPara = "?" + queryPara;
+                                    string userPW = "";
+                                    client.DefaultRequestHeaders.Clear();
+                                    if (AasxCredentials.get(requestPath, out queryPara, out userPW))
+                                    {
+                                        if (queryPara != "")
+                                            queryPara = "?" + queryPara;
+                                        if (userPW != "")
+                                        {
+                                            var bytes = Encoding.ASCII.GetBytes(userPW);
+                                            var basicAuth64 = Convert.ToBase64String(bytes);
+                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicAuth64);
+                                        }
+                                    }
+
                                     AasxServer.Program.submodelAPIcount++;
 
                                     switch (sd.IdShort)

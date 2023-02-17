@@ -312,7 +312,6 @@ namespace AasxServer
                 Console.WriteLine("secretStringAPI = " + secretStringAPI);
                 secretStringAPI = a.SecretStringAPI;
             }
-            AasxCredentials.init();
 
             if (a.OpcClientRate != null && a.OpcClientRate < 200)
             {
@@ -401,6 +400,8 @@ namespace AasxServer
                 }
             }
             */
+
+            AasxCredentials.init();
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");

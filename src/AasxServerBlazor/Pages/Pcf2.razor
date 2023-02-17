@@ -220,6 +220,10 @@
                                             <div class="self-center grow">
                                             <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
                                         @{
+                                            string link = "";
+                                            string queryPara = "";
+                                            string userPW = "";
+
                                             if (node.aas != null)
                                             {
                                                 // List<string> textList = new List<string>();
@@ -257,37 +261,66 @@
                                                         // textList.Add(id);
                                                         if (id != null && color != null)
                                                         {
-                                                            string link = getSmLink(sm);
-                                                            string email = "";
-                                                            if (AasxCredentials.get(link, out email))
+                                                            link = getSmLink(sm);
+                                                            queryPara = "";
+                                                            userPW = "";
+                                                            if (AasxCredentials.get(link, out queryPara, out userPW))
                                                             {
-                                                                link += "?" + email;
-                                                                // if (AasxServer.Program.Email != "")
-                                                                // link += "?Email=" + AasxServer.Program.Email;
+                                                                if (queryPara != "")
+                                                                {
+                                                                    link += "?" + queryPara;
+                                                                }
+                                                                if (userPW != "")
+                                                                {
+                                                                    link = link.Replace("https://", "https://" + userPW + "@");
+                                                                    link = link.Replace("http://", "http://" + userPW + "@");
+                                                                }
                                                             }
-                                                                <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
-                                                            }
+                                                            <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
                                                         }
                                                     }
-
-                                                    string aasLink = getAasLink(@node.aas);
-                                                    if (AasxCredentials.get(aasLink, out email2))
-                                                    {
-                                                        // if (AasxServer.Program.Email != "")
-                                                        aasLink += "?" + email2;
-                                                    }
-                                                    // if (AasxServer.Program.Email != "")
-                                                    //        aasLink += "?Email=" + AasxServer.Program.Email;
-                                                    <a href="@aasLink" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
                                                 }
+
+                                                link = getAasLink(@node.aas);
+                                                queryPara = "";
+                                                userPW = "";
+                                                if (AasxCredentials.get(link, out queryPara, out userPW))
+                                                {
+                                                    if (queryPara != "")
+                                                    {
+                                                        link += "?" + queryPara;
+                                                    }
+                                                    if (userPW != "")
+                                                    {
+                                                        link = link.Replace("https://", "https://" + userPW + "@");
+                                                        link = link.Replace("http://", "http://" + userPW + "@");
+                                                    }
+                                                }
+
+                                                <a href="@link" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
                                             }
+                                        }
                                         </div>
-                                        string aasUrl = getAasLink(@node.aas);
+                                        link = getAasLink(@node.aas);
+                                        queryPara = "";
+                                        userPW = "";
+                                        if (AasxCredentials.get(link, out queryPara, out userPW))
+                                        {
+                                            if (queryPara != "")
+                                            {
+                                                link += "?" + queryPara;
+                                            }
+                                            if (userPW != "")
+                                            {
+                                                link = link.Replace("https://", "https://" + userPW + "@");
+                                                link = link.Replace("http://", "http://" + userPW + "@");
+                                            }
+                                        }
                                         string iframePath = getIframePath();
                                     }
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
-                                            onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@aasUrl&Email=@email2'"
+                                            onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link'"
                                                 style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
@@ -411,13 +444,22 @@
                             string endpoint = getSmLink(sm);
                             path = endpoint + "/submodelelements/" + path;
                             path += "/attachment";
-                            string email = "";
-                            if (AasxCredentials.get(path, out email))
+
+                            string queryPara = "";
+                            string userPW = "";
+                            if (AasxCredentials.get(path, out queryPara, out userPW))
                             {
-                                path += "?" + email;
+                                if (queryPara != "")
+                                {
+                                    path += "?" + queryPara;
+                                }
+                                if (userPW != "")
+                                {
+                                    path = path.Replace("https://", "https://" + userPW + "@");
+                                    path = path.Replace("http://", "http://" + userPW + "@");
+                                }
                             }
-                            // if (AasxServer.Program.Email != "")
-                            //    path += "?Email=" + AasxServer.Program.Email;
+
                             return path;
                         }
                         catch { }
