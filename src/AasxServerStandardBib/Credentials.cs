@@ -35,7 +35,7 @@ namespace AasxServer
 
         public static void init()
         {
-            init("CREDENTIALS-DEFAULT.DAT");
+            init("CREDENTIALS-PUBLIC.DAT");
         }
         public static void init(string fileName)
         {
