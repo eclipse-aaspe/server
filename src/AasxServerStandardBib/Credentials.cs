@@ -31,15 +31,9 @@ namespace AasxServer
 
     public class AasxCredentials
     {
-        static List<AasxCredentialsEntry> credentials = new List<AasxCredentialsEntry>();
-
-        public static void init()
+        public static void init(List<AasxCredentialsEntry> cList, string fileName)
         {
-            init("CREDENTIALS-PUBLIC.DAT");
-        }
-        public static void init(string fileName)
-        {
-            credentials.Clear();
+            cList.Clear();
             if (File.Exists(fileName))
             {
                 try
@@ -59,7 +53,7 @@ namespace AasxServer
                                     c.type = cols[1];
                                     for (int i = 2; i < cols.Length; i++)
                                         c.parameters.Add(cols[i]);
-                                    credentials.Add(c);
+                                    cList.Add(c);
                                 }
                             }
                             line = sr.ReadLine();
@@ -75,7 +69,7 @@ namespace AasxServer
             }
         }
 
-        public static bool get(string urlPath, out string queryPara, out string userPW)
+        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW)
         {
             queryPara="";
             userPW="";
@@ -86,28 +80,28 @@ namespace AasxServer
                 return true;
             }
 
-            for (int i = 0; i < credentials.Count; i++)
+            for (int i = 0; i < cList.Count; i++)
             {
-                int len = credentials[i].urlPrefix.Length;
+                int len = cList[i].urlPrefix.Length;
                 string u = urlPath.Substring(0, len);
-                if (u == credentials[i].urlPrefix)
+                if (u == cList[i].urlPrefix)
                 {
-                    switch (credentials[i].type)
+                    switch (cList[i].type)
                     {
                         case "email":
-                            queryPara = "Email=" + credentials[i].parameters[0];
+                            queryPara = "Email=" + cList[i].parameters[0];
                             return true;
                         case "basicauth":
-                            if (credentials[i].parameters.Count == 2)
+                            if (cList[i].parameters.Count == 2)
                             {
-                                userPW = credentials[i].parameters[0] + ":" + credentials[i].parameters[1];
+                                userPW = cList[i].parameters[0] + ":" + cList[i].parameters[1];
                                 return true;
                             }
                             break;
                         case "userpw":
-                            if (credentials[i].parameters.Count == 2)
+                            if (cList[i].parameters.Count == 2)
                             {
-                                var upw = credentials[i].parameters[0] + ":" + credentials[i].parameters[1];
+                                var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
                                 var bytes = Encoding.ASCII.GetBytes(upw);
                                 var basicAuth64 = Convert.ToBase64String(bytes);
                                 queryPara = "_up=" + basicAuth64;
@@ -115,8 +109,8 @@ namespace AasxServer
                             }
                             break;
                         case "bearer":
-                            bearerCheckAndInit(credentials[i]);
-                            queryPara = "bearer=" + credentials[i].bearer;
+                            bearerCheckAndInit(cList[i]);
+                            queryPara = "bearer=" + cList[i].bearer;
                             return true;
                     }
                 }

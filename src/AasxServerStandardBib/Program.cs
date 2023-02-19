@@ -401,8 +401,6 @@ namespace AasxServer
             }
             */
 
-            AasxCredentials.init();
-
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");

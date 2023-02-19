@@ -862,7 +862,7 @@ namespace IO.Swagger.Registry.Controllers
 
 #pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
 #pragma warning disable IDE1006 // Benennungsstile
-        public static void initRegistry(DateTime timestamp, bool initAgain = false)
+        public static void initRegistry(List<AasxCredentialsEntry> cList, DateTime timestamp, bool initAgain = false)
 #pragma warning restore IDE1006 // Benennungsstile
 #pragma warning restore CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
         {
@@ -1065,7 +1065,7 @@ namespace IO.Swagger.Registry.Controllers
                                     string queryPara = "";
                                     string userPW = "";
                                     client.DefaultRequestHeaders.Clear();
-                                    if (AasxCredentials.get(requestPath, out queryPara, out userPW))
+                                    if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW))
                                     {
                                         if (queryPara != "")
                                             queryPara = "?" + queryPara;

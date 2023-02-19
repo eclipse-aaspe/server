@@ -57,38 +57,46 @@
                                 <!-- label -->
                                 <div class="ml-3 text-gray-700 font-medium">
                                     <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount</span>&nbsp&nbsp
+                                @{
+                                    if (input == "")
+                                    {
+                                        input = "CREDENTIALS-PUBLIC.DAT";
+                                        AasxServer.AasxCredentials.init(credentials, input);
+                                        IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(credentials, DateTime.UtcNow, true);
+                                    }
+                                }
                                 <input @bind="CurrentValue" /> <span style="border-width: 1px; color: blue;">@input</span>&nbsp&nbsp
                                 @code {
-                                private string CurrentValue { get; set; }
-                            }
-                                    @{
-                                    if (CurrentValue != null && CurrentValue != "")
+                                    private string CurrentValue { get; set; }
+                                }
+                                @{
+                                if (CurrentValue != null && CurrentValue != "")
+                                {
+                                    if (CurrentValue == "count=0")
                                     {
-                                        if (CurrentValue == "count=0")
-                                        {
-                                            AasxServer.Program.submodelAPIcount = 0;
-                                        }
-                                        else
-                                        {
-                                            if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
-                                            {
-                                                CurrentValue.Replace("Email=", "");
-                                                AasxServer.Program.Email = CurrentValue;
-                                                input = CurrentValue;
-                                            }
-                                            if (CurrentValue.Contains("CREDENTIALS-"))
-                                            {
-                                                input = CurrentValue;
-                                                AasxServer.AasxCredentials.init(CurrentValue);
-                                                AasxServer.Program.Email = "";
-                                            }
-                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow, true);
-                                            }
-                                            CurrentValue = "";
-                                            this.StateHasChanged();
-                                        }
+                                        AasxServer.Program.submodelAPIcount = 0;
                                     }
-                                    Disclaimer: displayed PCF values are for demo purposes only
+                                    else
+                                    {
+                                        if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
+                                        {
+                                            CurrentValue.Replace("Email=", "");
+                                            AasxServer.Program.Email = CurrentValue;
+                                            input = CurrentValue;
+                                        }
+                                        if (CurrentValue.Contains("CREDENTIALS-"))
+                                        {
+                                            input = CurrentValue;
+                                            AasxServer.AasxCredentials.init(credentials, CurrentValue);
+                                            AasxServer.Program.Email = "";
+                                        }
+                                        IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(credentials, DateTime.UtcNow, true);
+                                        }
+                                        CurrentValue = "";
+                                        this.StateHasChanged();
+                                    }
+                                }
+                                Disclaimer: displayed PCF values are for demo purposes only
                                 </div>
                                 <div class="relative ml-2">
                                     <!-- input -->
@@ -118,6 +126,7 @@
 </div>
 
 @code{
+    public static List<AasxServer.AasxCredentialsEntry> credentials = new List<AasxServer.AasxCredentialsEntry>();
     static string input = "";
     static string path = "";
     static bool pathIntit = true;
