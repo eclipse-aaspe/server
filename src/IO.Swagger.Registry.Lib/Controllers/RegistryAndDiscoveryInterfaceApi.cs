@@ -989,7 +989,7 @@ namespace IO.Swagger.Registry.Controllers
                         HttpResponseMessage response = new HttpResponseMessage();
                         try
                         {
-                            Console.WriteLine("GET" + requestPath);
+                            Console.WriteLine("GET " + requestPath);
                             var task = Task.Run(async () =>
                             {
                                 response = await client.GetAsync(requestPath);
