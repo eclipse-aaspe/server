@@ -3,6 +3,7 @@
 @using AasCore.Aas3_0_RC02
 @using Data
 @inject AASService SubmodelService
+@inject CredentialService cs
 @using AasxServer;
 @using Extenstions;
 @using Microsoft.IdentityModel.Tokens;
@@ -161,7 +162,7 @@
                                                 var maxWidthPx = maxWidth + "px";
 
                                                 // <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
-                                                productImage = getImageLink(node.productImage, node.envIndex);
+                                                productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
                                                 if (productImage != null)
                                                 {
                                                     <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
@@ -171,7 +172,7 @@
                                     }
 
                                     @{
-                                        productImage = getImageLink(node.productImage, node.envIndex);
+                                        productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
                                         if (productImage != null)
                                         {
                                             <img src=@productImage class="h-16" style="max-width: 50px; object-fit: contain;" />
@@ -190,7 +191,7 @@
                                                 var maxWidthPx = maxWidth + "px";
 
                                                 // <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
-                                                manufacturerLogo = getImageLink(node.manufacturerLogo, node.envIndex);
+                                                manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
                                                 if (manufacturerLogo != null)
                                                 {
                                                     <img src=@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
@@ -200,7 +201,7 @@
                                     }
 
                                     @{
-                                        manufacturerLogo = getImageLink(node.manufacturerLogo, node.envIndex);
+                                        manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
                                         if (manufacturerLogo != null)
                                         {
                                             <img src=@manufacturerLogo style="max-width: 50px; object-fit: contain;" class="self-center" />
@@ -264,7 +265,7 @@
                                                             link = getSmLink(sm);
                                                             queryPara = "";
                                                             userPW = "";
-                                                            if (AasxCredentials.get(MainLayout.credentials, link, out queryPara, out userPW))
+                                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW))
                                                             {
                                                                 if (queryPara != "")
                                                                 {
@@ -284,7 +285,7 @@
                                                 link = getAasLink(@node.aas);
                                                 queryPara = "";
                                                 userPW = "";
-                                                if (AasxCredentials.get(MainLayout.credentials, link, out queryPara, out userPW))
+                                                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW))
                                                 {
                                                     if (queryPara != "")
                                                     {
@@ -304,7 +305,7 @@
                                         link = getAasLink(@node.aas);
                                         queryPara = "";
                                         userPW = "";
-                                    if (AasxCredentials.get(MainLayout.credentials, link, out queryPara, out userPW))
+                                    if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW))
                                         {
                                             if (queryPara != "")
                                             {
@@ -412,7 +413,7 @@
         return endpoint;
     }
 
-    static string getImageLink(File f, int envIndex)
+    static string getImageLink(List<AasxCredentialsEntry> credentials, File f, int envIndex)
     {
         if (f == null || envIndex == -1)
             return null;
@@ -447,7 +448,7 @@
 
                             string queryPara = "";
                             string userPW = "";
-                            if (AasxCredentials.get(MainLayout.credentials, path, out queryPara, out userPW))
+                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW))
                             {
                                 if (queryPara != "")
                                 {

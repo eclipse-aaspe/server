@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
+@inject Data.CredentialService cs
 @using System
 
 @*<div class="sidebar">
@@ -10,8 +11,8 @@
         if (input == "")
         {
             input = "CREDENTIALS-PUBLIC.DAT";
-            AasxServer.AasxCredentials.init(credentials, input);
-            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(credentials, DateTime.UtcNow);
+            AasxServer.AasxCredentials.init(cs.credentials, input);
+            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
         }
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
             || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/");
@@ -85,10 +86,11 @@
                                             if (CurrentValue.Contains("CREDENTIALS-"))
                                             {
                                                 input = CurrentValue;
-                                                AasxServer.AasxCredentials.init(credentials, CurrentValue);
+                                                AasxServer.AasxCredentials.init(cs.credentials, CurrentValue);
                                                 AasxServer.Program.Email = "";
                                             }
-                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(credentials, DateTime.UtcNow, true);
+                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
+                                                cs.credentials, DateTime.UtcNow, true);
                                             }
                                             CurrentValue = "";
                                             this.StateHasChanged();
@@ -124,7 +126,6 @@
 </div>
 
 @code{
-    public List<AasxServer.AasxCredentialsEntry> credentials = new List<AasxServer.AasxCredentialsEntry>();
     string input = "";
     string path = "";
     bool pathIntit = true;
