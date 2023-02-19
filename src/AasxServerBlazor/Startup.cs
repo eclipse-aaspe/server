@@ -67,7 +67,8 @@ namespace AasxServerBlazor
                     });
             });
             services.AddScoped<BlazorSessionService>();
-            services.AddScoped<CredentialService>();
+            // services.AddScoped<CredentialService>();
+            services.AddSingleton<CredentialService>();
 
             services.AddControllers();
 
