@@ -823,12 +823,14 @@ namespace AasxServer
             rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
                 (CommandLineArguments a) =>
                 {
+                    /*
                     if (!(a.Rest || a.Opc || a.Mqtt))
                     {
                         Console.Error.WriteLine($"Please specify --rest and/or --opc and/or --mqtt{nl}");
                         new HelpBuilder(new SystemConsole()).Write(rootCommand);
                         return 1;
                     }
+                    */
 
                     return Run(a);
                 });
