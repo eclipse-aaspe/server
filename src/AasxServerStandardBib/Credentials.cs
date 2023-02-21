@@ -31,9 +31,12 @@ namespace AasxServer
 
     public class AasxCredentials
     {
-        public static void init(List<AasxCredentialsEntry> cList, string fileName)
+        public static void initEmpty(List<AasxCredentialsEntry> cList)
         {
             cList.Clear();
+        }
+        public static void initByFile(List<AasxCredentialsEntry> cList, string fileName)
+        {
             if (File.Exists(fileName))
             {
                 try
@@ -69,22 +72,37 @@ namespace AasxServer
             }
         }
 
+        public static void initByEmail(List<AasxCredentialsEntry> cList, string email)
+        {
+            cList.Clear();
+            var c = new AasxCredentialsEntry();
+            c.urlPrefix = "*";
+            c.type = "email";
+            c.parameters.Add(email);
+            cList.Add(c);
+        }
+
+        public static void initByUserPW(List<AasxCredentialsEntry> cList, string user, string pw)
+        {
+            cList.Clear();
+            var c = new AasxCredentialsEntry();
+            c.urlPrefix = "*";
+            c.type = "userpw";
+            c.parameters.Add(user);
+            c.parameters.Add(pw);
+            cList.Add(c);
+        }
+
         public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW)
         {
-            queryPara="";
-            userPW="";
-
-            if (AasxServer.Program.Email != "")
-            {
-                queryPara = "Email=" + AasxServer.Program.Email;
-                return true;
-            }
+            queryPara = "";
+            userPW = "";
 
             for (int i = 0; i < cList.Count; i++)
             {
                 int len = cList[i].urlPrefix.Length;
                 string u = urlPath.Substring(0, len);
-                if (u == cList[i].urlPrefix)
+                if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
                 {
                     switch (cList[i].type)
                     {

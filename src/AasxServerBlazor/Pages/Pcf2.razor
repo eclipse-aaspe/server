@@ -11,18 +11,21 @@
 @using System.Globalization;
 @implements IDisposable
 
-@{ 
+@{
     DateTime timeStamp = DateTime.UtcNow;
     // AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
     // AasxTask.cfpNode node = AasxTask.root;
     float total = 0.0f;
-    try
+    if (AasxTask.root != null)
     {
-        total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
-        total = (float)Math.Round(total, 1);
+        try
+        {
+            total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+            total = (float)Math.Round(total, 1);
 
+        }
+        catch { }
     }
-    catch { }
 }
 <div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
     <img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
@@ -234,6 +237,9 @@
 
                                                 foreach (var smr in node.aas.Submodels)
                                                 {
+                                                    if (Program.env == null)
+                                                        continue;
+
                                                     var sm = Program.env[node.envIndex].AasEnv.FindSubmodel(smr);
                                                     if (sm != null)
                                                     {

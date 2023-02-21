@@ -3705,6 +3705,26 @@ namespace AasxRestServerLibrary
         {
             return SecurityCheck(context.Request.QueryString, context.Request.Headers, ref index);
         }
+        
+        static string checkUserPW(string userPW64)
+        {
+            var credentialBytes = Convert.FromBase64String(userPW64);
+            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+            string username = credentials[0];
+            string password = credentials[1];
+
+            int userCount = securityUserName.Count;
+
+            for (int i = 0; i < userCount; i++)
+            {
+                if (username == securityUserName[i] && password == securityUserPassword[i])
+                {
+                    return (username);
+                }
+            }
+
+            return null;
+        }
         public static string SecurityCheck(NameValueCollection queryString, NameValueCollection headers, ref int index)
         {
             Console.WriteLine("SecurityCheck");
@@ -3774,32 +3794,11 @@ namespace AasxRestServerLibrary
                     {
                         try
                         {
-                            var credentialBytes = Convert.FromBase64String(split[1]);
-                            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
-                            string username = credentials[0];
-                            string password = credentials[1];
-
-                            if (username != null && password != null)
+                            string username = checkUserPW(split[1]);
+                            if (username != null)
                             {
-                                if (password == "EMAIL")
-                                {
-                                    user = username;
-                                    if (!user.Contains("@"))
-                                        user = "@" + user;
-                                }
-                            }
-                            else
-                            {
-                                int userCount = securityUserName.Count;
-
-                                for (int i = 0; i < userCount; i++)
-                                {
-                                    if (username == securityUserName[i] && password == securityUserPassword[i])
-                                    {
-                                        user = username;
-                                        break;
-                                    }
-                                }
+                                user = username;
+                                Console.WriteLine("Received username+password http header = " + user);
                             }
                         }
                         catch { }
@@ -3844,21 +3843,16 @@ namespace AasxRestServerLibrary
             token = queryString["_up"];
             if (token != null)
             {
-                var credentialBytes = Convert.FromBase64String(token);
-                var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
-                string username = credentials[0];
-                string password = credentials[1];
-
-                if (username != null && password != null)
+                try
                 {
-                    if (password == "EMAIL")
+                    string username = checkUserPW(token);
+                    if (username != null)
                     {
                         user = username;
-                        if (!user.Contains("@"))
-                            user = "@" + user;
+                        Console.WriteLine("Received username+password query string = " + user);
                     }
-                    Console.WriteLine("Received username+password query string = " + user);
                 }
+                catch { }
             }
 
             if (!error)
@@ -3935,24 +3929,32 @@ namespace AasxRestServerLibrary
                 {
                     int rightsCount = securityRights.Count;
 
-                    for (int i = 0; i < rightsCount; i++)
+                    if (user.Contains("@")) // email address
                     {
-                        if (securityRights[i].name.Contains("@")) // email address
+                        for (int i = 0; i < rightsCount; i++)
                         {
-                            if (user == securityRights[i].name)
+                            if (securityRights[i].name.Contains("@")) // email address
                             {
-                                // accessrights = securityRightsValue[i];
-                                accessrights = securityRights[i].role;
-                                return accessrights;
+                                if (user == securityRights[i].name)
+                                {
+                                    // accessrights = securityRightsValue[i];
+                                    accessrights = securityRights[i].role;
+                                    return accessrights;
+                                }
                             }
                         }
                     }
                     for (int i = 0; i < rightsCount; i++)
                     {
-                        if (!securityRights[i].name.Contains("@")) // domain name only
+                        if (!securityRights[i].name.Contains("@")) // domain name only or non email
                         {
-                            string[] splitUser = user.Split('@');
-                            if (splitUser[1] == securityRights[i].name)
+                            string u = user;
+                            if (user.Contains("@"))
+                            {
+                                string[] splitUser = user.Split('@');
+                                u = splitUser[1]; // domain only
+                            }
+                            if (u == securityRights[i].name)
                             {
                                 // accessrights = securityRightsValue[i];
                                 accessrights = securityRights[i].role;

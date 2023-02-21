@@ -10,8 +10,8 @@
     @{
         if (input == "")
         {
-            input = "CREDENTIALS-PUBLIC.DAT";
-            AasxServer.AasxCredentials.init(cs.credentials, input);
+            input = "anonymous";
+            AasxServer.AasxCredentials.initEmpty(cs.credentials);
             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
         }
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
@@ -64,10 +64,19 @@
                                 <!-- label -->
                                 <div class="ml-3 text-gray-700 font-medium">
                                     <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount</span>&nbsp&nbsp
+                                    <select @bind="role">
+                                        <option selected="@role"></option>
+                                        @{
+                                            for (int i = 0; i < roleList.Count; i++)
+                                            {
+                                                <option value="@roleList[i]">@roleList[i]</option>
+                                            }
+                                        }
+                                    </select>
                                     <input @bind="CurrentValue" /> <span style="border-width: 1px; color: blue;">@input</span>&nbsp&nbsp
-                                    @code {
-                                        private string CurrentValue { get; set; }
-                                    }
+                                @code {
+                                private string CurrentValue { get; set; }
+}
                                     @{
                                     if (CurrentValue != null && CurrentValue != "")
                                     {
@@ -77,58 +86,66 @@
                                         }
                                         else
                                         {
+                                            if (role == "")
+                                                role = roleList[0];
                                             if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
                                             {
                                                 CurrentValue.Replace("Email=", "");
-                                                AasxServer.Program.Email = CurrentValue;
+                                                AasxServer.AasxCredentials.initByEmail(cs.credentials, CurrentValue);
                                                 input = CurrentValue;
                                             }
-                                            if (CurrentValue.Contains("CREDENTIALS-"))
+                                            else if (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT"))
                                             {
+                                                AasxServer.AasxCredentials.initByFile(cs.credentials, CurrentValue);
                                                 input = CurrentValue;
-                                                AasxServer.AasxCredentials.init(cs.credentials, CurrentValue);
-                                                AasxServer.Program.Email = "";
+                                            }
+                                            else
+                                            {
+                                                AasxServer.AasxCredentials.initByUserPW(cs.credentials, role, CurrentValue);
+                                                input = role;
                                             }
                                             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
                                                 cs.credentials, DateTime.UtcNow, true);
-                                            }
-                                            CurrentValue = "";
-                                            this.StateHasChanged();
                                         }
+                                        CurrentValue = "";
+                                        this.StateHasChanged();
                                     }
-                                    Disclaimer: displayed PCF values are for demo purposes only
-                                </div>
-                                <div class="relative ml-2">
-                                    <!-- input -->
-                                    <input type="checkbox" id="toggle" class="sr-only"
+                                }
+                                Disclaimer: displayed PCF values are for demo purposes only
+                            </div>
+                            <div class="relative ml-2">
+                                <!-- input -->
+                                <input type="checkbox" id="toggle" class="sr-only"
                                            onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
                                         { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
-                                    <!-- line -->
-                                    <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
-                                    <!-- dot -->
-                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
+                                <!-- line -->
+                                <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
+                                <!-- dot -->
+                                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                            </div>
+                        </label>
                     </div>
-                    <div class="flex flex-row" style="height:92%;">
-                        <div class="content px-4 basis-1/2 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
-                            @Body
-                        </div>
-                        <div class="content px-4 basis-1/2 hide-slim" style="padding: 0px !important;">
+                </div>
+                <div class="flex flex-row" style="height:92%;">
+                    <div class="content px-4 basis-1/2 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
+                        @Body
+                    </div>
+                    <div class="content px-4 basis-1/2 hide-slim" style="padding: 0px !important;">
                         <iframe src="@getIframePath()"
                                     id="iframe" style="width: 100%; height: 100%;"></iframe>
-                        </div>
                     </div>
+                </div>
             </div>
         }
     }
 </div>
 
 @code{
-    string input = "";
-    string path = "";
-    bool pathIntit = true;
+    static List<string> roleList = new List<string> { "norole", "role1", "role2", "role3" };
+    static string role = roleList[0];
+    static string input = "";
+    static string path = "";
+    static bool pathIntit = true;
 
     string getIframePath()
     {
