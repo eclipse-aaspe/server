@@ -37,6 +37,7 @@ namespace AasxServer
         }
         public static void initByFile(List<AasxCredentialsEntry> cList, string fileName)
         {
+            cList.Clear();
             if (File.Exists(fileName))
             {
                 try
