@@ -98,6 +98,8 @@ namespace AasxServer
         {
             queryPara = "";
             userPW = "";
+            List<string> qp = new List<string>();
+            bool result = false;
 
             for (int i = 0; i < cList.Count; i++)
             {
@@ -108,13 +110,14 @@ namespace AasxServer
                     switch (cList[i].type)
                     {
                         case "email":
-                            queryPara = "Email=" + cList[i].parameters[0];
-                            return true;
+                            qp.Add("Email=" + cList[i].parameters[0]);
+                            result = true;
+                            break;
                         case "basicauth":
                             if (cList[i].parameters.Count == 2)
                             {
-                                userPW = cList[i].parameters[0] + ":" + cList[i].parameters[1];
-                                return true;
+                                qp.Add(cList[i].parameters[0] + ":" + cList[i].parameters[1]);
+                                result = true;
                             }
                             break;
                         case "userpw":
@@ -123,19 +126,34 @@ namespace AasxServer
                                 var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
                                 var bytes = Encoding.ASCII.GetBytes(upw);
                                 var basicAuth64 = Convert.ToBase64String(bytes);
-                                queryPara = "_up=" + basicAuth64;
-                                return true;
+                                qp.Add("_up=" + basicAuth64);
+                                result = true;
                             }
                             break;
                         case "bearer":
                             bearerCheckAndInit(cList[i]);
-                            queryPara = "bearer=" + cList[i].bearer;
-                            return true;
+                            qp.Add("bearer=" + cList[i].bearer);
+                            result = true;
+                            break;
+                        case "key":
+                            if (cList[i].parameters.Count == 2)
+                            {
+                                qp.Add(cList[i].parameters[0] + "=" + cList[i].parameters[1]);
+                                result = true;
+                            }
+                            break;
                     }
                 }
             }
+            for (int i = 0; i < qp.Count; i++)
+            {
+                if (i == 0)
+                    queryPara = qp[0];
+                else
+                    queryPara += "&" + qp[i];
+            }
 
-            return false; // no entry found
+            return result;
         }
 
         public static void bearerCheckAndInit(AasxCredentialsEntry c)
