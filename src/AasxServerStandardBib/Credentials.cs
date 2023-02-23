@@ -126,6 +126,7 @@ namespace AasxServer
                                 var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
                                 var bytes = Encoding.ASCII.GetBytes(upw);
                                 var basicAuth64 = Convert.ToBase64String(bytes);
+                                // userPW = basicAuth64;
                                 qp.Add("_up=" + basicAuth64);
                                 result = true;
                             }
@@ -135,7 +136,7 @@ namespace AasxServer
                             qp.Add("bearer=" + cList[i].bearer);
                             result = true;
                             break;
-                        case "key":
+                        case "querypara":
                             if (cList[i].parameters.Count == 2)
                             {
                                 qp.Add(cList[i].parameters[0] + "=" + cList[i].parameters[1]);
