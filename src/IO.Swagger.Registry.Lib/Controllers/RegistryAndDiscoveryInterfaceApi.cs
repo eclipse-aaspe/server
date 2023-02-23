@@ -1210,7 +1210,11 @@ namespace IO.Swagger.Registry.Controllers
                 string s = JsonConvert.SerializeObject(body);
                 Console.WriteLine(s);
             }
-            addAasDescriptorToRegistry(body, timestamp);
+
+            lock (Program.changeAasxFile)
+            {
+                addAasDescriptorToRegistry(body, timestamp);
+            }
 
             AasxServer.Program.signalNewData(2);
 

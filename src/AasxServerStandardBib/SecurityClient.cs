@@ -1548,7 +1548,13 @@ namespace AasxServer
                 {
                     fn = Path.GetFileName(fn);
                     if (fn.ToLower().Contains("--save-temp"))
-                        Program.env[envi].SaveAs("./temp/" + fn);
+                    {
+                        lock (Program.changeAasxFile)
+                        {
+                            Console.WriteLine("SAVE TEMP: " + fn);
+                            Program.env[envi].SaveAs("./temp/" + fn, true);
+                        }
+                    }
                 }
                 envi++;
             }
