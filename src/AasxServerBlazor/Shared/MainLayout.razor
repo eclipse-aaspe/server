@@ -93,11 +93,13 @@
                                                 CurrentValue.Replace("Email=", "");
                                                 AasxServer.AasxCredentials.initByEmail(cs.credentials, CurrentValue);
                                                 input = CurrentValue;
+                                                role = "";
                                             }
                                             else if (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT"))
                                             {
                                                 AasxServer.AasxCredentials.initByFile(cs.credentials, CurrentValue);
                                                 input = CurrentValue;
+                                                role = "";
                                             }
                                             else
                                             {
