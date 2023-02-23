@@ -1537,6 +1537,23 @@ namespace AasxServer
             Program.signalNewData(1);
         }
 
+        static void saveAASXtoTemp()
+        {
+            int envi = 0;
+            while (envi < Program.envFileName.Length)
+            {
+                string fn = Program.envFileName[envi];
+
+                if (fn != null && fn != "")
+                {
+                    fn = Path.GetFileName(fn);
+                    if (fn.ToLower().Contains("--save-temp"))
+                        Program.env[envi].SaveAs("./temp/" + fn);
+                }
+                envi++;
+            }
+        }
+
         static Thread tasksThread;
         public static void tasksSamplingLoop()
         {
@@ -1553,6 +1570,16 @@ namespace AasxServer
                 return;
 
             DateTime timeStamp = DateTime.UtcNow;
+
+            // check save AASX to temp
+            if (Program.saveTemp > 0)
+            {
+                if (Program.saveTempDt.AddSeconds(Program.saveTemp) < timeStamp)
+                {
+                    Program.saveTempDt = timeStamp;
+                    saveAASXtoTemp();
+                }
+            }
 
             // foreach (var t in taskList)
             bool taskRun = false;

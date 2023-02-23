@@ -152,6 +152,8 @@ namespace AasxServer
         public static string externalRest = "";
         public static string externalBlazor = "";
         public static bool readTemp = false;
+        public static int saveTemp = 0;
+        public static DateTime saveTempDt = new DateTime();
         public static string secretStringAPI = null;
         public static bool htmlId = false;
         // public static string Email = "";
@@ -196,6 +198,7 @@ namespace AasxServer
             public string ExternalRest { get; set; }
             public string ExternalBlazor { get; set; }
             public bool ReadTemp { get; set; }
+            public int SaveTemp { get; set; }
             public string SecretStringAPI { get; set; }
             public string Tag { get; set; }
             public bool HtmlId { get; set; }
@@ -306,6 +309,8 @@ namespace AasxServer
             Program.noSecurity = a.NoSecurity;
             Program.edit = a.Edit;
             Program.readTemp = a.ReadTemp;
+            if (a.SaveTemp > 0)
+                saveTemp = a.SaveTemp;
             Program.htmlId = a.HtmlId;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
             {
@@ -421,7 +426,8 @@ namespace AasxServer
                 }
             }
 
-            Directory.CreateDirectory("./temp");
+            if (!Directory.Exists("./temp")) 
+                Directory.CreateDirectory("./temp");
 
             string fn = null;
 
@@ -792,6 +798,10 @@ namespace AasxServer
                 new Option<bool>(
                     new[] {"--read-temp"},
                     "If set, reads existing AASX from temp at startup"),
+
+                new Option<int>(
+                    new[] {"--save-temp"},
+                    "If set, writes AASX every given seconds"),
 
                 new Option<string>(
                     new[] {"--secret-string-api"},
