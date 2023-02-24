@@ -690,7 +690,7 @@ namespace IO.Swagger.Registry.Controllers
 
             // add new entry
             SubmodelElementCollection c = new SubmodelElementCollection(
-                idShort: "ShellDescriptor_" + aasRegistryCount++,
+                idShort: "ShellDescriptor_" + aasRegistry.SubmodelElements.Count,
                 value: new List<ISubmodelElement>());
             c.TimeStampCreate = timestamp;
             c.TimeStamp = timestamp;
@@ -839,7 +839,7 @@ namespace IO.Swagger.Registry.Controllers
         public static AasCore.Aas3_0_RC02.Environment envRegistry = null;
         public static Submodel aasRegistry = null;
         public static Submodel submodelRegistry = null;
-        static int aasRegistryCount = 0;
+        static int aasRegistryCount = -1;
         static int submodelRegistryCount = 0;
         static List<string> postRegistry = new List<string>();
         static List<string> federatedElemensSemanticId = new List<string>();
