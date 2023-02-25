@@ -310,6 +310,11 @@ namespace AdminShellNS
             }
         }
 
+        public void SetFilename(string fileName)
+        {
+            _fn= fileName;
+        }
+
         public string Filename
         {
             get

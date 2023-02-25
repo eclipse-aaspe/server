@@ -2,6 +2,7 @@
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AdminShellNS;
+using Extenstions;
 using IO.Swagger.V1RC03.ApiModel;
 using IO.Swagger.V1RC03.Logging;
 using System;
@@ -100,6 +101,7 @@ namespace IO.Swagger.V1RC03.Services
 
                     System.IO.File.Copy(copyFileName, newFileName, true);
                     Program.envFileName[packageIndex] = newFileName;
+                    _packages[packageIndex].SetFilename(newFileName);
 
                     //Delete Temp file
                     System.IO.File.Delete(copyFileName);
@@ -208,13 +210,20 @@ namespace IO.Swagger.V1RC03.Services
                     try
                     {
                         //Replace existing file with temp file
-                        originalFile = fileName;
+                        //originalFile = fileName;
+                        var rootPath = Path.GetDirectoryName(originalFile);
+                        originalFile = Path.Combine(rootPath, fileName);
+
                         //Copy tempFile into originalFile location
                         System.IO.File.Copy(tempNewFile, originalFile, overwrite: true);
                         // open again
                         var newAasx = new AdminShellPackageEnv(originalFile, true);
                         if (newAasx != null)
                         {
+                            foreach(var submodel in newAasx.AasEnv.Submodels)
+                            {
+                                submodel.SetAllParents();
+                            }
                             _packages[packageIndex] = newAasx;
                         }
                         else
