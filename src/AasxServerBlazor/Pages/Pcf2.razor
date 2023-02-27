@@ -311,11 +311,11 @@
                                         link = getAasLink(@node.aas);
                                         queryPara = "";
                                         userPW = "";
-                                    if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW))
+                                        if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW))
                                         {
                                             if (queryPara != "")
                                             {
-                                                link += "?" + queryPara;
+                                                link += "&" + queryPara;
                                             }
                                             if (userPW != "")
                                             {
