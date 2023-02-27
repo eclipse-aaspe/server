@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using AasCore.Aas3_0_RC02;
-using AasxServer;
+﻿using AasCore.Aas3_0_RC02;
 using AdminShellNS;
-using Extenstions;
+using Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using QRCoder;
 using ScottPlot;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
 //using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerStandardBib

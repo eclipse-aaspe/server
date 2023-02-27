@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
+﻿using AasCore.Aas3_0_RC02;
 using AasxIntegrationBase;
 using AdminShellNS;
-using Extenstions;
-using Grapevine;
+using Extensions;
 using Grapevine.Client;
-using Grapevine.Shared;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Net;
 
 namespace AasxRestServerLibrary
 {

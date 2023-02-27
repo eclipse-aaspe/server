@@ -1,6 +1,13 @@
+using AasCore.Aas3_0_RC02;
+using AasxServer;
+using Extensions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Opc.Ua;
+using Org.Webpki.JsonCanonicalizer;
+using SampleClient;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,15 +15,6 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
-using AasCore.Aas3_0_RC02;
-using AasxServer;
-using AdminShellNS;
-using Extenstions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using Org.Webpki.JsonCanonicalizer;
-using SampleClient;
 
 namespace AasxTimeSeries
 {

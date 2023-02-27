@@ -10,17 +10,13 @@ This source code may use other Open Source software components (see LICENSE.txt)
 // to be disabled for AASX Server
 // #define UseMarkup
 
+using AasCore.Aas3_0_RC02;
+using AasxIntegrationBase;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
-using AasxIntegrationBase;
-using AdminShellNS;
-using Extenstions;
-using Newtonsoft.Json;
+using Extensions;
 
 namespace AdminShellEvents
 {
