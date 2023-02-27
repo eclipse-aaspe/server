@@ -1,13 +1,11 @@
-﻿using AasxServerStandardBib.Exceptions;
-using IO.Swagger.V1RC03.ApiModel;
+﻿using IO.Swagger.V1RC03.ApiModel;
+using IO.Swagger.V1RC03.Exceptions;
 using IO.Swagger.V1RC03.Logging;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.Middleware
@@ -95,7 +93,7 @@ namespace IO.Swagger.V1RC03.Middleware
                         message.MessageType = Message.MessageTypeEnum.ErrorEnum;
                         break;
                     }
-                case NotImplementedException:
+                case Exceptions.NotImplementedException:
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.NotImplemented;
                         message.Code = HttpStatusCode.NotImplemented.ToString();

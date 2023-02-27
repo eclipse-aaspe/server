@@ -7,17 +7,13 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using AasCore.Aas3_0_RC02;
+using Extensions;
+using Opc.Ua;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-using Extenstions;
-using Opc.Ua;
 
 // TODO (MIHO, 2020-08-29): The UA mapping needs to be overworked in order to comply the joint aligment with I4AAS
 // TODO (MIHO, 2020-08-29): The UA mapping needs to be checked for the "new" HasDataSpecification strcuture of V2.0.1
@@ -719,10 +715,10 @@ namespace AasOpcUaServer
             this.entityBuilder.AasTypes.Administration.CreateAddElements(
                 o, CreateMode.Instance, aas.Administration);
             // HasDataSpecification
-            if (aas.DataSpecifications != null && aas.DataSpecifications != null)
-                foreach (var ds in aas.DataSpecifications)
+            if (aas.EmbeddedDataSpecifications != null && aas.EmbeddedDataSpecifications != null)
+                foreach (var ds in aas.EmbeddedDataSpecifications)
                     this.entityBuilder.AasTypes.Reference.CreateAddElements(
-                        o, CreateMode.Instance, ds, "DataSpecification");
+                        o, CreateMode.Instance, ds.DataSpecification, "DataSpecification");
             // own attributes
             this.entityBuilder.AasTypes.Reference.CreateAddElements(
                 o, CreateMode.Instance, aas.DerivedFrom, "DerivedFrom");
@@ -843,10 +839,10 @@ namespace AasOpcUaServer
                 this.entityBuilder.AasTypes.ModelingKind.CreateAddElements(
                     o, CreateMode.Instance, (ModelingKind)sm.Kind);
                 // HasDataSpecification
-                if (sm.DataSpecifications != null && sm.DataSpecifications != null)
-                    foreach (var ds in sm.DataSpecifications)
+                if (sm.EmbeddedDataSpecifications != null && sm.EmbeddedDataSpecifications != null)
+                    foreach (var ds in sm.EmbeddedDataSpecifications)
                         this.entityBuilder.AasTypes.Reference.CreateAddElements(
-                            o, CreateMode.Instance, ds, "DataSpecification");
+                            o, CreateMode.Instance, ds.DataSpecification, "DataSpecification");
                 // Qualifiable
                 if (sm.Qualifiers != null)
                     foreach (var q in sm.Qualifiers)
@@ -932,10 +928,10 @@ namespace AasOpcUaServer
             this.entityBuilder.AasTypes.ModelingKind.CreateAddElements(
                 o, CreateMode.Instance, (ModelingKind)sme.Kind);
             // HasDataSpecification
-            if (sme.DataSpecifications != null && sme.DataSpecifications != null)
-                foreach (var ds in sme.DataSpecifications)
+            if (sme.EmbeddedDataSpecifications != null && sme.EmbeddedDataSpecifications != null)
+                foreach (var ds in sme.EmbeddedDataSpecifications)
                     this.entityBuilder.AasTypes.Reference.CreateAddElements(
-                        o, CreateMode.Instance, ds, "DataSpecification");
+                        o, CreateMode.Instance, ds.DataSpecification, "DataSpecification");
             // Qualifiable
             if (sme.Qualifiers != null)
                 foreach (var q in sme.Qualifiers)

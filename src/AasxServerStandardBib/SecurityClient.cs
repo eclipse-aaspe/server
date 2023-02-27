@@ -1,4 +1,13 @@
-﻿using System;
+﻿using AasCore.Aas3_0_RC02;
+using AasxRestServerLibrary;
+using AdminShellNS;
+using Extensions;
+using IdentityModel;
+using IdentityModel.Client;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,16 +18,6 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
-using AasxRestServerLibrary;
-using AasxServer;
-using AdminShellNS;
-using Extenstions;
-using IdentityModel;
-using IdentityModel.Client;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace AasxServer
 {
@@ -1342,7 +1341,7 @@ namespace AasxServer
                                                 if (p.Value != null)
                                                 {
                                                     string s = null;
-                                                    foreach (var ls in p.Value.LangStrings)
+                                                    foreach (var ls in p.Value)
                                                     {
                                                         if (ls.Language.ToLower() == "en")
                                                         {

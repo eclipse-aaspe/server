@@ -1,21 +1,13 @@
-﻿using System;
+﻿using AasCore.Aas3_0_RC02;
+using AasxTimeSeries;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
-using AasCore.Aas3_0_RC02;
-using AasxServer;
-using AasxTimeSeries;
-using AdminShellNS;
-using Extenstions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using SampleClient;
+using Extensions;
 
 namespace AasxDemonstration
 {

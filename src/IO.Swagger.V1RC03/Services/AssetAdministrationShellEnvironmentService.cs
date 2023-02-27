@@ -1,30 +1,24 @@
 ﻿using AasCore.Aas3_0_RC02;
 using AasxServer;
-using AasxServerStandardBib.Exceptions;
-using AasxServerStandardBib.Extenstions;
 using AdminShellNS;
-using Extenstions;
 using IO.Swagger.V1RC03.ApiModel;
 using IO.Swagger.V1RC03.APIModels.Core;
 using IO.Swagger.V1RC03.APIModels.ValueOnly;
+using IO.Swagger.V1RC03.Exceptions;
 using IO.Swagger.V1RC03.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController;
 using File = AasCore.Aas3_0_RC02.File;
+using Extensions;
 
 namespace IO.Swagger.V1RC03.Services
 {
@@ -741,11 +735,11 @@ namespace IO.Swagger.V1RC03.Services
                     var cdList = new List<ConceptDescription>();
                     foreach (var conceptDescription in output)
                     {
-                        if (!conceptDescription.DataSpecifications.IsNullOrEmpty())
+                        if (!conceptDescription.EmbeddedDataSpecifications.IsNullOrEmpty())
                         {
-                            foreach (var reference in conceptDescription.DataSpecifications)
+                            foreach (var reference in conceptDescription.EmbeddedDataSpecifications)
                             {
-                                if (reference != null && reference.Matches(reqDataSpecificationRef))
+                                if (reference != null && reference.DataSpecification.Matches(reqDataSpecificationRef))
                                 {
                                     cdList.Add(conceptDescription);
                                     break;
@@ -1445,7 +1439,7 @@ namespace IO.Swagger.V1RC03.Services
                         if(file.Value.StartsWith("http") || file.Value.StartsWith("https"))
                         {
                             _logger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
-                            throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+                            throw new Exceptions.NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
                         }
                         //Check if a directory
                         else if(file.Value.StartsWith('/') || file.Value.StartsWith('\\'))

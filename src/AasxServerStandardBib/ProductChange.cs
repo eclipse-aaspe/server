@@ -1,4 +1,11 @@
-﻿using System;
+﻿using AasCore.Aas3_0_RC02;
+using AdminShellNS;
+using Extensions;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Search;
+using MailKit.Security;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -6,13 +13,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Xml;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-using Extenstions;
-using MailKit;
-using MailKit.Net.Imap;
-using MailKit.Search;
-using MailKit.Security;
 
 namespace ProductChange
 {
