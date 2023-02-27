@@ -1,17 +1,13 @@
 ﻿using AasxRestServerLibrary;
 using AasxServer;
-using AasxServerStandardBib.Exceptions;
 using AdminShellNS;
 using IO.Swagger.V1RC03.ApiModel;
+using IO.Swagger.V1RC03.Exceptions;
 using IO.Swagger.V1RC03.Logging;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.Services
 {

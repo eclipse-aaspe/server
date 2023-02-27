@@ -1,21 +1,14 @@
 ﻿using AasCore.Aas3_0_RC02;
-using AasxServerStandardBib.Exceptions;
-using Extenstions;
 using IO.Swagger.V1RC03.APIModels.Core;
 using IO.Swagger.V1RC03.APIModels.Metadata;
 using IO.Swagger.V1RC03.APIModels.ValueOnly;
 using IO.Swagger.V1RC03.Extensions;
 using IO.Swagger.V1RC03.Logging;
-using ScottPlot;
-using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Nodes = System.Text.Json.Nodes;
+using Extensions;
+using IO.Swagger.V1RC03.Exceptions;
 
 namespace IO.Swagger.V1RC03.Services
 {
@@ -28,14 +21,15 @@ namespace IO.Swagger.V1RC03.Services
             _logger = logger;
         }
 
-        public object ApplyOutputModifiers(object obj, string level = null, string content = null, string extent = null)
-        {
-            ValidateOutputModifiers(obj, level, content, extent);
-            object output = ApplyLevelModifier(obj, level);
-            output = ApplyContentModifier(output, content);
+        //TODO: jtikekar Remove
+        //public object ApplyOutputModifiers(object obj, string level = null, string content = null, string extent = null)
+        //{
+        //    ValidateOutputModifiers(obj, level, content, extent);
+        //    object output = ApplyLevelModifier(obj, level);
+        //    output = ApplyContentModifier(output, content);
 
-            return output;
-        }
+        //    return output;
+        //}
 
         private object ApplyContentModifier(object obj, string content)
         {
@@ -189,37 +183,37 @@ namespace IO.Swagger.V1RC03.Services
         }
 
         //TODO:jtikekar remove
-        public object ApplyLevelModifier(object obj, string level)
-        {
-            if (!string.IsNullOrEmpty(level) && level.Equals("core", StringComparison.OrdinalIgnoreCase))
-            {
-                switch (obj)
-                {
-                    case Submodel submodel:
-                        {
-                            var submodelCore = new SubmodelCore(submodel);
-                            return submodelCore;
-                        }
-                    case SubmodelElementCollection collection:
-                        {
-                            var submodelCore = new SubmodelElementCollectionCore(collection);
-                            return submodelCore;
-                        }
-                    case SubmodelElementList list:
-                        {
-                            var submodelCore = new SubmodelElementListCore(list);
-                            return submodelCore;
-                        }
-                    case Entity entity:
-                        {
-                            var submodelCore = new EntityCore(entity);
-                            return submodelCore;
-                        }
-                }
-            }
+        //public object ApplyLevelModifier(object obj, string level)
+        //{
+        //    if (!string.IsNullOrEmpty(level) && level.Equals("core", StringComparison.OrdinalIgnoreCase))
+        //    {
+        //        switch (obj)
+        //        {
+        //            case Submodel submodel:
+        //                {
+        //                    var submodelCore = new SubmodelCore(submodel);
+        //                    return submodelCore;
+        //                }
+        //            case SubmodelElementCollection collection:
+        //                {
+        //                    var submodelCore = new SubmodelElementCollectionCore(collection);
+        //                    return submodelCore;
+        //                }
+        //            case SubmodelElementList list:
+        //                {
+        //                    var submodelCore = new SubmodelElementListCore(list);
+        //                    return submodelCore;
+        //                }
+        //            case Entity entity:
+        //                {
+        //                    var submodelCore = new EntityCore(entity);
+        //                    return submodelCore;
+        //                }
+        //        }
+        //    }
 
-            return obj;
-        }
+        //    return obj;
+        //}
 
         public void ValidateOutputModifiers(object obj, string level = null, string content = null, string extent = null)
         {

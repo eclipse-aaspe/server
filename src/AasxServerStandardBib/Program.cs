@@ -1,13 +1,23 @@
-﻿using System;
+﻿using AasCore.Aas3_0_RC02;
+using AasOpcUaServer;
+using AasxMqttServer;
+using AasxRestServerLibrary;
+using AdminShellNS;
+using Extensions;
+using Jose;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Opc.Ua;
+using Opc.Ua.Configuration;
+using Opc.Ua.Server;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -19,25 +29,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
-using AasCore.Aas3_0_RC02;
-using AasOpcUaServer;
-using AasxMqttServer;
-using AasxRestServerLibrary;
-using AdminShellNS;
-using Extenstions;
-using Jose;
-using MailKit;
-using MailKit.Net.Imap;
-using MailKit.Search;
-using MailKit.Security;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using Opc.Ua.Configuration;
-using Opc.Ua.Server;
-using static AasxDemonstration.EnergyModel;
 using Formatting = Newtonsoft.Json.Formatting;
-
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
 Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -887,7 +879,7 @@ namespace AasxServer
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
             //public AdminShell.Description description = null;
-            public LangStringSet description = null;
+            public List<LangString> description = null;
 
             [XmlElement(ElementName = "idShort")]
             [JsonIgnore]
@@ -915,7 +907,7 @@ namespace AasxServer
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
             //public AdminShell.Description description = new AdminShell.Description();
-            public LangStringSet description = new(new List<LangString>());
+            public List<LangString> description = new(new List<LangString>());
 
             [XmlElement(ElementName = "idShort")]
             public string idShort = "";
