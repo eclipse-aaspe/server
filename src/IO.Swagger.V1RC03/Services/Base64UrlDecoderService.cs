@@ -1,10 +1,6 @@
-﻿using AasxServerStandardBib.Exceptions;
+﻿using IO.Swagger.V1RC03.Exceptions;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.Services
 {

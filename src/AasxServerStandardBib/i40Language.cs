@@ -1,16 +1,12 @@
-﻿using System;
+﻿using AasCore.Aas3_0_RC02;
+using AdminShellNS;
+using Extensions;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-using Extenstions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using Opc.Ua.Server;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski

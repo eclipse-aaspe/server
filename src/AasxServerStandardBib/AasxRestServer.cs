@@ -4,7 +4,7 @@ using AasCore.Aas3_0_RC02;
 using AasxMqttClient;
 using AdminShellEvents;
 using AdminShellNS;
-using Extenstions;
+using Extensions;
 using Grapevine.Interfaces.Server;
 using Grapevine.Server;
 using Grapevine.Server.Attributes;
@@ -689,12 +689,12 @@ namespace AasxRestServerLibrary
                                                         result += " " + f.Value;
                                                     if (sme is MultiLanguageProperty mlp)
                                                     {
-                                                        if (mlp.Value != null && mlp.Value.LangStrings != null)
+                                                        if (mlp.Value != null && mlp.Value != null)
                                                         {
-                                                            for (int iMlp = 0; iMlp < mlp.Value.LangStrings.Count; iMlp++)
+                                                            for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                             {
-                                                                result += " [" + mlp.Value.LangStrings[iMlp].Language + "]" +
-                                                                    mlp.Value.LangStrings[iMlp].Text;
+                                                                result += " [" + mlp.Value[iMlp].Language + "]" +
+                                                                    mlp.Value[iMlp].Text;
                                                             }
 
                                                         }
@@ -1319,12 +1319,12 @@ namespace AasxRestServerLibrary
                                                                     result += " " + f.Value;
                                                                 if (sme is MultiLanguageProperty mlp)
                                                                 {
-                                                                    if (mlp.Value != null && mlp.Value.LangStrings != null)
+                                                                    if (mlp.Value != null && mlp.Value != null)
                                                                     {
-                                                                        for (int iMlp = 0; iMlp < mlp.Value.LangStrings.Count; iMlp++)
+                                                                        for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                                         {
-                                                                            result += " [" + mlp.Value.LangStrings[iMlp].Language + "]" +
-                                                                                mlp.Value.LangStrings[iMlp].Text;
+                                                                            result += " [" + mlp.Value[iMlp].Language + "]" +
+                                                                                mlp.Value[iMlp].Text;
                                                                         }
 
                                                                     }

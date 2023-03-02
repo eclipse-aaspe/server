@@ -1,15 +1,11 @@
 ﻿using AasCore.Aas3_0_RC02;
-using AasxServerStandardBib.Exceptions;
+using IO.Swagger.V1RC03.Exceptions;
 using IO.Swagger.V1RC03.Logging;
-using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.Services
 {
@@ -41,7 +37,7 @@ namespace IO.Swagger.V1RC03.Services
             {
                 throw new JsonDeserializationException(fieldName, ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

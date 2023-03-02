@@ -1,14 +1,8 @@
 ﻿using AasCore.Aas3_0_RC02;
-using AasxServerStandardBib.Exceptions;
+using IO.Swagger.V1RC03.Exceptions;
 using IO.Swagger.V1RC03.Extensions;
 using IO.Swagger.V1RC03.Logging;
-using Org.BouncyCastle.Asn1.X509.Qualified;
-using ScottPlot;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.Services
 {
