@@ -14,6 +14,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Org.BouncyCastle.Asn1.Ocsp;
+using System.Drawing;
 
 namespace AasxServer
 {
@@ -94,55 +95,84 @@ namespace AasxServer
             cList.Add(c);
         }
 
-        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW)
+        public static void initByEdc(List<AasxCredentialsEntry> cList, string user, string pw, string urlEdcWrapper)
+        {
+            cList.Clear();
+            var c = new AasxCredentialsEntry();
+            c.urlPrefix = "*";
+            c.type = "edc";
+            c.parameters.Add(user);
+            c.parameters.Add(pw);
+            c.parameters.Add(urlEdcWrapper);
+            cList.Add(c);
+        }
+
+        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW, out string urlEdcWrapper)
         {
             queryPara = "";
             userPW = "";
+            urlEdcWrapper = "";
             List<string> qp = new List<string>();
             bool result = false;
 
             for (int i = 0; i < cList.Count; i++)
             {
-                int len = cList[i].urlPrefix.Length;
-                string u = urlPath.Substring(0, len);
-                if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
+                int lenPrefix = cList[i].urlPrefix.Length;
+                int lenUrl = urlPath.Length;
+                if (lenPrefix <= lenUrl)
                 {
-                    switch (cList[i].type)
+                    string u = urlPath.Substring(0, lenPrefix);
+                    if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
                     {
-                        case "email":
-                            qp.Add("Email=" + cList[i].parameters[0]);
-                            result = true;
-                            break;
-                        case "basicauth":
-                            if (cList[i].parameters.Count == 2)
-                            {
-                                qp.Add(cList[i].parameters[0] + ":" + cList[i].parameters[1]);
+                        switch (cList[i].type)
+                        {
+                            case "email":
+                                qp.Add("Email=" + cList[i].parameters[0]);
                                 result = true;
-                            }
-                            break;
-                        case "userpw":
-                            if (cList[i].parameters.Count == 2)
-                            {
-                                var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
-                                var bytes = Encoding.ASCII.GetBytes(upw);
-                                var basicAuth64 = Convert.ToBase64String(bytes);
-                                // userPW = basicAuth64;
-                                qp.Add("_up=" + basicAuth64);
+                                break;
+                            case "basicauth": // for http header
+                            case "userpw": // as query parameter _up
+                                if (cList[i].parameters.Count == 2)
+                                {
+                                    var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
+                                    var bytes = Encoding.ASCII.GetBytes(upw);
+                                    var basicAuth64 = Convert.ToBase64String(bytes);
+                                    switch (cList[i].type)
+                                    {
+                                        case "basicauth": // for http header
+                                            userPW = basicAuth64;
+                                            break;
+                                        case "userpw": // as query parameter _up
+                                            qp.Add("_up=" + basicAuth64);
+                                            break;
+                                    }
+                                    result = true;
+                                }
+                                break;
+                            case "bearer":
+                                bearerCheckAndInit(cList[i]);
+                                qp.Add("bearer=" + cList[i].bearer);
                                 result = true;
-                            }
-                            break;
-                        case "bearer":
-                            bearerCheckAndInit(cList[i]);
-                            qp.Add("bearer=" + cList[i].bearer);
-                            result = true;
-                            break;
-                        case "querypara":
-                            if (cList[i].parameters.Count == 2)
-                            {
-                                qp.Add(cList[i].parameters[0] + "=" + cList[i].parameters[1]);
+                                break;
+                            case "querypara":
+                                if (cList[i].parameters.Count == 2)
+                                {
+                                    qp.Add(cList[i].parameters[0] + "=" + cList[i].parameters[1]);
+                                    result = true;
+                                }
+                                break;
+                            case "edc":
+                                if (cList[i].parameters.Count == 3)
+                                {
+                                    var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
+                                    var bytes = Encoding.ASCII.GetBytes(upw);
+                                    var basicAuth64 = Convert.ToBase64String(bytes);
+                                    userPW = basicAuth64;
+                                    urlEdcWrapper = cList[i].parameters[2];
+                                }
                                 result = true;
-                            }
-                            break;
+                                break;
+                        }
                     }
                 }
             }

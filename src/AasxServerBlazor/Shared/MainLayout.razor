@@ -15,7 +15,9 @@
             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
         }
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
-            || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/");
+        || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
+        || NavMan.Uri.EndsWith("/pcf2edc") || NavMan.Uri.EndsWith("/pcf2edc/");
+
         if (!isPcf)
         {
             <div class="top-row px-4">
@@ -63,7 +65,7 @@
                                 <!-- toggle -->
                                 <!-- label -->
                                 <div class="ml-3 text-gray-700 font-medium">
-                                    <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount</span>&nbsp&nbsp
+                                    <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount &nbsp&nbsp @watchText</span>&nbsp&nbsp
                                     <select @bind="role">
                                         <option selected="@role"></option>
                                         @{
@@ -84,13 +86,18 @@
                                         {
                                             AasxServer.Program.submodelAPIcount = 0;
                                         }
+                                        else if (CurrentValue.Contains("get="))
+                                        {
+                                            CurrentValue = CurrentValue.Replace("get=", "");
+                                            AasxServer.Program.getUrl = CurrentValue;
+                                        }
                                         else
                                         {
                                             if (role == "")
                                                 role = roleList[0];
                                             if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
                                             {
-                                                CurrentValue.Replace("Email=", "");
+                                                CurrentValue = CurrentValue.Replace("Email=", "");
                                                 AasxServer.AasxCredentials.initByEmail(cs.credentials, CurrentValue);
                                                 input = CurrentValue;
                                                 role = "";
@@ -101,16 +108,28 @@
                                                 input = CurrentValue;
                                                 role = "";
                                             }
+                                            else if (CurrentValue.Contains("edc="))
+                                            {
+                                                CurrentValue= CurrentValue.Replace("edc=", "");
+                                                AasxServer.AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
+                                                input = CurrentValue;
+                                                role = "";
+                                            }
                                             else
                                             {
                                                 AasxServer.AasxCredentials.initByUserPW(cs.credentials, role, CurrentValue);
                                                 input = role;
                                             }
+                                            var watch = System.Diagnostics.Stopwatch.StartNew();
                                             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
                                                 cs.credentials, DateTime.UtcNow, true);
+                                            AasxServer.AasxTask.once = false;
+                                            watch.Stop();
+                                            watchText = ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
                                         }
                                         CurrentValue = "";
                                         this.StateHasChanged();
+                                        AasxServer.Program.signalNewData(1);
                                     }
                                 }
                                 Disclaimer: displayed PCF values are for demo purposes only
@@ -146,6 +165,7 @@
     static List<string> roleList = new List<string> { "norole", "role1", "role2", "role3" };
     static string role = roleList[0];
     static string input = "";
+    static string watchText = "";
     static string path = "";
     static bool pathIntit = true;
 

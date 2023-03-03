@@ -1,4 +1,4 @@
-﻿@page "/pcf2";
+﻿@page "/pcf2edc";
 
 @using AasCore.Aas3_0_RC02
 @using Data
@@ -9,6 +9,7 @@
 @using Microsoft.IdentityModel.Tokens;
 @using System.Drawing;
 @using System.Globalization;
+@using System.Net
 @implements IDisposable
 
 @{
@@ -167,8 +168,11 @@
                                                 // <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
                                                 productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
                                                 if (productImage != null)
+                                                    productImage = getFromUrl(cs.credentials, productImage);
+                                                if (productImage != null)
                                                 {
-                                                    <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                    // <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                    <img src=data:image;base64,@productImage class="h-16" style="max-width: 50px; object-fit: contain;" />
                                                 }
                                             }
                                         }
@@ -178,7 +182,22 @@
                                         productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
                                         if (productImage != null)
                                         {
-                                            <img src=@productImage class="h-16" style="max-width: 50px; object-fit: contain;" />
+                                            if (productImage.ToLower().Contains("localhost")
+                                                || AasxServer.Program.getUrl == "" || !productImage.ToLower().Contains(AasxServer.Program.getUrl))
+                                            {
+                                                <img src=@productImage class="h-16" style="max-width: 50px; object-fit: contain;" />
+                                            }
+                                            else
+                                            {
+                                                productImage = getFromUrl(cs.credentials, productImage);
+                                                if (productImage != null)
+                                                {
+                                                    // <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                    <div class="border-4">
+                                                        <img src=data:image;base64,@productImage class="h-16" style="max-width: 50px; object-fit: contain;" />
+                                                    </div>
+                                                }
+                                            }
                                         }
                                     }
 
@@ -196,8 +215,11 @@
                                                 // <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
                                                 manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
                                                 if (manufacturerLogo != null)
+                                                    manufacturerLogo = getFromUrl(cs.credentials, manufacturerLogo);
+                                                if (manufacturerLogo != null)
                                                 {
-                                                    <img src=@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                                    // <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                    <img src=data:image;base64,@manufacturerLogo class="h-16" style="max-width: 50px; object-fit: contain;" />
                                                 }
                                             }
                                         }
@@ -207,7 +229,22 @@
                                         manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
                                         if (manufacturerLogo != null)
                                         {
-                                            <img src=@manufacturerLogo style="max-width: 50px; object-fit: contain;" class="self-center" />
+                                            if (manufacturerLogo.ToLower().Contains("localhost")
+                                                || AasxServer.Program.getUrl == "" || !manufacturerLogo.ToLower().Contains(AasxServer.Program.getUrl))
+                                            {
+                                                <img src=@manufacturerLogo class="h-16" style="max-width: 50px; object-fit: contain;" />
+                                            }
+                                            else
+                                            {
+                                                manufacturerLogo = getFromUrl(cs.credentials, manufacturerLogo);
+                                                if (manufacturerLogo != null)
+                                                {
+                                                    // <img src=@manufacturerLogo class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                                    <div class="border-4">
+                                                        <img src=data:image;base64,@manufacturerLogo class="h-16" style="max-width: 50px; object-fit: contain;" />
+                                                    </div>
+                                                }
+                                            }
                                         }
                                     }
 
@@ -275,14 +312,11 @@
                                                             urlEdcWrapper = "";
                                                             if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
                                                             {
+                                                                if (urlEdcWrapper != "")
+                                                                    link = urlEdcWrapper;
                                                                 if (queryPara != "")
                                                                 {
                                                                     link += "?" + queryPara;
-                                                                }
-                                                                if (userPW != "")
-                                                                {
-                                                                    link = link.Replace("https://", "https://" + userPW + "@");
-                                                                    link = link.Replace("http://", "http://" + userPW + "@");
                                                                 }
                                                             }
                                                             <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
@@ -296,14 +330,11 @@
                                                 urlEdcWrapper = "";
                                                 if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
                                                 {
+                                                    if (urlEdcWrapper != "")
+                                                        link = urlEdcWrapper;
                                                     if (queryPara != "")
                                                     {
                                                         link += "?" + queryPara;
-                                                    }
-                                                    if (userPW != "")
-                                                    {
-                                                        link = link.Replace("https://", "https://" + userPW + "@");
-                                                        link = link.Replace("http://", "http://" + userPW + "@");
                                                     }
                                                 }
 
@@ -320,11 +351,6 @@
                                             if (queryPara != "")
                                             {
                                                 link += "&" + queryPara;
-                                            }
-                                            if (userPW != "")
-                                            {
-                                                link = link.Replace("https://", "https://" + userPW + "@");
-                                                link = link.Replace("http://", "http://" + userPW + "@");
                                             }
                                         }
                                         string iframePath = getIframePath();
@@ -363,7 +389,8 @@
     }
 }
 
-@code {
+@code
+{
     static string path = "";
     static bool pathIntit = true;
 
@@ -421,6 +448,67 @@
         }
 
         return endpoint;
+    }
+
+    string getFromUrl(List<AasxCredentialsEntry> credentials, string url)
+    {
+        string queryPara = "";
+        string userPW = "";
+        string urlEdcWrapper = "";
+        if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper))
+        {
+            if (urlEdcWrapper != "")
+            {
+                string[] split = null;
+                if (path.Contains("/shells/"))
+                {
+                    split = path.Split("/shells/");
+                    if (split.Length == 2)
+                    {
+                        path = urlEdcWrapper + "/shells/" + split[1];
+                    }
+                }
+                else if (path.Contains("/submodels"))
+                {
+                    split = path.Split("/submodels/");
+                    if (split.Length == 2)
+                    {
+                        path = urlEdcWrapper + "/submodels/" + split[1];
+                    }
+                }
+            }
+        }
+
+        var handler = new HttpClientHandler();
+        HttpResponseMessage response = new HttpResponseMessage();
+
+        if (AasxServer.AasxTask.proxy != null)
+            handler.Proxy = AasxServer.AasxTask.proxy;
+        else
+            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+        var client = new HttpClient(handler);
+
+        if (userPW != "")
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", userPW);
+
+        Console.WriteLine("GetFromUrl: " + url);
+        // var result = client.GetStringAsync(url).Result;
+        System.IO.Stream s = null;
+        var task = Task.Run(async () =>
+            {
+                response = await client.GetAsync(url);
+                s = await response.Content.ReadAsStreamAsync();
+            });
+        task.Wait();
+        if (response.IsSuccessStatusCode && s != null)
+        {
+            using (var m = new System.IO.MemoryStream())
+            {
+                s.CopyTo(m);
+                return System.Convert.ToBase64String(m.ToArray());
+            }
+        }
+        return null;
     }
 
     static string getImageLink(List<AasxCredentialsEntry> credentials, File f, int envIndex)
