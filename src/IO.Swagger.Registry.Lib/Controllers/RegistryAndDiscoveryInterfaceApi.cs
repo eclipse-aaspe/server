@@ -1050,6 +1050,7 @@ namespace IO.Swagger.Registry.Controllers
 
                                     bool success = false;
                                     bool external = false;
+                                    string idEncoded = "";
                                     string endpoint = sd.Endpoints[0].ProtocolInformation.EndpointAddress;
                                     var s1 = endpoint.Split("/shells/");
                                     if (s1.Length == 2)
@@ -1057,24 +1058,23 @@ namespace IO.Swagger.Registry.Controllers
                                         var s2 = s1[1].Split("/submodels/");
                                         if (s2.Length == 2)
                                         {
-                                            var idEncoded = s2[1].Replace("/submodel/", ""); ;
+                                            idEncoded = s2[1].Replace("/submodel/", ""); ;
                                             endpoint = s1[0] + "/submodels/" + idEncoded;
                                         }
                                     }
                                     requestPath = endpoint;
                                     string queryPara = "";
                                     string userPW = "";
+                                    string urlEdcWrapper = "";
                                     client.DefaultRequestHeaders.Clear();
-                                    if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW))
+                                    if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper))
                                     {
                                         if (queryPara != "")
                                             queryPara = "?" + queryPara;
                                         if (userPW != "")
-                                        {
-                                            var bytes = Encoding.ASCII.GetBytes(userPW);
-                                            var basicAuth64 = Convert.ToBase64String(bytes);
-                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicAuth64);
-                                        }
+                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
+                                        if (urlEdcWrapper != "")
+                                            requestPath = urlEdcWrapper;
                                     }
 
                                     AasxServer.Program.submodelAPIcount++;
@@ -1119,13 +1119,16 @@ namespace IO.Swagger.Registry.Controllers
                                             // test if submodel is accessible
                                             try
                                             {
-                                                if (queryPara == "")
+                                                if (urlEdcWrapper == "")
                                                 {
-                                                    queryPara = "?level=core";
-                                                }
-                                                else
-                                                {
-                                                    queryPara += "&level=core";
+                                                    if (queryPara == "")
+                                                    {
+                                                        queryPara = "?level=core";
+                                                    }
+                                                    else
+                                                    {
+                                                        queryPara += "&level=core";
+                                                    }
                                                 }
                                                 requestPath += queryPara;
                                                 Console.WriteLine("GET Submodel Core " + requestPath);

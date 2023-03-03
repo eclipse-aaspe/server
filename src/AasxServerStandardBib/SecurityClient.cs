@@ -1394,13 +1394,16 @@ namespace AasxServer
             // return root;
         }
 
-        static bool once = false;
+        public static bool once = false;
         public static void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
         {
-            if (once)
-                return;
-
             if (AasxServer.Program.initializingRegistry)
+            {
+                once = false; // one more again
+                return;
+            }
+
+            if (once)
                 return;
 
             // Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
@@ -1533,7 +1536,7 @@ namespace AasxServer
                 }
             }
 
-            // once = true;
+            once = true;
             Program.signalNewData(1);
         }
 

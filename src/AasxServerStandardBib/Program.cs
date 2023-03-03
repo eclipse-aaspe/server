@@ -166,11 +166,12 @@ namespace AasxServer
 
         public static string redirectServer = "";
         public static string authType = "";
+        public static string getUrl = "";
 
         public static bool isLoading = true;
         public static int count = 0;
 
-        public static bool initializingRegistry = false;
+        public static bool initializingRegistry = true;
 
         public static object changeAasxFile = new object();
 
