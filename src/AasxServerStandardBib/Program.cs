@@ -171,7 +171,7 @@ namespace AasxServer
         public static bool isLoading = true;
         public static int count = 0;
 
-        public static bool initializingRegistry = true;
+        public static bool initializingRegistry = false;
 
         public static object changeAasxFile = new object();
 

@@ -102,6 +102,8 @@ namespace AasxTimeSeries
                                 sm.TimeStampCreate = timeStamp;
                                 sm.SetTimeStamp(timeStamp);
                                 sm.SetAllParents(timeStamp);
+                                if (sm.SubmodelElements == null)
+                                    continue;
                                 int countSme = sm.SubmodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {

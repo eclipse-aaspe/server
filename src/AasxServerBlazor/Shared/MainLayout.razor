@@ -90,6 +90,7 @@
                                         {
                                             CurrentValue = CurrentValue.Replace("get=", "");
                                             AasxServer.Program.getUrl = CurrentValue;
+                                            AasxServer.Program.signalNewData(2);
                                         }
                                         else
                                         {
@@ -123,13 +124,12 @@
                                             var watch = System.Diagnostics.Stopwatch.StartNew();
                                             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
                                                 cs.credentials, DateTime.UtcNow, true);
-                                            AasxServer.AasxTask.once = false;
+                                            // AasxServer.AasxTask.once = false;
                                             watch.Stop();
                                             watchText = ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
                                         }
                                         CurrentValue = "";
                                         this.StateHasChanged();
-                                        AasxServer.Program.signalNewData(1);
                                     }
                                 }
                                 Disclaimer: displayed PCF values are for demo purposes only

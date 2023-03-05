@@ -1117,11 +1117,13 @@ namespace AasxServer
             public AasCore.Aas3_0_RC02.File productImage = null;
             public string productDesignation = "";
             public List<string> bom = new List<string>();
+            public DateTime bomTimestamp = new DateTime();
             public List<cfpNode> children = new List<cfpNode>();
             public int iChild = 0;
         }
 
         public static cfpNode root = null;
+        public static DateTime lastCreateTimestamp = new DateTime();
 
         public static void createCfpTree(int envIndex, DateTime timeStamp)
         {
@@ -1291,11 +1293,13 @@ namespace AasxServer
                                 }
                                 if (sm.IdShort.Contains("BillOfMaterial") && sm.SubmodelElements != null)
                                 {
+                                    cfp.bomTimestamp = sm.TimeStampTree;
                                     List<string> bom = new List<string>();
                                     foreach (var v in sm.SubmodelElements)
                                     {
                                         if (v is Entity e)
                                         {
+                                            // check if first entity is newer than last cfp creation
                                             string s = "";
                                             //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
                                             //s = e?.assetRef?.Keys?[0].Value;
@@ -1367,10 +1371,11 @@ namespace AasxServer
                     if (!assetCfp.ContainsKey(assetId))
                     {
                         assetCfp.Add(assetId, cfp);
-
                     }                   
                     if (i == envIndex)
+                    {
                         root = cfp;
+                    }
                 }
             }
 
@@ -1390,8 +1395,6 @@ namespace AasxServer
                     }
                 }
             }
-
-            // return root;
         }
 
         public static bool once = false;
@@ -1399,7 +1402,7 @@ namespace AasxServer
         {
             if (AasxServer.Program.initializingRegistry)
             {
-                once = false; // one more again
+                // once = false; // one more again
                 return;
             }
 
@@ -1412,6 +1415,7 @@ namespace AasxServer
             // Iterate tree and calculate CFP values
             // cfpNode node = createCfpTree(envIndex, timeStamp);
             createCfpTree(envIndex, timeStamp);
+
             cfpNode node = root;
             cfpNode parent = null;
             List<cfpNode> stack = new List<cfpNode>();
@@ -1536,8 +1540,12 @@ namespace AasxServer
                 }
             }
 
-            once = true;
-            Program.signalNewData(1);
+            // once = true;
+            if (root.bomTimestamp > lastCreateTimestamp)
+            {
+                Program.signalNewData(1);
+                lastCreateTimestamp = timeStamp;
+            }
         }
 
         static void saveAASXtoTemp()
