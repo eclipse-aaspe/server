@@ -867,7 +867,10 @@ namespace IO.Swagger.Registry.Controllers
 #pragma warning restore CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
         {
             if (!initAgain && init)
+            {
+                AasxServer.Program.signalNewData(2);
                 return;
+            }
 
             AasxServer.Program.initializingRegistry= true;
 

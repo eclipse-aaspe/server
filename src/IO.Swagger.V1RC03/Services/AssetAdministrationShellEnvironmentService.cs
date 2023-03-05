@@ -1373,25 +1373,31 @@ namespace IO.Swagger.V1RC03.Services
             var submodelElement = GetSubmodelElementByPathSubmodelRepo(submodelIdentifier, idShortPath, out object smeParent);
             if (submodelElement != null)
             {
+                var timeStamp = DateTime.UtcNow;
                 if (smeParent is SubmodelElementCollection parentCollection)
                 {
                     parentCollection.Value.Remove(submodelElement);
+                    parentCollection.SetTimeStamp(timeStamp);
                 }
                 else if (smeParent is SubmodelElementList parentList)
                 {
                     parentList.Value.Remove(submodelElement);
+                    parentList.SetTimeStamp(timeStamp);
                 }
                 else if (smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
                 {
                     annotatedRelationshipElement.Annotations.Remove((IDataElement)submodelElement);
+                    annotatedRelationshipElement.SetTimeStamp(timeStamp);
                 }
                 else if (smeParent is Entity entity)
                 {
                     entity.Statements.Remove(submodelElement);
+                    entity.SetTimeStamp(timeStamp);
                 }
                 else if (smeParent is Submodel parentSubmodel)
                 {
                     parentSubmodel.SubmodelElements.Remove(submodelElement);
+                    parentSubmodel.SetTimeStamp(timeStamp);
                 }
 
                 AasxServer.Program.signalNewData(1);
