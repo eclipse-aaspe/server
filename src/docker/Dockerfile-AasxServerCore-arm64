@@ -10,7 +10,7 @@ RUN dotnet restore -r linux-arm64
 
 RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore -r linux-arm64 --self-contained false --no-restore
 
-FROM mcr.microsoft.com/dotnet/runtime:6.0-bullseye-slim-arm32v7
+FROM mcr.microsoft.com/dotnet/runtime:6.0-bullseye-slim-arm64v7
 EXPOSE 51210
 EXPOSE 51310
 COPY --from=build-env /out/AasxServerCore/ /AasxServerCore/
