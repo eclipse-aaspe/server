@@ -65,7 +65,7 @@
                                 <!-- toggle -->
                                 <!-- label -->
                                 <div class="ml-3 text-gray-700 font-medium">
-                                    <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount &nbsp&nbsp @watchText</span>&nbsp&nbsp
+                                    <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount &nbsp @watchText</span>&nbsp&nbsp
                                     <select @bind="role">
                                         <option selected="@role"></option>
                                         @{
@@ -82,6 +82,7 @@
                                     @{
                                     if (CurrentValue != null && CurrentValue != "")
                                     {
+                                        AasxServer.Program.submodelAPIcount = 0;
                                         if (CurrentValue == "count=0")
                                         {
                                             AasxServer.Program.submodelAPIcount = 0;
