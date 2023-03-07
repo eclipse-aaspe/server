@@ -325,14 +325,24 @@
                                                             urlEdcWrapper = "";
                                                             if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
                                                             {
-                                                                if (urlEdcWrapper != "")
-                                                                    link = urlEdcWrapper;
+                                                                // if (urlEdcWrapper != "")
+                                                                //    link = urlEdcWrapper;
                                                                 if (queryPara != "")
                                                                 {
                                                                     link += "?" + queryPara;
                                                                 }
                                                             }
                                                             <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                            /*
+                                                            if (userPW == "")
+                                                            {
+                                                                <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="fetch('@link',{headers: { Authorization:'Basic @userPW'}})" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                            }
+                                                            */
                                                         }
                                                     }
                                                 }
@@ -343,8 +353,8 @@
                                                 urlEdcWrapper = "";
                                                 if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
                                                 {
-                                                    if (urlEdcWrapper != "")
-                                                        link = urlEdcWrapper;
+                                                    // if (urlEdcWrapper != "")
+                                                    //    link = urlEdcWrapper;
                                                     if (queryPara != "")
                                                     {
                                                         link += "?" + queryPara;
@@ -352,6 +362,16 @@
                                                 }
 
                                                 <a href="@link" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
+                                                /*
+                                                if (userPW == "")
+                                                {
+                                                    <a href="@link" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
+                                                }
+                                                else
+                                                {
+                                                    <a href="fetch('@link',{headers: { Authorization:'Basic @userPW'}})" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                }
+                                                */
                                             }
                                         }
                                     </div>
