@@ -168,7 +168,8 @@ namespace AasxServer
                                     var bytes = Encoding.ASCII.GetBytes(upw);
                                     var basicAuth64 = Convert.ToBase64String(bytes);
                                     userPW = basicAuth64;
-                                    urlEdcWrapper = cList[i].parameters[2];
+                                    // urlEdcWrapper = cList[i].parameters[2];
+                                    urlEdcWrapper = urlPath.Replace(u, cList[i].parameters[2]);
                                 }
                                 result = true;
                                 break;
