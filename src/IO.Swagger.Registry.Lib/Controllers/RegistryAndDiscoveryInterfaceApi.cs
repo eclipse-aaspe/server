@@ -429,6 +429,7 @@ namespace IO.Swagger.Registry.Controllers
             e.ProtocolInformation.EndpointAddress =
                 AasxServer.Program.externalBlazor + "/shells/" +
                 Base64UrlEncoder.Encode(ad.Identification);
+            Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.EndpointAddress);
             e.Interface = "AAS-1.0";
             ad.Endpoints = new List<Models.Endpoint>();
             ad.Endpoints.Add(e);
@@ -465,6 +466,7 @@ namespace IO.Swagger.Registry.Controllers
                             AasxServer.Program.externalBlazor + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Identification) + "/submodels/" +
                             Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
+                        // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Models.Endpoint>();
                         sd.Endpoints.Add(esm);
@@ -588,8 +590,13 @@ namespace IO.Swagger.Registry.Controllers
                     continue;
                 }
 
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 string accessToken = null;
-                string requestPath = pr + "/registry/shell-descriptors";
+                string requestPath = pr;
+                if (!requestPath.Contains("?"))
+                {
+                    requestPath = requestPath + "/registry/shell-descriptors";
+                }
                 string json = JsonConvert.SerializeObject(ad);
 
                 var handler = new HttpClientHandler();
@@ -632,6 +639,8 @@ namespace IO.Swagger.Registry.Controllers
                         Console.WriteLine(r);
                     }
                 }
+                watch.Stop();
+                Console.WriteLine(watch.ElapsedMilliseconds + " ms");
             }
         }
 
@@ -1032,6 +1041,8 @@ namespace IO.Swagger.Registry.Controllers
                                 if (ad.IdShort == "ZveiControlCabinetAas")
                                     continue;
 
+                                var watch = System.Diagnostics.Stopwatch.StartNew();
+
                                 // check, if AAS is exisiting and must be replaced
                                 var aas = new AssetAdministrationShell();
                                 aas.Extensions = new List<Extension> { new Extension("endpoint", value: ad.Endpoints[0].ProtocolInformation.EndpointAddress) };
@@ -1171,6 +1182,9 @@ namespace IO.Swagger.Registry.Controllers
                                         newEnv.AasEnv.Submodels.Add(sm);
                                     }
                                 }
+
+                                watch.Stop();
+                                Console.WriteLine(watch.ElapsedMilliseconds + " ms");
 
                                 AasxServer.Program.env[i] = newEnv;
                                 i++;

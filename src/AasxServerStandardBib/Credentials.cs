@@ -73,10 +73,14 @@ namespace AasxServer
                 }
             }
         }
+        public static void initAnonymous(List<AasxCredentialsEntry> cList)
+        {
+            initByFile(cList, "CREDENTIALS-ANONYMOUS.DAT");
+        }
 
         public static void initByEmail(List<AasxCredentialsEntry> cList, string email)
         {
-            cList.Clear();
+            initAnonymous(cList);
             var c = new AasxCredentialsEntry();
             c.urlPrefix = "*";
             c.type = "email";
@@ -86,7 +90,7 @@ namespace AasxServer
 
         public static void initByUserPW(List<AasxCredentialsEntry> cList, string user, string pw)
         {
-            cList.Clear();
+            initAnonymous(cList);
             var c = new AasxCredentialsEntry();
             c.urlPrefix = "*";
             c.type = "userpw";
@@ -97,7 +101,7 @@ namespace AasxServer
 
         public static void initByEdc(List<AasxCredentialsEntry> cList, string user, string pw, string urlEdcWrapper)
         {
-            cList.Clear();
+            initAnonymous(cList);
             var c = new AasxCredentialsEntry();
             c.urlPrefix = "*";
             c.type = "edc";
