@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - masterV3
       - '*/Fix-*-docker*'
 
   release:

@@ -4,11 +4,13 @@ on:
   pull_request:
     branches:
       - master
+      - masterV3
     types: [opened, synchronize, reopened, edited]
 
   push:
     branches:
       - master
+      - masterV3
 
 jobs:
   Check-style:
