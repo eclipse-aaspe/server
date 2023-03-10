@@ -182,10 +182,13 @@
                                         productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
                                         if (productImage != null)
                                         {
+                                            <img src=@productImage class="h-16" style="max-width: 50px; object-fit: contain;" />
+                                            /*
                                             <img src
-                                                onerror="fetch('@productImage',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
-                                                onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
+                                            onerror="fetch('@productImage',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
+                                            onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
                                             />
+                                            */
                                             /*
                                             if (productImage.ToLower().Contains("localhost")
                                                 || AasxServer.Program.getUrl == "" || !productImage.ToLower().Contains(AasxServer.Program.getUrl))
@@ -235,10 +238,13 @@
                                         manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
                                         if (manufacturerLogo != null)
                                         {
+                                            <img src=@manufacturerLogo style="max-width: 50px; object-fit: contain;" class="self-center" />
+                                            /*
                                             <img src
-                                                onerror="fetch('@manufacturerLogo',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
-                                                onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
+                                            onerror="fetch('@manufacturerLogo',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
+                                            onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
                                             />
+                                            */
                                             /*
                                             if (manufacturerLogo.ToLower().Contains("localhost")
                                                 || AasxServer.Program.getUrl == "" || !manufacturerLogo.ToLower().Contains(AasxServer.Program.getUrl))

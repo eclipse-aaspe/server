@@ -11,7 +11,7 @@
         if (input == "")
         {
             input = "anonymous";
-            AasxServer.AasxCredentials.initEmpty(cs.credentials);
+            AasxServer.AasxCredentials.initAnonymous(cs.credentials);
             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
         }
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
@@ -127,6 +127,7 @@
                                                 cs.credentials, DateTime.UtcNow, true);
                                             // AasxServer.AasxTask.once = false;
                                             watch.Stop();
+                                            Console.WriteLine(watch.ElapsedMilliseconds + " ms");
                                             watchText = ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
                                         }
                                         CurrentValue = "";
