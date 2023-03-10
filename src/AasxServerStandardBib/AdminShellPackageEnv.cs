@@ -1161,7 +1161,7 @@ namespace AdminShellNS
             {
                 _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
 
-            }            
+            }
             var targetUri = PackUriHelper.CreatePartUri(new Uri(targetFile, UriKind.RelativeOrAbsolute));
             PackagePart packagePart = _openPackage.CreatePart(targetUri, targetContentType);
             fileContent.Position = 0;

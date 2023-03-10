@@ -1298,7 +1298,7 @@ namespace AasxServer
                     {
                         assetCfp.Add(assetId, cfp);
 
-                    }                   
+                    }
                     if (i == envIndex)
                         root = cfp;
                 }

@@ -429,7 +429,7 @@ namespace IO.Swagger.V1RC03.Controllers
         public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/shells", "GET");
-            
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             var output = _aasEnvService.GetAssetAdministrationShellById(decodedAasId, out _);
@@ -638,7 +638,7 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerOperation("GetSubmodel")]
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier,[FromRoute][Required] string submodelIdentifier,
+        public virtual IActionResult GetSubmodel([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
             [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent)
         {
             _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "GET");

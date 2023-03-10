@@ -865,7 +865,7 @@ namespace IO.Swagger.Registry.Controllers
             if (!initAgain && init)
                 return;
 
-            AasxServer.Program.initializingRegistry= true;
+            AasxServer.Program.initializingRegistry = true;
 
             init = true;
             if (initAgain)

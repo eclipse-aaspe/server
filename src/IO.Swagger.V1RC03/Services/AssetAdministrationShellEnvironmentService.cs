@@ -68,12 +68,12 @@ namespace IO.Swagger.V1RC03.Services
 
             checkAccessRights(_securityContext.accessRights, _securityContext.route, _securityContext.neededRights,
                 objPath, aasOrSubmodel, objectAasOrSubmodel);
-       }
+        }
 
         public bool SecurityCheckTestOnly(string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             if (!AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
-                return(true);
+                return (true);
 
             return checkAccessRights(_securityContext.accessRights, _securityContext.route, _securityContext.neededRights,
                 objPath, aasOrSubmodel, objectAasOrSubmodel, true);
@@ -90,7 +90,7 @@ namespace IO.Swagger.V1RC03.Services
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, bool testOnly = false)
         {
             string error = "Access not allowed";
-            withAllow= false;
+            withAllow = false;
 
             if (Program.secretStringAPI != null)
             {
@@ -104,7 +104,7 @@ namespace IO.Swagger.V1RC03.Services
                 if (AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                     out error, currentRole, operation, neededRights, out withAllow,
                     objPath, aasOrSubmodel, objectAasOrSubmodel))
-                        return true;
+                    return true;
 
                 if (currentRole == null)
                 {
@@ -1005,10 +1005,10 @@ namespace IO.Swagger.V1RC03.Services
             }
 
             //Check if corresponding AAS exist. If yes, then add to the same environment
-            if(!string.IsNullOrEmpty(aasIdentifier))
+            if (!string.IsNullOrEmpty(aasIdentifier))
             {
                 var aasFound = IsAssetAdministrationShellPresent(aasIdentifier, out AssetAdministrationShell aas, out int packageIndex);
-                if(aasFound)
+                if (aasFound)
                 {
                     body.SetAllParents(DateTime.UtcNow);
                     _packages[packageIndex].AasEnv.Submodels.Add(body);
@@ -1439,21 +1439,21 @@ namespace IO.Swagger.V1RC03.Services
                 if (fileElement is File file)
                 {
                     //Check if file has location
-                    if(!string.IsNullOrEmpty(file.Value))
+                    if (!string.IsNullOrEmpty(file.Value))
                     {
                         //check if it is external location
-                        if(file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+                        if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
                         {
                             _logger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
                             throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
                         }
                         //Check if a directory
-                        else if(file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                        else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
                         {
                             _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
                             //check if the value consists file extension
                             string sourcePath;
-                            if(Path.HasExtension(file.Value))
+                            if (Path.HasExtension(file.Value))
                             {
                                 sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
                             }
@@ -1461,7 +1461,7 @@ namespace IO.Swagger.V1RC03.Services
                             {
                                 sourcePath = Path.Combine(file.Value);
                             }
-                           
+
                             var targetFile = Path.Combine(sourcePath, fileName);
                             targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
                             Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
@@ -1485,7 +1485,7 @@ namespace IO.Swagger.V1RC03.Services
                         file.Value = FormatFileName(targetFile);
                         AasxServer.Program.signalNewData(2);
                     }
-                    
+
                 }
                 else
                 {
