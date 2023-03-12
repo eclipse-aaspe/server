@@ -380,17 +380,20 @@
                                                 */
                                             }
                                         }
-                                    </div>
-                                    link = getAasLink(@node.aas);
-                                    queryPara = "";
-                                    userPW = "";
-                                    urlEdcWrapper = "";
-                                    if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                                        </div>
+                                        link = getAasLink(@node.aas);
+                                        queryPara = "";
+                                        userPW = "";
+                                        urlEdcWrapper = "";
+                                        if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
                                         {
                                             if (queryPara != "")
                                             {
-                                                link += "&" + queryPara;
+                                                var bytes = System.Text.Encoding.UTF8.GetBytes(queryPara);
+                                                queryPara = System.Convert.ToBase64String(bytes);
+                                                link += "&query=" + queryPara;
                                             }
+                                            Console.WriteLine("iframe: " + "?aasUrl=" + link);
                                         }
                                         string iframePath = getIframePath();
                                     }
