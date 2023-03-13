@@ -852,7 +852,7 @@ namespace IO.Swagger.Registry.Controllers
         static int submodelRegistryCount = 0;
         static List<string> postRegistry = new List<string>();
         static List<string> federatedElemensSemanticId = new List<string>();
-        static List<string> getRegistry = new List<string>();
+        public static List<string> getRegistry = new List<string>();
 
         static bool init = false;
         static int initiallyEmpty = 0;
