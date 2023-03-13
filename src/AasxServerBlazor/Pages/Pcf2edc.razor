@@ -382,6 +382,11 @@
                                         }
                                         </div>
                                         link = getAasLink(@node.aas);
+                                        var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                                        if (registry.Count != 0)
+                                        {
+                                            link += "&registryURL=" + registry[0];
+                                        }
                                         queryPara = "";
                                         userPW = "";
                                         urlEdcWrapper = "";
@@ -389,11 +394,10 @@
                                         {
                                             if (queryPara != "")
                                             {
-                                                var bytes = System.Text.Encoding.UTF8.GetBytes(queryPara);
-                                                queryPara = System.Convert.ToBase64String(bytes);
+                                                queryPara = Base64UrlEncoder.Encode(queryPara);
                                                 link += "&query=" + queryPara;
                                             }
-                                            Console.WriteLine("iframe: " + "?aasUrl=" + link);
+                                            Console.WriteLine("iframe:" + link);
                                         }
                                         string iframePath = getIframePath();
                                     }
