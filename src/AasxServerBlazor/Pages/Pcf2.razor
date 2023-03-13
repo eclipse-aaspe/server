@@ -324,23 +324,24 @@
                                         }
                                     </div>
                                     link = getAasLink(@node.aas);
+                                    var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                                    if (registry.Count != 0)
+                                    {
+                                        link += "&registryURL=" + registry[0];
+                                    }
                                     queryPara = "";
                                     userPW = "";
                                     urlEdcWrapper = "";
                                     if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                                    {
+                                        if (queryPara != "")
                                         {
-                                            if (queryPara != "")
-                                            {
-                                                link += "&" + queryPara;
-                                            }
-                                            if (userPW != "")
-                                            {
-                                                link = link.Replace("https://", "https://" + userPW + "@");
-                                                link = link.Replace("http://", "http://" + userPW + "@");
-                                            }
+                                            queryPara = Base64UrlEncoder.Encode(queryPara);
+                                            link += "&query=" + queryPara;
                                         }
-                                        string iframePath = getIframePath();
+                                        Console.WriteLine("iframe:" + link);
                                     }
+                                    string iframePath = getIframePath();
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
                                             onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link'"
@@ -348,6 +349,7 @@
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
                                     </div>
+                                }
                                 </div>
                                 if (!moduleOnly && node.children.Count != 0 && node.cradleToGateModule != null)
                                 {
