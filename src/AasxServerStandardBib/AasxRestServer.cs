@@ -99,7 +99,7 @@ namespace AasxRestServerLibrary
             }
 
             // query
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")] 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/queryregistry/(/|)$")]
             public IHttpContext Queryregistry(IHttpContext context)
             {
@@ -260,7 +260,7 @@ namespace AasxRestServerLibrary
                             {
                                 string legal = "012345679.";
 
-                                foreach (var c in left+right)
+                                foreach (var c in left + right)
                                 {
                                     if (Char.IsDigit(c))
                                         continue;
@@ -309,7 +309,7 @@ namespace AasxRestServerLibrary
                             int l = Convert.ToInt32(left);
                             int r = Convert.ToInt32(right);
 
-                            switch(op)
+                            switch (op)
                             {
                                 case "==num":
                                     return l == r;
@@ -689,12 +689,12 @@ namespace AasxRestServerLibrary
                                                         result += " " + f.Value;
                                                     if (sme is MultiLanguageProperty mlp)
                                                     {
-                                                        if (mlp.Value != null && mlp.Value.LangStrings != null)
+                                                        if (mlp.Value != null && mlp.Value != null)
                                                         {
-                                                            for (int iMlp = 0; iMlp < mlp.Value.LangStrings.Count; iMlp++)
+                                                            for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                             {
-                                                                result += " [" + mlp.Value.LangStrings[iMlp].Language + "]" +
-                                                                    mlp.Value.LangStrings[iMlp].Text;
+                                                                result += " [" + mlp.Value[iMlp].Language + "]" +
+                                                                    mlp.Value[iMlp].Text;
                                                             }
 
                                                         }
@@ -1319,12 +1319,12 @@ namespace AasxRestServerLibrary
                                                                     result += " " + f.Value;
                                                                 if (sme is MultiLanguageProperty mlp)
                                                                 {
-                                                                    if (mlp.Value != null && mlp.Value.LangStrings != null)
+                                                                    if (mlp.Value != null && mlp.Value != null)
                                                                     {
-                                                                        for (int iMlp = 0; iMlp < mlp.Value.LangStrings.Count; iMlp++)
+                                                                        for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                                         {
-                                                                            result += " [" + mlp.Value.LangStrings[iMlp].Language + "]" +
-                                                                                mlp.Value.LangStrings[iMlp].Text;
+                                                                            result += " [" + mlp.Value[iMlp].Language + "]" +
+                                                                                mlp.Value[iMlp].Text;
                                                                         }
 
                                                                     }

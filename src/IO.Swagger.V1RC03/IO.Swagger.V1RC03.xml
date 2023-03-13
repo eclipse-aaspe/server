@@ -1121,6 +1121,31 @@
             <response code="404">Not Found</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.GetThumbnail(System.String)">
+            <summary>
+            Returns the thumbnail file
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+            <response code="200">The thumbnail of the Asset Information.</response>
+            <response code="400">Bad Request</response>
+            <response code="403">Forbidden</response>
+            <response code="404">Not Found</response>
+            <response code="500">Internal Server Error</response>
+            <response code="0">Default error handling for unmentioned status codes</response>
+        </member>
+        <member name="M:IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController.PutThumbnail(System.String,Microsoft.AspNetCore.Http.IFormFile)">
+            <summary>
+            Replaces the thumbnail file
+            </summary>
+            <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+            <param name="file">Thumbnail to upload</param>
+            <response code="204">Thumbnail updated successfully</response>
+            <response code="400">Bad Request</response>
+            <response code="403">Forbidden</response>
+            <response code="404">Not Found</response>
+            <response code="404">Internal Server Error</response>
+            <response code="0">Default error handling for unmentioned status codes</response>
+        </member>
         <member name="T:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController">
             <summary>
             

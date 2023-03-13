@@ -881,7 +881,7 @@ namespace IO.Swagger.Registry.Controllers
                 return;
             }
 
-            AasxServer.Program.initializingRegistry= true;
+            AasxServer.Program.initializingRegistry = true;
 
             init = true;
             if (initAgain)
@@ -1044,13 +1044,11 @@ namespace IO.Swagger.Registry.Controllers
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
                                 // check, if AAS is exisiting and must be replaced
-                                var aas = new AssetAdministrationShell();
+                                var aas = new AssetAdministrationShell(ad.Identification, new AssetInformation(AssetKind.Instance));
                                 aas.Extensions = new List<Extension> { new Extension("endpoint", value: ad.Endpoints[0].ProtocolInformation.EndpointAddress) };
                                 aas.TimeStamp = timestamp;
                                 aas.TimeStampCreate = timestamp;
-                                aas.Id = ad.Identification;
                                 aas.IdShort = ad.IdShort + " - EXTERNAL";
-                                aas.AssetInformation = new AssetInformation(AssetKind.Instance);
                                 string gid = ad.GlobalAssetId.Value[0];
                                 aas.AssetInformation.GlobalAssetId = new AasCore.Aas3_0_RC02.Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
                                             new List<Key>() { new Key(KeyTypes.GlobalReference, gid) });

@@ -1346,7 +1346,7 @@ namespace AasxServer
                                                 if (p.Value != null)
                                                 {
                                                     string s = null;
-                                                    foreach (var ls in p.Value.LangStrings)
+                                                    foreach (var ls in p.Value)
                                                     {
                                                         if (ls.Language.ToLower() == "en")
                                                         {
@@ -1371,7 +1371,7 @@ namespace AasxServer
                     if (!assetCfp.ContainsKey(assetId))
                     {
                         assetCfp.Add(assetId, cfp);
-                    }                   
+                    }
                     if (i == envIndex)
                     {
                         root = cfp;
