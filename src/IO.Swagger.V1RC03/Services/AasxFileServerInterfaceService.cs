@@ -80,11 +80,11 @@ namespace IO.Swagger.V1RC03.Services
                 System.IO.File.Delete(copyFileName);
                 return fileName;
             }
-            else if(requestedPackage != null && string.IsNullOrEmpty(requestedFileName))
+            else if (requestedPackage != null && string.IsNullOrEmpty(requestedFileName))
             {
                 //File does not exist, may be AAS is added by REST-API
                 //Check if AAS exists
-                if(requestedPackage.AasEnv.AssetAdministrationShells.Count != 0)
+                if (requestedPackage.AasEnv.AssetAdministrationShells.Count != 0)
                 {
                     string newFileName = Path.Combine(AasxHttpContextHelper.DataPath, requestedPackage.AasEnv.AssetAdministrationShells[0].IdShort + ".aasx");
                     using (new FileStream(newFileName, FileMode.CreateNew)) { }
@@ -220,7 +220,7 @@ namespace IO.Swagger.V1RC03.Services
                         var newAasx = new AdminShellPackageEnv(originalFile, true);
                         if (newAasx != null)
                         {
-                            foreach(var submodel in newAasx.AasEnv.Submodels)
+                            foreach (var submodel in newAasx.AasEnv.Submodels)
                             {
                                 submodel.SetAllParents();
                             }

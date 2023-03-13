@@ -282,13 +282,16 @@ namespace Extenstions
             if (sourceSubmodelElement.hasDataSpecification != null)
             {
                 //TODO: jtikekar : EmbeddedDataSpecification?? (as per old implementation)
-                if (submodelElement.DataSpecifications == null)
+                if (submodelElement.EmbeddedDataSpecifications == null)
                 {
-                    submodelElement.DataSpecifications = new List<Reference>();
+                    submodelElement.EmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
                 }
                 foreach (var dataSpecification in sourceSubmodelElement.hasDataSpecification.reference)
                 {
-                    submodelElement.DataSpecifications.Add(ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.GlobalReference));
+                    submodelElement.EmbeddedDataSpecifications.Add(
+                        new EmbeddedDataSpecification(
+                            ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.GlobalReference),
+                            null));
                 }
             }
         }
@@ -479,15 +482,16 @@ namespace Extenstions
             if (sourceSubmodelElement.hasDataSpecification != null)
             {
                 //TODO: jtikekar : EmbeddedDataSpecification?? (as per old implementation)
-                if (submodelElement.DataSpecifications == null)
-                {
-                    submodelElement.DataSpecifications = new List<Reference>();
-                }
+                if (submodelElement.EmbeddedDataSpecifications == null)
+                    submodelElement.EmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
 
                 //TODO: jtikekar: DataSpecificationContent?? (as per old implementation)
                 foreach (var sourceDataSpec in sourceSubmodelElement.hasDataSpecification)
                 {
-                    submodelElement.DataSpecifications.Add(ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.GlobalReference));
+                    submodelElement.EmbeddedDataSpecifications.Add(
+                        new EmbeddedDataSpecification(
+                            ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.GlobalReference),
+                            null));
                 }
             }
         }

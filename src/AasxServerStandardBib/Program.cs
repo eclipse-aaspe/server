@@ -427,7 +427,7 @@ namespace AasxServer
                 }
             }
 
-            if (!Directory.Exists("./temp")) 
+            if (!Directory.Exists("./temp"))
                 Directory.CreateDirectory("./temp");
 
             string fn = null;
@@ -898,7 +898,7 @@ namespace AasxServer
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
             //public AdminShell.Description description = null;
-            public LangStringSet description = null;
+            public List<LangString> description = null;
 
             [XmlElement(ElementName = "idShort")]
             [JsonIgnore]
@@ -926,7 +926,7 @@ namespace AasxServer
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
             //public AdminShell.Description description = new AdminShell.Description();
-            public LangStringSet description = new(new List<LangString>());
+            public List<LangString> description = new(new List<LangString>());
 
             [XmlElement(ElementName = "idShort")]
             public string idShort = "";

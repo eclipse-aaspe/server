@@ -1,11 +1,6 @@
 ﻿using AasCore.Aas3_0_RC02;
-using AasxServerStandardBib.Exceptions;
-using IO.Swagger.V1RC03.APIModels.Core;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static AasCore.Aas3_0_RC02.Visitation;
 
 namespace IO.Swagger.V1RC03.APIModels.ValueOnly
@@ -63,7 +58,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.SubmodelElements == null || that.SubmodelElements.Count != source.SubmodelElements.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("Submodel : " + that.IdShort, source.SubmodelElements.Count, that.SubmodelElements.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("Submodel : " + that.IdShort, source.SubmodelElements.Count, that.SubmodelElements.Count);
                     }
                     for (int i = 0; i < source.SubmodelElements.Count; i++)
                     {
@@ -83,7 +78,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (outputModifierContext.IncludeChildren)
             {
@@ -96,7 +91,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.SubmodelElements == null || that.SubmodelElements.Count != source.SubmodelElements.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("Submodel : " + that.IdShort, source.SubmodelElements.Count, that.SubmodelElements.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("Submodel : " + that.IdShort, source.SubmodelElements.Count, that.SubmodelElements.Count);
                     }
                     for (int i = 0; i < source.SubmodelElements.Count; i++)
                     {
@@ -129,7 +124,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
@@ -151,7 +146,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.Value == null || that.Value.Count != source.Value.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("SubmodelElementList : " + that.IdShort, source.Value.Count, that.Value.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("SubmodelElementList : " + that.IdShort, source.Value.Count, that.Value.Count);
                     }
                     for (int i = 0; i < source.Value.Count; i++)
                     {
@@ -171,7 +166,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (outputModifierContext.IncludeChildren)
             {
@@ -184,7 +179,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.Value == null || that.Value.Count != source.Value.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("SubmodelElementList : " + that.IdShort, source.Value.Count, that.Value.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("SubmodelElementList : " + that.IdShort, source.Value.Count, that.Value.Count);
                     }
                     for (int i = 0; i < source.Value.Count; i++)
                     {
@@ -207,7 +202,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.Value == null || that.Value.Count != source.Value.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("SubmodelElementCollection : " + that.IdShort, source.Value.Count, that.Value.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("SubmodelElementCollection : " + that.IdShort, source.Value.Count, that.Value.Count);
                     }
                     for (int i = 0; i < source.Value.Count; i++)
                     {
@@ -227,7 +222,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (outputModifierContext.IncludeChildren)
             {
@@ -240,7 +235,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.Value == null || that.Value.Count != source.Value.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("SubmodelElementCollection : " + that.IdShort, source.Value.Count, that.Value.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("SubmodelElementCollection : " + that.IdShort, source.Value.Count, that.Value.Count);
                     }
                     for (int i = 0; i < source.Value.Count; i++)
                     {
@@ -272,7 +267,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
             that.ValueType = source.ValueType;
             that.ValueId = source.ValueId;
 
@@ -304,7 +299,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
             that.ValueId = source.ValueId;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
@@ -336,7 +331,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
             that.ValueType = source.ValueType;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
@@ -368,7 +363,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
@@ -402,7 +397,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
@@ -434,7 +429,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
@@ -458,7 +453,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.Annotations == null || that.Annotations.Count != source.Annotations.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("AnnotedRelationshipElement : " + that.IdShort, source.Annotations.Count, that.Annotations.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("AnnotedRelationshipElement : " + that.IdShort, source.Annotations.Count, that.Annotations.Count);
                     }
                     for (int i = 0; i < source.Annotations.Count; i++)
                     {
@@ -478,7 +473,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
@@ -497,7 +492,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                     //First check if number of elements in source and that are equal
                     if (that.Annotations == null || that.Annotations.Count != source.Annotations.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("AnnotedRelationshipElement : " + that.IdShort, source.Annotations.Count, that.Annotations.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("AnnotedRelationshipElement : " + that.IdShort, source.Annotations.Count, that.Annotations.Count);
                     }
                     for (int i = 0; i < source.Annotations.Count; i++)
                     {
@@ -530,7 +525,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 {
                     if (that.Statements == null || that.Statements.Count != source.Statements.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("Entity : " + that.IdShort, source.Statements.Count, that.Statements.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("Entity : " + that.IdShort, source.Statements.Count, that.Statements.Count);
                     }
                     for (int i = 0; i < source.Statements.Count; i++)
                     {
@@ -550,7 +545,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             that.EntityType = source.EntityType;
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
@@ -576,7 +571,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 {
                     if (that.Statements == null || that.Statements.Count != source.Statements.Count)
                     {
-                        throw new InvalidNumberOfChildElementsException("Entity : " + that.IdShort, source.Statements.Count, that.Statements.Count);
+                        throw new AasxServerStandardBib.Exceptions.InvalidNumberOfChildElementsException("Entity : " + that.IdShort, source.Statements.Count, that.Statements.Count);
                     }
                     for (int i = 0; i < source.Statements.Count; i++)
                     {
@@ -614,7 +609,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             that.SemanticId = source.SemanticId;
             that.SupplementalSemanticIds = source.SupplementalSemanticIds;
             that.Qualifiers = source.Qualifiers;
-            that.DataSpecifications = source.DataSpecifications;
+            that.EmbeddedDataSpecifications = source.EmbeddedDataSpecifications;
 
             if (!outputModifierContext.Content.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
@@ -658,22 +653,32 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             throw new NotImplementedException();
         }
 
-        public IClass Transform(LangStringSet that, UpdateContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IClass Transform(DataSpecificationContent that, UpdateContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IClass Transform(DataSpecification that, UpdateContext context)
-        {
-            throw new NotImplementedException();
-        }
-
         public IClass Transform(AasCore.Aas3_0_RC02.Environment that, UpdateContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IClass Transform(EmbeddedDataSpecification that, UpdateContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IClass Transform(ValueReferencePair that, UpdateContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IClass Transform(ValueList that, UpdateContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IClass Transform(DataSpecificationIec61360 that, UpdateContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IClass Transform(DataSpecificationPhysicalUnit that, UpdateContext context)
         {
             throw new NotImplementedException();
         }

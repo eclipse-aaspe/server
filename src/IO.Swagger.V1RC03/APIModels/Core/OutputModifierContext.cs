@@ -13,7 +13,7 @@ namespace IO.Swagger.V1RC03.APIModels.Core
         private bool _includeChildren = true;
         private List<string> idShortPaths;
         public Submodel submodel = null;
-        public AssetAdministrationShellEnvironmentService aasEnvService= null;
+        public AssetAdministrationShellEnvironmentService aasEnvService = null;
         public string Level
         {
             get => _level;

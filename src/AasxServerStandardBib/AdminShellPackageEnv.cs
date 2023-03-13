@@ -9,6 +9,7 @@ This source code may use other Open Source software components (see LICENSE.txt)
 
 using AasCore.Aas3_0_RC02;
 using Extenstions;
+using MimeKit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -207,7 +208,8 @@ namespace AdminShellNS
                 //res = serializer.Deserialize(s) as AasCore.Aas3_0_RC02.Environment;
 
                 XmlReader xmlReader = XmlReader.Create(s);
-                res = Xmlization.Deserialize.EnvironmentFrom(xmlReader, "http://www.admin-shell.io/aas/3/0");
+                //res = Xmlization.Deserialize.EnvironmentFrom(xmlReader, "http://www.admin-shell.io/aas/3/0");
+                res = Xmlization.Deserialize.EnvironmentFrom(xmlReader);
                 return res;
             }
 
@@ -284,7 +286,7 @@ namespace AdminShellNS
 
         private string _tempFn = null;
 
-        private AasCore.Aas3_0_RC02.Environment _aasEnv = new AasCore.Aas3_0_RC02.Environment(new List<AssetAdministrationShell>(), new List<Submodel>(), new List<ConceptDescription>(), new List<DataSpecification>());
+        private AasCore.Aas3_0_RC02.Environment _aasEnv = new AasCore.Aas3_0_RC02.Environment(new List<AssetAdministrationShell>(), new List<Submodel>(), new List<ConceptDescription>());
         private Package _openPackage = null;
         private readonly ListOfAasSupplementaryFile _pendingFilesToAdd = new ListOfAasSupplementaryFile();
         private readonly ListOfAasSupplementaryFile _pendingFilesToDelete = new ListOfAasSupplementaryFile();
@@ -312,7 +314,7 @@ namespace AdminShellNS
 
         public void SetFilename(string fileName)
         {
-            _fn= fileName;
+            _fn = fileName;
         }
 
         public string Filename
@@ -840,7 +842,7 @@ namespace AdminShellNS
                             };
                             using XmlWriter writer = XmlWriter.Create(s, settings);
                             string ns = "http://www.admin-shell.io/aas/3/0";
-                            Xmlization.Serialize.To((IClass)_aasEnv, writer, ns: ns);
+                            Xmlization.Serialize.To((IClass)_aasEnv, writer);
                         }
                     }
 
@@ -1166,7 +1168,7 @@ namespace AdminShellNS
             {
                 _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
 
-            }            
+            }
             var targetUri = PackUriHelper.CreatePartUri(new Uri(targetFile, UriKind.RelativeOrAbsolute));
             PackagePart packagePart = _openPackage.CreatePart(targetUri, targetContentType);
             fileContent.Position = 0;
@@ -1486,5 +1488,33 @@ namespace AdminShellNS
             }
         }
 
+        public void EmbeddAssetInformationThumbnail(Resource defaultThumbnail, Stream fileContent)
+        {
+            // access
+            if (_openPackage == null)
+                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+
+            if (!string.IsNullOrEmpty(defaultThumbnail.Path))
+            {
+                var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
+                _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+            }
+            var targetUri = PackUriHelper.CreatePartUri(new Uri(defaultThumbnail.Path, UriKind.RelativeOrAbsolute));
+
+            PackagePart packagePart = _openPackage.CreatePart(targetUri, defaultThumbnail.ContentType, compressionOption: CompressionOption.Maximum);
+
+            _openPackage.CreateRelationship(packagePart.Uri, TargetMode.Internal,
+                                        "http://schemas.openxmlformats.org/package/2006/" +
+                                        "relationships/metadata/thumbnail");
+
+            //Write to the part
+            fileContent.Position = 0;
+            using (Stream dest = packagePart.GetStream())
+            {
+                fileContent.CopyTo(dest);
+            }
+
+
+        }
     }
 }

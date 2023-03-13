@@ -55,5 +55,7 @@ namespace IO.Swagger.V1RC03.Services
         void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, Stream stream);
         void SecurityCheckInit(HttpContext _context, string _route, string _httpOperation);
         void SecurityCheck(string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null);
+        void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream fileContent);
+        string GetThumbnail(string aasIdentifier, out byte[] content, out long fileSize);
     }
 }

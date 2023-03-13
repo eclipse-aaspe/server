@@ -10,7 +10,7 @@ namespace Extenstions
 {
     public static class ExtendLangStringSet
     {
-        public static string GetDefaultString(this LangStringSet langStringSet, string defaultLang = null)
+        public static string GetDefaultString(this List<LangString> langStringSet, string defaultLang = null)
         {
             // start
             if (defaultLang == null)
@@ -19,27 +19,30 @@ namespace Extenstions
             string res = null;
 
             // search
-            foreach (var langString in langStringSet.LangStrings)
+            foreach (var langString in langStringSet)
                 if (langString.Language.Equals(defaultLang, StringComparison.OrdinalIgnoreCase))
                     res = langString.Text;
 
-            if (res == null && langStringSet.LangStrings.Count > 0)
-                res = langStringSet.LangStrings[0].Text;
+            if (res == null && langStringSet.Count > 0)
+                res = langStringSet[0].Text;
 
             // found?
             return res;
         }
 
-        public static LangStringSet ConvertFromV20(this LangStringSet langStringSet, AasxCompatibilityModels.AdminShellV20.LangStringSet sourceLangStrings)
+        public static List<LangString> ConvertFromV20(
+            this List<LangString> langStringSet,
+            AasxCompatibilityModels.AdminShellV20.LangStringSet sourceLangStrings)
         {
 
-            if (!sourceLangStrings.langString.IsNullOrEmpty())
+            //if (!sourceLangStrings.langString.IsNullOrEmpty())
+            if (sourceLangStrings.langString != null && sourceLangStrings.langString.Count != 0)
             {
-                langStringSet.LangStrings = new List<LangString>();
+                langStringSet = new List<LangString>();
                 foreach (var sourceLangString in sourceLangStrings.langString)
                 {
                     var langString = new LangString(sourceLangString.lang, sourceLangString.str);
-                    langStringSet.LangStrings.Add(langString);
+                    langStringSet.Add(langString);
                 }
             }
             return langStringSet;
