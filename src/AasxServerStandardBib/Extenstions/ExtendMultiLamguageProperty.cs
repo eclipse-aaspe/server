@@ -12,7 +12,7 @@ namespace Extenstions
         public static string ValueAsText(this MultiLanguageProperty multiLanguageProperty)
         {
             //TODO: need to check/test again
-            return "" + multiLanguageProperty.Value?.LangStrings.FirstOrDefault().Text;
+            return "" + multiLanguageProperty.Value?.FirstOrDefault().Text;
         }
 
         public static MultiLanguageProperty ConvertFromV20(this MultiLanguageProperty property, AasxCompatibilityModels.AdminShellV20.MultiLanguageProperty sourceProperty)
@@ -43,7 +43,7 @@ namespace Extenstions
 
             var newLangStrings = new List<LangString>();
 
-            LangStringSet newLangStringSet = new(newLangStrings);
+            List<LangString> newLangStringSet = new(newLangStrings);
 
             property.Value = newLangStringSet.ConvertFromV20(sourceProperty.value);
 
