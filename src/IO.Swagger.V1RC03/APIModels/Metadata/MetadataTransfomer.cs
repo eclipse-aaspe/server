@@ -2118,9 +2118,9 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
         }
 
         //public override Nodes.JsonObject Transform(List<LangString> that)
-        public Nodes.JsonObject Transform(List<LangString> that)
+        public Nodes.JsonNode Transform(List<LangString> that)
         {
-            var result = new Nodes.JsonObject();
+            //var result = new Nodes.JsonObject();
 
             var arrayLangStrings = new Nodes.JsonArray();
             foreach (LangString item in that)
@@ -2129,9 +2129,9 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                     Transform(
                         item));
             }
-            result["langStrings"] = arrayLangStrings;
+            //result["langStrings"] = arrayLangStrings;
 
-            return result;
+            return arrayLangStrings;
         }
 
 

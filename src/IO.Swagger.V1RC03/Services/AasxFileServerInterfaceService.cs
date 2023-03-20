@@ -167,6 +167,10 @@ namespace IO.Swagger.V1RC03.Services
                 {
                     _packages[emptyPackageIndex] = newAasx;
                     _envFileNames[emptyPackageIndex] = newFileName;
+                    foreach (var submodel in newAasx.AasEnv.Submodels) 
+                    { 
+                        submodel.SetAllParents();
+                    }
                     AasxServer.Program.signalNewData(2);
                     return emptyPackageIndex.ToString();
                 }

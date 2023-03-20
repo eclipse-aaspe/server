@@ -1177,7 +1177,7 @@
             <response code="200">Requested package list</response>
             <response code="0">Default error handling for unmentioned status codes</response>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.PostAASXPackage(System.String,Microsoft.AspNetCore.Http.IFormFile,System.String)">
+        <member name="M:IO.Swagger.V1RC03.Controllers.AASXFileServerApiController.PostAASXPackage(System.String,Microsoft.AspNetCore.Http.IFormFile)">
             <summary>
             Creates an AASX package at the server
             </summary>
