@@ -2583,9 +2583,10 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             return result;
         }
 
-        public JsonObject Transform(List<LangString> that, OutputModifierContext context)
+        //public JsonObject Transform(List<LangString> that, OutputModifierContext context)
+        public JsonNode Transform(List<LangString> that, OutputModifierContext context)
         {
-            var result = new JsonObject();
+            //var result = new JsonObject();
 
             var arrayLangStrings = new JsonArray();
             foreach (LangString item in that)
@@ -2594,9 +2595,11 @@ namespace IO.Swagger.V1RC03.APIModels.Core
                     Transform(
                         item, context));
             }
-            result["langStrings"] = arrayLangStrings;
+            //result["langStrings"] = arrayLangStrings;
 
-            return result;
+            //return result;
+
+            return arrayLangStrings;
         }
 
         public JsonObject Transform(IDataSpecificationContent that, OutputModifierContext context)

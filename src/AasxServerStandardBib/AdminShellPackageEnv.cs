@@ -9,6 +9,8 @@ This source code may use other Open Source software components (see LICENSE.txt)
 
 using AasCore.Aas3_0_RC02;
 using Extenstions;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using MimeKit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -201,14 +203,14 @@ namespace AdminShellNS
             }
 
             // read V3.0?
-            if (nsuri != null && nsuri.Trim() == "http://www.admin-shell.io/aas/3/0")
+            if (nsuri != null && nsuri.Trim() == Xmlization.NS)
             {
                 //XmlSerializer serializer = new XmlSerializer(
                 //    typeof(AasCore.Aas3_0_RC02.Environment), "http://www.admin-shell.io/aas/3/0");
                 //res = serializer.Deserialize(s) as AasCore.Aas3_0_RC02.Environment;
-
                 XmlReader xmlReader = XmlReader.Create(s);
                 //res = Xmlization.Deserialize.EnvironmentFrom(xmlReader, "http://www.admin-shell.io/aas/3/0");
+                xmlReader.MoveToContent();
                 res = Xmlization.Deserialize.EnvironmentFrom(xmlReader);
                 return res;
             }
