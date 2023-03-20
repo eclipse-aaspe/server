@@ -1,9 +1,7 @@
 ﻿using AasCore.Aas3_0_RC02;
-using IO.Swagger.V1RC03.Logging;
+using AasxServerStandardBib.Logging;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.Services
 {

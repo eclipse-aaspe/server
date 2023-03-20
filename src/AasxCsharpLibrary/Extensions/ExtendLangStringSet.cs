@@ -112,16 +112,26 @@ namespace Extensions
             this List<LangString> lss, 
             AasxCompatibilityModels.AdminShellV20.LangStringSetIEC61360 src)
         {
-
+            lss = new List<LangString>();
             //if (!sourceLangStrings.langString.IsNullOrEmpty())
             if (src != null && src.Count != 0)
             {
-                lss = new List<LangString>();
                 foreach (var sourceLangString in src)
                 {
-                    var langString = new LangString(sourceLangString.lang, sourceLangString.str);
+                    //Remove ? in the end added by AdminShellV20, to avoid verification error
+                    string lang= sourceLangString.lang;
+                    if(!string.IsNullOrEmpty(sourceLangString.lang) && sourceLangString.lang.EndsWith("?"))
+                    {
+                        lang = sourceLangString.lang.Remove(sourceLangString.lang.Length -1);
+                    }
+                    var langString = new LangString(lang, sourceLangString.str);
                     lss.Add(langString);
                 }
+            }
+            else
+            {
+                //set default preferred name
+                lss.Add(new LangString("en", ""));
             }
             return lss;
         }

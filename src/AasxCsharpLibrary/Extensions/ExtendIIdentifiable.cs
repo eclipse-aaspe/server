@@ -20,6 +20,7 @@ namespace Extensions
         public static Reference GetReference(this IIdentifiable identifiable)
         {
             var key = new Key(ExtensionsUtil.GetKeyType(identifiable), identifiable.Id);
+            //TODO:jtikekar if model or Global reference?
             var outputReference = new Reference(ReferenceTypes.ModelReference, new List<Key>() { key });
 
             return outputReference;

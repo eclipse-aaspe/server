@@ -1,11 +1,8 @@
-﻿using IO.Swagger.V1RC03.Logging;
+﻿using AasxServerStandardBib.Logging;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
-using System.CommandLine.Parsing;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;

@@ -49,11 +49,6 @@ namespace IO.Swagger.V1RC03
             {
                 return base.CanWriteResult(context);
             }
-            //TODO:jtikekar remove
-            //if (typeof(IValue).IsAssignableFrom(context.ObjectType))
-            //{
-            //    return base.CanWriteResult(context);
-            //}
             else
                 return false;
         }

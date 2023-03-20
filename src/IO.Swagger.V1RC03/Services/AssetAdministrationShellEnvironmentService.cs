@@ -1,11 +1,13 @@
 ﻿using AasCore.Aas3_0_RC02;
 using AasxServer;
+using AasxServerStandardBib.Exceptions;
+using AasxServerStandardBib.Logging;
 using AdminShellNS;
+using Extensions;
 using IO.Swagger.V1RC03.ApiModel;
 using IO.Swagger.V1RC03.APIModels.Core;
 using IO.Swagger.V1RC03.APIModels.ValueOnly;
 using IO.Swagger.V1RC03.Exceptions;
-using IO.Swagger.V1RC03.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -18,7 +20,6 @@ using System.Threading.Tasks;
 using System.Web;
 using static IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController;
 using File = AasCore.Aas3_0_RC02.File;
-using Extensions;
 
 namespace IO.Swagger.V1RC03.Services
 {
@@ -194,7 +195,7 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
-                throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aas.Id}");
+                throw new AasxServerStandardBib.Exceptions.NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aas.Id}");
             }
         }
 
@@ -382,7 +383,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
                 }
             }
 
@@ -402,7 +403,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
                 }
             }
         }
@@ -477,7 +478,7 @@ namespace IO.Swagger.V1RC03.Services
                     output = output.Where(a => a.IdShort.Equals(idShort)).ToList();
                     if (output.IsNullOrEmpty())
                     {
-                        throw new NotFoundException($"AssetAdministrationShells with IdShort {idShort} Not Found.");
+                        throw new AasxServerStandardBib.Exceptions.NotFoundException($"AssetAdministrationShells with IdShort {idShort} Not Found.");
                     }
                 }
 
@@ -496,7 +497,7 @@ namespace IO.Swagger.V1RC03.Services
                     }
                     else
                     {
-                        throw new NotFoundException($"AssetAdministrationShells with requested SpecificAssetIds Not Found.");
+                        throw new AasxServerStandardBib.Exceptions.NotFoundException($"AssetAdministrationShells with requested SpecificAssetIds Not Found.");
                     }
                 }
             }
@@ -514,7 +515,7 @@ namespace IO.Swagger.V1RC03.Services
                 //Check if AAS consist the requested submodel
                 if (aas.Submodels.Where(s => s.Matches(submodelIdentifier)).IsNullOrEmpty())
                 {
-                    throw new NotFoundException($"Requested submodel: {submodelIdentifier} not found in AAS: {aasIdentifier}");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"Requested submodel: {submodelIdentifier} not found in AAS: {aasIdentifier}");
                 }
 
                 output = GetAllSubmodelElementsFromSubmodel(submodelIdentifier, outputModifierContext);
@@ -535,7 +536,7 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
-                throw new NotFoundException($"AssetAdministrationShell with id {aasIdentifier} not found.");
+                throw new AasxServerStandardBib.Exceptions.NotFoundException($"AssetAdministrationShell with id {aasIdentifier} not found.");
             }
         }
 
@@ -634,7 +635,7 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
-                throw new NotFoundException($"ConceptDescription with id {cdIdentifier} not found.");
+                throw new AasxServerStandardBib.Exceptions.NotFoundException($"ConceptDescription with id {cdIdentifier} not found.");
             }
         }
 
@@ -696,7 +697,7 @@ namespace IO.Swagger.V1RC03.Services
                     var cdList = output.Where(cd => cd.IdShort.Equals(idShort)).ToList();
                     if (cdList.IsNullOrEmpty())
                     {
-                        throw new NotFoundException($"Concept Description with IdShort {idShort} Not Found.");
+                        throw new AasxServerStandardBib.Exceptions.NotFoundException($"Concept Description with IdShort {idShort} Not Found.");
                     }
                     else
                     {
@@ -724,7 +725,7 @@ namespace IO.Swagger.V1RC03.Services
                     }
                     if (cdList.IsNullOrEmpty())
                     {
-                        throw new NotFoundException($"Concept Description with requested IsCaseOf Not Found.");
+                        throw new AasxServerStandardBib.Exceptions.NotFoundException($"Concept Description with requested IsCaseOf Not Found.");
                     }
                     else
                     {
@@ -753,7 +754,7 @@ namespace IO.Swagger.V1RC03.Services
                     }
                     if (cdList.IsNullOrEmpty())
                     {
-                        throw new NotFoundException($"Concept Description with requested DataSpecificationReference Not Found.");
+                        throw new AasxServerStandardBib.Exceptions.NotFoundException($"Concept Description with requested DataSpecificationReference Not Found.");
                     }
                     else
                     {
@@ -1039,7 +1040,7 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
-                throw new NotFoundException($"Submodel with id {submodelIdentifier} not found.");
+                throw new AasxServerStandardBib.Exceptions.NotFoundException($"Submodel with id {submodelIdentifier} not found.");
             }
         }
 
@@ -1238,7 +1239,7 @@ namespace IO.Swagger.V1RC03.Services
             }
             else
             {
-                throw new NotFoundException($"Requested submodel element {idShortPath} NOT found.");
+                throw new AasxServerStandardBib.Exceptions.NotFoundException($"Requested submodel element {idShortPath} NOT found.");
             }
         }
 
@@ -1426,7 +1427,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                 }
             }
 
@@ -1493,7 +1494,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                 }
             }
         }
@@ -1520,7 +1521,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"Submodel element {operationElement.IdShort} is not of type Operation.");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"Submodel element {operationElement.IdShort} is not of type Operation.");
                 }
             }
 
@@ -1552,7 +1553,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"Submodel element {operationElement.IdShort} is not of type Operation.");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"Submodel element {operationElement.IdShort} is not of type Operation.");
                 }
             }
 
@@ -1593,7 +1594,7 @@ namespace IO.Swagger.V1RC03.Services
                 }
                 else
                 {
-                    throw new NotFoundException($"Submodel element {operationElement.IdShort} is not of type Operation.");
+                    throw new AasxServerStandardBib.Exceptions.NotFoundException($"Submodel element {operationElement.IdShort} is not of type Operation.");
                 }
             }
 

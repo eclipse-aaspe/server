@@ -237,7 +237,7 @@ namespace Extensions
             if (srcCD.identification?.id != null)
                 cd.Id = srcCD.identification.id;
 
-            if (srcCD.description != null)
+            if (srcCD.description != null && srcCD.description.langString.Count >=1)
                 cd.Description = ExtensionsUtil.ConvertDescriptionFromV20(srcCD.description);
 
             if (srcCD.administration != null)
@@ -259,11 +259,11 @@ namespace Extensions
             //jtikekar:as per old implementation
             if(srcCD.embeddedDataSpecification != null)
             {
-                foreach (var sourceEsd in srcCD.embeddedDataSpecification)
+                foreach (var sourceEds in srcCD.embeddedDataSpecification)
                 {
-                    var esd = new EmbeddedDataSpecification(null, null);
-                    esd.ConvertFromV20(sourceEsd);
-                    cd.AddEmbeddedDataSpecification(esd);
+                    var eds = new EmbeddedDataSpecification(null, null);
+                    eds.ConvertFromV20(sourceEds);
+                    cd.AddEmbeddedDataSpecification(eds);
                 }
             }
 

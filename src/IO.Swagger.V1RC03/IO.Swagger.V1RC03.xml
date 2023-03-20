@@ -1747,7 +1747,7 @@
             <param name="operation">Operation</param>
             <param name="context">OperationFilterContext</param>
         </member>
-        <member name="M:IO.Swagger.V1RC03.Services.AssetAdministrationShellEnvironmentService.#ctor(IO.Swagger.V1RC03.Logging.IAppLogger{IO.Swagger.V1RC03.Services.AssetAdministrationShellEnvironmentService})">
+        <member name="M:IO.Swagger.V1RC03.Services.AssetAdministrationShellEnvironmentService.#ctor(AasxServerStandardBib.Logging.IAppLogger{IO.Swagger.V1RC03.Services.AssetAdministrationShellEnvironmentService})">
             <summary>
             Constructor
             </summary>
