@@ -1,22 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using AasxServerBlazor.Data;
-using IO.Swagger.V1RC03;
-using IO.Swagger.V1RC03.APIModels.ValueOnly;
-using IO.Swagger.V1RC03.Controllers;
-using IO.Swagger.V1RC03.Filters;
-using IO.Swagger.V1RC03.Logging;
-using IO.Swagger.V1RC03.Middleware;
-using IO.Swagger.V1RC03.Services;
+﻿using AasxServerBlazor.Data;
+using AasxServerStandardBib.Extensions;
+using AasxServerStandardBib.Interfaces;
+using AasxServerStandardBib.Logging;
+using AasxServerStandardBib.Services;
+using IO.Swagger.Controllers;
+using IO.Swagger.Filters;
+using IO.Swagger.Lib.V3.Formatters;
+using IO.Swagger.Lib.V3.Interfaces;
+using IO.Swagger.Lib.V3.Middleware;
+using IO.Swagger.Lib.V3.Services;
 //using IO.Swagger.Controllers;
 //using IO.Swagger.Filters;
 //using IO.Swagger.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.Extensions.Configuration;
@@ -26,10 +22,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
-using static Org.BouncyCastle.Math.EC.ECCurve;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace AasxServerBlazor
 {
+    //TODO:jtikekar change to startup instead of startupV3
     public class Startup
     {
         private const string _corsPolicyName = "AllowAll";
@@ -61,7 +60,7 @@ namespace AasxServerBlazor
                     builder =>
                     {
                         builder
-                        .AllowAnyOrigin()
+                        .AllowAnyOrigin() // Pass "Allowed Hosts" from appsettings.json
                         .AllowAnyMethod()
                         .AllowAnyHeader();
                     });
@@ -72,15 +71,27 @@ namespace AasxServerBlazor
 
             services.AddControllers();
 
+            services.AddLazyResolution();
+
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
-            services.AddTransient<IAssetAdministrationShellEnvironmentService, AssetAdministrationShellEnvironmentService>();
-            services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+            services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
+            services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
+            services.AddTransient<ISubmodelService, SubmodelService>();
+            services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
             services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
-            services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
-            services.AddTransient<IOutputModifiersService, OutputModifiersService>();
-            services.AddTransient<IInputModifierService, InputModifierService>();
-            services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
-            services.AddTransient<IValueOnlyDeserializerService, ValueOnlyDeserializerService>();
+            services.AddTransient<IPaginationService, PaginationService>();
+            services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
+            services.AddTransient<IMetamodelVerificationService, MetamodelVerificationService>();
+            services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+            //TODO:jtikekar uncomment
+            //services.AddTransient<IAssetAdministrationShellEnvironmentService, AssetAdministrationShellEnvironmentService>();
+            //services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+
+            //services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
+            //services.AddTransient<IOutputModifiersService, OutputModifiersService>();
+            //services.AddTransient<IInputModifierService, InputModifierService>();
+            //services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
+            //services.AddTransient<IValueOnlyDeserializerService, ValueOnlyDeserializerService>();
 
             // Add framework services.
             services
@@ -92,8 +103,11 @@ namespace AasxServerBlazor
                 {
                     options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
                     options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
-                    options.InputFormatters.Add(new AasCoreInputFormatter());
-                    options.OutputFormatters.Add(new AasCoreOutputFormatter());
+                    options.InputFormatters.Add(new AasRequestFormatter());
+                    options.OutputFormatters.Add(new AasResponseFormatter());
+                    //TODO:jtikekar uncomment
+                    //options.InputFormatters.Add(new AasCoreInputFormatter());
+                    //options.OutputFormatters.Add(new AasCoreOutputFormatter());
                 })
                 .AddNewtonsoftJson(opts =>
                 {
@@ -127,7 +141,8 @@ namespace AasxServerBlazor
                         TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
                     });
 
-                    c.SchemaFilter<EnumSchemaFilter>();
+                    //TODO:jtikekar uncomment
+                    //c.SchemaFilter<EnumSchemaFilter>();
 
                     //c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
                     //{
@@ -156,7 +171,8 @@ namespace AasxServerBlazor
                     c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
 
-                    string swaggerCommentedAssembly = typeof(AssetAdministrationShellEnvironmentAPIController).Assembly.GetName().Name;
+                    //string swaggerCommentedAssembly = typeof(AssetAdministrationShellEnvironmentAPIController).Assembly.GetName().Name;
+                    string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryAPIApiController).Assembly.GetName().Name;
                     c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
 
                     // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)

@@ -1,6 +1,6 @@
 ﻿using AasCore.Aas3_0_RC02;
 
-namespace IO.Swagger.V1RC03.Services
+namespace IO.Swagger.Lib.V3.Interfaces
 {
     public interface IJsonQueryDeserializer
     {

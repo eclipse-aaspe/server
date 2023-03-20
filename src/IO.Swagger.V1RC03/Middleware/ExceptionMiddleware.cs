@@ -1,6 +1,6 @@
-﻿using IO.Swagger.V1RC03.ApiModel;
+﻿using AasxServerStandardBib.Exceptions;
+using IO.Swagger.V1RC03.ApiModel;
 using IO.Swagger.V1RC03.Exceptions;
-using IO.Swagger.V1RC03.Logging;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;

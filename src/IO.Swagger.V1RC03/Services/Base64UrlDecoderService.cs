@@ -1,8 +1,9 @@
 ﻿using IO.Swagger.V1RC03.Exceptions;
+using IO.Swagger.V1RC03.Services;
 using Microsoft.IdentityModel.Tokens;
 using System;
 
-namespace IO.Swagger.V1RC03.Services
+namespace IO.Swagger.Lib.V3.Services
 {
     public class Base64UrlDecoderService : IBase64UrlDecoderService
     {

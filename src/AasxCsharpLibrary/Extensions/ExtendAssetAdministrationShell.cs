@@ -215,7 +215,7 @@ namespace Extensions
                 }
             }
 
-            if (sourceAas.hasDataSpecification != null)
+            if (sourceAas.hasDataSpecification != null && sourceAas.hasDataSpecification.Count >0)
             {
                 //TODO: jtikekar : EmbeddedDataSpecification?? (as per old implementation)
                 if (assetAdministrationShell.EmbeddedDataSpecifications == null)

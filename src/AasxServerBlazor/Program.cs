@@ -37,6 +37,7 @@ namespace AasxServerBlazor
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder
+                        //.UseStartup<Startup>()
                         .UseStartup<Startup>()
                         .UseUrls("http://*:5000")
                     /*

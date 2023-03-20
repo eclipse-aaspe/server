@@ -1504,5 +1504,32 @@ namespace AdminShellNS
             }
         }
 
+        public void EmbeddAssetInformationThumbnail(Resource defaultThumbnail, Stream fileContent)
+        {
+            // access
+            if (_openPackage == null)
+                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+
+            if (!string.IsNullOrEmpty(defaultThumbnail.Path))
+            {
+                var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
+                _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+
+            }
+            var targetUri = PackUriHelper.CreatePartUri(new Uri(defaultThumbnail.Path, UriKind.RelativeOrAbsolute));
+
+            PackagePart packagePart = _openPackage.CreatePart(targetUri, defaultThumbnail.ContentType, compressionOption: CompressionOption.Maximum);
+
+            _openPackage.CreateRelationship(packagePart.Uri, TargetMode.Internal,
+                                        "http://schemas.openxmlformats.org/package/2006/" +
+                                        "relationships/metadata/thumbnail");
+
+            //Write to the part
+            fileContent.Position = 0;
+            using (Stream dest = packagePart.GetStream())
+            {
+                fileContent.CopyTo(dest);
+            }
+        }
     }
 }

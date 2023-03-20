@@ -16,8 +16,12 @@ namespace Extensions
             
             if (src616360.shortName != null)
                 ds61360.ShortName = new List<LangString>().ConvertFromV20(src616360.shortName);
-                
-            ds61360.Unit = src616360.unit;
+
+            if (!string.IsNullOrEmpty(src616360.unit))
+            {
+                ds61360.Unit = src616360.unit;
+            }            
+            
             if (src616360.unitId != null)
                 ds61360.UnitId = ExtensionsUtil.ConvertReferenceFromV20(AasxCompatibilityModels.AdminShellV20.Reference.CreateNew(src616360.unitId.keys), ReferenceTypes.GlobalReference);
             
@@ -33,6 +37,9 @@ namespace Extensions
             }
             if (src616360.definition != null)
                 ds61360.Definition = new List<LangString>().ConvertFromV20(src616360.definition);
+
+            //TODO:jtikekar check with Andreas
+            ds61360.Value = "";
 
             return ds61360;
         }
