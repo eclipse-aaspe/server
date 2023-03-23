@@ -669,6 +669,7 @@ namespace IO.Swagger.Registry.Controllers
                     {
                         int found = 0;
                         Property pjson = null;
+                        Property pep = null;
                         foreach (var e2 in ec.Value)
                         {
                             if (e2 is Property ep)
@@ -679,16 +680,21 @@ namespace IO.Swagger.Registry.Controllers
                                     found++;
                                 if (ep.IdShort == "descriptorJSON")
                                     pjson = ep;
+                                if (ep.IdShort == "endpoint")
+                                    pep = ep;
                             }
                         }
                         if (found == 2 && pjson != null)
                         {
                             string s = JsonConvert.SerializeObject(ad);
-                            if (s != pjson.Value)
+                            // if (s != pjson.Value)
                             {
                                 pjson.TimeStampCreate = timestamp;
                                 pjson.TimeStamp = timestamp;
                                 pjson.Value = s;
+                                pep.TimeStampCreate = timestamp;
+                                pep.TimeStamp = timestamp;
+                                pep.Value = endpoint;
                                 Console.WriteLine("Replace Descriptor:");
                                 Console.WriteLine(s);
                             }
