@@ -578,6 +578,7 @@ namespace IO.Swagger.Registry.Controllers
             if (test)
             {
                 string json = JsonConvert.SerializeObject(ad);
+                Console.WriteLine(json);
                 var adTest = JsonConvert.DeserializeObject<AssetAdministrationShellDescriptor>(json);
             }
 
@@ -682,15 +683,15 @@ namespace IO.Swagger.Registry.Controllers
                         }
                         if (found == 2 && pjson != null)
                         {
-                            /*
                             string s = JsonConvert.SerializeObject(ad);
                             if (s != pjson.Value)
                             {
                                 pjson.TimeStampCreate = timestamp;
                                 pjson.TimeStamp = timestamp;
                                 pjson.Value = s;
+                                Console.WriteLine("Replace Descriptor:");
+                                Console.WriteLine(s);
                             }
-                            */
                             return;
                         }
                     }
@@ -824,20 +825,24 @@ namespace IO.Swagger.Registry.Controllers
                 {
                     foreach (var fe in sd.FederatedElements)
                     {
-                        federatedElementsCount++;
-                        /*
-                        var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<ISubmodelElement>(
-                            fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                        */
-                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
-                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                        var sme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                        try
+                        {
+                            federatedElementsCount++;
+                            /*
+                            var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<ISubmodelElement>(
+                                fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                            */
+                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
+                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                            var sme = Jsonization.Deserialize.ISubmodelElementFrom(node);
 
-                        // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
-                        sme.TimeStampCreate = timestamp;
-                        sme.TimeStamp = timestamp;
-                        // p.value = fe;
-                        smc.Value.Add(sme);
+                            // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
+                            sme.TimeStampCreate = timestamp;
+                            sme.TimeStamp = timestamp;
+                            // p.value = fe;
+                            smc.Value.Add(sme);
+                        }
+                        catch { }
                     }
                 }
             }
