@@ -56,6 +56,7 @@ namespace AasxServerBlazor
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
 
+            /*
             var corsOrigins = Configuration["CorsOrigins"];
             if (corsOrigins.Equals("*"))
             {
@@ -101,6 +102,7 @@ namespace AasxServerBlazor
                         });
                 });
             }
+            */
             services.AddScoped<BlazorSessionService>();
             // services.AddScoped<CredentialService>();
             services.AddSingleton<CredentialService>();
