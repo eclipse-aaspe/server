@@ -55,17 +55,54 @@ namespace AasxServerBlazor
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
-            services.AddCors(options =>
+
+            /*
+            var corsOrigins = Configuration["CorsOrigins"];
+            if (corsOrigins.Equals("*"))
             {
-                options.AddPolicy(_corsPolicyName,
-                    builder =>
-                    {
-                        builder
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
-                    });
-            });
+                services.AddCors(options =>
+                {
+                    options.AddPolicy(_corsPolicyName,
+                        builder =>
+                        {
+                            builder
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                        });
+                });
+            }
+            else if (corsOrigins.Contains(','))
+            {
+                string[] allowedOrigins = corsOrigins.Split(',');
+                services.AddCors(options =>
+                {
+                    options.AddPolicy(_corsPolicyName,
+                        builder =>
+                        {
+                            builder
+                            .WithOrigins(allowedOrigins)
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                        });
+                });
+            }
+            else
+            {
+                //case where only one host is defined, hence not comma separated
+                services.AddCors(options =>
+                {
+                    options.AddPolicy(_corsPolicyName,
+                        builder =>
+                        {
+                            builder
+                            .WithOrigins(corsOrigins)
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                        });
+                });
+            }
+            */
             services.AddScoped<BlazorSessionService>();
             // services.AddScoped<CredentialService>();
             services.AddSingleton<CredentialService>();
