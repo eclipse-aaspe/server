@@ -447,7 +447,11 @@
             pathIntit = false;
             var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
             if (p != null)
+            {
+                p = p.Replace("\r", "");
+                p = p.Replace("\n", "");
                 path = p;
+            }
         }
 
         return path;

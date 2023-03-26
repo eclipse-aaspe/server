@@ -875,6 +875,8 @@ namespace IO.Swagger.Registry.Controllers
             {
                 string envVar = url.Substring(1);
                 url = System.Environment.GetEnvironmentVariable(envVar);
+                url = url.Replace("\r", "");
+                url = url.Replace("\n", "");
             }
 
             return url;
