@@ -226,6 +226,8 @@ namespace AasxServer
                 string v = System.Environment.GetEnvironmentVariable(ev);
                 if (v != null)
                 {
+                    v = v.Replace("\r", "");
+                    v = v.Replace("\n", "");
                     Console.WriteLine("Variable: " + ev + " = " + v);
                     envVariables.Add(ev, v);
                 }
