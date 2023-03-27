@@ -131,12 +131,12 @@ namespace IO.Swagger.V1RC03.Controllers
         [Route("/packages")]
         [ValidateModelState]
         [SwaggerOperation("PostAASXPackage")]
-        public virtual IActionResult PostAASXPackage([FromForm] string aasIds, IFormFile file)
+        public virtual IActionResult PostAASXPackage([FromForm] string aasIds, [FromForm] IFormFile file, [FromForm] string fileName)
         {
             //TODO jtikekar aasIds
             var stream = new MemoryStream();
             file.CopyTo(stream);
-            var packageId = _fileService.PostAASXPackage(stream.ToArray(), file.FileName);
+            var packageId = _fileService.PostAASXPackage(stream.ToArray(), fileName);
             return CreatedAtAction(nameof(PostAASXPackage), packageId);
         }
 

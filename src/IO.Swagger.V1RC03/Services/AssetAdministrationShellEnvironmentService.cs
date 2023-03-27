@@ -869,7 +869,7 @@ namespace IO.Swagger.V1RC03.Services
                         list.Value.Remove(submodelElement);
                         list.Value.Insert(smeIndex, body);
                     }
-                    //Added support for submodel here, as no other api smReffound for this functionality
+                    //Added support for submodel here, as no other api found for this functionality
                     else if (smeParent is Submodel submodel)
                     {
                         var smeIndex = submodel.SubmodelElements.IndexOf(submodelElement);
@@ -1079,26 +1079,6 @@ namespace IO.Swagger.V1RC03.Services
                 {
                     body.SetAllParents(DateTime.UtcNow);
                     _packages[packageIndex].AasEnv.Submodels.Add(body);
-                    //Add reference to the aas, if not present
-                    var submodelReference = body.GetReference();
-                    if (submodelReference != null)
-                    {
-                        bool smReffound = false;
-                        //check if submodelRef already exists in aas
-                        foreach (var aasSmRef in aas.Submodels)
-                        {
-                            if (submodelReference.Matches(aasSmRef))
-                            {
-                                smReffound = true;
-                                break;
-                            }
-                        }
-
-                        if (!smReffound)
-                        {
-                            aas.Submodels.Add(submodelReference);
-                        }
-                    }
                     AasxServer.Program.signalNewData(2);
                     return body; // TODO: jtikekar find proper solution
                 }
