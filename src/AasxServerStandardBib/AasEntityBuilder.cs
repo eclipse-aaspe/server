@@ -235,7 +235,7 @@ namespace AasOpcUaServer
                                         targetNodeRec.uanode.NodeId))
                     {
                         lax.uanode.AddReference(this.AasTypes.HasAasReference.GetTypeNodeId(), false,
-                                        targetNodeRec.uanode.NodeId);
+                                        targetNodeRec.uanode.NodeId); 
                     }
                 }
 
@@ -260,7 +260,7 @@ namespace AasOpcUaServer
                                                         targetNodeRec.uanode.NodeId))
                             {
                                 lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false,
-                                                        targetNodeRec.uanode.NodeId);
+                                                        targetNodeRec.uanode.NodeId); 
                             }
                             foundAtAll = true;
                         }
@@ -284,7 +284,7 @@ namespace AasOpcUaServer
                                                         nr.uanode?.NodeId))
                             {
                                 lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false,
-                                                        nr.uanode?.NodeId);
+                                                        nr.uanode?.NodeId); 
                             }
                         }
                         else
@@ -305,7 +305,7 @@ namespace AasOpcUaServer
                                                                 miss?.NodeId))
                                 {
                                     lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false,
-                                                                miss?.NodeId);
+                                                                miss?.NodeId); 
                                 }
 
                                 // put it into the NodeRecords, that it can be re-used?? no!!
@@ -584,7 +584,7 @@ namespace AasOpcUaServer
                 {
                     if (!parent.ReferenceExists(referenceTypeFromParentId, false, x.NodeId))
                     {
-                        parent.AddReference(referenceTypeFromParentId, false, x.NodeId);
+                        parent.AddReference(referenceTypeFromParentId, false, x.NodeId); 
                     }
                     if (referenceTypeFromParentId == ReferenceTypeIds.HasComponent)
                         x.AddReference(referenceTypeFromParentId, true, parent.NodeId);

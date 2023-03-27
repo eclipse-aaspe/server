@@ -91,7 +91,6 @@ namespace Extenstions
             return property;
         }
 
-        //TODO:jtikekar remove
         public static void UpdatePropertyFrom(this Property property, Property sourceProperty)
         {
             if (sourceProperty.Extensions != null)
@@ -134,10 +133,10 @@ namespace Extenstions
             {
                 property.Qualifiers = sourceProperty.Qualifiers;
             }
-            //if (sourceProperty.DataSpecifications != null)
-            //{
-            //    property.DataSpecifications = sourceProperty.DataSpecifications;
-            //}
+            if (sourceProperty.DataSpecifications != null)
+            {
+                property.DataSpecifications = sourceProperty.DataSpecifications;
+            }
             if (sourceProperty.ValueType != null)
             {
                 property.ValueType = sourceProperty.ValueType;

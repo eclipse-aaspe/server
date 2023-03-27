@@ -1,6 +1,6 @@
 ﻿using AasCore.Aas3_0_RC02;
 using IO.Swagger.V1RC03.APIModels.Core;
-using System.Collections.Generic;
+using Org.BouncyCastle.Utilities.Encoders;
 using System.Text.Json.Nodes;
 using static AasCore.Aas3_0_RC02.Jsonization;
 using static AasCore.Aas3_0_RC02.Visitation;
@@ -321,6 +321,20 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return result;
         }
 
+        public JsonObject Transform(LangStringSet that, OutputModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public JsonObject Transform(DataSpecificationContent that, OutputModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public JsonObject Transform(DataSpecification that, OutputModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public JsonObject Transform(Environment that, OutputModifierContext context)
         {
@@ -332,35 +346,10 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
             return that.Transform(this, context);
         }
 
-        public JsonObject Transform(EmbeddedDataSpecification that, OutputModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public JsonObject Transform(ValueReferencePair that, OutputModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public JsonObject Transform(ValueList that, OutputModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public JsonObject Transform(DataSpecificationIec61360 that, OutputModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public JsonObject Transform(DataSpecificationPhysicalUnit that, OutputModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        internal JsonNode TransformValue(List<LangString> that, OutputModifierContext context)
+        internal JsonNode TransformValue(LangStringSet that, OutputModifierContext context)
         {
             var arrayLangStrings = new Nodes.JsonArray();
-            foreach (LangString item in that)
+            foreach (LangString item in that.LangStrings)
             {
                 arrayLangStrings.Add(
                     Transform(

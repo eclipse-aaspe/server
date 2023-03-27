@@ -3,10 +3,10 @@
  * Do NOT edit or append.
  */
 
-using Aas = AasCore.Aas3_0_RC02;  // renamed
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
-
 using System.Collections.Generic;  // can't alias
+
+using Aas = AasCore.Aas3_0_RC02;
 
 namespace AasCore.Aas3_0_RC02
 {
@@ -94,9 +94,9 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Escape special characters for XPath.
+        /// Escape special characters according to XML.
         /// </summary>
-        private static string EscapeForXPath(
+        private static string EscapeXmlCharacters(
             string text)
         {
             // Mind the order, as we need to replace '&' first.
@@ -105,10 +105,7 @@ namespace AasCore.Aas3_0_RC02
             // https://stackoverflow.com/questions/1321331/replace-multiple-string-elements-in-c-sharp
             return (
                 text
-                    // Even though ampersand, less-then etc. can not occur in valid element names,
-                    // we escape them here for easier debugging and better bug reports.
                     .Replace("&", "&amp;")
-                    .Replace("/", "&#47;")
                     .Replace("<", "&lt;")
                     .Replace(">", "&gt;")
                     .Replace("\"", "&quot;")
@@ -133,7 +130,7 @@ namespace AasCore.Aas3_0_RC02
                 switch (segment)
                 {
                     case NameSegment nameSegment:
-                        part = EscapeForXPath(nameSegment.Name);
+                        part = EscapeXmlCharacters(nameSegment.Name);
                         break;
                     case IndexSegment indexSegment:
                         part = $"*[{indexSegment.Index}]";

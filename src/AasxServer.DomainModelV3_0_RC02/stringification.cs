@@ -3,10 +3,10 @@
  * Do NOT edit or append.
  */
 
-using Aas = AasCore.Aas3_0_RC02;  // renamed
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
-
 using System.Collections.Generic;  // can't alias
+
+using Aas = AasCore.Aas3_0_RC02;
 
 namespace AasCore.Aas3_0_RC02
 {
@@ -194,6 +194,426 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
+        private static readonly Dictionary<Aas.EntityType, string> EntityTypeToString = (
+            new Dictionary<Aas.EntityType, string>()
+            {
+                { Aas.EntityType.CoManagedEntity, "CoManagedEntity" },
+                { Aas.EntityType.SelfManagedEntity, "SelfManagedEntity" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.EntityType? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (EntityTypeToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.EntityType> _entityTypeFromString = (
+            new Dictionary<string, Aas.EntityType>()
+            {
+                { "CoManagedEntity", Aas.EntityType.CoManagedEntity },
+                { "SelfManagedEntity", Aas.EntityType.SelfManagedEntity }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="EntityType" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="EntityType" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.EntityType? EntityTypeFromString(string text)
+        {
+            if (_entityTypeFromString.TryGetValue(text, out EntityType value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static readonly Dictionary<Aas.Direction, string> DirectionToString = (
+            new Dictionary<Aas.Direction, string>()
+            {
+                { Aas.Direction.Input, "INPUT" },
+                { Aas.Direction.Output, "OUTPUT" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.Direction? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (DirectionToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.Direction> _directionFromString = (
+            new Dictionary<string, Aas.Direction>()
+            {
+                { "INPUT", Aas.Direction.Input },
+                { "OUTPUT", Aas.Direction.Output }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="Direction" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="Direction" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.Direction? DirectionFromString(string text)
+        {
+            if (_directionFromString.TryGetValue(text, out Direction value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static readonly Dictionary<Aas.StateOfEvent, string> StateOfEventToString = (
+            new Dictionary<Aas.StateOfEvent, string>()
+            {
+                { Aas.StateOfEvent.On, "ON" },
+                { Aas.StateOfEvent.Off, "OFF" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.StateOfEvent? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (StateOfEventToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.StateOfEvent> _stateOfEventFromString = (
+            new Dictionary<string, Aas.StateOfEvent>()
+            {
+                { "ON", Aas.StateOfEvent.On },
+                { "OFF", Aas.StateOfEvent.Off }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="StateOfEvent" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="StateOfEvent" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.StateOfEvent? StateOfEventFromString(string text)
+        {
+            if (_stateOfEventFromString.TryGetValue(text, out StateOfEvent value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static readonly Dictionary<Aas.ReferenceTypes, string> ReferenceTypesToString = (
+            new Dictionary<Aas.ReferenceTypes, string>()
+            {
+                { Aas.ReferenceTypes.GlobalReference, "GlobalReference" },
+                { Aas.ReferenceTypes.ModelReference, "ModelReference" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.ReferenceTypes? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (ReferenceTypesToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.ReferenceTypes> _referenceTypesFromString = (
+            new Dictionary<string, Aas.ReferenceTypes>()
+            {
+                { "GlobalReference", Aas.ReferenceTypes.GlobalReference },
+                { "ModelReference", Aas.ReferenceTypes.ModelReference }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="ReferenceTypes" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="ReferenceTypes" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.ReferenceTypes? ReferenceTypesFromString(string text)
+        {
+            if (_referenceTypesFromString.TryGetValue(text, out ReferenceTypes value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static readonly Dictionary<Aas.GenericFragmentKeys, string> GenericFragmentKeysToString = (
+            new Dictionary<Aas.GenericFragmentKeys, string>()
+            {
+                { Aas.GenericFragmentKeys.FragmentReference, "FragmentReference" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.GenericFragmentKeys? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (GenericFragmentKeysToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.GenericFragmentKeys> _genericFragmentKeysFromString = (
+            new Dictionary<string, Aas.GenericFragmentKeys>()
+            {
+                { "FragmentReference", Aas.GenericFragmentKeys.FragmentReference }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="GenericFragmentKeys" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="GenericFragmentKeys" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.GenericFragmentKeys? GenericFragmentKeysFromString(string text)
+        {
+            if (_genericFragmentKeysFromString.TryGetValue(text, out GenericFragmentKeys value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static readonly Dictionary<Aas.GenericGloballyIdentifiables, string> GenericGloballyIdentifiablesToString = (
+            new Dictionary<Aas.GenericGloballyIdentifiables, string>()
+            {
+                { Aas.GenericGloballyIdentifiables.GlobalReference, "GlobalReference" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.GenericGloballyIdentifiables? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (GenericGloballyIdentifiablesToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.GenericGloballyIdentifiables> _genericGloballyIdentifiablesFromString = (
+            new Dictionary<string, Aas.GenericGloballyIdentifiables>()
+            {
+                { "GlobalReference", Aas.GenericGloballyIdentifiables.GlobalReference }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="GenericGloballyIdentifiables" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="GenericGloballyIdentifiables" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.GenericGloballyIdentifiables? GenericGloballyIdentifiablesFromString(string text)
+        {
+            if (_genericGloballyIdentifiablesFromString.TryGetValue(text, out GenericGloballyIdentifiables value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static readonly Dictionary<Aas.AasIdentifiables, string> AasIdentifiablesToString = (
+            new Dictionary<Aas.AasIdentifiables, string>()
+            {
+                { Aas.AasIdentifiables.AssetAdministrationShell, "AssetAdministrationShell" },
+                { Aas.AasIdentifiables.ConceptDescription, "ConceptDescription" },
+                { Aas.AasIdentifiables.Identifiable, "Identifiable" },
+                { Aas.AasIdentifiables.Submodel, "Submodel" }
+            });
+
+        /// <summary>
+        /// Retrieve the string representation of <paramref name="that" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
+        /// </remarks>
+        public static string? ToString(Aas.AasIdentifiables? that)
+        {
+            if (!that.HasValue)
+            {
+                return null;
+            }
+            else
+            {
+                if (AasIdentifiablesToString.TryGetValue(that.Value, out string? value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        private static readonly Dictionary<string, Aas.AasIdentifiables> _aasIdentifiablesFromString = (
+            new Dictionary<string, Aas.AasIdentifiables>()
+            {
+                { "AssetAdministrationShell", Aas.AasIdentifiables.AssetAdministrationShell },
+                { "ConceptDescription", Aas.AasIdentifiables.ConceptDescription },
+                { "Identifiable", Aas.AasIdentifiables.Identifiable },
+                { "Submodel", Aas.AasIdentifiables.Submodel }
+            });
+
+        /// <summary>
+        /// Parse the string representation of <see cref="AasIdentifiables" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="text" /> is not a valid string representation
+        /// of a literal of <see cref="AasIdentifiables" />,
+        /// return <c>null</c>.
+        /// </remarks>
+        public static Aas.AasIdentifiables? AasIdentifiablesFromString(string text)
+        {
+            if (_aasIdentifiablesFromString.TryGetValue(text, out AasIdentifiables value))
+            {
+                return value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         private static readonly Dictionary<Aas.AasSubmodelElements, string> AasSubmodelElementsToString = (
             new Dictionary<Aas.AasSubmodelElements, string>()
             {
@@ -284,11 +704,26 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
-        private static readonly Dictionary<Aas.EntityType, string> EntityTypeToString = (
-            new Dictionary<Aas.EntityType, string>()
+        private static readonly Dictionary<Aas.AasReferableNonIdentifiables, string> AasReferableNonIdentifiablesToString = (
+            new Dictionary<Aas.AasReferableNonIdentifiables, string>()
             {
-                { Aas.EntityType.CoManagedEntity, "CoManagedEntity" },
-                { Aas.EntityType.SelfManagedEntity, "SelfManagedEntity" }
+                { Aas.AasReferableNonIdentifiables.AnnotatedRelationshipElement, "AnnotatedRelationshipElement" },
+                { Aas.AasReferableNonIdentifiables.BasicEventElement, "BasicEventElement" },
+                { Aas.AasReferableNonIdentifiables.Blob, "Blob" },
+                { Aas.AasReferableNonIdentifiables.Capability, "Capability" },
+                { Aas.AasReferableNonIdentifiables.DataElement, "DataElement" },
+                { Aas.AasReferableNonIdentifiables.Entity, "Entity" },
+                { Aas.AasReferableNonIdentifiables.EventElement, "EventElement" },
+                { Aas.AasReferableNonIdentifiables.File, "File" },
+                { Aas.AasReferableNonIdentifiables.MultiLanguageProperty, "MultiLanguageProperty" },
+                { Aas.AasReferableNonIdentifiables.Operation, "Operation" },
+                { Aas.AasReferableNonIdentifiables.Property, "Property" },
+                { Aas.AasReferableNonIdentifiables.Range, "Range" },
+                { Aas.AasReferableNonIdentifiables.ReferenceElement, "ReferenceElement" },
+                { Aas.AasReferableNonIdentifiables.RelationshipElement, "RelationshipElement" },
+                { Aas.AasReferableNonIdentifiables.SubmodelElement, "SubmodelElement" },
+                { Aas.AasReferableNonIdentifiables.SubmodelElementCollection, "SubmodelElementCollection" },
+                { Aas.AasReferableNonIdentifiables.SubmodelElementList, "SubmodelElementList" }
             });
 
         /// <summary>
@@ -297,7 +732,7 @@ namespace AasCore.Aas3_0_RC02
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(Aas.EntityType? that)
+        public static string? ToString(Aas.AasReferableNonIdentifiables? that)
         {
             if (!that.HasValue)
             {
@@ -305,7 +740,7 @@ namespace AasCore.Aas3_0_RC02
             }
             else
             {
-                if (EntityTypeToString.TryGetValue(that.Value, out string? value))
+                if (AasReferableNonIdentifiablesToString.TryGetValue(that.Value, out string? value))
                 {
                     return value;
                 }
@@ -317,24 +752,39 @@ namespace AasCore.Aas3_0_RC02
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string, Aas.EntityType> _entityTypeFromString = (
-            new Dictionary<string, Aas.EntityType>()
+        private static readonly Dictionary<string, Aas.AasReferableNonIdentifiables> _aasReferableNonIdentifiablesFromString = (
+            new Dictionary<string, Aas.AasReferableNonIdentifiables>()
             {
-                { "CoManagedEntity", Aas.EntityType.CoManagedEntity },
-                { "SelfManagedEntity", Aas.EntityType.SelfManagedEntity }
+                { "AnnotatedRelationshipElement", Aas.AasReferableNonIdentifiables.AnnotatedRelationshipElement },
+                { "BasicEventElement", Aas.AasReferableNonIdentifiables.BasicEventElement },
+                { "Blob", Aas.AasReferableNonIdentifiables.Blob },
+                { "Capability", Aas.AasReferableNonIdentifiables.Capability },
+                { "DataElement", Aas.AasReferableNonIdentifiables.DataElement },
+                { "Entity", Aas.AasReferableNonIdentifiables.Entity },
+                { "EventElement", Aas.AasReferableNonIdentifiables.EventElement },
+                { "File", Aas.AasReferableNonIdentifiables.File },
+                { "MultiLanguageProperty", Aas.AasReferableNonIdentifiables.MultiLanguageProperty },
+                { "Operation", Aas.AasReferableNonIdentifiables.Operation },
+                { "Property", Aas.AasReferableNonIdentifiables.Property },
+                { "Range", Aas.AasReferableNonIdentifiables.Range },
+                { "ReferenceElement", Aas.AasReferableNonIdentifiables.ReferenceElement },
+                { "RelationshipElement", Aas.AasReferableNonIdentifiables.RelationshipElement },
+                { "SubmodelElement", Aas.AasReferableNonIdentifiables.SubmodelElement },
+                { "SubmodelElementCollection", Aas.AasReferableNonIdentifiables.SubmodelElementCollection },
+                { "SubmodelElementList", Aas.AasReferableNonIdentifiables.SubmodelElementList }
             });
 
         /// <summary>
-        /// Parse the string representation of <see cref="EntityType" />.
+        /// Parse the string representation of <see cref="AasReferableNonIdentifiables" />.
         /// </summary>
         /// <remarks>
         /// If <paramref name="text" /> is not a valid string representation
-        /// of a literal of <see cref="EntityType" />,
+        /// of a literal of <see cref="AasReferableNonIdentifiables" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.EntityType? EntityTypeFromString(string text)
+        public static Aas.AasReferableNonIdentifiables? AasReferableNonIdentifiablesFromString(string text)
         {
-            if (_entityTypeFromString.TryGetValue(text, out EntityType value))
+            if (_aasReferableNonIdentifiablesFromString.TryGetValue(text, out AasReferableNonIdentifiables value))
             {
                 return value;
             }
@@ -344,11 +794,31 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
-        private static readonly Dictionary<Aas.Direction, string> DirectionToString = (
-            new Dictionary<Aas.Direction, string>()
+        private static readonly Dictionary<Aas.AasReferables, string> AasReferablesToString = (
+            new Dictionary<Aas.AasReferables, string>()
             {
-                { Aas.Direction.Input, "input" },
-                { Aas.Direction.Output, "output" }
+                { Aas.AasReferables.Referable, "Referable" },
+                { Aas.AasReferables.AssetAdministrationShell, "AssetAdministrationShell" },
+                { Aas.AasReferables.ConceptDescription, "ConceptDescription" },
+                { Aas.AasReferables.Identifiable, "Identifiable" },
+                { Aas.AasReferables.Submodel, "Submodel" },
+                { Aas.AasReferables.AnnotatedRelationshipElement, "AnnotatedRelationshipElement" },
+                { Aas.AasReferables.BasicEventElement, "BasicEventElement" },
+                { Aas.AasReferables.Blob, "Blob" },
+                { Aas.AasReferables.Capability, "Capability" },
+                { Aas.AasReferables.DataElement, "DataElement" },
+                { Aas.AasReferables.Entity, "Entity" },
+                { Aas.AasReferables.EventElement, "EventElement" },
+                { Aas.AasReferables.File, "File" },
+                { Aas.AasReferables.MultiLanguageProperty, "MultiLanguageProperty" },
+                { Aas.AasReferables.Operation, "Operation" },
+                { Aas.AasReferables.Property, "Property" },
+                { Aas.AasReferables.Range, "Range" },
+                { Aas.AasReferables.ReferenceElement, "ReferenceElement" },
+                { Aas.AasReferables.RelationshipElement, "RelationshipElement" },
+                { Aas.AasReferables.SubmodelElement, "SubmodelElement" },
+                { Aas.AasReferables.SubmodelElementCollection, "SubmodelElementCollection" },
+                { Aas.AasReferables.SubmodelElementList, "SubmodelElementList" }
             });
 
         /// <summary>
@@ -357,7 +827,7 @@ namespace AasCore.Aas3_0_RC02
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(Aas.Direction? that)
+        public static string? ToString(Aas.AasReferables? that)
         {
             if (!that.HasValue)
             {
@@ -365,7 +835,7 @@ namespace AasCore.Aas3_0_RC02
             }
             else
             {
-                if (DirectionToString.TryGetValue(that.Value, out string? value))
+                if (AasReferablesToString.TryGetValue(that.Value, out string? value))
                 {
                     return value;
                 }
@@ -377,24 +847,44 @@ namespace AasCore.Aas3_0_RC02
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string, Aas.Direction> _directionFromString = (
-            new Dictionary<string, Aas.Direction>()
+        private static readonly Dictionary<string, Aas.AasReferables> _aasReferablesFromString = (
+            new Dictionary<string, Aas.AasReferables>()
             {
-                { "input", Aas.Direction.Input },
-                { "output", Aas.Direction.Output }
+                { "Referable", Aas.AasReferables.Referable },
+                { "AssetAdministrationShell", Aas.AasReferables.AssetAdministrationShell },
+                { "ConceptDescription", Aas.AasReferables.ConceptDescription },
+                { "Identifiable", Aas.AasReferables.Identifiable },
+                { "Submodel", Aas.AasReferables.Submodel },
+                { "AnnotatedRelationshipElement", Aas.AasReferables.AnnotatedRelationshipElement },
+                { "BasicEventElement", Aas.AasReferables.BasicEventElement },
+                { "Blob", Aas.AasReferables.Blob },
+                { "Capability", Aas.AasReferables.Capability },
+                { "DataElement", Aas.AasReferables.DataElement },
+                { "Entity", Aas.AasReferables.Entity },
+                { "EventElement", Aas.AasReferables.EventElement },
+                { "File", Aas.AasReferables.File },
+                { "MultiLanguageProperty", Aas.AasReferables.MultiLanguageProperty },
+                { "Operation", Aas.AasReferables.Operation },
+                { "Property", Aas.AasReferables.Property },
+                { "Range", Aas.AasReferables.Range },
+                { "ReferenceElement", Aas.AasReferables.ReferenceElement },
+                { "RelationshipElement", Aas.AasReferables.RelationshipElement },
+                { "SubmodelElement", Aas.AasReferables.SubmodelElement },
+                { "SubmodelElementCollection", Aas.AasReferables.SubmodelElementCollection },
+                { "SubmodelElementList", Aas.AasReferables.SubmodelElementList }
             });
 
         /// <summary>
-        /// Parse the string representation of <see cref="Direction" />.
+        /// Parse the string representation of <see cref="AasReferables" />.
         /// </summary>
         /// <remarks>
         /// If <paramref name="text" /> is not a valid string representation
-        /// of a literal of <see cref="Direction" />,
+        /// of a literal of <see cref="AasReferables" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.Direction? DirectionFromString(string text)
+        public static Aas.AasReferables? AasReferablesFromString(string text)
         {
-            if (_directionFromString.TryGetValue(text, out Direction value))
+            if (_aasReferablesFromString.TryGetValue(text, out AasReferables value))
             {
                 return value;
             }
@@ -404,11 +894,14 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
-        private static readonly Dictionary<Aas.StateOfEvent, string> StateOfEventToString = (
-            new Dictionary<Aas.StateOfEvent, string>()
+        private static readonly Dictionary<Aas.GloballyIdentifiables, string> GloballyIdentifiablesToString = (
+            new Dictionary<Aas.GloballyIdentifiables, string>()
             {
-                { Aas.StateOfEvent.On, "on" },
-                { Aas.StateOfEvent.Off, "off" }
+                { Aas.GloballyIdentifiables.GlobalReference, "GlobalReference" },
+                { Aas.GloballyIdentifiables.AssetAdministrationShell, "AssetAdministrationShell" },
+                { Aas.GloballyIdentifiables.ConceptDescription, "ConceptDescription" },
+                { Aas.GloballyIdentifiables.Identifiable, "Identifiable" },
+                { Aas.GloballyIdentifiables.Submodel, "Submodel" }
             });
 
         /// <summary>
@@ -417,7 +910,7 @@ namespace AasCore.Aas3_0_RC02
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(Aas.StateOfEvent? that)
+        public static string? ToString(Aas.GloballyIdentifiables? that)
         {
             if (!that.HasValue)
             {
@@ -425,7 +918,7 @@ namespace AasCore.Aas3_0_RC02
             }
             else
             {
-                if (StateOfEventToString.TryGetValue(that.Value, out string? value))
+                if (GloballyIdentifiablesToString.TryGetValue(that.Value, out string? value))
                 {
                     return value;
                 }
@@ -437,24 +930,27 @@ namespace AasCore.Aas3_0_RC02
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string, Aas.StateOfEvent> _stateOfEventFromString = (
-            new Dictionary<string, Aas.StateOfEvent>()
+        private static readonly Dictionary<string, Aas.GloballyIdentifiables> _globallyIdentifiablesFromString = (
+            new Dictionary<string, Aas.GloballyIdentifiables>()
             {
-                { "on", Aas.StateOfEvent.On },
-                { "off", Aas.StateOfEvent.Off }
+                { "GlobalReference", Aas.GloballyIdentifiables.GlobalReference },
+                { "AssetAdministrationShell", Aas.GloballyIdentifiables.AssetAdministrationShell },
+                { "ConceptDescription", Aas.GloballyIdentifiables.ConceptDescription },
+                { "Identifiable", Aas.GloballyIdentifiables.Identifiable },
+                { "Submodel", Aas.GloballyIdentifiables.Submodel }
             });
 
         /// <summary>
-        /// Parse the string representation of <see cref="StateOfEvent" />.
+        /// Parse the string representation of <see cref="GloballyIdentifiables" />.
         /// </summary>
         /// <remarks>
         /// If <paramref name="text" /> is not a valid string representation
-        /// of a literal of <see cref="StateOfEvent" />,
+        /// of a literal of <see cref="GloballyIdentifiables" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.StateOfEvent? StateOfEventFromString(string text)
+        public static Aas.GloballyIdentifiables? GloballyIdentifiablesFromString(string text)
         {
-            if (_stateOfEventFromString.TryGetValue(text, out StateOfEvent value))
+            if (_globallyIdentifiablesFromString.TryGetValue(text, out GloballyIdentifiables value))
             {
                 return value;
             }
@@ -464,11 +960,30 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
-        private static readonly Dictionary<Aas.ReferenceTypes, string> ReferenceTypesToString = (
-            new Dictionary<Aas.ReferenceTypes, string>()
+        private static readonly Dictionary<Aas.FragmentKeys, string> FragmentKeysToString = (
+            new Dictionary<Aas.FragmentKeys, string>()
             {
-                { Aas.ReferenceTypes.GlobalReference, "GlobalReference" },
-                { Aas.ReferenceTypes.ModelReference, "ModelReference" }
+                { Aas.FragmentKeys.FragmentReference, "FragmentReference" },
+                { Aas.FragmentKeys.AnnotatedRelationshipElement, "AnnotatedRelationshipElement" },
+                { Aas.FragmentKeys.AssetAdministrationShell, "AssetAdministrationShell" },
+                { Aas.FragmentKeys.BasicEventElement, "BasicEventElement" },
+                { Aas.FragmentKeys.Blob, "Blob" },
+                { Aas.FragmentKeys.Capability, "Capability" },
+                { Aas.FragmentKeys.ConceptDescription, "ConceptDescription" },
+                { Aas.FragmentKeys.DataElement, "DataElement" },
+                { Aas.FragmentKeys.Entity, "Entity" },
+                { Aas.FragmentKeys.EventElement, "EventElement" },
+                { Aas.FragmentKeys.File, "File" },
+                { Aas.FragmentKeys.MultiLanguageProperty, "MultiLanguageProperty" },
+                { Aas.FragmentKeys.Operation, "Operation" },
+                { Aas.FragmentKeys.Property, "Property" },
+                { Aas.FragmentKeys.Range, "Range" },
+                { Aas.FragmentKeys.ReferenceElement, "ReferenceElement" },
+                { Aas.FragmentKeys.RelationshipElement, "RelationshipElement" },
+                { Aas.FragmentKeys.Submodel, "Submodel" },
+                { Aas.FragmentKeys.SubmodelElement, "SubmodelElement" },
+                { Aas.FragmentKeys.SubmodelElementList, "SubmodelElementList" },
+                { Aas.FragmentKeys.SubmodelElementCollection, "SubmodelElementCollection" }
             });
 
         /// <summary>
@@ -477,7 +992,7 @@ namespace AasCore.Aas3_0_RC02
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(Aas.ReferenceTypes? that)
+        public static string? ToString(Aas.FragmentKeys? that)
         {
             if (!that.HasValue)
             {
@@ -485,7 +1000,7 @@ namespace AasCore.Aas3_0_RC02
             }
             else
             {
-                if (ReferenceTypesToString.TryGetValue(that.Value, out string? value))
+                if (FragmentKeysToString.TryGetValue(that.Value, out string? value))
                 {
                     return value;
                 }
@@ -497,24 +1012,43 @@ namespace AasCore.Aas3_0_RC02
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string, Aas.ReferenceTypes> _referenceTypesFromString = (
-            new Dictionary<string, Aas.ReferenceTypes>()
+        private static readonly Dictionary<string, Aas.FragmentKeys> _fragmentKeysFromString = (
+            new Dictionary<string, Aas.FragmentKeys>()
             {
-                { "GlobalReference", Aas.ReferenceTypes.GlobalReference },
-                { "ModelReference", Aas.ReferenceTypes.ModelReference }
+                { "FragmentReference", Aas.FragmentKeys.FragmentReference },
+                { "AnnotatedRelationshipElement", Aas.FragmentKeys.AnnotatedRelationshipElement },
+                { "AssetAdministrationShell", Aas.FragmentKeys.AssetAdministrationShell },
+                { "BasicEventElement", Aas.FragmentKeys.BasicEventElement },
+                { "Blob", Aas.FragmentKeys.Blob },
+                { "Capability", Aas.FragmentKeys.Capability },
+                { "ConceptDescription", Aas.FragmentKeys.ConceptDescription },
+                { "DataElement", Aas.FragmentKeys.DataElement },
+                { "Entity", Aas.FragmentKeys.Entity },
+                { "EventElement", Aas.FragmentKeys.EventElement },
+                { "File", Aas.FragmentKeys.File },
+                { "MultiLanguageProperty", Aas.FragmentKeys.MultiLanguageProperty },
+                { "Operation", Aas.FragmentKeys.Operation },
+                { "Property", Aas.FragmentKeys.Property },
+                { "Range", Aas.FragmentKeys.Range },
+                { "ReferenceElement", Aas.FragmentKeys.ReferenceElement },
+                { "RelationshipElement", Aas.FragmentKeys.RelationshipElement },
+                { "Submodel", Aas.FragmentKeys.Submodel },
+                { "SubmodelElement", Aas.FragmentKeys.SubmodelElement },
+                { "SubmodelElementList", Aas.FragmentKeys.SubmodelElementList },
+                { "SubmodelElementCollection", Aas.FragmentKeys.SubmodelElementCollection }
             });
 
         /// <summary>
-        /// Parse the string representation of <see cref="ReferenceTypes" />.
+        /// Parse the string representation of <see cref="FragmentKeys" />.
         /// </summary>
         /// <remarks>
         /// If <paramref name="text" /> is not a valid string representation
-        /// of a literal of <see cref="ReferenceTypes" />,
+        /// of a literal of <see cref="FragmentKeys" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.ReferenceTypes? ReferenceTypesFromString(string text)
+        public static Aas.FragmentKeys? FragmentKeysFromString(string text)
         {
-            if (_referenceTypesFromString.TryGetValue(text, out ReferenceTypes value))
+            if (_fragmentKeysFromString.TryGetValue(text, out FragmentKeys value))
             {
                 return value;
             }
@@ -544,8 +1078,8 @@ namespace AasCore.Aas3_0_RC02
                 { Aas.KeyTypes.Operation, "Operation" },
                 { Aas.KeyTypes.Property, "Property" },
                 { Aas.KeyTypes.Range, "Range" },
-                { Aas.KeyTypes.ReferenceElement, "ReferenceElement" },
                 { Aas.KeyTypes.Referable, "Referable" },
+                { Aas.KeyTypes.ReferenceElement, "ReferenceElement" },
                 { Aas.KeyTypes.RelationshipElement, "RelationshipElement" },
                 { Aas.KeyTypes.Submodel, "Submodel" },
                 { Aas.KeyTypes.SubmodelElement, "SubmodelElement" },
@@ -599,8 +1133,8 @@ namespace AasCore.Aas3_0_RC02
                 { "Operation", Aas.KeyTypes.Operation },
                 { "Property", Aas.KeyTypes.Property },
                 { "Range", Aas.KeyTypes.Range },
-                { "ReferenceElement", Aas.KeyTypes.ReferenceElement },
                 { "Referable", Aas.KeyTypes.Referable },
+                { "ReferenceElement", Aas.KeyTypes.ReferenceElement },
                 { "RelationshipElement", Aas.KeyTypes.RelationshipElement },
                 { "Submodel", Aas.KeyTypes.Submodel },
                 { "SubmodelElement", Aas.KeyTypes.SubmodelElement },
@@ -656,7 +1190,7 @@ namespace AasCore.Aas3_0_RC02
                 { Aas.DataTypeDefXsd.Int, "xs:int" },
                 { Aas.DataTypeDefXsd.Short, "xs:short" },
                 { Aas.DataTypeDefXsd.Byte, "xs:byte" },
-                { Aas.DataTypeDefXsd.NonNegativeInteger, "xs:nonNegativeInteger" },
+                { Aas.DataTypeDefXsd.NonNegativeInteger, "xs:NonNegativeInteger" },
                 { Aas.DataTypeDefXsd.PositiveInteger, "xs:positiveInteger" },
                 { Aas.DataTypeDefXsd.UnsignedLong, "xs:unsignedLong" },
                 { Aas.DataTypeDefXsd.UnsignedInt, "xs:unsignedInt" },
@@ -720,7 +1254,7 @@ namespace AasCore.Aas3_0_RC02
                 { "xs:int", Aas.DataTypeDefXsd.Int },
                 { "xs:short", Aas.DataTypeDefXsd.Short },
                 { "xs:byte", Aas.DataTypeDefXsd.Byte },
-                { "xs:nonNegativeInteger", Aas.DataTypeDefXsd.NonNegativeInteger },
+                { "xs:NonNegativeInteger", Aas.DataTypeDefXsd.NonNegativeInteger },
                 { "xs:positiveInteger", Aas.DataTypeDefXsd.PositiveInteger },
                 { "xs:unsignedLong", Aas.DataTypeDefXsd.UnsignedLong },
                 { "xs:unsignedInt", Aas.DataTypeDefXsd.UnsignedInt },
@@ -750,28 +1284,10 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
-        private static readonly Dictionary<Aas.DataTypeIec61360, string> DataTypeIec61360ToString = (
-            new Dictionary<Aas.DataTypeIec61360, string>()
+        private static readonly Dictionary<Aas.DataTypeDefRdf, string> DataTypeDefRdfToString = (
+            new Dictionary<Aas.DataTypeDefRdf, string>()
             {
-                { Aas.DataTypeIec61360.Date, "DATE" },
-                { Aas.DataTypeIec61360.String, "STRING" },
-                { Aas.DataTypeIec61360.StringTranslatable, "STRING_TRANSLATABLE" },
-                { Aas.DataTypeIec61360.IntegerMeasure, "INTEGER_MEASURE" },
-                { Aas.DataTypeIec61360.IntegerCount, "INTEGER_COUNT" },
-                { Aas.DataTypeIec61360.IntegerCurrency, "INTEGER_CURRENCY" },
-                { Aas.DataTypeIec61360.RealMeasure, "REAL_MEASURE" },
-                { Aas.DataTypeIec61360.RealCount, "REAL_COUNT" },
-                { Aas.DataTypeIec61360.RealCurrency, "REAL_CURRENCY" },
-                { Aas.DataTypeIec61360.Boolean, "BOOLEAN" },
-                { Aas.DataTypeIec61360.Iri, "IRI" },
-                { Aas.DataTypeIec61360.Irdi, "IRDI" },
-                { Aas.DataTypeIec61360.Rational, "RATIONAL" },
-                { Aas.DataTypeIec61360.RationalMeasure, "RATIONAL_MEASURE" },
-                { Aas.DataTypeIec61360.Time, "TIME" },
-                { Aas.DataTypeIec61360.Timestamp, "TIMESTAMP" },
-                { Aas.DataTypeIec61360.File, "FILE" },
-                { Aas.DataTypeIec61360.Html, "HTML" },
-                { Aas.DataTypeIec61360.Blob, "BLOB" }
+                { Aas.DataTypeDefRdf.LangString, "rdf:langString" }
             });
 
         /// <summary>
@@ -780,7 +1296,7 @@ namespace AasCore.Aas3_0_RC02
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(Aas.DataTypeIec61360? that)
+        public static string? ToString(Aas.DataTypeDefRdf? that)
         {
             if (!that.HasValue)
             {
@@ -788,7 +1304,7 @@ namespace AasCore.Aas3_0_RC02
             }
             else
             {
-                if (DataTypeIec61360ToString.TryGetValue(that.Value, out string? value))
+                if (DataTypeDefRdfToString.TryGetValue(that.Value, out string? value))
                 {
                     return value;
                 }
@@ -800,41 +1316,23 @@ namespace AasCore.Aas3_0_RC02
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string, Aas.DataTypeIec61360> _dataTypeIec61360FromString = (
-            new Dictionary<string, Aas.DataTypeIec61360>()
+        private static readonly Dictionary<string, Aas.DataTypeDefRdf> _dataTypeDefRdfFromString = (
+            new Dictionary<string, Aas.DataTypeDefRdf>()
             {
-                { "DATE", Aas.DataTypeIec61360.Date },
-                { "STRING", Aas.DataTypeIec61360.String },
-                { "STRING_TRANSLATABLE", Aas.DataTypeIec61360.StringTranslatable },
-                { "INTEGER_MEASURE", Aas.DataTypeIec61360.IntegerMeasure },
-                { "INTEGER_COUNT", Aas.DataTypeIec61360.IntegerCount },
-                { "INTEGER_CURRENCY", Aas.DataTypeIec61360.IntegerCurrency },
-                { "REAL_MEASURE", Aas.DataTypeIec61360.RealMeasure },
-                { "REAL_COUNT", Aas.DataTypeIec61360.RealCount },
-                { "REAL_CURRENCY", Aas.DataTypeIec61360.RealCurrency },
-                { "BOOLEAN", Aas.DataTypeIec61360.Boolean },
-                { "IRI", Aas.DataTypeIec61360.Iri },
-                { "IRDI", Aas.DataTypeIec61360.Irdi },
-                { "RATIONAL", Aas.DataTypeIec61360.Rational },
-                { "RATIONAL_MEASURE", Aas.DataTypeIec61360.RationalMeasure },
-                { "TIME", Aas.DataTypeIec61360.Time },
-                { "TIMESTAMP", Aas.DataTypeIec61360.Timestamp },
-                { "FILE", Aas.DataTypeIec61360.File },
-                { "HTML", Aas.DataTypeIec61360.Html },
-                { "BLOB", Aas.DataTypeIec61360.Blob }
+                { "rdf:langString", Aas.DataTypeDefRdf.LangString }
             });
 
         /// <summary>
-        /// Parse the string representation of <see cref="DataTypeIec61360" />.
+        /// Parse the string representation of <see cref="DataTypeDefRdf" />.
         /// </summary>
         /// <remarks>
         /// If <paramref name="text" /> is not a valid string representation
-        /// of a literal of <see cref="DataTypeIec61360" />,
+        /// of a literal of <see cref="DataTypeDefRdf" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.DataTypeIec61360? DataTypeIec61360FromString(string text)
+        public static Aas.DataTypeDefRdf? DataTypeDefRdfFromString(string text)
         {
-            if (_dataTypeIec61360FromString.TryGetValue(text, out DataTypeIec61360 value))
+            if (_dataTypeDefRdfFromString.TryGetValue(text, out DataTypeDefRdf value))
             {
                 return value;
             }
@@ -844,13 +1342,43 @@ namespace AasCore.Aas3_0_RC02
             }
         }
 
-        private static readonly Dictionary<Aas.LevelType, string> LevelTypeToString = (
-            new Dictionary<Aas.LevelType, string>()
+        private static readonly Dictionary<Aas.DataTypeDef, string> DataTypeDefToString = (
+            new Dictionary<Aas.DataTypeDef, string>()
             {
-                { Aas.LevelType.Min, "Min" },
-                { Aas.LevelType.Max, "Max" },
-                { Aas.LevelType.Nom, "Nom" },
-                { Aas.LevelType.Typ, "Typ" }
+                { Aas.DataTypeDef.AnyUri, "xs:anyURI" },
+                { Aas.DataTypeDef.Base64Binary, "xs:base64Binary" },
+                { Aas.DataTypeDef.Boolean, "xs:boolean" },
+                { Aas.DataTypeDef.Date, "xs:date" },
+                { Aas.DataTypeDef.DateTime, "xs:dateTime" },
+                { Aas.DataTypeDef.DateTimeStamp, "xs:dateTimeStamp" },
+                { Aas.DataTypeDef.Decimal, "xs:decimal" },
+                { Aas.DataTypeDef.Double, "xs:double" },
+                { Aas.DataTypeDef.Duration, "xs:duration" },
+                { Aas.DataTypeDef.Float, "xs:float" },
+                { Aas.DataTypeDef.GDay, "xs:gDay" },
+                { Aas.DataTypeDef.GMonth, "xs:gMonth" },
+                { Aas.DataTypeDef.GMonthDay, "xs:gMonthDay" },
+                { Aas.DataTypeDef.GYear, "xs:gYear" },
+                { Aas.DataTypeDef.GYearMonth, "xs:gYearMonth" },
+                { Aas.DataTypeDef.HexBinary, "xs:hexBinary" },
+                { Aas.DataTypeDef.String, "xs:string" },
+                { Aas.DataTypeDef.Time, "xs:time" },
+                { Aas.DataTypeDef.DayTimeDuration, "xs:dayTimeDuration" },
+                { Aas.DataTypeDef.YearMonthDuration, "xs:yearMonthDuration" },
+                { Aas.DataTypeDef.Integer, "xs:integer" },
+                { Aas.DataTypeDef.Long, "xs:long" },
+                { Aas.DataTypeDef.Int, "xs:int" },
+                { Aas.DataTypeDef.Short, "xs:short" },
+                { Aas.DataTypeDef.Byte, "xs:byte" },
+                { Aas.DataTypeDef.NonNegativeInteger, "xs:NonNegativeInteger" },
+                { Aas.DataTypeDef.PositiveInteger, "xs:positiveInteger" },
+                { Aas.DataTypeDef.UnsignedLong, "xs:unsignedLong" },
+                { Aas.DataTypeDef.UnsignedInt, "xs:unsignedInt" },
+                { Aas.DataTypeDef.UnsignedShort, "xs:unsignedShort" },
+                { Aas.DataTypeDef.UnsignedByte, "xs:unsignedByte" },
+                { Aas.DataTypeDef.NonPositiveInteger, "xs:nonPositiveInteger" },
+                { Aas.DataTypeDef.NegativeInteger, "xs:negativeInteger" },
+                { Aas.DataTypeDef.LangString, "rdf:langString" }
             });
 
         /// <summary>
@@ -859,7 +1387,7 @@ namespace AasCore.Aas3_0_RC02
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(Aas.LevelType? that)
+        public static string? ToString(Aas.DataTypeDef? that)
         {
             if (!that.HasValue)
             {
@@ -867,7 +1395,7 @@ namespace AasCore.Aas3_0_RC02
             }
             else
             {
-                if (LevelTypeToString.TryGetValue(that.Value, out string? value))
+                if (DataTypeDefToString.TryGetValue(that.Value, out string? value))
                 {
                     return value;
                 }
@@ -879,26 +1407,56 @@ namespace AasCore.Aas3_0_RC02
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string, Aas.LevelType> _levelTypeFromString = (
-            new Dictionary<string, Aas.LevelType>()
+        private static readonly Dictionary<string, Aas.DataTypeDef> _dataTypeDefFromString = (
+            new Dictionary<string, Aas.DataTypeDef>()
             {
-                { "Min", Aas.LevelType.Min },
-                { "Max", Aas.LevelType.Max },
-                { "Nom", Aas.LevelType.Nom },
-                { "Typ", Aas.LevelType.Typ }
+                { "xs:anyURI", Aas.DataTypeDef.AnyUri },
+                { "xs:base64Binary", Aas.DataTypeDef.Base64Binary },
+                { "xs:boolean", Aas.DataTypeDef.Boolean },
+                { "xs:date", Aas.DataTypeDef.Date },
+                { "xs:dateTime", Aas.DataTypeDef.DateTime },
+                { "xs:dateTimeStamp", Aas.DataTypeDef.DateTimeStamp },
+                { "xs:decimal", Aas.DataTypeDef.Decimal },
+                { "xs:double", Aas.DataTypeDef.Double },
+                { "xs:duration", Aas.DataTypeDef.Duration },
+                { "xs:float", Aas.DataTypeDef.Float },
+                { "xs:gDay", Aas.DataTypeDef.GDay },
+                { "xs:gMonth", Aas.DataTypeDef.GMonth },
+                { "xs:gMonthDay", Aas.DataTypeDef.GMonthDay },
+                { "xs:gYear", Aas.DataTypeDef.GYear },
+                { "xs:gYearMonth", Aas.DataTypeDef.GYearMonth },
+                { "xs:hexBinary", Aas.DataTypeDef.HexBinary },
+                { "xs:string", Aas.DataTypeDef.String },
+                { "xs:time", Aas.DataTypeDef.Time },
+                { "xs:dayTimeDuration", Aas.DataTypeDef.DayTimeDuration },
+                { "xs:yearMonthDuration", Aas.DataTypeDef.YearMonthDuration },
+                { "xs:integer", Aas.DataTypeDef.Integer },
+                { "xs:long", Aas.DataTypeDef.Long },
+                { "xs:int", Aas.DataTypeDef.Int },
+                { "xs:short", Aas.DataTypeDef.Short },
+                { "xs:byte", Aas.DataTypeDef.Byte },
+                { "xs:NonNegativeInteger", Aas.DataTypeDef.NonNegativeInteger },
+                { "xs:positiveInteger", Aas.DataTypeDef.PositiveInteger },
+                { "xs:unsignedLong", Aas.DataTypeDef.UnsignedLong },
+                { "xs:unsignedInt", Aas.DataTypeDef.UnsignedInt },
+                { "xs:unsignedShort", Aas.DataTypeDef.UnsignedShort },
+                { "xs:unsignedByte", Aas.DataTypeDef.UnsignedByte },
+                { "xs:nonPositiveInteger", Aas.DataTypeDef.NonPositiveInteger },
+                { "xs:negativeInteger", Aas.DataTypeDef.NegativeInteger },
+                { "rdf:langString", Aas.DataTypeDef.LangString }
             });
 
         /// <summary>
-        /// Parse the string representation of <see cref="LevelType" />.
+        /// Parse the string representation of <see cref="DataTypeDef" />.
         /// </summary>
         /// <remarks>
         /// If <paramref name="text" /> is not a valid string representation
-        /// of a literal of <see cref="LevelType" />,
+        /// of a literal of <see cref="DataTypeDef" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.LevelType? LevelTypeFromString(string text)
+        public static Aas.DataTypeDef? DataTypeDefFromString(string text)
         {
-            if (_levelTypeFromString.TryGetValue(text, out LevelType value))
+            if (_dataTypeDefFromString.TryGetValue(text, out DataTypeDef value))
             {
                 return value;
             }

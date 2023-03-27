@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static AasCore.Aas3_0_RC02.Visitation;
-//TODO:jtikekar Remove this file
+
 namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 {
     internal interface IUpdateTransformerWithContext<in T> : ITransformerWithContext<OutputModifierContext, IClass>
@@ -40,9 +40,9 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
         public void Transform(Reference that, Reference source, OutputModifierContext context);
         public void Transform(Key that, Key source, OutputModifierContext context);
         public void Transform(LangString that, LangString source, OutputModifierContext context);
-        //public void Transform(LangStringSet that, LangStringSet source, OutputModifierContext context);
-        //public void Transform(DataSpecificationContent that, DataSpecificationContent source, OutputModifierContext context);
-        //public void Transform(DataSpecification that, DataSpecification source, OutputModifierContext context);
+        public void Transform(LangStringSet that, LangStringSet source, OutputModifierContext context);
+        public void Transform(DataSpecificationContent that, DataSpecificationContent source, OutputModifierContext context);
+        public void Transform(DataSpecification that, DataSpecification source, OutputModifierContext context);
         public void Transform(AasCore.Aas3_0_RC02.Environment that, OutputModifierContext context);
     }
 }

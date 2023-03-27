@@ -727,12 +727,12 @@ namespace AasxRestServerLibrary
             }
 
             //TODO:jtikekar remove
-            if (context.Request.RawUrl.Equals("/aas/0/core") && obj is ExpandoObject findAasReturn)
+            if(context.Request.RawUrl.Equals("/aas/0/core") && obj is ExpandoObject findAasReturn)
             {
                 var value = new JsonObject();
                 foreach (KeyValuePair<string, object> kvp in findAasReturn)
                 {
-                    if (kvp.Key.Equals("AAS"))
+                    if(kvp.Key.Equals("AAS"))
                     {
                         value["AAS"] = Jsonization.Serialize.ToJsonObject((AssetAdministrationShell)kvp.Value);
                     }
@@ -3427,8 +3427,8 @@ namespace AasxRestServerLibrary
                 int iRole = 0;
                 while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
                 {
-                    if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas")
-                    /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
+                    if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas") 
+                        /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
                     {
                         if (objectAasOrSubmodel != null && securityRole[iRole].objReference == objectAasOrSubmodel &&
                         securityRole[iRole].permission == neededRights)
@@ -3626,7 +3626,7 @@ namespace AasxRestServerLibrary
                             }
                             if (actualTime.Value == null || actualTime.Value == "")
                             {
-                                actualTime.Value = DateTime.UtcNow.ToString();
+                                actualTime.Value =  DateTime.UtcNow.ToString();
                                 actualCount.Value = null;
                             }
                             if (actualCount.Value == null || actualCount.Value == "")
@@ -3675,7 +3675,7 @@ namespace AasxRestServerLibrary
             {
                 if (checkAccessLevel(currentRole, operation, neededRights,
                     objPath, aasOrSubmodel, objectAasOrSubmodel))
-                    return true;
+                        return true;
 
                 if (currentRole == null)
                 {
@@ -3705,7 +3705,7 @@ namespace AasxRestServerLibrary
         {
             return SecurityCheck(context.Request.QueryString, context.Request.Headers, ref index);
         }
-
+        
         static string checkUserPW(string userPW64)
         {
             var credentialBytes = Convert.FromBase64String(userPW64);

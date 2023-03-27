@@ -57,23 +57,23 @@ namespace AasOpcUaServer
             return res;
         }
 
-        public static LocalizedText[] GetUaLocalizedTexts(List<LangString> ls)
+        public static LocalizedText[] GetUaLocalizedTexts(LangStringSet ls)
         {
-            if (ls == null || ls.Count < 1)
+            if (ls == null || ls.LangStrings.Count < 1)
                 return new LocalizedText[] { new LocalizedText("", "") };
-            var res = new LocalizedText[ls.Count];
-            for (int i = 0; i < ls.Count; i++)
-                res[i] = new LocalizedText(ls[i].Language, ls[i].Text);
+            var res = new LocalizedText[ls.LangStrings.Count];
+            for (int i = 0; i < ls.LangStrings.Count; i++)
+                res[i] = new LocalizedText(ls.LangStrings[i].Language, ls.LangStrings[i].Text);
             return res;
         }
 
-        public static LocalizedText GetBestUaDescriptionFromAasDescription(List<LangString> desc)
+        public static LocalizedText GetBestUaDescriptionFromAasDescription(LangStringSet desc)
         {
             var res = new LocalizedText("", "");
-            if (desc != null && desc != null)
+            if (desc != null && desc.LangStrings != null)
             {
                 var found = false;
-                foreach (var ls in desc)
+                foreach (var ls in desc.LangStrings)
                     if (!found || ls.Language.Trim().ToLower().StartsWith("en"))
                     {
                         found = true;

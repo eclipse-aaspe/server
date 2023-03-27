@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.APIModels.Core
 {
-    //TODO:jtikekar remove this file
     internal class SubmodelElementCollectionCore : SubmodelElementCollection
     {
-        public SubmodelElementCollectionCore(SubmodelElementCollection collection) : base(collection.Extensions, collection.Category, collection.IdShort, collection.DisplayName, collection.Description, collection.Checksum, collection.Kind, collection.SemanticId, collection.SupplementalSemanticIds, collection.Qualifiers, null, collection.Value)
+        public SubmodelElementCollectionCore(SubmodelElementCollection collection) : base(collection.Extensions, collection.Category, collection.IdShort, collection.DisplayName, collection.Description, collection.Checksum, collection.Kind, collection.SemanticId, collection.SupplementalSemanticIds, collection.Qualifiers, collection.DataSpecifications, collection.Value)
         {
             //Remove indirect children
             foreach (var submodelElement in this.Value)

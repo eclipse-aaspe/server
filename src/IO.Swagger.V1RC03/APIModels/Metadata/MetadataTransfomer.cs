@@ -67,16 +67,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
         {
             var result = new Nodes.JsonObject();
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(
+                    arrayDataSpecifications.Add(
                         Transform(
                             item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             if (that.Version != null)
@@ -201,16 +201,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
             result["id"] = Nodes.JsonValue.Create(
                 that.Id);
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(
+                    arrayDataSpecifications.Add(
                         Transform(
                             item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             if (that.DerivedFrom != null)
@@ -402,14 +402,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "Submodel";
@@ -502,14 +504,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "RelationshipElement";
@@ -602,14 +606,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             if (that.OrderRelevant != null)
@@ -726,14 +732,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "SubmodelElementCollection";
@@ -826,14 +834,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["valueType"] = Serialize.DataTypeDefXsdToJsonValue(
@@ -929,14 +939,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "MultiLanguageProperty";
@@ -1029,14 +1041,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["valueType"] = Serialize.DataTypeDefXsdToJsonValue(
@@ -1132,14 +1146,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             if (that.Value != null)
@@ -1238,14 +1254,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "Blob";
@@ -1338,14 +1356,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "File";
@@ -1438,14 +1458,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "AnnotatedRelationshipElement";
@@ -1538,14 +1560,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["entityType"] = Serialize.EntityTypeToJsonValue(
@@ -1687,14 +1711,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["direction"] = Serialize.DirectionToJsonValue(
@@ -1823,14 +1849,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             if (that.InputVariables != null)
@@ -1969,14 +1997,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["qualifiers"] = arrayQualifiers;
             }
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             result["modelType"] = "Capability";
@@ -2039,14 +2069,16 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
             result["id"] = Nodes.JsonValue.Create(
                 that.Id);
 
-            if (that.EmbeddedDataSpecifications != null)
+            if (that.DataSpecifications != null)
             {
-                var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (Reference item in that.DataSpecifications)
                 {
-                    arrayEmbeddedDataSpecifications.Add(Transform(item));
+                    arrayDataSpecifications.Add(
+                        Transform(
+                            item));
                 }
-                result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
 
             if (that.IsCaseOf != null)
@@ -2117,13 +2149,12 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
             return result;
         }
 
-        //public override Nodes.JsonObject Transform(List<LangString> that)
-        public Nodes.JsonObject Transform(List<LangString> that)
+        public override Nodes.JsonObject Transform(LangStringSet that)
         {
             var result = new Nodes.JsonObject();
 
             var arrayLangStrings = new Nodes.JsonArray();
-            foreach (LangString item in that)
+            foreach (LangString item in that.LangStrings)
             {
                 arrayLangStrings.Add(
                     Transform(
@@ -2134,7 +2165,37 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
             return result;
         }
 
+        public override Nodes.JsonObject Transform(DataSpecificationContent that)
+        {
+            var result = new Nodes.JsonObject();
 
+            return result;
+        }
+
+        public override Nodes.JsonObject Transform(DataSpecification that)
+        {
+            var result = new Nodes.JsonObject();
+
+            result["id"] = Nodes.JsonValue.Create(
+                that.Id);
+
+            result["dataSpecificationContent"] = Transform(
+                that.DataSpecificationContent);
+
+            if (that.Administration != null)
+            {
+                result["administration"] = Transform(
+                    that.Administration);
+            }
+
+            if (that.Description != null)
+            {
+                result["description"] = Transform(
+                    that.Description);
+            }
+
+            return result;
+        }
 
         public override Nodes.JsonObject Transform(AasCore.Aas3_0_RC02.Environment that)
         {
@@ -2176,235 +2237,20 @@ namespace IO.Swagger.V1RC03.APIModels.Metadata
                 result["conceptDescriptions"] = arrayConceptDescriptions;
             }
 
-            return result;
-        }
-
-        public override Nodes.JsonObject Transform(EmbeddedDataSpecification that)
-        {
-            var result = new Nodes.JsonObject();
-
-            result["dataSpecification"] = Transform(
-                that.DataSpecification);
-
-            result["dataSpecificationContent"] = Transform(
-                that.DataSpecificationContent);
-
-            return result;
-        }
-
-        public override Nodes.JsonObject Transform(ValueReferencePair that)
-        {
-            var result = new Nodes.JsonObject();
-
-            result["value"] = Nodes.JsonValue.Create(
-                that.Value);
-
-            result["valueId"] = Transform(
-                that.ValueId);
-
-            return result;
-        }
-
-        public override Nodes.JsonObject Transform(ValueList that)
-        {
-            var result = new Nodes.JsonObject();
-
-            var arrayValueReferencePairs = new Nodes.JsonArray();
-            foreach (ValueReferencePair item in that.ValueReferencePairs)
+            if (that.DataSpecifications != null)
             {
-                arrayValueReferencePairs.Add(
-                    Transform(
-                        item));
-            }
-            result["valueReferencePairs"] = arrayValueReferencePairs;
-
-            return result;
-        }
-
-        public override Nodes.JsonObject Transform(DataSpecificationIec61360 that)
-        {
-            var result = new Nodes.JsonObject();
-
-            var arrayPreferredName = new Nodes.JsonArray();
-            foreach (LangString item in that.PreferredName)
-            {
-                arrayPreferredName.Add(
-                    Transform(
-                        item));
-            }
-            result["preferredName"] = arrayPreferredName;
-
-            if (that.ShortName != null)
-            {
-                var arrayShortName = new Nodes.JsonArray();
-                foreach (LangString item in that.ShortName)
+                var arrayDataSpecifications = new Nodes.JsonArray();
+                foreach (DataSpecification item in that.DataSpecifications)
                 {
-                    arrayShortName.Add(
+                    arrayDataSpecifications.Add(
                         Transform(
                             item));
                 }
-                result["shortName"] = arrayShortName;
+                result["dataSpecifications"] = arrayDataSpecifications;
             }
-
-            if (that.Unit != null)
-            {
-                result["unit"] = Nodes.JsonValue.Create(
-                    that.Unit);
-            }
-
-            if (that.UnitId != null)
-            {
-                result["unitId"] = Transform(
-                    that.UnitId);
-            }
-
-            if (that.SourceOfDefinition != null)
-            {
-                result["sourceOfDefinition"] = Nodes.JsonValue.Create(
-                    that.SourceOfDefinition);
-            }
-
-            if (that.Symbol != null)
-            {
-                result["symbol"] = Nodes.JsonValue.Create(
-                    that.Symbol);
-            }
-
-            if (that.DataType != null)
-            {
-                // We need to help the static analyzer with a null coalescing.
-                DataTypeIec61360 value = that.DataType
-                    ?? throw new System.InvalidOperationException();
-                result["dataType"] = Serialize.DataTypeIec61360ToJsonValue(
-                    value);
-            }
-
-            if (that.Definition != null)
-            {
-                var arrayDefinition = new Nodes.JsonArray();
-                foreach (LangString item in that.Definition)
-                {
-                    arrayDefinition.Add(
-                        Transform(
-                            item));
-                }
-                result["definition"] = arrayDefinition;
-            }
-
-            if (that.ValueFormat != null)
-            {
-                result["valueFormat"] = Nodes.JsonValue.Create(
-                    that.ValueFormat);
-            }
-
-            if (that.ValueList != null)
-            {
-                result["valueList"] = Transform(
-                    that.ValueList);
-            }
-
-            if (that.Value != null)
-            {
-                result["value"] = Nodes.JsonValue.Create(
-                    that.Value);
-            }
-
-            if (that.LevelType != null)
-            {
-                // We need to help the static analyzer with a null coalescing.
-                LevelType value = that.LevelType
-                    ?? throw new System.InvalidOperationException();
-                result["levelType"] = Serialize.LevelTypeToJsonValue(
-                    value);
-            }
-
-            result["modelType"] = "DataSpecificationIEC61360";
 
             return result;
         }
 
-        public override Nodes.JsonObject Transform(DataSpecificationPhysicalUnit that)
-        {
-            var result = new Nodes.JsonObject();
-
-            result["unitName"] = Nodes.JsonValue.Create(
-                that.UnitName);
-
-            result["unitSymbol"] = Nodes.JsonValue.Create(
-                that.UnitSymbol);
-
-            var arrayDefinition = new Nodes.JsonArray();
-            foreach (LangString item in that.Definition)
-            {
-                arrayDefinition.Add(
-                    Transform(
-                        item));
-            }
-            result["definition"] = arrayDefinition;
-
-            if (that.SiNotation != null)
-            {
-                result["siNotation"] = Nodes.JsonValue.Create(
-                    that.SiNotation);
-            }
-
-            if (that.SiName != null)
-            {
-                result["siName"] = Nodes.JsonValue.Create(
-                    that.SiName);
-            }
-
-            if (that.DinNotation != null)
-            {
-                result["dinNotation"] = Nodes.JsonValue.Create(
-                    that.DinNotation);
-            }
-
-            if (that.EceName != null)
-            {
-                result["eceName"] = Nodes.JsonValue.Create(
-                    that.EceName);
-            }
-
-            if (that.EceCode != null)
-            {
-                result["eceCode"] = Nodes.JsonValue.Create(
-                    that.EceCode);
-            }
-
-            if (that.NistName != null)
-            {
-                result["nistName"] = Nodes.JsonValue.Create(
-                    that.NistName);
-            }
-
-            if (that.SourceOfDefinition != null)
-            {
-                result["sourceOfDefinition"] = Nodes.JsonValue.Create(
-                    that.SourceOfDefinition);
-            }
-
-            if (that.ConversionFactor != null)
-            {
-                result["conversionFactor"] = Nodes.JsonValue.Create(
-                    that.ConversionFactor);
-            }
-
-            if (that.RegistrationAuthorityId != null)
-            {
-                result["registrationAuthorityId"] = Nodes.JsonValue.Create(
-                    that.RegistrationAuthorityId);
-            }
-
-            if (that.Supplier != null)
-            {
-                result["supplier"] = Nodes.JsonValue.Create(
-                    that.Supplier);
-            }
-
-            result["modelType"] = "DataSpecificationPhysicalUnit";
-
-            return result;
-        }
     }
 }

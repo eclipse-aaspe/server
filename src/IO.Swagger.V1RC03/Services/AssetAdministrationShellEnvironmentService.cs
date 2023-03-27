@@ -68,12 +68,12 @@ namespace IO.Swagger.V1RC03.Services
 
             checkAccessRights(_securityContext.accessRights, _securityContext.route, _securityContext.neededRights,
                 objPath, aasOrSubmodel, objectAasOrSubmodel);
-        }
+       }
 
         public bool SecurityCheckTestOnly(string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             if (!AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
-                return (true);
+                return(true);
 
             return checkAccessRights(_securityContext.accessRights, _securityContext.route, _securityContext.neededRights,
                 objPath, aasOrSubmodel, objectAasOrSubmodel, true);
@@ -90,7 +90,7 @@ namespace IO.Swagger.V1RC03.Services
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, bool testOnly = false)
         {
             string error = "Access not allowed";
-            withAllow = false;
+            withAllow= false;
 
             if (Program.secretStringAPI != null)
             {
@@ -104,7 +104,7 @@ namespace IO.Swagger.V1RC03.Services
                 if (AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                     out error, currentRole, operation, neededRights, out withAllow,
                     objPath, aasOrSubmodel, objectAasOrSubmodel))
-                    return true;
+                        return true;
 
                 if (currentRole == null)
                 {
@@ -141,73 +141,6 @@ namespace IO.Swagger.V1RC03.Services
         }
 
         #region AssetAdministrationShell
-
-        public string GetThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize)
-        {
-            string fileName = null;
-            byteArray = null;
-            fileSize = 0;
-            var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
-            if (aas != null)
-            {
-                if (aas.AssetInformation != null)
-                {
-                    if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
-                    {
-                        fileName = aas.AssetInformation.DefaultThumbnail.Path;
-
-                        Stream stream = _packages[packageIndex].GetLocalThumbnailStream();
-                        byteArray = stream.ToByteArray();
-                        fileSize = byteArray.Length;
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
-                    }
-                }
-                else
-                {
-                    throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
-                }
-            }
-
-            return fileName;
-        }
-
-        public void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream fileContent)
-        {
-            var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
-            if (aas != null)
-            {
-                if (aas.AssetInformation != null)
-                {
-                    var asset = aas.AssetInformation;
-
-                    if (string.IsNullOrEmpty(contentType))
-                    {
-                        contentType = "application/octet-stream";
-                    }
-
-                    if (asset.DefaultThumbnail == null)
-                    {
-                        //If thumbnail is not set, set to default path 
-                        asset.DefaultThumbnail ??= new(Path.Combine("/aasx/files", fileName).Replace('/', Path.DirectorySeparatorChar), contentType);
-                    }
-                    else
-                    {
-                        asset.DefaultThumbnail.Path = asset.DefaultThumbnail.Path.Replace('/', Path.DirectorySeparatorChar);
-                    }
-
-                    _packages[packageIndex].EmbeddAssetInformationThumbnail(asset.DefaultThumbnail, fileContent);
-                    AasxServer.Program.signalNewData(2);
-
-                }
-                else
-                {
-                    throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
-                }
-            }
-        }
 
         public void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, Stream fileContent)
         {
@@ -808,11 +741,11 @@ namespace IO.Swagger.V1RC03.Services
                     var cdList = new List<ConceptDescription>();
                     foreach (var conceptDescription in output)
                     {
-                        if (!conceptDescription.EmbeddedDataSpecifications.IsNullOrEmpty())
+                        if (!conceptDescription.DataSpecifications.IsNullOrEmpty())
                         {
-                            foreach (var reference in conceptDescription.EmbeddedDataSpecifications)
+                            foreach (var reference in conceptDescription.DataSpecifications)
                             {
-                                if (reference != null && reference.DataSpecification.Matches(reqDataSpecificationRef))
+                                if (reference != null && reference.Matches(reqDataSpecificationRef))
                                 {
                                     cdList.Add(conceptDescription);
                                     break;
@@ -1072,10 +1005,10 @@ namespace IO.Swagger.V1RC03.Services
             }
 
             //Check if corresponding AAS exist. If yes, then add to the same environment
-            if (!string.IsNullOrEmpty(aasIdentifier))
+            if(!string.IsNullOrEmpty(aasIdentifier))
             {
                 var aasFound = IsAssetAdministrationShellPresent(aasIdentifier, out AssetAdministrationShell aas, out int packageIndex);
-                if (aasFound)
+                if(aasFound)
                 {
                     body.SetAllParents(DateTime.UtcNow);
                     _packages[packageIndex].AasEnv.Submodels.Add(body);
@@ -1512,21 +1445,21 @@ namespace IO.Swagger.V1RC03.Services
                 if (fileElement is File file)
                 {
                     //Check if file has location
-                    if (!string.IsNullOrEmpty(file.Value))
+                    if(!string.IsNullOrEmpty(file.Value))
                     {
                         //check if it is external location
-                        if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+                        if(file.Value.StartsWith("http") || file.Value.StartsWith("https"))
                         {
                             _logger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
                             throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
                         }
                         //Check if a directory
-                        else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                        else if(file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
                         {
                             _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
                             //check if the value consists file extension
                             string sourcePath;
-                            if (Path.HasExtension(file.Value))
+                            if(Path.HasExtension(file.Value))
                             {
                                 sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
                             }
@@ -1534,7 +1467,7 @@ namespace IO.Swagger.V1RC03.Services
                             {
                                 sourcePath = Path.Combine(file.Value);
                             }
-
+                           
                             var targetFile = Path.Combine(sourcePath, fileName);
                             targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
                             Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
@@ -1558,7 +1491,7 @@ namespace IO.Swagger.V1RC03.Services
                         file.Value = FormatFileName(targetFile);
                         AasxServer.Program.signalNewData(2);
                     }
-
+                    
                 }
                 else
                 {
@@ -1693,10 +1626,6 @@ namespace IO.Swagger.V1RC03.Services
 
             return false;
         }
-
-
-
-
 
 
 

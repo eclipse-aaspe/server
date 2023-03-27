@@ -719,10 +719,10 @@ namespace AasOpcUaServer
             this.entityBuilder.AasTypes.Administration.CreateAddElements(
                 o, CreateMode.Instance, aas.Administration);
             // HasDataSpecification
-            if (aas.EmbeddedDataSpecifications != null && aas.EmbeddedDataSpecifications != null)
-                foreach (var ds in aas.EmbeddedDataSpecifications)
+            if (aas.DataSpecifications != null && aas.DataSpecifications != null)
+                foreach (var ds in aas.DataSpecifications)
                     this.entityBuilder.AasTypes.Reference.CreateAddElements(
-                        o, CreateMode.Instance, ds.DataSpecification, "DataSpecification");
+                        o, CreateMode.Instance, ds, "DataSpecification");
             // own attributes
             this.entityBuilder.AasTypes.Reference.CreateAddElements(
                 o, CreateMode.Instance, aas.DerivedFrom, "DerivedFrom");
@@ -843,10 +843,10 @@ namespace AasOpcUaServer
                 this.entityBuilder.AasTypes.ModelingKind.CreateAddElements(
                     o, CreateMode.Instance, (ModelingKind)sm.Kind);
                 // HasDataSpecification
-                if (sm.EmbeddedDataSpecifications != null && sm.EmbeddedDataSpecifications != null)
-                    foreach (var ds in sm.EmbeddedDataSpecifications)
+                if (sm.DataSpecifications != null && sm.DataSpecifications != null)
+                    foreach (var ds in sm.DataSpecifications)
                         this.entityBuilder.AasTypes.Reference.CreateAddElements(
-                            o, CreateMode.Instance, ds.DataSpecification, "DataSpecification");
+                            o, CreateMode.Instance, ds, "DataSpecification");
                 // Qualifiable
                 if (sm.Qualifiers != null)
                     foreach (var q in sm.Qualifiers)
@@ -932,9 +932,10 @@ namespace AasOpcUaServer
             this.entityBuilder.AasTypes.ModelingKind.CreateAddElements(
                 o, CreateMode.Instance, (ModelingKind)sme.Kind);
             // HasDataSpecification
-            if (sme.EmbeddedDataSpecifications != null && sme.EmbeddedDataSpecifications != null)
-                foreach (var ds in sme.EmbeddedDataSpecifications)
-                    this.entityBuilder.AasTypes.Reference.CreateAddElements(o, CreateMode.Instance, ds.DataSpecification, "DataSpecification");
+            if (sme.DataSpecifications != null && sme.DataSpecifications != null)
+                foreach (var ds in sme.DataSpecifications)
+                    this.entityBuilder.AasTypes.Reference.CreateAddElements(
+                        o, CreateMode.Instance, ds, "DataSpecification");
             // Qualifiable
             if (sme.Qualifiers != null)
                 foreach (var q in sme.Qualifiers)

@@ -290,7 +290,6 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="0">Default error handling for unmentioned status codes</response>
         IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
             [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
-        IActionResult GetThumbnail([FromRoute, Required] string aasIdentifier);
 
         /// <summary>
         /// Synchronously or asynchronously invokes an Operation at a specified path
@@ -539,6 +538,5 @@ namespace IO.Swagger.V1RC03.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent);
-        IActionResult PutThumbnail([FromRoute, Required] string aasIdentifier, IFormFile file);
     }
 }

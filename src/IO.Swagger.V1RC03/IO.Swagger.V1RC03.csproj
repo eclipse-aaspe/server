@@ -23,6 +23,7 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AasxServer.DomainModelV3_0_RC02\AasCore.Aas3_0_RC02.csproj" />
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
     <ProjectReference Include="..\IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj" />
   </ItemGroup>

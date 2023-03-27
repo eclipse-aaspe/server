@@ -1590,11 +1590,11 @@
             if (ls != null)
             {
                 ret = " = ";
-                for (int i = 0; i < ls.Count; i++)
+                for (int i = 0; i < ls.LangStrings.Count; i++)
                 {
-                    ret += ls[i].Language + " ";
+                    ret += ls.LangStrings[i].Language + " ";
                     if (i == 0)
-                        ret += ls[i].Text + " ";
+                        ret += ls.LangStrings[i].Text + " ";
                 }
             }
             if (mlp.Qualifiers != null && mlp.Qualifiers.Count > 0)
@@ -2284,9 +2284,9 @@
         {
             var mlp = o as MultiLanguageProperty;
             var ls = mlp.Value;
-            for (int i = 0; i < ls.Count; i++)
+            for (int i = 0; i < ls.LangStrings.Count; i++)
             {
-                ret += ls[i].Language + " ";
+                ret += ls.LangStrings[i].Language + " ";
             }
             switch (line)
             {
@@ -2308,12 +2308,12 @@
                 case 3:
                 case 4:
                     ret = "";
-                    if (ls.Count > line - 1)
+                    if (ls.LangStrings.Count > line - 1)
                     {
                         if (col == 0)
-                            ret = ls[line - 1].Language;
+                            ret = ls.LangStrings[line - 1].Language;
                         if (col == 1)
-                            ret = ls[line - 1].Text + "";
+                            ret = ls.LangStrings[line - 1].Text + "";
                     }
                     break;
                 case 5:

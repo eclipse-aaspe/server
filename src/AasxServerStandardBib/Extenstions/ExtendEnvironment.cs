@@ -391,7 +391,7 @@ namespace Extenstions
             }
 
             var aasList = environment.AssetAdministrationShells.Where(a => a.Id.Equals(aasId));
-            if (aasList.Any())
+            if(aasList.Any())
             {
                 return aasList.First();
             }
@@ -411,9 +411,9 @@ namespace Extenstions
             }
 
             var conceptDescriptionList = environment.ConceptDescriptions.Where(c => c.Id.Equals(conceptDescriptionId));
-            if (conceptDescriptionList.Any())
+            if(conceptDescriptionList.Any())
             {
-                return conceptDescriptionList.First();
+                return conceptDescriptionList.First();  
             }
 
             return null;

@@ -67,7 +67,7 @@ namespace Extenstions
             return outputReference;
         }
 
-        internal static List<LangString> ConvertDescriptionFromV10(AdminShellV10.Description sourceDescription)
+        internal static LangStringSet ConvertDescriptionFromV10(AdminShellV10.Description sourceDescription)
         {
             var newLangStrList = new List<LangString>();
             foreach (var ls in sourceDescription.langString)
@@ -75,10 +75,10 @@ namespace Extenstions
                 newLangStrList.Add(new LangString(ls.lang, ls.str));
             }
 
-            return new List<LangString>(newLangStrList);
+            return new LangStringSet(newLangStrList);
         }
 
-        internal static List<LangString> ConvertDescriptionFromV20(AdminShellV20.Description sourceDescription)
+        internal static LangStringSet ConvertDescriptionFromV20(AdminShellV20.Description sourceDescription)
         {
             var newLangStrList = new List<LangString>();
             foreach (var ls in sourceDescription.langString)
@@ -86,7 +86,7 @@ namespace Extenstions
                 newLangStrList.Add(new LangString(ls.lang, ls.str));
             }
 
-            return new List<LangString>(newLangStrList);
+            return new LangStringSet(newLangStrList);
         }
 
         internal static KeyTypes GetKeyType(IClass aasElement)

@@ -110,15 +110,13 @@ namespace Extenstions
             if (sourceAas.hasDataSpecification != null)
             {
                 //TODO: jtikekar : EmbeddedDataSpecification?? (as per old implementation)
-                if (assetAdministrationShell.EmbeddedDataSpecifications == null)
+                if (assetAdministrationShell.DataSpecifications == null)
                 {
-                    assetAdministrationShell.EmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                    assetAdministrationShell.DataSpecifications = new List<Reference>();
                 }
                 foreach (var dataSpecification in sourceAas.hasDataSpecification.reference)
                 {
-                    assetAdministrationShell.EmbeddedDataSpecifications.Add(new EmbeddedDataSpecification(
-                        ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.GlobalReference),
-                        null));
+                    assetAdministrationShell.DataSpecifications.Add(ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.GlobalReference));
                 }
             }
 
@@ -186,9 +184,9 @@ namespace Extenstions
             if (sourceAas.hasDataSpecification != null)
             {
                 //TODO: jtikekar : EmbeddedDataSpecification?? (as per old implementation)
-                if (assetAdministrationShell.EmbeddedDataSpecifications == null)
+                if (assetAdministrationShell.DataSpecifications == null)
                 {
-                    assetAdministrationShell.EmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                    assetAdministrationShell.DataSpecifications = new List<Reference>();
                 }
 
                 //TODO: jtikekar: DataSpecificationContent?? (as per old implementation)
@@ -196,10 +194,7 @@ namespace Extenstions
                 {
                     if (sourceDataSpec.dataSpecification != null)
                     {
-                        assetAdministrationShell.EmbeddedDataSpecifications.Add(
-                            new EmbeddedDataSpecification(
-                                ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.GlobalReference),
-                                null));
+                        assetAdministrationShell.DataSpecifications.Add(ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.GlobalReference));
                     }
                 }
             }

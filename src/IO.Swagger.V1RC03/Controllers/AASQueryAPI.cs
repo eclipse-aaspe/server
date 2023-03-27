@@ -165,7 +165,7 @@ namespace IO.Swagger.V1RC03.Controllers
 
             // return new ObjectResult(result);
         }
-
+        
         [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost]
         [Route("/queryregistry")]

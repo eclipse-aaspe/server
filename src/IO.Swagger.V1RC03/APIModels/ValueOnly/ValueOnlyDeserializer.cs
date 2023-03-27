@@ -2,8 +2,12 @@
 using AasxServerStandardBib.Exceptions;
 using IO.Swagger.V1RC03.Logging;
 using IO.Swagger.V1RC03.Services;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.APIModels.ValueOnly
 {
@@ -387,6 +391,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
         private ISubmodelElement CreateMultilanguageProperty(string idShort, JsonArray jsonArray)
         {
             var langStrings = new List<LangString>();
+            var langStringSet = new LangStringSet(langStrings);
             var enumerator = jsonArray.GetEnumerator();
             while (enumerator.MoveNext())
             {
@@ -396,7 +401,7 @@ namespace IO.Swagger.V1RC03.APIModels.ValueOnly
                 langStrings.Add(langString);
             }
 
-            return new MultiLanguageProperty(idShort: idShort, value: langStrings);
+            return new MultiLanguageProperty(idShort: idShort, value: langStringSet);
         }
 
         private void GetPropertyFromJsonObject(JsonObject item, out string propertyName, out string propertyValue)

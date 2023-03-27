@@ -1,7 +1,8 @@
-﻿using AasCore.Aas3_0_RC02;
-using System;
+﻿using static AasCore.Aas3_0_RC02.Visitation;
+using System.Text.Json.Nodes;
+using AasCore.Aas3_0_RC02;
 using System.Collections.Generic;
-using static AasCore.Aas3_0_RC02.Visitation;
+using System;
 
 namespace IO.Swagger.V1RC03.APIModels.Core
 {
@@ -436,7 +437,17 @@ namespace IO.Swagger.V1RC03.APIModels.Core
             throw new System.NotImplementedException();
         }
 
-        public List<string> Transform(List<LangString> that, OutputModifierContext context)
+        public List<string> Transform(LangStringSet that, OutputModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public List<string> Transform(DataSpecificationContent that, OutputModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public List<string> Transform(DataSpecification that, OutputModifierContext context)
         {
             throw new System.NotImplementedException();
         }
@@ -444,31 +455,6 @@ namespace IO.Swagger.V1RC03.APIModels.Core
         public List<string> Transform(AasCore.Aas3_0_RC02.Environment that, OutputModifierContext context)
         {
             throw new System.NotImplementedException();
-        }
-
-        public List<string> Transform(EmbeddedDataSpecification that, OutputModifierContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> Transform(ValueReferencePair that, OutputModifierContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> Transform(ValueList that, OutputModifierContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> Transform(DataSpecificationIec61360 that, OutputModifierContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> Transform(DataSpecificationPhysicalUnit that, OutputModifierContext context)
-        {
-            throw new NotImplementedException();
         }
     }
 }

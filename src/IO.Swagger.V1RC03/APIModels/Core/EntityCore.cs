@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.V1RC03.APIModels.Core
 {
-    //TODO: jtikekar remove this file
     internal class EntityCore : Entity
     {
-        public EntityCore(Entity entity) : base(entity.EntityType, entity.Extensions, entity.Category, entity.IdShort, entity.DisplayName, entity.Description, entity.Checksum, entity.Kind, entity.SemanticId, entity.SupplementalSemanticIds, entity.Qualifiers, null, entity.Statements, entity.GlobalAssetId, entity.SpecificAssetId)
+        public EntityCore(Entity entity) : base(entity.EntityType, entity.Extensions, entity.Category, entity.IdShort, entity.DisplayName, entity.Description, entity.Checksum, entity.Kind, entity.SemanticId, entity.SupplementalSemanticIds, entity.Qualifiers, entity.DataSpecifications, entity.Statements, entity.GlobalAssetId, entity.SpecificAssetId)
         {
             //Remove indirect children
             foreach (var submodelElement in this.Statements)

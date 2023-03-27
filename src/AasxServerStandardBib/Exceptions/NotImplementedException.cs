@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AasxServerStandardBib.Exceptions
 {
-    internal class NotImplementedException : Exception
+    internal class NotImplementedException :Exception
     {
         public NotImplementedException(string message) : base(message)
         {
