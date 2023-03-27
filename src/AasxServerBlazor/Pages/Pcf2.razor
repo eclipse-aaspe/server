@@ -362,7 +362,7 @@
                                                             {
                                                                 filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
                                                             }
-                                                            <a href="@link" target="_blank" onclick="window.open(this.href, 'mywin', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" style="margin-right: 2px;"><img src="sm_icons/@(icon).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
+                                                            <a href="@link" target="_blank" onclick="window.open(this.href, 'mywin', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" style="margin-right: 2px;"><img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
                                                         }
                                                     }
                                                 }
