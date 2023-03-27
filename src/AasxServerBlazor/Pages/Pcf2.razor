@@ -239,10 +239,30 @@
                                             <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
                                         @{
                                             string link = "";
+                                            string smlink = "";
                                             string queryPara = "";
                                             string userPW = "";
                                             string urlEdcWrapper = "";
                                             bool moreDotsToPrint = false;
+                                            string iframePath = getIframePath();
+                                            link = getAasLink(@node.aas);
+                                            var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                                            if (registry.Count != 0)
+                                            {
+                                                link += "&registryURL=" + registry[0];
+                                            }
+                                            queryPara = "";
+                                            userPW = "";
+                                            urlEdcWrapper = "";
+                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                                            {
+                                                if (queryPara != "")
+                                                {
+                                                    queryPara = Base64UrlEncoder.Encode(queryPara);
+                                                    link += "&query=" + queryPara;
+                                                }
+                                                Console.WriteLine("iframe:" + link);
+                                            }
 
                                             if (node.aas != null)
                                             {
@@ -315,7 +335,7 @@
                                                         // textList.Add(id);
                                                         if (id != null && color != null)
                                                         {
-                                                            link = getSmLink(sm);
+                                                            smlink = getSmLink(sm);
                                                             queryPara = "";
                                                             userPW = "";
                                                             urlEdcWrapper = "";
@@ -342,16 +362,16 @@
                                                             }
                                                         
                                                             var icon = id;
-                                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper))
                                                             {
                                                                 if (queryPara != "")
                                                                 {
-                                                                    link += "?" + queryPara;
+                                                                    smlink += "?" + queryPara;
                                                                 }
                                                                 if (userPW != "")
                                                                 {
-                                                                    link = link.Replace("https://", "https://" + userPW + "@");
-                                                                    link = link.Replace("http://", "http://" + userPW + "@");
+                                                                    smlink = smlink.Replace("https://", "https://" + userPW + "@");
+                                                                    smlink = smlink.Replace("http://", "http://" + userPW + "@");
                                                                 }
                                                             }
                                                             if(color == "red")
@@ -362,7 +382,7 @@
                                                             {
                                                                 filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
                                                             }
-                                                            <a href="@link" target="_blank" onclick="window.open(this.href, 'mywin', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" style="margin-right: 2px;"><img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
+                                                            <a href="@link" target="_blank" onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&smUrl=@sm.Id'; return false;" style="margin-right: 2px;"><img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
                                                         }
                                                     }
                                                 }
@@ -371,47 +391,10 @@
                                                 {
                                                     <span style="font-size:8pt;"> ...</span>
                                                 }
-
-                                                link = getAasLink(@node.aas);
-                                                queryPara = "";
-                                                userPW = "";
-                                                urlEdcWrapper = "";
-                                                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
-                                                {
-                                                    if (queryPara != "")
-                                                    {
-                                                        link += "?" + queryPara;
-                                                    }
-                                                    if (userPW != "")
-                                                    {
-                                                        link = link.Replace("https://", "https://" + userPW + "@");
-                                                        link = link.Replace("http://", "http://" + userPW + "@");
-                                                    }
-                                                }
-
-                                                //<a href="@link" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
                                             }
                                         }
                                     </div>
-                                    link = getAasLink(@node.aas);
-                                    var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                                    if (registry.Count != 0)
-                                    {
-                                        link += "&registryURL=" + registry[0];
-                                    }
-                                    queryPara = "";
-                                    userPW = "";
-                                    urlEdcWrapper = "";
-                                    if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
-                                    {
-                                        if (queryPara != "")
-                                        {
-                                            queryPara = Base64UrlEncoder.Encode(queryPara);
-                                            link += "&query=" + queryPara;
-                                        }
-                                        Console.WriteLine("iframe:" + link);
-                                    }
-                                    string iframePath = getIframePath();
+
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
                                             onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link'"
