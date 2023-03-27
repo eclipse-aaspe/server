@@ -51,7 +51,7 @@
     @{
         void nextLevel(AasxTask.cfpNode nextNode, float total, DateTime timeStamp, bool moduleOnly = false)
         {
-            <div class="node mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
+            <div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
 
                 @{
                     AasxTask.cfpNode node = nextNode;
@@ -242,6 +242,7 @@
                                             string queryPara = "";
                                             string userPW = "";
                                             string urlEdcWrapper = "";
+                                            bool moreDotsToPrint = false;
 
                                             if (node.aas != null)
                                             {
@@ -249,8 +250,39 @@
                                                 // List<string> colorList = new List<string>();
                                                 string id = null;
                                                 string color = null;
-
-                                                foreach (var smr in node.aas.Submodels)
+                                                string filter = "";
+                                                //custom ordering of references to achieve same rendering of all AASs
+                                                int order(String IdShort)
+                                                {
+                                                    switch (IdShort)
+                                                    {
+                                                        case "Nameplate": return 1;
+                                                        case "BillOfMaterial": return 2;
+                                                        case "ProductCarbonFootprint": return 3;
+                                                        case "Documentation": return 4;
+                                                        case "TechnicalData": return 5;
+                                                        default: return int.MaxValue;
+                                                    }
+                                                }
+                                                String cleanupIdShort(String text)
+                                                {
+                                                    if(text.Contains(" - EXTERNAL"))
+                                                        text = text.Replace(" - EXTERNAL", "");
+                                                    if (text.Contains(" - NO ACCESS"))
+                                                        text = text.Replace(" - NO ACCESS", "");
+                                                    if (text.Contains(" - COPY"))
+                                                        text = text.Replace(" - COPY", "");
+                                                    return text;
+                                                }
+                                                node.aas.Submodels.Sort(delegate(Reference a, Reference b)
+                                                 {
+                                                     var idA = new string(Program.env?[node.envIndex].AasEnv.FindSubmodel(a)?.IdShort);
+                                                     idA = cleanupIdShort(idA);
+                                                     var idB = new string(Program.env?[node.envIndex].AasEnv.FindSubmodel(b)?.IdShort);
+                                                     idB = cleanupIdShort(idB);
+                                                     return order(idA).CompareTo(order(idB));
+                                                 });
+                                                foreach (var smr in node.aas.Submodels) //foreach (var smr in node.aas.Submodels)
                                                 {
                                                     if (Program.env == null)
                                                         continue;
@@ -287,6 +319,29 @@
                                                             queryPara = "";
                                                             userPW = "";
                                                             urlEdcWrapper = "";
+                                                            switch (id)
+                                                            {
+                                                                case "BillOfMaterial":
+                                                                    id = "BOM";
+                                                                    break;
+                                                                case "Nameplate":
+                                                                    id = "NP";
+                                                                    break;
+                                                                case "ProductCarbonFootprint":
+                                                                    id = "PCF";
+                                                                    break;
+                                                                case "TechnicalData":
+                                                                    id = "TECH";
+                                                                    break;
+                                                                case "Documentation":
+                                                                    id = "DOC";
+                                                                    break;
+                                                                default:
+                                                                    moreDotsToPrint = true;
+                                                                    continue;
+                                                            }
+                                                        
+                                                            var icon = id;
                                                             if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
                                                             {
                                                                 if (queryPara != "")
@@ -299,9 +354,22 @@
                                                                     link = link.Replace("http://", "http://" + userPW + "@");
                                                                 }
                                                             }
-                                                            <a href="@link" target="_blank"><span style="font-size:8pt; color:@color;">@(id + " ")</span></a>
+                                                            if(color == "red")
+                                                            {
+                                                                filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(0deg)";
+                                                            }
+                                                            if (color == "green")
+                                                            {
+                                                                filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
+                                                            }
+                                                            <a href="@link" target="_blank" onclick="window.open(this.href, 'mywin', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" style="margin-right: 2px;"><img src="sm_icons/@(icon).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
                                                         }
                                                     }
+                                                }
+
+                                                if (moreDotsToPrint)
+                                                {
+                                                    <span style="font-size:8pt;"> ...</span>
                                                 }
 
                                                 link = getAasLink(@node.aas);
@@ -321,7 +389,7 @@
                                                     }
                                                 }
 
-                                                <a href="@link" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
+                                                //<a href="@link" target="_blank"><span style="font-size:8pt; color:blue;">aas</span></a>
                                             }
                                         }
                                     </div>
