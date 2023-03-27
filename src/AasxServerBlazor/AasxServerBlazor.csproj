@@ -50,6 +50,7 @@
   <ItemGroup>
     <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
     <Content Remove="wwwroot\Logo_IDTA.jpg" />
+    <Content Remove="wwwroot\sm_icons\bom.svg" />
   </ItemGroup>
 
   <ItemGroup>
