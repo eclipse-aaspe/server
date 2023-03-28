@@ -3748,32 +3748,22 @@ namespace AasxRestServerLibrary
             string[] split = null;
 
             // check for secret
-            if (Program.secretStringAPI != null)
-            {
-                accessrights = "READ";
 
-                // Query string with Secret?
-                string s = queryString["s"];
-                if (s != null && s != "")
+            string s = queryString["s"];
+            if (s != null && s != "")
+            {
+                if (Program.secretStringAPI != null)
                 {
-                    if (s == Program.secretStringAPI)
-                        accessrights = "UPDATE";
-                }
-                /*
-                split = request.Url.ToString().Split(new char[] { '?' });
-                if (split != null && split.Length > 1 && split[1] != null)
-                {
-                    Console.WriteLine("Received query string = " + split[1]);
-                    string secret = split[1];
-                    if (secret.Length > 2 && secret.Substring(0, 2) == "s=")
+                    accessrights = "READ";
+
+                    // Query string with Secret?
                     {
-                        secret = secret.Replace("s=", "");
-                        if (secret == Program.secretStringAPI)
+                        if (s == Program.secretStringAPI)
                             accessrights = "UPDATE";
                     }
+
+                    return accessrights;
                 }
-                */
-                return accessrights;
             }
 
             // string headers = request.Headers.ToString();
@@ -3794,6 +3784,26 @@ namespace AasxRestServerLibrary
                     {
                         try
                         {
+                            if (Program.secretStringAPI != null)
+                            {
+                                var credentialBytes = Convert.FromBase64String(split[1]);
+                                var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+                                string u = credentials[0];
+                                string p = credentials[1];
+                                Console.WriteLine("Received username+password http header = " + u + " : " + p);
+
+                                if (u == "secret")
+                                {
+                                    accessrights = "READ";
+                                    {
+                                        if (p == Program.secretStringAPI)
+                                            accessrights = "CREATE";
+                                    }
+                                    Console.WriteLine("accessrights " + accessrights);
+                                    return accessrights;
+                                }
+                            }
+
                             string username = checkUserPW(split[1]);
                             if (username != null)
                             {
