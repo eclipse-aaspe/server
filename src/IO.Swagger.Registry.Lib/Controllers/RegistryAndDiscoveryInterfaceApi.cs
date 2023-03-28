@@ -1051,8 +1051,8 @@ namespace IO.Swagger.Registry.Controllers
                             initiallyEmpty = i;
                             foreach (var ad in aasDescriptors)
                             {
-                                if (ad.IdShort == "ZveiControlCabinetAas")
-                                    continue;
+                                // if (ad.IdShort == "ZveiControlCabinetAas")
+                                //    continue;
 
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
