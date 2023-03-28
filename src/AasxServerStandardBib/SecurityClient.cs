@@ -1551,7 +1551,7 @@ namespace AasxServer
             }
 
             // once = true;
-            if (root.bomTimestamp > lastCreateTimestamp)
+            if (root != null && root.bomTimestamp > lastCreateTimestamp)
             {
                 Program.signalNewData(1);
                 lastCreateTimestamp = timeStamp;

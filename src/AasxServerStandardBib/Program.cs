@@ -317,8 +317,8 @@ namespace AasxServer
             Program.htmlId = a.HtmlId;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
             {
-                Console.WriteLine("secretStringAPI = " + secretStringAPI);
                 secretStringAPI = a.SecretStringAPI;
+                Console.WriteLine("secretStringAPI = " + secretStringAPI);
             }
 
             if (a.OpcClientRate != null && a.OpcClientRate < 200)

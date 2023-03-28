@@ -935,6 +935,8 @@ namespace IO.Swagger.V1RC03.Controllers
         public virtual IActionResult PostSubmodelElementByPath([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
             [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "POST");
+
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
