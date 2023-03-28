@@ -1140,6 +1140,10 @@ namespace AasxServer
                 if (env != null)
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[0];
+
+                    if (aas.IdShort == "ZveiControlCabinetAas")
+                        continue;
+
                     //var assetId = aas.assetRef.Keys[0].Value;
                     var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
                     var cfp = new cfpNode();
@@ -1371,8 +1375,14 @@ namespace AasxServer
                     if (!assetCfp.ContainsKey(assetId))
                     {
                         assetCfp.Add(assetId, cfp);
-                    }                   
+                    }
+                    /*
                     if (i == envIndex)
+                    {
+                        root = cfp;
+                    }
+                    */
+                    if (aas.IdShort == "ZveiControlCabinetAas - EXTERNAL")
                     {
                         root = cfp;
                     }
