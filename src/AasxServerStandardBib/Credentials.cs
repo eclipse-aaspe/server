@@ -20,6 +20,7 @@ namespace AasxServer
 {
     public class AasxCredentialsEntry
     {
+
         // input
         public string urlPrefix = string.Empty;
         public string type = string.Empty;
@@ -28,6 +29,13 @@ namespace AasxServer
         public string bearer = string.Empty;
         public DateTime bearerValidFrom = DateTime.MinValue;
         public DateTime bearerValidTo = DateTime.MinValue;
+    }
+
+    public class cs
+    {
+        // static for the moment
+        // service already prepared CredentialService.cs
+        public static List<AasxServer.AasxCredentialsEntry> credentials = new List<AasxServer.AasxCredentialsEntry>();
     }
 
     public class AasxCredentials
@@ -231,6 +239,7 @@ namespace AasxServer
                 var client = new HttpClient(handler);
                 DiscoveryDocumentResponse disco = null;
 
+                client.Timeout = TimeSpan.FromSeconds(20);
                 var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint); });
                 task.Wait();
                 if (disco.IsError) return;

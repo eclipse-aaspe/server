@@ -3404,11 +3404,16 @@ namespace AasxRestServerLibrary
         {
             error = "";
             withAllow = false;
+            
             if (Program.secretStringAPI != null)
             {
+                /*
                 if (neededRights == "READ")
                     return true;
                 if ((neededRights == "UPDATE" || neededRights == "DELETE") && currentRole == "UPDATE")
+                    return true;
+                */
+                if (currentRole == "CREATE")
                     return true;
             }
 
@@ -3666,12 +3671,16 @@ namespace AasxRestServerLibrary
         {
             if (Program.secretStringAPI != null)
             {
+                /*
                 if (neededRights == "READ")
                     return true;
                 if ((neededRights == "UPDATE" || neededRights == "DELETE") && currentRole == "UPDATE")
                     return true;
+                */
+                if (currentRole == "CREATE")
+                    return true;
             }
-            else
+            // else
             {
                 if (checkAccessLevel(currentRole, operation, neededRights,
                     objPath, aasOrSubmodel, objectAasOrSubmodel))
@@ -3754,12 +3763,12 @@ namespace AasxRestServerLibrary
             {
                 if (Program.secretStringAPI != null)
                 {
-                    accessrights = "READ";
+                    // accessrights = "READ";
 
                     // Query string with Secret?
                     {
                         if (s == Program.secretStringAPI)
-                            accessrights = "UPDATE";
+                            accessrights = "CREATE";
                     }
 
                     return accessrights;
@@ -3794,7 +3803,7 @@ namespace AasxRestServerLibrary
 
                                 if (u == "secret")
                                 {
-                                    accessrights = "READ";
+                                    // accessrights = "READ";
                                     {
                                         if (p == Program.secretStringAPI)
                                             accessrights = "CREATE";

@@ -94,12 +94,16 @@ namespace IO.Swagger.V1RC03.Services
 
             if (Program.secretStringAPI != null)
             {
+                /*
                 if (neededRights == "READ")
                     return true;
                 if ((neededRights == "UPDATE" || neededRights == "DELETE") && currentRole == "UPDATE")
                     return true;
+                */
+                if (currentRole == "CREATE")
+                    return true;
             }
-            else
+            // else
             {
                 if (AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                     out error, currentRole, operation, neededRights, out withAllow,

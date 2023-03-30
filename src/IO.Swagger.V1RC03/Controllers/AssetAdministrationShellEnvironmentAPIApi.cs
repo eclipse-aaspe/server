@@ -148,6 +148,8 @@ namespace IO.Swagger.V1RC03.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult DeleteSubmodelElementByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodels", "DELETE");
+            
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -901,6 +903,8 @@ namespace IO.Swagger.V1RC03.Controllers
         public virtual IActionResult PostSubmodelElement([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier,
             [FromQuery] LevelEnum level, [FromQuery] ContentEnum content, [FromQuery] ExtentEnum extent, [FromQuery] int first)
         {
+            _aasEnvService.SecurityCheckInit(HttpContext, "/submodelelements", "POST");
+            
             var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 

@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
-@inject Data.CredentialService cs
+@* @inject Data.CredentialService cs *@
+@using AasxServer
 @using System
 
 @*<div class="sidebar">
@@ -13,6 +14,7 @@
             input = "anonymous";
             AasxServer.AasxCredentials.initAnonymous(cs.credentials);
             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
+            AasxServer.AasxTask.resetTimeStamp();
         }
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
         || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
@@ -93,6 +95,12 @@
                                             AasxServer.Program.getUrl = CurrentValue;
                                             AasxServer.Program.signalNewData(2);
                                         }
+                                        else if (CurrentValue.Contains("secret="))
+                                        {
+                                            CurrentValue = CurrentValue.Replace("secret=", "");
+                                            AasxServer.Program.getUrl = CurrentValue;
+                                            AasxServer.Program.signalNewData(2);
+                                        }
                                         else
                                         {
                                             if (role == "")
@@ -125,10 +133,10 @@
                                             var watch = System.Diagnostics.Stopwatch.StartNew();
                                             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
                                                 cs.credentials, DateTime.UtcNow, true);
-                                            // AasxServer.AasxTask.once = false;
                                             watch.Stop();
                                             Console.WriteLine(watch.ElapsedMilliseconds + " ms");
                                             watchText = ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
+                                            AasxServer.AasxTask.resetTimeStamp();
                                         }
                                         CurrentValue = "";
                                         this.StateHasChanged();

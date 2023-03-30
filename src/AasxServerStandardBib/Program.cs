@@ -167,6 +167,7 @@ namespace AasxServer
         public static string redirectServer = "";
         public static string authType = "";
         public static string getUrl = "";
+        public static string getSecret = "";
 
         public static bool isLoading = true;
         public static int count = 0;
