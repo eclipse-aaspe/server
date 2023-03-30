@@ -27,7 +27,7 @@
         catch { }
     }
 }
-<div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
+<div class="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50 break-all">
     <img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
     <div style="background-color: #174a87; margin-left:1px; margin-top:2px;" class="node w-full mb-2 relative px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
         <div  class="node mb-2 flex flex-row space-x-2">
@@ -38,6 +38,12 @@
                         <span style="color: #EFEFEF; font-size:130%">
                             kg CO<sub>2</sub>e
                         </span>
+                        @{
+                            if (!AasxTask.cfpValid)
+                            {
+                                <span style="color: red;">incomplete</span>
+                            }
+                        }
                     </font>
                 </div>
             </div>
@@ -261,7 +267,7 @@
                                                     queryPara = Base64UrlEncoder.Encode(queryPara);
                                                     link += "&query=" + queryPara;
                                                 }
-                                                Console.WriteLine("iframe:" + link);
+                                                // Console.WriteLine("iframe:" + link);
                                             }
 
                                             if (node.aas != null)

@@ -1133,6 +1133,7 @@ namespace AasxServer
         }
 
         public static cfpNode root = null;
+        public static bool cfpValid = false;
         public static DateTime lastCreateTimestamp = new DateTime();
         public static bool credentialsChanged = false;
 
@@ -1155,6 +1156,7 @@ namespace AasxServer
         public static bool createCfpTree(int envIndex, DateTime timeStamp)
         {
             bool changed = false;
+            cfpValid = true;
 
             // GET actual BOM
             AdminShellPackageEnv env = null;
@@ -1255,6 +1257,7 @@ namespace AasxServer
                                                 env.AasEnv.Submodels.Remove(sm);
                                                 env.AasEnv.Submodels.Add(newsm);
                                             }
+                                            cfpValid = false;
                                         }
                                     }
                                     break;
@@ -1294,162 +1297,177 @@ namespace AasxServer
                             if (sm != null && sm.IdShort != null)
                             {
                                 // ZVEI Level 1
-                                if (sm.IdShort.Contains("ProductCarbonFootprint") && sm.SubmodelElements != null)
+                                if (sm.IdShort.Contains("ProductCarbonFootprint"))
                                 {
-                                    foreach (var v in sm.SubmodelElements)
+                                    if (sm.IdShort.Contains(" - NO ACCESS"))
+                                        cfpValid= false;
+                                    if (sm.SubmodelElements != null)
                                     {
-                                        if (v is SubmodelElementCollection c)
+                                        foreach (var v in sm.SubmodelElements)
                                         {
-                                            if (c.IdShort.Contains("FootprintInformationModule")
-                                                    || c.IdShort.Contains("FootprintInformationCombination"))
+                                            if (v is SubmodelElementCollection c)
                                             {
-                                                string lifeCyclePhase = "";
-                                                Property co2eq = null;
-                                                foreach (var v2 in c.Value)
+                                                if (c.IdShort.Contains("FootprintInformationModule")
+                                                        || c.IdShort.Contains("FootprintInformationCombination"))
                                                 {
-                                                    switch (v2.IdShort)
+                                                    string lifeCyclePhase = "";
+                                                    Property co2eq = null;
+                                                    foreach (var v2 in c.Value)
                                                     {
-                                                        case "LifeCyclePhase":
-                                                            lifeCyclePhase = v2.ValueAsText();
+                                                        switch (v2.IdShort)
+                                                        {
+                                                            case "LifeCyclePhase":
+                                                                lifeCyclePhase = v2.ValueAsText();
+                                                                break;
+                                                            case "CO2eq":
+                                                                co2eq = v2 as Property;
+                                                                break;
+                                                        }
+                                                    }
+                                                    switch (lifeCyclePhase)
+                                                    {
+                                                        case "Cradle-to-gate":
+                                                            if (c.IdShort.Contains("FootprintInformationModule"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.cradleToGateModule = co2eq;
+                                                            }
+                                                            if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.cradleToGateCombination = co2eq;
+                                                            }
                                                             break;
-                                                        case "CO2eq":
-                                                            co2eq = v2 as Property;
+                                                        case "Production":
+                                                            if (c.IdShort.Contains("FootprintInformationModule"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.productionModule = co2eq;
+                                                            }
+                                                            if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.productionCombination = co2eq;
+                                                            }
+                                                            break;
+                                                        case "Distribution":
+                                                            if (c.IdShort.Contains("FootprintInformationModule"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.distributionModule = co2eq;
+                                                            }
+                                                            if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.distributionCombination = co2eq;
+                                                            }
                                                             break;
                                                     }
-                                                }
-                                                switch (lifeCyclePhase)
-                                                {
-                                                    case "Cradle-to-gate":
-                                                        if (c.IdShort.Contains("FootprintInformationModule"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.cradleToGateModule = co2eq;
-                                                        }
-                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.cradleToGateCombination = co2eq;
-                                                        }
-                                                        break;
-                                                    case "Production":
-                                                        if (c.IdShort.Contains("FootprintInformationModule"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.productionModule = co2eq;
-                                                        }
-                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.productionCombination = co2eq;
-                                                        }
-                                                        break;
-                                                    case "Distribution":
-                                                        if (c.IdShort.Contains("FootprintInformationModule"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.distributionModule = co2eq;
-                                                        }
-                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.distributionCombination = co2eq;
-                                                        }
-                                                        break;
                                                 }
                                             }
                                         }
                                     }
                                 }
                                 // ZVEI Level 2
-                                if (sm.IdShort.Contains("CarbonFootprint") && sm.SubmodelElements != null)
+                                if (sm.IdShort.Contains("CarbonFootprint"))
                                 {
-                                    foreach (var v in sm.SubmodelElements)
+                                    if (sm.IdShort.Contains(" - NO ACCESS"))
+                                        cfpValid = false;
+                                    if (sm.SubmodelElements != null)
                                     {
-                                        if (v is SubmodelElementCollection c)
+                                        foreach (var v in sm.SubmodelElements)
                                         {
-                                            if (c.IdShort.Contains("ProductCarbonFootprint"))
+                                            if (v is SubmodelElementCollection c)
                                             {
-                                                string lifeCyclePhase = "";
-                                                Property co2eq = null;
-                                                foreach (var v2 in c.Value)
+                                                if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                 {
-                                                    switch (v2.IdShort)
+                                                    string lifeCyclePhase = "";
+                                                    Property co2eq = null;
+                                                    foreach (var v2 in c.Value)
                                                     {
-                                                        case "PCFLifeCyclePhase":
-                                                            lifeCyclePhase = v2.ValueAsText();
+                                                        switch (v2.IdShort)
+                                                        {
+                                                            case "PCFLifeCyclePhase":
+                                                                lifeCyclePhase = v2.ValueAsText();
+                                                                break;
+                                                            case "PCFCO2eq":
+                                                                co2eq = v2 as Property;
+                                                                break;
+                                                        }
+                                                    }
+                                                    switch (lifeCyclePhase)
+                                                    {
+                                                        case "Cradle-to-gate":
+                                                        case "A1-A3":
+                                                            if (c.IdShort.Contains("ProductCarbonFootprint"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.cradleToGateModule = co2eq;
+                                                            }
+                                                            if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.cradleToGateCombination = co2eq;
+                                                            }
                                                             break;
-                                                        case "PCFCO2eq":
-                                                            co2eq = v2 as Property;
+                                                        case "Production":
+                                                        case "A3":
+                                                            if (c.IdShort.Contains("ProductCarbonFootprint"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.productionModule = co2eq;
+                                                            }
+                                                            if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.productionCombination = co2eq;
+                                                            }
+                                                            break;
+                                                        case "Distribution":
+                                                        case "A2":
+                                                            if (c.IdShort.Contains("ProductCarbonFootprint"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.distributionModule = co2eq;
+                                                            }
+                                                            if (c.IdShort.Contains("FootprintInformationCombination"))
+                                                            {
+                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                cfp.distributionCombination = co2eq;
+                                                            }
                                                             break;
                                                     }
-                                                }
-                                                switch (lifeCyclePhase)
-                                                {
-                                                    case "Cradle-to-gate":
-                                                    case "A1-A3":
-                                                        if (c.IdShort.Contains("ProductCarbonFootprint"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.cradleToGateModule = co2eq;
-                                                        }
-                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.cradleToGateCombination = co2eq;
-                                                        }
-                                                        break;
-                                                    case "Production":
-                                                    case "A3":
-                                                        if (c.IdShort.Contains("ProductCarbonFootprint"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.productionModule = co2eq;
-                                                        }
-                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.productionCombination = co2eq;
-                                                        }
-                                                        break;
-                                                    case "Distribution":
-                                                    case "A2":
-                                                        if (c.IdShort.Contains("ProductCarbonFootprint"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.distributionModule = co2eq;
-                                                        }
-                                                        if (c.IdShort.Contains("FootprintInformationCombination"))
-                                                        {
-                                                            co2eq.Value = co2eq.Value.Replace(",", ".");
-                                                            cfp.distributionCombination = co2eq;
-                                                        }
-                                                        break;
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                if (sm.IdShort.Contains("BillOfMaterial") && sm.SubmodelElements != null)
+                                if (sm.IdShort.Contains("BillOfMaterial"))
                                 {
-                                    cfp.bomTimestamp = sm.TimeStampTree;
-                                    List<string> bom = new List<string>();
-                                    foreach (var v in sm.SubmodelElements)
+                                    if (sm.IdShort.Contains(" - NO ACCESS"))
+                                        cfpValid = false;
+                                    if (sm.SubmodelElements != null)
                                     {
-                                        if (v is Entity e)
+                                        cfp.bomTimestamp = sm.TimeStampTree;
+                                        List<string> bom = new List<string>();
+                                        foreach (var v in sm.SubmodelElements)
                                         {
-                                            // check if first entity is newer than last cfp creation
-                                            string s = "";
-                                            //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
-                                            //s = e?.assetRef?.Keys?[0].Value;
-                                            s = e?.GlobalAssetId?.Keys?[0].Value;
-                                            if (s != "")
+                                            if (v is Entity e)
                                             {
-                                                bom.Add(s);
+                                                // check if first entity is newer than last cfp creation
+                                                string s = "";
+                                                //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
+                                                //s = e?.assetRef?.Keys?[0].Value;
+                                                s = e?.GlobalAssetId?.Keys?[0].Value;
+                                                if (s != "")
+                                                {
+                                                    bom.Add(s);
+                                                }
                                             }
                                         }
+                                        // assetBOM.Add(assetId, bom);
+                                        cfp.bom = bom;
                                     }
-                                    // assetBOM.Add(assetId, bom);
-                                    cfp.bom = bom;
                                 }
                                 if (sm.IdShort.Contains("TechnicalData") && sm.SubmodelElements != null)
                                 {
