@@ -610,6 +610,7 @@ namespace IO.Swagger.Registry.Controllers
                 var client = new HttpClient(handler);
                 if (accessToken != null)
                     client.SetBearerToken(accessToken);
+                client.Timeout = TimeSpan.FromSeconds(20);
 
                 if (json != "")
                 {
@@ -1007,6 +1008,7 @@ namespace IO.Swagger.Registry.Controllers
                         //
 
                         var client = new HttpClient(handler);
+                        client.Timeout = TimeSpan.FromSeconds(3);
                         if (accessToken != null)
                             client.SetBearerToken(accessToken);
 
@@ -1051,8 +1053,8 @@ namespace IO.Swagger.Registry.Controllers
                             initiallyEmpty = i;
                             foreach (var ad in aasDescriptors)
                             {
-                                // if (ad.IdShort == "ZveiControlCabinetAas")
-                                //    continue;
+                                if (ad.IdShort == "myAASwithGlobalSecurityMetaModel")
+                                    continue;
 
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
 

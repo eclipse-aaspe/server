@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json.Nodes;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AasCore.Aas3_0_RC02;
@@ -19,6 +23,9 @@ using IdentityModel.Client;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
+using MimeKit.Cryptography;
+using Org.BouncyCastle.Crypto;
 
 namespace AasxServer
 {
@@ -315,6 +322,7 @@ namespace AasxServer
                             var client = new HttpClient(handler);
                             DiscoveryDocumentResponse disco = null;
 
+                            client.Timeout = TimeSpan.FromSeconds(10);
                             var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
                             task.Wait();
                             if (disco.IsError) return;
@@ -408,6 +416,7 @@ namespace AasxServer
                                 string clientToken = tokenHandler.WriteToken(token);
 
                                 TokenResponse response = null;
+                                client.Timeout = TimeSpan.FromSeconds(20);
                                 task = Task.Run(async () =>
                                 {
                                     response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -587,6 +596,7 @@ namespace AasxServer
             else
                 handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
             var client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromSeconds(20);
             if (accessToken != null)
                 client.SetBearerToken(accessToken.Value);
 
@@ -1124,13 +1134,140 @@ namespace AasxServer
 
         public static cfpNode root = null;
         public static DateTime lastCreateTimestamp = new DateTime();
+        public static bool credentialsChanged = false;
 
-        public static void createCfpTree(int envIndex, DateTime timeStamp)
+        public static void resetTimeStamp()
         {
-            Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
-            // cfpNode root = new cfpNode();
+            lastCreateTimestamp = new DateTime();
+            credentialsChanged = true;
+        }
+
+        static string cleanupIdShort(String text)
+        {
+            if (text.Contains(" - EXTERNAL"))
+                text = text.Replace(" - EXTERNAL", "");
+            if (text.Contains(" - NO ACCESS"))
+                text = text.Replace(" - NO ACCESS", "");
+            if (text.Contains(" - COPY"))
+                text = text.Replace(" - COPY", "");
+            return text;
+        }
+        public static bool createCfpTree(int envIndex, DateTime timeStamp)
+        {
+            bool changed = false;
+
+            // GET actual BOM
             AdminShellPackageEnv env = null;
             int aascount = AasxServer.Program.env.Length;
+
+            for (int i = 0; i < aascount; i++)
+            {
+                env = AasxServer.Program.env[i];
+                if (env != null)
+                {
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                        continue;
+
+                    Submodel newsm = null;
+                    if (aas.Submodels != null && aas.Submodels.Count > 0)
+                    {
+                        // foreach (var smr in aas.Submodels)
+                        for (int j = 0; j < aas.Submodels.Count; j++)
+                        {
+                            var smr = aas.Submodels[j];
+                            var sm = env.AasEnv.FindSubmodel(smr);
+                            if (sm != null && sm.IdShort != null)
+                            {
+                                if (sm.IdShort.Contains("BillOfMaterial"))
+                                {
+                                    if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[0].Name == "endpoint")
+                                    {
+                                        var handler = new HttpClientHandler();
+                                        if (AasxServer.AasxTask.proxy != null)
+                                            handler.Proxy = AasxServer.AasxTask.proxy;
+                                        else
+                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+
+                                        var client = new HttpClient(handler);
+
+                                        var requestPath = sm.Extensions[0].Value;
+                                        string queryPara = "";
+                                        string userPW = "";
+                                        string urlEdcWrapper = "";
+                                        client.DefaultRequestHeaders.Clear();
+                                        if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper))
+                                        {
+                                            if (queryPara != "")
+                                                queryPara = "?" + queryPara;
+                                            if (userPW != "")
+                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
+                                            if (urlEdcWrapper != "")
+                                                requestPath = urlEdcWrapper;
+                                        }
+                                        bool success = false;
+                                        HttpResponseMessage response = new HttpResponseMessage();
+                                        try
+                                        {
+                                            requestPath += queryPara;
+                                            Console.WriteLine("GET Submodel " + requestPath);
+                                            client.Timeout = TimeSpan.FromSeconds(3);
+                                            var task1 = Task.Run(async () =>
+                                            {
+                                                response = await client.GetAsync(requestPath);
+                                            });
+                                            task1.Wait();
+                                            if (response.IsSuccessStatusCode)
+                                            {
+                                                var json = response.Content.ReadAsStringAsync().Result;
+                                                byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                                string digest = Convert.ToBase64String(SHA256.HashData(buffer));
+                                                if (digest != hashBOM)
+                                                    changed= true;
+                                                hashBOM = digest;
+                                                MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                newsm = new Submodel("");
+                                                newsm = Jsonization.Deserialize.SubmodelFrom(node);
+                                                newsm.IdShort += " - COPY";
+                                                newsm.Extensions = sm.Extensions;
+                                                newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
+                                                env.AasEnv.Submodels.Remove(sm);
+                                                env.AasEnv.Submodels.Add(newsm);
+                                                success = true;
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            success = false;
+                                        }
+                                        if (!success)
+                                        {
+                                            if (sm.IdShort != "BillOfMaterial - NO ACCESS")
+                                            {
+                                                if (hashBOM != "")
+                                                    changed = true;
+                                                hashBOM = "";
+                                                newsm = new Submodel(sm.Id);
+                                                newsm.IdShort = "BillOfMaterial - NO ACCESS";
+                                                newsm.Extensions = sm.Extensions;
+                                                newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
+                                                env.AasEnv.Submodels.Remove(sm);
+                                                env.AasEnv.Submodels.Add(newsm);
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
+            // cfpNode root = new cfpNode();
+            aascount = AasxServer.Program.env.Length;
             root = null;
 
             // Collect data from all AAS into cfpNode(s)
@@ -1140,9 +1277,6 @@ namespace AasxServer
                 if (env != null)
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[0];
-
-                    if (aas.IdShort == "ZveiControlCabinetAas")
-                        continue;
 
                     //var assetId = aas.assetRef.Keys[0].Value;
                     var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
@@ -1405,9 +1539,12 @@ namespace AasxServer
                     }
                 }
             }
+
+            return changed;
         }
 
         public static bool once = false;
+        public static string hashBOM = "";
         public static void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
         {
             if (AasxServer.Program.initializingRegistry)
@@ -1419,12 +1556,8 @@ namespace AasxServer
             if (once)
                 return;
 
-            // Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
-            // cfpNode root = null;
-
             // Iterate tree and calculate CFP values
-            // cfpNode node = createCfpTree(envIndex, timeStamp);
-            createCfpTree(envIndex, timeStamp);
+            bool changed = createCfpTree(envIndex, timeStamp);
 
             cfpNode node = root;
             cfpNode parent = null;
@@ -1551,10 +1684,12 @@ namespace AasxServer
             }
 
             // once = true;
-            if (root != null && root.bomTimestamp > lastCreateTimestamp)
+            // if (root != null && root.bomTimestamp > lastCreateTimestamp)
+            if (changed || credentialsChanged)
             {
                 Program.signalNewData(1);
                 lastCreateTimestamp = timeStamp;
+                credentialsChanged = false;
             }
         }
 
