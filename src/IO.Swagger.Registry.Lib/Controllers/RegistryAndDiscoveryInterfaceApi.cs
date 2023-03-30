@@ -1114,6 +1114,7 @@ namespace IO.Swagger.Registry.Controllers
                                         case "ProductCarbonFootprint":
                                         case "CarbonFootprint":
                                         case "TechnicalData":
+                                        // case "Nameplate":
                                             // copy specific submodels locally
                                             try
                                             {
