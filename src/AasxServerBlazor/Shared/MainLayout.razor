@@ -1,8 +1,10 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
 @* @inject Data.CredentialService cs *@
+@using AasCore.Aas3_0_RC02;
 @using AasxServer
 @using System
+@using Microsoft.IdentityModel.Tokens;
 
 @*<div class="sidebar">
     <NavMenu />
@@ -182,18 +184,59 @@
     static string path = "";
     static bool pathIntit = true;
 
+    //TODO: code duplication with Pcf2.razor
+    static string getAasLink(AssetAdministrationShell aas)
+    {
+        string endpoint = null;
+        var idEncoded = Base64UrlEncoder.Encode(aas.Id);
+        if (aas.Extensions != null)
+        {
+            endpoint = aas.Extensions[0].Value;
+        }
+        else
+        {
+            endpoint = Program.externalBlazor + "/shells/" + idEncoded;
+        }
+
+        return endpoint;
+    }
+
     string getIframePath()
     {
         if (pathIntit)
         {
             pathIntit = false;
-            var p = Environment.GetEnvironmentVariable("IFRAMEPATH");
+            var link = "";
+            //get the admin shell of the cabinet
+            foreach (var env in AasxServer.Program.env)
+            {
+                if (env != null)
+                {
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                        continue;
+
+                    link = "?aasUrl=" + getAasLink(aas);
+
+                    var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                    if (registry.Count != 0)
+                    {
+                        link += "&registryURL=" + registry[0];
+                    }
+
+                }
+            }
+
+            //TODO: not passing credentials
+            var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
             if (p != null)
             {
                 p = p.Replace("\r", "");
                 p = p.Replace("\n", "");
                 path = p;
             }
+
+            path += link;
         }
 
         return path;
