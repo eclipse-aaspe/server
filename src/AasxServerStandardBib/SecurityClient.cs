@@ -26,6 +26,7 @@ using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using MimeKit.Cryptography;
 using Org.BouncyCastle.Crypto;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace AasxServer
 {
@@ -1133,6 +1134,7 @@ namespace AasxServer
         }
 
         public static cfpNode root = null;
+        public static string asbuilt_total = null;
         public static bool cfpValid = false;
         public static DateTime lastCreateTimestamp = new DateTime();
         public static bool credentialsChanged = false;
@@ -1537,6 +1539,10 @@ namespace AasxServer
                     if (aas.IdShort == "ZveiControlCabinetAas - EXTERNAL")
                     {
                         root = cfp;
+                        if(asbuilt_total == null && root.cradleToGateCombination!=null) {
+                            //TODO: elements need proper deep clone method implemented within AAS metamodel classes
+                            asbuilt_total = new String(root.cradleToGateCombination.Value);
+                        }
                     }
                 }
             }
