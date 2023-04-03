@@ -42,33 +42,33 @@
         }
         else
         {
-                <style>
+            <style>
                 input:checked ~ .dot {
-                    transform: translateX(100%);
-                    background-color: #174a87 !important; /* zvei blau */
+                transform: translateX(100%);
+                background-color: #174a87 !important; /* zvei blau */
                 }
                 @@media (max-width: 600px) { /* hide iframe in low widths - mobile phones*/
-                    .hide-slim {display: none;}
-                    .expand-slim {overflow-y: visible !important;}
-                    .node {
-                        padding-left: 1.2rem !important;
-                        padding-right: 0.5rem !important;
-                    }
+                .hide-slim {display: none;}
+                .expand-slim {overflow-y: visible !important;}
+                .node {
+                padding-left: 1.2rem !important;
+                padding-right: 0.5rem !important;
                 }
-                </style>
-                <div style="height:100%; flex; padding:0px !important; overflow-y: visible;">
-                    <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0px; min-height: 8%;">
-                        <div class="self-center">
-                            <div class="flex items-stretch">
-                                <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
-                                <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
-                            </div>
+                }
+            </style>
+            <div style="height:100%; flex; padding:0px !important; overflow-y: visible;">
+                <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0px; min-height: 8%;">
+                    <div class="self-center">
+                        <div class="flex items-stretch">
+                            <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
+                            <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
                         </div>
-                        <div class="self-center text-right p-2">
-                            <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                                <!-- toggle -->
-                                <!-- label -->
-                                <div class="ml-3 text-gray-700 font-medium">
+                    </div>
+                    <div class="self-center text-right p-2">
+                        <label for="toggle" class="flex items-center cursor-pointer justify-end">
+                            <!-- toggle -->
+                            <!-- label -->
+                            <div class="ml-3 text-gray-700 font-medium">
                                     <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount &nbsp @watchText</span>&nbsp&nbsp
                                     <select @bind="role">
                                         <option selected="@role"></option>
@@ -182,7 +182,6 @@
     static string input = "";
     static string watchText = "";
     static string path = "";
-    static bool pathIntit = true;
 
     //TODO: code duplication with Pcf2.razor
     static string getAasLink(AssetAdministrationShell aas)
@@ -203,41 +202,48 @@
 
     string getIframePath()
     {
-        if (pathIntit)
+        var link = "";
+        //get the admin shell of the cabinet
+        foreach (var env in AasxServer.Program.env)
         {
-            pathIntit = false;
-            var link = "";
-            //get the admin shell of the cabinet
-            foreach (var env in AasxServer.Program.env)
+            if (env != null)
             {
-                if (env != null)
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                    continue;
+
+                link = "?aasUrl=" + getAasLink(aas);
+
+                var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                if (registry.Count != 0)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[0];
-                    if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-                        continue;
-
-                    link = "?aasUrl=" + getAasLink(aas);
-
-                    var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                    if (registry.Count != 0)
-                    {
-                        link += "&registryURL=" + registry[0];
-                    }
-
+                    link += "&registryURL=" + registry[0];
                 }
-            }
 
-            //TODO: not passing credentials
-            var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
-            if (p != null)
-            {
-                p = p.Replace("\r", "");
-                p = p.Replace("\n", "");
-                path = p;
-            }
+                var queryPara = "";
+                var userPW = "";
+                var urlEdcWrapper = "";
+                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                {
+                    queryPara = Base64UrlEncoder.Encode(queryPara);
+                    link += "&query=" + queryPara;
+                    // Console.WriteLine("iframe:" + link);
+                }
 
-            path += link;
+            }
         }
+
+        //TODO: not passing credentials
+        var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
+        if (p != null)
+        {
+            p = p.Replace("\r", "");
+            p = p.Replace("\n", "");
+            path = p;
+        }
+
+        path += link;
+ 
 
         return path;
     }
