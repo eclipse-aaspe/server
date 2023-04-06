@@ -5,7 +5,27 @@
 @using AasxServer
 @using System
 @using Microsoft.IdentityModel.Tokens;
+<style>
+    .loader {
+    width: 28px;
+    height: 28px;
+    border: 5px solid #AAA;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+    }
 
+    @@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+    } 
+</style>
 @*<div class="sidebar">
     <NavMenu />
 </div>*@
@@ -64,26 +84,40 @@
                             <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
                         </div>
                     </div>
-                    <div class="self-center text-right p-2">
-                        <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                            <!-- toggle -->
-                            <!-- label -->
-                            <div class="ml-3 text-gray-700 font-medium">
-                                    <span style="border-width: 1px; color: blue;">API-SM#:@AasxServer.Program.submodelAPIcount &nbsp @watchText</span>&nbsp&nbsp
-                                    <select @bind="role">
-                                        <option selected="@role"></option>
-                                        @{
-                                            for (int i = 0; i < roleList.Count; i++)
-                                            {
-                                                <option value="@roleList[i]">@roleList[i]</option>
-                                            }
-                                        }
-                                    </select>
-                                    <input @bind="CurrentValue" /> <span style="border-width: 1px; color: blue;">@input</span>&nbsp&nbsp
-                                @code {
-                                private string CurrentValue { get; set; }
-}
-                                    @{
+                    <div>
+                        <!-- toggle -->
+                        <!-- label -->
+                        <span class="ml-3 text-gray-700 font-medium">
+                            @if (loading)
+                            {
+                                <span class="loader align-middle"></span>
+                                <span style="">Loading submodels...</span>
+                            }
+                            else
+                            {
+                                 <span style="">Loaded @AasxServer.Program.submodelAPIcount submodels @watchText</span>
+                            }
+                            &nbsp&nbsp&nbsp&nbsp&nbsp
+                            Role:
+                            <!--Curr: <span style="border-width: 1px; color: blue;">@input</span>-->
+
+                            <select @bind="role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <!--<option selected="@role"></option>-->
+                                @{
+                                    for (int i = 0; i < roleList.Count; i++)
+                                    {
+                                        <option value="@roleList[i]">@roleList[i]</option>
+                                    }
+                                }
+                            </select>
+                            <input class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" type="password" size="4" @bind="CurrentValue" />
+                            <button class="btn bg-blue-500 text-white p-1 text-sm" style="background-color: #174a87;" @onclick="update">Authenticate</button>&nbsp&nbsp
+                            @code {
+                            private string CurrentValue { get; set; }
+                        }
+                        @{
+                                async Task update()
+                                {
                                     if (CurrentValue != null && CurrentValue != "")
                                     {
                                         AasxServer.Program.submodelAPIcount = 0;
@@ -122,7 +156,7 @@
                                             }
                                             else if (CurrentValue.Contains("edc="))
                                             {
-                                                CurrentValue= CurrentValue.Replace("edc=", "");
+                                                CurrentValue = CurrentValue.Replace("edc=", "");
                                                 AasxServer.AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
                                                 input = CurrentValue;
                                                 role = "";
@@ -132,20 +166,28 @@
                                                 AasxServer.AasxCredentials.initByUserPW(cs.credentials, role, CurrentValue);
                                                 input = role;
                                             }
+                                            loading = true;
+                                            StateHasChanged();
+                                            await Task.Delay(1); //hack to let frontend update
                                             var watch = System.Diagnostics.Stopwatch.StartNew();
                                             IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
                                                 cs.credentials, DateTime.UtcNow, true);
                                             watch.Stop();
                                             Console.WriteLine(watch.ElapsedMilliseconds + " ms");
-                                            watchText = ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
+                                            watchText = "in " + ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
                                             AasxServer.AasxTask.resetTimeStamp();
+                                            loading = false;
                                         }
                                         CurrentValue = "";
                                         this.StateHasChanged();
                                     }
                                 }
-                                Disclaimer: displayed PCF values are for demo purposes only
-                            </div>
+                            }
+                        </span>
+                    </div>
+                    <div class="self-center text-right p-2" style="margin-top:8px;">
+                        <label for="toggle" class="flex items-center cursor-pointer justify-end">
+                            Disclaimer: displayed PCF values are for demo purposes only
                             <div class="relative ml-2">
                                 <!-- input -->
                                 <input type="checkbox" id="toggle" class="sr-only"
@@ -175,13 +217,14 @@
 
 @code{
     static List<string> roleList = new List<string>
-    {   "norole", "role1", "role2", "role3", 
+    {   //"norole", "role1", "role2", "role3", 
         "Anonym", "Isabelle", "Steven", "Mary", "Albert"
     };
     static string role = roleList[0];
     static string input = "";
     static string watchText = "";
     static string path = "";
+    static bool loading = false;
 
     //TODO: code duplication with Pcf2.razor
     static string getAasLink(AssetAdministrationShell aas)
