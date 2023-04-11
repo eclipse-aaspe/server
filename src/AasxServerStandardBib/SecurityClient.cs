@@ -1390,6 +1390,7 @@ namespace AasxServer
                                                         switch (v2.IdShort)
                                                         {
                                                             case "PCFLifeCyclePhase":
+                                                            case "PCFLiveCyclePhase":
                                                                 lifeCyclePhase = v2.ValueAsText();
                                                                 break;
                                                             case "PCFCO2eq":
@@ -1414,6 +1415,7 @@ namespace AasxServer
                                                             break;
                                                         case "Production":
                                                         case "A3":
+                                                        case "A3 - production":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
                                                                 co2eq.Value = co2eq.Value.Replace(",", ".");
@@ -1427,6 +1429,7 @@ namespace AasxServer
                                                             break;
                                                         case "Distribution":
                                                         case "A2":
+                                                        case "A1 – raw material supply (and upstream production)":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
                                                                 co2eq.Value = co2eq.Value.Replace(",", ".");
