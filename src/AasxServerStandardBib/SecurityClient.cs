@@ -1512,6 +1512,7 @@ namespace AasxServer
                                                         if (ls.Language.ToLower() == "en")
                                                         {
                                                             s = ls.Text;
+                                                            break; //english has priority over German
                                                         }
                                                         if (ls.Language.ToLower() == "de")
                                                         {
