@@ -302,7 +302,8 @@
                                                         case "ProductCarbonFootprint": return 3;
                                                         case "CarbonFootprint": return 4;
                                                         case "Documentation": return 5;
-                                                        case "TechnicalData": return 6;
+                                                        case "HandoverDocumentation": return 6;
+                                                        case "TechnicalData": return 7;
                                                         default: return int.MaxValue;
                                                     }
                                                 }
@@ -379,6 +380,9 @@
                                                                     id = "TECH";
                                                                     break;
                                                                 case "Documentation":
+                                                                    id = "DOC";
+                                                                    break;
+                                                                case "HandoverDocumentation":
                                                                     id = "DOC";
                                                                     break;
                                                                 default:
