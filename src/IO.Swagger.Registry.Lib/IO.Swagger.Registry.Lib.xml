@@ -101,6 +101,13 @@
             <param name="body">Asset Administration Shell Descriptor object</param>
             <response code="201">Asset Administration Shell Descriptor created successfully</response>
         </member>
+        <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PostMultipleAssetAdministrationShellDescriptor(System.Collections.Generic.List{IO.Swagger.Registry.Models.AssetAdministrationShellDescriptor})">
+            <summary>
+            Deletes all and writes multiple Asset Administration Shell Descriptors, i.e. registers an AAS
+            </summary>
+            <param name="body">Asset Administration Shell Descriptor List</param>
+            <response code="201">Asset Administration Shell Descriptors created successfully</response>
+        </member>
         <member name="M:IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.PostSubmodelDescriptor(IO.Swagger.Registry.Models.SubmodelDescriptor,System.String)">
             <summary>
             Creates a new Submodel Descriptor, i.e. registers a submodel

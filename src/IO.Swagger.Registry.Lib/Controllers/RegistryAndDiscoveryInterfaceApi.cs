@@ -1259,6 +1259,42 @@ namespace IO.Swagger.Registry.Controllers
         }
 
         /// <summary>
+        /// Deletes all and writes multiple Asset Administration Shell Descriptors, i.e. registers an AAS
+        /// </summary>
+        /// <param name="body">Asset Administration Shell Descriptor List</param>
+        /// <response code="201">Asset Administration Shell Descriptors created successfully</response>
+        [HttpPost]
+        [Route("/registry/overwrite-shell-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("PostMultipleAssetAdministrationShellDescriptors")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShellDescriptor), description: "Asset Administration Shell Descriptors created successfully")]
+        public virtual IActionResult PostMultipleAssetAdministrationShellDescriptor([FromBody] List<AssetAdministrationShellDescriptor> body)
+        {
+            var timestamp = DateTime.UtcNow;
+
+            Console.WriteLine("POST /registry/multiple-shell-descriptors");
+
+            if (aasRegistry != null)
+                aasRegistry.SubmodelElements.Clear();
+            if (submodelRegistry != null)
+                submodelRegistry.SubmodelElements.Clear();
+            foreach (var ad in body)
+            {
+                if (ad == null)
+                    continue;
+                lock (Program.changeAasxFile)
+                {
+                    addAasDescriptorToRegistry(ad, timestamp);
+                }
+            }
+
+            AasxServer.Program.signalNewData(2);
+
+            // return new ObjectResult(example);
+            return new ObjectResult("ok");
+        }
+
+        /// <summary>
         /// Creates a new Submodel Descriptor, i.e. registers a submodel
         /// </summary>
         /// <param name="body">Submodel Descriptor object</param>
