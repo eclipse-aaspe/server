@@ -74,17 +74,37 @@
         {
             <div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
 
-                @{
-                    AasxTask.cfpNode node = nextNode;
-                    while (node != null)
+            @{
+                AasxTask.cfpNode node = nextNode;
+                while (node != null)
+                {
+                    if (node.iChild == 0)
                     {
-                        if (node.iChild == 0)
-                        {
 
-                            bool view = false;
-                            bool viewCombination = false;
-                            string value = "";
-                            if (moduleOnly)
+                        bool view = false;
+                        bool viewCombination = false;
+                        string value = "";
+                        if (moduleOnly)
+                        {
+                            if (node.cradleToGateModule != null)
+                            {
+                                value = node.cradleToGateModule.Value;
+                                view = true;
+                            }
+                        }
+                        else
+                        {
+                            if (node.children.Count != 0)
+                            {
+                                if (node.cradleToGateCombination != null)
+                                {
+                                    value = node.cradleToGateCombination.Value;
+                                    //if (node != AasxTask.root)
+                                    viewCombination = true;
+                                    view = true;
+                                }
+                            }
+                            else
                             {
                                 if (node.cradleToGateModule != null)
                                 {
@@ -92,35 +112,27 @@
                                     view = true;
                                 }
                             }
-                            else
-                            {
-                                if (node.children.Count != 0)
-                                {
-                                    if (node.cradleToGateCombination != null)
-                                    {
-                                        value = node.cradleToGateCombination.Value;
-                                        //if (node != AasxTask.root)
-                                        viewCombination = true;
-                                        view = true;
-                                    }
-                                }
-                                else
-                                {
-                                    if (node.cradleToGateModule != null)
-                                    {
-                                        value = node.cradleToGateModule.Value;
-                                        view = true;
-                                    }
-                                }
-                            }
-                            float actual = 0.0f;
-                            try
-                            {
-                                actual = (float)Convert.ToDouble(value, CultureInfo.InvariantCulture);
-                            }
-                            catch { }
+                        }
+                        float actual = 0.0f;
+                        try
+                        {
+                            actual = (float)Convert.ToDouble(value, CultureInfo.InvariantCulture);
+                        }
+                        catch { }
 
-                            if (view)
+                        if (!view)
+                        {
+                            string text = "";
+                            if (node.asset != null)
+                                text += "assetid=" + node.asset + " ";
+                            if (node.aas != null && node.aas.Id != null)
+                                text += "aasid=" + node.aas.Id;
+                            if (text != "")
+                            {
+                                <span align=left style="color:red;font-size:80%;">@text</span>
+                            }
+                        }
+                        if (view)
                             {
                                 string email2 = "";
                                 // string productImage = getImage(node.productImage, node.envIndex);
