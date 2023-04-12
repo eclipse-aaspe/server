@@ -1259,6 +1259,7 @@ namespace AasxServer
                                                 env.AasEnv.Submodels.Remove(sm);
                                                 env.AasEnv.Submodels.Add(newsm);
                                             }
+                                            Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
                                             cfpValid = false;
                                         }
                                     }
@@ -1302,7 +1303,10 @@ namespace AasxServer
                                 if (sm.IdShort.Contains("ProductCarbonFootprint"))
                                 {
                                     if (sm.IdShort.Contains(" - NO ACCESS"))
-                                        cfpValid= false;
+                                    {
+                                        Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
+                                        cfpValid = false;
+                                    }
                                     if (sm.SubmodelElements != null)
                                     {
                                         foreach (var v in sm.SubmodelElements)
@@ -1374,7 +1378,10 @@ namespace AasxServer
                                 if (sm.IdShort.Contains("CarbonFootprint"))
                                 {
                                     if (sm.IdShort.Contains(" - NO ACCESS"))
+                                    {
+                                        Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
                                         cfpValid = false;
+                                    }
                                     if (sm.SubmodelElements != null)
                                     {
                                         foreach (var v in sm.SubmodelElements)
@@ -1450,7 +1457,10 @@ namespace AasxServer
                                 if (sm.IdShort.Contains("BillOfMaterial"))
                                 {
                                     if (sm.IdShort.Contains(" - NO ACCESS"))
+                                    {
+                                        Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
                                         cfpValid = false;
+                                    }
                                     if (sm.SubmodelElements != null)
                                     {
                                         cfp.bomTimestamp = sm.TimeStampTree;
