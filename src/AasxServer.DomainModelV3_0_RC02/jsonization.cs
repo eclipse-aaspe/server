@@ -10973,21 +10973,34 @@ namespace AasCore.Aas3_0_RC02
                 error = null;
 
                 Nodes.JsonObject? obj = node as Nodes.JsonObject;
+                // Fix
+                Nodes.JsonArray? arrayLangStrings = null;
+                Nodes.JsonNode? nodeLangStrings = null;
                 if (obj == null)
                 {
-                    error = new Reporting.Error(
-                        $"Expected a JsonObject, but got {node.GetType()}");
-                    return null;
+                    if (node is Nodes.JsonArray)
+                    {
+                        arrayLangStrings = node as Nodes.JsonArray;
+                    }
+                    else
+                    {
+                        error = new Reporting.Error(
+                            $"Expected a JsonObject, but got {node.GetType()}");
+                        return null;
+                    }
                 }
 
-                Nodes.JsonNode? nodeLangStrings = obj["langStrings"];
-                if (nodeLangStrings == null)
+                if (arrayLangStrings == null)
                 {
-                    error = new Reporting.Error(
-                        "Required property \"langStrings\" is missing ");
-                    return null;
+                    nodeLangStrings = obj["langStrings"];
+                    if (nodeLangStrings == null)
+                    {
+                        error = new Reporting.Error(
+                            "Required property \"langStrings\" is missing ");
+                        return null;
+                    }
+                    arrayLangStrings = nodeLangStrings as Nodes.JsonArray;
                 }
-                Nodes.JsonArray? arrayLangStrings = nodeLangStrings as Nodes.JsonArray;
                 if (arrayLangStrings == null)
                 {
                     error = new Reporting.Error(
