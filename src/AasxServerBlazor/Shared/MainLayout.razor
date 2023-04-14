@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
+@inject Data.AASService SubmodelService
 @* @inject Data.CredentialService cs *@
 @using AasCore.Aas3_0_RC02;
 @using AasxServer
@@ -116,12 +117,21 @@
                             private string CurrentValue { get; set; }
                         }
                         @{
+                                if (edit)
+                                {
+                                    <span style="color:red;">edit&nbsp&nbsp</span>
+                                }
                                 async Task update()
                                 {
                                     if (CurrentValue != null && CurrentValue != "")
                                     {
                                         AasxServer.Program.submodelAPIcount = 0;
-                                        if (CurrentValue == "count=0")
+                                        if (CurrentValue == "edit")
+                                        {
+                                            edit = !edit;
+                                            AasxServer.Program.signalNewData(2);
+                                        }
+                                        else if (CurrentValue == "count=0")
                                         {
                                             AasxServer.Program.submodelAPIcount = 0;
                                         }
@@ -225,6 +235,7 @@
     static string watchText = "";
     static string path = "";
     static bool loading = false;
+    static bool edit = false;
 
     //TODO: code duplication with Pcf2.razor
     static string getAasLink(AssetAdministrationShell aas)
@@ -289,5 +300,30 @@
  
 
         return path;
+    }
+
+    protected override void OnInitialized()
+    {
+        SubmodelService.NewDataAvailable += NewData;
+    }
+
+    public void Dispose()
+    {
+        SubmodelService.NewDataAvailable -= NewData;
+    }
+
+    void NewData(object source, EventArgs args)
+    {
+        if (Program.isLoading)
+            return;
+
+        if (args is Program.NewDataAvailableArgs newArgs)
+        {
+            int newDataMode = newArgs.signalNewDataMode;
+            if (newDataMode != 0)
+            {
+                InvokeAsync(() => this.StateHasChanged());
+            }
+        }
     }
 }
