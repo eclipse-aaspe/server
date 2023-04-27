@@ -221,8 +221,8 @@ namespace AasxServer
 
             Property authType = null;
             Property authServerEndPoint = null;
-            AasCore.Aas3_0_RC02.File authServerCertificate = null;
-            AasCore.Aas3_0_RC02.File clientCertificate = null;
+            AasCore.Aas3_0.File authServerCertificate = null;
+            AasCore.Aas3_0.File clientCertificate = null;
             Property clientCertificatePassWord = null;
             Property accessToken = null;
             Property userName = null;
@@ -278,15 +278,15 @@ namespace AasxServer
                         }
                         break;
                     case "authservercertificate":
-                        if (sme2 is AasCore.Aas3_0_RC02.File)
+                        if (sme2 is AasCore.Aas3_0.File)
                         {
-                            authServerCertificate = sme2 as AasCore.Aas3_0_RC02.File;
+                            authServerCertificate = sme2 as AasCore.Aas3_0.File;
                         }
                         break;
                     case "clientcertificate":
-                        if (sme2 is AasCore.Aas3_0_RC02.File)
+                        if (sme2 is AasCore.Aas3_0.File)
                         {
-                            clientCertificate = sme2 as AasCore.Aas3_0_RC02.File;
+                            clientCertificate = sme2 as AasCore.Aas3_0.File;
                         }
                         break;
                     case "clientcertificatepassword":
@@ -459,7 +459,7 @@ namespace AasxServer
             Property accessToken = null;
             Property userName = null;
             Property passWord = null;
-            AasCore.Aas3_0_RC02.File authServerCertificate = null;
+            AasCore.Aas3_0.File authServerCertificate = null;
             Property endPoint = null;
             Property path = null;
             SubmodelElementCollection elementCollection = null;
@@ -582,9 +582,9 @@ namespace AasxServer
                             }
                             break;
                         case "authservercertificate":
-                            if (sme2 is AasCore.Aas3_0_RC02.File)
+                            if (sme2 is AasCore.Aas3_0.File)
                             {
-                                authServerCertificate = sme2 as AasCore.Aas3_0_RC02.File;
+                                authServerCertificate = sme2 as AasCore.Aas3_0.File;
                             }
                             break;
                     }
@@ -1124,8 +1124,8 @@ namespace AasxServer
             public Property cradleToGateCombination = null;
             public Property productionCombination = null;
             public Property distributionCombination = null;
-            public AasCore.Aas3_0_RC02.File manufacturerLogo = null;
-            public AasCore.Aas3_0_RC02.File productImage = null;
+            public AasCore.Aas3_0.File manufacturerLogo = null;
+            public AasCore.Aas3_0.File productImage = null;
             public string productDesignation = "";
             public List<string> bom = new List<string>();
             public DateTime bomTimestamp = new DateTime();
@@ -1285,10 +1285,10 @@ namespace AasxServer
                     var aas = env.AasEnv.AssetAdministrationShells[0];
 
                     //var assetId = aas.assetRef.Keys[0].Value;
-                    var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
+                    var assetId = aas.AssetInformation.GlobalAssetId;
                     var cfp = new cfpNode();
                     cfp.envIndex = i;
-                    cfp.aas = aas;
+                    cfp.aas = aas as AssetAdministrationShell;
                     cfp.asset = assetId;
                     cfp.productDesignation = aas.IdShort;
 
@@ -1467,7 +1467,9 @@ namespace AasxServer
                                         List<string> bom = new List<string>();
                                         foreach (var v in sm.SubmodelElements)
                                         {
-                                            if (v is Entity e)
+                                            string s = "";
+                                            s = e?.GlobalAssetId;
+                                            if (s != "")
                                             {
                                                 // check if first entity is newer than last cfp creation
                                                 string s = "";
@@ -1494,7 +1496,7 @@ namespace AasxServer
                                             {
                                                 foreach (var sme in c.Value)
                                                 {
-                                                    if (sme is AasCore.Aas3_0_RC02.File f)
+                                                    if (sme is AasCore.Aas3_0.File f)
                                                     {
                                                         if (f.IdShort == "ManufacturerLogo")
                                                             cfp.manufacturerLogo = f;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System;
 
 namespace AasxServerStandardBib.Logging
 {
@@ -8,6 +9,7 @@ namespace AasxServerStandardBib.Logging
 
         public LoggerAdapter(ILoggerFactory loggerFactory)
         {
+            ArgumentNullException.ThrowIfNull(loggerFactory);
             _logger = loggerFactory.CreateLogger<T>();
         }
 

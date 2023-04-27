@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.V1RC03.ApiModel;
-using AasCore.Aas3_0_RC02;
+
 
 namespace IO.Swagger.V1RC03.Controllers
 {

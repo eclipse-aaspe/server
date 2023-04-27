@@ -3,14 +3,14 @@
  * Do NOT edit or append.
  */
 
-using Aas = AasCore.Aas3_0_RC02;  // renamed
+using Aas = AasCore.Aas3_0;  // renamed
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
 using Regex = System.Text.RegularExpressions.Regex;
 
 using System.Collections.Generic;  // can't alias
 using System.Linq;  // can't alias
 
-namespace AasCore.Aas3_0_RC02
+namespace AasCore.Aas3_0
 {
     /// <summary>
     /// Verify that the instances of the meta-model satisfy the invariants.
@@ -36,7 +36,7 @@ namespace AasCore.Aas3_0_RC02
         [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
         private static Regex _constructMatchesIdShort()
         {
-            var pattern = "^[a-zA-Z][a-zA-Z0-9_]+$";
+            var pattern = "^[a-zA-Z][a-zA-Z0-9_]*$";
 
             return new Regex(pattern);
         }
@@ -54,7 +54,47 @@ namespace AasCore.Aas3_0_RC02
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
         [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static Regex _constructMatchesXsDateTimeStampUtc()
+        private static Regex _constructMatchesVersionType()
+        {
+            var pattern = "^(0|[1-9][0-9]*)$";
+
+            return new Regex(pattern);
+        }
+
+        private static readonly Regex RegexMatchesVersionType = _constructMatchesVersionType();
+
+        /// <summary>
+        /// Check that <paramref name="text" /> is a valid version string.
+        /// </summary>
+        public static bool MatchesVersionType(string text)
+        {
+            return RegexMatchesVersionType.IsMatch(text);
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
+        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
+        private static Regex _constructMatchesRevisionType()
+        {
+            var pattern = "^(0|[1-9][0-9]*)$";
+
+            return new Regex(pattern);
+        }
+
+        private static readonly Regex RegexMatchesRevisionType = _constructMatchesRevisionType();
+
+        /// <summary>
+        /// Check that <paramref name="text" /> is a valid revision string.
+        /// </summary>
+        public static bool MatchesRevisionType(string text)
+        {
+            return RegexMatchesRevisionType.IsMatch(text);
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
+        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
+        private static Regex _constructMatchesXsDateTimeUtc()
         {
             var digit = "[0-9]";
             var yearFrag = $"-?(([1-9]{digit}{digit}{digit}+)|(0{digit}{digit}{digit}))";
@@ -64,17 +104,17 @@ namespace AasCore.Aas3_0_RC02
             var minuteFrag = $"[0-5]{digit}";
             var secondFrag = $"([0-5]{digit})(\\.{digit}+)?";
             var endOfDayFrag = "24:00:00(\\.0+)?";
-            var timezoneFrag = "Z";
-            var dateTimeStampLexicalRep = $"{yearFrag}-{monthFrag}-{dayFrag}T(({hourFrag}:{minuteFrag}:{secondFrag})|{endOfDayFrag}){timezoneFrag}";
-            var pattern = $"^{dateTimeStampLexicalRep}$";
+            var timezoneFrag = "(Z|\\+00:00|-00:00)";
+            var dateTimeLexicalRep = $"{yearFrag}-{monthFrag}-{dayFrag}T(({hourFrag}:{minuteFrag}:{secondFrag})|{endOfDayFrag}){timezoneFrag}";
+            var pattern = $"^{dateTimeLexicalRep}$";
 
             return new Regex(pattern);
         }
 
-        private static readonly Regex RegexMatchesXsDateTimeStampUtc = _constructMatchesXsDateTimeStampUtc();
+        private static readonly Regex RegexMatchesXsDateTimeUtc = _constructMatchesXsDateTimeUtc();
 
         /// <summary>
-        /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:dateTimeStamp</c>.
+        /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:dateTime</c>.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -83,7 +123,7 @@ namespace AasCore.Aas3_0_RC02
         /// correct nor do we check for leap seconds.
         /// </para>
         /// <para>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#dateTimeStamp
+        /// See: https://www.w3.org/TR/xmlschema-2/#dateTime
         /// </para>
         /// </remarks>
         /// <param name="text">
@@ -92,175 +132,20 @@ namespace AasCore.Aas3_0_RC02
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDateTimeStampUtc(string text)
+        public static bool MatchesXsDateTimeUtc(string text)
         {
-            return RegexMatchesXsDateTimeStampUtc.IsMatch(text);
-        }
-
-        private static readonly Regex RegexDatePrefix = (
-            new Regex("^(-?[0-9]+)-([0-9]{2})-([0-9]{2})"));
-
-        /// <summary>
-        /// Check whether the given year is a leap year.
-        /// </summary>
-        /// <remarks>Year 1 BCE is a leap year.</remarks>
-        /// <param name="year">to be checked</param>
-        /// <returns>True if <paramref name="year"/> is a leap year</returns>
-        public static bool IsLeapYear(System.Numerics.BigInteger year)
-        {
-            // NOTE (mristin, 2022-11-02):
-            // We consider the years B.C. to be one-off.
-            // See the note at: https://www.w3.org/TR/xmlschema-2/#dateTime:
-            // "'-0001' is the lexical representation of the year 1 Before Common Era
-            // (1 BCE, sometimes written "1 BC")."
-            //
-            // Hence, -1 year in XML is 1 BCE, which is 0 year in astronomical years.
-            if (year < 0)
-            {
-                year = -year - 1;
-            }
-
-            // See: See: https://en.wikipedia.org/wiki/Leap_year#Algorithm
-            if (year % 4 > 0)
-            {
-                return false;
-            }
-
-            if (year % 100 > 0)
-            {
-                return true;
-            }
-
-            if (year % 400 > 0)
-            {
-                return false;
-            }
-
-            return true;
+            return RegexMatchesXsDateTimeUtc.IsMatch(text);
         }
 
         /// <summary>
-        /// Check that the value starts with a valid date.
-        /// </summary>
-        /// <param name="value">
-        ///     an <c>xs:date</c>, an <c>xs:dateTime</c>,
-        ///     or an <c>xs:dateTimeStamp</c></param>
-        /// <returns>
-        ///     <c>true</c> if the value starts with a valid date
-        /// </returns>
-        private static bool IsPrefixedWithValidDate(string value)
-        {
-            // NOTE (mristin, 2022-11-02):
-            // We can not use System.DateTime.ParseExact since it does not handle the zero and
-            // BCE years correctly. Therefore, we have to roll out our own date validator.
-            var match = RegexDatePrefix.Match(value);
-            if (!match.Success)
-            {
-                return false;
-            }
-
-            bool ok = System.Numerics.BigInteger.TryParse(
-                match.Groups[1].Value,
-                out System.Numerics.BigInteger year);
-            if (!ok)
-            {
-                throw new System.InvalidOperationException(
-                    $"Expected to parse the year from {match.Groups[1].Value}, " +
-                    "but the parsing failed");
-            }
-
-            ok = System.SByte.TryParse(match.Groups[2].Value, out sbyte month);
-            if (!ok)
-            {
-                throw new System.InvalidOperationException(
-                    $"Expected to parse the month from {match.Groups[2].Value}, " +
-                    "but the parsing failed");
-            }
-
-            ok = System.SByte.TryParse(match.Groups[3].Value, out sbyte day);
-            if (!ok)
-            {
-                throw new System.InvalidOperationException(
-                    $"Expected to parse the day from {match.Groups[3].Value}, " +
-                    "but the parsing failed");
-            }
-
-            // Year zero does not exist, see: https://www.w3.org/TR/xmlschema-2/#dateTime
-            if (year == 0)
-            {
-                return false;
-            }
-
-            if (day <= 0 || day > 31)
-            {
-                return false;
-            }
-
-            if (month <= 0 || month >= 13)
-            {
-                return false;
-            }
-
-            sbyte maxDaysInMonth;
-            switch (month)
-            {
-                case 1:
-                    maxDaysInMonth = 31;
-                    break;
-                case 2:
-                    maxDaysInMonth = (IsLeapYear(year)) ? (sbyte)29 : (sbyte)28;
-                    break;
-                case 3:
-                    maxDaysInMonth = 31;
-                    break;
-                case 4:
-                    maxDaysInMonth = 30;
-                    break;
-                case 5:
-                    maxDaysInMonth = 31;
-                    break;
-                case 6:
-                    maxDaysInMonth = 30;
-                    break;
-                case 7:
-                    maxDaysInMonth = 31;
-                    break;
-                case 8:
-                    maxDaysInMonth = 31;
-                    break;
-                case 9:
-                    maxDaysInMonth = 30;
-                    break;
-                case 10:
-                    maxDaysInMonth = 31;
-                    break;
-                case 11:
-                    maxDaysInMonth = 30;
-                    break;
-                case 12:
-                    maxDaysInMonth = 31;
-                    break;
-                default:
-                    throw new System.InvalidOperationException($"Unexpected month: {month}");
-            }
-
-            if (day > maxDaysInMonth)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Check that <paramref name="value" /> is a <c>xs:dateTimeStamp</c> with
+        /// Check that <paramref name="value" /> is a <c>xs:dateTime</c> with
         /// the time zone set to UTC.
         /// </summary>
-        public static bool IsXsDateTimeStampUtc(
+        public static bool IsXsDateTimeUtc(
             string value
         )
         {
-            if (!MatchesXsDateTimeStampUtc(value))
+            if (!MatchesXsDateTimeUtc(value))
             {
                 return false;
             }
@@ -404,7 +289,7 @@ namespace AasCore.Aas3_0_RC02
         /// language.
         /// </summary>
         public static bool LangStringsHaveUniqueLanguages(
-            IEnumerable<Aas.LangString> langStrings
+            IEnumerable<Aas.IAbstractLangString> langStrings
         )
         {
             var languageSet = new HashSet<string>();
@@ -420,11 +305,11 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that there are no duplicate <see cref="Aas.Qualifier.Type" />'s
+        /// Check that there are no duplicate <see cref="Aas.IQualifier.Type" />'s
         /// in the <paramref name="qualifiers" />.
         /// </summary>
         public static bool QualifierTypesAreUnique(
-            IEnumerable<Aas.Qualifier> qualifiers
+            IEnumerable<Aas.IQualifier> qualifiers
         )
         {
             var typeSet = new HashSet<string>();
@@ -437,6 +322,36 @@ namespace AasCore.Aas3_0_RC02
                 typeSet.Add(qualifier.Type);
             }
             return true;
+        }
+
+        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
+        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
+        private static Regex _constructMatchesXmlSerializableString()
+        {
+            var pattern = "^([\\x09\\x0a\\x0d\\x20-\\ud7ff\\ue000-\\ufffd]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$";
+
+            return new Regex(pattern);
+        }
+
+        private static readonly Regex RegexMatchesXmlSerializableString = _constructMatchesXmlSerializableString();
+
+        /// <summary>
+        /// Check that <paramref name="text" /> conforms to the pattern of the Constraint AASd-130.
+        /// </summary>
+        /// <remarks>
+        /// Ensures that encoding is possible and interoperability between different
+        /// serializations is possible.
+        /// </remarks>
+        /// <param name="text">
+        /// Text to be checked
+        /// </param>
+        /// <returns>
+        /// True if the <paramref name="text" /> conforms to the pattern
+        /// </returns>
+        public static bool MatchesXmlSerializableString(string text)
+        {
+            return RegexMatchesXmlSerializableString.IsMatch(text);
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -490,7 +405,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:anyURI</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#anyURI and
+        /// See: https://www.w3.org/TR/xmlschema-2/#anyURI and
         /// https://datatracker.ietf.org/doc/html/rfc3987
         /// </remarks>
         /// <param name="text">
@@ -532,7 +447,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:base64Binary</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#base64Binary
+        /// See: https://www.w3.org/TR/xmlschema-2/#base64Binary
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -561,7 +476,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:boolean</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#boolean
+        /// See: https://www.w3.org/TR/xmlschema-2/#boolean
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -597,7 +512,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:date</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#date
+        /// See: https://www.w3.org/TR/xmlschema-2/#date
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -636,7 +551,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:dateTime</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#dateTime
+        /// See: https://www.w3.org/TR/xmlschema-2/#dateTime
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -649,43 +564,175 @@ namespace AasCore.Aas3_0_RC02
             return RegexMatchesXsDateTime.IsMatch(text);
         }
 
-        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
-        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static Regex _constructMatchesXsDateTimeStamp()
-        {
-            var digit = "[0-9]";
-            var yearFrag = $"-?(([1-9]{digit}{digit}{digit}+)|(0{digit}{digit}{digit}))";
-            var monthFrag = "((0[1-9])|(1[0-2]))";
-            var dayFrag = $"((0[1-9])|([12]{digit})|(3[01]))";
-            var hourFrag = $"(([01]{digit})|(2[0-3]))";
-            var minuteFrag = $"[0-5]{digit}";
-            var secondFrag = $"([0-5]{digit})(\\.{digit}+)?";
-            var endOfDayFrag = "24:00:00(\\.0+)?";
-            var timezoneFrag = $"(Z|(\\+|-)(0{digit}|1[0-3]):{minuteFrag}|14:00)";
-            var dateTimeStampLexicalRep = $"{yearFrag}-{monthFrag}-{dayFrag}T(({hourFrag}:{minuteFrag}:{secondFrag})|{endOfDayFrag}){timezoneFrag}";
-            var pattern = $"^{dateTimeStampLexicalRep}$";
-
-            return new Regex(pattern);
-        }
-
-        private static readonly Regex RegexMatchesXsDateTimeStamp = _constructMatchesXsDateTimeStamp();
+        private static readonly Regex RegexDatePrefix = (
+            new Regex("^(-?[0-9]+)-([0-9]{2})-([0-9]{2})"));
 
         /// <summary>
-        /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:dateTimeStamp</c>.
+        /// Check whether the given year is a leap year.
         /// </summary>
-        /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#dateTimeStamp
-        /// </remarks>
-        /// <param name="text">
-        /// Text to be checked
-        /// </param>
-        /// <returns>
-        /// True if the <paramref name="text" /> conforms to the pattern
-        /// </returns>
-        public static bool MatchesXsDateTimeStamp(string text)
+        /// <remarks>Year 1 BCE is a leap year.</remarks>
+        /// <param name="year">to be checked</param>
+        /// <returns>True if <paramref name="year"/> is a leap year</returns>
+        public static bool IsLeapYear(System.Numerics.BigInteger year)
         {
-            return RegexMatchesXsDateTimeStamp.IsMatch(text);
+            // NOTE (mristin, 2023-03-16):
+            // We consider the years B.C. to be one-off.
+            // See the note at: https://www.w3.org/TR/xmlschema-2/#dateTime:
+            // "'-0001' is the lexical representation of the year 1 Before Common Era
+            // (1 BCE, sometimes written "1 BC")."
+            //
+            // Hence, -1 year in XML is 1 BCE, which is 0 year in astronomical years.
+            if (year < 0)
+            {
+                year = -year - 1;
+            }
+
+            // See: See: https://en.wikipedia.org/wiki/Leap_year#Algorithm
+            if (year % 4 > 0)
+            {
+                return false;
+            }
+
+            if (year % 100 > 0)
+            {
+                return true;
+            }
+
+            if (year % 400 > 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check that the value starts with a valid date.
+        /// </summary>
+        /// <param name="value">
+        ///     an <c>xs:date</c>, an <c>xs:dateTime</c>,
+        ///     or an <c>xs:dateTimeStamp</c></param>
+        /// <returns>
+        ///     <c>true</c> if the value starts with a valid date
+        /// </returns>
+        private static bool IsPrefixedWithValidDate(string value)
+        {
+            // NOTE (mristin, 2023-03-16):
+            // We can not use System.DateTime.ParseExact since it does not handle the zero and
+            // BCE years correctly. Therefore, we have to roll out our own date validator.
+            var match = RegexDatePrefix.Match(value);
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            bool ok = System.Numerics.BigInteger.TryParse(
+                match.Groups[1].Value,
+                out System.Numerics.BigInteger year);
+            if (!ok)
+            {
+                throw new System.InvalidOperationException(
+                    $"Expected to parse the year from {match.Groups[1].Value}, " +
+                    "but the parsing failed");
+            }
+
+            ok = System.SByte.TryParse(match.Groups[2].Value, out sbyte month);
+            if (!ok)
+            {
+                throw new System.InvalidOperationException(
+                    $"Expected to parse the month from {match.Groups[2].Value}, " +
+                    "but the parsing failed");
+            }
+
+            ok = System.SByte.TryParse(match.Groups[3].Value, out sbyte day);
+            if (!ok)
+            {
+                throw new System.InvalidOperationException(
+                    $"Expected to parse the day from {match.Groups[3].Value}, " +
+                    "but the parsing failed");
+            }
+
+            // Year zero does not exist, see: https://www.w3.org/TR/xmlschema-2/#dateTime
+            if (year == 0)
+            {
+                return false;
+            }
+
+            if (day <= 0 || day > 31)
+            {
+                return false;
+            }
+
+            if (month <= 0 || month >= 13)
+            {
+                return false;
+            }
+
+            sbyte maxDaysInMonth;
+            switch (month)
+            {
+                case 1:
+                    maxDaysInMonth = 31;
+                    break;
+                case 2:
+                    maxDaysInMonth = (IsLeapYear(year)) ? (sbyte)29 : (sbyte)28;
+                    break;
+                case 3:
+                    maxDaysInMonth = 31;
+                    break;
+                case 4:
+                    maxDaysInMonth = 30;
+                    break;
+                case 5:
+                    maxDaysInMonth = 31;
+                    break;
+                case 6:
+                    maxDaysInMonth = 30;
+                    break;
+                case 7:
+                    maxDaysInMonth = 31;
+                    break;
+                case 8:
+                    maxDaysInMonth = 31;
+                    break;
+                case 9:
+                    maxDaysInMonth = 30;
+                    break;
+                case 10:
+                    maxDaysInMonth = 31;
+                    break;
+                case 11:
+                    maxDaysInMonth = 30;
+                    break;
+                case 12:
+                    maxDaysInMonth = 31;
+                    break;
+                default:
+                    throw new System.InvalidOperationException($"Unexpected month: {month}");
+            }
+
+            if (day > maxDaysInMonth)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check that <paramref name="value" /> is a <c>xs:dateTime</c> with
+        /// the time zone set to UTC.
+        /// </summary>
+        public static bool IsXsDateTime(
+            string value
+        )
+        {
+            if (!MatchesXsDateTime(value))
+            {
+                return false;
+            }
+
+            return IsPrefixedWithValidDate(value);
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -711,7 +758,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:decimal</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#decimal
+        /// See: https://www.w3.org/TR/xmlschema-2/#decimal
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -741,7 +788,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:double</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#double
+        /// See: https://www.w3.org/TR/xmlschema-2/#double
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -771,7 +818,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:duration</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#duration
+        /// See: https://www.w3.org/TR/xmlschema-2/#duration
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -801,7 +848,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:float</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#float
+        /// See: https://www.w3.org/TR/xmlschema-2/#float
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -831,7 +878,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:gDay</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#gDay
+        /// See: https://www.w3.org/TR/xmlschema-2/#gDay
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -861,7 +908,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:gMonth</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#gMonth
+        /// See: https://www.w3.org/TR/xmlschema-2/#gMonth
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -891,7 +938,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:gMonthDay</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#gMonthDay
+        /// See: https://www.w3.org/TR/xmlschema-2/#gMonthDay
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -921,7 +968,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:gYear</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#gYear
+        /// See: https://www.w3.org/TR/xmlschema-2/#gYear
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -951,7 +998,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:gYearMonth</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#gYearMonth
+        /// See: https://www.w3.org/TR/xmlschema-2/#gYearMonth
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -981,7 +1028,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:hexBinary</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#hexBinary
+        /// See: https://www.w3.org/TR/xmlschema-2/#hexBinary
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1011,7 +1058,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:time</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#time
+        /// See: https://www.w3.org/TR/xmlschema-2/#time
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1022,66 +1069,6 @@ namespace AasCore.Aas3_0_RC02
         public static bool MatchesXsTime(string text)
         {
             return RegexMatchesXsTime.IsMatch(text);
-        }
-
-        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
-        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static Regex _constructMatchesXsDayTimeDuration()
-        {
-            var dayTimeDurationRep = "-?P((([0-9]+D)(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))";
-            var pattern = $"^{dayTimeDurationRep}$";
-
-            return new Regex(pattern);
-        }
-
-        private static readonly Regex RegexMatchesXsDayTimeDuration = _constructMatchesXsDayTimeDuration();
-
-        /// <summary>
-        /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:dayTimeDuration</c>.
-        /// </summary>
-        /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#dayTimeDuration
-        /// </remarks>
-        /// <param name="text">
-        /// Text to be checked
-        /// </param>
-        /// <returns>
-        /// True if the <paramref name="text" /> conforms to the pattern
-        /// </returns>
-        public static bool MatchesXsDayTimeDuration(string text)
-        {
-            return RegexMatchesXsDayTimeDuration.IsMatch(text);
-        }
-
-        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
-        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static Regex _constructMatchesXsYearMonthDuration()
-        {
-            var yearMonthDurationRep = "-?P((([0-9]+Y)([0-9]+M)?)|([0-9]+M))";
-            var pattern = $"^{yearMonthDurationRep}$";
-
-            return new Regex(pattern);
-        }
-
-        private static readonly Regex RegexMatchesXsYearMonthDuration = _constructMatchesXsYearMonthDuration();
-
-        /// <summary>
-        /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:yearMonthDuration</c>.
-        /// </summary>
-        /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#yearMonthDuration
-        /// </remarks>
-        /// <param name="text">
-        /// Text to be checked
-        /// </param>
-        /// <returns>
-        /// True if the <paramref name="text" /> conforms to the pattern
-        /// </returns>
-        public static bool MatchesXsYearMonthDuration(string text)
-        {
-            return RegexMatchesXsYearMonthDuration.IsMatch(text);
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -1101,7 +1088,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:integer</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#integer
+        /// See: https://www.w3.org/TR/xmlschema-2/#integer
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1131,7 +1118,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:long</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#long
+        /// See: https://www.w3.org/TR/xmlschema-2/#long
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1161,7 +1148,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:int</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#int
+        /// See: https://www.w3.org/TR/xmlschema-2/#int
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1191,7 +1178,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:short</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#short
+        /// See: https://www.w3.org/TR/xmlschema-2/#short
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1221,7 +1208,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:byte</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#byte
+        /// See: https://www.w3.org/TR/xmlschema-2/#byte
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1251,7 +1238,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:nonNegativeInteger</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#nonNegativeInteger
+        /// See: https://www.w3.org/TR/xmlschema-2/#nonNegativeInteger
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1281,7 +1268,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:positiveInteger</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#positiveInteger
+        /// See: https://www.w3.org/TR/xmlschema-2/#positiveInteger
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1311,7 +1298,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:unsignedLong</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#unsignedLong
+        /// See: https://www.w3.org/TR/xmlschema-2/#unsignedLong
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1341,7 +1328,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:unsignedInt</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#unsignedInt
+        /// See: https://www.w3.org/TR/xmlschema-2/#unsignedInt
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1371,7 +1358,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:unsignedShort</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#unsignedShort
+        /// See: https://www.w3.org/TR/xmlschema-2/#unsignedShort
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1401,7 +1388,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:unsignedByte</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#unsignedByte
+        /// See: https://www.w3.org/TR/xmlschema-2/#unsignedByte
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1431,7 +1418,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:nonPositiveInteger</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#nonPositiveInteger
+        /// See: https://www.w3.org/TR/xmlschema-2/#nonPositiveInteger
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1461,7 +1448,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:negativeInteger</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#negativeInteger
+        /// See: https://www.w3.org/TR/xmlschema-2/#negativeInteger
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1479,7 +1466,7 @@ namespace AasCore.Aas3_0_RC02
         [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
         private static Regex _constructMatchesXsString()
         {
-            var pattern = "^([\\x01-\\ud7ff\\ue000-\\ufffd]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$";
+            var pattern = "^([\\x09\\x0a\\x0d\\x20-\\ud7ff\\ue000-\\ufffd]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$";
 
             return new Regex(pattern);
         }
@@ -1490,7 +1477,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that <paramref name="text" /> conforms to the pattern of an <c>xs:string</c>.
         /// </summary>
         /// <remarks>
-        /// See: https://www.w3.org/TR/xmlschema11-2/#string
+        /// See: https://www.w3.org/TR/xmlschema-2/#string
         /// </remarks>
         /// <param name="text">
         /// Text to be checked
@@ -1526,6 +1513,23 @@ namespace AasCore.Aas3_0_RC02
                     {
                         return MatchesXsBoolean(value);
                     }
+                case Aas.DataTypeDefXsd.Byte:
+                    {
+                        try
+                        {
+                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                            System.Xml.XmlConvert.ToSByte(value);
+                            return true;
+                        }
+                        catch (System.OverflowException)
+                        {
+                            return false;
+                        }
+                        catch (System.FormatException)
+                        {
+                            return false;
+                        }
+                    }
                 case Aas.DataTypeDefXsd.Date:
                     {
                         if (!MatchesXsDate(value))
@@ -1544,18 +1548,6 @@ namespace AasCore.Aas3_0_RC02
 
                         // The time part and the time zone part will be checked by
                         // MatchesXsDateTime. We need to check that the date part is
-                        // correct in sense of the day/month combination.
-                        return IsPrefixedWithValidDate(value);
-                    }
-                case Aas.DataTypeDefXsd.DateTimeStamp:
-                    {
-                        if (!MatchesXsDateTimeStamp(value))
-                        {
-                            return false;
-                        }
-
-                        // The time part and the time zone part will be checked by
-                        // MatchesXsDateTimeStamp. We need to check that the date part is
                         // correct in sense of the day/month combination.
                         return IsPrefixedWithValidDate(value);
                     }
@@ -1714,21 +1706,22 @@ namespace AasCore.Aas3_0_RC02
                     {
                         return MatchesXsHexBinary(value);
                     }
-                case Aas.DataTypeDefXsd.String:
+                case Aas.DataTypeDefXsd.Int:
                     {
-                        return MatchesXsString(value);
-                    }
-                case Aas.DataTypeDefXsd.Time:
-                    {
-                        return MatchesXsTime(value);
-                    }
-                case Aas.DataTypeDefXsd.DayTimeDuration:
-                    {
-                        return MatchesXsDayTimeDuration(value);
-                    }
-                case Aas.DataTypeDefXsd.YearMonthDuration:
-                    {
-                        return MatchesXsYearMonthDuration(value);
+                        try
+                        {
+                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                            System.Xml.XmlConvert.ToInt32(value);
+                            return true;
+                        }
+                        catch (System.OverflowException)
+                        {
+                            return false;
+                        }
+                        catch (System.FormatException)
+                        {
+                            return false;
+                        }
                     }
                 case Aas.DataTypeDefXsd.Integer:
                     {
@@ -1751,22 +1744,21 @@ namespace AasCore.Aas3_0_RC02
                             return false;
                         }
                     }
-                case Aas.DataTypeDefXsd.Int:
+                case Aas.DataTypeDefXsd.NegativeInteger:
                     {
-                        try
-                        {
-                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                            System.Xml.XmlConvert.ToInt32(value);
-                            return true;
-                        }
-                        catch (System.OverflowException)
-                        {
-                            return false;
-                        }
-                        catch (System.FormatException)
-                        {
-                            return false;
-                        }
+                        return MatchesXsNegativeInteger(value);
+                    }
+                case Aas.DataTypeDefXsd.NonNegativeInteger:
+                    {
+                        return MatchesXsNonNegativeInteger(value);
+                    }
+                case Aas.DataTypeDefXsd.NonPositiveInteger:
+                    {
+                        return MatchesXsNonPositiveInteger(value);
+                    }
+                case Aas.DataTypeDefXsd.PositiveInteger:
+                    {
+                        return MatchesXsPositiveInteger(value);
                     }
                 case Aas.DataTypeDefXsd.Short:
                     {
@@ -1785,32 +1777,15 @@ namespace AasCore.Aas3_0_RC02
                             return false;
                         }
                     }
-                case Aas.DataTypeDefXsd.Byte:
+                case Aas.DataTypeDefXsd.String:
                     {
-                        try
-                        {
-                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                            System.Xml.XmlConvert.ToSByte(value);
-                            return true;
-                        }
-                        catch (System.OverflowException)
-                        {
-                            return false;
-                        }
-                        catch (System.FormatException)
-                        {
-                            return false;
-                        }
+                        return MatchesXsString(value);
                     }
-                case Aas.DataTypeDefXsd.NonNegativeInteger:
+                case Aas.DataTypeDefXsd.Time:
                     {
-                        return MatchesXsNonNegativeInteger(value);
+                        return MatchesXsTime(value);
                     }
-                case Aas.DataTypeDefXsd.PositiveInteger:
-                    {
-                        return MatchesXsPositiveInteger(value);
-                    }
-                case Aas.DataTypeDefXsd.UnsignedLong:
+                case Aas.DataTypeDefXsd.UnsignedByte:
                     {
                         if (value.Length == 0)
                         {
@@ -1818,20 +1793,20 @@ namespace AasCore.Aas3_0_RC02
                         }
 
                         // We need to allow negative zeros which are allowed in the lexical
-                        // representation of an unsigned long, but System.Xml.XmlConvert.ToUInt64
+                        // representation of an unsigned byte, but System.Xml.XmlConvert.ToByte
                         // rejects it.
-                        // See: https://www.w3.org/TR/xmlschema11-2/#unsignedLong
+                        // See: https://www.w3.org/TR/xmlschema11-2/#unsignedByte
                         if (value == "-0")
                         {
                             return true;
                         }
 
                         // We need to strip the prefix positive sign since
-                        // System.Xml.XmlConvert.ToUInt64 does not adhere to lexical representation
-                        // of an unsigned long.
+                        // System.Xml.XmlConvert.ToByte does not adhere to lexical representation
+                        // of an unsigned byte.
                         //
                         // The positive sign is indeed allowed in the lexical representation, see:
-                        // https://www.w3.org/TR/xmlschema11-2/#unsignedLong
+                        // https://www.w3.org/TR/xmlschema11-2/#unsignedByte
                         string clipped = (value[0] == '+')
                             ? value.Substring(1, value.Length - 1)
                             : value;
@@ -1839,7 +1814,7 @@ namespace AasCore.Aas3_0_RC02
                         try
                         {
                             // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                            System.Xml.XmlConvert.ToUInt64(clipped);
+                            System.Xml.XmlConvert.ToByte(clipped);
                             return true;
                         }
                         catch (System.OverflowException)
@@ -1892,6 +1867,47 @@ namespace AasCore.Aas3_0_RC02
                             return false;
                         }
                     }
+                case Aas.DataTypeDefXsd.UnsignedLong:
+                    {
+                        if (value.Length == 0)
+                        {
+                            return false;
+                        }
+
+                        // We need to allow negative zeros which are allowed in the lexical
+                        // representation of an unsigned long, but System.Xml.XmlConvert.ToUInt64
+                        // rejects it.
+                        // See: https://www.w3.org/TR/xmlschema11-2/#unsignedLong
+                        if (value == "-0")
+                        {
+                            return true;
+                        }
+
+                        // We need to strip the prefix positive sign since
+                        // System.Xml.XmlConvert.ToUInt64 does not adhere to lexical representation
+                        // of an unsigned long.
+                        //
+                        // The positive sign is indeed allowed in the lexical representation, see:
+                        // https://www.w3.org/TR/xmlschema11-2/#unsignedLong
+                        string clipped = (value[0] == '+')
+                            ? value.Substring(1, value.Length - 1)
+                            : value;
+
+                        try
+                        {
+                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                            System.Xml.XmlConvert.ToUInt64(clipped);
+                            return true;
+                        }
+                        catch (System.OverflowException)
+                        {
+                            return false;
+                        }
+                        catch (System.FormatException)
+                        {
+                            return false;
+                        }
+                    }
                 case Aas.DataTypeDefXsd.UnsignedShort:
                     {
                         if (value.Length == 0)
@@ -1933,98 +1949,18 @@ namespace AasCore.Aas3_0_RC02
                             return false;
                         }
                     }
-                case Aas.DataTypeDefXsd.UnsignedByte:
-                    {
-                        if (value.Length == 0)
-                        {
-                            return false;
-                        }
-
-                        // We need to allow negative zeros which are allowed in the lexical
-                        // representation of an unsigned byte, but System.Xml.XmlConvert.ToByte
-                        // rejects it.
-                        // See: https://www.w3.org/TR/xmlschema11-2/#unsignedByte
-                        if (value == "-0")
-                        {
-                            return true;
-                        }
-
-                        // We need to strip the prefix positive sign since
-                        // System.Xml.XmlConvert.ToByte does not adhere to lexical representation
-                        // of an unsigned byte.
-                        //
-                        // The positive sign is indeed allowed in the lexical representation, see:
-                        // https://www.w3.org/TR/xmlschema11-2/#unsignedByte
-                        string clipped = (value[0] == '+')
-                            ? value.Substring(1, value.Length - 1)
-                            : value;
-
-                        try
-                        {
-                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                            System.Xml.XmlConvert.ToByte(clipped);
-                            return true;
-                        }
-                        catch (System.OverflowException)
-                        {
-                            return false;
-                        }
-                        catch (System.FormatException)
-                        {
-                            return false;
-                        }
-                    }
-                case Aas.DataTypeDefXsd.NonPositiveInteger:
-                    {
-                        return MatchesXsNonPositiveInteger(value);
-                    }
-                case Aas.DataTypeDefXsd.NegativeInteger:
-                    {
-                        return MatchesXsNegativeInteger(value);
-                    }
                 default:
                     throw new System.ArgumentException(
-                        $"valueType is an invalid  DataTypeDefXsd: {valueType}"
+                        $"valueType is an invalid DataTypeDefXsd: {valueType}"
                     );
             }
-        }
-
-        [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        [CodeAnalysis.SuppressMessageAttribute("ReSharper", "IdentifierTypo")]
-        [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static Regex _constructMatchesGlobalAssetIdLiterally()
-        {
-            var pattern = "^[gG][lL][oO][bB][aA][lL][aA][sS][sS][eE][tT][iI][dD]$";
-
-            return new Regex(pattern);
-        }
-
-        private static readonly Regex RegexMatchesGlobalAssetIdLiterally = _constructMatchesGlobalAssetIdLiterally();
-
-        /// <summary>
-        /// Check that the <paramref name="text" /> matches <c>globalAssetId</c> case-insensitive.
-        /// </summary>
-        /// <remarks>
-        /// The case-insensitivity depends on the culture. For example in Turkish, uppercase
-        /// "i" is "İ", not "I". We assume the culture to be English, and explicitly check
-        /// for English case-folding.
-        /// </remarks>
-        /// <param name="text">
-        /// which needs to match <c>globalAssetId</c> literally
-        /// </param>
-        /// <returns>
-        /// True if the <paramref name="text" /> matches case-insensitive
-        /// </returns>
-        public static bool MatchesGlobalAssetIdLiterally(string text)
-        {
-            return RegexMatchesGlobalAssetIdLiterally.IsMatch(text);
         }
 
         /// <summary>
         /// Check that the target of the model reference matches the <paramref name="expectedType" />.
         /// </summary>
         public static bool IsModelReferenceTo(
-            Reference reference,
+            IReference reference,
             KeyTypes expectedType
         )
         {
@@ -2037,7 +1973,7 @@ namespace AasCore.Aas3_0_RC02
         /// Check that the target of the reference matches a <see cref="Aas.Constants.AasReferables" />.
         /// </summary>
         public static bool IsModelReferenceToReferable(
-            Reference reference
+            IReference reference
         )
         {
             return reference.Type == ReferenceTypes.ModelReference
@@ -2069,11 +2005,72 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that all <see cref="Aas.Extension.Name" /> are unique among
+        /// Check that all <see cref="Aas.IReferable.IdShort" />'s are among all the
+        /// <paramref name="inputVariables" />, <paramref name="outputVariables" /> and
+        /// <paramref name="inoutputVariables" /> are unique.
+        /// </summary>
+        public static bool IdShortsOfVariablesAreUnique(
+            IEnumerable<Aas.IOperationVariable>? inputVariables,
+            IEnumerable<Aas.IOperationVariable>? outputVariables,
+            IEnumerable<Aas.IOperationVariable>? inoutputVariables
+        )
+        {
+            var idShortSet = new HashSet<string>();
+
+            if (inputVariables != null)
+            {
+                foreach (var variable in inputVariables)
+                {
+                    if (variable.Value.IdShort != null)
+                    {
+                        if (idShortSet.Contains(variable.Value.IdShort))
+                        {
+                            return false;
+                        }
+                        idShortSet.Add(variable.Value.IdShort);
+                    }
+                }
+            }
+
+            if (outputVariables != null)
+            {
+                foreach (var variable in outputVariables)
+                {
+                    if (variable.Value.IdShort != null)
+                    {
+                        if (idShortSet.Contains(variable.Value.IdShort))
+                        {
+                            return false;
+                        }
+                        idShortSet.Add(variable.Value.IdShort);
+                    }
+                }
+            }
+
+            if (inoutputVariables != null)
+            {
+                foreach (var variable in inoutputVariables)
+                {
+                    if (variable.Value.IdShort != null)
+                    {
+                        if (idShortSet.Contains(variable.Value.IdShort))
+                        {
+                            return false;
+                        }
+                        idShortSet.Add(variable.Value.IdShort);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check that all <see cref="Aas.IExtension.Name" /> are unique among
         /// <paramref name="extensions" />.
         /// </summary>
         public static bool ExtensionNamesAreUnique(
-            IEnumerable<Aas.Extension> extensions
+            IEnumerable<Aas.IExtension> extensions
         )
         {
             var nameSet = new HashSet<string>();
@@ -2096,7 +2093,7 @@ namespace AasCore.Aas3_0_RC02
             IEnumerable<Aas.ISubmodelElement> elements
         )
         {
-            Aas.Reference? thatSemanticId = null;
+            Aas.IReference? thatSemanticId = null;
 
             foreach (var element in elements)
             {
@@ -2138,43 +2135,43 @@ namespace AasCore.Aas3_0_RC02
             switch (expectedType)
             {
                 case Aas.AasSubmodelElements.AnnotatedRelationshipElement:
-                    return element is Aas.AnnotatedRelationshipElement;
+                    return element is Aas.IAnnotatedRelationshipElement;
 
                 case Aas.AasSubmodelElements.BasicEventElement:
-                    return element is Aas.BasicEventElement;
+                    return element is Aas.IBasicEventElement;
 
                 case Aas.AasSubmodelElements.Blob:
-                    return element is Aas.Blob;
+                    return element is Aas.IBlob;
 
                 case Aas.AasSubmodelElements.Capability:
-                    return element is Aas.Capability;
+                    return element is Aas.ICapability;
 
                 case Aas.AasSubmodelElements.DataElement:
                     return element is Aas.IDataElement;
 
                 case Aas.AasSubmodelElements.Entity:
-                    return element is Aas.Entity;
+                    return element is Aas.IEntity;
 
                 case Aas.AasSubmodelElements.EventElement:
                     return element is Aas.IEventElement;
 
                 case Aas.AasSubmodelElements.File:
-                    return element is Aas.File;
+                    return element is Aas.IFile;
 
                 case Aas.AasSubmodelElements.MultiLanguageProperty:
-                    return element is Aas.MultiLanguageProperty;
+                    return element is Aas.IMultiLanguageProperty;
 
                 case Aas.AasSubmodelElements.Operation:
-                    return element is Aas.Operation;
+                    return element is Aas.IOperation;
 
                 case Aas.AasSubmodelElements.Property:
-                    return element is Aas.Property;
+                    return element is Aas.IProperty;
 
                 case Aas.AasSubmodelElements.Range:
-                    return element is Aas.Range;
+                    return element is Aas.IRange;
 
                 case Aas.AasSubmodelElements.ReferenceElement:
-                    return element is Aas.ReferenceElement;
+                    return element is Aas.IReferenceElement;
 
                 case Aas.AasSubmodelElements.RelationshipElement:
                     return element is Aas.IRelationshipElement;
@@ -2185,10 +2182,10 @@ namespace AasCore.Aas3_0_RC02
                     return element is Aas.ISubmodelElement;
 
                 case Aas.AasSubmodelElements.SubmodelElementList:
-                    return element is Aas.SubmodelElementList;
+                    return element is Aas.ISubmodelElementList;
 
                 case Aas.AasSubmodelElements.SubmodelElementCollection:
-                    return element is Aas.SubmodelElementCollection;
+                    return element is Aas.ISubmodelElementCollection;
 
                 default:
                     throw new System.ArgumentException(
@@ -2199,7 +2196,7 @@ namespace AasCore.Aas3_0_RC02
 
         /// <summary>
         /// Check that the <paramref name="elements" /> which are
-        /// <see cref="Aas.Property" /> or <see cref="Aas.Range" />
+        /// <see cref="Aas.IProperty" /> or <see cref="Aas.IRange" />
         /// have the given <paramref name="valueType" />.
         /// </summary>
         /// <remarks>
@@ -2217,13 +2214,13 @@ namespace AasCore.Aas3_0_RC02
             {
                 switch (element)
                 {
-                    case Aas.Property prop:
+                    case Aas.IProperty prop:
                         if (prop.ValueType != valueType)
                         {
                             return false;
                         }
                         break;
-                    case Aas.Range range:
+                    case Aas.IRange range:
                         if (range.ValueType != valueType)
                         {
                             return false;
@@ -2237,12 +2234,12 @@ namespace AasCore.Aas3_0_RC02
         /// <summary>
         /// Check that the two references, <paramref name="that" /> and
         /// <paramref name="other" />, are equal by comparing
-        /// their <see cref="Aas.Reference.Keys" /> by
-        /// <see cref="Aas.Key.Value" />'s.
+        /// their <see cref="Aas.IReference.Keys" /> by
+        /// <see cref="Aas.IKey.Value" />'s.
         /// </summary>
         public static bool ReferenceKeyValuesEqual(
-            Aas.Reference that,
-            Aas.Reference other
+            Aas.IReference that,
+            Aas.IReference other
         )
         {
             if (that.Keys.Count != other.Keys.Count)
@@ -2262,19 +2259,19 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that the <see cref="Aas.DataSpecificationIec61360.DataType" /> is defined
+        /// Check that the <see cref="Aas.IDataSpecificationIec61360.DataType" /> is defined
         /// appropriately for all data specifications whose content is given as IEC 61360.
         /// </summary>
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         public static bool DataSpecificationIec61360sForPropertyOrValueHaveAppropriateDataType(
-            IEnumerable<Aas.EmbeddedDataSpecification> embeddedDataSpecifications
+            IEnumerable<Aas.IEmbeddedDataSpecification> embeddedDataSpecifications
         )
         {
             foreach (var embeddedDataSpecification in embeddedDataSpecifications)
             {
                 var iec61360 = (
                     embeddedDataSpecification.DataSpecificationContent
-                        as DataSpecificationIec61360
+                        as Aas.IDataSpecificationIec61360
                 );
                 if (iec61360 != null)
                 {
@@ -2293,19 +2290,19 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that the <see cref="Aas.DataSpecificationIec61360.DataType" /> is defined
+        /// Check that the <see cref="Aas.IDataSpecificationIec61360.DataType" /> is defined
         /// appropriately for all data specifications whose content is given as IEC 61360.
         /// </summary>
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         public static bool DataSpecificationIec61360sForReferenceHaveAppropriateDataType(
-            IEnumerable<Aas.EmbeddedDataSpecification> embeddedDataSpecifications
+            IEnumerable<Aas.IEmbeddedDataSpecification> embeddedDataSpecifications
         )
         {
             foreach (var embeddedDataSpecification in embeddedDataSpecifications)
             {
                 var iec61360 = (
                     embeddedDataSpecification.DataSpecificationContent
-                        as DataSpecificationIec61360
+                        as Aas.IDataSpecificationIec61360
                 );
                 if (iec61360 != null)
                 {
@@ -2324,19 +2321,19 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that the <see cref="Aas.DataSpecificationIec61360.DataType" /> is defined
+        /// Check that the <see cref="Aas.IDataSpecificationIec61360.DataType" /> is defined
         /// appropriately for all data specifications whose content is given as IEC 61360.
         /// </summary>
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         public static bool DataSpecificationIec61360sForDocumentHaveAppropriateDataType(
-            IEnumerable<Aas.EmbeddedDataSpecification> embeddedDataSpecifications
+            IEnumerable<Aas.IEmbeddedDataSpecification> embeddedDataSpecifications
         )
         {
             foreach (var embeddedDataSpecification in embeddedDataSpecifications)
             {
                 var iec61360 = (
                     embeddedDataSpecification.DataSpecificationContent
-                        as DataSpecificationIec61360
+                        as Aas.IDataSpecificationIec61360
                 );
                 if (iec61360 != null)
                 {
@@ -2355,19 +2352,19 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that the <see cref="Aas.DataSpecificationIec61360.DataType" /> is defined
+        /// Check that the <see cref="Aas.IDataSpecificationIec61360.DataType" /> is defined
         /// for all data specifications whose content is given as IEC 61360.
         /// </summary>
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         public static bool DataSpecificationIec61360sHaveDataType(
-            IEnumerable<Aas.EmbeddedDataSpecification> embeddedDataSpecifications
+            IEnumerable<Aas.IEmbeddedDataSpecification> embeddedDataSpecifications
         )
         {
             foreach (var embeddedDataSpecification in embeddedDataSpecifications)
             {
                 var iec61360 = (
                     embeddedDataSpecification.DataSpecificationContent
-                        as DataSpecificationIec61360
+                        as Aas.IDataSpecificationIec61360
                 );
                 if (iec61360 != null)
                 {
@@ -2382,19 +2379,19 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that the <see cref="Aas.DataSpecificationIec61360.Value" /> is defined
+        /// Check that the <see cref="Aas.IDataSpecificationIec61360.Value" /> is defined
         /// for all data specifications whose content is given as IEC 61360.
         /// </summary>
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         public static bool DataSpecificationIec61360sHaveValue(
-            IEnumerable<Aas.EmbeddedDataSpecification> embeddedDataSpecifications
+            IEnumerable<Aas.IEmbeddedDataSpecification> embeddedDataSpecifications
         )
         {
             foreach (var embeddedDataSpecification in embeddedDataSpecifications)
             {
                 var iec61360 = (
                     embeddedDataSpecification.DataSpecificationContent
-                        as DataSpecificationIec61360
+                        as Aas.IDataSpecificationIec61360
                 );
                 if (iec61360 != null)
                 {
@@ -2409,19 +2406,19 @@ namespace AasCore.Aas3_0_RC02
         }
 
         /// <summary>
-        /// Check that the <see cref="Aas.DataSpecificationIec61360.Definition" /> is defined
+        /// Check that the <see cref="Aas.IDataSpecificationIec61360.Definition" /> is defined
         /// for all data specifications whose content is given as IEC 61360 at least in English.
         /// </summary>
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
         public static bool DataSpecificationIec61360sHaveDefinitionAtLeastInEnglish(
-            IEnumerable<Aas.EmbeddedDataSpecification> embeddedDataSpecifications
+            IEnumerable<Aas.IEmbeddedDataSpecification> embeddedDataSpecifications
         )
         {
             foreach (var embeddedDataSpecification in embeddedDataSpecifications)
             {
                 var iec61360 = (
                     embeddedDataSpecification.DataSpecificationContent
-                        as DataSpecificationIec61360
+                        as Aas.IDataSpecificationIec61360
                 );
                 if (iec61360 != null)
                 {
@@ -2475,11 +2472,11 @@ namespace AasCore.Aas3_0_RC02
         /// </summary>
         internal static class EnumValueSet
         {
-            internal static readonly HashSet<int> ForModelingKind = new HashSet<int>
+            internal static readonly HashSet<int> ForModellingKind = new HashSet<int>
             {
 
-                (int)Aas.ModelingKind.Template,
-                (int)Aas.ModelingKind.Instance
+                (int)Aas.ModellingKind.Template,
+                (int)Aas.ModellingKind.Instance
             };
 
             internal static readonly HashSet<int> ForQualifierKind = new HashSet<int>
@@ -2494,7 +2491,8 @@ namespace AasCore.Aas3_0_RC02
             {
 
                 (int)Aas.AssetKind.Type,
-                (int)Aas.AssetKind.Instance
+                (int)Aas.AssetKind.Instance,
+                (int)Aas.AssetKind.NotApplicable
             };
 
             internal static readonly HashSet<int> ForAasSubmodelElements = new HashSet<int>
@@ -2543,37 +2541,37 @@ namespace AasCore.Aas3_0_RC02
             internal static readonly HashSet<int> ForReferenceTypes = new HashSet<int>
             {
 
-                (int)Aas.ReferenceTypes.GlobalReference,
+                (int)Aas.ReferenceTypes.ExternalReference,
                 (int)Aas.ReferenceTypes.ModelReference
             };
 
             internal static readonly HashSet<int> ForKeyTypes = new HashSet<int>
             {
 
-                (int)Aas.KeyTypes.FragmentReference,
-                (int)Aas.KeyTypes.GlobalReference,
                 (int)Aas.KeyTypes.AnnotatedRelationshipElement,
                 (int)Aas.KeyTypes.AssetAdministrationShell,
                 (int)Aas.KeyTypes.BasicEventElement,
                 (int)Aas.KeyTypes.Blob,
                 (int)Aas.KeyTypes.Capability,
                 (int)Aas.KeyTypes.ConceptDescription,
-                (int)Aas.KeyTypes.Identifiable,
                 (int)Aas.KeyTypes.DataElement,
                 (int)Aas.KeyTypes.Entity,
                 (int)Aas.KeyTypes.EventElement,
                 (int)Aas.KeyTypes.File,
+                (int)Aas.KeyTypes.FragmentReference,
+                (int)Aas.KeyTypes.GlobalReference,
+                (int)Aas.KeyTypes.Identifiable,
                 (int)Aas.KeyTypes.MultiLanguageProperty,
                 (int)Aas.KeyTypes.Operation,
                 (int)Aas.KeyTypes.Property,
                 (int)Aas.KeyTypes.Range,
-                (int)Aas.KeyTypes.ReferenceElement,
                 (int)Aas.KeyTypes.Referable,
+                (int)Aas.KeyTypes.ReferenceElement,
                 (int)Aas.KeyTypes.RelationshipElement,
                 (int)Aas.KeyTypes.Submodel,
                 (int)Aas.KeyTypes.SubmodelElement,
-                (int)Aas.KeyTypes.SubmodelElementList,
-                (int)Aas.KeyTypes.SubmodelElementCollection
+                (int)Aas.KeyTypes.SubmodelElementCollection,
+                (int)Aas.KeyTypes.SubmodelElementList
             };
 
             internal static readonly HashSet<int> ForDataTypeDefXsd = new HashSet<int>
@@ -2582,9 +2580,9 @@ namespace AasCore.Aas3_0_RC02
                 (int)Aas.DataTypeDefXsd.AnyUri,
                 (int)Aas.DataTypeDefXsd.Base64Binary,
                 (int)Aas.DataTypeDefXsd.Boolean,
+                (int)Aas.DataTypeDefXsd.Byte,
                 (int)Aas.DataTypeDefXsd.Date,
                 (int)Aas.DataTypeDefXsd.DateTime,
-                (int)Aas.DataTypeDefXsd.DateTimeStamp,
                 (int)Aas.DataTypeDefXsd.Decimal,
                 (int)Aas.DataTypeDefXsd.Double,
                 (int)Aas.DataTypeDefXsd.Duration,
@@ -2595,23 +2593,20 @@ namespace AasCore.Aas3_0_RC02
                 (int)Aas.DataTypeDefXsd.GYear,
                 (int)Aas.DataTypeDefXsd.GYearMonth,
                 (int)Aas.DataTypeDefXsd.HexBinary,
-                (int)Aas.DataTypeDefXsd.String,
-                (int)Aas.DataTypeDefXsd.Time,
-                (int)Aas.DataTypeDefXsd.DayTimeDuration,
-                (int)Aas.DataTypeDefXsd.YearMonthDuration,
+                (int)Aas.DataTypeDefXsd.Int,
                 (int)Aas.DataTypeDefXsd.Integer,
                 (int)Aas.DataTypeDefXsd.Long,
-                (int)Aas.DataTypeDefXsd.Int,
-                (int)Aas.DataTypeDefXsd.Short,
-                (int)Aas.DataTypeDefXsd.Byte,
+                (int)Aas.DataTypeDefXsd.NegativeInteger,
                 (int)Aas.DataTypeDefXsd.NonNegativeInteger,
-                (int)Aas.DataTypeDefXsd.PositiveInteger,
-                (int)Aas.DataTypeDefXsd.UnsignedLong,
-                (int)Aas.DataTypeDefXsd.UnsignedInt,
-                (int)Aas.DataTypeDefXsd.UnsignedShort,
-                (int)Aas.DataTypeDefXsd.UnsignedByte,
                 (int)Aas.DataTypeDefXsd.NonPositiveInteger,
-                (int)Aas.DataTypeDefXsd.NegativeInteger
+                (int)Aas.DataTypeDefXsd.PositiveInteger,
+                (int)Aas.DataTypeDefXsd.Short,
+                (int)Aas.DataTypeDefXsd.String,
+                (int)Aas.DataTypeDefXsd.Time,
+                (int)Aas.DataTypeDefXsd.UnsignedByte,
+                (int)Aas.DataTypeDefXsd.UnsignedInt,
+                (int)Aas.DataTypeDefXsd.UnsignedLong,
+                (int)Aas.DataTypeDefXsd.UnsignedShort
             };
 
             internal static readonly HashSet<int> ForDataTypeIec61360 = new HashSet<int>
@@ -2637,15 +2632,6 @@ namespace AasCore.Aas3_0_RC02
                 (int)Aas.DataTypeIec61360.Html,
                 (int)Aas.DataTypeIec61360.Blob
             };
-
-            internal static readonly HashSet<int> ForLevelType = new HashSet<int>
-            {
-
-                (int)Aas.LevelType.Min,
-                (int)Aas.LevelType.Max,
-                (int)Aas.LevelType.Nom,
-                (int)Aas.LevelType.Typ
-            };
         }  // internal static class EnumValueSet
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -2656,8 +2642,9 @@ namespace AasCore.Aas3_0_RC02
             : Visitation.AbstractTransformer<IEnumerable<Reporting.Error>>
         {
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Extension that)
+            public override IEnumerable<Reporting.Error> TransformExtension(
+                Aas.IExtension that
+            )
             {
                 if (!(
                     !(that.SupplementalSemanticIds != null)
@@ -2666,7 +2653,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -2677,6 +2664,15 @@ namespace AasCore.Aas3_0_RC02
                         "Invariant violated:\n" +
                         "Constraint AASd-118: If there are supplemental semantic IDs " +
                         "defined then there shall be also a main semantic ID.");
+                }
+
+                if (!(
+                    !(that.RefersTo != null)
+                    || (that.RefersTo.Count >= 1)))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Refers-to must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -2718,7 +2714,7 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
-                foreach (var error in Verification.VerifyNonEmptyString(that.Name))
+                foreach (var error in Verification.VerifyNameType(that.Name))
                 {
                     error.PrependSegment(
                         new Reporting.NameSegment(
@@ -2753,19 +2749,28 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.RefersTo != null)
                 {
-                    foreach (var error in Verification.Verify(that.RefersTo))
+                    int indexRefersTo = 0;
+                    foreach (var item in that.RefersTo)
                     {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "refersTo"));
-                        yield return error;
+                        foreach (var error in Verification.Verify(item))
+                        {
+                            error.PrependSegment(
+                                new Reporting.IndexSegment(
+                                    indexRefersTo));
+                            error.PrependSegment(
+                                new Reporting.NameSegment(
+                                    "refersTo"));
+                            yield return error;
+                        }
+                        indexRefersTo++;
                     }
                 }
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.AdministrativeInformation that)
+            public override IEnumerable<Reporting.Error> TransformAdministrativeInformation(
+                Aas.IAdministrativeInformation that
+            )
             {
                 if (!(
                     !(that.EmbeddedDataSpecifications != null)
@@ -2774,7 +2779,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -2810,7 +2815,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Version != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Version))
+                    foreach (var error in Verification.VerifyVersionType(that.Version))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -2821,7 +2826,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Revision != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Revision))
+                    foreach (var error in Verification.VerifyRevisionType(that.Revision))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -2829,11 +2834,34 @@ namespace AasCore.Aas3_0_RC02
                         yield return error;
                     }
                 }
+
+                if (that.Creator != null)
+                {
+                    foreach (var error in Verification.Verify(that.Creator))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "creator"));
+                        yield return error;
+                    }
+                }
+
+                if (that.TemplateId != null)
+                {
+                    foreach (var error in Verification.VerifyIdentifier(that.TemplateId))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "templateId"));
+                        yield return error;
+                    }
+                }
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Qualifier that)
+            public override IEnumerable<Reporting.Error> TransformQualifier(
+                Aas.IQualifier that
+            )
             {
                 if (!(
                     !(that.SupplementalSemanticIds != null)
@@ -2842,7 +2870,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -2949,8 +2977,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.AssetAdministrationShell that)
+            public override IEnumerable<Reporting.Error> TransformAssetAdministrationShell(
+                Aas.IAssetAdministrationShell that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -2958,7 +2987,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -2977,7 +3006,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -2986,7 +3016,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -2996,7 +3026,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -3005,7 +3035,16 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
+                }
+
+                if (!(that.IdShort != null))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-117: ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified.");
                 }
 
                 if (!(
@@ -3015,7 +3054,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -3024,7 +3063,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Submodels must be either not set or have at least one item");
+                        "Submodels must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -3072,7 +3111,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3083,7 +3122,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3127,17 +3166,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
                     }
                 }
 
@@ -3219,9 +3247,46 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.AssetInformation that)
+            public override IEnumerable<Reporting.Error> TransformAssetInformation(
+                Aas.IAssetInformation that
+            )
             {
+                if (!(
+                    !(that.SpecificAssetIds != null)
+                    || (
+                        that.SpecificAssetIds.All(
+                            specificAssetId => specificAssetId.Name != "globalAssetId"
+                                || (
+                                    specificAssetId.Name == "globalAssetId"
+                                    && specificAssetId.Value == that.GlobalAssetId
+                                ))
+                    )))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-116: ``globalAssetId`` is a reserved key. " +
+                        "If used as value for the name of specific asset ID then " +
+                        "the value of specific asset ID shall be identical to " +
+                        "the global asset ID.");
+                }
+
+                if (!(
+                    (
+                        (that.GlobalAssetId != null)
+                        && (that.SpecificAssetIds == null)
+                    )
+                    || (
+                        (that.GlobalAssetId == null)
+                        && (that.SpecificAssetIds != null)
+                        && that.SpecificAssetIds.Count >= 1
+                    )))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-131: Either the global asset ID shall be " +
+                        "defined or at least one specific asset ID.");
+                }
+
                 if (!(
                     !(that.SpecificAssetIds != null)
                     || (that.SpecificAssetIds.Count >= 1)))
@@ -3229,7 +3294,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Specific asset IDs must be either not set or have at least " +
-                        "one item");
+                        "one item.");
                 }
 
                 foreach (var error in Verification.VerifyAssetKind(that.AssetKind))
@@ -3242,7 +3307,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.GlobalAssetId != null)
                 {
-                    foreach (var error in Verification.Verify(that.GlobalAssetId))
+                    foreach (var error in Verification.VerifyIdentifier(that.GlobalAssetId))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3270,6 +3335,17 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
+                if (that.AssetType != null)
+                {
+                    foreach (var error in Verification.VerifyIdentifier(that.AssetType))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "assetType"));
+                        yield return error;
+                    }
+                }
+
                 if (that.DefaultThumbnail != null)
                 {
                     foreach (var error in Verification.Verify(that.DefaultThumbnail))
@@ -3283,8 +3359,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Resource that)
+            public override IEnumerable<Reporting.Error> TransformResource(
+                Aas.IResource that
+            )
             {
                 foreach (var error in Verification.VerifyPathType(that.Path))
                 {
@@ -3307,8 +3384,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.SpecificAssetId that)
+            public override IEnumerable<Reporting.Error> TransformSpecificAssetId(
+                Aas.ISpecificAssetId that
+            )
             {
                 if (!(
                     !(that.SupplementalSemanticIds != null)
@@ -3317,7 +3395,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -3328,6 +3406,16 @@ namespace AasCore.Aas3_0_RC02
                         "Invariant violated:\n" +
                         "Constraint AASd-118: If there are supplemental semantic IDs " +
                         "defined then there shall be also a main semantic ID.");
+                }
+
+                if (!(
+                    !(that.ExternalSubjectId != null)
+                    || (that.ExternalSubjectId.Type == ReferenceTypes.ExternalReference)))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-133: External subject ID shall be " +
+                        "an external reference.");
                 }
 
                 if (that.SemanticId != null)
@@ -3360,7 +3448,7 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
-                foreach (var error in Verification.VerifyNonEmptyString(that.Name))
+                foreach (var error in Verification.VerifyLabelType(that.Name))
                 {
                     error.PrependSegment(
                         new Reporting.NameSegment(
@@ -3368,7 +3456,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return error;
                 }
 
-                foreach (var error in Verification.VerifyNonEmptyString(that.Value))
+                foreach (var error in Verification.VerifyIdentifier(that.Value))
                 {
                     error.PrependSegment(
                         new Reporting.NameSegment(
@@ -3376,18 +3464,22 @@ namespace AasCore.Aas3_0_RC02
                     yield return error;
                 }
 
-                foreach (var error in Verification.Verify(that.ExternalSubjectId))
+                if (that.ExternalSubjectId != null)
                 {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "externalSubjectId"));
-                    yield return error;
+                    foreach (var error in Verification.Verify(that.ExternalSubjectId))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "externalSubjectId"));
+                        yield return error;
+                    }
                 }
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Submodel that)
+            public override IEnumerable<Reporting.Error> TransformSubmodel(
+                Aas.ISubmodel that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -3395,7 +3487,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -3414,7 +3506,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -3423,7 +3516,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -3433,7 +3526,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -3442,7 +3535,16 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
+                }
+
+                if (!(that.IdShort != null))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-117: ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified.");
                 }
 
                 if (!(
@@ -3452,7 +3554,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -3471,7 +3573,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -3491,7 +3593,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -3501,19 +3603,22 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Submodel elements must be either not set or have at least " +
-                        "one item");
+                        "one item.");
                 }
 
                 if (!(
                     !(that.SubmodelElements != null)
                     || (
                         that.SubmodelElements.All(
-                            element => element.IdShort != null)
+                            item => item.IdShort != null)
                     )))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "ID-shorts need to be defined for all the submodel elements.");
+                        "ID-shorts need to be defined for all the items of submodel " +
+                        "elements according to AASd-117 (ID-short of Referables not " +
+                        "being a direct child of a Submodel element list shall be " +
+                        "specified).");
                 }
 
                 if (!(
@@ -3522,8 +3627,33 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-120: ID-short of non-identifiable " +
-                        "referables shall be unique in its namespace.");
+                        "Constraint AASd-022: ID-short of non-identifiable " +
+                        "referables within the same name space shall be unique " +
+                        "(case-sensitive).");
+                }
+
+                if (!(
+                    !(that.SubmodelElements != null)
+                    || (
+                        !(that.Kind != ModellingKind.Template)
+                        || (
+                            that.SubmodelElements.All(
+                                submodelElement => !(submodelElement.Qualifiers != null)
+                                    || (
+                                        submodelElement.Qualifiers.All(
+                                            qualifier => qualifier.KindOrDefault() != QualifierKind.TemplateQualifier)
+                                    ))
+                        )
+                    )))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-129: If any qualifier kind value of " +
+                        "a Submodel element qualifier (attribute qualifier inherited " +
+                        "via Qualifiable) is equal to Template Qualifier then " +
+                        "the submodel element shall be part of a submodel template, " +
+                        "i.e. a Submodel with submodel kind (attribute kind " +
+                        "inherited via Has-Kind) value is equal to Template.");
                 }
 
                 if (!(
@@ -3531,9 +3661,9 @@ namespace AasCore.Aas3_0_RC02
                     || (
                         !(
                             that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
+                                qualifier => qualifier.KindOrDefault() == QualifierKind.TemplateQualifier)
                         )
-                        || (that.KindOrDefault() == ModelingKind.Template)
+                        || (that.KindOrDefault() == ModellingKind.Template)
                     )))
                 {
                     yield return new Reporting.Error(
@@ -3565,7 +3695,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3576,7 +3706,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3623,17 +3753,6 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
                 if (that.Administration != null)
                 {
                     foreach (var error in Verification.Verify(that.Administration))
@@ -3656,9 +3775,9 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Kind != null)
                 {
                     // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
+                    Aas.ModellingKind value = that.Kind
                         ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
+                    foreach (var error in Verification.VerifyModellingKind(value))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3756,8 +3875,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.RelationshipElement that)
+            public override IEnumerable<Reporting.Error> TransformRelationshipElement(
+                Aas.IRelationshipElement that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -3765,7 +3885,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -3784,7 +3904,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -3793,7 +3914,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -3803,7 +3924,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -3812,7 +3933,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -3822,7 +3943,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -3841,7 +3962,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -3861,25 +3982,16 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
+                if (!(that.IdShort != null))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "Constraint AASd-117: ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified.");
                 }
 
                 if (that.Extensions != null)
@@ -3903,7 +4015,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3914,7 +4026,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -3958,31 +4070,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -4072,8 +4159,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.SubmodelElementList that)
+            public override IEnumerable<Reporting.Error> TransformSubmodelElementList(
+                Aas.ISubmodelElementList that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -4081,7 +4169,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4100,7 +4188,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -4109,7 +4198,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -4119,7 +4208,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -4128,7 +4217,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -4138,7 +4227,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -4157,7 +4246,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4177,25 +4266,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -4204,7 +4275,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Value must be either not set or have at least one item");
+                        "Value must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4279,8 +4350,9 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-120: ID-shorts of submodel elements within " +
-                        "a SubmodelElementList shall not be specified.");
+                        "Constraint AASd-120: ID-short of submodel elements being " +
+                        "a direct child of a  Submodel element list shall not be " +
+                        "specified.");
                 }
 
                 if (that.Extensions != null)
@@ -4304,7 +4376,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -4315,7 +4387,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -4359,31 +4431,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -4452,25 +4499,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexEmbeddedDataSpecifications++;
-                    }
-                }
-
-                if (that.Value != null)
-                {
-                    int indexValue = 0;
-                    foreach (var item in that.Value)
-                    {
-                        foreach (var error in Verification.Verify(item))
-                        {
-                            error.PrependSegment(
-                                new Reporting.IndexSegment(
-                                    indexValue));
-                            error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "value"));
-                            yield return error;
-                        }
-                        indexValue++;
                     }
                 }
 
@@ -4508,11 +4536,31 @@ namespace AasCore.Aas3_0_RC02
                         yield return error;
                     }
                 }
+
+                if (that.Value != null)
+                {
+                    int indexValue = 0;
+                    foreach (var item in that.Value)
+                    {
+                        foreach (var error in Verification.Verify(item))
+                        {
+                            error.PrependSegment(
+                                new Reporting.IndexSegment(
+                                    indexValue));
+                            error.PrependSegment(
+                                new Reporting.NameSegment(
+                                    "value"));
+                            yield return error;
+                        }
+                        indexValue++;
+                    }
+                }
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.SubmodelElementCollection that)
+            public override IEnumerable<Reporting.Error> TransformSubmodelElementCollection(
+                Aas.ISubmodelElementCollection that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -4520,7 +4568,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4539,7 +4587,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -4548,7 +4597,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -4558,7 +4607,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -4567,7 +4616,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -4577,7 +4626,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -4596,7 +4645,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4616,25 +4665,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -4643,19 +4674,22 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Value must be either not set or have at least one item");
+                        "Value must be either not set or have at least one item.");
                 }
 
                 if (!(
                     !(that.Value != null)
                     || (
                         that.Value.All(
-                            element => element.IdShort != null)
+                            item => item.IdShort != null)
                     )))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "ID-shorts need to be defined for all the elements.");
+                        "ID-shorts need to be defined for all the items of value " +
+                        "according to AASd-117 (ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified).");
                 }
 
                 if (!(
@@ -4688,7 +4722,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -4699,7 +4733,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -4743,31 +4777,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -4860,8 +4869,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Property that)
+            public override IEnumerable<Reporting.Error> TransformProperty(
+                Aas.IProperty that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -4869,7 +4879,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4888,7 +4898,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -4897,7 +4908,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -4907,7 +4918,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -4916,7 +4927,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -4926,7 +4937,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -4945,7 +4956,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -4965,25 +4976,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -4993,7 +4986,8 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or VARIABLE");
+                        "one of the following values: CONSTANT, PARAMETER or " +
+                        "VARIABLE.");
                 }
 
                 if (!(
@@ -5026,7 +5020,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -5037,7 +5031,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -5081,31 +5075,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -5209,8 +5178,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.MultiLanguageProperty that)
+            public override IEnumerable<Reporting.Error> TransformMultiLanguageProperty(
+                Aas.IMultiLanguageProperty that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -5218,7 +5188,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -5237,7 +5207,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -5246,7 +5217,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5256,7 +5227,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -5265,7 +5236,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5275,7 +5246,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -5294,7 +5265,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -5314,25 +5285,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -5342,7 +5295,8 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or VARIABLE");
+                        "one of the following values: CONSTANT, PARAMETER or " +
+                        "VARIABLE.");
                 }
 
                 if (!(
@@ -5351,7 +5305,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Value specifies no duplicate languages");
+                        "Value specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5360,7 +5314,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Value must be either not set or have at least one item");
+                        "Value must be either not set or have at least one item.");
                 }
 
                 if (that.Extensions != null)
@@ -5384,7 +5338,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -5395,7 +5349,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -5439,31 +5393,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -5567,8 +5496,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Range that)
+            public override IEnumerable<Reporting.Error> TransformRange(
+                Aas.IRange that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -5576,7 +5506,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -5595,7 +5525,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -5604,7 +5535,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5614,7 +5545,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -5623,7 +5554,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5633,7 +5564,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -5652,7 +5583,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -5672,25 +5603,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -5700,7 +5613,8 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or VARIABLE");
+                        "one of the following values: CONSTANT, PARAMETER or " +
+                        "VARIABLE.");
                 }
 
                 if (!(
@@ -5742,7 +5656,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -5753,7 +5667,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -5797,31 +5711,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -5925,8 +5814,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.ReferenceElement that)
+            public override IEnumerable<Reporting.Error> TransformReferenceElement(
+                Aas.IReferenceElement that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -5934,7 +5824,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -5953,7 +5843,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -5962,7 +5853,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5972,7 +5863,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -5981,7 +5872,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -5991,7 +5882,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -6010,7 +5901,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -6030,25 +5921,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -6058,7 +5931,8 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or VARIABLE");
+                        "one of the following values: CONSTANT, PARAMETER or " +
+                        "VARIABLE.");
                 }
 
                 if (that.Extensions != null)
@@ -6082,7 +5956,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -6093,7 +5967,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -6137,31 +6011,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -6246,8 +6095,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Blob that)
+            public override IEnumerable<Reporting.Error> TransformBlob(
+                Aas.IBlob that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -6255,7 +6105,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -6274,7 +6124,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -6283,7 +6134,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -6293,7 +6144,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -6302,7 +6153,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -6312,7 +6163,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -6331,7 +6182,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -6351,25 +6202,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -6379,7 +6212,8 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or VARIABLE");
+                        "one of the following values: CONSTANT, PARAMETER or " +
+                        "VARIABLE.");
                 }
 
                 if (that.Extensions != null)
@@ -6403,7 +6237,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -6414,7 +6248,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -6458,31 +6292,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -6575,8 +6384,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.File that)
+            public override IEnumerable<Reporting.Error> TransformFile(
+                Aas.IFile that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -6584,7 +6394,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -6603,7 +6413,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -6612,7 +6423,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -6622,7 +6433,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -6631,7 +6442,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -6641,7 +6452,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -6660,7 +6471,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -6680,25 +6491,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -6708,7 +6501,8 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or VARIABLE");
+                        "one of the following values: CONSTANT, PARAMETER or " +
+                        "VARIABLE.");
                 }
 
                 if (that.Extensions != null)
@@ -6732,7 +6526,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -6743,7 +6537,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -6787,31 +6581,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -6904,8 +6673,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.AnnotatedRelationshipElement that)
+            public override IEnumerable<Reporting.Error> TransformAnnotatedRelationshipElement(
+                Aas.IAnnotatedRelationshipElement that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -6913,7 +6683,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -6932,7 +6702,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -6941,7 +6712,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -6951,7 +6722,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -6960,7 +6731,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -6970,7 +6741,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -6989,7 +6760,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -7009,25 +6780,16 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
+                if (!(that.IdShort != null))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "Constraint AASd-117: ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified.");
                 }
 
                 if (!(
@@ -7036,7 +6798,23 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Annotations must be either not set or have at least one item");
+                        "Annotations must be either not set or have at least one " +
+                        "item.");
+                }
+
+                if (!(
+                    !(that.Annotations != null)
+                    || (
+                        that.Annotations.All(
+                            item => item.IdShort != null)
+                    )))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "ID-shorts need to be defined for all the items of " +
+                        "annotations according to AASd-117 (ID-short of Referables " +
+                        "not being a direct child of a Submodel element list shall " +
+                        "be specified).");
                 }
 
                 if (that.Extensions != null)
@@ -7060,7 +6838,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7071,7 +6849,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7115,31 +6893,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -7248,8 +7001,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Entity that)
+            public override IEnumerable<Reporting.Error> TransformEntity(
+                Aas.IEntity that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -7257,7 +7011,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -7276,7 +7030,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -7285,7 +7040,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -7295,7 +7050,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -7304,7 +7059,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -7314,7 +7069,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -7333,7 +7088,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -7353,25 +7108,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -7380,7 +7117,22 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Statements must be either not set or have at least one item");
+                        "Statements must be either not set or have at least one item.");
+                }
+
+                if (!(
+                    !(that.Statements != null)
+                    || (
+                        that.Statements.All(
+                            item => item.IdShort != null)
+                    )))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "ID-shorts need to be defined for all the items of " +
+                        "statements according to AASd-117 (ID-short of Referables " +
+                        "not being a direct child of a Submodel element list shall " +
+                        "be specified).");
                 }
 
                 if (!(
@@ -7389,24 +7141,35 @@ namespace AasCore.Aas3_0_RC02
                         && (
                             (
                                 (that.GlobalAssetId != null)
-                                && (that.SpecificAssetId == null)
+                                && (that.SpecificAssetIds == null)
                             )
                             || (
                                 (that.GlobalAssetId == null)
-                                && (that.SpecificAssetId != null)
+                                && (that.SpecificAssetIds != null)
+                                && that.SpecificAssetIds.Count >= 1
                             )
                         )
                     )
                     || (
                         (that.GlobalAssetId == null)
-                        && (that.SpecificAssetId == null)
+                        && (that.SpecificAssetIds == null)
                     )))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-014: Either the attribute global asset ID " +
                         "or specific asset ID must be set if entity type is set to " +
-                        "'SelfManagedEntity'. They are not existing otherwise.");
+                        "self-managed entity. They are not existing otherwise.");
+                }
+
+                if (!(
+                    !(that.SpecificAssetIds != null)
+                    || (that.SpecificAssetIds.Count >= 1)))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Specific asset IDs must be either not set or have at least " +
+                        "one item.");
                 }
 
                 if (that.Extensions != null)
@@ -7430,7 +7193,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7441,7 +7204,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7485,31 +7248,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -7610,7 +7348,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.GlobalAssetId != null)
                 {
-                    foreach (var error in Verification.Verify(that.GlobalAssetId))
+                    foreach (var error in Verification.VerifyIdentifier(that.GlobalAssetId))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7619,28 +7357,38 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
-                if (that.SpecificAssetId != null)
+                if (that.SpecificAssetIds != null)
                 {
-                    foreach (var error in Verification.Verify(that.SpecificAssetId))
+                    int indexSpecificAssetIds = 0;
+                    foreach (var item in that.SpecificAssetIds)
                     {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "specificAssetId"));
-                        yield return error;
+                        foreach (var error in Verification.Verify(item))
+                        {
+                            error.PrependSegment(
+                                new Reporting.IndexSegment(
+                                    indexSpecificAssetIds));
+                            error.PrependSegment(
+                                new Reporting.NameSegment(
+                                    "specificAssetIds"));
+                            yield return error;
+                        }
+                        indexSpecificAssetIds++;
                     }
                 }
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.EventPayload that)
+            public override IEnumerable<Reporting.Error> TransformEventPayload(
+                Aas.IEventPayload that
+            )
             {
                 if (!(
-                    Verification.IsModelReferenceToReferable(that.Source)))
+                    Verification.IsModelReferenceTo(that.Source, KeyTypes.EventElement)
+                    || Verification.IsModelReferenceTo(that.Source, KeyTypes.BasicEventElement)))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Source must be a model reference to a referable.");
+                        "Source must be a model reference to an Event element.");
                 }
 
                 if (!(
@@ -7692,7 +7440,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Topic != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Topic))
+                    foreach (var error in Verification.VerifyMessageTopicType(that.Topic))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7712,7 +7460,7 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
-                foreach (var error in Verification.VerifyDateTimeStampUtc(that.TimeStamp))
+                foreach (var error in Verification.VerifyDateTimeUtc(that.TimeStamp))
                 {
                     error.PrependSegment(
                         new Reporting.NameSegment(
@@ -7722,7 +7470,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Payload != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Payload))
+                    foreach (var error in Verification.VerifyBlobType(that.Payload))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7733,8 +7481,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.BasicEventElement that)
+            public override IEnumerable<Reporting.Error> TransformBasicEventElement(
+                Aas.IBasicEventElement that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -7742,7 +7491,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -7761,7 +7510,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -7770,7 +7520,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -7780,7 +7530,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -7789,7 +7539,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -7799,7 +7549,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -7818,7 +7568,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -7838,25 +7588,16 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
+                if (!(that.IdShort != null))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "Constraint AASd-117: ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified.");
                 }
 
                 if (!(
@@ -7865,7 +7606,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Max. interval is not applicable for input direction");
+                        "Max. interval is not applicable for input direction.");
                 }
 
                 if (!(
@@ -7906,7 +7647,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7917,7 +7658,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -7961,31 +7702,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -8083,7 +7799,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.MessageTopic != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.MessageTopic))
+                    foreach (var error in Verification.VerifyMessageTopicType(that.MessageTopic))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8105,7 +7821,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.LastUpdate != null)
                 {
-                    foreach (var error in Verification.VerifyDateTimeStampUtc(that.LastUpdate))
+                    foreach (var error in Verification.VerifyDateTimeUtc(that.LastUpdate))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8116,7 +7832,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.MinInterval != null)
                 {
-                    foreach (var error in Verification.VerifyDateTimeStampUtc(that.MinInterval))
+                    foreach (var error in Verification.VerifyDuration(that.MinInterval))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8127,7 +7843,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.MaxInterval != null)
                 {
-                    foreach (var error in Verification.VerifyDateTimeStampUtc(that.MaxInterval))
+                    foreach (var error in Verification.VerifyDuration(that.MaxInterval))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8138,8 +7854,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Operation that)
+            public override IEnumerable<Reporting.Error> TransformOperation(
+                Aas.IOperation that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -8147,7 +7864,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -8166,7 +7883,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -8175,7 +7893,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -8185,7 +7903,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -8194,7 +7912,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -8204,7 +7922,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -8223,7 +7941,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -8243,25 +7961,19 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
                 if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
+                    Verification.IdShortsOfVariablesAreUnique(
+                        that.InputVariables,
+                        that.OutputVariables,
+                        that.InoutputVariables)))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "Constraint AASd-134: For an Operation the ID-short of all " +
+                        "values of input, output and in/output variables.");
                 }
 
                 if (!(
@@ -8271,7 +7983,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Input variables must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -8281,7 +7993,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Output variables must be either not set or have at least " +
-                        "one item");
+                        "one item.");
                 }
 
                 if (!(
@@ -8291,7 +8003,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Inoutput variables must be either not set or have at least " +
-                        "one item");
+                        "one item.");
                 }
 
                 if (that.Extensions != null)
@@ -8315,7 +8027,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8326,7 +8038,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8370,31 +8082,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -8525,9 +8212,20 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.OperationVariable that)
+            public override IEnumerable<Reporting.Error> TransformOperationVariable(
+                Aas.IOperationVariable that
+            )
             {
+                if (!(that.Value.IdShort != null))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Value must have the ID-short specified according to " +
+                        "Constraint AASd-117 (ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified).");
+                }
+
                 foreach (var error in Verification.Verify(that.Value))
                 {
                     error.PrependSegment(
@@ -8538,8 +8236,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Capability that)
+            public override IEnumerable<Reporting.Error> TransformCapability(
+                Aas.ICapability that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -8547,7 +8246,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -8566,7 +8265,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -8575,7 +8275,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -8585,7 +8285,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -8594,7 +8294,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -8604,7 +8304,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Supplemental semantic IDs must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -8623,7 +8323,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Qualifiers must be either not set or have at least one item");
+                        "Qualifiers must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -8643,25 +8343,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
-                }
-
-                if (!(
-                    !(that.Qualifiers != null)
-                    || (
-                        !(
-                            that.Qualifiers.Any(
-                                qualifier => qualifier.Kind == QualifierKind.TemplateQualifier)
-                        )
-                        || (that.KindOrDefault() == ModelingKind.Template)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-119: If any qualifier kind value of " +
-                        "a qualifiable qualifier is equal to template qualifier and " +
-                        "the qualified element has kind then the qualified element " +
-                        "shall be of kind template.");
+                        "at least one item.");
                 }
 
                 if (that.Extensions != null)
@@ -8685,7 +8367,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8696,7 +8378,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -8740,31 +8422,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyModelingKind(value))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "kind"));
-                        yield return error;
                     }
                 }
 
@@ -8838,8 +8495,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.ConceptDescription that)
+            public override IEnumerable<Reporting.Error> TransformConceptDescription(
+                Aas.IConceptDescription that
+            )
             {
                 if (!(
                     !(that.Extensions != null)
@@ -8847,7 +8505,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Extensions must be either not set or have at least one item");
+                        "Extensions must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -8866,7 +8524,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description must be either not set or have at least one item");
+                        "Description must be either not set or have at least one " +
+                        "item.");
                 }
 
                 if (!(
@@ -8875,7 +8534,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Description specifies no duplicate languages");
+                        "Description specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -8885,7 +8544,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Display name must be either not set or have at least one " +
-                        "item");
+                        "item.");
                 }
 
                 if (!(
@@ -8894,7 +8553,16 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Display name specifies no duplicate languages");
+                        "Display name specifies no duplicate languages.");
+                }
+
+                if (!(that.IdShort != null))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "Constraint AASd-117: ID-short of Referables not being " +
+                        "a direct child of a Submodel element list shall be " +
+                        "specified.");
                 }
 
                 if (!(
@@ -8904,7 +8572,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
                 if (!(
@@ -8913,51 +8581,22 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Is-case-of must be either not set or have at least one item");
+                        "Is-case-of must be either not set or have at least one item.");
                 }
 
                 if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForConceptDescription.Contains(that.Category)))
+                    !(that.EmbeddedDataSpecifications != null)
+                    || (
+                        Verification.DataSpecificationIec61360sHaveDefinitionAtLeastInEnglish(that.EmbeddedDataSpecifications)
+                        || Verification.DataSpecificationIec61360sHaveValue(that.EmbeddedDataSpecifications)
+                    )))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-051: A concept description shall have one " +
-                        "of the following categories: 'VALUE', 'PROPERTY', " +
-                        "'REFERENCE', 'DOCUMENT', 'CAPABILITY',; 'RELATIONSHIP', " +
-                        "'COLLECTION', 'FUNCTION', 'EVENT', 'ENTITY', " +
-                        "'APPLICATION_CLASS', 'QUALIFIER', 'VIEW'.");
-                }
-
-                if (!(
-                    !(
-                        (that.Category != null)
-                        && that.Category != "VALUE"
-                        && (that.EmbeddedDataSpecifications != null)
-                    )
-                    || Verification.DataSpecificationIec61360sHaveDefinitionAtLeastInEnglish(that.EmbeddedDataSpecifications)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASc-003: For all concept descriptions with " +
-                        "a category except VALUE using data specification IEC 61360, " +
-                        "the definition of the data specification is mandatory and " +
-                        "shall be defined at least in English.");
-                }
-
-                if (!(
-                    !(
-                        (that.Category != null)
-                        && that.Category == "VALUE"
-                        && (that.EmbeddedDataSpecifications != null)
-                    )
-                    || Verification.DataSpecificationIec61360sHaveValue(that.EmbeddedDataSpecifications)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASc-008: For a concept description with " +
-                        "category VALUE using data specification IEC 61360, " +
-                        "the value of the data specification shall be set.");
+                        "Constraint AASc-3a-008: For a concept description using " +
+                        "data specification template IEC 61360, the definition is " +
+                        "mandatory and shall be defined at least in English. " +
+                        "Exception: The concept description describes a value.");
                 }
 
                 if (!(
@@ -8970,7 +8609,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASc-007: For a concept description with " +
+                        "Constraint AASc-3a-007: For a concept description with " +
                         "category QUALIFIER_TYPE using data specification IEC 61360, " +
                         "the data type of the data specification is mandatory and " +
                         "shall be defined.");
@@ -8986,10 +8625,10 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASc-006: For a concept description with " +
+                        "Constraint AASc-3a-006: For a concept description with " +
                         "category DOCUMENT using data specification IEC 61360, " +
-                        "the data type of the data specification is mandatory and " +
-                        "shall be one of: FILE, BLOB, HTML.");
+                        "the data type of the data specification shall be one of: " +
+                        "FILE, BLOB, HTML.");
                 }
 
                 if (!(
@@ -9002,10 +8641,10 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASc-005: For a concept description with " +
+                        "Constraint AASc-3a-005: For a concept description with " +
                         "category REFERENCE using data specification IEC 61360, " +
-                        "the data type of the data specification is mandatory and " +
-                        "shall be one of: STRING, IRI, IRDI.");
+                        "the data type of the data specification shall be one of: " +
+                        "STRING, IRI, IRDI.");
                 }
 
                 if (!(
@@ -9021,7 +8660,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASc-004: For a concept description with " +
+                        "Constraint AASc-3a-004: For a concept description with " +
                         "category PROPERTY or VALUE using data specification IEC " +
                         "61360, the data type of the data specification is mandatory " +
                         "and shall be one of: DATE, STRING, STRING_TRANSLATABLE, " +
@@ -9051,7 +8690,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Category != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Category))
+                    foreach (var error in Verification.VerifyNameType(that.Category))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -9062,7 +8701,7 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.IdShort != null)
                 {
-                    foreach (var error in Verification.VerifyIdShort(that.IdShort))
+                    foreach (var error in Verification.VerifyIdShortType(that.IdShort))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -9106,17 +8745,6 @@ namespace AasCore.Aas3_0_RC02
                             yield return error;
                         }
                         indexDescription++;
-                    }
-                }
-
-                if (that.Checksum != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Checksum))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "checksum"));
-                        yield return error;
                     }
                 }
 
@@ -9179,8 +8807,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Reference that)
+            public override IEnumerable<Reporting.Error> TransformReference(
+                Aas.IReference that
+            )
             {
                 if (!(that.Keys.Count >= 1))
                 {
@@ -9195,22 +8824,23 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-121: For References the type of the first " +
-                        "key shall be one of Globally identifiables.");
+                        "Constraint AASd-121: For References the value of type of " +
+                        "the first key of keys shall be one of Globally " +
+                        "Identifiables.");
                 }
 
                 if (!(
                     !(
-                        that.Type == ReferenceTypes.GlobalReference
+                        that.Type == ReferenceTypes.ExternalReference
                         && that.Keys.Count >= 1
                     )
                     || Aas.Constants.GenericGloballyIdentifiables.Contains(that.Keys[0].Type)))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-122: For global references the type of " +
-                        "the first key shall be one of Generic globally " +
-                        "identifiables.");
+                        "Constraint AASd-122: For external references the value of " +
+                        "type of the first key of keys shall be one of Generic " +
+                        "Globally Identifiables.");
                 }
 
                 if (!(
@@ -9222,13 +8852,13 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-123: For model references the type of " +
-                        "the first key shall be one of AAS identifiables");
+                        "Constraint AASd-123: For model references the value of type " +
+                        "of the first key of keys shall be one of AAS identifiables.");
                 }
 
                 if (!(
                     !(
-                        that.Type == ReferenceTypes.GlobalReference
+                        that.Type == ReferenceTypes.ExternalReference
                         && that.Keys.Count >= 1
                     )
                     || (
@@ -9238,9 +8868,9 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-124: For global references the last key " +
-                        "shall be either one of Generic globally identifiables or " +
-                        "one of Generic fragment keys.");
+                        "Constraint AASd-124: For external references the last key " +
+                        "of keys shall be either one of Generic Globally " +
+                        "Identifiables or one of Generic Fragment Keys.");
                 }
 
                 if (!(
@@ -9259,8 +8889,9 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-125: For model references with more than " +
-                        "one key, the type of the keys following the first key shall " +
-                        "be one of Fragment keys.");
+                        "one key in keys the value of type of each of the keys " +
+                        "following the first key of keys shall be one of Fragment " +
+                        "Keys.");
                 }
 
                 if (!(
@@ -9279,9 +8910,10 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-126: For model references with more than " +
-                        "one key, the type of the last key in the reference key " +
-                        "chain may be one of Generic fragment keys or no key at all " +
-                        "shall have a value out of Generic fragment keys.");
+                        "one key in keys the value of type of the last key in " +
+                        "the reference key chain may be one of Generic Fragment Keys " +
+                        "or no key at all shall have a value out of Generic Fragment " +
+                        "Keys.");
                 }
 
                 if (!(
@@ -9297,8 +8929,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-127: For model references with more than " +
-                        "one key, a key with type Fragment reference shall be " +
+                        "Constraint AASd-127: For model references, with more than " +
+                        "one key in keys a key with type Fragment Reference shall be " +
                         "preceded by a key with type File or Blob.");
                 }
 
@@ -9361,8 +8993,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Key that)
+            public override IEnumerable<Reporting.Error> TransformKey(
+                Aas.IKey that
+            )
             {
                 foreach (var error in Verification.VerifyKeyTypes(that.Type))
                 {
@@ -9372,7 +9005,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return error;
                 }
 
-                foreach (var error in Verification.VerifyNonEmptyString(that.Value))
+                foreach (var error in Verification.VerifyIdentifier(that.Value))
                 {
                     error.PrependSegment(
                         new Reporting.NameSegment(
@@ -9382,9 +9015,17 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.LangString that)
+            public override IEnumerable<Reporting.Error> TransformLangStringNameType(
+                Aas.ILangStringNameType that
+            )
             {
+                if (!(that.Text.Length <= 128))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "String shall have a maximum length of 128 characters.");
+                }
+
                 foreach (var error in Verification.VerifyBcp47LanguageTag(that.Language))
                 {
                     error.PrependSegment(
@@ -9392,11 +9033,53 @@ namespace AasCore.Aas3_0_RC02
                             "language"));
                     yield return error;
                 }
+
+                foreach (
+                        var error in Verification.VerifyNonEmptyXmlSerializableString(
+                            that.Text))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "text"));
+                    yield return error;
+                }
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.Environment that)
+            public override IEnumerable<Reporting.Error> TransformLangStringTextType(
+                Aas.ILangStringTextType that
+            )
+            {
+                if (!(that.Text.Length <= 1023))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "String shall have a maximum length of 1023 characters.");
+                }
+
+                foreach (var error in Verification.VerifyBcp47LanguageTag(that.Language))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "language"));
+                    yield return error;
+                }
+
+                foreach (
+                        var error in Verification.VerifyNonEmptyXmlSerializableString(
+                            that.Text))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "text"));
+                    yield return error;
+                }
+            }
+
+            [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
+            public override IEnumerable<Reporting.Error> TransformEnvironment(
+                Aas.IEnvironment that
+            )
             {
                 if (!(
                     !(that.ConceptDescriptions != null)
@@ -9405,7 +9088,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Concept descriptions must be either not set or have at " +
-                        "least one item");
+                        "least one item.");
                 }
 
                 if (!(
@@ -9414,7 +9097,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Submodels must be either not set or have at least one item");
+                        "Submodels must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -9424,7 +9107,7 @@ namespace AasCore.Aas3_0_RC02
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Asset administration shells must be either not set or have " +
-                        "at least one item");
+                        "at least one item.");
                 }
 
                 if (that.AssetAdministrationShells != null)
@@ -9486,8 +9169,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.EmbeddedDataSpecification that)
+            public override IEnumerable<Reporting.Error> TransformEmbeddedDataSpecification(
+                Aas.IEmbeddedDataSpecification that
+            )
             {
                 foreach (var error in Verification.Verify(that.DataSpecification))
                 {
@@ -9507,9 +9191,27 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.ValueReferencePair that)
+            public override IEnumerable<Reporting.Error> TransformLevelType(
+                Aas.ILevelType that
+            )
             {
+                // No verification has been defined for LevelType.
+                yield break;
+            }
+
+            [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
+            public override IEnumerable<Reporting.Error> TransformValueReferencePair(
+                Aas.IValueReferencePair that
+            )
+            {
+                foreach (var error in Verification.VerifyValueTypeIec61360(that.Value))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "value"));
+                    yield return error;
+                }
+
                 foreach (var error in Verification.Verify(that.ValueId))
                 {
                     error.PrependSegment(
@@ -9520,8 +9222,9 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.ValueList that)
+            public override IEnumerable<Reporting.Error> TransformValueList(
+                Aas.IValueList that
+            )
             {
                 if (!(that.ValueReferencePairs.Count >= 1))
                 {
@@ -9548,8 +9251,102 @@ namespace AasCore.Aas3_0_RC02
             }
 
             [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.DataSpecificationIec61360 that)
+            public override IEnumerable<Reporting.Error> TransformLangStringPreferredNameTypeIec61360(
+                Aas.ILangStringPreferredNameTypeIec61360 that
+            )
+            {
+                if (!(that.Text.Length <= 255))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "String shall have a maximum length of 1023 characters.");
+                }
+
+                foreach (var error in Verification.VerifyBcp47LanguageTag(that.Language))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "language"));
+                    yield return error;
+                }
+
+                foreach (
+                        var error in Verification.VerifyNonEmptyXmlSerializableString(
+                            that.Text))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "text"));
+                    yield return error;
+                }
+            }
+
+            [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
+            public override IEnumerable<Reporting.Error> TransformLangStringShortNameTypeIec61360(
+                Aas.ILangStringShortNameTypeIec61360 that
+            )
+            {
+                if (!(that.Text.Length <= 18))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "String shall have a maximum length of 1023 characters.");
+                }
+
+                foreach (var error in Verification.VerifyBcp47LanguageTag(that.Language))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "language"));
+                    yield return error;
+                }
+
+                foreach (
+                        var error in Verification.VerifyNonEmptyXmlSerializableString(
+                            that.Text))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "text"));
+                    yield return error;
+                }
+            }
+
+            [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
+            public override IEnumerable<Reporting.Error> TransformLangStringDefinitionTypeIec61360(
+                Aas.ILangStringDefinitionTypeIec61360 that
+            )
+            {
+                if (!(that.Text.Length <= 1023))
+                {
+                    yield return new Reporting.Error(
+                        "Invariant violated:\n" +
+                        "String shall have a maximum length of 1023 characters.");
+                }
+
+                foreach (var error in Verification.VerifyBcp47LanguageTag(that.Language))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "language"));
+                    yield return error;
+                }
+
+                foreach (
+                        var error in Verification.VerifyNonEmptyXmlSerializableString(
+                            that.Text))
+                {
+                    error.PrependSegment(
+                        new Reporting.NameSegment(
+                            "text"));
+                    yield return error;
+                }
+            }
+
+            [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
+            public override IEnumerable<Reporting.Error> TransformDataSpecificationIec61360(
+                Aas.IDataSpecificationIec61360 that
+            )
             {
                 if (!(
                     (
@@ -9564,8 +9361,8 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASc-010: If value is not empty then value list " +
-                        "shall be empty and vice versa.");
+                        "Constraint AASc-3a-010: If value is not empty then value " +
+                        "list shall be empty and vice versa.");
                 }
 
                 if (!(
@@ -9580,9 +9377,9 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASc-009: If data type is a an integer, real or " +
-                        "rational with a measure or currency, unit or unit ID shall " +
-                        "be defined.");
+                        "Constraint AASc-3a-009: If data type is a an integer, real " +
+                        "or rational with a measure or currency, unit or unit ID " +
+                        "shall be defined.");
                 }
 
                 if (!(
@@ -9591,7 +9388,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Definition must be either not set or have at least one item");
+                        "Definition must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -9600,7 +9397,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Definition specifies no duplicate languages");
+                        "Definition specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -9609,7 +9406,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Short name must be either not set or have at least one item");
+                        "Short name must be either not set or have at least one item.");
                 }
 
                 if (!(
@@ -9618,14 +9415,14 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Short name specifies no duplicate languages");
+                        "Short name specifies no duplicate languages.");
                 }
 
                 if (!(that.PreferredName.Count >= 1))
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Preferred name must have at least one item");
+                        "Preferred name must have at least one item.");
                 }
 
                 if (!(
@@ -9633,7 +9430,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Preferred name specifies no duplicate languages");
+                        "Preferred name specifies no duplicate languages.");
                 }
 
                 if (!(
@@ -9683,7 +9480,9 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Unit != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Unit))
+                    foreach (
+                            var error in Verification.VerifyNonEmptyXmlSerializableString(
+                                that.Unit))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -9706,7 +9505,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SourceOfDefinition != null)
                 {
                     foreach (
-                            var error in Verification.VerifyNonEmptyString(
+                            var error in Verification.VerifyNonEmptyXmlSerializableString(
                                 that.SourceOfDefinition))
                     {
                         error.PrependSegment(
@@ -9718,7 +9517,9 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.Symbol != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Symbol))
+                    foreach (
+                            var error in Verification.VerifyNonEmptyXmlSerializableString(
+                                that.Symbol))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -9762,7 +9563,9 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.ValueFormat != null)
                 {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.ValueFormat))
+                    foreach (
+                            var error in Verification.VerifyNonEmptyXmlSerializableString(
+                                that.ValueFormat))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
@@ -9782,182 +9585,24 @@ namespace AasCore.Aas3_0_RC02
                     }
                 }
 
+                if (that.Value != null)
+                {
+                    foreach (var error in Verification.VerifyValueTypeIec61360(that.Value))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "value"));
+                        yield return error;
+                    }
+                }
+
                 if (that.LevelType != null)
                 {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.LevelType value = that.LevelType
-                        ?? throw new System.InvalidOperationException();
-                    foreach (var error in Verification.VerifyLevelType(value))
+                    foreach (var error in Verification.Verify(that.LevelType))
                     {
                         error.PrependSegment(
                             new Reporting.NameSegment(
                                 "levelType"));
-                        yield return error;
-                    }
-                }
-            }
-
-            [CodeAnalysis.SuppressMessage("ReSharper", "NegativeEqualityExpression")]
-            public override IEnumerable<Reporting.Error> Transform(
-                Aas.DataSpecificationPhysicalUnit that)
-            {
-                if (!(that.Definition.Count >= 1))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Definition must have at least one item");
-                }
-
-                if (!(
-                    Verification.LangStringsHaveUniqueLanguages(that.Definition)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Definition specifies no duplicate languages");
-                }
-
-                foreach (var error in Verification.VerifyNonEmptyString(that.UnitName))
-                {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "unitName"));
-                    yield return error;
-                }
-
-                foreach (var error in Verification.VerifyNonEmptyString(that.UnitSymbol))
-                {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "unitSymbol"));
-                    yield return error;
-                }
-
-                int indexDefinition = 0;
-                foreach (var item in that.Definition)
-                {
-                    foreach (var error in Verification.Verify(item))
-                    {
-                        error.PrependSegment(
-                            new Reporting.IndexSegment(
-                                indexDefinition));
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "definition"));
-                        yield return error;
-                    }
-                    indexDefinition++;
-                }
-
-                if (that.SiNotation != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.SiNotation))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "siNotation"));
-                        yield return error;
-                    }
-                }
-
-                if (that.SiName != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.SiName))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "siName"));
-                        yield return error;
-                    }
-                }
-
-                if (that.DinNotation != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.DinNotation))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "dinNotation"));
-                        yield return error;
-                    }
-                }
-
-                if (that.EceName != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.EceName))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "eceName"));
-                        yield return error;
-                    }
-                }
-
-                if (that.EceCode != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.EceCode))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "eceCode"));
-                        yield return error;
-                    }
-                }
-
-                if (that.NistName != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.NistName))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "nistName"));
-                        yield return error;
-                    }
-                }
-
-                if (that.SourceOfDefinition != null)
-                {
-                    foreach (
-                            var error in Verification.VerifyNonEmptyString(
-                                that.SourceOfDefinition))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "sourceOfDefinition"));
-                        yield return error;
-                    }
-                }
-
-                if (that.ConversionFactor != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.ConversionFactor))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "conversionFactor"));
-                        yield return error;
-                    }
-                }
-
-                if (that.RegistrationAuthorityId != null)
-                {
-                    foreach (
-                            var error in Verification.VerifyNonEmptyString(
-                                that.RegistrationAuthorityId))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "registrationAuthorityId"));
-                        yield return error;
-                    }
-                }
-
-                if (that.Supplier != null)
-                {
-                    foreach (var error in Verification.VerifyNonEmptyString(that.Supplier))
-                    {
-                        error.PrependSegment(
-                            new Reporting.NameSegment(
-                                "supplier"));
                         yield return error;
                     }
                 }
@@ -9981,38 +9626,60 @@ namespace AasCore.Aas3_0_RC02
         /// <summary>
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
-        public static IEnumerable<Reporting.Error> VerifyNonEmptyString(
+        public static IEnumerable<Reporting.Error> VerifyNonEmptyXmlSerializableString(
             string that)
         {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
             if (!(that.Length >= 1))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Constraint AASd-100: An attribute with data type ``string`` " +
-                    "is not allowed to be empty.");
+                    "The value must not be empty.");
             }
         }
 
         /// <summary>
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
-        public static IEnumerable<Reporting.Error> VerifyDateTimeStampUtc(
+        public static IEnumerable<Reporting.Error> VerifyDateTimeUtc(
             string that)
         {
-            if (!Verification.MatchesXsDateTimeStampUtc(that))
+            if (!Verification.MatchesXsDateTimeUtc(that))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "The value must match the pattern of xs:dateTimeStamp with " +
+                    "The value must match the pattern of xs:dateTime with " +
                     "the time zone fixed to UTC.");
             }
 
-            if (!Verification.IsXsDateTimeStampUtc(that))
+            if (!Verification.IsXsDateTimeUtc(that))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "The value must represent a valid xs:dateTimeStamp with " +
-                    "the time zone fixed to UTC.");
+                    "The value must represent a valid xs:dateTime with the time " +
+                    "zone fixed to UTC.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyDuration(
+            string that)
+        {
+            if (!Verification.MatchesXsDuration(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must match the pattern of xs:duration.");
             }
         }
 
@@ -10032,12 +9699,223 @@ namespace AasCore.Aas3_0_RC02
         public static IEnumerable<Reporting.Error> VerifyIdentifier(
             string that)
         {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
             if (!(that.Length >= 1))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Constraint AASd-100: An attribute with data type ``string`` " +
-                    "is not allowed to be empty.");
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 2000))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Identifier shall have a maximum length of 2000 characters.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyValueTypeIec61360(
+            string that)
+        {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 2000))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Value type IEC 61360 shall have a maximum length of 2000 " +
+                    "characters.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyNameType(
+            string that)
+        {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 128))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Name type shall have a maximum length of 128 characters.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyVersionType(
+            string that)
+        {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
+            if (!Verification.MatchesVersionType(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Version type shall match the version pattern.");
+            }
+
+            if (!(that.Length <= 4))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Version type shall have a maximum length of 4 characters.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyRevisionType(
+            string that)
+        {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
+            if (!Verification.MatchesRevisionType(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Revision type shall match the revision pattern.");
+            }
+
+            if (!(that.Length <= 4))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Revision type shall have a maximum length of 4 characters.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyLabelType(
+            string that)
+        {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 64))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Label type shall have a maximum length of 64 characters.");
+            }
+        }
+
+        /// <summary>
+        /// Verify the constraints of <paramref name="that" />.
+        /// </summary>
+        public static IEnumerable<Reporting.Error> VerifyMessageTopicType(
+            string that)
+        {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 255))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Message topic type shall have a maximum length of 255 " +
+                    "characters.");
             }
         }
 
@@ -10062,12 +9940,27 @@ namespace AasCore.Aas3_0_RC02
         public static IEnumerable<Reporting.Error> VerifyContentType(
             string that)
         {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
             if (!(that.Length >= 1))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Constraint AASd-100: An attribute with data type ``string`` " +
-                    "is not allowed to be empty.");
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 100))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Content type shall have a maximum length of 100 characters.");
             }
 
             if (!Verification.MatchesMimeType(that))
@@ -10085,12 +9978,27 @@ namespace AasCore.Aas3_0_RC02
         public static IEnumerable<Reporting.Error> VerifyPathType(
             string that)
         {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
             if (!(that.Length >= 1))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Constraint AASd-100: An attribute with data type ``string`` " +
-                    "is not allowed to be empty.");
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 2000))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Identifier shall have a maximum length of 2000 characters.");
             }
 
             if (!Verification.MatchesRfc8089Path(that))
@@ -10108,12 +10016,27 @@ namespace AasCore.Aas3_0_RC02
         public static IEnumerable<Reporting.Error> VerifyQualifierType(
             string that)
         {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
             if (!(that.Length >= 1))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Constraint AASd-100: An attribute with data type ``string`` " +
-                    "is not allowed to be empty.");
+                    "The value must not be empty.");
+            }
+
+            if (!(that.Length <= 128))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Name type shall have a maximum length of 128 characters.");
             }
         }
 
@@ -10130,15 +10053,30 @@ namespace AasCore.Aas3_0_RC02
         /// <summary>
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
-        public static IEnumerable<Reporting.Error> VerifyIdShort(
+        public static IEnumerable<Reporting.Error> VerifyIdShortType(
             string that)
         {
+            if (!Verification.MatchesXmlSerializableString(that))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "Constraint AASd-130: An attribute with data type 'string' " +
+                    "shall consist of these characters only: " +
+                    "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$.");
+            }
+
+            if (!(that.Length >= 1))
+            {
+                yield return new Reporting.Error(
+                    "Invariant violated:\n" +
+                    "The value must not be empty.");
+            }
+
             if (!(that.Length <= 128))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Constraint AASd-027: ID-short shall have a maximum length " +
-                    "of 128 characters.");
+                    "Name type shall have a maximum length of 128 characters.");
             }
 
             if (!Verification.MatchesIdShort(that))
@@ -10147,21 +10085,21 @@ namespace AasCore.Aas3_0_RC02
                     "Invariant violated:\n" +
                     "ID-short of Referables shall only feature letters, digits, " +
                     "underscore (``_``); starting mandatory with a letter. " +
-                    "*I.e.* ``[a-zA-Z][a-zA-Z0-9_]+``.");
+                    "*I.e.* ``[a-zA-Z][a-zA-Z0-9_]*``.");
             }
         }
 
         /// <summary>
         /// Verify that <paramref name="that" /> is a valid enumeration value.
         /// </summary>
-        public static IEnumerable<Reporting.Error> VerifyModelingKind(
-            Aas.ModelingKind that)
+        public static IEnumerable<Reporting.Error> VerifyModellingKind(
+            Aas.ModellingKind that)
         {
-            if (!EnumValueSet.ForModelingKind.Contains(
+            if (!EnumValueSet.ForModellingKind.Contains(
                 (int)that))
             {
                 yield return new Reporting.Error(
-                    $"Invalid ModelingKind: {that}");
+                    $"Invalid ModellingKind: {that}");
             }
         }
 
@@ -10304,22 +10242,8 @@ namespace AasCore.Aas3_0_RC02
                     $"Invalid DataTypeIec61360: {that}");
             }
         }
-
-        /// <summary>
-        /// Verify that <paramref name="that" /> is a valid enumeration value.
-        /// </summary>
-        public static IEnumerable<Reporting.Error> VerifyLevelType(
-            Aas.LevelType that)
-        {
-            if (!EnumValueSet.ForLevelType.Contains(
-                (int)that))
-            {
-                yield return new Reporting.Error(
-                    $"Invalid LevelType: {that}");
-            }
-        }
     }  // public static class Verification
-}  // namespace AasCore.Aas3_0_RC02
+}  // namespace AasCore.Aas3_0
 
 /*
  * This code has been automatically generated by aas-core-codegen.

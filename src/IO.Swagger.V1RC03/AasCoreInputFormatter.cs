@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
+
 using System.Collections.Generic;
 using System;
 using System.Text.Json.Nodes;

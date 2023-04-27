@@ -1,7 +1,7 @@
 ﻿@page "/"
 @inject AASService SubmodelService
 @inject NavigationManager NavigationManager
-@using AasCore.Aas3_0_RC02
+@using AasCore.Aas3_0
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
 @using System
@@ -278,7 +278,7 @@
                         CurrentValue = "";
                     }
                 }
-                if (selectedNode != null && (selectedNode.Tag is AssetAdministrationShell || selectedNode.Tag is AasCore.Aas3_0_RC02.File))
+                if (selectedNode != null && (selectedNode.Tag is AssetAdministrationShell || selectedNode.Tag is AasCore.Aas3_0.File))
                 {
                     if (selectedNode.Tag is AssetAdministrationShell)
                     {
@@ -580,7 +580,7 @@
     async Task DownloadFile()
     {
         this.StateHasChanged();
-        var f = selectedNode.Tag as AasCore.Aas3_0_RC02.File;
+        var f = selectedNode.Tag as AasCore.Aas3_0.File;
         var fileName = System.IO.Path.GetFileName(f.Value);
         if (fileName != "")
         {
@@ -949,7 +949,7 @@
             }
         }
 
-        if (o is AasCore.Aas3_0_RC02.File f)
+        if (o is AasCore.Aas3_0.File f)
         {
 
             // Test for /aasx/
@@ -1014,7 +1014,7 @@
             if (asset != null)
             {
                 // string url = WebUtility.UrlEncode(asset.identification.id);
-                string url = asset.GlobalAssetId.GetAsIdentifier();
+                string url = asset.GlobalAssetId;
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
@@ -1080,7 +1080,7 @@
             if (asset != null)
             {
                 // string url = WebUtility.UrlEncode(asset.identification.id);
-                string url = asset.GlobalAssetId.GetAsIdentifier();
+                string url = asset.GlobalAssetId;
                 // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
                 // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
@@ -1115,7 +1115,7 @@
 
         object o = item.Tag;
 
-        if (o is AasCore.Aas3_0_RC02.File f)
+        if (o is AasCore.Aas3_0.File f)
         {
 
             // Test for /aasx/
@@ -1164,13 +1164,13 @@
             return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
         }
 
-        if (o is AasCore.Aas3_0_RC02.File || o is Property)
+        if (o is AasCore.Aas3_0.File || o is Property)
         {
             string value = "";
 
-            if (o is AasCore.Aas3_0_RC02.File)
+            if (o is AasCore.Aas3_0.File)
             {
-                value = (o as AasCore.Aas3_0_RC02.File).Value;
+                value = (o as AasCore.Aas3_0.File).Value;
             }
             if (o is Property)
             {
@@ -1361,7 +1361,7 @@
         {
             ret += "Opr";
         }
-        if (o is AasCore.Aas3_0_RC02.File)
+        if (o is AasCore.Aas3_0.File)
         {
             ret += "File";
         }
@@ -1369,7 +1369,7 @@
         {
             ret += "Blob";
         }
-        if (o is AasCore.Aas3_0_RC02.Range)
+        if (o is AasCore.Aas3_0.Range)
         {
             ret += "Range";
         }
@@ -1449,7 +1449,7 @@
         {
             var sm = o as Submodel;
             ret = "";
-            if (sm.Kind != null && sm.Kind == ModelingKind.Template)
+            if (sm.Kind != null && sm.Kind == ModellingKind.Template)
                 ret += "<T> ";
             ret += sm.IdShort;
         }
@@ -1457,39 +1457,29 @@
         {
             var sme = o as ISubmodelElement;
             ret = "";
-            if (sme.Kind != null && sme.Kind == ModelingKind.Template)
-                ret += "<T> ";
             ret += sme.IdShort;
         }
-        if (o is AasCore.Aas3_0_RC02.File f)
+        if (o is AasCore.Aas3_0.File f)
         {
             ret = "";
-            if (f.Kind != null && f.Kind == ModelingKind.Template)
-                ret += "<T> ";
             ret += f.IdShort;
         }
         if (o is Blob)
         {
             var b = o as Blob;
             ret = "";
-            if (b.Kind != null && b.Kind == ModelingKind.Template)
-                ret += "<T> ";
             ret += b.IdShort;
         }
-        if (o is AasCore.Aas3_0_RC02.Range)
+        if (o is AasCore.Aas3_0.Range)
         {
-            var r = o as AasCore.Aas3_0_RC02.Range;
+            var r = o as AasCore.Aas3_0.Range;
             ret = "";
-            if (r.Kind != null && r.Kind == ModelingKind.Template)
-                ret += "<T> ";
             ret += r.IdShort;
         }
         if (o is MultiLanguageProperty)
         {
             var mlp = o as MultiLanguageProperty;
             ret = "";
-            if (mlp.Kind != null && mlp.Kind == ModelingKind.Template)
-                ret += "<T> ";
             ret += mlp.IdShort;
         }
         return (ret);
@@ -1563,7 +1553,7 @@
                     ret += " @QUALIFIERS";
                 }
             }
-            if (o is AasCore.Aas3_0_RC02.File f)
+            if (o is AasCore.Aas3_0.File f)
             {
                 if (f.Value != null)
                     ret = " = " + f.Value;
@@ -1573,9 +1563,9 @@
                 }
             }
         }
-        if (o is AasCore.Aas3_0_RC02.Range)
+        if (o is AasCore.Aas3_0.Range)
         {
-            var r = o as AasCore.Aas3_0_RC02.Range;
+            var r = o as AasCore.Aas3_0.Range;
             if (r.Min != null && r.Max != null)
                 ret = " = " + r.Min + " .. " + r.Max;
             if (r.Qualifiers != null && r.Qualifiers.Count > 0)
@@ -1647,7 +1637,7 @@
                         if (col == 0)
                             ret = "ASSET";
                         if (col == 1)
-                            ret = asset.GlobalAssetId.GetAsIdentifier();
+                            ret = asset.GlobalAssetId;
                     }
                     break;
                 case 2:
@@ -1656,9 +1646,9 @@
                         if (col == 0)
                             ret = "ASSETID";
                         if (col == 1)
-                            ret = asset.GlobalAssetId.GetAsIdentifier() + "";
+                            ret = asset.GlobalAssetId + "";
                         if (col == 2)
-                            ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId.GetAsIdentifier()) + "";
+                            ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + "";
                     }
                     break;
                 case 3:
@@ -1668,7 +1658,7 @@
                             ret = "ASSETID URLENCODED";
                         if (col == 1)
                         {
-                            string url = WebUtility.UrlEncode(asset.GlobalAssetId.GetAsIdentifier());
+                            string url = WebUtility.UrlEncode(asset.GlobalAssetId);
                             ret = url;
                         }
                     }
@@ -1676,30 +1666,30 @@
                 /*
                 case 3:
                 subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-    if (subjectIssuer != null)
-    {
-    string[] s = subjectIssuer.Split(';');
-    if (s.Length > 0 && s[0] != "")
-    {
-    ret = "SUBJECT";
-    if (col == 1)
-    ret = s[0];
-    }
-    }
-    break;
-    case 4:
-    subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-            if (subjectIssuer != null)
+                if (subjectIssuer != null)
+                            {
+                            string[] s = subjectIssuer.Split(';');
+                            if (s.Length > 0 && s[0] != "")
                 {
-                string[] s = subjectIssuer.Split(';');
-    if (s.Length > 1 && s[1] != "")
-    {
-    ret = "ISSUER";
-    if (col == 1)
-    ret = s[1];
-        }
-            }
-            break;
+                ret = "SUBJECT";
+                if (col == 1)
+                ret = s[0];
+                }
+                }
+                break;
+                case 4:
+                subjectIssuer = Program.envSubjectIssuer[item.envIndex];
+                if (subjectIssuer != null)
+                    {
+                        string[] s = subjectIssuer.Split(';');
+                        if (s.Length > 1 && s[1] != "")
+                        {
+                        ret = "ISSUER";
+                            if (col == 1)
+                            ret = s[1];
+                            }
+                }
+                break;
                 */
                 case 4:
                     if (aas.Extensions != null)
@@ -1869,24 +1859,23 @@
                                 ret = "Asset";
                             if (col == 1)
                             {
-                                var k = e.GlobalAssetId.Keys;
-                                if (k != null)
-                                {
-                                    ret = k.ToStringExtended();
-                                }
+                                var k = e.GlobalAssetId;
                             }
                         }
 
-                        if (e.SpecificAssetId != null)
+                        if (e.SpecificAssetIds != null)
                         {
                             if (col == 0)
                                 ret = "Asset";
                             if (col == 1)
                             {
-                                var k = e.SpecificAssetId.Value;
-                                if (k != null)
+                                foreach(var specificAssetId in e.SpecificAssetIds)
                                 {
-                                    ret = k;
+                                    var k = specificAssetId.Value;
+                                    if(!string.IsNullOrEmpty(k))
+                                    {
+                                        ret = "[" + k + "]";
+                                    }
                                 }
                             }
                         }
@@ -1907,7 +1896,7 @@
             return ret;
         }
 
-        if (o is AasCore.Aas3_0_RC02.File f)
+        if (o is AasCore.Aas3_0.File f)
         {
             ret += ", " + f.Value;
             switch (line)
@@ -1992,9 +1981,9 @@
             return ret;
         }
 
-        if (o is AasCore.Aas3_0_RC02.Range)
+        if (o is AasCore.Aas3_0.Range)
         {
-            var r = o as AasCore.Aas3_0_RC02.Range;
+            var r = o as AasCore.Aas3_0.Range;
             ret = r.IdShort;
             switch (line)
             {
@@ -2368,7 +2357,7 @@
         return (ret);
     }
 
-    static string getQualifiers(List<Qualifier> q, int col)
+    static string getQualifiers(List<IQualifier> q, int col)
     {
         string ret = "";
 

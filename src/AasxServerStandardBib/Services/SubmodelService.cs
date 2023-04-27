@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
@@ -14,9 +14,9 @@ namespace AasxServerStandardBib.Services
         private readonly IAppLogger<SubmodelService> _logger;
         private readonly IAdminShellPackageEnvironmentService _packageEnvService;
 
-        public SubmodelService(IAppLogger<SubmodelService> logger, IAdminShellPackageEnvironmentService packageEnvService) 
+        public SubmodelService(IAppLogger<SubmodelService> logger, IAdminShellPackageEnvironmentService packageEnvService)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
             _packageEnvService = packageEnvService;
         }
 
@@ -157,7 +157,7 @@ namespace AasxServerStandardBib.Services
         public void DeleteSubmodelElementByPath(string submodelIdentifier, string idShortPath)
         {
             var found = IsSubmodelElementPresent(submodelIdentifier, idShortPath, out ISubmodelElement submodelElement, out IReferable smeParent);
-            if(found)
+            if (found)
             {
                 if (smeParent is SubmodelElementCollection parentCollection)
                 {
@@ -196,10 +196,10 @@ namespace AasxServerStandardBib.Services
 
         public List<ISubmodelElement> GetAllSubmodelElements(string submodelIdentifier)
         {
-            var submodel = _packageEnvService.GetSubmodelById(submodelIdentifier, out _); 
+            var submodel = _packageEnvService.GetSubmodelById(submodelIdentifier, out _);
             return submodel.SubmodelElements;
         }
 
-        
+
     }
 }

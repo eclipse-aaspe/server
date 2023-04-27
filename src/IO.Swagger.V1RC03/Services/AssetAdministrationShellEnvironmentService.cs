@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;

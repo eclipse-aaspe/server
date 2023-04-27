@@ -1,6 +1,6 @@
 ﻿using static AasCore.Aas3_0_RC02.Visitation;
 using System.Text.Json.Nodes;
-using AasCore.Aas3_0_RC02;
+
 using System.Collections.Generic;
 using System;
 

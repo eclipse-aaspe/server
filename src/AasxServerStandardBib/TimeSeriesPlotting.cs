@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AdminShellNS;
 using Extensions;
 using Newtonsoft.Json;
@@ -1657,7 +1657,7 @@ namespace AasxServerStandardBib
 
                 // options
                 if (isCaseOf != null)
-                    cd.IsCaseOf = new List<Reference>(new[] { isCaseOf });
+                    cd.IsCaseOf = new List<IReference>(new[] { isCaseOf });
 
                 // ok
                 return cd;

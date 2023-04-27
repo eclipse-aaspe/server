@@ -19,25 +19,25 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [DataContract]
     public partial class Result : IEquatable<Result>
-    { 
+    {
         /// <summary>
         /// Gets or Sets Messages
         /// </summary>
 
-        [DataMember(Name="messages")]
+        [DataMember(Name = "messages")]
         public List<Message> Messages { get; set; }
 
         /// <summary>
         /// Gets or Sets Success
         /// </summary>
 
-        [DataMember(Name="success")]
+        [DataMember(Name = "success")]
         public bool? Success { get; set; }
 
         /// <summary>
@@ -85,12 +85,12 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return 
+            return
                 (
                     Messages == other.Messages ||
                     Messages != null &&
                     Messages.SequenceEqual(other.Messages)
-                ) && 
+                ) &&
                 (
                     Success == other.Success ||
                     Success != null &&
@@ -108,16 +108,16 @@ namespace IO.Swagger.Models
             {
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
-                    if (Messages != null)
+                if (Messages != null)
                     hashCode = hashCode * 59 + Messages.GetHashCode();
-                    if (Success != null)
+                if (Success != null)
                     hashCode = hashCode * 59 + Success.GetHashCode();
                 return hashCode;
             }
         }
 
         #region Operators
-        #pragma warning disable 1591
+#pragma warning disable 1591
 
         public static bool operator ==(Result left, Result right)
         {
@@ -129,7 +129,7 @@ namespace IO.Swagger.Models
             return !Equals(left, right);
         }
 
-        #pragma warning restore 1591
+#pragma warning restore 1591
         #endregion Operators
     }
 }

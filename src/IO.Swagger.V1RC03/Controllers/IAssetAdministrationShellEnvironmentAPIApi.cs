@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using IO.Swagger.V1RC03.ApiModel;
-using AasCore.Aas3_0_RC02;
+
 using Microsoft.AspNetCore.Http;
 using IO.Swagger.V1RC03.APIModels;
 

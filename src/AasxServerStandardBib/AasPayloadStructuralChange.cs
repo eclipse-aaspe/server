@@ -10,16 +10,9 @@ This source code may use other Open Source software components (see LICENSE.txt)
 // to be disabled for AASX Server
 // #define UseMarkup 
 
+using AasxIntegrationBase;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using AasCore.Aas3_0_RC02;
-using AasxIntegrationBase;
-using AdminShellNS;
-using Newtonsoft.Json;
 
 namespace AdminShellEvents
 {
@@ -57,7 +50,7 @@ namespace AdminShellEvents
         /// Is null / empty, if identical to Observable.
         /// </summary>
         //public AdminShell.KeyList Path { get; set; }
-        public List<Key> Path { get; set; }
+        public List<IKey> Path { get; set; }
 
         /// <summary>
         /// JSON-Serializatin of the Submodel, SMC, SME which was denoted by Observabale and Path.
@@ -78,7 +71,7 @@ namespace AdminShellEvents
             ulong count,
             DateTime timeStamp,
             ChangeReason reason,
-            List<Key> path = null,
+            List<IKey> path = null,
             string data = null)
         {
             Count = count;

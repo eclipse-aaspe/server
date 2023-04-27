@@ -1,11 +1,12 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using Extensions;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Extensions;
 
 namespace AasxServerStandardBib.Services
 {
@@ -15,14 +16,14 @@ namespace AasxServerStandardBib.Services
         private readonly IAdminShellPackageEnvironmentService _packageEnvService;
         private readonly IMetamodelVerificationService _verificationService;
 
-        public ConceptDescriptionService(IAppLogger<ConceptDescriptionService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService) 
+        public ConceptDescriptionService(IAppLogger<ConceptDescriptionService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
             _packageEnvService = packageEnvService;
             _verificationService = verificationService;
         }
 
-        public ConceptDescription CreateConceptDescription(ConceptDescription body)
+        public IConceptDescription CreateConceptDescription(IConceptDescription body)
         {
             //Verify the body first
             _verificationService.VerifyRequestBody(body);
@@ -44,7 +45,7 @@ namespace AasxServerStandardBib.Services
             _packageEnvService.DeleteConceptDescriptionById(cdIdentifier);
         }
 
-        public List<ConceptDescription> GetAllConceptDescriptions(string idShort, Reference isCaseOf, Reference dataSpecificationRef)
+        public List<IConceptDescription> GetAllConceptDescriptions(string idShort, Reference isCaseOf, Reference dataSpecificationRef)
         {
             //Get All Concept descriptions
             var output = _packageEnvService.GetAllConceptDescriptions();
@@ -68,7 +69,7 @@ namespace AasxServerStandardBib.Services
                 //Filter based on IsCaseOf
                 if (isCaseOf != null)
                 {
-                    var cdList = new List<ConceptDescription>();
+                    var cdList = new List<IConceptDescription>();
                     foreach (var conceptDescription in output)
                     {
                         if (!conceptDescription.IsCaseOf.IsNullOrEmpty())
@@ -97,7 +98,7 @@ namespace AasxServerStandardBib.Services
                 //Filter based on DataSpecificationRef
                 if (dataSpecificationRef != null)
                 {
-                    var cdList = new List<ConceptDescription>();
+                    var cdList = new List<IConceptDescription>();
                     foreach (var conceptDescription in output)
                     {
                         if (!conceptDescription.EmbeddedDataSpecifications.IsNullOrEmpty())
@@ -126,7 +127,7 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public ConceptDescription GetConceptDescriptionById(string cdIdentifier)
+        public IConceptDescription GetConceptDescriptionById(string cdIdentifier)
         {
             return _packageEnvService.GetConceptDescriptionById(cdIdentifier, out _);
         }

@@ -1,11 +1,6 @@
-﻿using AasCore.Aas3_0_RC02;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Extensions
 {
@@ -15,7 +10,7 @@ namespace Extensions
         {
             if (sourceQualifier.semanticId != null)
             {
-                var keyList = new List<Key>();
+                var keyList = new List<IKey>();
                 foreach (var refKey in sourceQualifier.semanticId.Keys)
                 {
                     var keyType = Stringification.KeyTypesFromString(refKey.type);
@@ -28,7 +23,7 @@ namespace Extensions
                         Console.WriteLine($"KeyType value {refKey.type} not found.");
                     }
                 }
-                qualifier.SemanticId = new Reference(ReferenceTypes.GlobalReference, keyList);
+                qualifier.SemanticId = new Reference(ReferenceTypes.ExternalReference, keyList);
             }
 
             qualifier.Type = sourceQualifier.qualifierType;
@@ -36,7 +31,7 @@ namespace Extensions
 
             if (sourceQualifier.qualifierValueId != null)
             {
-                var keyList = new List<Key>();
+                var keyList = new List<IKey>();
                 foreach (var refKey in sourceQualifier.qualifierValueId.Keys)
                 {
                     var keyType = Stringification.KeyTypesFromString(refKey.type);
@@ -49,7 +44,7 @@ namespace Extensions
                         Console.WriteLine($"KeyType value {refKey.type} not found.");
                     }
                 }
-                qualifier.ValueId = new Reference(ReferenceTypes.GlobalReference, keyList);
+                qualifier.ValueId = new Reference(ReferenceTypes.ExternalReference, keyList);
             }
 
             return qualifier;
@@ -59,7 +54,7 @@ namespace Extensions
         {
             if (sourceQualifier.semanticId != null)
             {
-                var keyList = new List<Key>();
+                var keyList = new List<IKey>();
                 foreach (var refKey in sourceQualifier.semanticId.Keys)
                 {
                     var keyType = Stringification.KeyTypesFromString(refKey.type);
@@ -73,7 +68,7 @@ namespace Extensions
                     }
 
                 }
-                qualifier.SemanticId = new Reference(ReferenceTypes.GlobalReference, keyList);
+                qualifier.SemanticId = new Reference(ReferenceTypes.ExternalReference, keyList);
             }
 
             qualifier.Type = sourceQualifier.type;
@@ -81,7 +76,7 @@ namespace Extensions
 
             if (sourceQualifier.valueId != null)
             {
-                var keyList = new List<Key>();
+                var keyList = new List<IKey>();
                 foreach (var refKey in sourceQualifier.valueId.Keys)
                 {
                     var keyType = Stringification.KeyTypesFromString(refKey.type);
@@ -94,7 +89,7 @@ namespace Extensions
                         Console.WriteLine($"KeyType value {refKey.type} not found.");
                     }
                 }
-                qualifier.ValueId = new Reference(ReferenceTypes.GlobalReference, keyList);
+                qualifier.ValueId = new Reference(ReferenceTypes.ExternalReference, keyList);
             }
 
             return qualifier;
@@ -102,7 +97,7 @@ namespace Extensions
 
         // ReSharper disable MethodOverloadWithOptionalParameter .. this seems to work, anyhow
         // ReSharper disable RedundantArgumentDefaultValue
-        public static string ToStringExtended(this Qualifier q, 
+        public static string ToStringExtended(this Qualifier q,
             int format = 0, string delimiter = ",")
         {
             var res = "" + q.Type;
@@ -129,14 +124,14 @@ namespace Extensions
 
         public static Qualifier FindQualifierOfType(this List<Qualifier> qualifiers, string qualifierType)
         {
-            if(qualifierType == null)
+            if (qualifierType == null)
             {
                 return null;
             }
 
-            foreach(var qualifier in qualifiers)
+            foreach (var qualifier in qualifiers)
             {
-                if(qualifier != null && qualifierType.Equals(qualifier.Type))
+                if (qualifier != null && qualifierType.Equals(qualifier.Type))
                 {
                     return qualifier;
                 }
@@ -147,7 +142,7 @@ namespace Extensions
 
         // ReSharper disable MethodOverloadWithOptionalParameter .. this seems to work, anyhow
         // ReSharper disable RedundantArgumentDefaultValue
-        public static string ToStringExtended(this List<Qualifier> qualifiers, 
+        public static string ToStringExtended(this List<Qualifier> qualifiers,
             int format = 0, string delimiter = ";", string referencesDelimiter = ",")
         {
             var res = "";

@@ -1,11 +1,6 @@
-﻿using AasCore.Aas3_0_RC02;
-using AdminShellNS.Exceptions;
-using System;
+﻿using AdminShellNS.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Extensions
 {
@@ -18,7 +13,7 @@ namespace Extensions
             return new AasElementSelfDescription("Reference", "Rfc", null, null);
         }
 
-        public static bool IsValid(this Reference reference)
+        public static bool IsValid(this IReference reference)
         {
             return reference.Keys != null && !reference.Keys.IsEmpty();
         }
@@ -31,7 +26,7 @@ namespace Extensions
         /// <returns>Reference with guessed type</returns>
         public static Reference CreateFromKey(Key k)
         {
-            var res = new Reference(ReferenceTypes.GlobalReference, new List<Key> { k });   
+            var res = new Reference(ReferenceTypes.ExternalReference, new List<IKey> { k });
             res.Type = res.GuessType();
             return res;
         }
@@ -43,11 +38,11 @@ namespace Extensions
         public static Reference CreateFromKey(KeyTypes type,
             string value)
         {
-            var res = new Reference(ReferenceTypes.GlobalReference, 
-                        new List<Key> { new Key(type, value) });
+            var res = new Reference(ReferenceTypes.ExternalReference,
+                        new List<IKey> { new Key(type, value) });
             res.Type = res.GuessType();
             return res;
-        }        
+        }
 
         /// <summary>
         /// Formaly a static constructor.
@@ -57,7 +52,7 @@ namespace Extensions
         /// <returns></returns>
         public static Reference CreateNew(List<Key> lk)
         {
-            var res = new Reference(ReferenceTypes.GlobalReference, new List<Key>());
+            var res = new Reference(ReferenceTypes.ExternalReference, new List<IKey>());
             if (lk == null)
                 return res;
             res.Keys.AddRange(lk.Copy());
@@ -68,7 +63,7 @@ namespace Extensions
         // TODO (Jui, 2023-01-05): Check why the generic Copy<T> does not apply here?!
         public static Reference Copy(this Reference original)
         {
-            var res = new Reference(original.Type, new List<Key>());
+            var res = new Reference(original.Type, new List<IKey>());
             if (original != null)
                 foreach (var o in original.Keys)
                     res.Add(o.Copy());
@@ -78,7 +73,7 @@ namespace Extensions
 
         public static Reference Parse(string input)
         {
-            var res = new Reference(ReferenceTypes.GlobalReference, new List<Key>());
+            var res = new Reference(ReferenceTypes.ExternalReference, new List<IKey>());
             if (input == null)
                 return res;
 
@@ -94,14 +89,14 @@ namespace Extensions
             return a;
         }
 
-        public static Reference Add(this Reference a, Key k)
+        public static Reference Add(this Reference a, IKey k)
         {
             if (k != null)
                 a.Keys?.Add(k);
             return a;
         }
 
-        public static bool IsEmpty(this Reference reference)
+        public static bool IsEmpty(this IReference reference)
         {
             if (reference == null || reference.Keys == null || reference.Keys.Count < 1)
             {
@@ -109,18 +104,18 @@ namespace Extensions
             }
 
             return false;
-        } 
+        }
 
         #endregion
 
-        public static bool Matches (this Reference reference, KeyTypes keyType, string id, MatchMode matchMode = MatchMode.Strict)
+        public static bool Matches(this IReference reference, KeyTypes keyType, string id, MatchMode matchMode = MatchMode.Strict)
         {
-            if(reference.IsEmpty())
+            if (reference.IsEmpty())
             {
                 return false;
             }
 
-            if(reference.Keys.Count == 1)
+            if (reference.Keys.Count == 1)
             {
                 var key = reference.Keys[0];
                 return key.Matches(new Key(keyType, id), matchMode);
@@ -129,7 +124,7 @@ namespace Extensions
             return false;
         }
 
-        public static bool Matches(this Reference reference, string id)
+        public static bool Matches(this IReference reference, string id)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -145,7 +140,7 @@ namespace Extensions
             return false;
         }
 
-        public static bool Matches(this Reference reference, Reference otherReference, MatchMode matchMode = MatchMode.Strict)
+        public static bool Matches(this IReference reference, IReference otherReference, MatchMode matchMode = MatchMode.Strict)
         {
             if (reference.Keys == null || reference.Keys.Count == 0 || otherReference?.Keys == null || otherReference.Keys.Count == 0)
             {
@@ -161,9 +156,9 @@ namespace Extensions
             return match;
         }
 
-        public static bool MatchesExactlyOneKey(this Reference reference, Key key, MatchMode matchMode = MatchMode.Strict)
+        public static bool MatchesExactlyOneKey(this IReference reference, Key key, MatchMode matchMode = MatchMode.Strict)
         {
-            if(key == null || reference.Keys == null || reference.Keys.Count != 1)
+            if (key == null || reference.Keys == null || reference.Keys.Count != 1)
             {
                 return false;
             }
@@ -172,9 +167,9 @@ namespace Extensions
             return referenceKey.Matches(key, matchMode);
         }
 
-        public static string GetAsIdentifier(this Reference reference)
+        public static string GetAsIdentifier(this IReference reference)
         {
-            if (reference.Type == ReferenceTypes.GlobalReference) // Applying only to Global Reference, based on older implementation, TODO:Make it Generic
+            if (reference.Type == ReferenceTypes.ExternalReference) // Applying only to Global Reference, based on older implementation, TODO:Make it Generic
             {
                 if (reference.Keys == null || reference.Keys.Count < 1)
                 {
@@ -187,7 +182,7 @@ namespace Extensions
             return null;
         }
 
-        public static string MostSignificantInfo(this Reference reference)
+        public static string MostSignificantInfo(this IReference reference)
         {
             if (reference.Keys.Count < 1)
             {
@@ -201,7 +196,7 @@ namespace Extensions
             return output;
         }
 
-        public static Key GetAsExactlyOneKey(this Reference reference)
+        public static Key GetAsExactlyOneKey(this IReference reference)
         {
             if (reference.Keys == null || reference.Keys.Count != 1)
             {
@@ -212,9 +207,9 @@ namespace Extensions
             return new Key(key.Type, key.Value);
         }
 
-        public static string ToStringExtended(this Reference reference, int format = 1, string delimiter = ",")
+        public static string ToStringExtended(this IReference reference, int format = 1, string delimiter = ",")
         {
-            if(reference.Keys == null)
+            if (reference.Keys == null)
             {
                 throw new NullValueException("Keys");
             }
@@ -232,7 +227,7 @@ namespace Extensions
             if (allAasRefs)
                 return ReferenceTypes.ModelReference;
             else
-                return ReferenceTypes.GlobalReference;
+                return ReferenceTypes.ExternalReference;
         }
 
         public static int Count(this Reference rf)
@@ -240,9 +235,9 @@ namespace Extensions
             return rf.Keys.Count;
         }
 
-        public static Key Last(this Reference rf)
-        { 
-            return rf.Keys.Last(); 
+        public static IKey Last(this Reference rf)
+        {
+            return rf.Keys.Last();
         }
 
         public static string ListOfValues(this Reference rf, string delim)

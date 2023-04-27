@@ -1,11 +1,11 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServer;
+using Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using static AasxServerBlazor.Pages.TreePage;
-using Extensions;
 
 namespace AasxServerBlazor.Data
 {
@@ -148,7 +148,7 @@ namespace AasxServerBlazor.Data
                                 foreach (var c in childs)
                                     c.parent = root;
                                 items.Add(root);
-                            } 
+                            }
                         }
                     }
                     if (Program.envSymbols[i] == "L")
@@ -339,7 +339,7 @@ namespace AasxServerBlazor.Data
                 c.parent = smeRootItem;
         }
 
-        public List<Submodel> GetSubmodels()
+        public List<ISubmodel> GetSubmodels()
         {
             return Program.env[0].AasEnv.Submodels;
         }

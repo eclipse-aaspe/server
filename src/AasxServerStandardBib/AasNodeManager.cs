@@ -27,14 +27,13 @@
  * http://opcfoundation.org/License/MIT/1.00/
  * ======================================================================*/
 
+using AdminShellNS;
+using Opc.Ua;
+using Opc.Ua.Sample;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using AdminShellNS;
-using Opc.Ua;
-using Opc.Ua.Sample;
 
 namespace AasOpcUaServer
 {
@@ -169,7 +168,7 @@ namespace AasOpcUaServer
         /// in other node managers. For example, the 'Objects' node is managed by the CoreNodeManager and
         /// should have a reference to the root folder node(s) exposed by this node manager.  
         /// </remarks>
-        public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
+        public override void CreateAddressSpace(IDictionary<NodeId, IList<Opc.Ua.IReference>> externalReferences)
         {
             lock (Lock)
             {
@@ -342,11 +341,11 @@ namespace AasOpcUaServer
             return res;
         }
 
-        public void AddReference(NodeId node, IReference reference)
+        public void AddReference(NodeId node, Opc.Ua.IReference reference)
         {
-            var dict = new Dictionary<NodeId, IList<IReference>>();
+            var dict = new Dictionary<NodeId, IList<Opc.Ua.IReference>>();
             // ReSharper disable once RedundantExplicitArrayCreation
-            dict.Add(node, new List<IReference>(new IReference[] { reference }));
+            dict.Add(node, new List<Opc.Ua.IReference>(new Opc.Ua.IReference[] { reference }));
             this.AddReferences(dict);
         }
 

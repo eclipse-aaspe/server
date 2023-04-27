@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using Nodes = System.Text.Json.Nodes;
 using System;
 using System.Collections.Generic;

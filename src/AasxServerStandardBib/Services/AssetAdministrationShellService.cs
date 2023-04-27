@@ -1,15 +1,12 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
-using AdminShellNS.Exceptions;
 using AdminShellNS.Extensions;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
-using MimeKit;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,21 +20,21 @@ namespace AasxServerStandardBib.Services
         private readonly IMetamodelVerificationService _verificationService;
         private readonly ISubmodelService _submodelService;
 
-        public AssetAdministrationShellService(IAppLogger<AssetAdministrationShellService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService, ISubmodelService submodelService) 
+        public AssetAdministrationShellService(IAppLogger<AssetAdministrationShellService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService, ISubmodelService submodelService)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
             _packageEnvService = packageEnvService;
             _verificationService = verificationService;
             _submodelService = submodelService;
         }
 
-        public AssetAdministrationShell CreateAssetAdministrationShell(AssetAdministrationShell body)
+        public IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body)
         {
             //Verify the body first
             _verificationService.VerifyRequestBody(body);
 
             var found = _packageEnvService.IsAssetAdministrationShellPresent(body.Id);
-            if(found)
+            if (found)
             {
                 _logger.LogDebug($"Cannot create requested AAS !!");
                 throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
@@ -48,20 +45,20 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public Reference CreateSubmodelReferenceInAAS(Reference body, string aasIdentifier)
+        public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
         {
-            Reference output = null;
+            IReference output = null;
             //Verify request body
             _verificationService.VerifyRequestBody(body);
 
             //TODO:jtikekar to check if submodel with requested submodelReference exists in the server
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
 
-            if(aas != null)
+            if (aas != null)
             {
-                if(aas.Submodels.IsNullOrEmpty())
+                if (aas.Submodels.IsNullOrEmpty())
                 {
-                    aas.Submodels = new List<Reference>
+                    aas.Submodels = new List<IReference>
                     {
                         body
                     };
@@ -71,23 +68,23 @@ namespace AasxServerStandardBib.Services
                 {
                     bool found = false;
                     //Check if duplicate
-                    foreach(var submodelReference in aas.Submodels)
+                    foreach (var submodelReference in aas.Submodels)
                     {
-                        if(submodelReference.Matches(body))
+                        if (submodelReference.Matches(body))
                         {
                             found = true;
                             break;
                         }
                     }
 
-                    if(found)
+                    if (found)
                     {
                         _logger.LogDebug($"Cannot create requested Submodel-Reference in the AAS !!");
                         throw new DuplicateException($"Requested SubmodelReference already exists in the AAS with Id {aasIdentifier}.");
                     }
                     else
                     {
-                        aas.Submodels.Add( body );
+                        aas.Submodels.Add(body);
                         output = aas.Submodels.Last();
                     }
                 }
@@ -96,7 +93,7 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        
+
 
         public void DeleteAssetAdministrationShellById(string aasIdentifier)
         {
@@ -112,7 +109,7 @@ namespace AasxServerStandardBib.Services
         public void DeleteSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
             var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
-            if(found)
+            if (found)
             {
                 _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
                 _submodelService.DeleteSubmodelElementByPath(submodelIdentifier, idShortPath);
@@ -124,20 +121,20 @@ namespace AasxServerStandardBib.Services
 
         }
 
-        
+
 
         public void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier)
         {
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
 
-            if(aas != null)
+            if (aas != null)
             {
                 var submodelReference = aas.Submodels.Where(s => s.Matches(submodelIdentifier));
-                if(submodelReference.Any())
+                if (submodelReference.Any())
                 {
                     _logger.LogDebug($"Found requested submodel reference in the aas.");
                     bool deleted = aas.Submodels.Remove(submodelReference.First());
-                    if(deleted)
+                    if (deleted)
                     {
                         _logger.LogDebug($"Deleted submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
                         Program.signalNewData(1);
@@ -154,7 +151,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<AssetAdministrationShell> GetAllAssetAdministrationShells(List<SpecificAssetId> assetIds = null, string idShort = null)
+        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<SpecificAssetId> assetIds = null, string idShort = null)
         {
             var output = _packageEnvService.GetAllAssetAdministrationShells();
 
@@ -166,16 +163,16 @@ namespace AasxServerStandardBib.Services
                 {
                     _logger.LogDebug($"Filtering AASs with idShort {idShort}.");
                     output = output.Where(a => a.IdShort.Equals(idShort)).ToList();
-                    if(output.IsNullOrEmpty())
+                    if (output.IsNullOrEmpty())
                     {
                         _logger.LogInformation($"No AAS with idShhort {idShort} found.");
                     }
-                } 
+                }
 
-                if(!assetIds.IsNullOrEmpty())
+                if (!assetIds.IsNullOrEmpty())
                 {
                     _logger.LogDebug($"Filtering AASs with requested specific assetIds.");
-                    var aasList = new List<AssetAdministrationShell>();
+                    var aasList = new List<IAssetAdministrationShell>();
                     foreach (var assetId in assetIds)
                     {
                         aasList = output.Where(a => a.AssetInformation.SpecificAssetIds.ContainsSpecificAssetId(assetId)).ToList();
@@ -209,14 +206,14 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<Reference> GetAllSubmodelReferencesFromAas(string aasIdentifier)
+        public List<IReference> GetAllSubmodelReferencesFromAas(string aasIdentifier)
         {
-            List<Reference> output = new List<Reference>();
+            List<IReference> output = new List<IReference>();
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
 
-            if(aas != null)
+            if (aas != null)
             {
-                if(aas.Submodels.IsNullOrEmpty())
+                if (aas.Submodels.IsNullOrEmpty())
                 {
                     _logger.LogDebug($"No submodels present in the AAS with Id {aasIdentifier}");
                 }
@@ -227,12 +224,12 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public AssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier)
+        public IAssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier)
         {
             return _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
         }
 
-        public AssetInformation GetAssetInformation(string aasIdentifier)
+        public IAssetInformation GetAssetInformation(string aasIdentifier)
         {
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
             return aas.AssetInformation;
@@ -272,7 +269,7 @@ namespace AasxServerStandardBib.Services
             return fileName;
         }
 
-        public void UpdateAssetAdministrationShellById(AssetAdministrationShell body, string aasIdentifier)
+        public void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
         {
             //Verify the body first
             _verificationService.VerifyRequestBody(body);
@@ -311,7 +308,7 @@ namespace AasxServerStandardBib.Services
                     if (asset.DefaultThumbnail == null)
                     {
                         //If thumbnail is not set, set to default path 
-                        asset.DefaultThumbnail ??= new(Path.Combine("/aasx/files", fileName).Replace('/', Path.DirectorySeparatorChar), contentType);
+                        asset.DefaultThumbnail ??= new Resource(Path.Combine("/aasx/files", fileName).Replace('/', Path.DirectorySeparatorChar), contentType);
                     }
                     else
                     {
@@ -319,7 +316,7 @@ namespace AasxServerStandardBib.Services
                     }
 
                     _packageEnvService.UpdateAssetInformationThumbnail(asset.DefaultThumbnail, fileContent, packageIndex);
-                    
+
 
                 }
                 else
@@ -334,11 +331,11 @@ namespace AasxServerStandardBib.Services
         private bool IsSubmodelPresentWithinAAS(string aasIdentifier, string submodelIdentifier)
         {
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
-            if(aas != null)
+            if (aas != null)
             {
-                foreach(var submodelReference in aas.Submodels)
+                foreach (var submodelReference in aas.Submodels)
                 {
-                    if(submodelReference.GetAsExactlyOneKey().Value.Equals(submodelIdentifier))
+                    if (submodelReference.GetAsExactlyOneKey().Value.Equals(submodelIdentifier))
                     { return true; }
                 }
             }

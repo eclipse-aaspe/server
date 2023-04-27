@@ -7,22 +7,18 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using AdminShellNS;
+using Opc.Ua;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-using Opc.Ua;
 
 namespace AasOpcUaServer
 {
     public class AasUaPackageFileHandler
     {
         private AdminShellPackageEnv package = null;
-        private AasCore.Aas3_0_RC02.File file = null;
+        private AasCore.Aas3_0.File file = null;
 
         private class PackageFileHandle
         {
@@ -43,7 +39,7 @@ namespace AasOpcUaServer
 
         private Dictionary<UInt32, PackageFileHandle> handles = new Dictionary<uint, PackageFileHandle>();
 
-        public AasUaPackageFileHandler(AdminShellPackageEnv package, AasCore.Aas3_0_RC02.File file)
+        public AasUaPackageFileHandler(AdminShellPackageEnv package, AasCore.Aas3_0.File file)
         {
             this.package = package;
             this.file = file;
@@ -189,7 +185,7 @@ namespace AasOpcUaServer
         /// Shall be TRUE for local, existing files ..
         /// </summary>
         /// <returns></returns>
-        public bool CheckSuitablity(AdminShellPackageEnv package, AasCore.Aas3_0_RC02.File file)
+        public bool CheckSuitablity(AdminShellPackageEnv package, AasCore.Aas3_0.File file)
         {
             // trivial
             if (package == null || file == null)
@@ -212,7 +208,7 @@ namespace AasOpcUaServer
         }
 
         public NodeState CreateAddElements(NodeState parent, CreateMode mode,
-            AdminShellPackageEnv package = null, AasCore.Aas3_0_RC02.File file = null)
+            AdminShellPackageEnv package = null, AasCore.Aas3_0.File file = null)
         {
             // access
             if (parent == null)

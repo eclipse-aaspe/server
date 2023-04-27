@@ -1,12 +1,7 @@
-﻿using System;
+﻿using Opc.Ua;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-using Opc.Ua;
 
 namespace AasOpcUaServer
 {
@@ -57,7 +52,7 @@ namespace AasOpcUaServer
             return res;
         }
 
-        public static LocalizedText[] GetUaLocalizedTexts(List<LangString> ls)
+        public static LocalizedText[] GetUaLocalizedTexts(List<ILangStringTextType> ls)
         {
             if (ls == null || ls.Count < 1)
                 return new LocalizedText[] { new LocalizedText("", "") };
@@ -67,7 +62,7 @@ namespace AasOpcUaServer
             return res;
         }
 
-        public static LocalizedText GetBestUaDescriptionFromAasDescription(List<LangString> desc)
+        public static LocalizedText GetBestUaDescriptionFromAasDescription(List<ILangStringTextType> desc)
         {
             var res = new LocalizedText("", "");
             if (desc != null && desc != null)

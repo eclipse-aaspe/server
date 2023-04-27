@@ -1,208 +1,198 @@
-﻿using AasCore.Aas3_0_RC02;
-using IO.Swagger.Models;
-using Opc.Ua;
-using System.Text.Json.Nodes;
-using static AasCore.Aas3_0_RC02.Visitation;
+﻿using System.Text.Json.Nodes;
+using static AasCore.Aas3_0.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers
 {
     public class LevelExtentTransformer : AbstractTransformerWithContext<SerializationModifierContext, JsonObject>
     {
-        public override JsonObject Transform(Extension that, SerializationModifierContext context)
+        public override JsonObject TransformAdministrativeInformation(IAdministrativeInformation that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(AdministrativeInformation that, SerializationModifierContext context)
+        public override JsonObject TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Qualifier that, SerializationModifierContext context)
+        public override JsonObject TransformAssetAdministrationShell(IAssetAdministrationShell that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(AssetAdministrationShell that, SerializationModifierContext context)
+        public override JsonObject TransformAssetInformation(IAssetInformation that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(AssetInformation that, SerializationModifierContext context)
+        public override JsonObject TransformBasicEventElement(IBasicEventElement that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Resource that, SerializationModifierContext context)
+        public override JsonObject TransformBlob(IBlob that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(SpecificAssetId that, SerializationModifierContext context)
+        public override JsonObject TransformCapability(ICapability that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Submodel that, SerializationModifierContext context)
+        public override JsonObject TransformConceptDescription(IConceptDescription that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(RelationshipElement that, SerializationModifierContext context)
+        public override JsonObject TransformDataSpecificationIec61360(IDataSpecificationIec61360 that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(SubmodelElementList that, SerializationModifierContext context)
+        public override JsonObject TransformEmbeddedDataSpecification(IEmbeddedDataSpecification that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(SubmodelElementCollection that, SerializationModifierContext context)
+        public override JsonObject TransformEntity(IEntity that, SerializationModifierContext context)
         {
-            var result = Jsonization.Serialize.ToJsonObject(that);
-
-            //Transform SubmodelElements w.r.t. extent
-            if (context.Extent == ExtentEnum.WithoutBlobValue)
-            {
-                JsonArray valueArray = (JsonArray)result["value"];
-                foreach (JsonObject item in valueArray)
-                {
-                    var modelType = item["modelType"].GetValue<string>();
-                    if(modelType.Equals("Blob"))
-                    {
-                        item.Remove("value");
-                    }
-                } 
-            }
-
-            return result;
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Property that, SerializationModifierContext context)
+        public override JsonObject TransformEnvironment(IEnvironment that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(MultiLanguageProperty that, SerializationModifierContext context)
+        public override JsonObject TransformEventPayload(IEventPayload that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(AasCore.Aas3_0_RC02.Range that, SerializationModifierContext context)
+        public override JsonObject TransformExtension(IExtension that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(ReferenceElement that, SerializationModifierContext context)
+        public override JsonObject TransformFile(IFile that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Blob that, SerializationModifierContext context)
+        public override JsonObject TransformKey(IKey that, SerializationModifierContext context)
         {
-            var result = Jsonization.Serialize.ToJsonObject(that);
-
-            //Check extent and remove value if WithoutBlob
-            if(result != null)
-            {
-                if(context.Extent == ExtentEnum.WithoutBlobValue)
-                {
-                    result.Remove("value");
-                }
-            }
-
-            return result;
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(File that, SerializationModifierContext context)
+        public override JsonObject TransformLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(AnnotatedRelationshipElement that, SerializationModifierContext context)
+        public override JsonObject TransformLangStringNameType(ILangStringNameType that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Entity that, SerializationModifierContext context)
+        public override JsonObject TransformLangStringPreferredNameTypeIec61360(ILangStringPreferredNameTypeIec61360 that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(EventPayload that, SerializationModifierContext context)
+        public override JsonObject TransformLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(BasicEventElement that, SerializationModifierContext context)
+        public override JsonObject TransformLangStringTextType(ILangStringTextType that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Operation that, SerializationModifierContext context)
+        public override JsonObject TransformLevelType(ILevelType that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(OperationVariable that, SerializationModifierContext context)
+        public override JsonObject TransformMultiLanguageProperty(IMultiLanguageProperty that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Capability that, SerializationModifierContext context)
+        public override JsonObject TransformOperation(IOperation that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(ConceptDescription that, SerializationModifierContext context)
+        public override JsonObject TransformOperationVariable(IOperationVariable that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Reference that, SerializationModifierContext context)
+        public override JsonObject TransformProperty(IProperty that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Key that, SerializationModifierContext context)
+        public override JsonObject TransformQualifier(IQualifier that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(LangString that, SerializationModifierContext context)
+        public override JsonObject TransformRange(IRange that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(Environment that, SerializationModifierContext context)
+        public override JsonObject TransformReference(IReference that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(EmbeddedDataSpecification that, SerializationModifierContext context)
+        public override JsonObject TransformReferenceElement(IReferenceElement that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(ValueReferencePair that, SerializationModifierContext context)
+        public override JsonObject TransformRelationshipElement(IRelationshipElement that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(ValueList that, SerializationModifierContext context)
+        public override JsonObject TransformResource(IResource that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(DataSpecificationIec61360 that, SerializationModifierContext context)
+        public override JsonObject TransformSpecificAssetId(ISpecificAssetId that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
         }
 
-        public override JsonObject Transform(DataSpecificationPhysicalUnit that, SerializationModifierContext context)
+        public override JsonObject TransformSubmodel(ISubmodel that, SerializationModifierContext context)
         {
-            return Jsonization.Serialize.ToJsonObject(that);
+            throw new System.NotImplementedException();
+        }
+
+        public override JsonObject TransformSubmodelElementCollection(ISubmodelElementCollection that, SerializationModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override JsonObject TransformSubmodelElementList(ISubmodelElementList that, SerializationModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override JsonObject TransformValueList(IValueList that, SerializationModifierContext context)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override JsonObject TransformValueReferencePair(IValueReferencePair that, SerializationModifierContext context)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

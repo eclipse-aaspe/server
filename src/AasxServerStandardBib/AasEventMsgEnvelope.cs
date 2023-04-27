@@ -10,13 +10,13 @@ This source code may use other Open Source software components (see LICENSE.txt)
 // to be disabled for AASX Server
 // #define UseMarkup
 
-using AasCore.Aas3_0_RC02;
+
 using AasxIntegrationBase;
+using Extensions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Extensions;
 
 namespace AdminShellEvents
 {
@@ -38,18 +38,18 @@ namespace AdminShellEvents
         /// SemanticId  of  the  source  EventElement,  if available.
         /// </summary>
         //jtikekar: Considering SemanticID is nor of type Reference
-        public Reference SourceSemanticId { get; set; }
+        public IReference SourceSemanticId { get; set; }
 
         /// <summary>
         /// Reference  to  the  Referable,  which  defines  the scope  of  the  event.  Can  be  AAS,  Submodel, 
         /// SubmodelElementCollection  or SubmodelElement. 
         /// </summary>
-        public Reference ObservableReference { get; set; }
+        public IReference ObservableReference { get; set; }
 
         /// <summary>
         /// SemanticId  of  the  Referable,  which  defines  the scope of the event, if available. 
         /// </summary>
-        public Reference ObservableSemanticId { get; set; }
+        public IReference ObservableSemanticId { get; set; }
 
         /// <summary>
         /// Information for the outer message infrastructure for  scheduling the  event to the  respective 
@@ -126,9 +126,9 @@ namespace AdminShellEvents
         public AasEventMsgEnvelope(
             DateTime timestamp,
             Reference source = null,
-            Reference sourceSemanticId = null,
-            Reference observableReference = null,
-            Reference observableSemanticId = null,
+            IReference sourceSemanticId = null,
+            IReference observableReference = null,
+            IReference observableSemanticId = null,
             string topic = null,
             string subject = null,
             AasPayloadBase payload = null,

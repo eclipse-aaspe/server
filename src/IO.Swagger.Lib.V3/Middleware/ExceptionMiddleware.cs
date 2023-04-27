@@ -75,9 +75,9 @@ namespace IO.Swagger.Lib.V3.Middleware
                 case MetamodelVerificationException ex:
                     {
                         //Print the errors in debug level
-                        foreach(var error in ex.ErrorList)
+                        foreach (var error in ex.ErrorList)
                         {
-                            var errorText = AasCore.Aas3_0_RC02.Reporting.GenerateJsonPath(error.PathSegments) + ":" + error.Cause;
+                            var errorText = Reporting.GenerateJsonPath(error.PathSegments) + ":" + error.Cause;
                             logger.LogDebug(errorText);
                         }
 

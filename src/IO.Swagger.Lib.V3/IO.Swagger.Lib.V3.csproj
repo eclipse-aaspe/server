@@ -9,6 +9,9 @@
     <PackageId>IO.Swagger</PackageId>
     <OutputType>Library</OutputType>
   </PropertyGroup>
+	<ItemGroup>
+		<Using Include="AasCore.Aas3_0"/>
+	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="5.5.1" />
