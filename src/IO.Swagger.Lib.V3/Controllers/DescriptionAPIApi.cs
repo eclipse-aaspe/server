@@ -20,13 +20,13 @@ using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 
 namespace IO.Swagger.Controllers
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [ApiController]
     public class DescriptionAPIApiController : ControllerBase
-    { 
+    {
         /// <summary>
         /// Returns the self-describing information of a network resource (Description)
         /// </summary>
@@ -39,7 +39,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 200, type: typeof(List<Description>), description: "Requested Description")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         public virtual IActionResult GetDescription()
-        { 
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(List<Description>));
 
@@ -47,10 +47,10 @@ namespace IO.Swagger.Controllers
             // return StatusCode(403, default(Result));
             string exampleJson = null;
             exampleJson = "[ \"{\n  \"profiles\": [\n    \"RepositoryServiceSpecification/V3.0-MinimalProfile\",\n    \"RegistryServiceSpecification/V3.0\"\n  ]\n}\", \"{\n  \"profiles\": [\n    \"RepositoryServiceSpecification/V3.0-MinimalProfile\",\n    \"RegistryServiceSpecification/V3.0\"\n  ]\n}\" ]";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<List<Description>>(exampleJson)
-                        : default(List<Description>);            //TODO: Change the data returned
+
+            var example = exampleJson != null
+            ? JsonConvert.DeserializeObject<List<Description>>(exampleJson)
+            : default(List<Description>);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
     }

@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using System;
 using System.Linq;
 using static AasCore.Aas3_0_RC02.Visitation;

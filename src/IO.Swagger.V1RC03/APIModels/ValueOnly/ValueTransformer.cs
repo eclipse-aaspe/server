@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using IO.Swagger.V1RC03.APIModels.Core;
 using Org.BouncyCastle.Utilities.Encoders;
 using System.Collections.Generic;

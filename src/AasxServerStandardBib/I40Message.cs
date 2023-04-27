@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
 Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -64,10 +62,10 @@ namespace AasxServer
     public class I40Message_Interaction
     {
         public I40TransmitFrame frame;
-        public List<Submodel> interactionElements;
+        public List<ISubmodel> interactionElements;
         public I40Message_Interaction()
         {
-            interactionElements = new List<Submodel> { };
+            interactionElements = new List<ISubmodel> { };
         }
 
     }

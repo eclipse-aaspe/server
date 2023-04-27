@@ -7,11 +7,11 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
-using AasCore.Aas3_0_RC02;
+
 using AdminShellNS;
+using Extensions;
 using Opc.Ua;
 using System.Collections.Generic;
-using Extensions;
 
 namespace AasOpcUaServer
 {
@@ -26,7 +26,7 @@ namespace AasOpcUaServer
 
         public AasxUaServerOptions theServerOptions = null;
 
-        public IDictionary<NodeId, IList<IReference>> nodeMgrExternalReferences = null;
+        public IDictionary<NodeId, IList<Opc.Ua.IReference>> nodeMgrExternalReferences = null;
 
         /// <summary>
         /// Root of AASes
@@ -50,7 +50,7 @@ namespace AasOpcUaServer
         public NodeState RootMissingDictionaryEntries = null;
 
         public AasEntityBuilder(AasModeManager nodeMgr, AdminShellPackageEnv[] package,
-            IDictionary<NodeId, IList<IReference>> externalReferences, AasxUaServerOptions options)
+            IDictionary<NodeId, IList<Opc.Ua.IReference>> externalReferences, AasxUaServerOptions options)
         {
             AasEntityBuilder.nodeMgr = nodeMgr;
             this.packages = package;
@@ -187,7 +187,7 @@ namespace AasOpcUaServer
         /// Top level creation functions. Uses the definitions of RootAAS, RootConceptDescriptions, 
         /// RootDataSpecifications to synthesize information model
         /// </summary>
-        public void CreateAddInstanceObjects(AasCore.Aas3_0_RC02.Environment env)
+        public void CreateAddInstanceObjects(AasCore.Aas3_0.Environment env)
         {
             if (RootAAS == null)
                 return;
@@ -231,7 +231,7 @@ namespace AasOpcUaServer
                                         targetNodeRec.uanode.NodeId))
                     {
                         lax.uanode.AddReference(this.AasTypes.HasAasReference.GetTypeNodeId(), false,
-                                        targetNodeRec.uanode.NodeId); 
+                                        targetNodeRec.uanode.NodeId);
                     }
                 }
 
@@ -256,7 +256,7 @@ namespace AasOpcUaServer
                                                         targetNodeRec.uanode.NodeId))
                             {
                                 lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false,
-                                                        targetNodeRec.uanode.NodeId); 
+                                                        targetNodeRec.uanode.NodeId);
                             }
                             foundAtAll = true;
                         }
@@ -280,7 +280,7 @@ namespace AasOpcUaServer
                                                         nr.uanode?.NodeId))
                             {
                                 lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false,
-                                                        nr.uanode?.NodeId); 
+                                                        nr.uanode?.NodeId);
                             }
                         }
                         else
@@ -301,7 +301,7 @@ namespace AasOpcUaServer
                                                                 miss?.NodeId))
                                 {
                                     lax.uanode.AddReference(this.AasTypes.HasDictionaryEntry.GetTypeNodeId(), false,
-                                                                miss?.NodeId); 
+                                                                miss?.NodeId);
                                 }
 
                                 // put it into the NodeRecords, that it can be re-used?? no!!
@@ -326,7 +326,7 @@ namespace AasOpcUaServer
         //
 
         // ReSharper disable once UnusedType.Global
-        public class AasReference : IReference
+        public class AasReference : Opc.Ua.IReference
         {
             // private members
             private NodeId referenceTypeId = null;
@@ -580,7 +580,7 @@ namespace AasOpcUaServer
                 {
                     if (!parent.ReferenceExists(referenceTypeFromParentId, false, x.NodeId))
                     {
-                        parent.AddReference(referenceTypeFromParentId, false, x.NodeId); 
+                        parent.AddReference(referenceTypeFromParentId, false, x.NodeId);
                     }
                     if (referenceTypeFromParentId == ReferenceTypeIds.HasComponent)
                         x.AddReference(referenceTypeFromParentId, true, parent.NodeId);

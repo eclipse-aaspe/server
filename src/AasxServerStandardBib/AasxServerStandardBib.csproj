@@ -12,6 +12,9 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+	<ItemGroup>
+		<Using Include="AasCore.Aas3_0"/>
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Grapevine" Version="4.1.2" />

@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using Org.BouncyCastle.Crypto.Tls;
 using System.Collections.Generic;
 using System.Linq;

@@ -13,12 +13,12 @@
 
         public PaginationParameters(int? from, int? size)
         {
-            if(from != null)
+            if (from != null)
             {
                 From = from.Value;
             }
 
-            if(size != null)
+            if (size != null)
             {
                 Size = size.Value;
             }

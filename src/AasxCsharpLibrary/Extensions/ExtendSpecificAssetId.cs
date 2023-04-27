@@ -1,25 +1,20 @@
-﻿using AasCore.Aas3_0_RC02;
-using Extensions;
-using System;
+﻿using Extensions;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AdminShellNS.Extensions
 {
     public static class ExtendSpecificAssetId
     {
-        public static bool Matches(this SpecificAssetId specificAssetId, SpecificAssetId other)
+        public static bool Matches(this ISpecificAssetId specificAssetId, ISpecificAssetId other)
         {
-            if(specificAssetId == null) return false;
-            if(other == null) return false;
+            if (specificAssetId == null) return false;
+            if (other == null) return false;
 
             //check mandatory parameters first
-            if(specificAssetId.Name != other.Name) return false;
-            if(specificAssetId.Value != other.Value) return false;
-            if(!specificAssetId.ExternalSubjectId.Matches(other.ExternalSubjectId)) return false;
+            if (specificAssetId.Name != other.Name) return false;
+            if (specificAssetId.Value != other.Value) return false;
+            if (!specificAssetId.ExternalSubjectId.Matches(other.ExternalSubjectId)) return false;
 
             //TODO: jtikekar Check optional parameter i.e., Semantic Id and supplementatry semantic id
 
@@ -28,13 +23,13 @@ namespace AdminShellNS.Extensions
 
         #region ListOfSpecificAssetIds
 
-        public static bool ContainsSpecificAssetId(this List<SpecificAssetId> specificAssetIds, SpecificAssetId other)
+        public static bool ContainsSpecificAssetId(this List<ISpecificAssetId> specificAssetIds, ISpecificAssetId other)
         {
             if (specificAssetIds == null) return false;
             if (other == null) return false;
 
             var foundIds = specificAssetIds.Where(assetId => assetId.Matches(other));
-            if(foundIds.Any()) return true;
+            if (foundIds.Any()) return true;
 
             return false;
         }

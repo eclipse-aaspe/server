@@ -1,6 +1,6 @@
 ﻿#define MICHA
 
-using AasCore.Aas3_0_RC02;
+
 using AasxMqttClient;
 using AdminShellEvents;
 using AdminShellNS;
@@ -99,7 +99,7 @@ namespace AasxRestServerLibrary
             }
 
             // query
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")] 
+            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")]
             [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/queryregistry/(/|)$")]
             public IHttpContext Queryregistry(IHttpContext context)
             {
@@ -260,7 +260,7 @@ namespace AasxRestServerLibrary
                             {
                                 string legal = "012345679.";
 
-                                foreach (var c in left+right)
+                                foreach (var c in left + right)
                                 {
                                     if (Char.IsDigit(c))
                                         continue;
@@ -309,7 +309,7 @@ namespace AasxRestServerLibrary
                             int l = Convert.ToInt32(left);
                             int r = Convert.ToInt32(right);
 
-                            switch(op)
+                            switch (op)
                             {
                                 case "==num":
                                     return l == r;
@@ -339,7 +339,7 @@ namespace AasxRestServerLibrary
                 return false;
             }
 
-            public static string runQueryRegistryOnly(string query, string restPayload, Submodel aasRegistry, AasCore.Aas3_0_RC02.Environment envRegistry)
+            public static string runQueryRegistryOnly(string query, string restPayload, Submodel aasRegistry, AasCore.Aas3_0.Environment envRegistry)
             {
                 string result = "";
 
@@ -685,7 +685,7 @@ namespace AasxRestServerLibrary
                                                     result += "submodelelement found 1 value ";
                                                     if (sme is Property p)
                                                         result += " " + p.Value;
-                                                    if (sme is AasCore.Aas3_0_RC02.File f)
+                                                    if (sme is AasCore.Aas3_0.File f)
                                                         result += " " + f.Value;
                                                     if (sme is MultiLanguageProperty mlp)
                                                     {
@@ -1048,9 +1048,8 @@ namespace AasxRestServerLibrary
                                             compare = aas.IdShort;
                                             break;
                                         case "%assetid":
-                                            if (aas.AssetInformation.GlobalAssetId != null &&
-                                                    aas.AssetInformation.GlobalAssetId.Keys != null && aas.AssetInformation.GlobalAssetId.Keys.Count != 0)
-                                                compare = aas.AssetInformation.GlobalAssetId.Keys[0].Value;
+                                            if (!string.IsNullOrEmpty(aas.AssetInformation.GlobalAssetId))
+                                                compare = aas.AssetInformation.GlobalAssetId;
                                             break;
                                     }
                                     if (comp(op, compare, attrValue))
@@ -1077,7 +1076,7 @@ namespace AasxRestServerLibrary
                                             if (storeResult)
                                             {
                                                 if (!storeAas.Contains(aas))
-                                                    storeAas.Add(aas);
+                                                    storeAas.Add(aas as AssetAdministrationShell);
                                             }
                                         }
                                         if (select == "repository")
@@ -1180,7 +1179,7 @@ namespace AasxRestServerLibrary
                                                 if (storeResult)
                                                 {
                                                     if (!storeSubmodels.Contains(sm))
-                                                        storeSubmodels.Add(sm);
+                                                        storeSubmodels.Add(sm as Submodel);
 
                                                 }
                                                 foundInSubmodel++;
@@ -1191,7 +1190,7 @@ namespace AasxRestServerLibrary
                                                 if (storeResult)
                                                 {
                                                     if (!storeAas.Contains(aas))
-                                                        storeAas.Add(aas);
+                                                        storeAas.Add(aas as AssetAdministrationShell);
                                                 }
                                                 foundInAas++;
                                                 totalFound++;
@@ -1315,7 +1314,7 @@ namespace AasxRestServerLibrary
                                                             {
                                                                 if (sme is Property p)
                                                                     result += " " + p.Value;
-                                                                if (sme is AasCore.Aas3_0_RC02.File f)
+                                                                if (sme is AasCore.Aas3_0.File f)
                                                                     result += " " + f.Value;
                                                                 if (sme is MultiLanguageProperty mlp)
                                                                 {
@@ -1347,7 +1346,7 @@ namespace AasxRestServerLibrary
                                                             if (storeResult)
                                                             {
                                                                 if (!storeSubmodels.Contains(sm))
-                                                                    storeSubmodels.Add(sm);
+                                                                    storeSubmodels.Add(sm as Submodel);
                                                             }
                                                             foundInSubmodel++;
                                                             totalFound++;
@@ -1357,7 +1356,7 @@ namespace AasxRestServerLibrary
                                                             if (storeResult)
                                                             {
                                                                 if (!storeAas.Contains(aas))
-                                                                    storeAas.Add(aas);
+                                                                    storeAas.Add(aas as AssetAdministrationShell);
                                                             }
                                                             foundInAas++;
                                                             totalFound++;
@@ -1453,9 +1452,8 @@ namespace AasxRestServerLibrary
                                 }
                                 if (selectParameters.Contains("%assetid"))
                                 {
-                                    if (aas.AssetInformation.GlobalAssetId != null &&
-                                            aas.AssetInformation.GlobalAssetId.Keys != null && aas.AssetInformation.GlobalAssetId.Keys.Count != 0)
-                                        result += " " + aas.AssetInformation.GlobalAssetId.Keys[0].Value;
+                                    if (!string.IsNullOrEmpty(aas.AssetInformation.GlobalAssetId))
+                                        result += " " + aas.AssetInformation.GlobalAssetId;
                                 }
                                 result += "\n";
                             }
@@ -1649,7 +1647,7 @@ namespace AasxRestServerLibrary
 
             public class DeletedListItem
             {
-                public Submodel sm;
+                public ISubmodel sm;
                 public IReferable rf;
             }
 
@@ -1664,7 +1662,7 @@ namespace AasxRestServerLibrary
                 public string obj = "";
                 public string data = "";
 
-                public static void add(IReferable o, string op, Submodel rootSubmodel, ulong changeCount)
+                public static void add(IReferable o, string op, ISubmodel rootSubmodel, ulong changeCount)
                 {
                     // if (o is SubmodelElementCollection smec)
                     if (o is ISubmodelElement smec)
@@ -1688,7 +1686,7 @@ namespace AasxRestServerLibrary
                         }
 
                         rootSubmodel.SetAllParents();
-                        List<Key> keys = new();
+                        List<IKey> keys = new();
 
 #if MICHA
                         // keys were in the reverse order
@@ -1970,7 +1968,7 @@ namespace AasxRestServerLibrary
                                     continue;
 
                                 // obseverved semantic id is pain in the ..
-                                Reference obsSemId = null;
+                                IReference obsSemId = null;
                                 if (obs is Submodel obssm)
                                     obsSemId = obssm.SemanticId;
                                 if (obs is ISubmodelElement obssme)
@@ -2006,7 +2004,7 @@ namespace AasxRestServerLibrary
                                         if (d.rf.TimeStamp > minimumDate)
                                         {
                                             // get the path
-                                            List<Key> p2 = null;
+                                            List<IKey> p2 = null;
                                             if (d.rf is Submodel delsm)
                                                 p2 = delsm?.GetModelReference()?.Keys;
                                             if (d.rf is ISubmodelElement delsme)
@@ -2093,7 +2091,7 @@ namespace AasxRestServerLibrary
                 AasPayloadUpdateValue plUpdate,
                 ISubmodelElement sme, DateTime minimumDate,
                 bool doUpdate, bool doCreateDelete,
-                List<Key> observablePath = null)
+                List<IKey> observablePath = null)
             {
                 if (!(sme is SubmodelElementCollection))
                 {

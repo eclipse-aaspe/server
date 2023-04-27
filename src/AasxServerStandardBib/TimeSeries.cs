@@ -1,4 +1,4 @@
-using AasCore.Aas3_0_RC02;
+
 using AasxServer;
 using Extensions;
 using Newtonsoft.Json;
@@ -24,7 +24,7 @@ namespace AasxTimeSeries
     {
         public class TimeSeriesBlock
         {
-            public Submodel submodel = null;
+            public ISubmodel submodel = null;
             public SubmodelElementCollection block = null;
             public SubmodelElementCollection data = null;
             public SubmodelElementCollection latestData = null;
@@ -934,7 +934,7 @@ namespace AasxTimeSeries
 
                                     if (latestDataProperty.Qualifiers == null)
                                         //latestDataProperty.Qualifiers = new QualifierCollection();
-                                        latestDataProperty.Qualifiers = new List<Qualifier>();
+                                        latestDataProperty.Qualifiers = new List<IQualifier>();
                                     latestDataProperty.Qualifiers.Add(q);
                                     tsb.latestData.Value.Add(latestDataProperty);
                                 }
@@ -1000,8 +1000,8 @@ namespace AasxTimeSeries
                                         */
                                         nextCollection = new SubmodelElementCollection(idShort: "Segment_" + tsb.highDataIndex.Value,
                                             value: new List<ISubmodelElement>());
-                                        nextCollection.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                            new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value) });
+                                        nextCollection.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value) });
                                         nextCollection.TimeStamp = timeStamp;
 
                                         /*
@@ -1011,8 +1011,8 @@ namespace AasxTimeSeries
                                         */
                                         var smcvar = new SubmodelElementCollection(idShort: "TSvariable_timeStamp",
                                             value: new List<ISubmodelElement>());
-                                        smcvar.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                            new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
+                                        smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
                                         smcvar.TimeStamp = timeStamp;
                                         nextCollection.Value.Add(smcvar);
 
@@ -1022,8 +1022,8 @@ namespace AasxTimeSeries
                                             smeValue: "timeStamp");
                                         */
                                         var newSme1 = new Property(DataTypeDefXsd.String, idShort: "RecordId");
-                                        newSme1.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                            new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
+                                        newSme1.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
                                         newSme1.TimeStamp = timeStamp;
                                         (newSme1 as Property).Value = "timeStamp";
                                         smcvar.Value.Add(newSme1);
@@ -1033,8 +1033,7 @@ namespace AasxTimeSeries
                                             "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime.Value);
                                         */
                                         var newSme2 = new Property(DataTypeDefXsd.String, idShort: "UtcTime");
-                                        newSme2.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                            new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value) });
+                                        newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value) });
                                         newSme2.TimeStamp = timeStamp;
                                         smcvar.Value.Add(newSme2);
 
@@ -1044,8 +1043,7 @@ namespace AasxTimeSeries
                                             smeValue: tsb.samplesTimeStamp);
                                         */
                                         var newSme3 = new Blob("BLOB", idShort: "timeStamp");
-                                        newSme3.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                            new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
+                                        newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
                                         newSme3.TimeStamp = timeStamp;
                                         (newSme3 as Blob).Value = Encoding.ASCII.GetBytes(tsb.samplesTimeStamp);
                                         smcvar.Value.Add(newSme3);
@@ -1079,8 +1077,7 @@ namespace AasxTimeSeries
                                             */
                                             var smcvar = new SubmodelElementCollection(idShort: "TSvariable_" + tsb.samplesProperties[i].IdShort,
                                                 value: new List<ISubmodelElement>());
-                                            smcvar.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                                new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
+                                            smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
                                             smcvar.TimeStamp = timeStamp;
                                             nextCollection.Value.Add(smcvar);
 
@@ -1090,8 +1087,7 @@ namespace AasxTimeSeries
                                                 smeValue: "" + tsb.samplesProperties[i].IdShort);
                                             */
                                             var newSme = new Property(DataTypeDefXsd.String, idShort: "RecordId");
-                                            newSme.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                                new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
+                                            newSme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
                                             newSme.TimeStamp = timeStamp;
                                             (newSme as Property).Value = "" + tsb.samplesProperties[i].IdShort;
                                             smcvar.Value.Add(newSme);
@@ -1104,8 +1100,7 @@ namespace AasxTimeSeries
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedFloat.Value);
                                                 */
                                                 var newSme2 = new Property(DataTypeDefXsd.String, idShort: "" + tsb.samplesProperties[i].IdShort);
-                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedFloat.Value) });
+                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedFloat.Value) });
                                                 newSme2.TimeStamp = timeStamp;
                                                 smcvar.Value.Add(newSme2);
                                             }
@@ -1117,8 +1112,7 @@ namespace AasxTimeSeries
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedInteger.Value);
                                                 */
                                                 var newSme2 = new Property(DataTypeDefXsd.String, idShort: "" + tsb.samplesProperties[i].IdShort);
-                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedInteger.Value) });
+                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedInteger.Value) });
                                                 newSme2.TimeStamp = timeStamp;
                                                 smcvar.Value.Add(newSme2);
                                             }
@@ -1129,8 +1123,7 @@ namespace AasxTimeSeries
                                                 smeValue: tsb.samplesValues[i]);
                                             */
                                             var newSme3 = new Blob("BLOB", idShort: "ValueArray");
-                                            newSme3.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                                new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
+                                            newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
                                             newSme3.TimeStamp = timeStamp;
                                             (newSme3 as Blob).Value = Encoding.ASCII.GetBytes(tsb.samplesValues[i]);
                                             smcvar.Value.Add(newSme3);
@@ -1188,8 +1181,7 @@ namespace AasxTimeSeries
                                 */
                                 nextCollection = new SubmodelElementCollection(idShort: "Segment_" + tsb.highDataIndex.Value,
                                     value: new List<ISubmodelElement>());
-                                nextCollection.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value) });
+                                nextCollection.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value) });
                                 nextCollection.TimeStamp = timeStamp;
 
                                 /*
@@ -1199,8 +1191,7 @@ namespace AasxTimeSeries
                                 */
                                 var smcvar = new SubmodelElementCollection(idShort: "TSvariable_timeStamp",
                                     value: new List<ISubmodelElement>());
-                                smcvar.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
+                                smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
                                 smcvar.TimeStamp = timeStamp;
                                 nextCollection.Value.Add(smcvar);
 
@@ -1210,8 +1201,7 @@ namespace AasxTimeSeries
                                     smeValue: "timeStamp");
                                 */
                                 var newSme = new Property(DataTypeDefXsd.String, idShort: "RecordId");
-                                newSme.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
+                                newSme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
                                 newSme.TimeStamp = timeStamp;
                                 (newSme as Property).Value = "timeStamp";
                                 smcvar.Value.Add(newSme);
@@ -1221,8 +1211,7 @@ namespace AasxTimeSeries
                                     "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime.Value);
                                 */
                                 var newSme2 = new Property(DataTypeDefXsd.String, idShort: "UtcTime");
-                                newSme2.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value) });
+                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value) });
                                 newSme2.TimeStamp = timeStamp;
                                 smcvar.Value.Add(newSme2);
 
@@ -1232,8 +1221,7 @@ namespace AasxTimeSeries
                                     smeValue: tsb.samplesTimeStamp);
                                 */
                                 var newSme3 = new Blob("BLOB", idShort: "timeStamp");
-                                newSme3.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
+                                newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
                                 newSme3.TimeStamp = timeStamp;
                                 (newSme3 as Blob).Value = Encoding.ASCII.GetBytes(tsb.samplesTimeStamp);
                                 smcvar.Value.Add(newSme3);

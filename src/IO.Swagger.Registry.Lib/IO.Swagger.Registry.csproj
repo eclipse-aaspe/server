@@ -10,6 +10,9 @@
     <DocumentationFile>.\IO.Swagger.Registry.Lib.xml</DocumentationFile>
   </PropertyGroup>
 	<ItemGroup>
+		<Using Include="AasCore.Aas3_0"/>
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
 	</ItemGroup>
 		<ItemGroup>

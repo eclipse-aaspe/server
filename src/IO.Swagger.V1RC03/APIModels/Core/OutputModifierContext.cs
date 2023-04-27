@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using IO.Swagger.V1RC03.Services;
 using ScottPlot.Drawing.Colormaps;
 using System;

@@ -19,19 +19,19 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [DataContract]
     public partial class Message : IEquatable<Message>
-    { 
+    {
         /// <summary>
         /// Gets or Sets Code
         /// </summary>
 
         [MaxLength(8)]
-        [DataMember(Name="code")]
+        [DataMember(Name = "code")]
         public string Code { get; set; }
 
         /// <summary>
@@ -64,27 +64,28 @@ namespace IO.Swagger.Models
             /// Enum ExceptionEnum for Exception
             /// </summary>
             [EnumMember(Value = "Exception")]
-            ExceptionEnum = 4        }
+            ExceptionEnum = 4
+        }
 
         /// <summary>
         /// Gets or Sets MessageType
         /// </summary>
 
-        [DataMember(Name="messageType")]
+        [DataMember(Name = "messageType")]
         public MessageTypeEnum? MessageType { get; set; }
 
         /// <summary>
         /// Gets or Sets Text
         /// </summary>
 
-        [DataMember(Name="text")]
+        [DataMember(Name = "text")]
         public string Text { get; set; }
 
         /// <summary>
         /// Gets or Sets Timestamp
         /// </summary>
 
-        [DataMember(Name="timestamp")]
+        [DataMember(Name = "timestamp")]
         public string Timestamp { get; set; }
 
         /// <summary>
@@ -134,22 +135,22 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return 
+            return
                 (
                     Code == other.Code ||
                     Code != null &&
                     Code.Equals(other.Code)
-                ) && 
+                ) &&
                 (
                     MessageType == other.MessageType ||
                     MessageType != null &&
                     MessageType.Equals(other.MessageType)
-                ) && 
+                ) &&
                 (
                     Text == other.Text ||
                     Text != null &&
                     Text.Equals(other.Text)
-                ) && 
+                ) &&
                 (
                     Timestamp == other.Timestamp ||
                     Timestamp != null &&
@@ -167,20 +168,20 @@ namespace IO.Swagger.Models
             {
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
-                    if (Code != null)
+                if (Code != null)
                     hashCode = hashCode * 59 + Code.GetHashCode();
-                    if (MessageType != null)
+                if (MessageType != null)
                     hashCode = hashCode * 59 + MessageType.GetHashCode();
-                    if (Text != null)
+                if (Text != null)
                     hashCode = hashCode * 59 + Text.GetHashCode();
-                    if (Timestamp != null)
+                if (Timestamp != null)
                     hashCode = hashCode * 59 + Timestamp.GetHashCode();
                 return hashCode;
             }
         }
 
         #region Operators
-        #pragma warning disable 1591
+#pragma warning disable 1591
 
         public static bool operator ==(Message left, Message right)
         {
@@ -192,7 +193,7 @@ namespace IO.Swagger.Models
             return !Equals(left, right);
         }
 
-        #pragma warning restore 1591
+#pragma warning restore 1591
         #endregion Operators
     }
 }

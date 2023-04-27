@@ -1,20 +1,13 @@
-﻿using AasCore.Aas3_0_RC02;
-using AasxCompatibilityModels;
-using AdminShellNS;
-using System;
+﻿using AdminShellNS;
+using Extensions;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
-using Extensions;
 
 namespace Extensions
 {
     public static class ExtendKeyList
     {
-        public static bool IsEmpty(this List<Key> keys)
+        public static bool IsEmpty(this List<IKey> keys)
         {
             return keys.Count < 1;
         }
@@ -31,7 +24,7 @@ namespace Extensions
             return same;
         }
 
-        public static List<Key> ReplaceLastKey(this List<Key> keys,List<Key> newKeys)
+        public static List<Key> ReplaceLastKey(this List<Key> keys, List<Key> newKeys)
         {
             var res = new List<Key>(keys);
             if (res.Count < 1 || newKeys == null || newKeys.Count < 1)
@@ -42,7 +35,7 @@ namespace Extensions
             return res;
         }
 
-        public static bool StartsWith(this List<Key> keyList, List<Key> otherKeyList)
+        public static bool StartsWith(this List<IKey> keyList, List<IKey> otherKeyList)
         {
             if (otherKeyList == null || otherKeyList.Count == 0)
                 return false;
@@ -62,7 +55,7 @@ namespace Extensions
             return true;
         }
 
-        public static bool StartsWith(this List<Key> keyList,List<Key> head, bool emptyIsTrue = false,
+        public static bool StartsWith(this List<Key> keyList, List<Key> head, bool emptyIsTrue = false,
                 MatchMode matchMode = MatchMode.Relaxed)
         {
             // access
@@ -86,12 +79,12 @@ namespace Extensions
             return true;
         }
 
-        public static string ToStringExtended(this List<Key> keys, int format = 1, string delimiter = ",")
+        public static string ToStringExtended(this List<IKey> keys, int format = 1, string delimiter = ",")
         {
             return string.Join(delimiter, keys.Select((k) => k.ToStringExtended(format)));
         }
 
-        public static void Validate(this List<Key> keys, AasValidationRecordList results,
+        public static void Validate(this List<IKey> keys, AasValidationRecordList results,
                 IReferable container)
         {
             // access
@@ -121,7 +114,7 @@ namespace Extensions
             return res;
         }
 
-        public static List<Key> Parse(string input)
+        public static List<IKey> Parse(string input)
         {
             // access
             if (input == null)
@@ -129,7 +122,7 @@ namespace Extensions
 
             // split
             var parts = input.Split(',', ';');
-            var kl = new List<Key>();
+            var kl = new List<IKey>();
 
             foreach (var p in parts)
             {
@@ -165,7 +158,7 @@ namespace Extensions
             return res;
         }
 
-        public static List<Key> SubList(this List<Key> keyList, 
+        public static List<Key> SubList(this List<Key> keyList,
             int startPos, int count = int.MaxValue)
         {
             var res = new List<Key>();

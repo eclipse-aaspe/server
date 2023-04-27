@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServerStandardBib.Logging;
 using Extensions;
 using IO.Swagger.V1RC03.APIModels.Metadata;

@@ -3,13 +3,13 @@
  * Do NOT edit or append.
  */
 
-using Aas = AasCore.Aas3_0_RC02;  // renamed
+using Aas = AasCore.Aas3_0;  // renamed
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
 using Nodes = System.Text.Json.Nodes;
 
 using System.Collections.Generic;  // can't alias
 
-namespace AasCore.Aas3_0_RC02
+namespace AasCore.Aas3_0
 {
     /// <summary>
     /// Provide de/serialization of meta-model classes to/from JSON.
@@ -327,11 +327,11 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theName = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
                 DataTypeDefXsd? theValueType = null;
                 string? theValue = null;
-                Reference? theRefersTo = null;
+                List<IReference>? theRefersTo = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -402,7 +402,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -419,7 +419,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -495,20 +495,51 @@ namespace AasCore.Aas3_0_RC02
                                     continue;
                                 }
 
-                                theRefersTo = DeserializeImplementation.ReferenceFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
+                                Nodes.JsonArray? arrayRefersTo = keyValue.Value as Nodes.JsonArray;
+                                if (arrayRefersTo == null)
                                 {
+                                    error = new Reporting.Error(
+                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                                     error.PrependSegment(
                                         new Reporting.NameSegment(
                                             "refersTo"));
                                     return null;
                                 }
-                                if (theRefersTo == null)
+                                theRefersTo = new List<IReference>(
+                                    arrayRefersTo.Count);
+                                int indexRefersTo = 0;
+                                foreach (Nodes.JsonNode? item in arrayRefersTo)
                                 {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theRefersTo null when error is also null");
+                                    if (item == null)
+                                    {
+                                        error = new Reporting.Error(
+                                            "Expected a non-null item, but got a null");
+                                        error.PrependSegment(
+                                            new Reporting.IndexSegment(
+                                                indexRefersTo));
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "refersTo"));
+                                        return null;
+                                    }
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                        item ?? throw new System.InvalidOperationException(),
+                                        out error);
+                                    if (error != null)
+                                    {
+                                        error.PrependSegment(
+                                            new Reporting.IndexSegment(
+                                                indexRefersTo));
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "refersTo"));
+                                        return null;
+                                    }
+                                    theRefersTo.Add(
+                                        parsedItem
+                                            ?? throw new System.InvalidOperationException(
+                                                "Unexpected result null when error is null"));
+                                    indexRefersTo++;
                                 }
                                 break;
                             }
@@ -811,11 +842,11 @@ namespace AasCore.Aas3_0_RC02
             }  // public static Aas.IIdentifiable IIdentifiableFrom
 
             /// <summary>
-            /// Deserialize the enumeration ModelingKind from the <paramref name="node" />.
+            /// Deserialize the enumeration ModellingKind from the <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <param name="error">Error, if any, during the deserialization</param>
-            internal static Aas.ModelingKind? ModelingKindFrom(
+            internal static Aas.ModellingKind? ModellingKindFrom(
                 Nodes.JsonNode node,
                 out Reporting.Error? error)
             {
@@ -831,14 +862,14 @@ namespace AasCore.Aas3_0_RC02
                     throw new System.InvalidOperationException(
                         "Unexpected text null if error null");
                 }
-                Aas.ModelingKind? result = Stringification.ModelingKindFromString(text);
+                Aas.ModellingKind? result = Stringification.ModellingKindFromString(text);
                 if (result == null)
                 {
                     error = new Reporting.Error(
-                        "Not a valid JSON representation of ModelingKind");
+                        "Not a valid JSON representation of ModellingKind");
                 }
                 return result;
-            }  // internal static ModelingKindFrom
+            }  // internal static ModellingKindFrom
 
             /// <summary>
             /// Deserialize an instance of IHasKind by dispatching
@@ -887,50 +918,8 @@ namespace AasCore.Aas3_0_RC02
 
                 switch (modelType)
                 {
-                    case "RelationshipElement":
-                        return RelationshipElementFrom(
-                            node, out error);
-                    case "AnnotatedRelationshipElement":
-                        return AnnotatedRelationshipElementFrom(
-                            node, out error);
-                    case "BasicEventElement":
-                        return BasicEventElementFrom(
-                            node, out error);
-                    case "Blob":
-                        return BlobFrom(
-                            node, out error);
-                    case "Capability":
-                        return CapabilityFrom(
-                            node, out error);
-                    case "Entity":
-                        return EntityFrom(
-                            node, out error);
-                    case "File":
-                        return FileFrom(
-                            node, out error);
-                    case "MultiLanguageProperty":
-                        return MultiLanguagePropertyFrom(
-                            node, out error);
-                    case "Operation":
-                        return OperationFrom(
-                            node, out error);
-                    case "Property":
-                        return PropertyFrom(
-                            node, out error);
-                    case "Range":
-                        return RangeFrom(
-                            node, out error);
-                    case "ReferenceElement":
-                        return ReferenceElementFrom(
-                            node, out error);
                     case "Submodel":
                         return SubmodelFrom(
-                            node, out error);
-                    case "SubmodelElementCollection":
-                        return SubmodelElementCollectionFrom(
-                            node, out error);
-                    case "SubmodelElementList":
-                        return SubmodelElementListFrom(
                             node, out error);
                     default:
                         error = new Reporting.Error(
@@ -1066,9 +1055,11 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theVersion = null;
                 string? theRevision = null;
+                IReference? theCreator = null;
+                string? theTemplateId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -1091,7 +1082,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -1108,7 +1099,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -1177,6 +1168,54 @@ namespace AasCore.Aas3_0_RC02
                                 }
                                 break;
                             }
+                        case "creator":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theCreator = DeserializeImplementation.ReferenceFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "creator"));
+                                    return null;
+                                }
+                                if (theCreator == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theCreator null when error is also null");
+                                }
+                                break;
+                            }
+                        case "templateId":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theTemplateId = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "templateId"));
+                                    return null;
+                                }
+                                if (theTemplateId == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theTemplateId null when error is also null");
+                                }
+                                break;
+                            }
                         default:
                             error = new Reporting.Error(
                                 $"Unexpected property: {keyValue.Key}");
@@ -1189,7 +1228,9 @@ namespace AasCore.Aas3_0_RC02
                 return new Aas.AdministrativeInformation(
                     theEmbeddedDataSpecifications,
                     theVersion,
-                    theRevision);
+                    theRevision,
+                    theCreator,
+                    theTemplateId);
             }  // internal static AdministrativeInformationFrom
 
             /// <summary>
@@ -1342,11 +1383,11 @@ namespace AasCore.Aas3_0_RC02
 
                 string? theType = null;
                 DataTypeDefXsd? theValueType = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
                 QualifierKind? theKind = null;
                 string? theValue = null;
-                Reference? theValueId = null;
+                IReference? theValueId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -1441,7 +1482,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -1458,7 +1499,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -1606,17 +1647,16 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theId = null;
-                AssetInformation? theAssetInformation = null;
-                List<Extension>? theExtensions = null;
+                IAssetInformation? theAssetInformation = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                AdministrativeInformation? theAdministration = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theDerivedFrom = null;
-                List<Reference>? theSubmodels = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IAdministrativeInformation? theAdministration = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theDerivedFrom = null;
+                List<IReference>? theSubmodels = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -1687,7 +1727,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -1704,7 +1744,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -1790,7 +1830,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -1807,7 +1847,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -1845,7 +1885,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -1862,7 +1902,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -1880,30 +1920,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
                                 }
                                 break;
                             }
@@ -1948,7 +1964,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -1965,7 +1981,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2027,7 +2043,7 @@ namespace AasCore.Aas3_0_RC02
                                             "submodels"));
                                     return null;
                                 }
-                                theSubmodels = new List<Reference>(
+                                theSubmodels = new List<IReference>(
                                     arraySubmodels.Count);
                                 int indexSubmodels = 0;
                                 foreach (Nodes.JsonNode? item in arraySubmodels)
@@ -2044,7 +2060,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "submodels"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2100,7 +2116,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
                     theAdministration,
                     theEmbeddedDataSpecifications,
                     theDerivedFrom,
@@ -2127,9 +2142,10 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 AssetKind? theAssetKind = null;
-                Reference? theGlobalAssetId = null;
-                List<SpecificAssetId>? theSpecificAssetIds = null;
-                Resource? theDefaultThumbnail = null;
+                string? theGlobalAssetId = null;
+                List<ISpecificAssetId>? theSpecificAssetIds = null;
+                string? theAssetType = null;
+                IResource? theDefaultThumbnail = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -2166,7 +2182,7 @@ namespace AasCore.Aas3_0_RC02
                                     continue;
                                 }
 
-                                theGlobalAssetId = DeserializeImplementation.ReferenceFrom(
+                                theGlobalAssetId = DeserializeImplementation.StringFrom(
                                     keyValue.Value,
                                     out error);
                                 if (error != null)
@@ -2200,7 +2216,7 @@ namespace AasCore.Aas3_0_RC02
                                             "specificAssetIds"));
                                     return null;
                                 }
-                                theSpecificAssetIds = new List<SpecificAssetId>(
+                                theSpecificAssetIds = new List<ISpecificAssetId>(
                                     arraySpecificAssetIds.Count);
                                 int indexSpecificAssetIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySpecificAssetIds)
@@ -2217,7 +2233,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "specificAssetIds"));
                                         return null;
                                     }
-                                    SpecificAssetId? parsedItem = DeserializeImplementation.SpecificAssetIdFrom(
+                                    ISpecificAssetId? parsedItem = DeserializeImplementation.SpecificAssetIdFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2235,6 +2251,30 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexSpecificAssetIds++;
+                                }
+                                break;
+                            }
+                        case "assetType":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theAssetType = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "assetType"));
+                                    return null;
+                                }
+                                if (theAssetType == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theAssetType null when error is also null");
                                 }
                                 break;
                             }
@@ -2282,6 +2322,7 @@ namespace AasCore.Aas3_0_RC02
                             "Unexpected null, had to be handled before"),
                     theGlobalAssetId,
                     theSpecificAssetIds,
+                    theAssetType,
                     theDefaultThumbnail);
             }  // internal static AssetInformationFrom
 
@@ -2431,9 +2472,9 @@ namespace AasCore.Aas3_0_RC02
 
                 string? theName = null;
                 string? theValue = null;
-                Reference? theExternalSubjectId = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                IReference? theExternalSubjectId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -2487,30 +2528,6 @@ namespace AasCore.Aas3_0_RC02
                                 }
                                 break;
                             }
-                        case "externalSubjectId":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theExternalSubjectId = DeserializeImplementation.ReferenceFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "externalSubjectId"));
-                                    return null;
-                                }
-                                if (theExternalSubjectId == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theExternalSubjectId null when error is also null");
-                                }
-                                break;
-                            }
                         case "semanticId":
                             {
                                 if (keyValue.Value == null)
@@ -2552,7 +2569,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -2569,7 +2586,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2587,6 +2604,30 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexSupplementalSemanticIds++;
+                                }
+                                break;
+                            }
+                        case "externalSubjectId":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theExternalSubjectId = DeserializeImplementation.ReferenceFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "externalSubjectId"));
+                                    return null;
+                                }
+                                if (theExternalSubjectId == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theExternalSubjectId null when error is also null");
                                 }
                                 break;
                             }
@@ -2611,13 +2652,6 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                if (theExternalSubjectId == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"externalSubjectId\" is missing");
-                    return null;
-                }
-
                 return new Aas.SpecificAssetId(
                     theName
                          ?? throw new System.InvalidOperationException(
@@ -2625,11 +2659,9 @@ namespace AasCore.Aas3_0_RC02
                     theValue
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"),
-                    theExternalSubjectId
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
                     theSemanticId,
-                    theSupplementalSemanticIds);
+                    theSupplementalSemanticIds,
+                    theExternalSubjectId);
             }  // internal static SpecificAssetIdFrom
 
             /// <summary>
@@ -2652,18 +2684,17 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theId = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                AdministrativeInformation? theAdministration = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IAdministrativeInformation? theAdministration = null;
+                ModellingKind? theKind = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theSubmodelElements = null;
 
                 foreach (var keyValue in obj)
@@ -2711,7 +2742,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -2728,7 +2759,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2814,7 +2845,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -2831,7 +2862,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2869,7 +2900,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -2886,7 +2917,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -2904,30 +2935,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
                                 }
                                 break;
                             }
@@ -2962,7 +2969,7 @@ namespace AasCore.Aas3_0_RC02
                                     continue;
                                 }
 
-                                theKind = DeserializeImplementation.ModelingKindFrom(
+                                theKind = DeserializeImplementation.ModellingKindFrom(
                                     keyValue.Value,
                                     out error);
                                 if (error != null)
@@ -3020,7 +3027,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -3037,7 +3044,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3075,7 +3082,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -3092,7 +3099,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3130,7 +3137,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -3147,7 +3154,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3248,7 +3255,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
                     theAdministration,
                     theKind,
                     theSemanticId,
@@ -3433,19 +3439,17 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                Reference? theFirst = null;
-                Reference? theSecond = null;
-                List<Extension>? theExtensions = null;
+                IReference? theFirst = null;
+                IReference? theSecond = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -3516,7 +3520,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -3533,7 +3537,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3619,7 +3623,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -3636,7 +3640,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3674,7 +3678,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -3691,7 +3695,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3709,54 +3713,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -3801,7 +3757,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -3818,7 +3774,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3856,7 +3812,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -3873,7 +3829,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3911,7 +3867,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -3928,7 +3884,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -3984,8 +3940,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -4042,21 +3996,19 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 AasSubmodelElements? theTypeValueListElement = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 bool? theOrderRelevant = null;
-                List<ISubmodelElement>? theValue = null;
-                Reference? theSemanticIdListElement = null;
+                IReference? theSemanticIdListElement = null;
                 DataTypeDefXsd? theValueTypeListElement = null;
+                List<ISubmodelElement>? theValue = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -4103,7 +4055,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -4120,7 +4072,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4206,7 +4158,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -4223,7 +4175,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4261,7 +4213,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -4278,7 +4230,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4296,54 +4248,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -4388,7 +4292,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -4405,7 +4309,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4443,7 +4347,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -4460,7 +4364,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4498,7 +4402,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -4515,7 +4419,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4557,6 +4461,54 @@ namespace AasCore.Aas3_0_RC02
                                 {
                                     throw new System.InvalidOperationException(
                                         "Unexpected theOrderRelevant null when error is also null");
+                                }
+                                break;
+                            }
+                        case "semanticIdListElement":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theSemanticIdListElement = DeserializeImplementation.ReferenceFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "semanticIdListElement"));
+                                    return null;
+                                }
+                                if (theSemanticIdListElement == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theSemanticIdListElement null when error is also null");
+                                }
+                                break;
+                            }
+                        case "valueTypeListElement":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theValueTypeListElement = DeserializeImplementation.DataTypeDefXsdFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "valueTypeListElement"));
+                                    return null;
+                                }
+                                if (theValueTypeListElement == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theValueTypeListElement null when error is also null");
                                 }
                                 break;
                             }
@@ -4615,54 +4567,6 @@ namespace AasCore.Aas3_0_RC02
                                 }
                                 break;
                             }
-                        case "semanticIdListElement":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theSemanticIdListElement = DeserializeImplementation.ReferenceFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "semanticIdListElement"));
-                                    return null;
-                                }
-                                if (theSemanticIdListElement == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theSemanticIdListElement null when error is also null");
-                                }
-                                break;
-                            }
-                        case "valueTypeListElement":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theValueTypeListElement = DeserializeImplementation.DataTypeDefXsdFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "valueTypeListElement"));
-                                    return null;
-                                }
-                                if (theValueTypeListElement == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theValueTypeListElement null when error is also null");
-                                }
-                                break;
-                            }
                         case "modelType":
                             continue;
                         default:
@@ -4688,16 +4592,14 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
                     theEmbeddedDataSpecifications,
                     theOrderRelevant,
-                    theValue,
                     theSemanticIdListElement,
-                    theValueTypeListElement);
+                    theValueTypeListElement,
+                    theValue);
             }  // internal static SubmodelElementListFrom
 
             /// <summary>
@@ -4719,17 +4621,15 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theValue = null;
 
                 foreach (var keyValue in obj)
@@ -4753,7 +4653,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -4770,7 +4670,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4856,7 +4756,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -4873,7 +4773,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4911,7 +4811,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -4928,7 +4828,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -4946,54 +4846,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -5038,7 +4890,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -5055,7 +4907,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5093,7 +4945,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -5110,7 +4962,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5148,7 +5000,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -5165,7 +5017,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5258,8 +5110,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -5359,19 +5209,17 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 DataTypeDefXsd? theValueType = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theValue = null;
-                Reference? theValueId = null;
+                IReference? theValueId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -5418,7 +5266,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -5435,7 +5283,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5521,7 +5369,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -5538,7 +5386,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5576,7 +5424,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -5593,7 +5441,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5611,54 +5459,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -5703,7 +5503,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -5720,7 +5520,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5758,7 +5558,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -5775,7 +5575,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5813,7 +5613,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -5830,7 +5630,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -5924,8 +5724,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -5953,19 +5751,17 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<LangString>? theValue = null;
-                Reference? theValueId = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringTextType>? theValue = null;
+                IReference? theValueId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -5988,7 +5784,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -6005,7 +5801,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6091,7 +5887,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -6108,7 +5904,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6146,7 +5942,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -6163,7 +5959,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6181,54 +5977,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -6273,7 +6021,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -6290,7 +6038,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6328,7 +6076,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -6345,7 +6093,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6383,7 +6131,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -6400,7 +6148,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6438,7 +6186,7 @@ namespace AasCore.Aas3_0_RC02
                                             "value"));
                                     return null;
                                 }
-                                theValue = new List<LangString>(
+                                theValue = new List<ILangStringTextType>(
                                     arrayValue.Count);
                                 int indexValue = 0;
                                 foreach (Nodes.JsonNode? item in arrayValue)
@@ -6455,7 +6203,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "value"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6517,8 +6265,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -6547,17 +6293,15 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 DataTypeDefXsd? theValueType = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theMin = null;
                 string? theMax = null;
 
@@ -6606,7 +6350,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -6623,7 +6367,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6709,7 +6453,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -6726,7 +6470,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6764,7 +6508,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -6781,7 +6525,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6799,54 +6543,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -6891,7 +6587,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -6908,7 +6604,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -6946,7 +6642,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -6963,7 +6659,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7001,7 +6697,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -7018,7 +6714,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7112,8 +6808,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -7141,18 +6835,16 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theValue = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theValue = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -7175,7 +6867,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -7192,7 +6884,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7278,7 +6970,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -7295,7 +6987,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7333,7 +7025,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -7350,7 +7042,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7368,54 +7060,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -7460,7 +7104,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -7477,7 +7121,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7515,7 +7159,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -7532,7 +7176,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7570,7 +7214,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -7587,7 +7231,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7649,8 +7293,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -7678,17 +7320,15 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theContentType = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 byte[]? theValue = null;
 
                 foreach (var keyValue in obj)
@@ -7736,7 +7376,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -7753,7 +7393,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7839,7 +7479,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -7856,7 +7496,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7894,7 +7534,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -7911,7 +7551,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -7929,54 +7569,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -8021,7 +7613,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -8038,7 +7630,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8076,7 +7668,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -8093,7 +7685,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8131,7 +7723,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -8148,7 +7740,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8218,8 +7810,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -8247,17 +7837,15 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theContentType = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theValue = null;
 
                 foreach (var keyValue in obj)
@@ -8305,7 +7893,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -8322,7 +7910,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8408,7 +7996,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -8425,7 +8013,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8463,7 +8051,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -8480,7 +8068,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8498,54 +8086,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -8590,7 +8130,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -8607,7 +8147,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8645,7 +8185,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -8662,7 +8202,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8700,7 +8240,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -8717,7 +8257,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -8787,8 +8327,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -8815,19 +8353,17 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                Reference? theFirst = null;
-                Reference? theSecond = null;
-                List<Extension>? theExtensions = null;
+                IReference? theFirst = null;
+                IReference? theSecond = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<IDataElement>? theAnnotations = null;
 
                 foreach (var keyValue in obj)
@@ -8899,7 +8435,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -8916,7 +8452,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9002,7 +8538,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -9019,7 +8555,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9057,7 +8593,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -9074,7 +8610,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9092,54 +8628,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -9184,7 +8672,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -9201,7 +8689,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9239,7 +8727,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -9256,7 +8744,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9294,7 +8782,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -9311,7 +8799,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9422,44 +8910,12 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
                     theEmbeddedDataSpecifications,
                     theAnnotations);
             }  // internal static AnnotatedRelationshipElementFrom
-
-            /// <summary>
-            /// Deserialize the enumeration EntityType from the <paramref name="node" />.
-            /// </summary>
-            /// <param name="node">JSON node to be parsed</param>
-            /// <param name="error">Error, if any, during the deserialization</param>
-            internal static Aas.EntityType? EntityTypeFrom(
-                Nodes.JsonNode node,
-                out Reporting.Error? error)
-            {
-                error = null;
-                string? text = DeserializeImplementation.StringFrom(
-                    node, out error);
-                if (error != null)
-                {
-                    return null;
-                }
-                if (text == null)
-                {
-                    throw new System.InvalidOperationException(
-                        "Unexpected text null if error null");
-                }
-                Aas.EntityType? result = Stringification.EntityTypeFromString(text);
-                if (result == null)
-                {
-                    error = new Reporting.Error(
-                        "Not a valid JSON representation of EntityType");
-                }
-                return result;
-            }  // internal static EntityTypeFrom
 
             /// <summary>
             /// Deserialize an instance of Entity from <paramref name="node" />.
@@ -9481,20 +8937,18 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 EntityType? theEntityType = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theStatements = null;
-                Reference? theGlobalAssetId = null;
-                SpecificAssetId? theSpecificAssetId = null;
+                string? theGlobalAssetId = null;
+                List<ISpecificAssetId>? theSpecificAssetIds = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -9541,7 +8995,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -9558,7 +9012,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9644,7 +9098,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -9661,7 +9115,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9699,7 +9153,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -9716,7 +9170,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9734,54 +9188,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -9826,7 +9232,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -9843,7 +9249,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9881,7 +9287,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -9898,7 +9304,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -9936,7 +9342,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -9953,7 +9359,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -10036,7 +9442,7 @@ namespace AasCore.Aas3_0_RC02
                                     continue;
                                 }
 
-                                theGlobalAssetId = DeserializeImplementation.ReferenceFrom(
+                                theGlobalAssetId = DeserializeImplementation.StringFrom(
                                     keyValue.Value,
                                     out error);
                                 if (error != null)
@@ -10053,27 +9459,58 @@ namespace AasCore.Aas3_0_RC02
                                 }
                                 break;
                             }
-                        case "specificAssetId":
+                        case "specificAssetIds":
                             {
                                 if (keyValue.Value == null)
                                 {
                                     continue;
                                 }
 
-                                theSpecificAssetId = DeserializeImplementation.SpecificAssetIdFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
+                                Nodes.JsonArray? arraySpecificAssetIds = keyValue.Value as Nodes.JsonArray;
+                                if (arraySpecificAssetIds == null)
                                 {
+                                    error = new Reporting.Error(
+                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                                     error.PrependSegment(
                                         new Reporting.NameSegment(
-                                            "specificAssetId"));
+                                            "specificAssetIds"));
                                     return null;
                                 }
-                                if (theSpecificAssetId == null)
+                                theSpecificAssetIds = new List<ISpecificAssetId>(
+                                    arraySpecificAssetIds.Count);
+                                int indexSpecificAssetIds = 0;
+                                foreach (Nodes.JsonNode? item in arraySpecificAssetIds)
                                 {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theSpecificAssetId null when error is also null");
+                                    if (item == null)
+                                    {
+                                        error = new Reporting.Error(
+                                            "Expected a non-null item, but got a null");
+                                        error.PrependSegment(
+                                            new Reporting.IndexSegment(
+                                                indexSpecificAssetIds));
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "specificAssetIds"));
+                                        return null;
+                                    }
+                                    ISpecificAssetId? parsedItem = DeserializeImplementation.SpecificAssetIdFrom(
+                                        item ?? throw new System.InvalidOperationException(),
+                                        out error);
+                                    if (error != null)
+                                    {
+                                        error.PrependSegment(
+                                            new Reporting.IndexSegment(
+                                                indexSpecificAssetIds));
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "specificAssetIds"));
+                                        return null;
+                                    }
+                                    theSpecificAssetIds.Add(
+                                        parsedItem
+                                            ?? throw new System.InvalidOperationException(
+                                                "Unexpected result null when error is null"));
+                                    indexSpecificAssetIds++;
                                 }
                                 break;
                             }
@@ -10102,16 +9539,44 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
                     theEmbeddedDataSpecifications,
                     theStatements,
                     theGlobalAssetId,
-                    theSpecificAssetId);
+                    theSpecificAssetIds);
             }  // internal static EntityFrom
+
+            /// <summary>
+            /// Deserialize the enumeration EntityType from the <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <param name="error">Error, if any, during the deserialization</param>
+            internal static Aas.EntityType? EntityTypeFrom(
+                Nodes.JsonNode node,
+                out Reporting.Error? error)
+            {
+                error = null;
+                string? text = DeserializeImplementation.StringFrom(
+                    node, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+                if (text == null)
+                {
+                    throw new System.InvalidOperationException(
+                        "Unexpected text null if error null");
+                }
+                Aas.EntityType? result = Stringification.EntityTypeFromString(text);
+                if (result == null)
+                {
+                    error = new Reporting.Error(
+                        "Not a valid JSON representation of EntityType");
+                }
+                return result;
+            }  // internal static EntityTypeFrom
 
             /// <summary>
             /// Deserialize the enumeration Direction from the <paramref name="node" />.
@@ -10192,14 +9657,14 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                Reference? theSource = null;
-                Reference? theObservableReference = null;
+                IReference? theSource = null;
+                IReference? theObservableReference = null;
                 string? theTimeStamp = null;
-                Reference? theSourceSemanticId = null;
-                Reference? theObservableSemanticId = null;
+                IReference? theSourceSemanticId = null;
+                IReference? theObservableSemanticId = null;
                 string? theTopic = null;
-                Reference? theSubjectId = null;
-                string? thePayload = null;
+                IReference? theSubjectId = null;
+                byte[]? thePayload = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -10380,7 +9845,7 @@ namespace AasCore.Aas3_0_RC02
                                     continue;
                                 }
 
-                                thePayload = DeserializeImplementation.StringFrom(
+                                thePayload = DeserializeImplementation.BytesFrom(
                                     keyValue.Value,
                                     out error);
                                 if (error != null)
@@ -10518,22 +9983,20 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                Reference? theObserved = null;
+                IReference? theObserved = null;
                 Direction? theDirection = null;
                 StateOfEvent? theState = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theMessageTopic = null;
-                Reference? theMessageBroker = null;
+                IReference? theMessageBroker = null;
                 string? theLastUpdate = null;
                 string? theMinInterval = null;
                 string? theMaxInterval = null;
@@ -10631,7 +10094,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -10648,7 +10111,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -10734,7 +10197,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -10751,7 +10214,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -10789,7 +10252,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -10806,7 +10269,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -10824,54 +10287,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -10916,7 +10331,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -10933,7 +10348,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -10971,7 +10386,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -10988,7 +10403,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11026,7 +10441,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -11043,7 +10458,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11229,8 +10644,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -11261,20 +10674,18 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<OperationVariable>? theInputVariables = null;
-                List<OperationVariable>? theOutputVariables = null;
-                List<OperationVariable>? theInoutputVariables = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<IOperationVariable>? theInputVariables = null;
+                List<IOperationVariable>? theOutputVariables = null;
+                List<IOperationVariable>? theInoutputVariables = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -11297,7 +10708,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -11314,7 +10725,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11400,7 +10811,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -11417,7 +10828,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11455,7 +10866,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -11472,7 +10883,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11490,54 +10901,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -11582,7 +10945,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -11599,7 +10962,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11637,7 +11000,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -11654,7 +11017,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11692,7 +11055,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -11709,7 +11072,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11747,7 +11110,7 @@ namespace AasCore.Aas3_0_RC02
                                             "inputVariables"));
                                     return null;
                                 }
-                                theInputVariables = new List<OperationVariable>(
+                                theInputVariables = new List<IOperationVariable>(
                                     arrayInputVariables.Count);
                                 int indexInputVariables = 0;
                                 foreach (Nodes.JsonNode? item in arrayInputVariables)
@@ -11764,7 +11127,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "inputVariables"));
                                         return null;
                                     }
-                                    OperationVariable? parsedItem = DeserializeImplementation.OperationVariableFrom(
+                                    IOperationVariable? parsedItem = DeserializeImplementation.OperationVariableFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11802,7 +11165,7 @@ namespace AasCore.Aas3_0_RC02
                                             "outputVariables"));
                                     return null;
                                 }
-                                theOutputVariables = new List<OperationVariable>(
+                                theOutputVariables = new List<IOperationVariable>(
                                     arrayOutputVariables.Count);
                                 int indexOutputVariables = 0;
                                 foreach (Nodes.JsonNode? item in arrayOutputVariables)
@@ -11819,7 +11182,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "outputVariables"));
                                         return null;
                                     }
-                                    OperationVariable? parsedItem = DeserializeImplementation.OperationVariableFrom(
+                                    IOperationVariable? parsedItem = DeserializeImplementation.OperationVariableFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11857,7 +11220,7 @@ namespace AasCore.Aas3_0_RC02
                                             "inoutputVariables"));
                                     return null;
                                 }
-                                theInoutputVariables = new List<OperationVariable>(
+                                theInoutputVariables = new List<IOperationVariable>(
                                     arrayInoutputVariables.Count);
                                 int indexInoutputVariables = 0;
                                 foreach (Nodes.JsonNode? item in arrayInoutputVariables)
@@ -11874,7 +11237,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "inoutputVariables"));
                                         return null;
                                     }
-                                    OperationVariable? parsedItem = DeserializeImplementation.OperationVariableFrom(
+                                    IOperationVariable? parsedItem = DeserializeImplementation.OperationVariableFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -11912,8 +11275,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -12011,17 +11372,15 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -12044,7 +11403,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -12061,7 +11420,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12147,7 +11506,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -12164,7 +11523,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12202,7 +11561,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -12219,7 +11578,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12237,54 +11596,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
-                                }
-                                break;
-                            }
-                        case "kind":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theKind = DeserializeImplementation.ModelingKindFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "kind"));
-                                    return null;
-                                }
-                                if (theKind == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theKind null when error is also null");
                                 }
                                 break;
                             }
@@ -12329,7 +11640,7 @@ namespace AasCore.Aas3_0_RC02
                                             "supplementalSemanticIds"));
                                     return null;
                                 }
-                                theSupplementalSemanticIds = new List<Reference>(
+                                theSupplementalSemanticIds = new List<IReference>(
                                     arraySupplementalSemanticIds.Count);
                                 int indexSupplementalSemanticIds = 0;
                                 foreach (Nodes.JsonNode? item in arraySupplementalSemanticIds)
@@ -12346,7 +11657,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "supplementalSemanticIds"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12384,7 +11695,7 @@ namespace AasCore.Aas3_0_RC02
                                             "qualifiers"));
                                     return null;
                                 }
-                                theQualifiers = new List<Qualifier>(
+                                theQualifiers = new List<IQualifier>(
                                     arrayQualifiers.Count);
                                 int indexQualifiers = 0;
                                 foreach (Nodes.JsonNode? item in arrayQualifiers)
@@ -12401,7 +11712,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "qualifiers"));
                                         return null;
                                     }
-                                    Qualifier? parsedItem = DeserializeImplementation.QualifierFrom(
+                                    IQualifier? parsedItem = DeserializeImplementation.QualifierFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12439,7 +11750,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -12456,7 +11767,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12494,8 +11805,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -12522,15 +11831,14 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theId = null;
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                AdministrativeInformation? theAdministration = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<Reference>? theIsCaseOf = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IAdministrativeInformation? theAdministration = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<IReference>? theIsCaseOf = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -12577,7 +11885,7 @@ namespace AasCore.Aas3_0_RC02
                                             "extensions"));
                                     return null;
                                 }
-                                theExtensions = new List<Extension>(
+                                theExtensions = new List<IExtension>(
                                     arrayExtensions.Count);
                                 int indexExtensions = 0;
                                 foreach (Nodes.JsonNode? item in arrayExtensions)
@@ -12594,7 +11902,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "extensions"));
                                         return null;
                                     }
-                                    Extension? parsedItem = DeserializeImplementation.ExtensionFrom(
+                                    IExtension? parsedItem = DeserializeImplementation.ExtensionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12680,7 +11988,7 @@ namespace AasCore.Aas3_0_RC02
                                             "displayName"));
                                     return null;
                                 }
-                                theDisplayName = new List<LangString>(
+                                theDisplayName = new List<ILangStringNameType>(
                                     arrayDisplayName.Count);
                                 int indexDisplayName = 0;
                                 foreach (Nodes.JsonNode? item in arrayDisplayName)
@@ -12697,7 +12005,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "displayName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringNameType? parsedItem = DeserializeImplementation.LangStringNameTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12735,7 +12043,7 @@ namespace AasCore.Aas3_0_RC02
                                             "description"));
                                     return null;
                                 }
-                                theDescription = new List<LangString>(
+                                theDescription = new List<ILangStringTextType>(
                                     arrayDescription.Count);
                                 int indexDescription = 0;
                                 foreach (Nodes.JsonNode? item in arrayDescription)
@@ -12752,7 +12060,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "description"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringTextType? parsedItem = DeserializeImplementation.LangStringTextTypeFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12770,30 +12078,6 @@ namespace AasCore.Aas3_0_RC02
                                             ?? throw new System.InvalidOperationException(
                                                 "Unexpected result null when error is null"));
                                     indexDescription++;
-                                }
-                                break;
-                            }
-                        case "checksum":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theChecksum = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "checksum"));
-                                    return null;
-                                }
-                                if (theChecksum == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theChecksum null when error is also null");
                                 }
                                 break;
                             }
@@ -12838,7 +12122,7 @@ namespace AasCore.Aas3_0_RC02
                                             "embeddedDataSpecifications"));
                                     return null;
                                 }
-                                theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>(
+                                theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>(
                                     arrayEmbeddedDataSpecifications.Count);
                                 int indexEmbeddedDataSpecifications = 0;
                                 foreach (Nodes.JsonNode? item in arrayEmbeddedDataSpecifications)
@@ -12855,7 +12139,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "embeddedDataSpecifications"));
                                         return null;
                                     }
-                                    EmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
+                                    IEmbeddedDataSpecification? parsedItem = DeserializeImplementation.EmbeddedDataSpecificationFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12893,7 +12177,7 @@ namespace AasCore.Aas3_0_RC02
                                             "isCaseOf"));
                                     return null;
                                 }
-                                theIsCaseOf = new List<Reference>(
+                                theIsCaseOf = new List<IReference>(
                                     arrayIsCaseOf.Count);
                                 int indexIsCaseOf = 0;
                                 foreach (Nodes.JsonNode? item in arrayIsCaseOf)
@@ -12910,7 +12194,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "isCaseOf"));
                                         return null;
                                     }
-                                    Reference? parsedItem = DeserializeImplementation.ReferenceFrom(
+                                    IReference? parsedItem = DeserializeImplementation.ReferenceFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -12956,7 +12240,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
                     theAdministration,
                     theEmbeddedDataSpecifications,
                     theIsCaseOf);
@@ -13012,8 +12295,8 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 ReferenceTypes? theType = null;
-                List<Key>? theKeys = null;
-                Reference? theReferredSemanticId = null;
+                List<IKey>? theKeys = null;
+                IReference? theReferredSemanticId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13060,7 +12343,7 @@ namespace AasCore.Aas3_0_RC02
                                             "keys"));
                                     return null;
                                 }
-                                theKeys = new List<Key>(
+                                theKeys = new List<IKey>(
                                     arrayKeys.Count);
                                 int indexKeys = 0;
                                 foreach (Nodes.JsonNode? item in arrayKeys)
@@ -13077,7 +12360,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "keys"));
                                         return null;
                                     }
-                                    Key? parsedItem = DeserializeImplementation.KeyFrom(
+                                    IKey? parsedItem = DeserializeImplementation.KeyFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -13318,11 +12601,80 @@ namespace AasCore.Aas3_0_RC02
             }  // internal static DataTypeDefXsdFrom
 
             /// <summary>
-            /// Deserialize an instance of LangString from <paramref name="node" />.
+            /// Deserialize an instance of IAbstractLangString by dispatching
+            /// based on <c>modelType</c> property of the <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <param name="error">Error, if any, during the deserialization</param>
-            internal static Aas.LangString? LangStringFrom(
+            [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+            public static Aas.IAbstractLangString? IAbstractLangStringFrom(
+                Nodes.JsonNode node,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                var obj = node as Nodes.JsonObject;
+                if (obj == null)
+                {
+                    error = new Reporting.Error(
+                        "Expected Nodes.JsonObject, but got {node.GetType()}");
+                    return null;
+                }
+
+                Nodes.JsonNode? modelTypeNode = obj["modelType"];
+                if (modelTypeNode == null)
+                {
+                    error = new Reporting.Error(
+                        "Expected a model type, but none is present");
+                    return null;
+                }
+                Nodes.JsonValue? modelTypeValue = modelTypeNode as Nodes.JsonValue;
+                if (modelTypeValue == null)
+                {
+                    error = new Reporting.Error(
+                        "Expected JsonValue, " +
+                        $"but got {modelTypeNode.GetType()}");
+                    return null;
+                }
+                modelTypeValue.TryGetValue<string>(out string? modelType);
+                if (modelType == null)
+                {
+                    error = new Reporting.Error(
+                        "Expected a string, " +
+                        $"but the conversion failed from {modelTypeValue}");
+                    return null;
+                }
+
+                switch (modelType)
+                {
+                    case "LangStringDefinitionTypeIec61360":
+                        return LangStringDefinitionTypeIec61360From(
+                            node, out error);
+                    case "LangStringNameType":
+                        return LangStringNameTypeFrom(
+                            node, out error);
+                    case "LangStringPreferredNameTypeIec61360":
+                        return LangStringPreferredNameTypeIec61360From(
+                            node, out error);
+                    case "LangStringShortNameTypeIec61360":
+                        return LangStringShortNameTypeIec61360From(
+                            node, out error);
+                    case "LangStringTextType":
+                        return LangStringTextTypeFrom(
+                            node, out error);
+                    default:
+                        error = new Reporting.Error(
+                            $"Unexpected model type for IAbstractLangString: {modelType}");
+                        return null;
+                }
+            }  // public static Aas.IAbstractLangString IAbstractLangStringFrom
+
+            /// <summary>
+            /// Deserialize an instance of LangStringNameType from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <param name="error">Error, if any, during the deserialization</param>
+            internal static Aas.LangStringNameType? LangStringNameTypeFrom(
                 Nodes.JsonNode node,
                 out Reporting.Error? error)
             {
@@ -13412,14 +12764,118 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                return new Aas.LangString(
+                return new Aas.LangStringNameType(
                     theLanguage
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"),
                     theText
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"));
-            }  // internal static LangStringFrom
+            }  // internal static LangStringNameTypeFrom
+
+            /// <summary>
+            /// Deserialize an instance of LangStringTextType from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <param name="error">Error, if any, during the deserialization</param>
+            internal static Aas.LangStringTextType? LangStringTextTypeFrom(
+                Nodes.JsonNode node,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                Nodes.JsonObject? obj = node as Nodes.JsonObject;
+                if (obj == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonObject, but got {node.GetType()}");
+                    return null;
+                }
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                foreach (var keyValue in obj)
+                {
+                    switch (keyValue.Key)
+                    {
+                        case "language":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theLanguage = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "language"));
+                                    return null;
+                                }
+                                if (theLanguage == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theLanguage null when error is also null");
+                                }
+                                break;
+                            }
+                        case "text":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theText = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "text"));
+                                    return null;
+                                }
+                                if (theText == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theText null when error is also null");
+                                }
+                                break;
+                            }
+                        default:
+                            error = new Reporting.Error(
+                                $"Unexpected property: {keyValue.Key}");
+                            return null;
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"language\" is missing");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"text\" is missing");
+                    return null;
+                }
+
+                return new Aas.LangStringTextType(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static LangStringTextTypeFrom
 
             /// <summary>
             /// Deserialize an instance of Environment from <paramref name="node" />.
@@ -13440,9 +12896,9 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<AssetAdministrationShell>? theAssetAdministrationShells = null;
-                List<Submodel>? theSubmodels = null;
-                List<ConceptDescription>? theConceptDescriptions = null;
+                List<IAssetAdministrationShell>? theAssetAdministrationShells = null;
+                List<ISubmodel>? theSubmodels = null;
+                List<IConceptDescription>? theConceptDescriptions = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13465,7 +12921,7 @@ namespace AasCore.Aas3_0_RC02
                                             "assetAdministrationShells"));
                                     return null;
                                 }
-                                theAssetAdministrationShells = new List<AssetAdministrationShell>(
+                                theAssetAdministrationShells = new List<IAssetAdministrationShell>(
                                     arrayAssetAdministrationShells.Count);
                                 int indexAssetAdministrationShells = 0;
                                 foreach (Nodes.JsonNode? item in arrayAssetAdministrationShells)
@@ -13482,7 +12938,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "assetAdministrationShells"));
                                         return null;
                                     }
-                                    AssetAdministrationShell? parsedItem = DeserializeImplementation.AssetAdministrationShellFrom(
+                                    IAssetAdministrationShell? parsedItem = DeserializeImplementation.AssetAdministrationShellFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -13520,7 +12976,7 @@ namespace AasCore.Aas3_0_RC02
                                             "submodels"));
                                     return null;
                                 }
-                                theSubmodels = new List<Submodel>(
+                                theSubmodels = new List<ISubmodel>(
                                     arraySubmodels.Count);
                                 int indexSubmodels = 0;
                                 foreach (Nodes.JsonNode? item in arraySubmodels)
@@ -13537,7 +12993,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "submodels"));
                                         return null;
                                     }
-                                    Submodel? parsedItem = DeserializeImplementation.SubmodelFrom(
+                                    ISubmodel? parsedItem = DeserializeImplementation.SubmodelFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -13575,7 +13031,7 @@ namespace AasCore.Aas3_0_RC02
                                             "conceptDescriptions"));
                                     return null;
                                 }
-                                theConceptDescriptions = new List<ConceptDescription>(
+                                theConceptDescriptions = new List<IConceptDescription>(
                                     arrayConceptDescriptions.Count);
                                 int indexConceptDescriptions = 0;
                                 foreach (Nodes.JsonNode? item in arrayConceptDescriptions)
@@ -13592,7 +13048,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "conceptDescriptions"));
                                         return null;
                                     }
-                                    ConceptDescription? parsedItem = DeserializeImplementation.ConceptDescriptionFrom(
+                                    IConceptDescription? parsedItem = DeserializeImplementation.ConceptDescriptionFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -13675,11 +13131,8 @@ namespace AasCore.Aas3_0_RC02
 
                 switch (modelType)
                 {
-                    case "DataSpecificationIEC61360":
+                    case "DataSpecificationIec61360":
                         return DataSpecificationIec61360From(
-                            node, out error);
-                    case "DataSpecificationPhysicalUnit":
-                        return DataSpecificationPhysicalUnitFrom(
                             node, out error);
                     default:
                         error = new Reporting.Error(
@@ -13707,7 +13160,7 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                Reference? theDataSpecification = null;
+                IReference? theDataSpecification = null;
                 IDataSpecificationContent? theDataSpecificationContent = null;
 
                 foreach (var keyValue in obj)
@@ -13823,7 +13276,7 @@ namespace AasCore.Aas3_0_RC02
             }  // internal static DataTypeIec61360From
 
             /// <summary>
-            /// Deserialize the enumeration LevelType from the <paramref name="node" />.
+            /// Deserialize an instance of LevelType from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <param name="error">Error, if any, during the deserialization</param>
@@ -13832,24 +13285,168 @@ namespace AasCore.Aas3_0_RC02
                 out Reporting.Error? error)
             {
                 error = null;
-                string? text = DeserializeImplementation.StringFrom(
-                    node, out error);
-                if (error != null)
-                {
-                    return null;
-                }
-                if (text == null)
-                {
-                    throw new System.InvalidOperationException(
-                        "Unexpected text null if error null");
-                }
-                Aas.LevelType? result = Stringification.LevelTypeFromString(text);
-                if (result == null)
+
+                Nodes.JsonObject? obj = node as Nodes.JsonObject;
+                if (obj == null)
                 {
                     error = new Reporting.Error(
-                        "Not a valid JSON representation of LevelType");
+                        $"Expected a JsonObject, but got {node.GetType()}");
+                    return null;
                 }
-                return result;
+
+                bool? theMin = null;
+                bool? theNom = null;
+                bool? theTyp = null;
+                bool? theMax = null;
+
+                foreach (var keyValue in obj)
+                {
+                    switch (keyValue.Key)
+                    {
+                        case "min":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theMin = DeserializeImplementation.BoolFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "min"));
+                                    return null;
+                                }
+                                if (theMin == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theMin null when error is also null");
+                                }
+                                break;
+                            }
+                        case "nom":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theNom = DeserializeImplementation.BoolFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "nom"));
+                                    return null;
+                                }
+                                if (theNom == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theNom null when error is also null");
+                                }
+                                break;
+                            }
+                        case "typ":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theTyp = DeserializeImplementation.BoolFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "typ"));
+                                    return null;
+                                }
+                                if (theTyp == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theTyp null when error is also null");
+                                }
+                                break;
+                            }
+                        case "max":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theMax = DeserializeImplementation.BoolFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "max"));
+                                    return null;
+                                }
+                                if (theMax == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theMax null when error is also null");
+                                }
+                                break;
+                            }
+                        default:
+                            error = new Reporting.Error(
+                                $"Unexpected property: {keyValue.Key}");
+                            return null;
+                    }
+                }
+
+                if (theMin == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"min\" is missing");
+                    return null;
+                }
+
+                if (theNom == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"nom\" is missing");
+                    return null;
+                }
+
+                if (theTyp == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"typ\" is missing");
+                    return null;
+                }
+
+                if (theMax == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"max\" is missing");
+                    return null;
+                }
+
+                return new Aas.LevelType(
+                    theMin
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theNom
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theTyp
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theMax
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
             }  // internal static LevelTypeFrom
 
             /// <summary>
@@ -13872,7 +13469,7 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 string? theValue = null;
-                Reference? theValueId = null;
+                IReference? theValueId = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13975,7 +13572,7 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<ValueReferencePair>? theValueReferencePairs = null;
+                List<IValueReferencePair>? theValueReferencePairs = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13998,7 +13595,7 @@ namespace AasCore.Aas3_0_RC02
                                             "valueReferencePairs"));
                                     return null;
                                 }
-                                theValueReferencePairs = new List<ValueReferencePair>(
+                                theValueReferencePairs = new List<IValueReferencePair>(
                                     arrayValueReferencePairs.Count);
                                 int indexValueReferencePairs = 0;
                                 foreach (Nodes.JsonNode? item in arrayValueReferencePairs)
@@ -14015,7 +13612,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "valueReferencePairs"));
                                         return null;
                                     }
-                                    ValueReferencePair? parsedItem = DeserializeImplementation.ValueReferencePairFrom(
+                                    IValueReferencePair? parsedItem = DeserializeImplementation.ValueReferencePairFrom(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -14057,6 +13654,318 @@ namespace AasCore.Aas3_0_RC02
             }  // internal static ValueListFrom
 
             /// <summary>
+            /// Deserialize an instance of LangStringPreferredNameTypeIec61360 from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <param name="error">Error, if any, during the deserialization</param>
+            internal static Aas.LangStringPreferredNameTypeIec61360? LangStringPreferredNameTypeIec61360From(
+                Nodes.JsonNode node,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                Nodes.JsonObject? obj = node as Nodes.JsonObject;
+                if (obj == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonObject, but got {node.GetType()}");
+                    return null;
+                }
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                foreach (var keyValue in obj)
+                {
+                    switch (keyValue.Key)
+                    {
+                        case "language":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theLanguage = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "language"));
+                                    return null;
+                                }
+                                if (theLanguage == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theLanguage null when error is also null");
+                                }
+                                break;
+                            }
+                        case "text":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theText = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "text"));
+                                    return null;
+                                }
+                                if (theText == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theText null when error is also null");
+                                }
+                                break;
+                            }
+                        default:
+                            error = new Reporting.Error(
+                                $"Unexpected property: {keyValue.Key}");
+                            return null;
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"language\" is missing");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"text\" is missing");
+                    return null;
+                }
+
+                return new Aas.LangStringPreferredNameTypeIec61360(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static LangStringPreferredNameTypeIec61360From
+
+            /// <summary>
+            /// Deserialize an instance of LangStringShortNameTypeIec61360 from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <param name="error">Error, if any, during the deserialization</param>
+            internal static Aas.LangStringShortNameTypeIec61360? LangStringShortNameTypeIec61360From(
+                Nodes.JsonNode node,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                Nodes.JsonObject? obj = node as Nodes.JsonObject;
+                if (obj == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonObject, but got {node.GetType()}");
+                    return null;
+                }
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                foreach (var keyValue in obj)
+                {
+                    switch (keyValue.Key)
+                    {
+                        case "language":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theLanguage = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "language"));
+                                    return null;
+                                }
+                                if (theLanguage == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theLanguage null when error is also null");
+                                }
+                                break;
+                            }
+                        case "text":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theText = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "text"));
+                                    return null;
+                                }
+                                if (theText == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theText null when error is also null");
+                                }
+                                break;
+                            }
+                        default:
+                            error = new Reporting.Error(
+                                $"Unexpected property: {keyValue.Key}");
+                            return null;
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"language\" is missing");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"text\" is missing");
+                    return null;
+                }
+
+                return new Aas.LangStringShortNameTypeIec61360(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static LangStringShortNameTypeIec61360From
+
+            /// <summary>
+            /// Deserialize an instance of LangStringDefinitionTypeIec61360 from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <param name="error">Error, if any, during the deserialization</param>
+            internal static Aas.LangStringDefinitionTypeIec61360? LangStringDefinitionTypeIec61360From(
+                Nodes.JsonNode node,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                Nodes.JsonObject? obj = node as Nodes.JsonObject;
+                if (obj == null)
+                {
+                    error = new Reporting.Error(
+                        $"Expected a JsonObject, but got {node.GetType()}");
+                    return null;
+                }
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                foreach (var keyValue in obj)
+                {
+                    switch (keyValue.Key)
+                    {
+                        case "language":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theLanguage = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "language"));
+                                    return null;
+                                }
+                                if (theLanguage == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theLanguage null when error is also null");
+                                }
+                                break;
+                            }
+                        case "text":
+                            {
+                                if (keyValue.Value == null)
+                                {
+                                    continue;
+                                }
+
+                                theText = DeserializeImplementation.StringFrom(
+                                    keyValue.Value,
+                                    out error);
+                                if (error != null)
+                                {
+                                    error.PrependSegment(
+                                        new Reporting.NameSegment(
+                                            "text"));
+                                    return null;
+                                }
+                                if (theText == null)
+                                {
+                                    throw new System.InvalidOperationException(
+                                        "Unexpected theText null when error is also null");
+                                }
+                                break;
+                            }
+                        default:
+                            error = new Reporting.Error(
+                                $"Unexpected property: {keyValue.Key}");
+                            return null;
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"language\" is missing");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "Required property \"text\" is missing");
+                    return null;
+                }
+
+                return new Aas.LangStringDefinitionTypeIec61360(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static LangStringDefinitionTypeIec61360From
+
+            /// <summary>
             /// Deserialize an instance of DataSpecificationIec61360 from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
@@ -14075,18 +13984,18 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                List<LangString>? thePreferredName = null;
-                List<LangString>? theShortName = null;
+                List<ILangStringPreferredNameTypeIec61360>? thePreferredName = null;
+                List<ILangStringShortNameTypeIec61360>? theShortName = null;
                 string? theUnit = null;
-                Reference? theUnitId = null;
+                IReference? theUnitId = null;
                 string? theSourceOfDefinition = null;
                 string? theSymbol = null;
                 DataTypeIec61360? theDataType = null;
-                List<LangString>? theDefinition = null;
+                List<ILangStringDefinitionTypeIec61360>? theDefinition = null;
                 string? theValueFormat = null;
-                ValueList? theValueList = null;
+                IValueList? theValueList = null;
                 string? theValue = null;
-                LevelType? theLevelType = null;
+                ILevelType? theLevelType = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -14109,7 +14018,7 @@ namespace AasCore.Aas3_0_RC02
                                             "preferredName"));
                                     return null;
                                 }
-                                thePreferredName = new List<LangString>(
+                                thePreferredName = new List<ILangStringPreferredNameTypeIec61360>(
                                     arrayPreferredName.Count);
                                 int indexPreferredName = 0;
                                 foreach (Nodes.JsonNode? item in arrayPreferredName)
@@ -14126,7 +14035,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "preferredName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringPreferredNameTypeIec61360? parsedItem = DeserializeImplementation.LangStringPreferredNameTypeIec61360From(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -14164,7 +14073,7 @@ namespace AasCore.Aas3_0_RC02
                                             "shortName"));
                                     return null;
                                 }
-                                theShortName = new List<LangString>(
+                                theShortName = new List<ILangStringShortNameTypeIec61360>(
                                     arrayShortName.Count);
                                 int indexShortName = 0;
                                 foreach (Nodes.JsonNode? item in arrayShortName)
@@ -14181,7 +14090,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "shortName"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringShortNameTypeIec61360? parsedItem = DeserializeImplementation.LangStringShortNameTypeIec61360From(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -14339,7 +14248,7 @@ namespace AasCore.Aas3_0_RC02
                                             "definition"));
                                     return null;
                                 }
-                                theDefinition = new List<LangString>(
+                                theDefinition = new List<ILangStringDefinitionTypeIec61360>(
                                     arrayDefinition.Count);
                                 int indexDefinition = 0;
                                 foreach (Nodes.JsonNode? item in arrayDefinition)
@@ -14356,7 +14265,7 @@ namespace AasCore.Aas3_0_RC02
                                                 "definition"));
                                         return null;
                                     }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
+                                    ILangStringDefinitionTypeIec61360? parsedItem = DeserializeImplementation.LangStringDefinitionTypeIec61360From(
                                         item ?? throw new System.InvalidOperationException(),
                                         out error);
                                     if (error != null)
@@ -14505,438 +14414,6 @@ namespace AasCore.Aas3_0_RC02
                     theValue,
                     theLevelType);
             }  // internal static DataSpecificationIec61360From
-
-            /// <summary>
-            /// Deserialize an instance of DataSpecificationPhysicalUnit from <paramref name="node" />.
-            /// </summary>
-            /// <param name="node">JSON node to be parsed</param>
-            /// <param name="error">Error, if any, during the deserialization</param>
-            internal static Aas.DataSpecificationPhysicalUnit? DataSpecificationPhysicalUnitFrom(
-                Nodes.JsonNode node,
-                out Reporting.Error? error)
-            {
-                error = null;
-
-                Nodes.JsonObject? obj = node as Nodes.JsonObject;
-                if (obj == null)
-                {
-                    error = new Reporting.Error(
-                        $"Expected a JsonObject, but got {node.GetType()}");
-                    return null;
-                }
-
-                string? theUnitName = null;
-                string? theUnitSymbol = null;
-                List<LangString>? theDefinition = null;
-                string? theSiNotation = null;
-                string? theSiName = null;
-                string? theDinNotation = null;
-                string? theEceName = null;
-                string? theEceCode = null;
-                string? theNistName = null;
-                string? theSourceOfDefinition = null;
-                string? theConversionFactor = null;
-                string? theRegistrationAuthorityId = null;
-                string? theSupplier = null;
-
-                foreach (var keyValue in obj)
-                {
-                    switch (keyValue.Key)
-                    {
-                        case "unitName":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theUnitName = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "unitName"));
-                                    return null;
-                                }
-                                if (theUnitName == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theUnitName null when error is also null");
-                                }
-                                break;
-                            }
-                        case "unitSymbol":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theUnitSymbol = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "unitSymbol"));
-                                    return null;
-                                }
-                                if (theUnitSymbol == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theUnitSymbol null when error is also null");
-                                }
-                                break;
-                            }
-                        case "definition":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                Nodes.JsonArray? arrayDefinition = keyValue.Value as Nodes.JsonArray;
-                                if (arrayDefinition == null)
-                                {
-                                    error = new Reporting.Error(
-                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "definition"));
-                                    return null;
-                                }
-                                theDefinition = new List<LangString>(
-                                    arrayDefinition.Count);
-                                int indexDefinition = 0;
-                                foreach (Nodes.JsonNode? item in arrayDefinition)
-                                {
-                                    if (item == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected a non-null item, but got a null");
-                                        error.PrependSegment(
-                                            new Reporting.IndexSegment(
-                                                indexDefinition));
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "definition"));
-                                        return null;
-                                    }
-                                    LangString? parsedItem = DeserializeImplementation.LangStringFrom(
-                                        item ?? throw new System.InvalidOperationException(),
-                                        out error);
-                                    if (error != null)
-                                    {
-                                        error.PrependSegment(
-                                            new Reporting.IndexSegment(
-                                                indexDefinition));
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "definition"));
-                                        return null;
-                                    }
-                                    theDefinition.Add(
-                                        parsedItem
-                                            ?? throw new System.InvalidOperationException(
-                                                "Unexpected result null when error is null"));
-                                    indexDefinition++;
-                                }
-                                break;
-                            }
-                        case "siNotation":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theSiNotation = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "siNotation"));
-                                    return null;
-                                }
-                                if (theSiNotation == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theSiNotation null when error is also null");
-                                }
-                                break;
-                            }
-                        case "siName":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theSiName = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "siName"));
-                                    return null;
-                                }
-                                if (theSiName == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theSiName null when error is also null");
-                                }
-                                break;
-                            }
-                        case "dinNotation":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theDinNotation = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "dinNotation"));
-                                    return null;
-                                }
-                                if (theDinNotation == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theDinNotation null when error is also null");
-                                }
-                                break;
-                            }
-                        case "eceName":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theEceName = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "eceName"));
-                                    return null;
-                                }
-                                if (theEceName == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theEceName null when error is also null");
-                                }
-                                break;
-                            }
-                        case "eceCode":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theEceCode = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "eceCode"));
-                                    return null;
-                                }
-                                if (theEceCode == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theEceCode null when error is also null");
-                                }
-                                break;
-                            }
-                        case "nistName":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theNistName = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "nistName"));
-                                    return null;
-                                }
-                                if (theNistName == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theNistName null when error is also null");
-                                }
-                                break;
-                            }
-                        case "sourceOfDefinition":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theSourceOfDefinition = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "sourceOfDefinition"));
-                                    return null;
-                                }
-                                if (theSourceOfDefinition == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theSourceOfDefinition null when error is also null");
-                                }
-                                break;
-                            }
-                        case "conversionFactor":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theConversionFactor = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "conversionFactor"));
-                                    return null;
-                                }
-                                if (theConversionFactor == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theConversionFactor null when error is also null");
-                                }
-                                break;
-                            }
-                        case "registrationAuthorityId":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theRegistrationAuthorityId = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "registrationAuthorityId"));
-                                    return null;
-                                }
-                                if (theRegistrationAuthorityId == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theRegistrationAuthorityId null when error is also null");
-                                }
-                                break;
-                            }
-                        case "supplier":
-                            {
-                                if (keyValue.Value == null)
-                                {
-                                    continue;
-                                }
-
-                                theSupplier = DeserializeImplementation.StringFrom(
-                                    keyValue.Value,
-                                    out error);
-                                if (error != null)
-                                {
-                                    error.PrependSegment(
-                                        new Reporting.NameSegment(
-                                            "supplier"));
-                                    return null;
-                                }
-                                if (theSupplier == null)
-                                {
-                                    throw new System.InvalidOperationException(
-                                        "Unexpected theSupplier null when error is also null");
-                                }
-                                break;
-                            }
-                        case "modelType":
-                            continue;
-                        default:
-                            error = new Reporting.Error(
-                                $"Unexpected property: {keyValue.Key}");
-                            return null;
-                    }
-                }
-
-                if (theUnitName == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"unitName\" is missing");
-                    return null;
-                }
-
-                if (theUnitSymbol == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"unitSymbol\" is missing");
-                    return null;
-                }
-
-                if (theDefinition == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"definition\" is missing");
-                    return null;
-                }
-
-                return new Aas.DataSpecificationPhysicalUnit(
-                    theUnitName
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theUnitSymbol
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theDefinition
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theSiNotation,
-                    theSiName,
-                    theDinNotation,
-                    theEceName,
-                    theEceCode,
-                    theNistName,
-                    theSourceOfDefinition,
-                    theConversionFactor,
-                    theRegistrationAuthorityId,
-                    theSupplier);
-            }  // internal static DataSpecificationPhysicalUnitFrom
         }  // public static class DeserializeImplementation
 
         /// <summary>
@@ -15098,17 +14575,17 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of ModelingKind from <paramref name="node" />.
+            /// Deserialize an instance of ModellingKind from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <exception cref="Jsonization.Exception">
             /// Thrown when <paramref name="node" /> is not a valid JSON
-            /// representation of ModelingKind.
+            /// representation of ModellingKind.
             /// </exception>
-            public static Aas.ModelingKind ModelingKindFrom(
+            public static Aas.ModellingKind ModellingKindFrom(
                 Nodes.JsonNode node)
             {
-                Aas.ModelingKind? result = DeserializeImplementation.ModelingKindFrom(
+                Aas.ModellingKind? result = DeserializeImplementation.ModellingKindFrom(
                     node,
                     out Reporting.Error? error);
                 if (error != null)
@@ -15779,17 +15256,17 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of EntityType from <paramref name="node" />.
+            /// Deserialize an instance of Entity from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <exception cref="Jsonization.Exception">
             /// Thrown when <paramref name="node" /> is not a valid JSON
-            /// representation of EntityType.
+            /// representation of Entity.
             /// </exception>
-            public static Aas.EntityType EntityTypeFrom(
+            public static Aas.Entity EntityFrom(
                 Nodes.JsonNode node)
             {
-                Aas.EntityType? result = DeserializeImplementation.EntityTypeFrom(
+                Aas.Entity? result = DeserializeImplementation.EntityFrom(
                     node,
                     out Reporting.Error? error);
                 if (error != null)
@@ -15804,17 +15281,17 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of Entity from <paramref name="node" />.
+            /// Deserialize an instance of EntityType from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <exception cref="Jsonization.Exception">
             /// Thrown when <paramref name="node" /> is not a valid JSON
-            /// representation of Entity.
+            /// representation of EntityType.
             /// </exception>
-            public static Aas.Entity EntityFrom(
+            public static Aas.EntityType EntityTypeFrom(
                 Nodes.JsonNode node)
             {
-                Aas.Entity? result = DeserializeImplementation.EntityFrom(
+                Aas.EntityType? result = DeserializeImplementation.EntityTypeFrom(
                     node,
                     out Reporting.Error? error);
                 if (error != null)
@@ -16180,17 +15657,68 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of LangString from <paramref name="node" />.
+            /// Deserialize an instance of IAbstractLangString from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <exception cref="Jsonization.Exception">
             /// Thrown when <paramref name="node" /> is not a valid JSON
-            /// representation of LangString.
+            /// representation of IAbstractLangString.
             /// </exception>
-            public static Aas.LangString LangStringFrom(
+            [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+            public static Aas.IAbstractLangString IAbstractLangStringFrom(
                 Nodes.JsonNode node)
             {
-                Aas.LangString? result = DeserializeImplementation.LangStringFrom(
+                Aas.IAbstractLangString? result = DeserializeImplementation.IAbstractLangStringFrom(
+                    node,
+                    out Reporting.Error? error);
+                if (error != null)
+                {
+                    throw new Jsonization.Exception(
+                        Reporting.GenerateJsonPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringNameType from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <exception cref="Jsonization.Exception">
+            /// Thrown when <paramref name="node" /> is not a valid JSON
+            /// representation of LangStringNameType.
+            /// </exception>
+            public static Aas.LangStringNameType LangStringNameTypeFrom(
+                Nodes.JsonNode node)
+            {
+                Aas.LangStringNameType? result = DeserializeImplementation.LangStringNameTypeFrom(
+                    node,
+                    out Reporting.Error? error);
+                if (error != null)
+                {
+                    throw new Jsonization.Exception(
+                        Reporting.GenerateJsonPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringTextType from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <exception cref="Jsonization.Exception">
+            /// Thrown when <paramref name="node" /> is not a valid JSON
+            /// representation of LangStringTextType.
+            /// </exception>
+            public static Aas.LangStringTextType LangStringTextTypeFrom(
+                Nodes.JsonNode node)
+            {
+                Aas.LangStringTextType? result = DeserializeImplementation.LangStringTextTypeFrom(
                     node,
                     out Reporting.Error? error);
                 if (error != null)
@@ -16381,17 +15909,17 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of DataSpecificationIec61360 from <paramref name="node" />.
+            /// Deserialize an instance of LangStringPreferredNameTypeIec61360 from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <exception cref="Jsonization.Exception">
             /// Thrown when <paramref name="node" /> is not a valid JSON
-            /// representation of DataSpecificationIec61360.
+            /// representation of LangStringPreferredNameTypeIec61360.
             /// </exception>
-            public static Aas.DataSpecificationIec61360 DataSpecificationIec61360From(
+            public static Aas.LangStringPreferredNameTypeIec61360 LangStringPreferredNameTypeIec61360From(
                 Nodes.JsonNode node)
             {
-                Aas.DataSpecificationIec61360? result = DeserializeImplementation.DataSpecificationIec61360From(
+                Aas.LangStringPreferredNameTypeIec61360? result = DeserializeImplementation.LangStringPreferredNameTypeIec61360From(
                     node,
                     out Reporting.Error? error);
                 if (error != null)
@@ -16406,17 +15934,67 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of DataSpecificationPhysicalUnit from <paramref name="node" />.
+            /// Deserialize an instance of LangStringShortNameTypeIec61360 from <paramref name="node" />.
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <exception cref="Jsonization.Exception">
             /// Thrown when <paramref name="node" /> is not a valid JSON
-            /// representation of DataSpecificationPhysicalUnit.
+            /// representation of LangStringShortNameTypeIec61360.
             /// </exception>
-            public static Aas.DataSpecificationPhysicalUnit DataSpecificationPhysicalUnitFrom(
+            public static Aas.LangStringShortNameTypeIec61360 LangStringShortNameTypeIec61360From(
                 Nodes.JsonNode node)
             {
-                Aas.DataSpecificationPhysicalUnit? result = DeserializeImplementation.DataSpecificationPhysicalUnitFrom(
+                Aas.LangStringShortNameTypeIec61360? result = DeserializeImplementation.LangStringShortNameTypeIec61360From(
+                    node,
+                    out Reporting.Error? error);
+                if (error != null)
+                {
+                    throw new Jsonization.Exception(
+                        Reporting.GenerateJsonPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringDefinitionTypeIec61360 from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <exception cref="Jsonization.Exception">
+            /// Thrown when <paramref name="node" /> is not a valid JSON
+            /// representation of LangStringDefinitionTypeIec61360.
+            /// </exception>
+            public static Aas.LangStringDefinitionTypeIec61360 LangStringDefinitionTypeIec61360From(
+                Nodes.JsonNode node)
+            {
+                Aas.LangStringDefinitionTypeIec61360? result = DeserializeImplementation.LangStringDefinitionTypeIec61360From(
+                    node,
+                    out Reporting.Error? error);
+                if (error != null)
+                {
+                    throw new Jsonization.Exception(
+                        Reporting.GenerateJsonPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of DataSpecificationIec61360 from <paramref name="node" />.
+            /// </summary>
+            /// <param name="node">JSON node to be parsed</param>
+            /// <exception cref="Jsonization.Exception">
+            /// Thrown when <paramref name="node" /> is not a valid JSON
+            /// representation of DataSpecificationIec61360.
+            /// </exception>
+            public static Aas.DataSpecificationIec61360 DataSpecificationIec61360From(
+                Nodes.JsonNode node)
+            {
+                Aas.DataSpecificationIec61360? result = DeserializeImplementation.DataSpecificationIec61360From(
                     node,
                     out Reporting.Error? error);
                 if (error != null)
@@ -16454,7 +16032,9 @@ namespace AasCore.Aas3_0_RC02
                 return Nodes.JsonValue.Create(that);
             }
 
-            public override Nodes.JsonObject Transform(Aas.Extension that)
+            public override Nodes.JsonObject TransformExtension(
+                Aas.IExtension that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -16467,7 +16047,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16496,21 +16076,29 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.RefersTo != null)
                 {
-                    result["refersTo"] = Transform(
-                        that.RefersTo);
+                    var arrayRefersTo = new Nodes.JsonArray();
+                    foreach (IReference item in that.RefersTo)
+                    {
+                        arrayRefersTo.Add(
+                            Transform(
+                                item));
+                    }
+                    result["refersTo"] = arrayRefersTo;
                 }
 
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.AdministrativeInformation that)
+            public override Nodes.JsonObject TransformAdministrativeInformation(
+                Aas.IAdministrativeInformation that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16531,10 +16119,24 @@ namespace AasCore.Aas3_0_RC02
                         that.Revision);
                 }
 
+                if (that.Creator != null)
+                {
+                    result["creator"] = Transform(
+                        that.Creator);
+                }
+
+                if (that.TemplateId != null)
+                {
+                    result["templateId"] = Nodes.JsonValue.Create(
+                        that.TemplateId);
+                }
+
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Qualifier that)
+            public override Nodes.JsonObject TransformQualifier(
+                Aas.IQualifier that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -16547,7 +16149,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16586,14 +16188,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.AssetAdministrationShell that)
+            public override Nodes.JsonObject TransformAssetAdministrationShell(
+                Aas.IAssetAdministrationShell that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16617,7 +16221,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16629,19 +16233,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
                 }
 
                 if (that.Administration != null)
@@ -16656,7 +16254,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16677,7 +16275,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Submodels != null)
                 {
                     var arraySubmodels = new Nodes.JsonArray();
-                    foreach (Reference item in that.Submodels)
+                    foreach (IReference item in that.Submodels)
                     {
                         arraySubmodels.Add(
                             Transform(
@@ -16691,7 +16289,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.AssetInformation that)
+            public override Nodes.JsonObject TransformAssetInformation(
+                Aas.IAssetInformation that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -16700,20 +16300,26 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.GlobalAssetId != null)
                 {
-                    result["globalAssetId"] = Transform(
+                    result["globalAssetId"] = Nodes.JsonValue.Create(
                         that.GlobalAssetId);
                 }
 
                 if (that.SpecificAssetIds != null)
                 {
                     var arraySpecificAssetIds = new Nodes.JsonArray();
-                    foreach (SpecificAssetId item in that.SpecificAssetIds)
+                    foreach (ISpecificAssetId item in that.SpecificAssetIds)
                     {
                         arraySpecificAssetIds.Add(
                             Transform(
                                 item));
                     }
                     result["specificAssetIds"] = arraySpecificAssetIds;
+                }
+
+                if (that.AssetType != null)
+                {
+                    result["assetType"] = Nodes.JsonValue.Create(
+                        that.AssetType);
                 }
 
                 if (that.DefaultThumbnail != null)
@@ -16725,7 +16331,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Resource that)
+            public override Nodes.JsonObject TransformResource(
+                Aas.IResource that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -16741,7 +16349,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.SpecificAssetId that)
+            public override Nodes.JsonObject TransformSpecificAssetId(
+                Aas.ISpecificAssetId that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -16754,7 +16364,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16769,20 +16379,25 @@ namespace AasCore.Aas3_0_RC02
                 result["value"] = Nodes.JsonValue.Create(
                     that.Value);
 
-                result["externalSubjectId"] = Transform(
-                    that.ExternalSubjectId);
+                if (that.ExternalSubjectId != null)
+                {
+                    result["externalSubjectId"] = Transform(
+                        that.ExternalSubjectId);
+                }
 
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Submodel that)
+            public override Nodes.JsonObject TransformSubmodel(
+                Aas.ISubmodel that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16806,7 +16421,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16818,19 +16433,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
                 }
 
                 if (that.Administration != null)
@@ -16845,9 +16454,9 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Kind != null)
                 {
                     // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
+                    Aas.ModellingKind value = that.Kind
                         ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
+                    result["kind"] = Serialize.ModellingKindToJsonValue(
                         value);
                 }
 
@@ -16860,7 +16469,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16872,7 +16481,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -16884,7 +16493,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16910,14 +16519,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.RelationshipElement that)
+            public override Nodes.JsonObject TransformRelationshipElement(
+                Aas.IRelationshipElement that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16941,7 +16552,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16953,28 +16564,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -16986,7 +16582,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16998,7 +16594,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17010,7 +16606,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17030,14 +16626,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.SubmodelElementList that)
+            public override Nodes.JsonObject TransformSubmodelElementList(
+                Aas.ISubmodelElementList that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17061,7 +16659,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17073,28 +16671,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17106,7 +16689,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17118,7 +16701,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17130,7 +16713,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17143,18 +16726,6 @@ namespace AasCore.Aas3_0_RC02
                 {
                     result["orderRelevant"] = Nodes.JsonValue.Create(
                         that.OrderRelevant);
-                }
-
-                if (that.Value != null)
-                {
-                    var arrayValue = new Nodes.JsonArray();
-                    foreach (ISubmodelElement item in that.Value)
-                    {
-                        arrayValue.Add(
-                            Transform(
-                                item));
-                    }
-                    result["value"] = arrayValue;
                 }
 
                 if (that.SemanticIdListElement != null)
@@ -17175,19 +16746,33 @@ namespace AasCore.Aas3_0_RC02
                         value);
                 }
 
+                if (that.Value != null)
+                {
+                    var arrayValue = new Nodes.JsonArray();
+                    foreach (ISubmodelElement item in that.Value)
+                    {
+                        arrayValue.Add(
+                            Transform(
+                                item));
+                    }
+                    result["value"] = arrayValue;
+                }
+
                 result["modelType"] = "SubmodelElementList";
 
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.SubmodelElementCollection that)
+            public override Nodes.JsonObject TransformSubmodelElementCollection(
+                Aas.ISubmodelElementCollection that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17211,7 +16796,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17223,28 +16808,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17256,7 +16826,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17268,7 +16838,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17280,7 +16850,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17306,14 +16876,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Property that)
+            public override Nodes.JsonObject TransformProperty(
+                Aas.IProperty that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17337,7 +16909,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17349,28 +16921,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17382,7 +16939,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17394,7 +16951,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17406,7 +16963,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17435,14 +16992,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.MultiLanguageProperty that)
+            public override Nodes.JsonObject TransformMultiLanguageProperty(
+                Aas.IMultiLanguageProperty that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17466,7 +17025,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17478,28 +17037,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17511,7 +17055,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17523,7 +17067,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17535,7 +17079,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17547,7 +17091,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Value != null)
                 {
                     var arrayValue = new Nodes.JsonArray();
-                    foreach (LangString item in that.Value)
+                    foreach (ILangStringTextType item in that.Value)
                     {
                         arrayValue.Add(
                             Transform(
@@ -17567,14 +17111,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Range that)
+            public override Nodes.JsonObject TransformRange(
+                Aas.IRange that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17598,7 +17144,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17610,28 +17156,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17643,7 +17174,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17655,7 +17186,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17667,7 +17198,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17696,14 +17227,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.ReferenceElement that)
+            public override Nodes.JsonObject TransformReferenceElement(
+                Aas.IReferenceElement that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17727,7 +17260,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17739,28 +17272,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17772,7 +17290,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17784,7 +17302,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17796,7 +17314,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17816,14 +17334,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Blob that)
+            public override Nodes.JsonObject TransformBlob(
+                Aas.IBlob that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17847,7 +17367,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17859,28 +17379,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -17892,7 +17397,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17904,7 +17409,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17916,7 +17421,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17940,14 +17445,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.File that)
+            public override Nodes.JsonObject TransformFile(
+                Aas.IFile that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17971,7 +17478,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17983,28 +17490,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -18016,7 +17508,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18028,7 +17520,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18040,7 +17532,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18063,14 +17555,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.AnnotatedRelationshipElement that)
+            public override Nodes.JsonObject TransformAnnotatedRelationshipElement(
+                Aas.IAnnotatedRelationshipElement that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18094,7 +17588,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18106,28 +17600,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -18139,7 +17618,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18151,7 +17630,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18163,7 +17642,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18195,14 +17674,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Entity that)
+            public override Nodes.JsonObject TransformEntity(
+                Aas.IEntity that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18226,7 +17707,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18238,28 +17719,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -18271,7 +17737,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18283,7 +17749,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18295,7 +17761,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18321,14 +17787,20 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.GlobalAssetId != null)
                 {
-                    result["globalAssetId"] = Transform(
+                    result["globalAssetId"] = Nodes.JsonValue.Create(
                         that.GlobalAssetId);
                 }
 
-                if (that.SpecificAssetId != null)
+                if (that.SpecificAssetIds != null)
                 {
-                    result["specificAssetId"] = Transform(
-                        that.SpecificAssetId);
+                    var arraySpecificAssetIds = new Nodes.JsonArray();
+                    foreach (ISpecificAssetId item in that.SpecificAssetIds)
+                    {
+                        arraySpecificAssetIds.Add(
+                            Transform(
+                                item));
+                    }
+                    result["specificAssetIds"] = arraySpecificAssetIds;
                 }
 
                 result["modelType"] = "Entity";
@@ -18336,7 +17808,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.EventPayload that)
+            public override Nodes.JsonObject TransformEventPayload(
+                Aas.IEventPayload that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -18376,20 +17850,23 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Payload != null)
                 {
                     result["payload"] = Nodes.JsonValue.Create(
-                        that.Payload);
+                        System.Convert.ToBase64String(
+                            that.Payload));
                 }
 
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.BasicEventElement that)
+            public override Nodes.JsonObject TransformBasicEventElement(
+                Aas.IBasicEventElement that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18413,7 +17890,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18425,28 +17902,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -18458,7 +17920,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18470,7 +17932,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18482,7 +17944,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18535,14 +17997,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Operation that)
+            public override Nodes.JsonObject TransformOperation(
+                Aas.IOperation that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18566,7 +18030,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18578,28 +18042,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -18611,7 +18060,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18623,7 +18072,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18635,7 +18084,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18647,7 +18096,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.InputVariables != null)
                 {
                     var arrayInputVariables = new Nodes.JsonArray();
-                    foreach (OperationVariable item in that.InputVariables)
+                    foreach (IOperationVariable item in that.InputVariables)
                     {
                         arrayInputVariables.Add(
                             Transform(
@@ -18659,7 +18108,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.OutputVariables != null)
                 {
                     var arrayOutputVariables = new Nodes.JsonArray();
-                    foreach (OperationVariable item in that.OutputVariables)
+                    foreach (IOperationVariable item in that.OutputVariables)
                     {
                         arrayOutputVariables.Add(
                             Transform(
@@ -18671,7 +18120,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.InoutputVariables != null)
                 {
                     var arrayInoutputVariables = new Nodes.JsonArray();
-                    foreach (OperationVariable item in that.InoutputVariables)
+                    foreach (IOperationVariable item in that.InoutputVariables)
                     {
                         arrayInoutputVariables.Add(
                             Transform(
@@ -18685,7 +18134,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.OperationVariable that)
+            public override Nodes.JsonObject TransformOperationVariable(
+                Aas.IOperationVariable that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -18695,14 +18146,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Capability that)
+            public override Nodes.JsonObject TransformCapability(
+                Aas.ICapability that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18726,7 +18179,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18738,28 +18191,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
-                }
-
-                if (that.Kind != null)
-                {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.ModelingKind value = that.Kind
-                        ?? throw new System.InvalidOperationException();
-                    result["kind"] = Serialize.ModelingKindToJsonValue(
-                        value);
                 }
 
                 if (that.SemanticId != null)
@@ -18771,7 +18209,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (Reference item in that.SupplementalSemanticIds)
+                    foreach (IReference item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18783,7 +18221,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (Qualifier item in that.Qualifiers)
+                    foreach (IQualifier item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18795,7 +18233,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18809,14 +18247,16 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.ConceptDescription that)
+            public override Nodes.JsonObject TransformConceptDescription(
+                Aas.IConceptDescription that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (Extension item in that.Extensions)
+                    foreach (IExtension item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18840,7 +18280,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (LangString item in that.DisplayName)
+                    foreach (ILangStringNameType item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18852,19 +18292,13 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (LangString item in that.Description)
+                    foreach (ILangStringTextType item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
                                 item));
                     }
                     result["description"] = arrayDescription;
-                }
-
-                if (that.Checksum != null)
-                {
-                    result["checksum"] = Nodes.JsonValue.Create(
-                        that.Checksum);
                 }
 
                 if (that.Administration != null)
@@ -18879,7 +18313,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (EmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18891,7 +18325,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.IsCaseOf != null)
                 {
                     var arrayIsCaseOf = new Nodes.JsonArray();
-                    foreach (Reference item in that.IsCaseOf)
+                    foreach (IReference item in that.IsCaseOf)
                     {
                         arrayIsCaseOf.Add(
                             Transform(
@@ -18905,7 +18339,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Reference that)
+            public override Nodes.JsonObject TransformReference(
+                Aas.IReference that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -18919,7 +18355,7 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 var arrayKeys = new Nodes.JsonArray();
-                foreach (Key item in that.Keys)
+                foreach (IKey item in that.Keys)
                 {
                     arrayKeys.Add(
                         Transform(
@@ -18930,7 +18366,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Key that)
+            public override Nodes.JsonObject TransformKey(
+                Aas.IKey that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -18943,7 +18381,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.LangString that)
+            public override Nodes.JsonObject TransformLangStringNameType(
+                Aas.ILangStringNameType that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -18956,14 +18396,31 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.Environment that)
+            public override Nodes.JsonObject TransformLangStringTextType(
+                Aas.ILangStringTextType that
+            )
+            {
+                var result = new Nodes.JsonObject();
+
+                result["language"] = Nodes.JsonValue.Create(
+                    that.Language);
+
+                result["text"] = Nodes.JsonValue.Create(
+                    that.Text);
+
+                return result;
+            }
+
+            public override Nodes.JsonObject TransformEnvironment(
+                Aas.IEnvironment that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 if (that.AssetAdministrationShells != null)
                 {
                     var arrayAssetAdministrationShells = new Nodes.JsonArray();
-                    foreach (AssetAdministrationShell item in that.AssetAdministrationShells)
+                    foreach (IAssetAdministrationShell item in that.AssetAdministrationShells)
                     {
                         arrayAssetAdministrationShells.Add(
                             Transform(
@@ -18975,7 +18432,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Submodels != null)
                 {
                     var arraySubmodels = new Nodes.JsonArray();
-                    foreach (Submodel item in that.Submodels)
+                    foreach (ISubmodel item in that.Submodels)
                     {
                         arraySubmodels.Add(
                             Transform(
@@ -18987,7 +18444,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.ConceptDescriptions != null)
                 {
                     var arrayConceptDescriptions = new Nodes.JsonArray();
-                    foreach (ConceptDescription item in that.ConceptDescriptions)
+                    foreach (IConceptDescription item in that.ConceptDescriptions)
                     {
                         arrayConceptDescriptions.Add(
                             Transform(
@@ -18999,7 +18456,9 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.EmbeddedDataSpecification that)
+            public override Nodes.JsonObject TransformEmbeddedDataSpecification(
+                Aas.IEmbeddedDataSpecification that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -19012,7 +18471,30 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.ValueReferencePair that)
+            public override Nodes.JsonObject TransformLevelType(
+                Aas.ILevelType that
+            )
+            {
+                var result = new Nodes.JsonObject();
+
+                result["min"] = Nodes.JsonValue.Create(
+                    that.Min);
+
+                result["nom"] = Nodes.JsonValue.Create(
+                    that.Nom);
+
+                result["typ"] = Nodes.JsonValue.Create(
+                    that.Typ);
+
+                result["max"] = Nodes.JsonValue.Create(
+                    that.Max);
+
+                return result;
+            }
+
+            public override Nodes.JsonObject TransformValueReferencePair(
+                Aas.IValueReferencePair that
+            )
             {
                 var result = new Nodes.JsonObject();
 
@@ -19025,12 +18507,14 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.ValueList that)
+            public override Nodes.JsonObject TransformValueList(
+                Aas.IValueList that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 var arrayValueReferencePairs = new Nodes.JsonArray();
-                foreach (ValueReferencePair item in that.ValueReferencePairs)
+                foreach (IValueReferencePair item in that.ValueReferencePairs)
                 {
                     arrayValueReferencePairs.Add(
                         Transform(
@@ -19041,12 +18525,59 @@ namespace AasCore.Aas3_0_RC02
                 return result;
             }
 
-            public override Nodes.JsonObject Transform(Aas.DataSpecificationIec61360 that)
+            public override Nodes.JsonObject TransformLangStringPreferredNameTypeIec61360(
+                Aas.ILangStringPreferredNameTypeIec61360 that
+            )
+            {
+                var result = new Nodes.JsonObject();
+
+                result["language"] = Nodes.JsonValue.Create(
+                    that.Language);
+
+                result["text"] = Nodes.JsonValue.Create(
+                    that.Text);
+
+                return result;
+            }
+
+            public override Nodes.JsonObject TransformLangStringShortNameTypeIec61360(
+                Aas.ILangStringShortNameTypeIec61360 that
+            )
+            {
+                var result = new Nodes.JsonObject();
+
+                result["language"] = Nodes.JsonValue.Create(
+                    that.Language);
+
+                result["text"] = Nodes.JsonValue.Create(
+                    that.Text);
+
+                return result;
+            }
+
+            public override Nodes.JsonObject TransformLangStringDefinitionTypeIec61360(
+                Aas.ILangStringDefinitionTypeIec61360 that
+            )
+            {
+                var result = new Nodes.JsonObject();
+
+                result["language"] = Nodes.JsonValue.Create(
+                    that.Language);
+
+                result["text"] = Nodes.JsonValue.Create(
+                    that.Text);
+
+                return result;
+            }
+
+            public override Nodes.JsonObject TransformDataSpecificationIec61360(
+                Aas.IDataSpecificationIec61360 that
+            )
             {
                 var result = new Nodes.JsonObject();
 
                 var arrayPreferredName = new Nodes.JsonArray();
-                foreach (LangString item in that.PreferredName)
+                foreach (ILangStringPreferredNameTypeIec61360 item in that.PreferredName)
                 {
                     arrayPreferredName.Add(
                         Transform(
@@ -19057,7 +18588,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.ShortName != null)
                 {
                     var arrayShortName = new Nodes.JsonArray();
-                    foreach (LangString item in that.ShortName)
+                    foreach (ILangStringShortNameTypeIec61360 item in that.ShortName)
                     {
                         arrayShortName.Add(
                             Transform(
@@ -19102,7 +18633,7 @@ namespace AasCore.Aas3_0_RC02
                 if (that.Definition != null)
                 {
                     var arrayDefinition = new Nodes.JsonArray();
-                    foreach (LangString item in that.Definition)
+                    foreach (ILangStringDefinitionTypeIec61360 item in that.Definition)
                     {
                         arrayDefinition.Add(
                             Transform(
@@ -19131,98 +18662,11 @@ namespace AasCore.Aas3_0_RC02
 
                 if (that.LevelType != null)
                 {
-                    // We need to help the static analyzer with a null coalescing.
-                    Aas.LevelType value = that.LevelType
-                        ?? throw new System.InvalidOperationException();
-                    result["levelType"] = Serialize.LevelTypeToJsonValue(
-                        value);
+                    result["levelType"] = Transform(
+                        that.LevelType);
                 }
 
-                result["modelType"] = "DataSpecificationIEC61360";
-
-                return result;
-            }
-
-            public override Nodes.JsonObject Transform(Aas.DataSpecificationPhysicalUnit that)
-            {
-                var result = new Nodes.JsonObject();
-
-                result["unitName"] = Nodes.JsonValue.Create(
-                    that.UnitName);
-
-                result["unitSymbol"] = Nodes.JsonValue.Create(
-                    that.UnitSymbol);
-
-                var arrayDefinition = new Nodes.JsonArray();
-                foreach (LangString item in that.Definition)
-                {
-                    arrayDefinition.Add(
-                        Transform(
-                            item));
-                }
-                result["definition"] = arrayDefinition;
-
-                if (that.SiNotation != null)
-                {
-                    result["siNotation"] = Nodes.JsonValue.Create(
-                        that.SiNotation);
-                }
-
-                if (that.SiName != null)
-                {
-                    result["siName"] = Nodes.JsonValue.Create(
-                        that.SiName);
-                }
-
-                if (that.DinNotation != null)
-                {
-                    result["dinNotation"] = Nodes.JsonValue.Create(
-                        that.DinNotation);
-                }
-
-                if (that.EceName != null)
-                {
-                    result["eceName"] = Nodes.JsonValue.Create(
-                        that.EceName);
-                }
-
-                if (that.EceCode != null)
-                {
-                    result["eceCode"] = Nodes.JsonValue.Create(
-                        that.EceCode);
-                }
-
-                if (that.NistName != null)
-                {
-                    result["nistName"] = Nodes.JsonValue.Create(
-                        that.NistName);
-                }
-
-                if (that.SourceOfDefinition != null)
-                {
-                    result["sourceOfDefinition"] = Nodes.JsonValue.Create(
-                        that.SourceOfDefinition);
-                }
-
-                if (that.ConversionFactor != null)
-                {
-                    result["conversionFactor"] = Nodes.JsonValue.Create(
-                        that.ConversionFactor);
-                }
-
-                if (that.RegistrationAuthorityId != null)
-                {
-                    result["registrationAuthorityId"] = Nodes.JsonValue.Create(
-                        that.RegistrationAuthorityId);
-                }
-
-                if (that.Supplier != null)
-                {
-                    result["supplier"] = Nodes.JsonValue.Create(
-                        that.Supplier);
-                }
-
-                result["modelType"] = "DataSpecificationPhysicalUnit";
+                result["modelType"] = "DataSpecificationIec61360";
 
                 return result;
             }
@@ -19255,14 +18699,14 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Serialize a literal of ModelingKind into a JSON string.
+            /// Serialize a literal of ModellingKind into a JSON string.
             /// </summary>
-            public static Nodes.JsonValue ModelingKindToJsonValue(Aas.ModelingKind that)
+            public static Nodes.JsonValue ModellingKindToJsonValue(Aas.ModellingKind that)
             {
                 string? text = Stringification.ToString(that);
                 return Nodes.JsonValue.Create(text)
                     ?? throw new System.ArgumentException(
-                        $"Invalid ModelingKind: {that}");
+                        $"Invalid ModellingKind: {that}");
             }
 
             /// <summary>
@@ -19374,20 +18818,9 @@ namespace AasCore.Aas3_0_RC02
                     ?? throw new System.ArgumentException(
                         $"Invalid DataTypeIec61360: {that}");
             }
-
-            /// <summary>
-            /// Serialize a literal of LevelType into a JSON string.
-            /// </summary>
-            public static Nodes.JsonValue LevelTypeToJsonValue(Aas.LevelType that)
-            {
-                string? text = Stringification.ToString(that);
-                return Nodes.JsonValue.Create(text)
-                    ?? throw new System.ArgumentException(
-                        $"Invalid LevelType: {that}");
-            }
         }  // public static class Serialize
     }  // public static class Jsonization
-}  // namespace AasCore.Aas3_0_RC02
+}  // namespace AasCore.Aas3_0
 
 /*
  * This code has been automatically generated by aas-core-codegen.

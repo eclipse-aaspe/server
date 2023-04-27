@@ -3,13 +3,13 @@
  * Do NOT edit or append.
  */
 
-using Aas = AasCore.Aas3_0_RC02;  // renamed
+using Aas = AasCore.Aas3_0;  // renamed
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
 using Xml = System.Xml;
 
 using System.Collections.Generic;  // can't alias
 
-namespace AasCore.Aas3_0_RC02
+namespace AasCore.Aas3_0
 {
     /// <summary>
     /// Provide de/serialization of meta-model classes to/from XML.
@@ -214,12 +214,12 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
                 string? theName = null;
                 DataTypeDefXsd? theValueType = null;
                 string? theValue = null;
-                Reference? theRefersTo = null;
+                List<IReference>? theRefersTo = null;
 
                 if (!isEmptySequence)
                 {
@@ -264,7 +264,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -273,7 +273,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -435,15 +435,37 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "refersTo":
                                 {
-                                    theRefersTo = ReferenceFromSequence(
-                                        reader, isEmptyProperty, out error);
+                                    theRefersTo = new List<IReference>();
 
-                                    if (error != null)
+                                    if (!isEmptyProperty)
                                     {
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "refersTo"));
-                                        return null;
+                                        SkipNoneWhitespaceAndComments(reader);
+
+                                        int indexRefersTo = 0;
+                                        while (reader.NodeType == Xml.XmlNodeType.Element)
+                                        {
+                                            IReference? item = ReferenceFromElement(
+                                                reader, out error);
+
+                                            if (error != null)
+                                            {
+                                                error.PrependSegment(
+                                                    new Reporting.IndexSegment(
+                                                        indexRefersTo));
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "refersTo"));
+                                                return null;
+                                            }
+
+                                            theRefersTo.Add(
+                                                item
+                                                    ?? throw new System.InvalidOperationException(
+                                                        "Unexpected item null when error null"));
+
+                                            indexRefersTo++;
+                                            SkipNoneWhitespaceAndComments(reader);
+                                        }
                                     }
                                     break;
                                 }
@@ -905,50 +927,8 @@ namespace AasCore.Aas3_0_RC02
 
                 switch (elementName)
                 {
-                    case "relationshipElement":
-                        return RelationshipElementFromElement(
-                            reader, out error);
-                    case "annotatedRelationshipElement":
-                        return AnnotatedRelationshipElementFromElement(
-                            reader, out error);
-                    case "basicEventElement":
-                        return BasicEventElementFromElement(
-                            reader, out error);
-                    case "blob":
-                        return BlobFromElement(
-                            reader, out error);
-                    case "capability":
-                        return CapabilityFromElement(
-                            reader, out error);
-                    case "entity":
-                        return EntityFromElement(
-                            reader, out error);
-                    case "file":
-                        return FileFromElement(
-                            reader, out error);
-                    case "multiLanguageProperty":
-                        return MultiLanguagePropertyFromElement(
-                            reader, out error);
-                    case "operation":
-                        return OperationFromElement(
-                            reader, out error);
-                    case "property":
-                        return PropertyFromElement(
-                            reader, out error);
-                    case "range":
-                        return RangeFromElement(
-                            reader, out error);
-                    case "referenceElement":
-                        return ReferenceElementFromElement(
-                            reader, out error);
                     case "submodel":
                         return SubmodelFromElement(
-                            reader, out error);
-                    case "submodelElementCollection":
-                        return SubmodelElementCollectionFromElement(
-                            reader, out error);
-                    case "submodelElementList":
-                        return SubmodelElementListFromElement(
                             reader, out error);
                     default:
                         error = new Reporting.Error(
@@ -1070,9 +1050,11 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theVersion = null;
                 string? theRevision = null;
+                IReference? theCreator = null;
+                string? theTemplateId = null;
 
                 if (!isEmptySequence)
                 {
@@ -1103,7 +1085,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -1112,7 +1094,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -1217,6 +1199,60 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
+                            case "creator":
+                                {
+                                    theCreator = ReferenceFromSequence(
+                                        reader, isEmptyProperty, out error);
+
+                                    if (error != null)
+                                    {
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "creator"));
+                                        return null;
+                                    }
+                                    break;
+                                }
+                            case "templateId":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theTemplateId = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property TemplateId of an instance of class AdministrativeInformation, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theTemplateId = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property TemplateId of an instance of class AdministrativeInformation " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "templateId"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
                             default:
                                 error = new Reporting.Error(
                                     "We expected properties of the class AdministrativeInformation, " +
@@ -1280,7 +1316,9 @@ namespace AasCore.Aas3_0_RC02
                 return new Aas.AdministrativeInformation(
                     theEmbeddedDataSpecifications,
                     theVersion,
-                    theRevision);
+                    theRevision,
+                    theCreator,
+                    theTemplateId);
             }  // internal static Aas.AdministrativeInformation? AdministrativeInformationFromSequence
 
             /// <summary>
@@ -1486,13 +1524,13 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
                 QualifierKind? theKind = null;
                 string? theType = null;
                 DataTypeDefXsd? theValueType = null;
                 string? theValue = null;
-                Reference? theValueId = null;
+                IReference? theValueId = null;
 
                 if (!isEmptySequence)
                 {
@@ -1537,7 +1575,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -1546,7 +1584,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -1979,18 +2017,17 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                AdministrativeInformation? theAdministration = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IAdministrativeInformation? theAdministration = null;
                 string? theId = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theDerivedFrom = null;
-                AssetInformation? theAssetInformation = null;
-                List<Reference>? theSubmodels = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theDerivedFrom = null;
+                IAssetInformation? theAssetInformation = null;
+                List<IReference>? theSubmodels = null;
 
                 if (!isEmptySequence)
                 {
@@ -2021,7 +2058,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -2030,7 +2067,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -2137,7 +2174,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -2146,7 +2183,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -2173,7 +2210,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -2182,7 +2219,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -2203,46 +2240,6 @@ namespace AasCore.Aas3_0_RC02
 
                                             indexDescription++;
                                             SkipNoneWhitespaceAndComments(reader);
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class AssetAdministrationShell, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class AssetAdministrationShell " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
                                         }
                                     }
                                     break;
@@ -2303,7 +2300,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -2312,7 +2309,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -2367,7 +2364,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "submodels":
                                 {
-                                    theSubmodels = new List<Reference>();
+                                    theSubmodels = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -2376,7 +2373,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSubmodels = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -2489,7 +2486,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
                     theAdministration,
                     theEmbeddedDataSpecifications,
                     theDerivedFrom,
@@ -2611,9 +2607,10 @@ namespace AasCore.Aas3_0_RC02
                 error = null;
 
                 AssetKind? theAssetKind = null;
-                Reference? theGlobalAssetId = null;
-                List<SpecificAssetId>? theSpecificAssetIds = null;
-                Resource? theDefaultThumbnail = null;
+                string? theGlobalAssetId = null;
+                List<ISpecificAssetId>? theSpecificAssetIds = null;
+                string? theAssetType = null;
+                IResource? theDefaultThumbnail = null;
 
                 if (!isEmptySequence)
                 {
@@ -2699,21 +2696,47 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "globalAssetId":
                                 {
-                                    theGlobalAssetId = ReferenceFromSequence(
-                                        reader, isEmptyProperty, out error);
-
-                                    if (error != null)
+                                    if (isEmptyProperty)
                                     {
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "globalAssetId"));
-                                        return null;
+                                        theGlobalAssetId = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property GlobalAssetId of an instance of class AssetInformation, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theGlobalAssetId = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property GlobalAssetId of an instance of class AssetInformation " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "globalAssetId"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
                                     }
                                     break;
                                 }
                             case "specificAssetIds":
                                 {
-                                    theSpecificAssetIds = new List<SpecificAssetId>();
+                                    theSpecificAssetIds = new List<ISpecificAssetId>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -2722,7 +2745,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSpecificAssetIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            SpecificAssetId? item = SpecificAssetIdFromElement(
+                                            ISpecificAssetId? item = SpecificAssetIdFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -2743,6 +2766,46 @@ namespace AasCore.Aas3_0_RC02
 
                                             indexSpecificAssetIds++;
                                             SkipNoneWhitespaceAndComments(reader);
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "assetType":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theAssetType = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property AssetType of an instance of class AssetInformation, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theAssetType = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property AssetType of an instance of class AssetInformation " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "assetType"));
+                                                return null;
+                                            }
+
+                                            throw;
                                         }
                                     }
                                     break;
@@ -2835,6 +2898,7 @@ namespace AasCore.Aas3_0_RC02
                             "Unexpected null, had to be handled before"),
                     theGlobalAssetId,
                     theSpecificAssetIds,
+                    theAssetType,
                     theDefaultThumbnail);
             }  // internal static Aas.AssetInformation? AssetInformationFromSequence
 
@@ -3251,11 +3315,11 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
                 string? theName = null;
                 string? theValue = null;
-                Reference? theExternalSubjectId = null;
+                IReference? theExternalSubjectId = null;
 
                 if (!isEmptySequence)
                 {
@@ -3300,7 +3364,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -3309,7 +3373,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -3504,14 +3568,6 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                if (theExternalSubjectId == null)
-                {
-                    error = new Reporting.Error(
-                        "The required property ExternalSubjectId has not been given " +
-                        "in the XML representation of an instance of class SpecificAssetId");
-                    return null;
-                }
-
                 return new Aas.SpecificAssetId(
                     theName
                          ?? throw new System.InvalidOperationException(
@@ -3519,11 +3575,9 @@ namespace AasCore.Aas3_0_RC02
                     theValue
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"),
-                    theExternalSubjectId
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
                     theSemanticId,
-                    theSupplementalSemanticIds);
+                    theSupplementalSemanticIds,
+                    theExternalSubjectId);
             }  // internal static Aas.SpecificAssetId? SpecificAssetIdFromSequence
 
             /// <summary>
@@ -3640,19 +3694,18 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                AdministrativeInformation? theAdministration = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IAdministrativeInformation? theAdministration = null;
                 string? theId = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                ModellingKind? theKind = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theSubmodelElements = null;
 
                 if (!isEmptySequence)
@@ -3684,7 +3737,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -3693,7 +3746,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -3800,7 +3853,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -3809,7 +3862,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -3836,7 +3889,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -3845,7 +3898,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -3866,46 +3919,6 @@ namespace AasCore.Aas3_0_RC02
 
                                             indexDescription++;
                                             SkipNoneWhitespaceAndComments(reader);
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Submodel, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Submodel " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
                                         }
                                     }
                                     break;
@@ -4003,7 +4016,7 @@ namespace AasCore.Aas3_0_RC02
                                         return null;
                                     }
 
-                                    theKind = Stringification.ModelingKindFromString(
+                                    theKind = Stringification.ModellingKindFromString(
                                         textKind);
 
                                     if (theKind == null)
@@ -4035,7 +4048,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4044,7 +4057,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4071,7 +4084,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4080,7 +4093,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4107,7 +4120,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4116,7 +4129,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4254,7 +4267,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
                     theAdministration,
                     theKind,
                     theSemanticId,
@@ -4464,19 +4476,17 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theFirst = null;
-                Reference? theSecond = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theFirst = null;
+                IReference? theSecond = null;
 
                 if (!isEmptySequence)
                 {
@@ -4507,7 +4517,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4516,7 +4526,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4623,7 +4633,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4632,7 +4642,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4659,7 +4669,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4668,7 +4678,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4693,101 +4703,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class RelationshipElement, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class RelationshipElement " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class RelationshipElement " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class RelationshipElement, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class RelationshipElement " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class RelationshipElement " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -4804,7 +4719,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4813,7 +4728,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4840,7 +4755,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4849,7 +4764,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -4876,7 +4791,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -4885,7 +4800,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5026,8 +4941,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -5198,22 +5111,20 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 bool? theOrderRelevant = null;
-                List<ISubmodelElement>? theValue = null;
-                Reference? theSemanticIdListElement = null;
+                IReference? theSemanticIdListElement = null;
                 AasSubmodelElements? theTypeValueListElement = null;
                 DataTypeDefXsd? theValueTypeListElement = null;
+                List<ISubmodelElement>? theValue = null;
 
                 if (!isEmptySequence)
                 {
@@ -5244,7 +5155,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -5253,7 +5164,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5360,7 +5271,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -5369,7 +5280,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5396,7 +5307,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -5405,7 +5316,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5430,101 +5341,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class SubmodelElementList, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class SubmodelElementList " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class SubmodelElementList " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class SubmodelElementList, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class SubmodelElementList " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class SubmodelElementList " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -5541,7 +5357,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -5550,7 +5366,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5577,7 +5393,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -5586,7 +5402,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5613,7 +5429,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -5622,7 +5438,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -5690,42 +5506,6 @@ namespace AasCore.Aas3_0_RC02
                                             }
 
                                             throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "value":
-                                {
-                                    theValue = new List<ISubmodelElement>();
-
-                                    if (!isEmptyProperty)
-                                    {
-                                        SkipNoneWhitespaceAndComments(reader);
-
-                                        int indexValue = 0;
-                                        while (reader.NodeType == Xml.XmlNodeType.Element)
-                                        {
-                                            ISubmodelElement? item = ISubmodelElementFromElement(
-                                                reader, out error);
-
-                                            if (error != null)
-                                            {
-                                                error.PrependSegment(
-                                                    new Reporting.IndexSegment(
-                                                        indexValue));
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "value"));
-                                                return null;
-                                            }
-
-                                            theValue.Add(
-                                                item
-                                                    ?? throw new System.InvalidOperationException(
-                                                        "Unexpected item null when error null"));
-
-                                            indexValue++;
-                                            SkipNoneWhitespaceAndComments(reader);
                                         }
                                     }
                                     break;
@@ -5854,6 +5634,42 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
+                            case "value":
+                                {
+                                    theValue = new List<ISubmodelElement>();
+
+                                    if (!isEmptyProperty)
+                                    {
+                                        SkipNoneWhitespaceAndComments(reader);
+
+                                        int indexValue = 0;
+                                        while (reader.NodeType == Xml.XmlNodeType.Element)
+                                        {
+                                            ISubmodelElement? item = ISubmodelElementFromElement(
+                                                reader, out error);
+
+                                            if (error != null)
+                                            {
+                                                error.PrependSegment(
+                                                    new Reporting.IndexSegment(
+                                                        indexValue));
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "value"));
+                                                return null;
+                                            }
+
+                                            theValue.Add(
+                                                item
+                                                    ?? throw new System.InvalidOperationException(
+                                                        "Unexpected item null when error null"));
+
+                                            indexValue++;
+                                            SkipNoneWhitespaceAndComments(reader);
+                                        }
+                                    }
+                                    break;
+                                }
                             default:
                                 error = new Reporting.Error(
                                     "We expected properties of the class SubmodelElementList, " +
@@ -5931,16 +5747,14 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
                     theEmbeddedDataSpecifications,
                     theOrderRelevant,
-                    theValue,
                     theSemanticIdListElement,
-                    theValueTypeListElement);
+                    theValueTypeListElement,
+                    theValue);
             }  // internal static Aas.SubmodelElementList? SubmodelElementListFromSequence
 
             /// <summary>
@@ -6057,17 +5871,15 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theValue = null;
 
                 if (!isEmptySequence)
@@ -6099,7 +5911,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6108,7 +5920,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6215,7 +6027,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6224,7 +6036,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6251,7 +6063,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6260,7 +6072,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6285,101 +6097,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class SubmodelElementCollection, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class SubmodelElementCollection " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class SubmodelElementCollection " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class SubmodelElementCollection, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class SubmodelElementCollection " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class SubmodelElementCollection " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -6396,7 +6113,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6405,7 +6122,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6432,7 +6149,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6441,7 +6158,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6468,7 +6185,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6477,7 +6194,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6604,8 +6321,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -6789,20 +6504,18 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 DataTypeDefXsd? theValueType = null;
                 string? theValue = null;
-                Reference? theValueId = null;
+                IReference? theValueId = null;
 
                 if (!isEmptySequence)
                 {
@@ -6833,7 +6546,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6842,7 +6555,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6949,7 +6662,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6958,7 +6671,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -6985,7 +6698,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -6994,7 +6707,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7019,101 +6732,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Property, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Property " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Property " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class Property, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Property " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Property " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -7130,7 +6748,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7139,7 +6757,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7166,7 +6784,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7175,7 +6793,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7202,7 +6820,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7211,7 +6829,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7422,8 +7040,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -7546,19 +7162,17 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<LangString>? theValue = null;
-                Reference? theValueId = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringTextType>? theValue = null;
+                IReference? theValueId = null;
 
                 if (!isEmptySequence)
                 {
@@ -7589,7 +7203,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7598,7 +7212,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7705,7 +7319,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7714,7 +7328,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7741,7 +7355,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7750,7 +7364,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7775,101 +7389,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class MultiLanguageProperty, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class MultiLanguageProperty " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class MultiLanguageProperty " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class MultiLanguageProperty, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class MultiLanguageProperty " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class MultiLanguageProperty " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -7886,7 +7405,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7895,7 +7414,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7922,7 +7441,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7931,7 +7450,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7958,7 +7477,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -7967,7 +7486,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -7994,7 +7513,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "value":
                                 {
-                                    theValue = new List<LangString>();
+                                    theValue = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8003,7 +7522,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexValue = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8108,8 +7627,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -8232,17 +7749,15 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 DataTypeDefXsd? theValueType = null;
                 string? theMin = null;
                 string? theMax = null;
@@ -8276,7 +7791,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8285,7 +7800,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8392,7 +7907,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8401,7 +7916,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8428,7 +7943,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8437,7 +7952,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8462,101 +7977,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Range, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Range " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Range " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class Range, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Range " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Range " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -8573,7 +7993,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8582,7 +8002,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8609,7 +8029,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8618,7 +8038,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8645,7 +8065,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -8654,7 +8074,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -8891,8 +8311,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -9015,18 +8433,16 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theValue = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theValue = null;
 
                 if (!isEmptySequence)
                 {
@@ -9057,7 +8473,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9066,7 +8482,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9173,7 +8589,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9182,7 +8598,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9209,7 +8625,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9218,7 +8634,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9243,101 +8659,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class ReferenceElement, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class ReferenceElement " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class ReferenceElement " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class ReferenceElement, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class ReferenceElement " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class ReferenceElement " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -9354,7 +8675,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9363,7 +8684,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9390,7 +8711,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9399,7 +8720,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9426,7 +8747,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9435,7 +8756,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9540,8 +8861,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -9663,17 +8982,15 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 byte[]? theValue = null;
                 string? theContentType = null;
 
@@ -9706,7 +9023,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9715,7 +9032,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9822,7 +9139,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9831,7 +9148,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9858,7 +9175,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -9867,7 +9184,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -9892,101 +9209,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Blob, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Blob " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Blob " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class Blob, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Blob " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Blob " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -10003,7 +9225,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10012,7 +9234,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10039,7 +9261,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10048,7 +9270,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10075,7 +9297,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10084,7 +9306,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10274,8 +9496,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -10397,17 +9617,15 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 string? theValue = null;
                 string? theContentType = null;
 
@@ -10440,7 +9658,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10449,7 +9667,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10556,7 +9774,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10565,7 +9783,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10592,7 +9810,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10601,7 +9819,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10626,101 +9844,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class File, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class File " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class File " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class File, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class File " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class File " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -10737,7 +9860,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10746,7 +9869,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10773,7 +9896,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10782,7 +9905,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -10809,7 +9932,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -10818,7 +9941,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11000,8 +10123,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -11123,19 +10244,17 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theFirst = null;
-                Reference? theSecond = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theFirst = null;
+                IReference? theSecond = null;
                 List<IDataElement>? theAnnotations = null;
 
                 if (!isEmptySequence)
@@ -11167,7 +10286,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11176,7 +10295,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11283,7 +10402,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11292,7 +10411,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11319,7 +10438,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11328,7 +10447,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11353,101 +10472,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class AnnotatedRelationshipElement, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class AnnotatedRelationshipElement " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class AnnotatedRelationshipElement " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class AnnotatedRelationshipElement, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class AnnotatedRelationshipElement " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class AnnotatedRelationshipElement " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -11464,7 +10488,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11473,7 +10497,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11500,7 +10524,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11509,7 +10533,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11536,7 +10560,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11545,7 +10569,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -11722,8 +10746,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -11845,21 +10867,19 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theStatements = null;
                 EntityType? theEntityType = null;
-                Reference? theGlobalAssetId = null;
-                SpecificAssetId? theSpecificAssetId = null;
+                string? theGlobalAssetId = null;
+                List<ISpecificAssetId>? theSpecificAssetIds = null;
 
                 if (!isEmptySequence)
                 {
@@ -11890,7 +10910,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -11899,7 +10919,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -12006,7 +11026,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -12015,7 +11035,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -12042,7 +11062,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -12051,7 +11071,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -12076,101 +11096,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Entity, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Entity " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Entity " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class Entity, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Entity " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Entity " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -12187,7 +11112,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -12196,7 +11121,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -12223,7 +11148,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -12232,7 +11157,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -12259,7 +11184,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -12268,7 +11193,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -12386,29 +11311,77 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "globalAssetId":
                                 {
-                                    theGlobalAssetId = ReferenceFromSequence(
-                                        reader, isEmptyProperty, out error);
-
-                                    if (error != null)
+                                    if (isEmptyProperty)
                                     {
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "globalAssetId"));
-                                        return null;
+                                        theGlobalAssetId = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property GlobalAssetId of an instance of class Entity, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theGlobalAssetId = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property GlobalAssetId of an instance of class Entity " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "globalAssetId"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
                                     }
                                     break;
                                 }
-                            case "specificAssetId":
+                            case "specificAssetIds":
                                 {
-                                    theSpecificAssetId = SpecificAssetIdFromSequence(
-                                        reader, isEmptyProperty, out error);
+                                    theSpecificAssetIds = new List<ISpecificAssetId>();
 
-                                    if (error != null)
+                                    if (!isEmptyProperty)
                                     {
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "specificAssetId"));
-                                        return null;
+                                        SkipNoneWhitespaceAndComments(reader);
+
+                                        int indexSpecificAssetIds = 0;
+                                        while (reader.NodeType == Xml.XmlNodeType.Element)
+                                        {
+                                            ISpecificAssetId? item = SpecificAssetIdFromElement(
+                                                reader, out error);
+
+                                            if (error != null)
+                                            {
+                                                error.PrependSegment(
+                                                    new Reporting.IndexSegment(
+                                                        indexSpecificAssetIds));
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "specificAssetIds"));
+                                                return null;
+                                            }
+
+                                            theSpecificAssetIds.Add(
+                                                item
+                                                    ?? throw new System.InvalidOperationException(
+                                                        "Unexpected item null when error null"));
+
+                                            indexSpecificAssetIds++;
+                                            SkipNoneWhitespaceAndComments(reader);
+                                        }
                                     }
                                     break;
                                 }
@@ -12489,15 +11462,13 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
                     theEmbeddedDataSpecifications,
                     theStatements,
                     theGlobalAssetId,
-                    theSpecificAssetId);
+                    theSpecificAssetIds);
             }  // internal static Aas.Entity? EntityFromSequence
 
             /// <summary>
@@ -12614,14 +11585,14 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                Reference? theSource = null;
-                Reference? theSourceSemanticId = null;
-                Reference? theObservableReference = null;
-                Reference? theObservableSemanticId = null;
+                IReference? theSource = null;
+                IReference? theSourceSemanticId = null;
+                IReference? theObservableReference = null;
+                IReference? theObservableSemanticId = null;
                 string? theTopic = null;
-                Reference? theSubjectId = null;
+                IReference? theSubjectId = null;
                 string? theTimeStamp = null;
-                string? thePayload = null;
+                byte[]? thePayload = null;
 
                 if (!isEmptySequence)
                 {
@@ -12804,7 +11775,14 @@ namespace AasCore.Aas3_0_RC02
                                 {
                                     if (isEmptyProperty)
                                     {
-                                        thePayload = "";
+                                        error = new Reporting.Error(
+                                            "The property Payload of an instance of class EventPayload " +
+                                            "can not be de-serialized from a self-closing element " +
+                                            "since it needs content");
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "payload"));
+                                        return null;
                                     }
                                     else
                                     {
@@ -12819,7 +11797,8 @@ namespace AasCore.Aas3_0_RC02
 
                                         try
                                         {
-                                            thePayload = reader.ReadContentAsString();
+                                            thePayload = DeserializeImplementation.ReadWholeContentAsBase64(
+                                            reader);
                                         }
                                         catch (System.Exception exception)
                                         {
@@ -13102,22 +12081,20 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                Reference? theObserved = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                IReference? theObserved = null;
                 Direction? theDirection = null;
                 StateOfEvent? theState = null;
                 string? theMessageTopic = null;
-                Reference? theMessageBroker = null;
+                IReference? theMessageBroker = null;
                 string? theLastUpdate = null;
                 string? theMinInterval = null;
                 string? theMaxInterval = null;
@@ -13151,7 +12128,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -13160,7 +12137,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -13267,7 +12244,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -13276,7 +12253,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -13303,7 +12280,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -13312,7 +12289,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -13337,101 +12314,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class BasicEventElement, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class BasicEventElement " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class BasicEventElement " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class BasicEventElement, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class BasicEventElement " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class BasicEventElement " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -13448,7 +12330,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -13457,7 +12339,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -13484,7 +12366,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -13493,7 +12375,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -13520,7 +12402,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -13529,7 +12411,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -13951,8 +12833,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -14078,20 +12958,18 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<OperationVariable>? theInputVariables = null;
-                List<OperationVariable>? theOutputVariables = null;
-                List<OperationVariable>? theInoutputVariables = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<IOperationVariable>? theInputVariables = null;
+                List<IOperationVariable>? theOutputVariables = null;
+                List<IOperationVariable>? theInoutputVariables = null;
 
                 if (!isEmptySequence)
                 {
@@ -14122,7 +13000,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14131,7 +13009,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14238,7 +13116,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14247,7 +13125,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14274,7 +13152,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14283,7 +13161,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14308,101 +13186,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Operation, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Operation " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Operation " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class Operation, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Operation " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Operation " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -14419,7 +13202,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14428,7 +13211,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14455,7 +13238,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14464,7 +13247,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14491,7 +13274,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14500,7 +13283,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14527,7 +13310,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "inputVariables":
                                 {
-                                    theInputVariables = new List<OperationVariable>();
+                                    theInputVariables = new List<IOperationVariable>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14536,7 +13319,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexInputVariables = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            OperationVariable? item = OperationVariableFromElement(
+                                            IOperationVariable? item = OperationVariableFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14563,7 +13346,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "outputVariables":
                                 {
-                                    theOutputVariables = new List<OperationVariable>();
+                                    theOutputVariables = new List<IOperationVariable>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14572,7 +13355,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexOutputVariables = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            OperationVariable? item = OperationVariableFromElement(
+                                            IOperationVariable? item = OperationVariableFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14599,7 +13382,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "inoutputVariables":
                                 {
-                                    theInoutputVariables = new List<OperationVariable>();
+                                    theInoutputVariables = new List<IOperationVariable>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -14608,7 +13391,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexInoutputVariables = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            OperationVariable? item = OperationVariableFromElement(
+                                            IOperationVariable? item = OperationVariableFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -14699,8 +13482,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -15094,17 +13875,15 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                ModelingKind? theKind = null;
-                Reference? theSemanticId = null;
-                List<Reference>? theSupplementalSemanticIds = null;
-                List<Qualifier>? theQualifiers = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IReference? theSemanticId = null;
+                List<IReference>? theSupplementalSemanticIds = null;
+                List<IQualifier>? theQualifiers = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
 
                 if (!isEmptySequence)
                 {
@@ -15135,7 +13914,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15144,7 +13923,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15251,7 +14030,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15260,7 +14039,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15287,7 +14066,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15296,7 +14075,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15321,101 +14100,6 @@ namespace AasCore.Aas3_0_RC02
                                     }
                                     break;
                                 }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class Capability, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class Capability " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "kind":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Capability " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    if (reader.EOF)
-                                    {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property Kind of an instance of class Capability, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textKind;
-                                    try
-                                    {
-                                        textKind = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Capability " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-
-                                    theKind = Stringification.ModelingKindFromString(
-                                        textKind);
-
-                                    if (theKind == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property Kind of an instance of class Capability " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textKind);
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "kind"));
-                                        return null;
-                                    }
-                                    break;
-                                }
                             case "semanticId":
                                 {
                                     theSemanticId = ReferenceFromSequence(
@@ -15432,7 +14116,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "supplementalSemanticIds":
                                 {
-                                    theSupplementalSemanticIds = new List<Reference>();
+                                    theSupplementalSemanticIds = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15441,7 +14125,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSupplementalSemanticIds = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15468,7 +14152,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "qualifiers":
                                 {
-                                    theQualifiers = new List<Qualifier>();
+                                    theQualifiers = new List<IQualifier>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15477,7 +14161,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexQualifiers = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Qualifier? item = QualifierFromElement(
+                                            IQualifier? item = QualifierFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15504,7 +14188,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15513,7 +14197,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15604,8 +14288,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
-                    theKind,
                     theSemanticId,
                     theSupplementalSemanticIds,
                     theQualifiers,
@@ -15726,16 +14408,15 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<Extension>? theExtensions = null;
+                List<IExtension>? theExtensions = null;
                 string? theCategory = null;
                 string? theIdShort = null;
-                List<LangString>? theDisplayName = null;
-                List<LangString>? theDescription = null;
-                string? theChecksum = null;
-                AdministrativeInformation? theAdministration = null;
+                List<ILangStringNameType>? theDisplayName = null;
+                List<ILangStringTextType>? theDescription = null;
+                IAdministrativeInformation? theAdministration = null;
                 string? theId = null;
-                List<EmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<Reference>? theIsCaseOf = null;
+                List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
+                List<IReference>? theIsCaseOf = null;
 
                 if (!isEmptySequence)
                 {
@@ -15766,7 +14447,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "extensions":
                                 {
-                                    theExtensions = new List<Extension>();
+                                    theExtensions = new List<IExtension>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15775,7 +14456,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexExtensions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Extension? item = ExtensionFromElement(
+                                            IExtension? item = ExtensionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15882,7 +14563,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "displayName":
                                 {
-                                    theDisplayName = new List<LangString>();
+                                    theDisplayName = new List<ILangStringNameType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15891,7 +14572,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDisplayName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringNameType? item = LangStringNameTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15918,7 +14599,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "description":
                                 {
-                                    theDescription = new List<LangString>();
+                                    theDescription = new List<ILangStringTextType>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -15927,7 +14608,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDescription = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringTextType? item = LangStringTextTypeFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -15948,46 +14629,6 @@ namespace AasCore.Aas3_0_RC02
 
                                             indexDescription++;
                                             SkipNoneWhitespaceAndComments(reader);
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "checksum":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theChecksum = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Checksum of an instance of class ConceptDescription, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theChecksum = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Checksum of an instance of class ConceptDescription " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "checksum"));
-                                                return null;
-                                            }
-
-                                            throw;
                                         }
                                     }
                                     break;
@@ -16048,7 +14689,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "embeddedDataSpecifications":
                                 {
-                                    theEmbeddedDataSpecifications = new List<EmbeddedDataSpecification>();
+                                    theEmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -16057,7 +14698,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexEmbeddedDataSpecifications = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            EmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
+                                            IEmbeddedDataSpecification? item = EmbeddedDataSpecificationFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -16084,7 +14725,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "isCaseOf":
                                 {
-                                    theIsCaseOf = new List<Reference>();
+                                    theIsCaseOf = new List<IReference>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -16093,7 +14734,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexIsCaseOf = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Reference? item = ReferenceFromElement(
+                                            IReference? item = ReferenceFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -16195,7 +14836,6 @@ namespace AasCore.Aas3_0_RC02
                     theIdShort,
                     theDisplayName,
                     theDescription,
-                    theChecksum,
                     theAdministration,
                     theEmbeddedDataSpecifications,
                     theIsCaseOf);
@@ -16316,8 +14956,8 @@ namespace AasCore.Aas3_0_RC02
                 error = null;
 
                 ReferenceTypes? theType = null;
-                Reference? theReferredSemanticId = null;
-                List<Key>? theKeys = null;
+                IReference? theReferredSemanticId = null;
+                List<IKey>? theKeys = null;
 
                 if (!isEmptySequence)
                 {
@@ -16417,7 +15057,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "keys":
                                 {
-                                    theKeys = new List<Key>();
+                                    theKeys = new List<IKey>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -16426,7 +15066,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexKeys = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Key? item = KeyFromElement(
+                                            IKey? item = KeyFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -16961,14 +15601,73 @@ namespace AasCore.Aas3_0_RC02
             }  // internal static Aas.Key? KeyFromElement
 
             /// <summary>
-            /// Deserialize an instance of class LangString from a sequence of XML elements.
+            /// Deserialize an instance of IAbstractLangString from an XML element.
+            /// </summary>
+            [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+            internal static Aas.IAbstractLangString? IAbstractLangStringFromElement(
+                Xml.XmlReader reader,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (reader.EOF)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element, but reached end-of-file");
+                    return null;
+                }
+
+                if (reader.NodeType != Xml.XmlNodeType.Element)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element, " +
+                        $"but got a node of type {reader.NodeType} " +
+                        $"with value {reader.Value}");
+                    return null;
+                }
+
+                string elementName = TryElementName(
+                    reader, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+
+                switch (elementName)
+                {
+                    case "langStringDefinitionTypeIec61360":
+                        return LangStringDefinitionTypeIec61360FromElement(
+                            reader, out error);
+                    case "langStringNameType":
+                        return LangStringNameTypeFromElement(
+                            reader, out error);
+                    case "langStringPreferredNameTypeIec61360":
+                        return LangStringPreferredNameTypeIec61360FromElement(
+                            reader, out error);
+                    case "langStringShortNameTypeIec61360":
+                        return LangStringShortNameTypeIec61360FromElement(
+                            reader, out error);
+                    case "langStringTextType":
+                        return LangStringTextTypeFromElement(
+                            reader, out error);
+                    default:
+                        error = new Reporting.Error(
+                            $"Unexpected element with the name {elementName}");
+                        return null;
+                }
+            }  // internal static Aas.IAbstractLangString? IAbstractLangStringFromElement
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringNameType from a sequence of XML elements.
             /// </summary>
             /// <remarks>
             /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
             /// the instance from an empty sequence. That is, the parent element
             /// was a self-closing element.
             /// </remarks>
-            internal static Aas.LangString? LangStringFromSequence(
+            internal static Aas.LangStringNameType? LangStringNameTypeFromSequence(
                 Xml.XmlReader reader,
                 bool isEmptySequence,
                 out Reporting.Error? error)
@@ -16985,7 +15684,7 @@ namespace AasCore.Aas3_0_RC02
                     {
                         error = new Reporting.Error(
                             "Expected an XML element representing " +
-                            "a property of an instance of class LangString, " +
+                            "a property of an instance of class LangStringNameType, " +
                             "but reached the end-of-file");
                         return null;
                     }
@@ -17017,7 +15716,7 @@ namespace AasCore.Aas3_0_RC02
                                         {
                                             error = new Reporting.Error(
                                                 "Expected an XML content representing " +
-                                                "the property Language of an instance of class LangString, " +
+                                                "the property Language of an instance of class LangStringNameType, " +
                                                 "but reached the end-of-file");
                                             return null;
                                         }
@@ -17032,7 +15731,7 @@ namespace AasCore.Aas3_0_RC02
                                                 || exception is System.Xml.XmlException)
                                             {
                                                 error = new Reporting.Error(
-                                                    "The property Language of an instance of class LangString " +
+                                                    "The property Language of an instance of class LangStringNameType " +
                                                     $"could not be de-serialized: {exception.Message}");
                                                 error.PrependSegment(
                                                     new Reporting.NameSegment(
@@ -17057,7 +15756,7 @@ namespace AasCore.Aas3_0_RC02
                                         {
                                             error = new Reporting.Error(
                                                 "Expected an XML content representing " +
-                                                "the property Text of an instance of class LangString, " +
+                                                "the property Text of an instance of class LangStringNameType, " +
                                                 "but reached the end-of-file");
                                             return null;
                                         }
@@ -17072,7 +15771,7 @@ namespace AasCore.Aas3_0_RC02
                                                 || exception is System.Xml.XmlException)
                                             {
                                                 error = new Reporting.Error(
-                                                    "The property Text of an instance of class LangString " +
+                                                    "The property Text of an instance of class LangStringNameType " +
                                                     $"could not be de-serialized: {exception.Message}");
                                                 error.PrependSegment(
                                                     new Reporting.NameSegment(
@@ -17087,7 +15786,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             default:
                                 error = new Reporting.Error(
-                                    "We expected properties of the class LangString, " +
+                                    "We expected properties of the class LangStringNameType, " +
                                     "but got an unexpected element " +
                                     $"with the name {elementName}");
                                 return null;
@@ -17102,7 +15801,7 @@ namespace AasCore.Aas3_0_RC02
                             if (reader.EOF)
                             {
                                 error = new Reporting.Error(
-                                    "Expected an XML end element to conclude a property of class LangString " +
+                                    "Expected an XML end element to conclude a property of class LangStringNameType " +
                                     $"with the element name {elementName}, " +
                                     "but got the end-of-file.");
                                 return null;
@@ -17110,7 +15809,7 @@ namespace AasCore.Aas3_0_RC02
                             if (reader.NodeType != Xml.XmlNodeType.EndElement)
                             {
                                 error = new Reporting.Error(
-                                    "Expected an XML end element to conclude a property of class LangString " +
+                                    "Expected an XML end element to conclude a property of class LangStringNameType " +
                                     $"with the element name {elementName}, " +
                                     $"but got the node of type {reader.NodeType} " +
                                     $"with the value {reader.Value}");
@@ -17127,7 +15826,7 @@ namespace AasCore.Aas3_0_RC02
                             if (endElementName != elementName)
                             {
                                 error = new Reporting.Error(
-                                    "Expected an XML end element to conclude a property of class LangString " +
+                                    "Expected an XML end element to conclude a property of class LangStringNameType " +
                                     $"with the element name {elementName}, " +
                                     $"but got the end element with the name {reader.Name}");
                                 return null;
@@ -17149,7 +15848,7 @@ namespace AasCore.Aas3_0_RC02
                 {
                     error = new Reporting.Error(
                         "The required property Language has not been given " +
-                        "in the XML representation of an instance of class LangString");
+                        "in the XML representation of an instance of class LangStringNameType");
                     return null;
                 }
 
@@ -17157,23 +15856,23 @@ namespace AasCore.Aas3_0_RC02
                 {
                     error = new Reporting.Error(
                         "The required property Text has not been given " +
-                        "in the XML representation of an instance of class LangString");
+                        "in the XML representation of an instance of class LangStringNameType");
                     return null;
                 }
 
-                return new Aas.LangString(
+                return new Aas.LangStringNameType(
                     theLanguage
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"),
                     theText
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"));
-            }  // internal static Aas.LangString? LangStringFromSequence
+            }  // internal static Aas.LangStringNameType? LangStringNameTypeFromSequence
 
             /// <summary>
-            /// Deserialize an instance of class LangString from an XML element.
+            /// Deserialize an instance of class LangStringNameType from an XML element.
             /// </summary>
-            internal static Aas.LangString? LangStringFromElement(
+            internal static Aas.LangStringNameType? LangStringNameTypeFromElement(
                 Xml.XmlReader reader,
                 out Reporting.Error? error)
             {
@@ -17184,7 +15883,7 @@ namespace AasCore.Aas3_0_RC02
                 if (reader.EOF)
                 {
                     error = new Reporting.Error(
-                        "Expected an XML element representing an instance of class LangString, " +
+                        "Expected an XML element representing an instance of class LangStringNameType, " +
                         "but reached the end-of-file");
                     return null;
                 }
@@ -17192,7 +15891,7 @@ namespace AasCore.Aas3_0_RC02
                 if (reader.NodeType != Xml.XmlNodeType.Element)
                 {
                     error = new Reporting.Error(
-                        "Expected an XML element representing an instance of class LangString, " +
+                        "Expected an XML element representing an instance of class LangStringNameType, " +
                         $"but got a node of type {reader.NodeType} " +
                         $"with value {reader.Value}");
                     return null;
@@ -17205,11 +15904,11 @@ namespace AasCore.Aas3_0_RC02
                     return null;
                 }
 
-                if (elementName != "langString")
+                if (elementName != "langStringNameType")
                 {
                     error = new Reporting.Error(
-                        "Expected an element representing an instance of class LangString " +
-                        $"with element name langString, but got: {elementName}");
+                        "Expected an element representing an instance of class LangStringNameType " +
+                        $"with element name langStringNameType, but got: {elementName}");
                     return null;
                 }
 
@@ -17218,8 +15917,8 @@ namespace AasCore.Aas3_0_RC02
                 // Skip the element node and go to the content
                 reader.Read();
 
-                Aas.LangString? result = (
-                    LangStringFromSequence(
+                Aas.LangStringNameType? result = (
+                    LangStringNameTypeFromSequence(
                         reader, isEmptyElement, out error));
                 if (error != null)
                 {
@@ -17233,7 +15932,7 @@ namespace AasCore.Aas3_0_RC02
                     if (reader.EOF)
                     {
                         error = new Reporting.Error(
-                            "Expected an XML end element concluding an instance of class LangString, " +
+                            "Expected an XML end element concluding an instance of class LangStringNameType, " +
                             "but reached the end-of-file");
                         return null;
                     }
@@ -17241,7 +15940,7 @@ namespace AasCore.Aas3_0_RC02
                     if (reader.NodeType != Xml.XmlNodeType.EndElement)
                     {
                         error = new Reporting.Error(
-                            "Expected an XML end element concluding an instance of class LangString, " +
+                            "Expected an XML end element concluding an instance of class LangStringNameType, " +
                             $"but got a node of type {reader.NodeType} " +
                             $"with value {reader.Value}");
                         return null;
@@ -17267,7 +15966,316 @@ namespace AasCore.Aas3_0_RC02
                 }
 
                 return result;
-            }  // internal static Aas.LangString? LangStringFromElement
+            }  // internal static Aas.LangStringNameType? LangStringNameTypeFromElement
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringTextType from a sequence of XML elements.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
+            /// the instance from an empty sequence. That is, the parent element
+            /// was a self-closing element.
+            /// </remarks>
+            internal static Aas.LangStringTextType? LangStringTextTypeFromSequence(
+                Xml.XmlReader reader,
+                bool isEmptySequence,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                if (!isEmptySequence)
+                {
+                    SkipNoneWhitespaceAndComments(reader);
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML element representing " +
+                            "a property of an instance of class LangStringTextType, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+                    while (reader.NodeType == Xml.XmlNodeType.Element)
+                    {
+                        string elementName = TryElementName(
+                            reader, out error);
+                        if (error != null)
+                        {
+                            return null;
+                        }
+
+                        bool isEmptyProperty = reader.IsEmptyElement;
+
+                        // Skip the expected element
+                        reader.Read();
+
+                        switch (elementName)
+                        {
+                            case "language":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theLanguage = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Language of an instance of class LangStringTextType, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theLanguage = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Language of an instance of class LangStringTextType " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "language"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "text":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theText = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Text of an instance of class LangStringTextType, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theText = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Text of an instance of class LangStringTextType " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "text"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            default:
+                                error = new Reporting.Error(
+                                    "We expected properties of the class LangStringTextType, " +
+                                    "but got an unexpected element " +
+                                    $"with the name {elementName}");
+                                return null;
+                        }
+
+                        SkipNoneWhitespaceAndComments(reader);
+
+                        if (!isEmptyProperty)
+                        {
+                            // Read the end element
+
+                            if (reader.EOF)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringTextType " +
+                                    $"with the element name {elementName}, " +
+                                    "but got the end-of-file.");
+                                return null;
+                            }
+                            if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringTextType " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the node of type {reader.NodeType} " +
+                                    $"with the value {reader.Value}");
+                                return null;
+                            }
+
+                            string endElementName = TryElementName(
+                                reader, out error);
+                            if (error != null)
+                            {
+                                return null;
+                            }
+
+                            if (endElementName != elementName)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringTextType " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the end element with the name {reader.Name}");
+                                return null;
+                            }
+                            // Skip the expected end element
+                            reader.Read();
+
+                            SkipNoneWhitespaceAndComments(reader);
+                        }
+
+                        if (reader.EOF)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Language has not been given " +
+                        "in the XML representation of an instance of class LangStringTextType");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Text has not been given " +
+                        "in the XML representation of an instance of class LangStringTextType");
+                    return null;
+                }
+
+                return new Aas.LangStringTextType(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static Aas.LangStringTextType? LangStringTextTypeFromSequence
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringTextType from an XML element.
+            /// </summary>
+            internal static Aas.LangStringTextType? LangStringTextTypeFromElement(
+                Xml.XmlReader reader,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (reader.EOF)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringTextType, " +
+                        "but reached the end-of-file");
+                    return null;
+                }
+
+                if (reader.NodeType != Xml.XmlNodeType.Element)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringTextType, " +
+                        $"but got a node of type {reader.NodeType} " +
+                        $"with value {reader.Value}");
+                    return null;
+                }
+
+                string elementName = TryElementName(
+                    reader, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+
+                if (elementName != "langStringTextType")
+                {
+                    error = new Reporting.Error(
+                        "Expected an element representing an instance of class LangStringTextType " +
+                        $"with element name langStringTextType, but got: {elementName}");
+                    return null;
+                }
+
+                bool isEmptyElement = reader.IsEmptyElement;
+
+                // Skip the element node and go to the content
+                reader.Read();
+
+                Aas.LangStringTextType? result = (
+                    LangStringTextTypeFromSequence(
+                        reader, isEmptyElement, out error));
+                if (error != null)
+                {
+                    return null;
+                }
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (!isEmptyElement)
+                {
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringTextType, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+
+                    if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringTextType, " +
+                            $"but got a node of type {reader.NodeType} " +
+                            $"with value {reader.Value}");
+                        return null;
+                    }
+
+                    string endElementName = TryElementName(
+                        reader, out error);
+                    if (error != null)
+                    {
+                        return null;
+                    }
+
+                    if (endElementName != elementName)
+                    {
+                        error = new Reporting.Error(
+                            $"Expected an XML end element with an name {elementName}, " +
+                            $"but got: {endElementName}");
+                        return null;
+                    }
+
+                    // Skip the end element
+                    reader.Read();
+                }
+
+                return result;
+            }  // internal static Aas.LangStringTextType? LangStringTextTypeFromElement
 
             /// <summary>
             /// Deserialize an instance of class Environment from a sequence of XML elements.
@@ -17284,9 +16292,9 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<AssetAdministrationShell>? theAssetAdministrationShells = null;
-                List<Submodel>? theSubmodels = null;
-                List<ConceptDescription>? theConceptDescriptions = null;
+                List<IAssetAdministrationShell>? theAssetAdministrationShells = null;
+                List<ISubmodel>? theSubmodels = null;
+                List<IConceptDescription>? theConceptDescriptions = null;
 
                 if (!isEmptySequence)
                 {
@@ -17317,7 +16325,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "assetAdministrationShells":
                                 {
-                                    theAssetAdministrationShells = new List<AssetAdministrationShell>();
+                                    theAssetAdministrationShells = new List<IAssetAdministrationShell>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -17326,7 +16334,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexAssetAdministrationShells = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            AssetAdministrationShell? item = AssetAdministrationShellFromElement(
+                                            IAssetAdministrationShell? item = AssetAdministrationShellFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -17353,7 +16361,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "submodels":
                                 {
-                                    theSubmodels = new List<Submodel>();
+                                    theSubmodels = new List<ISubmodel>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -17362,7 +16370,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexSubmodels = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            Submodel? item = SubmodelFromElement(
+                                            ISubmodel? item = SubmodelFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -17389,7 +16397,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "conceptDescriptions":
                                 {
-                                    theConceptDescriptions = new List<ConceptDescription>();
+                                    theConceptDescriptions = new List<IConceptDescription>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -17398,7 +16406,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexConceptDescriptions = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            ConceptDescription? item = ConceptDescriptionFromElement(
+                                            IConceptDescription? item = ConceptDescriptionFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -17628,9 +16636,6 @@ namespace AasCore.Aas3_0_RC02
                     case "dataSpecificationIec61360":
                         return DataSpecificationIec61360FromElement(
                             reader, out error);
-                    case "dataSpecificationPhysicalUnit":
-                        return DataSpecificationPhysicalUnitFromElement(
-                            reader, out error);
                     default:
                         error = new Reporting.Error(
                             $"Unexpected element with the name {elementName}");
@@ -17653,7 +16658,7 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                Reference? theDataSpecification = null;
+                IReference? theDataSpecification = null;
                 IDataSpecificationContent? theDataSpecificationContent = null;
 
                 if (!isEmptySequence)
@@ -17935,6 +16940,447 @@ namespace AasCore.Aas3_0_RC02
             }  // internal static Aas.EmbeddedDataSpecification? EmbeddedDataSpecificationFromElement
 
             /// <summary>
+            /// Deserialize an instance of class LevelType from a sequence of XML elements.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
+            /// the instance from an empty sequence. That is, the parent element
+            /// was a self-closing element.
+            /// </remarks>
+            internal static Aas.LevelType? LevelTypeFromSequence(
+                Xml.XmlReader reader,
+                bool isEmptySequence,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                bool? theMin = null;
+                bool? theNom = null;
+                bool? theTyp = null;
+                bool? theMax = null;
+
+                if (!isEmptySequence)
+                {
+                    SkipNoneWhitespaceAndComments(reader);
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML element representing " +
+                            "a property of an instance of class LevelType, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+                    while (reader.NodeType == Xml.XmlNodeType.Element)
+                    {
+                        string elementName = TryElementName(
+                            reader, out error);
+                        if (error != null)
+                        {
+                            return null;
+                        }
+
+                        bool isEmptyProperty = reader.IsEmptyElement;
+
+                        // Skip the expected element
+                        reader.Read();
+
+                        switch (elementName)
+                        {
+                            case "min":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        error = new Reporting.Error(
+                                            "The property Min of an instance of class LevelType " +
+                                            "can not be de-serialized from a self-closing element " +
+                                            "since it needs content");
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "min"));
+                                        return null;
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Min of an instance of class LevelType, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theMin = reader.ReadContentAsBoolean();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Min of an instance of class LevelType " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "min"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "nom":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        error = new Reporting.Error(
+                                            "The property Nom of an instance of class LevelType " +
+                                            "can not be de-serialized from a self-closing element " +
+                                            "since it needs content");
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "nom"));
+                                        return null;
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Nom of an instance of class LevelType, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theNom = reader.ReadContentAsBoolean();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Nom of an instance of class LevelType " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "nom"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "typ":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        error = new Reporting.Error(
+                                            "The property Typ of an instance of class LevelType " +
+                                            "can not be de-serialized from a self-closing element " +
+                                            "since it needs content");
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "typ"));
+                                        return null;
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Typ of an instance of class LevelType, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theTyp = reader.ReadContentAsBoolean();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Typ of an instance of class LevelType " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "typ"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "max":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        error = new Reporting.Error(
+                                            "The property Max of an instance of class LevelType " +
+                                            "can not be de-serialized from a self-closing element " +
+                                            "since it needs content");
+                                        error.PrependSegment(
+                                            new Reporting.NameSegment(
+                                                "max"));
+                                        return null;
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Max of an instance of class LevelType, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theMax = reader.ReadContentAsBoolean();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Max of an instance of class LevelType " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "max"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            default:
+                                error = new Reporting.Error(
+                                    "We expected properties of the class LevelType, " +
+                                    "but got an unexpected element " +
+                                    $"with the name {elementName}");
+                                return null;
+                        }
+
+                        SkipNoneWhitespaceAndComments(reader);
+
+                        if (!isEmptyProperty)
+                        {
+                            // Read the end element
+
+                            if (reader.EOF)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LevelType " +
+                                    $"with the element name {elementName}, " +
+                                    "but got the end-of-file.");
+                                return null;
+                            }
+                            if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LevelType " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the node of type {reader.NodeType} " +
+                                    $"with the value {reader.Value}");
+                                return null;
+                            }
+
+                            string endElementName = TryElementName(
+                                reader, out error);
+                            if (error != null)
+                            {
+                                return null;
+                            }
+
+                            if (endElementName != elementName)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LevelType " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the end element with the name {reader.Name}");
+                                return null;
+                            }
+                            // Skip the expected end element
+                            reader.Read();
+
+                            SkipNoneWhitespaceAndComments(reader);
+                        }
+
+                        if (reader.EOF)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (theMin == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Min has not been given " +
+                        "in the XML representation of an instance of class LevelType");
+                    return null;
+                }
+
+                if (theNom == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Nom has not been given " +
+                        "in the XML representation of an instance of class LevelType");
+                    return null;
+                }
+
+                if (theTyp == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Typ has not been given " +
+                        "in the XML representation of an instance of class LevelType");
+                    return null;
+                }
+
+                if (theMax == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Max has not been given " +
+                        "in the XML representation of an instance of class LevelType");
+                    return null;
+                }
+
+                return new Aas.LevelType(
+                    theMin
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theNom
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theTyp
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theMax
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static Aas.LevelType? LevelTypeFromSequence
+
+            /// <summary>
+            /// Deserialize an instance of class LevelType from an XML element.
+            /// </summary>
+            internal static Aas.LevelType? LevelTypeFromElement(
+                Xml.XmlReader reader,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (reader.EOF)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LevelType, " +
+                        "but reached the end-of-file");
+                    return null;
+                }
+
+                if (reader.NodeType != Xml.XmlNodeType.Element)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LevelType, " +
+                        $"but got a node of type {reader.NodeType} " +
+                        $"with value {reader.Value}");
+                    return null;
+                }
+
+                string elementName = TryElementName(
+                    reader, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+
+                if (elementName != "levelType")
+                {
+                    error = new Reporting.Error(
+                        "Expected an element representing an instance of class LevelType " +
+                        $"with element name levelType, but got: {elementName}");
+                    return null;
+                }
+
+                bool isEmptyElement = reader.IsEmptyElement;
+
+                // Skip the element node and go to the content
+                reader.Read();
+
+                Aas.LevelType? result = (
+                    LevelTypeFromSequence(
+                        reader, isEmptyElement, out error));
+                if (error != null)
+                {
+                    return null;
+                }
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (!isEmptyElement)
+                {
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LevelType, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+
+                    if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LevelType, " +
+                            $"but got a node of type {reader.NodeType} " +
+                            $"with value {reader.Value}");
+                        return null;
+                    }
+
+                    string endElementName = TryElementName(
+                        reader, out error);
+                    if (error != null)
+                    {
+                        return null;
+                    }
+
+                    if (endElementName != elementName)
+                    {
+                        error = new Reporting.Error(
+                            $"Expected an XML end element with an name {elementName}, " +
+                            $"but got: {endElementName}");
+                        return null;
+                    }
+
+                    // Skip the end element
+                    reader.Read();
+                }
+
+                return result;
+            }  // internal static Aas.LevelType? LevelTypeFromElement
+
+            /// <summary>
             /// Deserialize an instance of class ValueReferencePair from a sequence of XML elements.
             /// </summary>
             /// <remarks>
@@ -17950,7 +17396,7 @@ namespace AasCore.Aas3_0_RC02
                 error = null;
 
                 string? theValue = null;
-                Reference? theValueId = null;
+                IReference? theValueId = null;
 
                 if (!isEmptySequence)
                 {
@@ -18232,7 +17678,7 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<ValueReferencePair>? theValueReferencePairs = null;
+                List<IValueReferencePair>? theValueReferencePairs = null;
 
                 if (!isEmptySequence)
                 {
@@ -18263,7 +17709,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "valueReferencePairs":
                                 {
-                                    theValueReferencePairs = new List<ValueReferencePair>();
+                                    theValueReferencePairs = new List<IValueReferencePair>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -18272,7 +17718,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexValueReferencePairs = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            ValueReferencePair? item = ValueReferencePairFromElement(
+                                            IValueReferencePair? item = ValueReferencePairFromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -18471,6 +17917,933 @@ namespace AasCore.Aas3_0_RC02
             }  // internal static Aas.ValueList? ValueListFromElement
 
             /// <summary>
+            /// Deserialize an instance of class LangStringPreferredNameTypeIec61360 from a sequence of XML elements.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
+            /// the instance from an empty sequence. That is, the parent element
+            /// was a self-closing element.
+            /// </remarks>
+            internal static Aas.LangStringPreferredNameTypeIec61360? LangStringPreferredNameTypeIec61360FromSequence(
+                Xml.XmlReader reader,
+                bool isEmptySequence,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                if (!isEmptySequence)
+                {
+                    SkipNoneWhitespaceAndComments(reader);
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML element representing " +
+                            "a property of an instance of class LangStringPreferredNameTypeIec61360, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+                    while (reader.NodeType == Xml.XmlNodeType.Element)
+                    {
+                        string elementName = TryElementName(
+                            reader, out error);
+                        if (error != null)
+                        {
+                            return null;
+                        }
+
+                        bool isEmptyProperty = reader.IsEmptyElement;
+
+                        // Skip the expected element
+                        reader.Read();
+
+                        switch (elementName)
+                        {
+                            case "language":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theLanguage = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Language of an instance of class LangStringPreferredNameTypeIec61360, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theLanguage = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Language of an instance of class LangStringPreferredNameTypeIec61360 " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "language"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "text":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theText = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Text of an instance of class LangStringPreferredNameTypeIec61360, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theText = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Text of an instance of class LangStringPreferredNameTypeIec61360 " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "text"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            default:
+                                error = new Reporting.Error(
+                                    "We expected properties of the class LangStringPreferredNameTypeIec61360, " +
+                                    "but got an unexpected element " +
+                                    $"with the name {elementName}");
+                                return null;
+                        }
+
+                        SkipNoneWhitespaceAndComments(reader);
+
+                        if (!isEmptyProperty)
+                        {
+                            // Read the end element
+
+                            if (reader.EOF)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringPreferredNameTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    "but got the end-of-file.");
+                                return null;
+                            }
+                            if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringPreferredNameTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the node of type {reader.NodeType} " +
+                                    $"with the value {reader.Value}");
+                                return null;
+                            }
+
+                            string endElementName = TryElementName(
+                                reader, out error);
+                            if (error != null)
+                            {
+                                return null;
+                            }
+
+                            if (endElementName != elementName)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringPreferredNameTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the end element with the name {reader.Name}");
+                                return null;
+                            }
+                            // Skip the expected end element
+                            reader.Read();
+
+                            SkipNoneWhitespaceAndComments(reader);
+                        }
+
+                        if (reader.EOF)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Language has not been given " +
+                        "in the XML representation of an instance of class LangStringPreferredNameTypeIec61360");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Text has not been given " +
+                        "in the XML representation of an instance of class LangStringPreferredNameTypeIec61360");
+                    return null;
+                }
+
+                return new Aas.LangStringPreferredNameTypeIec61360(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static Aas.LangStringPreferredNameTypeIec61360? LangStringPreferredNameTypeIec61360FromSequence
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringPreferredNameTypeIec61360 from an XML element.
+            /// </summary>
+            internal static Aas.LangStringPreferredNameTypeIec61360? LangStringPreferredNameTypeIec61360FromElement(
+                Xml.XmlReader reader,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (reader.EOF)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringPreferredNameTypeIec61360, " +
+                        "but reached the end-of-file");
+                    return null;
+                }
+
+                if (reader.NodeType != Xml.XmlNodeType.Element)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringPreferredNameTypeIec61360, " +
+                        $"but got a node of type {reader.NodeType} " +
+                        $"with value {reader.Value}");
+                    return null;
+                }
+
+                string elementName = TryElementName(
+                    reader, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+
+                if (elementName != "langStringPreferredNameTypeIec61360")
+                {
+                    error = new Reporting.Error(
+                        "Expected an element representing an instance of class LangStringPreferredNameTypeIec61360 " +
+                        $"with element name langStringPreferredNameTypeIec61360, but got: {elementName}");
+                    return null;
+                }
+
+                bool isEmptyElement = reader.IsEmptyElement;
+
+                // Skip the element node and go to the content
+                reader.Read();
+
+                Aas.LangStringPreferredNameTypeIec61360? result = (
+                    LangStringPreferredNameTypeIec61360FromSequence(
+                        reader, isEmptyElement, out error));
+                if (error != null)
+                {
+                    return null;
+                }
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (!isEmptyElement)
+                {
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringPreferredNameTypeIec61360, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+
+                    if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringPreferredNameTypeIec61360, " +
+                            $"but got a node of type {reader.NodeType} " +
+                            $"with value {reader.Value}");
+                        return null;
+                    }
+
+                    string endElementName = TryElementName(
+                        reader, out error);
+                    if (error != null)
+                    {
+                        return null;
+                    }
+
+                    if (endElementName != elementName)
+                    {
+                        error = new Reporting.Error(
+                            $"Expected an XML end element with an name {elementName}, " +
+                            $"but got: {endElementName}");
+                        return null;
+                    }
+
+                    // Skip the end element
+                    reader.Read();
+                }
+
+                return result;
+            }  // internal static Aas.LangStringPreferredNameTypeIec61360? LangStringPreferredNameTypeIec61360FromElement
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringShortNameTypeIec61360 from a sequence of XML elements.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
+            /// the instance from an empty sequence. That is, the parent element
+            /// was a self-closing element.
+            /// </remarks>
+            internal static Aas.LangStringShortNameTypeIec61360? LangStringShortNameTypeIec61360FromSequence(
+                Xml.XmlReader reader,
+                bool isEmptySequence,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                if (!isEmptySequence)
+                {
+                    SkipNoneWhitespaceAndComments(reader);
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML element representing " +
+                            "a property of an instance of class LangStringShortNameTypeIec61360, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+                    while (reader.NodeType == Xml.XmlNodeType.Element)
+                    {
+                        string elementName = TryElementName(
+                            reader, out error);
+                        if (error != null)
+                        {
+                            return null;
+                        }
+
+                        bool isEmptyProperty = reader.IsEmptyElement;
+
+                        // Skip the expected element
+                        reader.Read();
+
+                        switch (elementName)
+                        {
+                            case "language":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theLanguage = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Language of an instance of class LangStringShortNameTypeIec61360, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theLanguage = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Language of an instance of class LangStringShortNameTypeIec61360 " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "language"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "text":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theText = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Text of an instance of class LangStringShortNameTypeIec61360, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theText = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Text of an instance of class LangStringShortNameTypeIec61360 " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "text"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            default:
+                                error = new Reporting.Error(
+                                    "We expected properties of the class LangStringShortNameTypeIec61360, " +
+                                    "but got an unexpected element " +
+                                    $"with the name {elementName}");
+                                return null;
+                        }
+
+                        SkipNoneWhitespaceAndComments(reader);
+
+                        if (!isEmptyProperty)
+                        {
+                            // Read the end element
+
+                            if (reader.EOF)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringShortNameTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    "but got the end-of-file.");
+                                return null;
+                            }
+                            if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringShortNameTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the node of type {reader.NodeType} " +
+                                    $"with the value {reader.Value}");
+                                return null;
+                            }
+
+                            string endElementName = TryElementName(
+                                reader, out error);
+                            if (error != null)
+                            {
+                                return null;
+                            }
+
+                            if (endElementName != elementName)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringShortNameTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the end element with the name {reader.Name}");
+                                return null;
+                            }
+                            // Skip the expected end element
+                            reader.Read();
+
+                            SkipNoneWhitespaceAndComments(reader);
+                        }
+
+                        if (reader.EOF)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Language has not been given " +
+                        "in the XML representation of an instance of class LangStringShortNameTypeIec61360");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Text has not been given " +
+                        "in the XML representation of an instance of class LangStringShortNameTypeIec61360");
+                    return null;
+                }
+
+                return new Aas.LangStringShortNameTypeIec61360(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static Aas.LangStringShortNameTypeIec61360? LangStringShortNameTypeIec61360FromSequence
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringShortNameTypeIec61360 from an XML element.
+            /// </summary>
+            internal static Aas.LangStringShortNameTypeIec61360? LangStringShortNameTypeIec61360FromElement(
+                Xml.XmlReader reader,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (reader.EOF)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringShortNameTypeIec61360, " +
+                        "but reached the end-of-file");
+                    return null;
+                }
+
+                if (reader.NodeType != Xml.XmlNodeType.Element)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringShortNameTypeIec61360, " +
+                        $"but got a node of type {reader.NodeType} " +
+                        $"with value {reader.Value}");
+                    return null;
+                }
+
+                string elementName = TryElementName(
+                    reader, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+
+                if (elementName != "langStringShortNameTypeIec61360")
+                {
+                    error = new Reporting.Error(
+                        "Expected an element representing an instance of class LangStringShortNameTypeIec61360 " +
+                        $"with element name langStringShortNameTypeIec61360, but got: {elementName}");
+                    return null;
+                }
+
+                bool isEmptyElement = reader.IsEmptyElement;
+
+                // Skip the element node and go to the content
+                reader.Read();
+
+                Aas.LangStringShortNameTypeIec61360? result = (
+                    LangStringShortNameTypeIec61360FromSequence(
+                        reader, isEmptyElement, out error));
+                if (error != null)
+                {
+                    return null;
+                }
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (!isEmptyElement)
+                {
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringShortNameTypeIec61360, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+
+                    if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringShortNameTypeIec61360, " +
+                            $"but got a node of type {reader.NodeType} " +
+                            $"with value {reader.Value}");
+                        return null;
+                    }
+
+                    string endElementName = TryElementName(
+                        reader, out error);
+                    if (error != null)
+                    {
+                        return null;
+                    }
+
+                    if (endElementName != elementName)
+                    {
+                        error = new Reporting.Error(
+                            $"Expected an XML end element with an name {elementName}, " +
+                            $"but got: {endElementName}");
+                        return null;
+                    }
+
+                    // Skip the end element
+                    reader.Read();
+                }
+
+                return result;
+            }  // internal static Aas.LangStringShortNameTypeIec61360? LangStringShortNameTypeIec61360FromElement
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringDefinitionTypeIec61360 from a sequence of XML elements.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
+            /// the instance from an empty sequence. That is, the parent element
+            /// was a self-closing element.
+            /// </remarks>
+            internal static Aas.LangStringDefinitionTypeIec61360? LangStringDefinitionTypeIec61360FromSequence(
+                Xml.XmlReader reader,
+                bool isEmptySequence,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                string? theLanguage = null;
+                string? theText = null;
+
+                if (!isEmptySequence)
+                {
+                    SkipNoneWhitespaceAndComments(reader);
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML element representing " +
+                            "a property of an instance of class LangStringDefinitionTypeIec61360, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+                    while (reader.NodeType == Xml.XmlNodeType.Element)
+                    {
+                        string elementName = TryElementName(
+                            reader, out error);
+                        if (error != null)
+                        {
+                            return null;
+                        }
+
+                        bool isEmptyProperty = reader.IsEmptyElement;
+
+                        // Skip the expected element
+                        reader.Read();
+
+                        switch (elementName)
+                        {
+                            case "language":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theLanguage = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Language of an instance of class LangStringDefinitionTypeIec61360, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theLanguage = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Language of an instance of class LangStringDefinitionTypeIec61360 " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "language"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            case "text":
+                                {
+                                    if (isEmptyProperty)
+                                    {
+                                        theText = "";
+                                    }
+                                    else
+                                    {
+                                        if (reader.EOF)
+                                        {
+                                            error = new Reporting.Error(
+                                                "Expected an XML content representing " +
+                                                "the property Text of an instance of class LangStringDefinitionTypeIec61360, " +
+                                                "but reached the end-of-file");
+                                            return null;
+                                        }
+
+                                        try
+                                        {
+                                            theText = reader.ReadContentAsString();
+                                        }
+                                        catch (System.Exception exception)
+                                        {
+                                            if (exception is System.FormatException
+                                                || exception is System.Xml.XmlException)
+                                            {
+                                                error = new Reporting.Error(
+                                                    "The property Text of an instance of class LangStringDefinitionTypeIec61360 " +
+                                                    $"could not be de-serialized: {exception.Message}");
+                                                error.PrependSegment(
+                                                    new Reporting.NameSegment(
+                                                        "text"));
+                                                return null;
+                                            }
+
+                                            throw;
+                                        }
+                                    }
+                                    break;
+                                }
+                            default:
+                                error = new Reporting.Error(
+                                    "We expected properties of the class LangStringDefinitionTypeIec61360, " +
+                                    "but got an unexpected element " +
+                                    $"with the name {elementName}");
+                                return null;
+                        }
+
+                        SkipNoneWhitespaceAndComments(reader);
+
+                        if (!isEmptyProperty)
+                        {
+                            // Read the end element
+
+                            if (reader.EOF)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringDefinitionTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    "but got the end-of-file.");
+                                return null;
+                            }
+                            if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringDefinitionTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the node of type {reader.NodeType} " +
+                                    $"with the value {reader.Value}");
+                                return null;
+                            }
+
+                            string endElementName = TryElementName(
+                                reader, out error);
+                            if (error != null)
+                            {
+                                return null;
+                            }
+
+                            if (endElementName != elementName)
+                            {
+                                error = new Reporting.Error(
+                                    "Expected an XML end element to conclude a property of class LangStringDefinitionTypeIec61360 " +
+                                    $"with the element name {elementName}, " +
+                                    $"but got the end element with the name {reader.Name}");
+                                return null;
+                            }
+                            // Skip the expected end element
+                            reader.Read();
+
+                            SkipNoneWhitespaceAndComments(reader);
+                        }
+
+                        if (reader.EOF)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (theLanguage == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Language has not been given " +
+                        "in the XML representation of an instance of class LangStringDefinitionTypeIec61360");
+                    return null;
+                }
+
+                if (theText == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property Text has not been given " +
+                        "in the XML representation of an instance of class LangStringDefinitionTypeIec61360");
+                    return null;
+                }
+
+                return new Aas.LangStringDefinitionTypeIec61360(
+                    theLanguage
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"),
+                    theText
+                         ?? throw new System.InvalidOperationException(
+                            "Unexpected null, had to be handled before"));
+            }  // internal static Aas.LangStringDefinitionTypeIec61360? LangStringDefinitionTypeIec61360FromSequence
+
+            /// <summary>
+            /// Deserialize an instance of class LangStringDefinitionTypeIec61360 from an XML element.
+            /// </summary>
+            internal static Aas.LangStringDefinitionTypeIec61360? LangStringDefinitionTypeIec61360FromElement(
+                Xml.XmlReader reader,
+                out Reporting.Error? error)
+            {
+                error = null;
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (reader.EOF)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringDefinitionTypeIec61360, " +
+                        "but reached the end-of-file");
+                    return null;
+                }
+
+                if (reader.NodeType != Xml.XmlNodeType.Element)
+                {
+                    error = new Reporting.Error(
+                        "Expected an XML element representing an instance of class LangStringDefinitionTypeIec61360, " +
+                        $"but got a node of type {reader.NodeType} " +
+                        $"with value {reader.Value}");
+                    return null;
+                }
+
+                string elementName = TryElementName(
+                    reader, out error);
+                if (error != null)
+                {
+                    return null;
+                }
+
+                if (elementName != "langStringDefinitionTypeIec61360")
+                {
+                    error = new Reporting.Error(
+                        "Expected an element representing an instance of class LangStringDefinitionTypeIec61360 " +
+                        $"with element name langStringDefinitionTypeIec61360, but got: {elementName}");
+                    return null;
+                }
+
+                bool isEmptyElement = reader.IsEmptyElement;
+
+                // Skip the element node and go to the content
+                reader.Read();
+
+                Aas.LangStringDefinitionTypeIec61360? result = (
+                    LangStringDefinitionTypeIec61360FromSequence(
+                        reader, isEmptyElement, out error));
+                if (error != null)
+                {
+                    return null;
+                }
+
+                SkipNoneWhitespaceAndComments(reader);
+
+                if (!isEmptyElement)
+                {
+                    if (reader.EOF)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringDefinitionTypeIec61360, " +
+                            "but reached the end-of-file");
+                        return null;
+                    }
+
+                    if (reader.NodeType != Xml.XmlNodeType.EndElement)
+                    {
+                        error = new Reporting.Error(
+                            "Expected an XML end element concluding an instance of class LangStringDefinitionTypeIec61360, " +
+                            $"but got a node of type {reader.NodeType} " +
+                            $"with value {reader.Value}");
+                        return null;
+                    }
+
+                    string endElementName = TryElementName(
+                        reader, out error);
+                    if (error != null)
+                    {
+                        return null;
+                    }
+
+                    if (endElementName != elementName)
+                    {
+                        error = new Reporting.Error(
+                            $"Expected an XML end element with an name {elementName}, " +
+                            $"but got: {endElementName}");
+                        return null;
+                    }
+
+                    // Skip the end element
+                    reader.Read();
+                }
+
+                return result;
+            }  // internal static Aas.LangStringDefinitionTypeIec61360? LangStringDefinitionTypeIec61360FromElement
+
+            /// <summary>
             /// Deserialize an instance of class DataSpecificationIec61360 from a sequence of XML elements.
             /// </summary>
             /// <remarks>
@@ -18485,18 +18858,18 @@ namespace AasCore.Aas3_0_RC02
             {
                 error = null;
 
-                List<LangString>? thePreferredName = null;
-                List<LangString>? theShortName = null;
+                List<ILangStringPreferredNameTypeIec61360>? thePreferredName = null;
+                List<ILangStringShortNameTypeIec61360>? theShortName = null;
                 string? theUnit = null;
-                Reference? theUnitId = null;
+                IReference? theUnitId = null;
                 string? theSourceOfDefinition = null;
                 string? theSymbol = null;
                 DataTypeIec61360? theDataType = null;
-                List<LangString>? theDefinition = null;
+                List<ILangStringDefinitionTypeIec61360>? theDefinition = null;
                 string? theValueFormat = null;
-                ValueList? theValueList = null;
+                IValueList? theValueList = null;
                 string? theValue = null;
-                LevelType? theLevelType = null;
+                ILevelType? theLevelType = null;
 
                 if (!isEmptySequence)
                 {
@@ -18527,7 +18900,7 @@ namespace AasCore.Aas3_0_RC02
                         {
                             case "preferredName":
                                 {
-                                    thePreferredName = new List<LangString>();
+                                    thePreferredName = new List<ILangStringPreferredNameTypeIec61360>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -18536,7 +18909,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexPreferredName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringPreferredNameTypeIec61360? item = LangStringPreferredNameTypeIec61360FromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -18563,7 +18936,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "shortName":
                                 {
-                                    theShortName = new List<LangString>();
+                                    theShortName = new List<ILangStringShortNameTypeIec61360>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -18572,7 +18945,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexShortName = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringShortNameTypeIec61360? item = LangStringShortNameTypeIec61360FromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -18788,7 +19161,7 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "definition":
                                 {
-                                    theDefinition = new List<LangString>();
+                                    theDefinition = new List<ILangStringDefinitionTypeIec61360>();
 
                                     if (!isEmptyProperty)
                                     {
@@ -18797,7 +19170,7 @@ namespace AasCore.Aas3_0_RC02
                                         int indexDefinition = 0;
                                         while (reader.NodeType == Xml.XmlNodeType.Element)
                                         {
-                                            LangString? item = LangStringFromElement(
+                                            ILangStringDefinitionTypeIec61360? item = LangStringDefinitionTypeIec61360FromElement(
                                                 reader, out error);
 
                                             if (error != null)
@@ -18918,52 +19291,11 @@ namespace AasCore.Aas3_0_RC02
                                 }
                             case "levelType":
                                 {
-                                    if (isEmptyProperty)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property LevelType of an instance of class DataSpecificationIec61360 " +
-                                            "can not be de-serialized from a self-closing element " +
-                                            "since it needs content");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "levelType"));
-                                        return null;
-                                    }
+                                    theLevelType = LevelTypeFromSequence(
+                                        reader, isEmptyProperty, out error);
 
-                                    if (reader.EOF)
+                                    if (error != null)
                                     {
-                                        error = new Reporting.Error(
-                                            "Expected an XML content representing " +
-                                            "the property LevelType of an instance of class DataSpecificationIec61360, " +
-                                            "but reached the end-of-file");
-                                        return null;
-                                    }
-
-                                    string textLevelType;
-                                    try
-                                    {
-                                        textLevelType = reader.ReadContentAsString();
-                                    }
-                                    catch (System.FormatException exception)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property LevelType of an instance of class DataSpecificationIec61360 " +
-                                            $"could not be de-serialized as a string: {exception}");
-                                        error.PrependSegment(
-                                            new Reporting.NameSegment(
-                                                "levelType"));
-                                        return null;
-                                    }
-
-                                    theLevelType = Stringification.LevelTypeFromString(
-                                        textLevelType);
-
-                                    if (theLevelType == null)
-                                    {
-                                        error = new Reporting.Error(
-                                            "The property LevelType of an instance of class DataSpecificationIec61360 " +
-                                            "could not be de-serialized from an unexpected enumeration literal: " +
-                                            textLevelType);
                                         error.PrependSegment(
                                             new Reporting.NameSegment(
                                                 "levelType"));
@@ -19154,783 +19486,6 @@ namespace AasCore.Aas3_0_RC02
 
                 return result;
             }  // internal static Aas.DataSpecificationIec61360? DataSpecificationIec61360FromElement
-
-            /// <summary>
-            /// Deserialize an instance of class DataSpecificationPhysicalUnit from a sequence of XML elements.
-            /// </summary>
-            /// <remarks>
-            /// If <paramref name="isEmptySequence" /> is set, we should try to deserialize
-            /// the instance from an empty sequence. That is, the parent element
-            /// was a self-closing element.
-            /// </remarks>
-            internal static Aas.DataSpecificationPhysicalUnit? DataSpecificationPhysicalUnitFromSequence(
-                Xml.XmlReader reader,
-                bool isEmptySequence,
-                out Reporting.Error? error)
-            {
-                error = null;
-
-                string? theUnitName = null;
-                string? theUnitSymbol = null;
-                List<LangString>? theDefinition = null;
-                string? theSiNotation = null;
-                string? theSiName = null;
-                string? theDinNotation = null;
-                string? theEceName = null;
-                string? theEceCode = null;
-                string? theNistName = null;
-                string? theSourceOfDefinition = null;
-                string? theConversionFactor = null;
-                string? theRegistrationAuthorityId = null;
-                string? theSupplier = null;
-
-                if (!isEmptySequence)
-                {
-                    SkipNoneWhitespaceAndComments(reader);
-                    if (reader.EOF)
-                    {
-                        error = new Reporting.Error(
-                            "Expected an XML element representing " +
-                            "a property of an instance of class DataSpecificationPhysicalUnit, " +
-                            "but reached the end-of-file");
-                        return null;
-                    }
-                    while (reader.NodeType == Xml.XmlNodeType.Element)
-                    {
-                        string elementName = TryElementName(
-                            reader, out error);
-                        if (error != null)
-                        {
-                            return null;
-                        }
-
-                        bool isEmptyProperty = reader.IsEmptyElement;
-
-                        // Skip the expected element
-                        reader.Read();
-
-                        switch (elementName)
-                        {
-                            case "unitName":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theUnitName = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property UnitName of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theUnitName = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property UnitName of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "unitName"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "unitSymbol":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theUnitSymbol = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property UnitSymbol of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theUnitSymbol = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property UnitSymbol of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "unitSymbol"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "definition":
-                                {
-                                    theDefinition = new List<LangString>();
-
-                                    if (!isEmptyProperty)
-                                    {
-                                        SkipNoneWhitespaceAndComments(reader);
-
-                                        int indexDefinition = 0;
-                                        while (reader.NodeType == Xml.XmlNodeType.Element)
-                                        {
-                                            LangString? item = LangStringFromElement(
-                                                reader, out error);
-
-                                            if (error != null)
-                                            {
-                                                error.PrependSegment(
-                                                    new Reporting.IndexSegment(
-                                                        indexDefinition));
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "definition"));
-                                                return null;
-                                            }
-
-                                            theDefinition.Add(
-                                                item
-                                                    ?? throw new System.InvalidOperationException(
-                                                        "Unexpected item null when error null"));
-
-                                            indexDefinition++;
-                                            SkipNoneWhitespaceAndComments(reader);
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "siNotation":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theSiNotation = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property SiNotation of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theSiNotation = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property SiNotation of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "siNotation"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "siName":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theSiName = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property SiName of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theSiName = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property SiName of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "siName"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "dinNotation":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theDinNotation = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property DinNotation of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theDinNotation = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property DinNotation of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "dinNotation"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "eceName":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theEceName = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property EceName of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theEceName = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property EceName of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "eceName"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "eceCode":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theEceCode = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property EceCode of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theEceCode = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property EceCode of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "eceCode"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "nistName":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theNistName = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property NistName of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theNistName = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property NistName of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "nistName"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "sourceOfDefinition":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theSourceOfDefinition = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property SourceOfDefinition of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theSourceOfDefinition = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property SourceOfDefinition of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "sourceOfDefinition"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "conversionFactor":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theConversionFactor = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property ConversionFactor of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theConversionFactor = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property ConversionFactor of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "conversionFactor"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "registrationAuthorityId":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theRegistrationAuthorityId = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property RegistrationAuthorityId of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theRegistrationAuthorityId = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property RegistrationAuthorityId of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "registrationAuthorityId"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            case "supplier":
-                                {
-                                    if (isEmptyProperty)
-                                    {
-                                        theSupplier = "";
-                                    }
-                                    else
-                                    {
-                                        if (reader.EOF)
-                                        {
-                                            error = new Reporting.Error(
-                                                "Expected an XML content representing " +
-                                                "the property Supplier of an instance of class DataSpecificationPhysicalUnit, " +
-                                                "but reached the end-of-file");
-                                            return null;
-                                        }
-
-                                        try
-                                        {
-                                            theSupplier = reader.ReadContentAsString();
-                                        }
-                                        catch (System.Exception exception)
-                                        {
-                                            if (exception is System.FormatException
-                                                || exception is System.Xml.XmlException)
-                                            {
-                                                error = new Reporting.Error(
-                                                    "The property Supplier of an instance of class DataSpecificationPhysicalUnit " +
-                                                    $"could not be de-serialized: {exception.Message}");
-                                                error.PrependSegment(
-                                                    new Reporting.NameSegment(
-                                                        "supplier"));
-                                                return null;
-                                            }
-
-                                            throw;
-                                        }
-                                    }
-                                    break;
-                                }
-                            default:
-                                error = new Reporting.Error(
-                                    "We expected properties of the class DataSpecificationPhysicalUnit, " +
-                                    "but got an unexpected element " +
-                                    $"with the name {elementName}");
-                                return null;
-                        }
-
-                        SkipNoneWhitespaceAndComments(reader);
-
-                        if (!isEmptyProperty)
-                        {
-                            // Read the end element
-
-                            if (reader.EOF)
-                            {
-                                error = new Reporting.Error(
-                                    "Expected an XML end element to conclude a property of class DataSpecificationPhysicalUnit " +
-                                    $"with the element name {elementName}, " +
-                                    "but got the end-of-file.");
-                                return null;
-                            }
-                            if (reader.NodeType != Xml.XmlNodeType.EndElement)
-                            {
-                                error = new Reporting.Error(
-                                    "Expected an XML end element to conclude a property of class DataSpecificationPhysicalUnit " +
-                                    $"with the element name {elementName}, " +
-                                    $"but got the node of type {reader.NodeType} " +
-                                    $"with the value {reader.Value}");
-                                return null;
-                            }
-
-                            string endElementName = TryElementName(
-                                reader, out error);
-                            if (error != null)
-                            {
-                                return null;
-                            }
-
-                            if (endElementName != elementName)
-                            {
-                                error = new Reporting.Error(
-                                    "Expected an XML end element to conclude a property of class DataSpecificationPhysicalUnit " +
-                                    $"with the element name {elementName}, " +
-                                    $"but got the end element with the name {reader.Name}");
-                                return null;
-                            }
-                            // Skip the expected end element
-                            reader.Read();
-
-                            SkipNoneWhitespaceAndComments(reader);
-                        }
-
-                        if (reader.EOF)
-                        {
-                            break;
-                        }
-                    }
-                }
-
-                if (theUnitName == null)
-                {
-                    error = new Reporting.Error(
-                        "The required property UnitName has not been given " +
-                        "in the XML representation of an instance of class DataSpecificationPhysicalUnit");
-                    return null;
-                }
-
-                if (theUnitSymbol == null)
-                {
-                    error = new Reporting.Error(
-                        "The required property UnitSymbol has not been given " +
-                        "in the XML representation of an instance of class DataSpecificationPhysicalUnit");
-                    return null;
-                }
-
-                if (theDefinition == null)
-                {
-                    error = new Reporting.Error(
-                        "The required property Definition has not been given " +
-                        "in the XML representation of an instance of class DataSpecificationPhysicalUnit");
-                    return null;
-                }
-
-                return new Aas.DataSpecificationPhysicalUnit(
-                    theUnitName
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theUnitSymbol
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theDefinition
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theSiNotation,
-                    theSiName,
-                    theDinNotation,
-                    theEceName,
-                    theEceCode,
-                    theNistName,
-                    theSourceOfDefinition,
-                    theConversionFactor,
-                    theRegistrationAuthorityId,
-                    theSupplier);
-            }  // internal static Aas.DataSpecificationPhysicalUnit? DataSpecificationPhysicalUnitFromSequence
-
-            /// <summary>
-            /// Deserialize an instance of class DataSpecificationPhysicalUnit from an XML element.
-            /// </summary>
-            internal static Aas.DataSpecificationPhysicalUnit? DataSpecificationPhysicalUnitFromElement(
-                Xml.XmlReader reader,
-                out Reporting.Error? error)
-            {
-                error = null;
-
-                SkipNoneWhitespaceAndComments(reader);
-
-                if (reader.EOF)
-                {
-                    error = new Reporting.Error(
-                        "Expected an XML element representing an instance of class DataSpecificationPhysicalUnit, " +
-                        "but reached the end-of-file");
-                    return null;
-                }
-
-                if (reader.NodeType != Xml.XmlNodeType.Element)
-                {
-                    error = new Reporting.Error(
-                        "Expected an XML element representing an instance of class DataSpecificationPhysicalUnit, " +
-                        $"but got a node of type {reader.NodeType} " +
-                        $"with value {reader.Value}");
-                    return null;
-                }
-
-                string elementName = TryElementName(
-                    reader, out error);
-                if (error != null)
-                {
-                    return null;
-                }
-
-                if (elementName != "dataSpecificationPhysicalUnit")
-                {
-                    error = new Reporting.Error(
-                        "Expected an element representing an instance of class DataSpecificationPhysicalUnit " +
-                        $"with element name dataSpecificationPhysicalUnit, but got: {elementName}");
-                    return null;
-                }
-
-                bool isEmptyElement = reader.IsEmptyElement;
-
-                // Skip the element node and go to the content
-                reader.Read();
-
-                Aas.DataSpecificationPhysicalUnit? result = (
-                    DataSpecificationPhysicalUnitFromSequence(
-                        reader, isEmptyElement, out error));
-                if (error != null)
-                {
-                    return null;
-                }
-
-                SkipNoneWhitespaceAndComments(reader);
-
-                if (!isEmptyElement)
-                {
-                    if (reader.EOF)
-                    {
-                        error = new Reporting.Error(
-                            "Expected an XML end element concluding an instance of class DataSpecificationPhysicalUnit, " +
-                            "but reached the end-of-file");
-                        return null;
-                    }
-
-                    if (reader.NodeType != Xml.XmlNodeType.EndElement)
-                    {
-                        error = new Reporting.Error(
-                            "Expected an XML end element concluding an instance of class DataSpecificationPhysicalUnit, " +
-                            $"but got a node of type {reader.NodeType} " +
-                            $"with value {reader.Value}");
-                        return null;
-                    }
-
-                    string endElementName = TryElementName(
-                        reader, out error);
-                    if (error != null)
-                    {
-                        return null;
-                    }
-
-                    if (endElementName != elementName)
-                    {
-                        error = new Reporting.Error(
-                            $"Expected an XML end element with an name {elementName}, " +
-                            $"but got: {endElementName}");
-                        return null;
-                    }
-
-                    // Skip the end element
-                    reader.Read();
-                }
-
-                return result;
-            }  // internal static Aas.DataSpecificationPhysicalUnit? DataSpecificationPhysicalUnitFromElement
         }  // internal static class DeserializeImplementation
 
         /// <summary>
@@ -20971,18 +20526,71 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
-            /// Deserialize an instance of LangString from <paramref name="reader" />.
+            /// Deserialize an instance of IAbstractLangString from <paramref name="reader" />.
             /// </summary>
             /// <param name="reader">Initialized XML reader with cursor set to the element</param>
             /// <exception cref="Xmlization.Exception">
             /// Thrown when the element is not a valid XML
-            /// representation of LangString.
+            /// representation of IAbstractLangString.
             /// </exception>
-            public static Aas.LangString LangStringFrom(
+            [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
+            public static Aas.IAbstractLangString IAbstractLangStringFrom(
                 Xml.XmlReader reader)
             {
-                Aas.LangString? result = (
-                    DeserializeImplementation.LangStringFromElement(
+                Aas.IAbstractLangString? result = (
+                    DeserializeImplementation.IAbstractLangStringFromElement(
+                        reader,
+                        out Reporting.Error? error));
+                if (error != null)
+                {
+                    throw new Xmlization.Exception(
+                        Reporting.GenerateRelativeXPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringNameType from <paramref name="reader" />.
+            /// </summary>
+            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
+            /// <exception cref="Xmlization.Exception">
+            /// Thrown when the element is not a valid XML
+            /// representation of LangStringNameType.
+            /// </exception>
+            public static Aas.LangStringNameType LangStringNameTypeFrom(
+                Xml.XmlReader reader)
+            {
+                Aas.LangStringNameType? result = (
+                    DeserializeImplementation.LangStringNameTypeFromElement(
+                        reader,
+                        out Reporting.Error? error));
+                if (error != null)
+                {
+                    throw new Xmlization.Exception(
+                        Reporting.GenerateRelativeXPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringTextType from <paramref name="reader" />.
+            /// </summary>
+            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
+            /// <exception cref="Xmlization.Exception">
+            /// Thrown when the element is not a valid XML
+            /// representation of LangStringTextType.
+            /// </exception>
+            public static Aas.LangStringTextType LangStringTextTypeFrom(
+                Xml.XmlReader reader)
+            {
+                Aas.LangStringTextType? result = (
+                    DeserializeImplementation.LangStringTextTypeFromElement(
                         reader,
                         out Reporting.Error? error));
                 if (error != null)
@@ -21076,6 +20684,32 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
+            /// Deserialize an instance of LevelType from <paramref name="reader" />.
+            /// </summary>
+            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
+            /// <exception cref="Xmlization.Exception">
+            /// Thrown when the element is not a valid XML
+            /// representation of LevelType.
+            /// </exception>
+            public static Aas.LevelType LevelTypeFrom(
+                Xml.XmlReader reader)
+            {
+                Aas.LevelType? result = (
+                    DeserializeImplementation.LevelTypeFromElement(
+                        reader,
+                        out Reporting.Error? error));
+                if (error != null)
+                {
+                    throw new Xmlization.Exception(
+                        Reporting.GenerateRelativeXPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
             /// Deserialize an instance of ValueReferencePair from <paramref name="reader" />.
             /// </summary>
             /// <param name="reader">Initialized XML reader with cursor set to the element</param>
@@ -21128,6 +20762,84 @@ namespace AasCore.Aas3_0_RC02
             }
 
             /// <summary>
+            /// Deserialize an instance of LangStringPreferredNameTypeIec61360 from <paramref name="reader" />.
+            /// </summary>
+            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
+            /// <exception cref="Xmlization.Exception">
+            /// Thrown when the element is not a valid XML
+            /// representation of LangStringPreferredNameTypeIec61360.
+            /// </exception>
+            public static Aas.LangStringPreferredNameTypeIec61360 LangStringPreferredNameTypeIec61360From(
+                Xml.XmlReader reader)
+            {
+                Aas.LangStringPreferredNameTypeIec61360? result = (
+                    DeserializeImplementation.LangStringPreferredNameTypeIec61360FromElement(
+                        reader,
+                        out Reporting.Error? error));
+                if (error != null)
+                {
+                    throw new Xmlization.Exception(
+                        Reporting.GenerateRelativeXPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringShortNameTypeIec61360 from <paramref name="reader" />.
+            /// </summary>
+            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
+            /// <exception cref="Xmlization.Exception">
+            /// Thrown when the element is not a valid XML
+            /// representation of LangStringShortNameTypeIec61360.
+            /// </exception>
+            public static Aas.LangStringShortNameTypeIec61360 LangStringShortNameTypeIec61360From(
+                Xml.XmlReader reader)
+            {
+                Aas.LangStringShortNameTypeIec61360? result = (
+                    DeserializeImplementation.LangStringShortNameTypeIec61360FromElement(
+                        reader,
+                        out Reporting.Error? error));
+                if (error != null)
+                {
+                    throw new Xmlization.Exception(
+                        Reporting.GenerateRelativeXPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
+            /// Deserialize an instance of LangStringDefinitionTypeIec61360 from <paramref name="reader" />.
+            /// </summary>
+            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
+            /// <exception cref="Xmlization.Exception">
+            /// Thrown when the element is not a valid XML
+            /// representation of LangStringDefinitionTypeIec61360.
+            /// </exception>
+            public static Aas.LangStringDefinitionTypeIec61360 LangStringDefinitionTypeIec61360From(
+                Xml.XmlReader reader)
+            {
+                Aas.LangStringDefinitionTypeIec61360? result = (
+                    DeserializeImplementation.LangStringDefinitionTypeIec61360FromElement(
+                        reader,
+                        out Reporting.Error? error));
+                if (error != null)
+                {
+                    throw new Xmlization.Exception(
+                        Reporting.GenerateRelativeXPath(error.PathSegments),
+                        error.Cause);
+                }
+                return result
+                    ?? throw new System.InvalidOperationException(
+                        "Unexpected output null when error is null");
+            }
+
+            /// <summary>
             /// Deserialize an instance of DataSpecificationIec61360 from <paramref name="reader" />.
             /// </summary>
             /// <param name="reader">Initialized XML reader with cursor set to the element</param>
@@ -21152,32 +20864,6 @@ namespace AasCore.Aas3_0_RC02
                     ?? throw new System.InvalidOperationException(
                         "Unexpected output null when error is null");
             }
-
-            /// <summary>
-            /// Deserialize an instance of DataSpecificationPhysicalUnit from <paramref name="reader" />.
-            /// </summary>
-            /// <param name="reader">Initialized XML reader with cursor set to the element</param>
-            /// <exception cref="Xmlization.Exception">
-            /// Thrown when the element is not a valid XML
-            /// representation of DataSpecificationPhysicalUnit.
-            /// </exception>
-            public static Aas.DataSpecificationPhysicalUnit DataSpecificationPhysicalUnitFrom(
-                Xml.XmlReader reader)
-            {
-                Aas.DataSpecificationPhysicalUnit? result = (
-                    DeserializeImplementation.DataSpecificationPhysicalUnitFromElement(
-                        reader,
-                        out Reporting.Error? error));
-                if (error != null)
-                {
-                    throw new Xmlization.Exception(
-                        Reporting.GenerateRelativeXPath(error.PathSegments),
-                        error.Cause);
-                }
-                return result
-                    ?? throw new System.InvalidOperationException(
-                        "Unexpected output null when error is null");
-            }
         }  // public static class Deserialize
 
         /// <summary>
@@ -21187,7 +20873,7 @@ namespace AasCore.Aas3_0_RC02
             : Visitation.AbstractVisitorWithContext<Xml.XmlWriter>
         {
             private void ExtensionToSequence(
-                Extension that,
+                Aas.IExtension that,
                 Xml.XmlWriter writer)
             {
                 if (that.SemanticId != null)
@@ -21263,16 +20949,19 @@ namespace AasCore.Aas3_0_RC02
                         "refersTo",
                         NS);
 
-                    this.ReferenceToSequence(
-                        that.RefersTo,
-                        writer);
+                    foreach (var item in that.RefersTo)
+                    {
+                        this.Visit(
+                            item,
+                            writer);
+                    }
 
                     writer.WriteEndElement();
                 }
             }  // private void ExtensionToSequence
 
-            public override void Visit(
-                Aas.Extension that,
+            public override void VisitExtension(
+                Aas.IExtension that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21285,7 +20974,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void AdministrativeInformationToSequence(
-                AdministrativeInformation that,
+                Aas.IAdministrativeInformation that,
                 Xml.XmlWriter writer)
             {
                 if (that.EmbeddedDataSpecifications != null)
@@ -21327,10 +21016,35 @@ namespace AasCore.Aas3_0_RC02
 
                     writer.WriteEndElement();
                 }
+
+                if (that.Creator != null)
+                {
+                    writer.WriteStartElement(
+                        "creator",
+                        NS);
+
+                    this.ReferenceToSequence(
+                        that.Creator,
+                        writer);
+
+                    writer.WriteEndElement();
+                }
+
+                if (that.TemplateId != null)
+                {
+                    writer.WriteStartElement(
+                        "templateId",
+                        NS);
+
+                    writer.WriteValue(
+                        that.TemplateId);
+
+                    writer.WriteEndElement();
+                }
             }  // private void AdministrativeInformationToSequence
 
-            public override void Visit(
-                Aas.AdministrativeInformation that,
+            public override void VisitAdministrativeInformation(
+                Aas.IAdministrativeInformation that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21343,7 +21057,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void QualifierToSequence(
-                Qualifier that,
+                Aas.IQualifier that,
                 Xml.XmlWriter writer)
             {
                 if (that.SemanticId != null)
@@ -21441,8 +21155,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void QualifierToSequence
 
-            public override void Visit(
-                Aas.Qualifier that,
+            public override void VisitQualifier(
+                Aas.IQualifier that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21455,7 +21169,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void AssetAdministrationShellToSequence(
-                AssetAdministrationShell that,
+                Aas.IAssetAdministrationShell that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -21526,18 +21240,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
 
                     writer.WriteEndElement();
                 }
@@ -21620,8 +21322,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void AssetAdministrationShellToSequence
 
-            public override void Visit(
-                Aas.AssetAdministrationShell that,
+            public override void VisitAssetAdministrationShell(
+                Aas.IAssetAdministrationShell that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21634,7 +21336,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void AssetInformationToSequence(
-                AssetInformation that,
+                Aas.IAssetInformation that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21657,9 +21359,8 @@ namespace AasCore.Aas3_0_RC02
                         "globalAssetId",
                         NS);
 
-                    this.ReferenceToSequence(
-                        that.GlobalAssetId,
-                        writer);
+                    writer.WriteValue(
+                        that.GlobalAssetId);
 
                     writer.WriteEndElement();
                 }
@@ -21680,6 +21381,18 @@ namespace AasCore.Aas3_0_RC02
                     writer.WriteEndElement();
                 }
 
+                if (that.AssetType != null)
+                {
+                    writer.WriteStartElement(
+                        "assetType",
+                        NS);
+
+                    writer.WriteValue(
+                        that.AssetType);
+
+                    writer.WriteEndElement();
+                }
+
                 if (that.DefaultThumbnail != null)
                 {
                     writer.WriteStartElement(
@@ -21694,8 +21407,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void AssetInformationToSequence
 
-            public override void Visit(
-                Aas.AssetInformation that,
+            public override void VisitAssetInformation(
+                Aas.IAssetInformation that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21708,7 +21421,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void ResourceToSequence(
-                Resource that,
+                Aas.IResource that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21733,8 +21446,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void ResourceToSequence
 
-            public override void Visit(
-                Aas.Resource that,
+            public override void VisitResource(
+                Aas.IResource that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21747,7 +21460,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void SpecificAssetIdToSequence(
-                SpecificAssetId that,
+                Aas.ISpecificAssetId that,
                 Xml.XmlWriter writer)
             {
                 if (that.SemanticId != null)
@@ -21797,19 +21510,22 @@ namespace AasCore.Aas3_0_RC02
 
                 writer.WriteEndElement();
 
-                writer.WriteStartElement(
-                    "externalSubjectId",
-                    NS);
+                if (that.ExternalSubjectId != null)
+                {
+                    writer.WriteStartElement(
+                        "externalSubjectId",
+                        NS);
 
-                this.ReferenceToSequence(
-                    that.ExternalSubjectId,
-                    writer);
+                    this.ReferenceToSequence(
+                        that.ExternalSubjectId,
+                        writer);
 
-                writer.WriteEndElement();
+                    writer.WriteEndElement();
+                }
             }  // private void SpecificAssetIdToSequence
 
-            public override void Visit(
-                Aas.SpecificAssetId that,
+            public override void VisitSpecificAssetId(
+                Aas.ISpecificAssetId that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21822,7 +21538,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void SubmodelToSequence(
-                Submodel that,
+                Aas.ISubmodel that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -21897,18 +21613,6 @@ namespace AasCore.Aas3_0_RC02
                     writer.WriteEndElement();
                 }
 
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
                 if (that.Administration != null)
                 {
                     writer.WriteStartElement(
@@ -21942,7 +21646,7 @@ namespace AasCore.Aas3_0_RC02
                     writer.WriteValue(
                         textKind
                             ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
+                                "Invalid literal for the enumeration ModellingKind: " +
                                 that.Kind.ToString()));
 
                     writer.WriteEndElement();
@@ -22026,8 +21730,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void SubmodelToSequence
 
-            public override void Visit(
-                Aas.Submodel that,
+            public override void VisitSubmodel(
+                Aas.ISubmodel that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -22040,7 +21744,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void RelationshipElementToSequence(
-                RelationshipElement that,
+                Aas.IRelationshipElement that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -22111,35 +21815,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -22226,8 +21901,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void RelationshipElementToSequence
 
-            public override void Visit(
-                Aas.RelationshipElement that,
+            public override void VisitRelationshipElement(
+                Aas.IRelationshipElement that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -22240,7 +21915,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void SubmodelElementListToSequence(
-                SubmodelElementList that,
+                Aas.ISubmodelElementList that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -22311,35 +21986,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -22417,22 +22063,6 @@ namespace AasCore.Aas3_0_RC02
                     writer.WriteEndElement();
                 }
 
-                if (that.Value != null)
-                {
-                    writer.WriteStartElement(
-                        "value",
-                        NS);
-
-                    foreach (var item in that.Value)
-                    {
-                        this.Visit(
-                            item,
-                            writer);
-                    }
-
-                    writer.WriteEndElement();
-                }
-
                 if (that.SemanticIdListElement != null)
                 {
                     writer.WriteStartElement(
@@ -22476,10 +22106,26 @@ namespace AasCore.Aas3_0_RC02
 
                     writer.WriteEndElement();
                 }
+
+                if (that.Value != null)
+                {
+                    writer.WriteStartElement(
+                        "value",
+                        NS);
+
+                    foreach (var item in that.Value)
+                    {
+                        this.Visit(
+                            item,
+                            writer);
+                    }
+
+                    writer.WriteEndElement();
+                }
             }  // private void SubmodelElementListToSequence
 
-            public override void Visit(
-                Aas.SubmodelElementList that,
+            public override void VisitSubmodelElementList(
+                Aas.ISubmodelElementList that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -22492,7 +22138,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void SubmodelElementCollectionToSequence(
-                SubmodelElementCollection that,
+                Aas.ISubmodelElementCollection that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -22563,35 +22209,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -22674,8 +22291,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void SubmodelElementCollectionToSequence
 
-            public override void Visit(
-                Aas.SubmodelElementCollection that,
+            public override void VisitSubmodelElementCollection(
+                Aas.ISubmodelElementCollection that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -22688,7 +22305,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void PropertyToSequence(
-                Property that,
+                Aas.IProperty that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -22759,35 +22376,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -22893,8 +22481,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void PropertyToSequence
 
-            public override void Visit(
-                Aas.Property that,
+            public override void VisitProperty(
+                Aas.IProperty that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -22907,7 +22495,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void MultiLanguagePropertyToSequence(
-                MultiLanguageProperty that,
+                Aas.IMultiLanguageProperty that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -22978,35 +22566,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -23102,8 +22661,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void MultiLanguagePropertyToSequence
 
-            public override void Visit(
-                Aas.MultiLanguageProperty that,
+            public override void VisitMultiLanguageProperty(
+                Aas.IMultiLanguageProperty that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -23116,7 +22675,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void RangeToSequence(
-                Range that,
+                Aas.IRange that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -23187,35 +22746,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -23320,8 +22850,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void RangeToSequence
 
-            public override void Visit(
-                Aas.Range that,
+            public override void VisitRange(
+                Aas.IRange that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -23334,7 +22864,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void ReferenceElementToSequence(
-                ReferenceElement that,
+                Aas.IReferenceElement that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -23405,35 +22935,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -23513,8 +23014,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void ReferenceElementToSequence
 
-            public override void Visit(
-                Aas.ReferenceElement that,
+            public override void VisitReferenceElement(
+                Aas.IReferenceElement that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -23527,7 +23028,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void BlobToSequence(
-                Blob that,
+                Aas.IBlob that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -23598,35 +23099,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -23716,8 +23188,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void BlobToSequence
 
-            public override void Visit(
-                Aas.Blob that,
+            public override void VisitBlob(
+                Aas.IBlob that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -23730,7 +23202,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void FileToSequence(
-                File that,
+                Aas.IFile that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -23801,35 +23273,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -23917,8 +23360,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void FileToSequence
 
-            public override void Visit(
-                Aas.File that,
+            public override void VisitFile(
+                Aas.IFile that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -23931,7 +23374,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void AnnotatedRelationshipElementToSequence(
-                AnnotatedRelationshipElement that,
+                Aas.IAnnotatedRelationshipElement that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -24002,35 +23445,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -24133,8 +23547,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void AnnotatedRelationshipElementToSequence
 
-            public override void Visit(
-                Aas.AnnotatedRelationshipElement that,
+            public override void VisitAnnotatedRelationshipElement(
+                Aas.IAnnotatedRelationshipElement that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -24147,7 +23561,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void EntityToSequence(
-                Entity that,
+                Aas.IEntity that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -24218,35 +23632,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -24348,29 +23733,31 @@ namespace AasCore.Aas3_0_RC02
                         "globalAssetId",
                         NS);
 
-                    this.ReferenceToSequence(
-                        that.GlobalAssetId,
-                        writer);
+                    writer.WriteValue(
+                        that.GlobalAssetId);
 
                     writer.WriteEndElement();
                 }
 
-                if (that.SpecificAssetId != null)
+                if (that.SpecificAssetIds != null)
                 {
                     writer.WriteStartElement(
-                        "specificAssetId",
+                        "specificAssetIds",
                         NS);
 
-                    this.SpecificAssetIdToSequence(
-                        that.SpecificAssetId,
-                        writer);
+                    foreach (var item in that.SpecificAssetIds)
+                    {
+                        this.Visit(
+                            item,
+                            writer);
+                    }
 
                     writer.WriteEndElement();
                 }
             }  // private void EntityToSequence
 
-            public override void Visit(
-                Aas.Entity that,
+            public override void VisitEntity(
+                Aas.IEntity that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -24383,7 +23770,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void EventPayloadToSequence(
-                EventPayload that,
+                Aas.IEventPayload that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -24472,15 +23859,17 @@ namespace AasCore.Aas3_0_RC02
                         "payload",
                         NS);
 
-                    writer.WriteValue(
-                        that.Payload);
+                    writer.WriteBase64(
+                        that.Payload,
+                        0,
+                        that.Payload.Length);
 
                     writer.WriteEndElement();
                 }
             }  // private void EventPayloadToSequence
 
-            public override void Visit(
-                Aas.EventPayload that,
+            public override void VisitEventPayload(
+                Aas.IEventPayload that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -24493,7 +23882,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void BasicEventElementToSequence(
-                BasicEventElement that,
+                Aas.IBasicEventElement that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -24564,35 +23953,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -24758,8 +24118,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void BasicEventElementToSequence
 
-            public override void Visit(
-                Aas.BasicEventElement that,
+            public override void VisitBasicEventElement(
+                Aas.IBasicEventElement that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -24772,7 +24132,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void OperationToSequence(
-                Operation that,
+                Aas.IOperation that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -24843,35 +24203,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -24986,8 +24317,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void OperationToSequence
 
-            public override void Visit(
-                Aas.Operation that,
+            public override void VisitOperation(
+                Aas.IOperation that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25000,7 +24331,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void OperationVariableToSequence(
-                OperationVariable that,
+                Aas.IOperationVariable that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25014,8 +24345,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void OperationVariableToSequence
 
-            public override void Visit(
-                Aas.OperationVariable that,
+            public override void VisitOperationVariable(
+                Aas.IOperationVariable that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25028,7 +24359,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void CapabilityToSequence(
-                Capability that,
+                Aas.ICapability that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -25099,35 +24430,6 @@ namespace AasCore.Aas3_0_RC02
                             item,
                             writer);
                     }
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Kind != null)
-                {
-                    writer.WriteStartElement(
-                        "kind",
-                        NS);
-
-                    string? textKind = Stringification.ToString(
-                        that.Kind);
-                    writer.WriteValue(
-                        textKind
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration ModelingKind: " +
-                                that.Kind.ToString()));
 
                     writer.WriteEndElement();
                 }
@@ -25194,8 +24496,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void CapabilityToSequence
 
-            public override void Visit(
-                Aas.Capability that,
+            public override void VisitCapability(
+                Aas.ICapability that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25208,7 +24510,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void ConceptDescriptionToSequence(
-                ConceptDescription that,
+                Aas.IConceptDescription that,
                 Xml.XmlWriter writer)
             {
                 if (that.Extensions != null)
@@ -25283,18 +24585,6 @@ namespace AasCore.Aas3_0_RC02
                     writer.WriteEndElement();
                 }
 
-                if (that.Checksum != null)
-                {
-                    writer.WriteStartElement(
-                        "checksum",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Checksum);
-
-                    writer.WriteEndElement();
-                }
-
                 if (that.Administration != null)
                 {
                     writer.WriteStartElement(
@@ -25350,8 +24640,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void ConceptDescriptionToSequence
 
-            public override void Visit(
-                Aas.ConceptDescription that,
+            public override void VisitConceptDescription(
+                Aas.IConceptDescription that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25364,7 +24654,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void ReferenceToSequence(
-                Reference that,
+                Aas.IReference that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25408,8 +24698,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void ReferenceToSequence
 
-            public override void Visit(
-                Aas.Reference that,
+            public override void VisitReference(
+                Aas.IReference that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25422,7 +24712,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void KeyToSequence(
-                Key that,
+                Aas.IKey that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25449,8 +24739,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void KeyToSequence
 
-            public override void Visit(
-                Aas.Key that,
+            public override void VisitKey(
+                Aas.IKey that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25462,8 +24752,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }
 
-            private void LangStringToSequence(
-                LangString that,
+            private void LangStringNameTypeToSequence(
+                Aas.ILangStringNameType that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25483,23 +24773,59 @@ namespace AasCore.Aas3_0_RC02
                     that.Text);
 
                 writer.WriteEndElement();
-            }  // private void LangStringToSequence
+            }  // private void LangStringNameTypeToSequence
 
-            public override void Visit(
-                Aas.LangString that,
+            public override void VisitLangStringNameType(
+                Aas.ILangStringNameType that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
-                    "langString",
+                    "langStringNameType",
                     NS);
-                this.LangStringToSequence(
+                this.LangStringNameTypeToSequence(
+                    that,
+                    writer);
+                writer.WriteEndElement();
+            }
+
+            private void LangStringTextTypeToSequence(
+                Aas.ILangStringTextType that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "language",
+                    NS);
+
+                writer.WriteValue(
+                    that.Language);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "text",
+                    NS);
+
+                writer.WriteValue(
+                    that.Text);
+
+                writer.WriteEndElement();
+            }  // private void LangStringTextTypeToSequence
+
+            public override void VisitLangStringTextType(
+                Aas.ILangStringTextType that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "langStringTextType",
+                    NS);
+                this.LangStringTextTypeToSequence(
                     that,
                     writer);
                 writer.WriteEndElement();
             }
 
             private void EnvironmentToSequence(
-                Environment that,
+                Aas.IEnvironment that,
                 Xml.XmlWriter writer)
             {
                 if (that.AssetAdministrationShells != null)
@@ -25551,8 +24877,8 @@ namespace AasCore.Aas3_0_RC02
                 }
             }  // private void EnvironmentToSequence
 
-            public override void Visit(
-                Aas.Environment that,
+            public override void VisitEnvironment(
+                Aas.IEnvironment that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25565,7 +24891,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void EmbeddedDataSpecificationToSequence(
-                EmbeddedDataSpecification that,
+                Aas.IEmbeddedDataSpecification that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25589,8 +24915,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void EmbeddedDataSpecificationToSequence
 
-            public override void Visit(
-                Aas.EmbeddedDataSpecification that,
+            public override void VisitEmbeddedDataSpecification(
+                Aas.IEmbeddedDataSpecification that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25602,8 +24928,62 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }
 
+            private void LevelTypeToSequence(
+                Aas.ILevelType that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "min",
+                    NS);
+
+                writer.WriteValue(
+                    that.Min);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "nom",
+                    NS);
+
+                writer.WriteValue(
+                    that.Nom);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "typ",
+                    NS);
+
+                writer.WriteValue(
+                    that.Typ);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "max",
+                    NS);
+
+                writer.WriteValue(
+                    that.Max);
+
+                writer.WriteEndElement();
+            }  // private void LevelTypeToSequence
+
+            public override void VisitLevelType(
+                Aas.ILevelType that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "levelType",
+                    NS);
+                this.LevelTypeToSequence(
+                    that,
+                    writer);
+                writer.WriteEndElement();
+            }
+
             private void ValueReferencePairToSequence(
-                ValueReferencePair that,
+                Aas.IValueReferencePair that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25626,8 +25006,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void ValueReferencePairToSequence
 
-            public override void Visit(
-                Aas.ValueReferencePair that,
+            public override void VisitValueReferencePair(
+                Aas.IValueReferencePair that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25640,7 +25020,7 @@ namespace AasCore.Aas3_0_RC02
             }
 
             private void ValueListToSequence(
-                ValueList that,
+                Aas.IValueList that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25657,8 +25037,8 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }  // private void ValueListToSequence
 
-            public override void Visit(
-                Aas.ValueList that,
+            public override void VisitValueList(
+                Aas.IValueList that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25670,8 +25050,116 @@ namespace AasCore.Aas3_0_RC02
                 writer.WriteEndElement();
             }
 
+            private void LangStringPreferredNameTypeIec61360ToSequence(
+                Aas.ILangStringPreferredNameTypeIec61360 that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "language",
+                    NS);
+
+                writer.WriteValue(
+                    that.Language);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "text",
+                    NS);
+
+                writer.WriteValue(
+                    that.Text);
+
+                writer.WriteEndElement();
+            }  // private void LangStringPreferredNameTypeIec61360ToSequence
+
+            public override void VisitLangStringPreferredNameTypeIec61360(
+                Aas.ILangStringPreferredNameTypeIec61360 that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "langStringPreferredNameTypeIec61360",
+                    NS);
+                this.LangStringPreferredNameTypeIec61360ToSequence(
+                    that,
+                    writer);
+                writer.WriteEndElement();
+            }
+
+            private void LangStringShortNameTypeIec61360ToSequence(
+                Aas.ILangStringShortNameTypeIec61360 that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "language",
+                    NS);
+
+                writer.WriteValue(
+                    that.Language);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "text",
+                    NS);
+
+                writer.WriteValue(
+                    that.Text);
+
+                writer.WriteEndElement();
+            }  // private void LangStringShortNameTypeIec61360ToSequence
+
+            public override void VisitLangStringShortNameTypeIec61360(
+                Aas.ILangStringShortNameTypeIec61360 that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "langStringShortNameTypeIec61360",
+                    NS);
+                this.LangStringShortNameTypeIec61360ToSequence(
+                    that,
+                    writer);
+                writer.WriteEndElement();
+            }
+
+            private void LangStringDefinitionTypeIec61360ToSequence(
+                Aas.ILangStringDefinitionTypeIec61360 that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "language",
+                    NS);
+
+                writer.WriteValue(
+                    that.Language);
+
+                writer.WriteEndElement();
+
+                writer.WriteStartElement(
+                    "text",
+                    NS);
+
+                writer.WriteValue(
+                    that.Text);
+
+                writer.WriteEndElement();
+            }  // private void LangStringDefinitionTypeIec61360ToSequence
+
+            public override void VisitLangStringDefinitionTypeIec61360(
+                Aas.ILangStringDefinitionTypeIec61360 that,
+                Xml.XmlWriter writer)
+            {
+                writer.WriteStartElement(
+                    "langStringDefinitionTypeIec61360",
+                    NS);
+                this.LangStringDefinitionTypeIec61360ToSequence(
+                    that,
+                    writer);
+                writer.WriteEndElement();
+            }
+
             private void DataSpecificationIec61360ToSequence(
-                DataSpecificationIec61360 that,
+                Aas.IDataSpecificationIec61360 that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25828,195 +25316,22 @@ namespace AasCore.Aas3_0_RC02
                         "levelType",
                         NS);
 
-                    string? textLevelType = Stringification.ToString(
-                        that.LevelType);
-                    writer.WriteValue(
-                        textLevelType
-                            ?? throw new System.ArgumentException(
-                                "Invalid literal for the enumeration LevelType: " +
-                                that.LevelType.ToString()));
+                    this.LevelTypeToSequence(
+                        that.LevelType,
+                        writer);
 
                     writer.WriteEndElement();
                 }
             }  // private void DataSpecificationIec61360ToSequence
 
-            public override void Visit(
-                Aas.DataSpecificationIec61360 that,
+            public override void VisitDataSpecificationIec61360(
+                Aas.IDataSpecificationIec61360 that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
                     "dataSpecificationIec61360",
                     NS);
                 this.DataSpecificationIec61360ToSequence(
-                    that,
-                    writer);
-                writer.WriteEndElement();
-            }
-
-            private void DataSpecificationPhysicalUnitToSequence(
-                DataSpecificationPhysicalUnit that,
-                Xml.XmlWriter writer)
-            {
-                writer.WriteStartElement(
-                    "unitName",
-                    NS);
-
-                writer.WriteValue(
-                    that.UnitName);
-
-                writer.WriteEndElement();
-
-                writer.WriteStartElement(
-                    "unitSymbol",
-                    NS);
-
-                writer.WriteValue(
-                    that.UnitSymbol);
-
-                writer.WriteEndElement();
-
-                writer.WriteStartElement(
-                    "definition",
-                    NS);
-
-                foreach (var item in that.Definition)
-                {
-                    this.Visit(
-                        item,
-                        writer);
-                }
-
-                writer.WriteEndElement();
-
-                if (that.SiNotation != null)
-                {
-                    writer.WriteStartElement(
-                        "siNotation",
-                        NS);
-
-                    writer.WriteValue(
-                        that.SiNotation);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.SiName != null)
-                {
-                    writer.WriteStartElement(
-                        "siName",
-                        NS);
-
-                    writer.WriteValue(
-                        that.SiName);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.DinNotation != null)
-                {
-                    writer.WriteStartElement(
-                        "dinNotation",
-                        NS);
-
-                    writer.WriteValue(
-                        that.DinNotation);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.EceName != null)
-                {
-                    writer.WriteStartElement(
-                        "eceName",
-                        NS);
-
-                    writer.WriteValue(
-                        that.EceName);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.EceCode != null)
-                {
-                    writer.WriteStartElement(
-                        "eceCode",
-                        NS);
-
-                    writer.WriteValue(
-                        that.EceCode);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.NistName != null)
-                {
-                    writer.WriteStartElement(
-                        "nistName",
-                        NS);
-
-                    writer.WriteValue(
-                        that.NistName);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.SourceOfDefinition != null)
-                {
-                    writer.WriteStartElement(
-                        "sourceOfDefinition",
-                        NS);
-
-                    writer.WriteValue(
-                        that.SourceOfDefinition);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.ConversionFactor != null)
-                {
-                    writer.WriteStartElement(
-                        "conversionFactor",
-                        NS);
-
-                    writer.WriteValue(
-                        that.ConversionFactor);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.RegistrationAuthorityId != null)
-                {
-                    writer.WriteStartElement(
-                        "registrationAuthorityId",
-                        NS);
-
-                    writer.WriteValue(
-                        that.RegistrationAuthorityId);
-
-                    writer.WriteEndElement();
-                }
-
-                if (that.Supplier != null)
-                {
-                    writer.WriteStartElement(
-                        "supplier",
-                        NS);
-
-                    writer.WriteValue(
-                        that.Supplier);
-
-                    writer.WriteEndElement();
-                }
-            }  // private void DataSpecificationPhysicalUnitToSequence
-
-            public override void Visit(
-                Aas.DataSpecificationPhysicalUnit that,
-                Xml.XmlWriter writer)
-            {
-                writer.WriteStartElement(
-                    "dataSpecificationPhysicalUnit",
-                    NS);
-                this.DataSpecificationPhysicalUnitToSequence(
                     that,
                     writer);
                 writer.WriteEndElement();
@@ -26056,7 +25371,7 @@ namespace AasCore.Aas3_0_RC02
             }
         }  // public static class Serialize
     }  // public static class Xmlization
-}  // namespace AasCore.Aas3_0_RC02
+}  // namespace AasCore.Aas3_0
 
 /*
  * This code has been automatically generated by aas-core-codegen.

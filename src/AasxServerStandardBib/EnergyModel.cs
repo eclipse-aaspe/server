@@ -1,13 +1,12 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxTimeSeries;
-using Newtonsoft.Json.Linq;
+using Extensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Extensions;
 
 namespace AasxDemonstration
 {
@@ -153,7 +152,7 @@ namespace AasxDemonstration
             var newElem = CreateSubmodelElementInstance(typeof(T));
 
             newElem.IdShort = idShort;
-            newElem.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, new List<Key>() { new Key(KeyTypes.GlobalReference, semanticIdKey) });
+            newElem.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, semanticIdKey) });
             newElem.SetTimeStamp(timestamp);
             newElem.TimeStampCreate = timestamp;
             if (parent?.Value != null)
@@ -200,7 +199,7 @@ namespace AasxDemonstration
             if (copyQualifers)
             {
                 //dst.Qualifiers = new QualifierCollection();
-                dst.Qualifiers = new List<Qualifier>();
+                dst.Qualifiers = new List<IQualifier>();
                 foreach (var q in src.Qualifiers)
                     dst.Qualifiers.Add(q);
             }
@@ -506,7 +505,7 @@ namespace AasxDemonstration
             // Overall Submodel instance
             //
 
-            protected Submodel _submodel;
+            protected ISubmodel _submodel;
 
             //
             // Managing of the actual value propertes
@@ -550,7 +549,7 @@ namespace AasxDemonstration
             // Initialize
             //
 
-            protected void ScanSubmodelForIoTDataPoints(Submodel sm)
+            protected void ScanSubmodelForIoTDataPoints(ISubmodel sm)
             {
                 // access
                 if (sm == null)
@@ -577,7 +576,7 @@ namespace AasxDemonstration
             /// In Andreas' original code, all AAS and SM need to be tagged for time stamping
             /// </summary>
             public static void TagAllAasAndSm(
-                AasCore.Aas3_0_RC02.Environment env,
+                AasCore.Aas3_0.Environment env,
                 DateTime timeStamp)
             {
                 if (env == null)
@@ -598,7 +597,7 @@ namespace AasxDemonstration
             }
 
             public static IEnumerable<EnergyModelInstance> FindAllSmInstances(
-                AasCore.Aas3_0_RC02.Environment env)
+                AasCore.Aas3_0.Environment env)
             {
                 if (env == null)
                     yield break;
@@ -614,7 +613,7 @@ namespace AasxDemonstration
                 }
             }
 
-            protected void ScanSubmodelForTimeSeriesParameters(Submodel sm)
+            protected void ScanSubmodelForTimeSeriesParameters(ISubmodel sm)
             {
                 // access
                 if (sm?.SubmodelElements == null)
@@ -700,8 +699,8 @@ namespace AasxDemonstration
                             continue;
 
                         // relevant?
-                        //if (true == smcsegt.kind?.IsTemplate && first)
-                        if ((smcsegt.Kind.Value == ModelingKind.Template) && first)
+                        //TODO:jtikekar check with Andreas
+                        //if ((smcsegt.Kind.Value == ModellingKind.Template) && first)
                         {
                             first = false;
 

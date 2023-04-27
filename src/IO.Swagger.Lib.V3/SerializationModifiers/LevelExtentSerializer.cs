@@ -2,7 +2,7 @@
  * This class applies only Level and Extent modifiers. As per new specification, there are seperate APIs for the content modifiers.
  * 
  */
-using AasCore.Aas3_0_RC02;
+
 using System.Text.Json.Nodes;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers

@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

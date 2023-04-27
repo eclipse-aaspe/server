@@ -1,8 +1,9 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServerStandardBib.Logging;
 using Extensions;
 using IO.Swagger.Lib.V3.Interfaces;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.Services
@@ -13,11 +14,11 @@ namespace IO.Swagger.Lib.V3.Services
 
         public AasRepositoryApiHelperService(IAppLogger<AasRepositoryApiHelperService> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
         }
         public List<Reference> GetAllAssetAdministrationShellReference(List<AssetAdministrationShell> aasList)
         {
-            if(aasList.IsNullOrEmpty())
+            if (aasList.IsNullOrEmpty())
             {
                 _logger.LogDebug($"No asset administrations shells present.");
                 return null;
@@ -34,7 +35,7 @@ namespace IO.Swagger.Lib.V3.Services
 
         public Reference GetAssetAdministrationShellReference(AssetAdministrationShell aas)
         {
-            if(aas == null)
+            if (aas == null)
             {
                 _logger.LogDebug($"Retrieved AAS is null");
                 return null;

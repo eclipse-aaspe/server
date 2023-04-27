@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AdminShellNS;
 using Extensions;
 using MailKit;
@@ -46,7 +46,7 @@ namespace ProductChange
                 Console.WriteLine("Checking Emails for Product Change Notifications: " + timeStamp + "Z");
 
                 AdminShellPackageEnv pcnEnv = null;
-                Submodel pcnSub = null;
+                ISubmodel pcnSub = null;
                 SubmodelElementCollection imported = null;
                 int aascount = AasxServer.Program.env.Length;
 
@@ -237,7 +237,7 @@ namespace ProductChange
                                                                     c = new SubmodelElementCollection(idShort: name);
                                                                     c.TimeStampCreate = timeStamp;
                                                                     c.SetTimeStamp(timeStamp);
-                                                                    var f = new AasCore.Aas3_0_RC02.File(contentType: "", idShort: name);
+                                                                    var f = new AasCore.Aas3_0.File(contentType: "", idShort: name);
                                                                     f.TimeStampCreate = timeStamp;
                                                                     f.SetTimeStamp(timeStamp);
                                                                     f.Value = "/aasx/" + fName;
@@ -413,7 +413,7 @@ namespace ProductChange
             Console.WriteLine("Importing xml files from ./xml to submodel xml");
 
             AdminShellPackageEnv xmlEnv = null;
-            Submodel xmlSub = null;
+            ISubmodel xmlSub = null;
             SubmodelElementCollection imported = null;
             int aascount = AasxServer.Program.env.Length;
 
@@ -516,7 +516,7 @@ namespace ProductChange
                                         smc[stack].TimeStampCreate = timeStamp;
                                         smc[stack].SetTimeStamp(timeStamp);
                                         Qualifier q = new Qualifier("XmlHasAttributes", DataTypeDefXsd.String);
-                                        smc[stack].Qualifiers = new List<Qualifier>();
+                                        smc[stack].Qualifiers = new List<IQualifier>();
                                         smc[stack].Qualifiers.Add(q);
                                         if (stack == 0)
                                         {
@@ -539,7 +539,7 @@ namespace ProductChange
                                             p.SetTimeStamp(timeStamp);
                                             p.Value = v;
                                             q = new Qualifier("XmlAttribute", DataTypeDefXsd.String);
-                                            p.Qualifiers = new List<Qualifier>();
+                                            p.Qualifiers = new List<IQualifier>();
                                             p.Qualifiers.Add(q);
                                             if (smc[stack] != null)
                                                 smc[stack].Add(p);

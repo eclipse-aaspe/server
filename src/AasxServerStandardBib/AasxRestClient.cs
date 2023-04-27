@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxIntegrationBase;
 using AdminShellNS;
 using Extensions;
@@ -157,7 +157,7 @@ namespace AasxRestServerLibrary
             return response.GetContent();
         }
 
-        public string UpdatePropertyValue(AasCore.Aas3_0_RC02.Environment env, Submodel submodel, ISubmodelElement sme)
+        public string UpdatePropertyValue(AasCore.Aas3_0.Environment env, Submodel submodel, ISubmodelElement sme)
         {
             // trivial fails
             if (env == null || sme == null)

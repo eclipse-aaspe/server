@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AdminShellNS;
 using Extensions;
 using Newtonsoft.Json;
@@ -832,7 +832,7 @@ namespace AasxServer
 
                 receivedFrameJSON.Value = receivedFrame;
 
-                Submodel submodel = null;
+                ISubmodel submodel = null;
 
                 if (receivedFrame != "")
                 {
@@ -975,7 +975,7 @@ namespace AasxServer
 
                 receivedFrameJSON.Value = receivedFrame;
 
-                Submodel submodel = null;
+                ISubmodel submodel = null;
 
                 if (receivedFrame != "")
                 {
@@ -1080,7 +1080,7 @@ namespace AasxServer
         }
 
 
-        public static Submodel boringSubmodel = null;
+        public static ISubmodel boringSubmodel = null;
         public static I40TransmitFrame boringSubmodelFrame = null;
 
         public static bool isRequester = false;
@@ -1094,12 +1094,12 @@ namespace AasxServer
         public static List<string> sendFrameJSONProvider = new List<string>();
         public static List<string> receivedFrameJSONRequester = new List<string>();
         public static string srAnswerMessageType = "";
-        public static Submodel returnBoringSbmodel()
+        public static ISubmodel returnBoringSbmodel()
         {
             //IIdentifiable _boringSMID = new IIdentifiable();
             string _boringSMID = "www.company.com/ids/sm/3145_4121_8002_1792";
             //Submodel _boringSubmodel = new Submodel();
-            Submodel _boringSubmodel = Program.env[0].AasEnv.FindSubmodelById(_boringSMID);
+            ISubmodel _boringSubmodel = Program.env[0].AasEnv.FindSubmodelById(_boringSMID);
             //return Program.env[0].AasEnv.FindSubmodelById(_boringSMID);
             return _boringSubmodel;
         }
@@ -1169,7 +1169,7 @@ namespace AasxServer
             Program.count = Program.count + 1;
 
             //Submodel _boringSubmodel = new Submodel();
-            Submodel _boringSubmodel = returnBoringSbmodel();
+            ISubmodel _boringSubmodel = returnBoringSbmodel();
             newBiddingMessage.interactionElements.Add(_boringSubmodel);
 
             string frame = JsonConvert.SerializeObject(newBiddingMessage, Newtonsoft.Json.Formatting.Indented);
@@ -1291,7 +1291,7 @@ namespace AasxServer
                 Program.count = Program.count + 1;
 
                 //Submodel _boringSubmodel = new Submodel();
-                Submodel _boringSubmodel = returnBoringSbmodel();
+                ISubmodel _boringSubmodel = returnBoringSbmodel();
                 newBiddingMessage.interactionElements.Add(_boringSubmodel);
 
                 frame = JsonConvert.SerializeObject(newBiddingMessage, Newtonsoft.Json.Formatting.Indented);

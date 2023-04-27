@@ -7,20 +7,13 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
-using AasCore.Aas3_0_RC02;
 using Extensions;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using static AasxCompatibilityModels.AdminShellV20.SubmodelElementWrapper;
-using static Extensions.ExtendIDataSpecificationContent;
 
 namespace AdminShellNS
 {
@@ -88,9 +81,9 @@ namespace AdminShellNS
                 return AasSubmodelElements.Property;
             if (typeof(T) == typeof(MultiLanguageProperty))
                 return AasSubmodelElements.MultiLanguageProperty;
-            if (typeof(T) == typeof(AasCore.Aas3_0_RC02.Range))
+            if (typeof(T) == typeof(AasCore.Aas3_0.Range))
                 return AasSubmodelElements.Range;
-            if (typeof(T) == typeof(AasCore.Aas3_0_RC02.File))
+            if (typeof(T) == typeof(AasCore.Aas3_0.File))
                 return AasSubmodelElements.File;
             if (typeof(T) == typeof(Blob))
                 return AasSubmodelElements.Blob;
@@ -116,7 +109,7 @@ namespace AdminShellNS
 
         public static ISubmodelElement CreateSubmodelElementFromEnum(AasSubmodelElements smeEnum, ISubmodelElement sourceSme = null)
         {
-            switch(smeEnum)
+            switch (smeEnum)
             {
                 case AasSubmodelElements.Property:
                     {
@@ -128,11 +121,11 @@ namespace AdminShellNS
                     }
                 case AasSubmodelElements.Range:
                     {
-                        return new AasCore.Aas3_0_RC02.Range(DataTypeDefXsd.String).UpdateFrom(sourceSme);
+                        return new AasCore.Aas3_0.Range(DataTypeDefXsd.String).UpdateFrom(sourceSme);
                     }
                 case AasSubmodelElements.File:
                     {
-                        return new AasCore.Aas3_0_RC02.File("").UpdateFrom(sourceSme);
+                        return new AasCore.Aas3_0.File("").UpdateFrom(sourceSme);
                     }
                 case AasSubmodelElements.Blob:
                     {
@@ -549,7 +542,7 @@ namespace AdminShellNS
                     break;
 
                 case TypeCode.Single:
-                    if (Single.TryParse("" + value, NumberStyles.Float, 
+                    if (Single.TryParse("" + value, NumberStyles.Float,
                         CultureInfo.InvariantCulture, out var sgl))
                         f.SetValue(obj, sgl);
                     break;

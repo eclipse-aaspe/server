@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServerStandardBib.Logging;
 using IO.Swagger.Lib.V3.Exceptions;
 using IO.Swagger.Lib.V3.Interfaces;
@@ -17,7 +17,7 @@ namespace IO.Swagger.Lib.V3.Services
 
         public JsonQueryDeserializer(IAppLogger<JsonQueryDeserializer> logger, IBase64UrlDecoderService decoderService)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _decoderService = decoderService;
         }
 

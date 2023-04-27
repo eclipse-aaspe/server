@@ -10,16 +10,10 @@ This source code may use other Open Source software components (see LICENSE.txt)
 // to be disabled for AASX Server
 // #define UseMarkup 
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using AasCore.Aas3_0_RC02;
 using AasxIntegrationBase;
-using AdminShellNS;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace AdminShellEvents
 {
@@ -35,7 +29,7 @@ namespace AdminShellEvents
         /// Path of the element to be updated. Contains one or more Keys, relative to the Observable of
         /// the defined Event.
         /// </summary>
-        public List<Key> Path { get; set; }
+        public List<IKey> Path { get; set; }
 
         /// <summary>
         /// Serialized updated value of the updated element.
@@ -52,7 +46,7 @@ namespace AdminShellEvents
         //
 
         public AasPayloadUpdateValueItem(
-            List<Key> path = null,
+            List<IKey> path = null,
             string value = null,
             Reference valueId = null)
         {

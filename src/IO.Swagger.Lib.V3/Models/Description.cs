@@ -19,13 +19,13 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
-{ 
+{
     /// <summary>
     /// The Description object enables servers to present their capabilities to the clients, in particular which profiles they implement. At least one defined profile is required. Additional, proprietary attributes might be included. Nevertheless, the server must not expect that a regular client understands them.
     /// </summary>
     [DataContract]
     public partial class Description : IEquatable<Description>
-    { 
+    {
         /// <summary>
         /// Gets or Sets Profiles
         /// </summary>
@@ -111,13 +111,14 @@ namespace IO.Swagger.Models
             /// Enum RegistryAndDiscoveryServiceSpecificationV30Enum for RegistryAndDiscoveryServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "RegistryAndDiscoveryServiceSpecification/V3.0")]
-            RegistryAndDiscoveryServiceSpecificationV30Enum = 15        }
+            RegistryAndDiscoveryServiceSpecificationV30Enum = 15
+        }
 
         /// <summary>
         /// Gets or Sets Profiles
         /// </summary>
 
-        [DataMember(Name="profiles")]
+        [DataMember(Name = "profiles")]
         public List<ProfilesEnum> Profiles { get; set; }
 
         /// <summary>
@@ -164,7 +165,7 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return 
+            return
                 (
                     Profiles == other.Profiles ||
                     Profiles != null &&
@@ -182,14 +183,14 @@ namespace IO.Swagger.Models
             {
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
-                    if (Profiles != null)
+                if (Profiles != null)
                     hashCode = hashCode * 59 + Profiles.GetHashCode();
                 return hashCode;
             }
         }
 
         #region Operators
-        #pragma warning disable 1591
+#pragma warning disable 1591
 
         public static bool operator ==(Description left, Description right)
         {
@@ -201,7 +202,7 @@ namespace IO.Swagger.Models
             return !Equals(left, right);
         }
 
-        #pragma warning restore 1591
+#pragma warning restore 1591
         #endregion Operators
     }
 }

@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
@@ -418,7 +418,7 @@ namespace AasxServer
                 }
             }
 
-            if (!Directory.Exists("./temp")) 
+            if (!Directory.Exists("./temp"))
                 Directory.CreateDirectory("./temp");
 
             string fn = null;
@@ -889,7 +889,7 @@ namespace AasxServer
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
             //public AdminShell.Description description = null;
-            public List<LangString> description = null;
+            public List<ILangStringTextType> description = null;
 
             [XmlElement(ElementName = "idShort")]
             [JsonIgnore]
@@ -911,13 +911,11 @@ namespace AasxServer
 
             [XmlElement(ElementName = "administration")]
             [JsonIgnore]
-            //public AdminShell.Administration administration = null;
             public AdministrativeInformation administration = null;
 
             [XmlElement(ElementName = "description")]
             [JsonIgnore]
-            //public AdminShell.Description description = new AdminShell.Description();
-            public List<LangString> description = new(new List<LangString>());
+            public List<ILangStringTextType> description = new(new List<ILangStringTextType>());
 
             [XmlElement(ElementName = "idShort")]
             public string idShort = "";
@@ -958,11 +956,11 @@ namespace AasxServer
             {
                 SubmodelDescriptors sdc = new SubmodelDescriptors();
 
-                sdc.administration = adminShell.AasEnv.Submodels[i].Administration;
+                sdc.administration = adminShell.AasEnv.Submodels[i].Administration as AdministrativeInformation;
                 sdc.description = adminShell.AasEnv.Submodels[i].Description;
                 sdc.identification = adminShell.AasEnv.Submodels[i].Id;
                 sdc.idShort = adminShell.AasEnv.Submodels[i].IdShort;
-                sdc.semanticId = adminShell.AasEnv.Submodels[i].SemanticId;
+                sdc.semanticId = adminShell.AasEnv.Submodels[i].SemanticId as Reference;
 
                 AASxEndpoint endpSub = new AASxEndpoint();
                 endpSub.address = endpointAddress + "/aas/" + adminShell.AasEnv.AssetAdministrationShells[0].IdShort +
@@ -1488,7 +1486,7 @@ namespace AasxServer
                                         return;
                                     }
 
-                                    AssetAdministrationShell aas = null;
+                                    IAssetAdministrationShell aas = null;
                                     envi = 0;
                                     while (env[envi] != null)
                                     {
@@ -1591,8 +1589,8 @@ namespace AasxServer
                                                     // add SubmodelRef to AAS            
                                                     // access the AAS
                                                     var key = new Key(KeyTypes.Submodel, submodel.Id);
-                                                    var keyList = new List<Key>() { key };
-                                                    var newsmr = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, keyList);
+                                                    var keyList = new List<IKey>() { key };
+                                                    var newsmr = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, keyList);
                                                     //var newsmr = SubmodelRef.CreateNew("Submodel", submodel.id);
                                                     var existsmr = aas.HasSubmodelReference(newsmr);
                                                     if (!existsmr)
@@ -1842,8 +1840,8 @@ namespace AasxServer
 
                 // add SubmodelRef to AAS            
                 // access the AAS
-                var keyList = new List<Key>() { new Key(KeyTypes.Submodel, submodel.Id) };
-                var newsmr = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, keyList);
+                var keyList = new List<IKey>() { new Key(KeyTypes.Submodel, submodel.Id) };
+                var newsmr = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, keyList);
                 var existsmr = aas.HasSubmodelReference(newsmr);
                 if (!existsmr)
                 {

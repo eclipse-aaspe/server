@@ -1,22 +1,19 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Exceptions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AasxServerStandardBib.Services
 {
-    public class MetamodelVerificationService :IMetamodelVerificationService
+    public class MetamodelVerificationService : IMetamodelVerificationService
     {
         private readonly IAppLogger<MetamodelVerificationService> _logger;
 
         public MetamodelVerificationService(IAppLogger<MetamodelVerificationService> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
         }
         public void VerifyRequestBody(IClass body)
         {

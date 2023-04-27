@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
@@ -17,9 +17,9 @@ namespace AasxServerStandardBib.Services
         private readonly Lazy<IAssetAdministrationShellService> _aasService;
         private AdminShellPackageEnv[] _packages;
 
-        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService) 
+        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _aasService = aasService;
             _packages = Program.env;
         }
@@ -45,7 +45,7 @@ namespace AasxServerStandardBib.Services
         #endregion
 
         #region AssetAdministrationShell
-        public AssetAdministrationShell CreateAssetAdministrationShell(AssetAdministrationShell body)
+        public IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body)
         {
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
@@ -60,7 +60,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public void DeleteAssetAdministrationShell(int packageIndex, AssetAdministrationShell aas)
+        public void DeleteAssetAdministrationShell(int packageIndex, IAssetAdministrationShell aas)
         {
             if (aas != null && packageIndex != -1)
             {
@@ -84,9 +84,9 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<AssetAdministrationShell> GetAllAssetAdministrationShells()
+        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells()
         {
-            List<AssetAdministrationShell> output = new List<AssetAdministrationShell>();
+            List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
 
             foreach (var package in _packages)
             {
@@ -103,9 +103,9 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public AssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier, out int packageIndex)
+        public IAssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier, out int packageIndex)
         {
-            bool found = IsAssetAdministrationShellPresent(aasIdentifier, out AssetAdministrationShell output, out packageIndex);
+            bool found = IsAssetAdministrationShellPresent(aasIdentifier, out IAssetAdministrationShell output, out packageIndex);
             if (found)
             {
                 _logger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
@@ -122,7 +122,7 @@ namespace AasxServerStandardBib.Services
             return IsAssetAdministrationShellPresent(aasIdentifier, out _, out _);
         }
 
-        private bool IsAssetAdministrationShellPresent(string aasIdentifier, out AssetAdministrationShell output, out int packageIndex)
+        private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
             foreach (var package in _packages)
@@ -146,7 +146,7 @@ namespace AasxServerStandardBib.Services
             return false;
         }
 
-        public void UpdateAssetAdministrationShellById(AssetAdministrationShell body, string aasIdentifier)
+        public void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
         {
             var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
             if (aas != null && packageIndex != -1)
@@ -165,7 +165,7 @@ namespace AasxServerStandardBib.Services
             return _packages[packageIndex].GetLocalThumbnailStream();
         }
 
-        public void UpdateAssetInformationThumbnail(Resource defaultThumbnail, Stream fileContent, int packageIndex)
+        public void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex)
         {
             _packages[packageIndex].EmbeddAssetInformationThumbnail(defaultThumbnail, fileContent);
             Program.signalNewData(0);
@@ -177,7 +177,7 @@ namespace AasxServerStandardBib.Services
         public void DeleteSubmodelById(string submodelIdentifier)
         {
             var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
-            if(submodel != null && packageIndex != -1)
+            if (submodel != null && packageIndex != -1)
             {
                 foreach (var aas in _packages[packageIndex].AasEnv.AssetAdministrationShells)
                 {
@@ -189,10 +189,10 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public Submodel GetSubmodelById(string submodelIdentifier, out int packageIndex)
+        public ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex)
         {
-            var found = IsSubmodelPresent(submodelIdentifier, out Submodel submodel,out packageIndex);
-            if(found)
+            var found = IsSubmodelPresent(submodelIdentifier, out ISubmodel submodel, out packageIndex);
+            if (found)
             {
                 _logger.LogDebug($"Found the submodel with Id {submodelIdentifier}");
                 return submodel;
@@ -203,7 +203,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        private bool IsSubmodelPresent(string submodelIdentifier, out Submodel output, out int packageIndex)
+        private bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
             output = null;
             packageIndex = -1;
@@ -245,10 +245,10 @@ namespace AasxServerStandardBib.Services
         }
 
         //TODO:jtikekar hide out packageIndex ??
-        public ConceptDescription GetConceptDescriptionById(string cdIdentifier, out int packageIndex)
+        public IConceptDescription GetConceptDescriptionById(string cdIdentifier, out int packageIndex)
         {
-            var found = IsConceptDescriptionPresent(cdIdentifier, out ConceptDescription output, out packageIndex);
-            if(found)
+            var found = IsConceptDescriptionPresent(cdIdentifier, out IConceptDescription output, out packageIndex);
+            if (found)
             {
                 _logger.LogDebug($"Found the conceptDescription with id {cdIdentifier}");
                 return output;
@@ -260,7 +260,7 @@ namespace AasxServerStandardBib.Services
         }
 
 
-        private bool IsConceptDescriptionPresent(string cdIdentifier, out ConceptDescription output, out int packageIndex)
+        private bool IsConceptDescriptionPresent(string cdIdentifier, out IConceptDescription output, out int packageIndex)
         {
             output = null;
             packageIndex = -1;
@@ -285,9 +285,9 @@ namespace AasxServerStandardBib.Services
             return false;
         }
 
-        public List<ConceptDescription> GetAllConceptDescriptions()
+        public List<IConceptDescription> GetAllConceptDescriptions()
         {
-            var output = new List<ConceptDescription>();
+            var output = new List<IConceptDescription>();
 
             //Get All Concept descriptions
             foreach (var package in _packages)
@@ -310,7 +310,7 @@ namespace AasxServerStandardBib.Services
             return IsConceptDescriptionPresent(cdIdentifier, out _, out _);
         }
 
-        public ConceptDescription CreateConceptDescription(ConceptDescription body)
+        public IConceptDescription CreateConceptDescription(IConceptDescription body)
         {
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
@@ -325,7 +325,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public void UpdateConceptDescriptionById(ConceptDescription body, string cdIdentifier)
+        public void UpdateConceptDescriptionById(IConceptDescription body, string cdIdentifier)
         {
             var conceptDescription = GetConceptDescriptionById(cdIdentifier, out int packageIndex);
             if (conceptDescription != null && packageIndex != -1)

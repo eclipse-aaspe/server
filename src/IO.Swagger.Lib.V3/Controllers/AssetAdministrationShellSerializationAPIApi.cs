@@ -20,13 +20,13 @@ using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 
 namespace IO.Swagger.Controllers
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
     [ApiController]
     public class AssetAdministrationShellSerializationAPIApiController : ControllerBase
-    { 
+    {
         /// <summary>
         /// Returns an appropriate serialization based on the specified format (see SerializationFormat)
         /// </summary>
@@ -47,8 +47,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GenerateSerializationByIds([FromQuery][Required()]List<string> aasIds, [FromQuery][Required()]List<string> submodelIds, [FromQuery][Required()]bool? includeConceptDescriptions)
-        { 
+        public virtual IActionResult GenerateSerializationByIds([FromQuery][Required()] List<string> aasIds, [FromQuery][Required()] List<string> submodelIds, [FromQuery][Required()] bool? includeConceptDescriptions)
+        {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(byte[]));
 
@@ -65,10 +65,10 @@ namespace IO.Swagger.Controllers
             // return StatusCode(0, default(Result));
             string exampleJson = null;
             exampleJson = "\"\"";
-            
-                        var example = exampleJson != null
-                        ? JsonConvert.DeserializeObject<byte[]>(exampleJson)
-                        : default(byte[]);            //TODO: Change the data returned
+
+            var example = exampleJson != null
+            ? JsonConvert.DeserializeObject<byte[]>(exampleJson)
+            : default(byte[]);            //TODO: Change the data returned
             return new ObjectResult(example);
         }
     }

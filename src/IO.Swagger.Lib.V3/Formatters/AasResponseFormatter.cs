@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Http;
@@ -49,7 +49,7 @@ namespace IO.Swagger.Lib.V3.Formatters
 
             //SerializationModifier
             GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
-            
+
 
             if (typeof(IClass).IsAssignableFrom(context.ObjectType))
             {
@@ -61,9 +61,9 @@ namespace IO.Swagger.Lib.V3.Formatters
                 json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-            else if(IsGenericListOfIClass(context.Object))
+            else if (IsGenericListOfIClass(context.Object))
             {
-                
+
                 var jsonArray = new JsonArray();
                 IList genericList = (IList)context.Object;
                 List<IClass> contextObjectType = new List<IClass>();
@@ -93,7 +93,7 @@ namespace IO.Swagger.Lib.V3.Formatters
         private void GetSerializationMidifiersFromRequest(HttpRequest request, out LevelEnum level, out ExtentEnum extent)
         {
             request.Query.TryGetValue("level", out StringValues levelValues);
-            if(levelValues.Any())
+            if (levelValues.Any())
             {
                 Enum.TryParse(levelValues.First(), out level);
             }
@@ -101,9 +101,9 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 level = LevelEnum.Deep;
             }
-            
+
             request.Query.TryGetValue("extent", out StringValues extenValues);
-            if(extenValues.Any())
+            if (extenValues.Any())
             {
                 Enum.TryParse(extenValues.First(), out extent);
             }

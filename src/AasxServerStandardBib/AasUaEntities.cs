@@ -7,13 +7,13 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
-using AasCore.Aas3_0_RC02;
+
 using Extensions;
 using Opc.Ua;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
+using AAS = AasCore.Aas3_0;
 
 // TODO (MIHO, 2020-08-29): The UA mapping needs to be overworked in order to comply the joint aligment with I4AAS
 // TODO (MIHO, 2020-08-29): The UA mapping needs to be checked for the "new" HasDataSpecification strcuture of V2.0.1
@@ -146,7 +146,7 @@ namespace AasOpcUaServer
         }
 
         public NodeState CreateAddElements(NodeState parent, CreateMode mode,
-            AdministrativeInformation administration = null,
+            IAdministrativeInformation administration = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)
@@ -194,7 +194,7 @@ namespace AasOpcUaServer
                 null, "ValueId", AasUaNodeHelper.ModellingRule.Optional);
         }
 
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, Qualifier qualifier = null,
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode, IQualifier qualifier = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)
@@ -280,7 +280,7 @@ namespace AasOpcUaServer
 
         //public NodeState CreateAddElements(NodeState parent, CreateMode mode, ModelingKind kind = null,
         //TODO:jtikekar: default value of ModellingKind
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, ModelingKind kind = ModelingKind.Template,
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode, ModellingKind kind = ModellingKind.Template,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (mode == CreateMode.Instance)
@@ -343,7 +343,7 @@ namespace AasOpcUaServer
         /// Sets the "Keys" value information of an AAS Reference. This is especially important for referencing 
         /// outwards of the AAS (environment).
         /// </summary>
-        public void CreateAddKeyElements(NodeState parent, CreateMode mode, List<Key> keys = null)
+        public void CreateAddKeyElements(NodeState parent, CreateMode mode, List<IKey> keys = null)
         {
             if (parent == null)
                 return;
@@ -359,7 +359,7 @@ namespace AasOpcUaServer
 
                 if (mode == CreateMode.Instance && keyo != null)
                 {
-                    Reference newRef = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, keys);
+                    Reference newRef = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, keys);
                     keyo.Value = AasUaUtils.ToOpcUaReference(newRef);
                 }
             }
@@ -371,7 +371,7 @@ namespace AasOpcUaServer
 
                 if (mode == CreateMode.Instance && keyo != null)
                 {
-                    Reference newRef = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, keys);
+                    Reference newRef = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, keys);
                     keyo.Value = AasUaUtils.ToOpcUaReferenceList(newRef)?.ToArray();
                 }
             }
@@ -383,7 +383,7 @@ namespace AasOpcUaServer
         /// </summary>
         public void CreateAddKeyElements(NodeState parent, CreateMode mode, List<IIdentifiable> ids = null)
         {
-            List<Key> keys = new List<Key>();
+            List<IKey> keys = new List<IKey>();
             if (parent == null)
                 return;
 
@@ -407,7 +407,7 @@ namespace AasOpcUaServer
 
                 if (mode == CreateMode.Instance && keyo != null)
                 {
-                    Reference newRef = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, keys);
+                    Reference newRef = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, keys);
                     keyo.Value = AasUaUtils.ToOpcUaReference(newRef);
                 }
             }
@@ -419,7 +419,7 @@ namespace AasOpcUaServer
 
                 if (mode == CreateMode.Instance && keyo != null)
                 {
-                    Reference newRef = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, keys);
+                    Reference newRef = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, keys);
                     keyo.Value = AasUaUtils.ToOpcUaReferenceList(newRef)?.ToArray();
                 }
             }
@@ -460,7 +460,7 @@ namespace AasOpcUaServer
         }
 
         public NodeState CreateAddElements(NodeState parent, CreateMode mode,
-            Reference reference, string browseDisplayName = null,
+            AAS.IReference reference, string browseDisplayName = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)
@@ -504,7 +504,7 @@ namespace AasOpcUaServer
                     this.entityBuilder.AddNodeLateAction(
                         new AasEntityBuilder.NodeLateActionLinkToReference(
                             o,
-                            new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, glbrf.Keys),
+                            new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, glbrf.Keys),
                             AasEntityBuilder.NodeLateActionLinkToReference.ActionType.SetAasReference
                         ));
                 }
@@ -527,7 +527,7 @@ namespace AasOpcUaServer
         }
 
         public NodeState CreateAddInstanceObject(NodeState parent, CreateMode mode,
-            Reference semid = null, string browseDisplayName = null,
+            AAS.IReference semid = null, string browseDisplayName = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)
@@ -556,7 +556,7 @@ namespace AasOpcUaServer
                     new AasEntityBuilder.NodeLateActionLinkToReference(
                         parent,
                         //Reference.CreateNew(Key.ConceptDescription, semid?.Keys),
-                        new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, semid?.Keys),
+                        new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, semid?.Keys),
                         AasEntityBuilder.NodeLateActionLinkToReference.ActionType.SetDictionaryEntry
                     ));
 
@@ -597,7 +597,7 @@ namespace AasOpcUaServer
                 null, "AssetIdentificationModel", modellingRule: AasUaNodeHelper.ModellingRule.Optional);
         }
 
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, AssetInformation asset = null,
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode, IAssetInformation asset = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)
@@ -618,13 +618,13 @@ namespace AasOpcUaServer
 
                 // register node record
 
-                this.entityBuilder.AddNodeRecord(new AasEntityBuilder.NodeRecord(o, asset?.GlobalAssetId?.Keys?.FirstOrDefault().Value));
+                this.entityBuilder.AddNodeRecord(new AasEntityBuilder.NodeRecord(o, asset?.GlobalAssetId));
 
                 // Referable
                 //this.entityBuilder.AasTypes.Referable.CreateAddElements(o, CreateMode.Instance, asset);
                 // Identifiable
                 this.entityBuilder.AasTypes.Identification.CreateAddElements(
-                    o, CreateMode.Instance, asset?.GlobalAssetId?.Keys?.FirstOrDefault().Value);
+                    o, CreateMode.Instance, asset?.GlobalAssetId);
                 //this.entityBuilder.AasTypes.Administration.CreateAddElements(
                 //    o, CreateMode.Instance, asset.administration);
                 // HasKind
@@ -686,7 +686,7 @@ namespace AasOpcUaServer
         }
 
         public NodeState CreateAddInstanceObject(NodeState parent,
-            AasCore.Aas3_0_RC02.Environment env, AssetAdministrationShell aas)
+            AasCore.Aas3_0.Environment env, IAssetAdministrationShell aas)
         {
             // access
             if (env == null || aas == null)
@@ -797,7 +797,7 @@ namespace AasOpcUaServer
                 modellingRule: AasUaNodeHelper.ModellingRule.OptionalPlaceholder);
         }
 
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, Submodel sm = null,
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode, ISubmodel sm = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)
@@ -837,7 +837,7 @@ namespace AasOpcUaServer
                     o, CreateMode.Instance, sm.SemanticId, "SemanticId");
                 // HasKind
                 this.entityBuilder.AasTypes.ModelingKind.CreateAddElements(
-                    o, CreateMode.Instance, (ModelingKind)sm.Kind);
+                    o, CreateMode.Instance, (ModellingKind)sm.Kind);
                 // HasDataSpecification
                 if (sm.EmbeddedDataSpecifications != null && sm.EmbeddedDataSpecifications != null)
                     foreach (var ds in sm.EmbeddedDataSpecifications)
@@ -924,9 +924,6 @@ namespace AasOpcUaServer
             // HasSemantics
             this.entityBuilder.AasTypes.SemanticId.CreateAddInstanceObject(
                 o, CreateMode.Instance, sme.SemanticId, "SemanticId");
-            // HasKind
-            this.entityBuilder.AasTypes.ModelingKind.CreateAddElements(
-                o, CreateMode.Instance, (ModelingKind)sme.Kind);
             // HasDataSpecification
             if (sme.EmbeddedDataSpecifications != null && sme.EmbeddedDataSpecifications != null)
                 foreach (var ds in sme.EmbeddedDataSpecifications)
@@ -1055,7 +1052,7 @@ namespace AasOpcUaServer
                 this.entityBuilder.CreateAddPropertyState<bool>(o, mode, "Value",
                     DataTypeIds.Boolean, x == "true", defaultSettings: true);
             }
-            else if (vt == DataTypeDefXsd.DateTime || vt == DataTypeDefXsd.DateTimeStamp || vt == DataTypeDefXsd.Time)
+            else if (vt == DataTypeDefXsd.DateTime || vt == DataTypeDefXsd.Date || vt == DataTypeDefXsd.Time)
             {
                 if (DateTime.TryParse(prop.Value, CultureInfo.InvariantCulture,
                     DateTimeStyles.AssumeUniversal, out var dt))
@@ -1510,7 +1507,7 @@ namespace AasOpcUaServer
             return o;
         }
 
-        private void CreateOperationArguments(int i, ref List<Argument>[] args, List<OperationVariable> opVariables)
+        private void CreateOperationArguments(int i, ref List<Argument>[] args, List<IOperationVariable> opVariables)
         {
             if (opVariables != null)
             {
@@ -1813,7 +1810,7 @@ namespace AasOpcUaServer
             return to;
         }
 
-        public NodeState CreateAddElements(NodeState parent, CreateMode mode, ConceptDescription cd = null,
+        public NodeState CreateAddElements(NodeState parent, CreateMode mode, IConceptDescription cd = null,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
             if (parent == null)

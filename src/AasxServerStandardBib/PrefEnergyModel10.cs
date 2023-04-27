@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using AasCore.Aas3_0_RC02;
-using AdminShellNS;
-
-namespace AasxDemonstration
+﻿namespace AasxDemonstration
 {
     public static class PrefEnergyModel10
     {

@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿
 using AasxServer;
 using AdminShellNS;
 using Extensions;
@@ -224,7 +224,7 @@ namespace AasxRestServerLibrary
             */
         }
 
-        public Reference FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public IReference FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
@@ -254,7 +254,7 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public Submodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public ISubmodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
@@ -280,9 +280,9 @@ namespace AasxRestServerLibrary
         }
 
 
-        public Submodel FindSubmodelWithinAas(string aasid, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public ISubmodel FindSubmodelWithinAas(string aasid, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
-            AssetAdministrationShell aas = null;
+            IAssetAdministrationShell aas = null;
             int iPackage = -1;
 
             if (Packages == null)
@@ -346,7 +346,7 @@ namespace AasxRestServerLibrary
 
 
 
-        public Submodel FindSubmodelWithoutAas(string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public ISubmodel FindSubmodelWithoutAas(string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[0] == null || Packages[0].AasEnv == null || smid == null || smid.Trim() == "")
@@ -369,7 +369,7 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public ConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public IConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || cdid == null || cdid.Trim() == "")
@@ -720,12 +720,12 @@ namespace AasxRestServerLibrary
             }
 
             //TODO:jtikekar remove
-            if(context.Request.RawUrl.Equals("/aas/0/core") && obj is ExpandoObject findAasReturn)
+            if (context.Request.RawUrl.Equals("/aas/0/core") && obj is ExpandoObject findAasReturn)
             {
                 var value = new JsonObject();
                 foreach (KeyValuePair<string, object> kvp in findAasReturn)
                 {
-                    if(kvp.Key.Equals("AAS"))
+                    if (kvp.Key.Equals("AAS"))
                     {
                         value["AAS"] = Jsonization.Serialize.ToJsonObject((AssetAdministrationShell)kvp.Value);
                     }
@@ -875,11 +875,11 @@ namespace AasxRestServerLibrary
             }
 
             // create a new, filtered AasEnv
-            AasCore.Aas3_0_RC02.Environment copyenv = new AasCore.Aas3_0_RC02.Environment();
+            AasCore.Aas3_0.Environment copyenv = new AasCore.Aas3_0.Environment();
             try
             {
                 var sourceEnvironment = Packages[findAasReturn.iPackage].AasEnv;
-                var aasList = new List<AssetAdministrationShell>() { findAasReturn.aas };
+                var aasList = new List<IAssetAdministrationShell>() { findAasReturn.aas };
                 copyenv = copyenv.CreateFromExistingEnvironment(sourceEnvironment, aasList);
             }
             catch (Exception ex)
@@ -1121,11 +1121,7 @@ namespace AasxRestServerLibrary
                     {
                         aas.IdShort += file.instancesIdentificationSuffix;
                         aas.Id += file.instancesIdentificationSuffix;
-                        //aas.assetRef[0].Value += file.instancesIdentificationSuffix;
-                        //aas.AssetInformation.SetIdentification(new AdminShellV30.Identifier(file.instancesIdentificationSuffix));
-                        var assetIdKey = new Key(KeyTypes.GlobalReference, file.instancesIdentificationSuffix);
-                        var keyList = new List<Key>() { assetIdKey };
-                        aas.AssetInformation.GlobalAssetId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, keyList);
+                        aas.AssetInformation.GlobalAssetId = file.instancesIdentificationSuffix;
                         foreach (var smref in aas.Submodels)
                         {
                             foreach (var key in smref.Keys)
@@ -1521,7 +1517,7 @@ namespace AasxRestServerLibrary
             {
                 if (deleteAsset && asset != null)
                 {
-                    context.Server.Logger.Debug($"Deleting Asset with Global Asset Id {asset.GlobalAssetId.GetAsIdentifier() ?? "--"}");
+                    context.Server.Logger.Debug($"Deleting Asset with Global Asset Id {asset.GlobalAssetId ?? "--"}");
                     //this.Packages[findAasReturn.iPackage].AasEnv.Assets.Remove(asset);
                 }
             }
@@ -1568,7 +1564,7 @@ namespace AasxRestServerLibrary
             if (handle != null && handle.identification != null)
             {
                 foreach (var aas in this.Packages[0].AasEnv.AssetAdministrationShells)
-                    if (aas.AssetInformation != null && (aas.AssetInformation.GlobalAssetId.Matches(handle.identification) || aas.AssetInformation.GlobalAssetId.Matches(handle.identification)))
+                    if (aas.AssetInformation != null && (aas.AssetInformation.GlobalAssetId.Equals(handle.identification)))
                     {
                         dynamic o = new ExpandoObject();
                         o.identification = aas.Id;
@@ -1893,8 +1889,8 @@ namespace AasxRestServerLibrary
 
             // add SubmodelRef to AAS
             var key = new Key(KeyTypes.Submodel, submodel.Id);
-            var KeyList = new List<Key>() { key };
-            Reference newsmr = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.ModelReference, KeyList);
+            var KeyList = new List<IKey>() { key };
+            Reference newsmr = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, KeyList);
             //var newsmr = SubmodelRef.CreateNew("Submodel", submodel.Id);
             var existsmr = findAasReturn.aas.HasSubmodelReference(newsmr);
             if (!existsmr)
@@ -2104,9 +2100,9 @@ namespace AasxRestServerLibrary
                     row.Value = "" + (p.Value ?? "") + ((p.ValueId != null) ? p.ValueId.ToString() : "");
                 }
 
-                if (sme is AasCore.Aas3_0_RC02.File)
+                if (sme is AasCore.Aas3_0.File)
                 {
-                    var p = sme as AasCore.Aas3_0_RC02.File;
+                    var p = sme as AasCore.Aas3_0.File;
                     row.Value = "" + p.Value;
                 }
 
@@ -2379,7 +2375,7 @@ namespace AasxRestServerLibrary
 
             // find the right SubmodelElement
             var fse = this.FindSubmodelElement(sm, sm.SubmodelElements, elemids);
-            var smef = fse?.elem as AasCore.Aas3_0_RC02.File;
+            var smef = fse?.elem as AasCore.Aas3_0.File;
             if (smef == null || smef.Value == null || smef.Value == "")
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching File element in Submodel found.");
@@ -2745,8 +2741,8 @@ namespace AasxRestServerLibrary
 
             // create a new, filtered AasEnv
             // (this is expensive, but delivers us with a list of CDs which are in relation to the respective AAS)
-            var copyenv = new AasCore.Aas3_0_RC02.Environment();
-            copyenv = copyenv.CreateFromExistingEnvironment(this.Packages[findAasReturn.iPackage].AasEnv, filterForAas: new List<AssetAdministrationShell>(new AssetAdministrationShell[] { findAasReturn.aas }));
+            var copyenv = new AasCore.Aas3_0.Environment();
+            copyenv = copyenv.CreateFromExistingEnvironment(this.Packages[findAasReturn.iPackage].AasEnv, filterForAas: new List<IAssetAdministrationShell>(new AssetAdministrationShell[] { (AssetAdministrationShell)findAasReturn.aas }));
 
             // get all CDs and describe them
             foreach (var cd in copyenv.ConceptDescriptions)
@@ -3420,8 +3416,8 @@ namespace AasxRestServerLibrary
                 int iRole = 0;
                 while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
                 {
-                    if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas") 
-                        /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
+                    if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas")
+                    /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
                     {
                         if (objectAasOrSubmodel != null && securityRole[iRole].objReference == objectAasOrSubmodel &&
                         securityRole[iRole].permission == neededRights)
@@ -3619,7 +3615,7 @@ namespace AasxRestServerLibrary
                             }
                             if (actualTime.Value == null || actualTime.Value == "")
                             {
-                                actualTime.Value =  DateTime.UtcNow.ToString();
+                                actualTime.Value = DateTime.UtcNow.ToString();
                                 actualCount.Value = null;
                             }
                             if (actualCount.Value == null || actualCount.Value == "")
@@ -3668,7 +3664,7 @@ namespace AasxRestServerLibrary
             {
                 if (checkAccessLevel(currentRole, operation, neededRights,
                     objPath, aasOrSubmodel, objectAasOrSubmodel))
-                        return true;
+                    return true;
 
                 if (currentRole == null)
                 {
@@ -3698,7 +3694,7 @@ namespace AasxRestServerLibrary
         {
             return SecurityCheck(context.Request.QueryString, context.Request.Headers, ref index);
         }
-        
+
         static string checkUserPW(string userPW64)
         {
             var credentialBytes = Convert.FromBase64String(userPW64);
@@ -4074,7 +4070,7 @@ namespace AasxRestServerLibrary
                             {
                                 //var asset = Program.env[i].AasEnv.FindAsset(aas.assetRef);
                                 var asset = aas.AssetInformation;
-                                s += " : " + asset.GlobalAssetId?.Keys[0]?.Value;
+                                s += " : " + asset.GlobalAssetId;
                                 s += " : " + asset.AssetKind;
                             }
                             aaslist.Add(s);
@@ -4409,7 +4405,7 @@ namespace AasxRestServerLibrary
                                                             AasxServer.Program.authType = p3.Value;
                                                             break;
                                                         case "publicCertificate":
-                                                            var f = sme2 as AasCore.Aas3_0_RC02.File;
+                                                            var f = sme2 as AasCore.Aas3_0.File;
                                                             serverCertfileNames = new string[1];
                                                             serverCerts = new X509Certificate2[1];
                                                             var s = Program.env[i].GetLocalStreamFromPackage(f.Value);
