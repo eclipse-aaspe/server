@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -30,6 +31,7 @@ using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
 using MailKit.Security;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -218,6 +220,8 @@ namespace AasxServer
 
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
+        public static AasContext db = new AasContext();
+        public static int aasDBId = 0;
         private class CommandLineArguments
 
         {
@@ -504,8 +508,8 @@ namespace AasxServer
                 }
             }
 
-
             int envi = 0;
+            aasDBId = 1;
 
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
@@ -534,6 +538,84 @@ namespace AasxServer
                             Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
                             return 1;
                         }
+
+                        // DB
+                        var aas = env[envi].AasEnv.AssetAdministrationShells[0];
+                        var aasId = aas.Id;
+                        var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
+                        if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                        {
+                            var listAasDB = db.AasSets.Where(a => (a.Id == aasDBId));
+                            /*
+                            var listAasDB = db.AasSets.Where(a => (a.AasId == aasId));
+                            if (listAasDB != null && listAasDB.Count() != 0)
+                            {
+                                foreach (var adb in listAasDB)
+                                {
+                                    db.AasSets.Remove(adb);
+                                }
+                                db.SaveChanges();
+                            }
+
+                            AasSet aasDB = null;
+                            aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn };
+                            db.Add(aasDB);
+                            */
+
+                            AasSet aasDB = null;
+                            if (listAasDB != null && listAasDB.Count() != 0)
+                                aasDB = listAasDB.First();
+                            if (aasDB == null)
+                            {
+                                aasDB = new AasSet { Id = aasDBId, AasId = aasId, AssetId = assetId, Aasx = fn };
+                                db.Add(aasDB);
+                            }
+                            else
+                            {
+                                aasDB.AasId = aasId;
+                                aasDB.AssetId = assetId;
+                                aasDB.Aasx = fn;
+                            }
+                            db.SaveChanges();
+
+                            if (aasDB.Submodels == null)
+                            {
+                                // aasDB.Submodels = new List<SubmodelSet>();
+                            }
+                            else
+                            {
+                                aasDB.Submodels.Clear();
+                            }
+                            db.SaveChanges();
+
+                            // Iterate submodels
+                            if (aas.Submodels != null && aas.Submodels.Count > 0)
+                            {
+                                foreach (var smr in aas.Submodels)
+                                {
+                                    var sm = env[envi].AasEnv.FindSubmodel(smr);
+                                    if (sm != null)
+                                    {
+                                        var listSubmodelDB = db.SubmodelSets.Where(s => (s.SubmodelId == sm.Id));
+                                        if (listSubmodelDB != null && listSubmodelDB.Count() != 0)
+                                        {
+                                            foreach (var submodelDB in listSubmodelDB)
+                                            {
+                                                db.SubmodelSets.Remove(submodelDB);
+                                            }
+                                        }
+                                        var semanticId = sm.SemanticId.GetAsIdentifier();
+                                        if (semanticId == null)
+                                            semanticId = "";
+                                        aasDB.Submodels.Add(new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId });
+                                        db.SaveChanges();
+                                    }
+                                }
+                            }
+                            
+                            aasDBId++;
+                        }
+
                         // check if signed
                         string fileCert = "./user/" + name + ".cer";
                         if (System.IO.File.Exists(fileCert))
