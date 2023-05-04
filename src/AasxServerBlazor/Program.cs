@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using AasxServer;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -29,7 +30,6 @@ namespace AasxServerBlazor
             CreateHostBuilder(args).Build().RunAsync();
 
             AasxServer.Program.Main(args);
-
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
