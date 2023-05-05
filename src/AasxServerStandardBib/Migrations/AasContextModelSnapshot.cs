@@ -32,6 +32,9 @@ namespace AasxServerStandardBib.Migrations
                     b.Property<string>("AssetId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Idshort")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("AasSets");
@@ -50,6 +53,9 @@ namespace AasxServerStandardBib.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Aasx")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Idshort")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")

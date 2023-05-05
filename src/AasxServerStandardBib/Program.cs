@@ -24,6 +24,7 @@ using AasCore.Aas3_0_RC02;
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
+using AasxServerStandardBib.Migrations;
 using AdminShellNS;
 using Extenstions;
 using Jose;
@@ -509,7 +510,13 @@ namespace AasxServer
             }
 
             int envi = 0;
-            aasDBId = 1;
+            // aasDBId = 1;
+            int count = 0;
+            // Clear DB
+            var task = Task.Run(async() => count = await db.SubmodelSets.ExecuteDeleteAsync());
+            task.Wait();
+            task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
+            task.Wait();
 
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
@@ -545,9 +552,13 @@ namespace AasxServer
                         var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
                         if (aasId != null && aasId != "" && assetId != null && assetId != "")
                         {
-                            var listAasDB = db.AasSets.Where(a => (a.Id == aasDBId));
+                            var aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort };
+                            db.Add(aasDB);
+                            db.SaveChanges();
+
                             /*
-                            var listAasDB = db.AasSets.Where(a => (a.AasId == aasId));
+                            var listAasDB = db.AasSets.Where(a => (a.Id == aasDBId));
+                            // var listAasDB = db.AasSets.Where(a => (a.AasId == aasId));
                             if (listAasDB != null && listAasDB.Count() != 0)
                             {
                                 foreach (var adb in listAasDB)
@@ -560,14 +571,14 @@ namespace AasxServer
                             AasSet aasDB = null;
                             aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn };
                             db.Add(aasDB);
-                            */
 
                             AasSet aasDB = null;
                             if (listAasDB != null && listAasDB.Count() != 0)
                                 aasDB = listAasDB.First();
                             if (aasDB == null)
                             {
-                                aasDB = new AasSet { Id = aasDBId, AasId = aasId, AssetId = assetId, Aasx = fn };
+                                // aasDB = new AasSet { Id = aasDBId, AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort };
+                                aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort };
                                 db.Add(aasDB);
                             }
                             else
@@ -575,6 +586,7 @@ namespace AasxServer
                                 aasDB.AasId = aasId;
                                 aasDB.AssetId = assetId;
                                 aasDB.Aasx = fn;
+                                aasDB.Idshort = aas.IdShort;
                             }
                             db.SaveChanges();
 
@@ -587,6 +599,7 @@ namespace AasxServer
                                 aasDB.Submodels.Clear();
                             }
                             db.SaveChanges();
+                            */
 
                             // Iterate submodels
                             if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -596,6 +609,15 @@ namespace AasxServer
                                     var sm = env[envi].AasEnv.FindSubmodel(smr);
                                     if (sm != null)
                                     {
+                                        var semanticId = sm.SemanticId.GetAsIdentifier();
+                                        if (semanticId == null)
+                                            semanticId = "";
+
+                                        var submodelDB = new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort };
+                                        aasDB.Submodels.Add(submodelDB);
+                                        db.SaveChanges();
+
+                                        /*
                                         var listSubmodelDB = db.SubmodelSets.Where(s => (s.SubmodelId == sm.Id));
                                         if (listSubmodelDB != null && listSubmodelDB.Count() != 0)
                                         {
@@ -607,13 +629,14 @@ namespace AasxServer
                                         var semanticId = sm.SemanticId.GetAsIdentifier();
                                         if (semanticId == null)
                                             semanticId = "";
-                                        aasDB.Submodels.Add(new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId });
+                                        aasDB.Submodels.Add(new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort });
                                         db.SaveChanges();
+                                        */
                                     }
                                 }
                             }
                             
-                            aasDBId++;
+                            // aasDBId++;
                         }
 
                         // check if signed
