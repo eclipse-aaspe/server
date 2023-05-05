@@ -543,6 +543,9 @@ namespace IO.Swagger.V1RC03.Services
         private bool IsAssetAdministrationShellPresent(string aasIdentifier, out AssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
+
+            Program.loadPackageForAas(aasIdentifier, out output, out packageIndex);
+
             foreach (var package in _packages)
             {
                 if (package != null)
@@ -1048,6 +1051,9 @@ namespace IO.Swagger.V1RC03.Services
         {
             output = null;
             packageIndex = -1;
+
+            Program.loadPackageForSubmodel(submodelIdentifier, out output, out packageIndex);
+
             foreach (var package in _packages)
             {
                 if (package != null)
