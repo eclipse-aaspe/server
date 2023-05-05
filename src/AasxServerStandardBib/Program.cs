@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Packaging;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -70,79 +71,107 @@ namespace AasxServer
 
     public static class Program
     {
-        public static int envimax = 200;
-        public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[200]
+        static int oldest = 0;
+        public static bool loadPackageForAas(string aasIdentifier, out AssetAdministrationShell output, out int packageIndex)
+        {
+            output = null; packageIndex = -1;
+            int i = 0;
+            while (i < env.Length)
             {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-        public static string[] envFileName = new string[200]
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
+                if (env[i] == null)
+                    break;
 
-        public static string[] envSymbols = new string[200]
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
+                var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
+                if (aas.Any())
+                {
+                    output = aas.First();
+                    packageIndex = i;
+                    return true;
+                }
+                i++;
+            }
 
-        public static string[] envSubjectIssuer = new string[200]
+            // not found in memory
+            if (i == env.Length)
+            {
+                i = oldest++;
+                if (oldest == env.Length)
+                    oldest = 0;
+                Console.WriteLine("UNLOAD: " + envFileName[i]);
+            }
+
+            var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
+            if (aasDBList.Any())
+            {
+                var aasDB = aasDBList.First();
+                string fn = aasDB.Aasx;
+                envFileName[i] = fn;
+                env[i] = new AdminShellPackageEnv(fn, true);
+                Console.WriteLine("LOAD: " + fn);
+                var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
+                if (aas.Any())
+                {
+                    output = aas.First();
+                    packageIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool loadPackageForSubmodel(string submodelIdentifier, out Submodel output, out int packageIndex)
+        {
+            output = null; packageIndex = -1;
+            int i = 0;
+            while (i < env.Length)
+            {
+                if (env[i] == null)
+                    break;
+
+                var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                if (submodels.Any())
+                {
+                    output = submodels.First();
+                    packageIndex = i;
+                    return true;
+                }
+                i++;
+            }
+
+            // not found in memory
+            if (i == env.Length)
+            {
+                i = oldest++;
+                if (oldest == env.Length)
+                    oldest = 0;
+                Console.WriteLine("UNLOAD: " + envFileName[i]);
+            }
+
+            var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
+            if (submodelDBList.Any())
+            {
+                var submodelDB = submodelDBList.First();
+                string fn = submodelDB.Aasx;
+                envFileName[i] = fn;
+                env[i] = new AdminShellPackageEnv(fn, true);
+                Console.WriteLine("LOAD: " + fn);
+
+                var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                if (submodels.Any())
+                {
+                    output = submodels.First();
+                    packageIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public const int envimax = 3;
+        public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[envimax];
+        /*
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -165,6 +194,82 @@ namespace AasxServer
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null
             };
+        */
+        public static string[] envFileName = new string[envimax];
+        /*
+            {
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null
+            };
+        */
+        public static string[] envSymbols = new string[envimax];
+        /*
+            {
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null
+            };
+        */
+        public static string[] envSubjectIssuer = new string[envimax];
+        /*
+            {
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null
+            };
+        */
 
         public static string hostPort = "";
         public static string blazorPort = "";
@@ -222,6 +327,7 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static AasContext db = new AasContext();
+        public static bool withDb = true;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -511,10 +617,13 @@ namespace AasxServer
             int count = 0;
 
             // Clear DB
-            var task = Task.Run(async() => count = await db.SubmodelSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-            task.Wait();
+            if (withDb)
+            {
+                var task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
+                task.Wait();
+            }
 
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
@@ -522,9 +631,10 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
-                while (envi < fileNames.Length)
+                int fi = 0;
+                while (fi < fileNames.Length)
                 {
-                    fn = fileNames[envi];
+                    fn = fileNames[fi];
 
                     if (fn != "" && envi < envimax)
                     {
@@ -545,33 +655,39 @@ namespace AasxServer
                         }
 
                         // DB
-                        var aas = env[envi].AasEnv.AssetAdministrationShells[0];
-                        var aasId = aas.Id;
-                        var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
-                        if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                        if (withDb)
                         {
-                            var aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort };
-                            db.Add(aasDB);
-                            db.SaveChanges();
-
-                            // Iterate submodels
-                            if (aas.Submodels != null && aas.Submodels.Count > 0)
+                            var aas = env[envi].AasEnv.AssetAdministrationShells[0];
+                            var aasId = aas.Id;
+                            var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
+                            if (aasId != null && aasId != "" && assetId != null && assetId != "")
                             {
-                                foreach (var smr in aas.Submodels)
-                                {
-                                    var sm = env[envi].AasEnv.FindSubmodel(smr);
-                                    if (sm != null)
-                                    {
-                                        var semanticId = sm.SemanticId.GetAsIdentifier();
-                                        if (semanticId == null)
-                                            semanticId = "";
+                                var aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort };
+                                db.Add(aasDB);
+                                db.SaveChanges();
 
-                                        var submodelDB = new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort };
-                                        aasDB.Submodels.Add(submodelDB);
-                                        db.SaveChanges();
+                                // Iterate submodels
+                                if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                {
+                                    foreach (var smr in aas.Submodels)
+                                    {
+                                        var sm = env[envi].AasEnv.FindSubmodel(smr);
+                                        if (sm != null)
+                                        {
+                                            var semanticId = sm.SemanticId.GetAsIdentifier();
+                                            if (semanticId == null)
+                                                semanticId = "";
+
+                                            var submodelDB = new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort };
+                                            aasDB.Submodels.Add(submodelDB);
+                                            db.SaveChanges();
+                                        }
                                     }
                                 }
                             }
+                            // remove from memory
+                            envFileName[envi] = null;
+                            env[envi] = null;
                         }
 
                         // check if signed
@@ -593,7 +709,9 @@ namespace AasxServer
                         }
 
                     }
-                    envi++;
+                    fi++;
+                    if (!withDb)
+                        envi++;
                 }
 
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
@@ -2203,7 +2321,7 @@ namespace AasxServer
             lock (Program.changeAasxFile)
             {
                 int i = 0;
-                while (env[i] != null)
+                while (i < env.Length && env[i] != null)
                 {
                     foreach (var sm in env[i].AasEnv.Submodels)
                     {
