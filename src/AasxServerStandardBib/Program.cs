@@ -65,6 +65,9 @@ namespace AasxServer
         public static bool loadPackageForAas(string aasIdentifier, out AssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
+            if (!withDb)
+                return false;
+
             int i = 0;
             while (i < env.Length)
             {
@@ -98,11 +101,22 @@ namespace AasxServer
                 envFileName[i] = fn;
                 env[i] = new AdminShellPackageEnv(fn, true);
                 Console.WriteLine("LOAD: " + fn);
+                DateTime timeStamp = DateTime.Now;
+                foreach (var submodel in env[i].AasEnv.Submodels)
+                {
+                    submodel.TimeStampCreate = timeStamp;
+                    submodel.SetTimeStamp(timeStamp);
+                    submodel.SetAllParents();
+                }
                 var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
                 if (aas.Any())
                 {
-                    output = aas.First();
+                    var a = aas.First();
+                    a.TimeStampCreate = timeStamp;
+                    a.SetTimeStamp(timeStamp);
+                    output = a;
                     packageIndex = i;
+                    AasxServer.Program.signalNewData(2);
                     return true;
                 }
             }
@@ -113,6 +127,9 @@ namespace AasxServer
         public static bool loadPackageForSubmodel(string submodelIdentifier, out Submodel output, out int packageIndex)
         {
             output = null; packageIndex = -1;
+            if (!withDb)
+                return false;
+
             int i = 0;
             while (i < env.Length)
             {
@@ -147,11 +164,23 @@ namespace AasxServer
                 env[i] = new AdminShellPackageEnv(fn, true);
                 Console.WriteLine("LOAD: " + fn);
 
+                DateTime timeStamp = DateTime.Now;
+                var a = env[i].AasEnv.AssetAdministrationShells[0];
+                a.TimeStampCreate = timeStamp;
+                a.SetTimeStamp(timeStamp);
+                foreach (var submodel in env[i].AasEnv.Submodels)
+                {
+                    submodel.TimeStampCreate = timeStamp;
+                    submodel.SetTimeStamp(timeStamp);
+                    submodel.SetAllParents();
+                }
+
                 var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
                 if (submodels.Any())
                 {
                     output = submodels.First();
                     packageIndex = i;
+                    AasxServer.Program.signalNewData(2);
                     return true;
                 }
             }
@@ -159,7 +188,7 @@ namespace AasxServer
             return false;
         }
 
-        public const int envimax = 3;
+        public const int envimax = 5;
         public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[envimax];
         /*
             {
@@ -652,7 +681,8 @@ namespace AasxServer
                             var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
                             if (aasId != null && aasId != "" && assetId != null && assetId != "")
                             {
-                                var aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort };
+                                var aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort,
+                                    AssetKind = aas.AssetInformation.AssetKind.ToString() };
                                 db.Add(aasDB);
                                 db.SaveChanges();
 
