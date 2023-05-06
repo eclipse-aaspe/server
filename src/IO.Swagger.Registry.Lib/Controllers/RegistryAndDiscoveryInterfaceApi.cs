@@ -11,9 +11,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -124,15 +126,31 @@ namespace IO.Swagger.Registry.Controllers
             */
             try
             {
-                var assetList = new List<String>();
-                if (assetId != null && assetId != "")
+                if (!Program.withDb)
                 {
-                    assetList.Add(assetId);
+                    // from memory
+                    var assetList = new List<String>();
+                    if (assetId != null && assetId != "")
+                    {
+                        assetList.Add(assetId);
+                    }
+
+                    var aasList = getFromAasRegistry(null, assetList);
+
+                    return new ObjectResult(aasList);
+                }
+                else
+                {
+                    // from database
+                    var aasList = new List<AssetAdministrationShellDescriptor>();
+                    foreach (var aasDB in Program.db.AasSets)
+                    {
+                        aasList.Add(createAasDescriptorFromDb(aasDB));
+                    }
+
+                    return new ObjectResult(aasList);
                 }
 
-                var aasList = getFromAasRegistry(null, assetList);
-
-                return new ObjectResult(aasList);
             }
             catch (Exception ex)
             {
@@ -410,9 +428,74 @@ namespace IO.Swagger.Registry.Controllers
             return new ObjectResult(example);
         }
 
-#pragma warning disable IDE1006 // Benennungsstile
-        static void addAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
-#pragma warning restore IDE1006 // Benennungsstile
+        public static AssetAdministrationShellDescriptor createAasDescriptorFromDb(AasSet aasDB)
+        {
+            var db = Program.db;
+
+            AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
+            //string asset = aas.assetRef?[0].Value;
+            string globalAssetId = aasDB.AssetId;
+
+            // ad.Administration.Version = aas.administration.version;
+            // ad.Administration.Revision = aas.administration.revision;
+            ad.IdShort = aasDB.Idshort;
+            ad.Identification = aasDB.AasId;
+            var e = new Models.Endpoint();
+            e.ProtocolInformation = new ProtocolInformation();
+            e.ProtocolInformation.EndpointAddress =
+                AasxServer.Program.externalBlazor + "/shells/" +
+                Base64UrlEncoder.Encode(ad.Identification);
+            Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.EndpointAddress);
+            e.Interface = "AAS-1.0";
+            ad.Endpoints = new List<Models.Endpoint>();
+            ad.Endpoints.Add(e);
+            var gr = new GlobalReference();
+            gr.Value = new List<string>();
+            gr.Value.Add(globalAssetId);
+            ad.GlobalAssetId = gr;
+            //
+            var kvp = new IO.Swagger.Registry.Models.IdentifierKeyValuePair();
+            kvp.Key = "assetKind";
+            kvp.Value = aasDB.AssetKind;
+            gr = new GlobalReference();
+            gr.Value = new List<string>();
+            gr.Value.Add("assetKind");
+            kvp.SubjectId = gr;
+            ad.SpecificAssetIds = new List<IdentifierKeyValuePair>();
+            ad.SpecificAssetIds.Add(kvp);
+            //
+            // Submodels
+            var submodelDBList = db.SubmodelSets.Where(s => s.AasId == aasDB.AasId);
+            if (submodelDBList.Any())
+            {
+                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                foreach (var submodelDB in submodelDBList)
+                {
+                    SubmodelDescriptor sd = new SubmodelDescriptor();
+                    sd.IdShort = submodelDB.Idshort;
+                    sd.Identification = submodelDB.SubmodelId;
+                    var esm = new Models.Endpoint();
+                    esm.ProtocolInformation = new ProtocolInformation();
+                    esm.ProtocolInformation.EndpointAddress =
+                        AasxServer.Program.externalBlazor + "/shells/" +
+                        Base64UrlEncoder.Encode(ad.Identification) + "/submodels/" +
+                        Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
+                    // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
+                    esm.Interface = "SUBMODEL-1.0";
+                    sd.Endpoints = new List<Models.Endpoint>();
+                    sd.Endpoints.Add(esm);
+                    gr = new GlobalReference();
+                    gr.Value = new List<string>();
+                    gr.Value.Add(submodelDB.SemanticId);
+                    sd.SemanticId = gr;
+                    ad.SubmodelDescriptors.Add(sd);
+                }
+            }
+
+            return ad;
+        }
+
+        public static AssetAdministrationShellDescriptor createAasDescriptor(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
         {
             var aas = env.AasEnv.AssetAdministrationShells[0];
 
@@ -538,6 +621,7 @@ namespace IO.Swagger.Registry.Controllers
                             }
                         }
                         ad.SubmodelDescriptors.Add(sd);
+                        /*
                         if (sm.IdShort.ToLower() == "nameplate")
                         {
                             // Add special entry for verifiable credentials
@@ -566,9 +650,19 @@ namespace IO.Swagger.Registry.Controllers
                             }
                             ad.SubmodelDescriptors.Add(sd);
                         }
+                        */
                     }
                 }
             }
+
+            return ad;
+        }
+#pragma warning disable IDE1006 // Benennungsstile
+        static void addAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
+#pragma warning restore IDE1006 // Benennungsstile
+        {
+            var ad = createAasDescriptor(env, timestamp);
+
             // add to internal registry
             if (postRegistry.Contains("this"))
                 addAasDescriptorToRegistry(ad, timestamp, true);

@@ -32,6 +32,9 @@ namespace AasxServerStandardBib.Migrations
                     b.Property<string>("AssetId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AssetKind")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Idshort")
                         .HasColumnType("TEXT");
 
