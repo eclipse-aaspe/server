@@ -126,15 +126,15 @@ namespace IO.Swagger.Registry.Controllers
             */
             try
             {
+                var assetList = new List<String>();
+                if (assetId != null && assetId != "")
+                {
+                    assetList.Add(assetId);
+                }
+
                 if (!Program.withDb)
                 {
                     // from memory
-                    var assetList = new List<String>();
-                    if (assetId != null && assetId != "")
-                    {
-                        assetList.Add(assetId);
-                    }
-
                     var aasList = getFromAasRegistry(null, assetList);
 
                     return new ObjectResult(aasList);
@@ -145,7 +145,8 @@ namespace IO.Swagger.Registry.Controllers
                     var aasList = new List<AssetAdministrationShellDescriptor>();
                     foreach (var aasDB in Program.db.AasSets)
                     {
-                        aasList.Add(createAasDescriptorFromDb(aasDB));
+                        if (assetList.Count == 0 || assetList.Contains(Base64UrlEncoder.Encode(aasDB.AssetId)))
+                            aasList.Add(createAasDescriptorFromDb(aasDB));
                     }
 
                     return new ObjectResult(aasList);
@@ -207,11 +208,27 @@ namespace IO.Swagger.Registry.Controllers
 
                 var aasList = new List<String>();
 
-                var aasDecsriptorList = getFromAasRegistry(null, assetList);
-
-                foreach (var ad in aasDecsriptorList)
+                if (!Program.withDb)
                 {
-                    aasList.Add(ad.Identification);
+                    // from memory
+                    var aasDecsriptorList = getFromAasRegistry(null, assetList);
+
+                    foreach (var ad in aasDecsriptorList)
+                    {
+                        aasList.Add(ad.Identification);
+                    }
+                }
+                else
+                {
+                    // from database
+                    foreach (var aasDB in Program.db.AasSets)
+                    {
+                        if (assetList.Contains(aasDB.AssetId))
+                            aasList.Add(aasDB.AasId);
+                    }
+
+                    return new ObjectResult(aasList);
+
                 }
 
                 return new ObjectResult(aasList);
@@ -370,9 +387,24 @@ namespace IO.Swagger.Registry.Controllers
 
             try
             {
-                var aasList = getFromAasRegistry(aasIdentifier, null);
+                if (!Program.withDb)
+                {
+                    var aasList = getFromAasRegistry(aasIdentifier, null);
 
-                return new ObjectResult(aasList);
+                    return new ObjectResult(aasList);
+                }
+                else
+                {
+                    // from database
+                    var aasList = new List<AssetAdministrationShellDescriptor>();
+                    foreach (var aasDB in Program.db.AasSets)
+                    {
+                        if (Base64UrlEncoder.Encode(aasDB.AasId) == aasIdentifier)
+                            aasList.Add(createAasDescriptorFromDb(aasDB));
+                    }
+
+                    return new ObjectResult(aasList);
+                }
             }
             catch (Exception ex)
             {
