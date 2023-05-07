@@ -198,9 +198,13 @@ namespace AasxServer
             return false;
         }
 
-        public const int envimax = 5;
+        public static int envimax = 200;
+        public static AdminShellPackageEnv[] env = null;
+        public static string[] envFileName = null;
+        public static string[] envSymbols = null;
+        public static string[] envSubjectIssuer = null;
+        /*
         public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[envimax];
-        /*
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -223,9 +227,7 @@ namespace AasxServer
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null
             };
-        */
         public static string[] envFileName = new string[envimax];
-        /*
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -248,9 +250,7 @@ namespace AasxServer
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null
             };
-        */
         public static string[] envSymbols = new string[envimax];
-        /*
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -273,9 +273,7 @@ namespace AasxServer
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null
             };
-        */
         public static string[] envSubjectIssuer = new string[envimax];
-        /*
             {
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
@@ -382,6 +380,8 @@ namespace AasxServer
             public string SecretStringAPI { get; set; }
             public string Tag { get; set; }
             public bool HtmlId { get; set; }
+            public int AasxInMemory { get; set; }
+            public bool WithDb { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -494,6 +494,9 @@ namespace AasxServer
             if (a.SaveTemp > 0)
                 saveTemp = a.SaveTemp;
             Program.htmlId = a.HtmlId;
+            Program.withDb = a.WithDb;
+            if (a.AasxInMemory > 0)
+                 envimax = a.AasxInMemory;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
             {
                 secretStringAPI = a.SecretStringAPI;
@@ -504,6 +507,12 @@ namespace AasxServer
             {
                 Console.WriteLine("Recommend an OPC client update rate > 200 ms.");
             }
+
+            // allocate memory
+            env = new AdminShellPackageEnv[envimax];
+            envFileName = new string[envimax];
+            envSymbols = new string[envimax];
+            envSubjectIssuer = new string[envimax];
 
             // Proxy
             string proxyAddress = "";
@@ -1045,7 +1054,15 @@ namespace AasxServer
 
                 new Option<string>(
                     new[] {"--tag"},
-                    "Only used to differ servers in task list")
+                    "Only used to differ servers in task list"),
+
+                new Option<int>(
+                    new[] {"--aasx-in-memory"},
+                    "If set, size of array of AASX files in memory"),
+
+                new Option<bool>(
+                    new[] {"--with-db"},
+                    "If set, will use DB by Entity Framework")
             };
 
             if (args.Length == 0)
