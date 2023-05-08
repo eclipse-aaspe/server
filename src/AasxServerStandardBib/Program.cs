@@ -698,32 +698,49 @@ namespace AasxServer
                             var aas = env[envi].AasEnv.AssetAdministrationShells[0];
                             var aasId = aas.Id;
                             var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
-                            if (aasId != null && aasId != "" && assetId != null && assetId != "")
+
+                            // Check security
+                            if (aas.IdShort.ToLower().Contains("globalsecurity"))
                             {
-                                var aasDB = new AasSet { AasId = aasId, AssetId = assetId, Aasx = fn, Idshort = aas.IdShort,
-                                    AssetKind = aas.AssetInformation.AssetKind.ToString() };
-                                db.Add(aasDB);
-                                db.SaveChanges();
-
-                                // Iterate submodels
-                                if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                                AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                            }
+                            else
+                            {
+                                if (aasId != null && aasId != "" && assetId != null && assetId != "")
                                 {
-                                    foreach (var smr in aas.Submodels)
+                                    var aasDB = new AasSet
                                     {
-                                        var sm = env[envi].AasEnv.FindSubmodel(smr);
-                                        if (sm != null)
-                                        {
-                                            var semanticId = sm.SemanticId.GetAsIdentifier();
-                                            if (semanticId == null)
-                                                semanticId = "";
+                                        AasId = aasId,
+                                        AssetId = assetId,
+                                        Aasx = fn,
+                                        Idshort = aas.IdShort,
+                                        AssetKind = aas.AssetInformation.AssetKind.ToString()
+                                    };
+                                    db.Add(aasDB);
+                                    db.SaveChanges();
 
-                                            var submodelDB = new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort };
-                                            aasDB.Submodels.Add(submodelDB);
-                                            db.SaveChanges();
+                                    // Iterate submodels
+                                    if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                    {
+                                        foreach (var smr in aas.Submodels)
+                                        {
+                                            var sm = env[envi].AasEnv.FindSubmodel(smr);
+                                            if (sm != null)
+                                            {
+                                                var semanticId = sm.SemanticId.GetAsIdentifier();
+                                                if (semanticId == null)
+                                                    semanticId = "";
+
+                                                var submodelDB = new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort };
+                                                aasDB.Submodels.Add(submodelDB);
+                                                db.SaveChanges();
+                                            }
                                         }
                                     }
                                 }
                             }
+
                             // remove from memory
                             envFileName[envi] = null;
                             env[envi] = null;
@@ -769,8 +786,11 @@ namespace AasxServer
                 }
             }
 
-            AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-            AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+            if (!withDb)
+            {
+                AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+            }
 
             Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
