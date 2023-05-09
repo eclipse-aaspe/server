@@ -99,7 +99,7 @@ namespace AasxServer
                 var aasDB = aasDBList.First();
                 string fn = aasDB.Aasx;
                 envFileName[i] = fn;
-                env[i] = new AdminShellPackageEnv(fn, true);
+                env[i] = new AdminShellPackageEnv(fn);
                 Console.WriteLine("LOAD: " + fn);
                 DateTime timeStamp = DateTime.Now;
                 foreach (var submodel in env[i].AasEnv.Submodels)
@@ -161,7 +161,7 @@ namespace AasxServer
                 var submodelDB = submodelDBList.First();
                 string fn = submodelDB.Aasx;
                 envFileName[i] = fn;
-                env[i] = new AdminShellPackageEnv(fn, true);
+                env[i] = new AdminShellPackageEnv(fn);
                 Console.WriteLine("LOAD: " + fn);
 
                 DateTime timeStamp = DateTime.Now;
@@ -673,9 +673,9 @@ namespace AasxServer
                             fn = tempName;
                         }
 
-                        Console.WriteLine("Loading {0}...", fn);
+                        Console.WriteLine((fi+1)+"/"+fileNames.Length+" Loading {0}...", fn);
                         envFileName[envi] = fn;
-                        env[envi] = new AdminShellPackageEnv(fn, true);
+                        env[envi] = new AdminShellPackageEnv(fn, !withDb);
                         if (env[envi] == null)
                         {
                             Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
@@ -708,7 +708,6 @@ namespace AasxServer
                                         AssetKind = aas.AssetInformation.AssetKind.ToString()
                                     };
                                     db.Add(aasDB);
-                                    db.SaveChanges();
 
                                     // Iterate submodels
                                     if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -724,7 +723,6 @@ namespace AasxServer
 
                                                 var submodelDB = new SubmodelSet { SubmodelId = sm.Id, SemanticId = semanticId, Aasx = fn, AasId = aasId, Idshort = sm.IdShort };
                                                 aasDB.Submodels.Add(submodelDB);
-                                                db.SaveChanges();
                                             }
                                         }
                                     }
@@ -753,12 +751,23 @@ namespace AasxServer
                                 envSubjectIssuer[envi] += ";" + x509.Issuer;
                             }
                         }
-
                     }
                     fi++;
-                    if (!withDb)
+                    if (withDb)
+                    {
+                        if (fi % 100 == 0) // every 100
+                        {
+                            Console.WriteLine("DB Save Changes");
+                            db.SaveChanges();
+                        }
+                    }
+                    else
+                    {
                         envi++;
+                    }
                 }
+                if (withDb)
+                    db.SaveChanges();
 
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
                 Array.Sort(fileNames);
