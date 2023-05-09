@@ -1,0 +1,30 @@
+﻿@page "/assetid";
+
+<div>
+    Input AssetID:
+    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;" />
+    @code { private string CurrentValue { get; set; } }
+    @if (CurrentValue != null && CurrentValue != "")
+    {
+        asset = CurrentValue;
+        if (asset == " ")
+            asset = "";
+        asset64 = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(asset));
+        link = AasxServer.Program.externalBlazor + "/registry/shell-descriptors?assetId=" + asset64;
+        CurrentValue = "";
+        this.StateHasChanged();
+    }
+    <br />
+    AssetID: <span>@asset</span><br /><br />
+    @if (asset != "")
+    {
+        <span>GET shell-descriptor for AssetID:</span> <a href="@link" target="_blank">@link</a>
+        <br>
+    }
+</div>
+
+@code{
+    string asset = "";
+    string asset64 = "";
+    string link = "";
+}
