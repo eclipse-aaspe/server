@@ -119,11 +119,13 @@ namespace AasxServer
             cList.Add(c);
         }
 
-        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW, out string urlEdcWrapper)
+        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW,
+            out string urlEdcWrapper)
         {
             queryPara = "";
             userPW = "";
             urlEdcWrapper = "";
+            string replace = "";
             List<string> qp = new List<string>();
             bool result = false;
 
@@ -183,6 +185,11 @@ namespace AasxServer
                                     // urlEdcWrapper = cList[i].parameters[2];
                                     urlEdcWrapper = urlPath.Replace(u, cList[i].parameters[2]);
                                 }
+                                result = true;
+                                break;
+                            case "replace":
+                                if (cList[i].parameters.Count == 1)
+                                    replace = urlPath.Replace(u, cList[i].parameters[0]);
                                 result = true;
                                 break;
                         }
