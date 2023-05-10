@@ -17,7 +17,8 @@
 
 <div class="col-12 row">
     <br />
-    <div class="col-4" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; word-wrap: break-word; word-break: break-all; position: sticky">
+    <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
+            word-wrap: break-word; word-break: break-all; position: sticky">
         @updateVisibleTree(Items, selectedNode)
         @if (Program.isLoading)
         {<span style="color:white;background-color:blue;">Loading...</span>
@@ -100,11 +101,11 @@
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
                 <strong><span style="color:blue">@getSymbols(context)</span></strong>
-                <span style="color:lightgray;">@ViewTimeStamp(context)</span>
+                <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
             </TitleTemplate>
         </Tree>
     </div>
-    <div class="col-8" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky">
+    <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
                 if (selectedNode != null)
@@ -265,7 +266,9 @@
                 if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                 {
                     // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                    <input @bind="CurrentValue" /> <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span><br>
+                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;" />
+                    <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
+                    <br>
                     @code { private string CurrentValue { get; set; } }
                     if (CurrentValue != null && CurrentValue != "")
                     {

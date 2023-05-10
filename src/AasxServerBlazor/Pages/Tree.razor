@@ -10,55 +10,62 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 @*@using static AdminShellNS.AdminShellV20;*@
 @using static TreePage
 
-<div class="uic-tree @(Visible ? "" : "uic-tree--hidden")">
+<div class="uic-tree @(Visible ? "" : "uic-tree--hidden")" style="float:left; padding: 1px; margin: 1px">
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
         var nodeExpanded = ExpandedNodes.Contains(node);
         var nodeSelected = node.Equals(SelectedNode);
         var hasChilds = HasChildNodes(node);
         var it = node as Item;
+        string col_tree = "col-12";
         // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
 
-        <div>
-            @if (hasChilds)
-            {
-                string iconId = "";
-                if (AasxServer.Program.htmlId)
-                    iconId = HtmlId(it) + "._icon";
-                <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId">
-                    <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
-                </span>
-            }
-
-            <div class="uic-tree__title">
-                @*
-                @if (it.Tag is AssetAdministrationShell)
+        <div class="row" style="background-color:aliceblue; padding: 1px; margin: 1px">
+            @{
+                if (it.Tag is AssetAdministrationShell)
                 {
-                    string detailsImage = createDetailsImage(it);
-                    if (detailsImage != "")
-                    {
-                        <div>
-                            <img align=left valign="center" height="10" width="20" alt="Details Image"
-                                 src=data:image;base64,@detailsImage />
-                        </div>
-                    }
+                    <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
+                        @{
+                            col_tree = "col-10";
+                            string detailsImage = createDetailsImage(it);
+                            if (detailsImage != "")
+                            {
+                                <img style="max-height:50px;object-fit:contain;" alt="Details Image"
+                                        src=data:image;base64,@detailsImage />
+                            }
+                        }
+                    </div>       
                 }
-                *@
+            }
+            <div class="col" style="width:100%;float:left;vertical-align:central">
+                @if (hasChilds)
+                {
+                    string iconId = "";
+                    if (AasxServer.Program.htmlId)
+                        iconId = HtmlId(it) + "._icon";
+                    <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId">
+                        <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
+                    </span>
+                }
+
+                <div class="uic-tree__title" style="width:100%">
                 @{
                     string titleId = "";
                     if (AasxServer.Program.htmlId)
                         titleId = HtmlId(node as Item) + "._title";
                     <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
-                        @TitleTemplate(node) @{ /* @(" " + node.GetHashCode() + " ") */ }
+                        @TitleTemplate(node) @{
+                            /* @(" " + node.GetHashCode() + " ") */
+                        }
                     </span>
                 }
-            </div>
+                </div>
 
-            @if (hasChilds)
-            {
-                if (nodeExpanded)
+                @if (hasChilds)
                 {
-                    <Tree Nodes="ChildSelector(node)"
+                    if (nodeExpanded)
+                    {
+                        <Tree Nodes="ChildSelector(node)"
                           TitleTemplate="TitleTemplate"
                           ChildSelector="ChildSelector"
                           ExpandedNodes="ExpandedNodes"
@@ -68,9 +75,9 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                           Visible="nodeExpanded"
                           HasChildNodes="HasChildNodes"
                           HtmlId="HtmlId" />
+                    }
                 }
-            }
-
+            </div>
         </div>
     }
 
