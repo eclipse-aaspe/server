@@ -31,19 +31,19 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
             }
 
             <div class="uic-tree__title">
+                @*
                 @if (it.Tag is AssetAdministrationShell)
                 {
-                    @*<img align=left valign="center" src="Logo_IDTA.jpg" height="20" width="80" />*@
                     string detailsImage = createDetailsImage(it);
                     if (detailsImage != "")
                     {
                         <div>
-                            @*<img src=data:image;base64,@detailsImage height="20" width="40" alt="Details Image" />*@
                             <img align=left valign="center" height="10" width="20" alt="Details Image"
                                  src=data:image;base64,@detailsImage />
                         </div>
                     }
                 }
+                *@
                 @{
                     string titleId = "";
                     if (AasxServer.Program.htmlId)
