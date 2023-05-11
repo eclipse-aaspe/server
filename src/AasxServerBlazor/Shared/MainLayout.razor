@@ -277,8 +277,11 @@
                 var queryPara = "";
                 var userPW = "";
                 var urlEdcWrapper = "";
-                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                string replace = "";
+                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
                 {
+                    if (replace != "")
+                        link = replace;
                     queryPara = Base64UrlEncoder.Encode(queryPara);
                     link += "&query=" + queryPara;
                     // Console.WriteLine("iframe:" + link);

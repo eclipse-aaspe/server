@@ -656,6 +656,7 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
@@ -768,6 +769,8 @@ namespace AasxServer
                 }
                 if (withDb)
                     db.SaveChanges();
+                watch.Stop();
+                Console.WriteLine(fi + " AASX loaded in " + watch.ElapsedMilliseconds + " ms");
 
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
                 Array.Sort(fileNames);
