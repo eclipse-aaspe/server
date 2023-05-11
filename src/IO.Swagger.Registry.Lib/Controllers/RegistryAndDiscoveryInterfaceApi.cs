@@ -1221,9 +1221,12 @@ namespace IO.Swagger.Registry.Controllers
                                     string queryPara = "";
                                     string userPW = "";
                                     string urlEdcWrapper = "";
+                                    string replace = "";
                                     client.DefaultRequestHeaders.Clear();
-                                    if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper))
+                                    if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                     {
+                                        if (replace != "")
+                                            requestPath = replace;
                                         if (queryPara != "")
                                             queryPara = "?" + queryPara;
                                         if (userPW != "")

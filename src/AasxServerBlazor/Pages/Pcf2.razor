@@ -276,6 +276,7 @@
                                             string queryPara = "";
                                             string userPW = "";
                                             string urlEdcWrapper = "";
+                                            string replace = "";
                                             bool moreDotsToPrint = false;
                                             string iframePath = getIframePath();
                                             link = getAasLink(@node.aas);
@@ -287,8 +288,11 @@
                                             queryPara = "";
                                             userPW = "";
                                             urlEdcWrapper = "";
-                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper))
+                                            replace = "";
+                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                             {
+                                                if (replace != "")
+                                                    link = replace;
                                                 if (queryPara != "")
                                                 {
                                                     queryPara = Base64UrlEncoder.Encode(queryPara);
@@ -403,8 +407,10 @@
                                                             }
                                                         
                                                             var icon = id;
-                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper))
+                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                                             {
+                                                                if (replace != "")
+                                                                    smlink = replace;
                                                                 if (queryPara != "")
                                                                 {
                                                                     smlink += "?" + queryPara;
@@ -567,8 +573,11 @@
                             string queryPara = "";
                             string userPW = "";
                             string urlEdcWrapper = "";
-                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper))
+                            string replace = "";
+                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace))
                             {
+                                if (replace != "")
+                                    path = replace;
                                 if (queryPara != "")
                                 {
                                     path += "?" + queryPara;

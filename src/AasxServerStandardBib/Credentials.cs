@@ -120,12 +120,12 @@ namespace AasxServer
         }
 
         public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW,
-            out string urlEdcWrapper)
+            out string urlEdcWrapper, out string replace)
         {
             queryPara = "";
             userPW = "";
             urlEdcWrapper = "";
-            string replace = "";
+            replace = "";
             List<string> qp = new List<string>();
             bool result = false;
 
