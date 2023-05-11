@@ -17,16 +17,18 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         var nodeSelected = node.Equals(SelectedNode);
         var hasChilds = HasChildNodes(node);
         var it = node as Item;
-        string col_tree = "col-12";
+        bool itIsAas = it.Tag is AssetAdministrationShell;
+        string itMargin = "margin: 0px";
+        if (itIsAas)
+            itMargin = "margin: 0px; margin-bottom: 3px";
         // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
 
-        <div class="row" style="background-color:aliceblue; padding: 1px; margin: 1px">
+        <div class="row" style="background-color:aliceblue; padding: 0px; @itMargin">
             @{
-                if (it.Tag is AssetAdministrationShell)
+                if (itIsAas)
                 {
                     <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
-                            col_tree = "col-10";
                             string detailsImage = createDetailsImage(it);
                             if (detailsImage != "")
                             {
