@@ -1,0 +1,46 @@
+﻿@page "/db";
+@using AasxServer
+@using Microsoft.IdentityModel.Tokens;
+
+<div>
+    @{
+        if (!Program.withDb)
+        {
+            <span>This is a in memory server!</span>
+        }
+        else
+        {
+            <span>@("Aas# " + Program.db.AasSets.Count())</span>
+            <br />
+            int i = 0;
+            <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>IdShort</th>
+                        <th>AasId</th>
+                        <th>AssetId</th>
+                        <th>AASX</th>
+                        <th>URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var aasDB in Program.db.AasSets)
+                    {
+                        string aas64 = Base64UrlEncoder.Encode((aasDB.AasId));
+                        string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
+                        <tr>
+                            <td style="word-break:keep-all">@i</td>
+                            <td>@aasDB.Idshort</td>
+                            <td>@aasDB.AasId</td>
+                            <td>@aasDB.AssetId</td>
+                            <td>@aasDB.Aasx</td>
+                            <td><a href="@link" target="_blank">@link</a></td>
+                        </tr>
+                        i++;
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
