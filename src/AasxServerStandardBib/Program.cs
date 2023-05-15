@@ -67,6 +67,8 @@ namespace AasxServer
             output = null; packageIndex = -1;
             if (!withDb)
                 return false;
+            if (Program.isLoading)
+                return false;
 
             int i = 0;
             while (i < env.Length)
@@ -90,34 +92,43 @@ namespace AasxServer
                 i = oldest++;
                 if (oldest == env.Length)
                     oldest = 0;
-                Console.WriteLine("UNLOAD: " + envFileName[i]);
             }
 
             var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
             if (aasDBList.Any())
             {
-                var aasDB = aasDBList.First();
-                string fn = aasDB.Aasx;
-                envFileName[i] = fn;
-                env[i] = new AdminShellPackageEnv(fn);
-                Console.WriteLine("LOAD: " + fn);
-                DateTime timeStamp = DateTime.Now;
-                foreach (var submodel in env[i].AasEnv.Submodels)
+                lock (Program.changeAasxFile)
                 {
-                    submodel.TimeStampCreate = timeStamp;
-                    submodel.SetTimeStamp(timeStamp);
-                    submodel.SetAllParents();
-                }
-                var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
-                if (aas.Any())
-                {
-                    var a = aas.First();
-                    a.TimeStampCreate = timeStamp;
-                    a.SetTimeStamp(timeStamp);
-                    output = a;
-                    packageIndex = i;
-                    AasxServer.Program.signalNewData(2);
-                    return true;
+                    if (env[i] != null)
+                    {
+                        Console.WriteLine("UNLOAD: " + envFileName[i]);
+                        env[i].Close();
+                    }
+
+                    var aasDB = aasDBList.First();
+                    string fn = aasDB.Aasx;
+                    envFileName[i] = fn;
+
+                    env[i] = new AdminShellPackageEnv(fn);
+                    Console.WriteLine("LOAD: " + fn);
+                    DateTime timeStamp = DateTime.Now;
+                    foreach (var submodel in env[i].AasEnv.Submodels)
+                    {
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetTimeStamp(timeStamp);
+                        submodel.SetAllParents();
+                    }
+                    var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
+                    if (aas.Any())
+                    {
+                        var a = aas.First();
+                        a.TimeStampCreate = timeStamp;
+                        a.SetTimeStamp(timeStamp);
+                        output = a;
+                        packageIndex = i;
+                        AasxServer.Program.signalNewData(2);
+                        return true;
+                    }
                 }
             }
 
@@ -128,6 +139,8 @@ namespace AasxServer
         {
             output = null; packageIndex = -1;
             if (!withDb)
+                return false;
+            if (Program.isLoading)
                 return false;
 
             int i = 0;
@@ -158,30 +171,39 @@ namespace AasxServer
             var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
             if (submodelDBList.Any())
             {
-                var submodelDB = submodelDBList.First();
-                string fn = submodelDB.Aasx;
-                envFileName[i] = fn;
-                env[i] = new AdminShellPackageEnv(fn);
-                Console.WriteLine("LOAD: " + fn);
-
-                DateTime timeStamp = DateTime.Now;
-                var a = env[i].AasEnv.AssetAdministrationShells[0];
-                a.TimeStampCreate = timeStamp;
-                a.SetTimeStamp(timeStamp);
-                foreach (var submodel in env[i].AasEnv.Submodels)
+                lock (Program.changeAasxFile)
                 {
-                    submodel.TimeStampCreate = timeStamp;
-                    submodel.SetTimeStamp(timeStamp);
-                    submodel.SetAllParents();
-                }
+                    if (env[i] != null)
+                    {
+                        Console.WriteLine("UNLOAD: " + envFileName[i]);
+                        env[i].Close();
+                    }
 
-                var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                if (submodels.Any())
-                {
-                    output = submodels.First();
-                    packageIndex = i;
-                    AasxServer.Program.signalNewData(2);
-                    return true;
+                    var submodelDB = submodelDBList.First();
+                    string fn = submodelDB.Aasx;
+                    envFileName[i] = fn;
+                    env[i] = new AdminShellPackageEnv(fn);
+                    Console.WriteLine("LOAD: " + fn);
+
+                    DateTime timeStamp = DateTime.Now;
+                    var a = env[i].AasEnv.AssetAdministrationShells[0];
+                    a.TimeStampCreate = timeStamp;
+                    a.SetTimeStamp(timeStamp);
+                    foreach (var submodel in env[i].AasEnv.Submodels)
+                    {
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetTimeStamp(timeStamp);
+                        submodel.SetAllParents();
+                    }
+
+                    var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                    if (submodels.Any())
+                    {
+                        output = submodels.First();
+                        packageIndex = i;
+                        AasxServer.Program.signalNewData(2);
+                        return true;
+                    }
                 }
             }
 
@@ -732,6 +754,7 @@ namespace AasxServer
 
                             // remove from memory
                             envFileName[envi] = null;
+                            env[envi].Close();
                             env[envi] = null;
                         }
 
