@@ -612,10 +612,10 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
+    /*
+    await js.InvokeAsync<object>(
+        "saveAsFile",
+        filename,
         Convert.ToBase64String(data)
         );
         */
@@ -935,17 +935,20 @@
             {
                 try
                 {
-                    using (System.IO.Stream s = Program.env[item.envIndex].GetLocalThumbnailStream())
+                    if (Program.env[item.envIndex].IsOpen)
                     {
-                        if (s != null)
+                        using (System.IO.Stream s = Program.env[item.envIndex].GetLocalThumbnailStream())
                         {
-                            using (var m = new System.IO.MemoryStream())
+                            if (s != null)
                             {
-                                s.CopyTo(m);
-                                return System.Convert.ToBase64String(m.ToArray());
+                                using (var m = new System.IO.MemoryStream())
+                                {
+                                    s.CopyTo(m);
+                                    return System.Convert.ToBase64String(m.ToArray());
+                                }
                             }
-                        }
 
+                        }
                     }
                 }
                 catch { }
