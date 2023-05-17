@@ -1740,25 +1740,69 @@ namespace AasxServer
 
         static void saveAASXtoTemp()
         {
+            bool newData = false;
             int envi = 0;
-            while (envi < Program.envFileName.Length)
+            while (envi < Program.env.Length)
             {
-                string fn = Program.envFileName[envi];
-
-                if (fn != null && fn != "")
+                if (!Program.withDb)
                 {
-                    fn = Path.GetFileName(fn);
-                    if (fn.ToLower().Contains("--save-temp"))
+                    string fn = Program.envFileName[envi];
+
+                    if (fn != null && fn != "")
                     {
+                        fn = Path.GetFileName(fn);
+                        if (fn.ToLower().Contains("--save-temp"))
+                        {
+                            lock (Program.changeAasxFile)
+                            {
+                                Console.WriteLine("SAVE TEMP: " + fn);
+                                Program.env[envi].SaveAs("./temp/" + fn, true);
+                                DateTime timeStamp = DateTime.Now;
+                                foreach (var submodel in Program.env[envi].AasEnv.Submodels)
+                                {
+                                    submodel.TimeStampCreate = timeStamp;
+                                    submodel.SetTimeStamp(timeStamp);
+                                    submodel.SetAllParents(timeStamp);
+                                }
+                                newData = true;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (Program.env[envi] != null && Program.env[envi].getWrite())
+                    {
+                        Console.WriteLine("SAVE to be implemented: " + Program.envFileName[envi]);
+                        string fn = Program.envFileName[envi];
+                        fn = Path.GetFileName(fn);
+
                         lock (Program.changeAasxFile)
                         {
-                            Console.WriteLine("SAVE TEMP: " + fn);
-                            Program.env[envi].SaveAs("./temp/" + fn, true);
+                            Program.env[envi].setWrite(false);
+                            newData = true;
+                            // Save does not work
+                            /*
+                            Program.env[envi].SaveAs("./temp/" + fn);
+                            Program.env[envi].Close();
+                            Program.env[envi] = new AdminShellPackageEnv("./temp/" + fn);
+                            Program.env[envi].setWrite(false);
+                            DateTime timeStamp = DateTime.Now;
+                            foreach (var submodel in Program.env[envi].AasEnv.Submodels)
+                            {
+                                submodel.TimeStampCreate = timeStamp;
+                                submodel.SetTimeStamp(timeStamp);
+                                submodel.SetAllParents(timeStamp);
+                            }
+                            newData = true;
+                            */
                         }
                     }
                 }
                 envi++;
             }
+            if (newData)
+                Program.signalNewData(0);
         }
 
         static Thread tasksThread;

@@ -102,6 +102,11 @@ namespace AasxServer
                     if (env[i] != null)
                     {
                         Console.WriteLine("UNLOAD: " + envFileName[i]);
+                        if (env[i].getWrite())
+                        {
+                            env[i].SaveAs(envFileName[i]);
+                            env[i].setWrite(false);
+                        }
                         env[i].Close();
                     }
 
@@ -116,7 +121,7 @@ namespace AasxServer
                     {
                         submodel.TimeStampCreate = timeStamp;
                         submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents();
+                        submodel.SetAllParents(timeStamp);
                     }
                     var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
                     if (aas.Any())
@@ -165,7 +170,6 @@ namespace AasxServer
                 i = oldest++;
                 if (oldest == env.Length)
                     oldest = 0;
-                Console.WriteLine("UNLOAD: " + envFileName[i]);
             }
 
             var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
@@ -176,6 +180,11 @@ namespace AasxServer
                     if (env[i] != null)
                     {
                         Console.WriteLine("UNLOAD: " + envFileName[i]);
+                        if (env[i].getWrite())
+                        {
+                            env[i].SaveAs(envFileName[i]);
+                            env[i].setWrite(false);
+                        }
                         env[i].Close();
                     }
 
@@ -193,7 +202,7 @@ namespace AasxServer
                     {
                         submodel.TimeStampCreate = timeStamp;
                         submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents();
+                        submodel.SetAllParents(timeStamp);
                     }
 
                     var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));

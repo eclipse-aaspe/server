@@ -219,6 +219,7 @@ namespace IO.Swagger.V1RC03.Services
             var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
             if (aas != null && packageIndex != -1)
             {
+                _packages[packageIndex].setWrite(true);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Remove(aas);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Add(body);
                 AasxServer.Program.signalNewData(1);
@@ -301,7 +302,7 @@ namespace IO.Swagger.V1RC03.Services
 
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
+                _packages[emptyPackageIndex].setWrite(true);
                 _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells.Add(body);
                 AasxServer.Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells[0]; //Considering it is being added to empty package.
@@ -413,6 +414,7 @@ namespace IO.Swagger.V1RC03.Services
             var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
             if ((aas != null) && (packageIndex != -1))
             {
+                _packages[packageIndex].setWrite(true);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Remove(aas);
                 if (_packages[packageIndex].AasEnv.AssetAdministrationShells.Count == 0)
                 {
@@ -581,6 +583,7 @@ namespace IO.Swagger.V1RC03.Services
             var conceptDescription = GetConceptDescriptionById(cdIdentifier, out int packageIndex);
             if (conceptDescription != null)
             {
+                _packages[packageIndex].setWrite(true);
                 int cdIndex = _packages[packageIndex].AasEnv.ConceptDescriptions.IndexOf(conceptDescription);
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Insert(cdIndex, body);
@@ -604,7 +607,7 @@ namespace IO.Swagger.V1RC03.Services
 
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
+                _packages[emptyPackageIndex].setWrite(true);
                 _packages[emptyPackageIndex].AasEnv.ConceptDescriptions.Add(body);
                 AasxServer.Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.ConceptDescriptions[0]; //Considering it is being added to empty package.
@@ -620,6 +623,7 @@ namespace IO.Swagger.V1RC03.Services
             var conceptDescription = GetConceptDescriptionById(cdIdentifier, out int packageIndex);
             if ((conceptDescription != null) && (packageIndex != -1))
             {
+                _packages[packageIndex].setWrite(true);
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 AasxServer.Program.signalNewData(1);
             }
@@ -843,6 +847,7 @@ namespace IO.Swagger.V1RC03.Services
                 //Default or null modifiers, so replace the complete resource as per standard HTTP/PUT
                 else
                 {
+                    _packages[packageIndex].setWrite(true);
                     _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
                     _packages[packageIndex].AasEnv.Submodels.Add(body);
                 }
@@ -1013,6 +1018,7 @@ namespace IO.Swagger.V1RC03.Services
                 if(aasFound)
                 {
                     body.SetAllParents(DateTime.UtcNow);
+                    _packages[packageIndex].setWrite(true);
                     _packages[packageIndex].AasEnv.Submodels.Add(body);
                     AasxServer.Program.signalNewData(2);
                     return body; // TODO: jtikekar find proper solution
@@ -1022,6 +1028,7 @@ namespace IO.Swagger.V1RC03.Services
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
                 body.SetAllParents(DateTime.UtcNow);
+                _packages[emptyPackageIndex].setWrite(true);
                 _packages[emptyPackageIndex].AasEnv.Submodels.Add(body);
                 AasxServer.Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is being added to empty package.
@@ -1219,6 +1226,7 @@ namespace IO.Swagger.V1RC03.Services
             var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
             if ((submodel != null) && (packageIndex != -1))
             {
+                _packages[packageIndex].setWrite(true);
                 _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
 
                 //Delete submodel reference from AAS
@@ -1475,6 +1483,7 @@ namespace IO.Swagger.V1RC03.Services
                            
                             var targetFile = Path.Combine(sourcePath, fileName);
                             targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
+                            _packages[packageIndex].setWrite(true);
                             Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
                             file.Value = FormatFileName(targetFile);
                             AasxServer.Program.signalNewData(2);
@@ -1492,6 +1501,7 @@ namespace IO.Swagger.V1RC03.Services
                         _logger.LogError($"Null Value of the Submodel-Element File with IdShort {file.IdShort}");
                         var targetFile = Path.Combine("/aasx/files", fileName);
                         targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
+                        _packages[packageIndex].setWrite(true);
                         Task task = _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(file.Value, targetFile, contentType, fileContent);
                         file.Value = FormatFileName(targetFile);
                         AasxServer.Program.signalNewData(2);

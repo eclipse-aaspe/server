@@ -259,9 +259,19 @@ namespace AdminShellNS
         private readonly ListOfAasSupplementaryFile _pendingFilesToAdd = new ListOfAasSupplementaryFile();
         private readonly ListOfAasSupplementaryFile _pendingFilesToDelete = new ListOfAasSupplementaryFile();
 
+        private bool write = false;
+
         public AdminShellPackageEnv() { }
 
-        public AdminShellPackageEnv(AasCore.Aas3_0.Environment env)
+        public bool getWrite()
+        {
+            return write;
+        }
+        public void setWrite(bool status)
+        {
+            write = status;
+        }
+        public AdminShellPackageEnv(AasCore.Aas3_0_RC02.Environment env)
         {
             if (env != null)
                 _aasEnv = env;
