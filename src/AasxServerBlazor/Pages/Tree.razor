@@ -29,10 +29,15 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                 {
                     <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
+                            string border = "";
+                            if (AasxServer.Program.env[it.envIndex].getWrite())
+                            {
+                                border = "border:dotted;border-color:blue;";
+                            }
                             string detailsImage = createDetailsImage(it);
                             if (detailsImage != "")
                             {
-                                <img style="max-height:50px;object-fit:contain;" alt="Details Image"
+                                <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
                                         src=data:image;base64,@detailsImage />
                             }
                         }
