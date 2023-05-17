@@ -114,7 +114,8 @@ namespace AasxServer
                         Console.WriteLine("UNLOAD: " + envFileName[i]);
                         if (env[i].getWrite())
                         {
-                            env[i].SaveAs(envFileName[i]);
+                            Console.WriteLine("SAVE to be implemented: " + envFileName[i]);
+                            // env[i].SaveAs(envFileName[i]);
                             env[i].setWrite(false);
                         }
                         env[i].Close();
@@ -192,7 +193,8 @@ namespace AasxServer
                         Console.WriteLine("UNLOAD: " + envFileName[i]);
                         if (env[i].getWrite())
                         {
-                            env[i].SaveAs(envFileName[i]);
+                            Console.WriteLine("SAVE to be implemented: " + envFileName[i]);
+                            // env[i].SaveAs(envFileName[i]);
                             env[i].setWrite(false);
                         }
                         env[i].Close();
