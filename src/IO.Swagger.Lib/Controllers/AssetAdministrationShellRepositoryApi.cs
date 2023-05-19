@@ -1776,10 +1776,6 @@ namespace IO.Swagger.Controllers
                     return BadRequest($"IdShort is not set in the submodel element.");
                 }
 
-                if (!idShortPath.Contains('.'))
-                {
-                    return BadRequest($"Please check the idShortPath again.");
-                }
                 //IdShortPath is a path to this requested submodel element
                 var existingSME = aasHelper.FindSubmodelElementByPath(submodel, idShortPath, out object parent);
                 if (existingSME == null)
