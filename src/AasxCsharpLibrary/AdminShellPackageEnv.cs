@@ -112,7 +112,8 @@ namespace AdminShellNS
             }
 
             // return to zero pos
-            s.Seek(0, SeekOrigin.Begin);
+            //s.Seek(0, SeekOrigin.Begin);
+            s.Position = 0;
 
             // give back
             return res;
@@ -280,6 +281,7 @@ namespace AdminShellNS
         public AdminShellPackageEnv(string fn, bool indirectLoadSave = false)
         {
             Load(fn, indirectLoadSave);
+            SetTempFn(fn);
         }
 
         public bool IsOpen
@@ -370,7 +372,7 @@ namespace AdminShellNS
             Package package;
             try
             {
-                package = Package.Open(fnToLoad, FileMode.Open);
+                package = Package.Open(fnToLoad, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             }
             catch (Exception ex)
             {

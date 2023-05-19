@@ -1,10 +1,11 @@
-﻿
+﻿using AasCore.Aas3_0;
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
 using AdminShellNS;
-using Extensions;
+using Extenstions;
 using Jose;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -18,7 +19,6 @@ using System.CommandLine.IO;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -109,7 +109,7 @@ namespace AasxServer
                             string requestedFileName = envFileName[i];
                             string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
                             System.IO.File.Copy(requestedFileName, copyFileName, true);
-                            AasxServer.Program.env[packageIndex].SaveAs(copyFileName);
+                            AasxServer.Program.env[i].SaveAs(copyFileName);
                             System.IO.File.Copy(copyFileName, requestedFileName, true);
                             System.IO.File.Delete(copyFileName);
                             env[i].setWrite(false);
@@ -531,7 +531,7 @@ namespace AasxServer
             Program.htmlId = a.HtmlId;
             Program.withDb = a.WithDb;
             if (a.AasxInMemory > 0)
-                 envimax = a.AasxInMemory;
+                envimax = a.AasxInMemory;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
             {
                 secretStringAPI = a.SecretStringAPI;
@@ -719,7 +719,7 @@ namespace AasxServer
                             fn = tempName;
                         }
 
-                        Console.WriteLine((fi+1)+"/"+fileNames.Length+" Loading {0}...", fn);
+                        Console.WriteLine((fi + 1) + "/" + fileNames.Length + " Loading {0}...", fn);
                         envFileName[envi] = fn;
                         env[envi] = new AdminShellPackageEnv(fn, !withDb);
                         if (env[envi] == null)
