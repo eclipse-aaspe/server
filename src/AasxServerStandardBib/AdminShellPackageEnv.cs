@@ -994,7 +994,7 @@ namespace AdminShellNS
                         {
                             package.Close();
                             System.IO.File.Copy(_tempFn, _fn, overwrite: true);
-                            _openPackage = Package.Open(_tempFn, FileMode.OpenOrCreate);
+                            _openPackage = Package.Open(_tempFn, FileMode.Open, FileAccess.Read, FileShare.Read);
                         }
                         catch (Exception ex)
                         {

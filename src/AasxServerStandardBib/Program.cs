@@ -116,6 +116,12 @@ namespace AasxServer
                         {
                             Console.WriteLine("SAVE to be implemented: " + envFileName[i]);
                             // env[i].SaveAs(envFileName[i]);
+                            string requestedFileName = envFileName[i];
+                            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
+                            System.IO.File.Copy(requestedFileName, copyFileName, true);
+                            AasxServer.Program.env[packageIndex].SaveAs(copyFileName);
+                            System.IO.File.Copy(copyFileName, requestedFileName, true);
+                            System.IO.File.Delete(copyFileName);
                             env[i].setWrite(false);
                         }
                         env[i].Close();
@@ -195,6 +201,12 @@ namespace AasxServer
                         {
                             Console.WriteLine("SAVE to be implemented: " + envFileName[i]);
                             // env[i].SaveAs(envFileName[i]);
+                            string requestedFileName = envFileName[i];
+                            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
+                            System.IO.File.Copy(requestedFileName, copyFileName, true);
+                            AasxServer.Program.env[packageIndex].SaveAs(copyFileName);
+                            System.IO.File.Copy(copyFileName, requestedFileName, true);
+                            System.IO.File.Delete(copyFileName);
                             env[i].setWrite(false);
                         }
                         env[i].Close();
