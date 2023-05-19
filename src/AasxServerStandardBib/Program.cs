@@ -61,6 +61,17 @@ namespace AasxServer
 
     public static class Program
     {
+        public static void saveEnv(int envIndex)
+        {
+            Console.WriteLine("SAVE: " + envFileName[envIndex]);
+            string requestedFileName = envFileName[envIndex];
+            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
+            System.IO.File.Copy(requestedFileName, copyFileName, true);
+            AasxServer.Program.env[envIndex].SaveAs(copyFileName);
+            System.IO.File.Copy(copyFileName, requestedFileName, true);
+            System.IO.File.Delete(copyFileName);
+        }
+
         static int oldest = 0;
         public static bool loadPackageForAas(string aasIdentifier, out AssetAdministrationShell output, out int packageIndex)
         {
@@ -104,14 +115,7 @@ namespace AasxServer
                         Console.WriteLine("UNLOAD: " + envFileName[i]);
                         if (env[i].getWrite())
                         {
-                            Console.WriteLine("SAVE to be implemented: " + envFileName[i]);
-                            // env[i].SaveAs(envFileName[i]);
-                            string requestedFileName = envFileName[i];
-                            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
-                            System.IO.File.Copy(requestedFileName, copyFileName, true);
-                            AasxServer.Program.env[i].SaveAs(copyFileName);
-                            System.IO.File.Copy(copyFileName, requestedFileName, true);
-                            System.IO.File.Delete(copyFileName);
+                            saveEnv(i);
                             env[i].setWrite(false);
                         }
                         env[i].Close();
@@ -189,14 +193,7 @@ namespace AasxServer
                         Console.WriteLine("UNLOAD: " + envFileName[i]);
                         if (env[i].getWrite())
                         {
-                            Console.WriteLine("SAVE to be implemented: " + envFileName[i]);
-                            // env[i].SaveAs(envFileName[i]);
-                            string requestedFileName = envFileName[i];
-                            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
-                            System.IO.File.Copy(requestedFileName, copyFileName, true);
-                            AasxServer.Program.env[packageIndex].SaveAs(copyFileName);
-                            System.IO.File.Copy(copyFileName, requestedFileName, true);
-                            System.IO.File.Delete(copyFileName);
+                            saveEnv(i);
                             env[i].setWrite(false);
                         }
                         env[i].Close();
