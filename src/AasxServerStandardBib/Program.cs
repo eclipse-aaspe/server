@@ -1,14 +1,24 @@
-﻿using System;
+﻿using AasCore.Aas3_0_RC02;
+using AasOpcUaServer;
+using AasxMqttServer;
+using AasxRestServerLibrary;
+using AdminShellNS;
+using Extenstions;
+using Jose;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Opc.Ua;
+using Opc.Ua.Configuration;
+using Opc.Ua.Server;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
-using System.IO.Packaging;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -21,25 +31,6 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
-using AasCore.Aas3_0_RC02;
-using AasOpcUaServer;
-using AasxMqttServer;
-using AasxRestServerLibrary;
-using AasxServerStandardBib.Migrations;
-using AdminShellNS;
-using Extenstions;
-using Jose;
-using MailKit;
-using MailKit.Net.Imap;
-using MailKit.Search;
-using MailKit.Security;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
-using Opc.Ua.Configuration;
-using Opc.Ua.Server;
-using static AasxDemonstration.EnergyModel;
 using Formatting = Newtonsoft.Json.Formatting;
 
 /*
@@ -119,7 +110,7 @@ namespace AasxServer
                             string requestedFileName = envFileName[i];
                             string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
                             System.IO.File.Copy(requestedFileName, copyFileName, true);
-                            AasxServer.Program.env[packageIndex].SaveAs(copyFileName);
+                            AasxServer.Program.env[i].SaveAs(copyFileName);
                             System.IO.File.Copy(copyFileName, requestedFileName, true);
                             System.IO.File.Delete(copyFileName);
                             env[i].setWrite(false);
@@ -541,7 +532,7 @@ namespace AasxServer
             Program.htmlId = a.HtmlId;
             Program.withDb = a.WithDb;
             if (a.AasxInMemory > 0)
-                 envimax = a.AasxInMemory;
+                envimax = a.AasxInMemory;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
             {
                 secretStringAPI = a.SecretStringAPI;
@@ -662,7 +653,7 @@ namespace AasxServer
                 }
             }
 
-            if (!Directory.Exists("./temp")) 
+            if (!Directory.Exists("./temp"))
                 Directory.CreateDirectory("./temp");
 
             string fn = null;
@@ -729,7 +720,7 @@ namespace AasxServer
                             fn = tempName;
                         }
 
-                        Console.WriteLine((fi+1)+"/"+fileNames.Length+" Loading {0}...", fn);
+                        Console.WriteLine((fi + 1) + "/" + fileNames.Length + " Loading {0}...", fn);
                         envFileName[envi] = fn;
                         env[envi] = new AdminShellPackageEnv(fn, !withDb);
                         if (env[envi] == null)

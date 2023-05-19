@@ -146,7 +146,8 @@ namespace AdminShellNS
             }
 
             // return to zero pos
-            s.Seek(0, SeekOrigin.Begin);
+            //s.Seek(0, SeekOrigin.Begin);
+            s.Position = 0;
 
             // give back
             return res;
@@ -310,6 +311,7 @@ namespace AdminShellNS
         public AdminShellPackageEnv(string fn, bool indirectLoadSave = false)
         {
             Load(fn, indirectLoadSave);
+            SetTempFn(fn);
         }
 
         public bool IsOpen
@@ -322,7 +324,7 @@ namespace AdminShellNS
 
         public void SetFilename(string fileName)
         {
-            _fn= fileName;
+            _fn = fileName;
         }
 
         public string Filename
@@ -397,7 +399,7 @@ namespace AdminShellNS
             Package package;
             try
             {
-                package = Package.Open(fnToLoad, FileMode.Open);
+                package = Package.Open(fnToLoad, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             }
             catch (Exception ex)
             {
@@ -1176,7 +1178,7 @@ namespace AdminShellNS
             {
                 _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
 
-            }            
+            }
             var targetUri = PackUriHelper.CreatePartUri(new Uri(targetFile, UriKind.RelativeOrAbsolute));
             PackagePart packagePart = _openPackage.CreatePart(targetUri, targetContentType);
             fileContent.Position = 0;
