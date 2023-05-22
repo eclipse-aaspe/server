@@ -387,6 +387,7 @@ namespace AasxServer
 
         public static AasContext db = new AasContext();
         public static bool withDb = true;
+        public static int startIndex = 0;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -414,6 +415,7 @@ namespace AasxServer
             public bool HtmlId { get; set; }
             public int AasxInMemory { get; set; }
             public bool WithDb { get; set; }
+            public int StartIndex { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -527,6 +529,8 @@ namespace AasxServer
                 saveTemp = a.SaveTemp;
             Program.htmlId = a.HtmlId;
             Program.withDb = a.WithDb;
+            if (a.StartIndex > 0)
+                startIndex = a.StartIndex;
             if (a.AasxInMemory > 0)
                 envimax = a.AasxInMemory;
             if (a.SecretStringAPI != null && a.SecretStringAPI != "")
@@ -687,7 +691,7 @@ namespace AasxServer
             int count = 0;
 
             // Clear DB
-            if (withDb)
+            if (withDb && startIndex == 0)
             {
                 var task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
                 task.Wait();
@@ -705,6 +709,12 @@ namespace AasxServer
                 int fi = 0;
                 while (fi < fileNames.Length)
                 {
+                    if (fi < startIndex)
+                    {
+                        fi++;
+                        continue;
+                    }
+
                     fn = fileNames[fi];
 
                     if (fn != "" && envi < envimax)
@@ -1127,7 +1137,11 @@ namespace AasxServer
 
                 new Option<bool>(
                     new[] {"--with-db"},
-                    "If set, will use DB by Entity Framework")
+                    "If set, will use DB by Entity Framework"),
+
+                new Option<int>(
+                    new[] {"--start-index"},
+                    "If set, start index in list of AASX files")
             };
 
             if (args.Length == 0)

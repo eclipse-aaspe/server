@@ -1,6 +1,7 @@
 ﻿@page "/db";
 @using AasxServer
 @using Microsoft.IdentityModel.Tokens;
+@inject NavigationManager NavMan
 
 <div>
     @{
@@ -10,9 +11,52 @@
         }
         else
         {
-            <span>@("Aas# " + Program.db.AasSets.Count())</span>
+            string url = NavMan.Uri;
+            var s = url.Split("?");
+            if (s.Length == 2)
+            {
+            var query = System.Web.HttpUtility.ParseQueryString(s[1]);
+            var list = query.Get("index");
+            if (list != null)
+            index = Convert.ToInt32(list);
+            list = query.Get("size");
+            if (list != null)
+            size = Convert.ToInt32(list);
+            list = query.Get("filter");
+            if (list != null)
+            filter = list;
+            }
+
+            <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;" />
+            @code {
+                private string CurrentValue { get; set; }
+            }
+            if (CurrentValue != null && CurrentValue != "")
+            {
+                // Syntax: index=xxx, size=xxx, filter=xxx
+                s = CurrentValue.Split("=");
+                if (s.Count() == 2)
+                {
+                    switch(s[0])
+                    {
+                        case "index":
+                            index = Convert.ToInt32(s[1]);
+                            break;
+                        case "size":
+                            size = Convert.ToInt32(s[1]);
+                            break;
+                        case "filter":
+                            filter = s[1];
+                            break;
+                    }
+                }
+                CurrentValue = "";
+            }
+            <span>&nbsp&nbsp@("Aas#: " + total + " index=" + index + " size=" + size + " filter=" + filter)</span>
+            <br />
             <br />
             int i = 0;
+            int count = 0;
             <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                 <thead>
                     <tr>
@@ -27,20 +71,38 @@
                 <tbody>
                     @foreach (var aasDB in Program.db.AasSets)
                     {
-                        string aas64 = Base64UrlEncoder.Encode((aasDB.AasId));
-                        string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
-                        <tr>
-                            <td style="word-break:keep-all">@i</td>
-                            <td>@aasDB.Idshort</td>
-                            <td>@aasDB.AasId</td>
-                            <td>@aasDB.AssetId</td>
-                            <td>@aasDB.Aasx</td>
-                            <td><a href="@link" target="_blank">@link</a></td>
-                        </tr>
+                        if (i >= index && count < size)
+                        {
+                            string f = filter.ToLower();
+                            if (aasDB.Idshort.ToLower().Contains(f) || aasDB.AasId.ToLower().Contains(f) || aasDB.AssetId.ToLower().Contains(f))
+                            {
+                                count++;
+                                string aas64 = Base64UrlEncoder.Encode((aasDB.AasId));
+                                string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
+                                <tr>
+                                    <td style="word-break:keep-all">@i</td>
+                                    <td>@aasDB.Idshort</td>
+                                    <td>@aasDB.AasId</td>
+                                    <td>@aasDB.AssetId</td>
+                                    <td>@aasDB.Aasx</td>
+                                    <td><a href="@link" target="_blank">@link</a></td>
+                                </tr>
+                            }
+                        }
                         i++;
                     }
                 </tbody>
             </table>
+            <span>@("Count: " + count)</span>
+            <br />
+            <br />
         }
     }
 </div>
+
+@code{
+    int total = Program.db.AasSets.Count();
+    int index = 0;
+    int size = 1000;
+    string filter = "";
+}
