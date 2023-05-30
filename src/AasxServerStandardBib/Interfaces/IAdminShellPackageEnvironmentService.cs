@@ -14,12 +14,21 @@ namespace AasxServerStandardBib.Interfaces
         bool IsAssetAdministrationShellPresent(string aasIdentifier);
         void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);
         void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex);
+        void DeleteAssetInformationThumbnail(int packageIndex, IResource defaultThumbnail);
+        void ReplaceAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas);
 
         #endregion
 
         #region Submodel
         void DeleteSubmodelById(string submodelIdentifier);
         ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex);
+
+        void DeleteSupplementaryFileInPackage(string submodelIdentifier, string filePath);
+        Stream GetFileFromPackage(string submodelIdentifier, string fileName1);
+        void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
+        List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null);
+        bool IsSubmodelPresent(string submodelIdentifier);
+        ISubmodel CreateSubmodel(ISubmodel newSubmodel);
 
         #endregion
 
@@ -31,6 +40,8 @@ namespace AasxServerStandardBib.Interfaces
         bool IsConceptDescriptionPresent(string cdIdentifier);
         IConceptDescription CreateConceptDescription(IConceptDescription body);
         void UpdateConceptDescriptionById(IConceptDescription body, string cdIdentifier);
+
+
 
         #endregion
 

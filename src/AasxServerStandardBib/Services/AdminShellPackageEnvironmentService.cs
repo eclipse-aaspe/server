@@ -1,9 +1,14 @@
-﻿
+﻿/*  Copyright (c) 2019-2023 Fraunhofer IOSB-INA Lemgo,
+    eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft
+    zur Foerderung der angewandten Forschung e.V.
+ */
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
+using Extensions;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -122,6 +127,8 @@ namespace AasxServerStandardBib.Services
             return IsAssetAdministrationShellPresent(aasIdentifier, out _, out _);
         }
 
+
+
         private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
@@ -158,6 +165,12 @@ namespace AasxServerStandardBib.Services
 
                 _logger.LogDebug($"Successfully updated the AAS with requested AAS");
             }
+        }
+
+        public void DeleteAssetInformationThumbnail(int packageIndex, IResource defaultThumbnail)
+        {
+            _packages[packageIndex].DeleteAssetInformationThumbnail(defaultThumbnail);
+            Program.signalNewData(0);
         }
 
         public Stream GetAssetInformationThumbnail(int packageIndex)
@@ -201,6 +214,20 @@ namespace AasxServerStandardBib.Services
             {
                 throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found.");
             }
+        }
+
+        public void DeleteSupplementaryFileInPackage(string submodelIdentifier, string filePath)
+        {
+            _ = GetSubmodelById(submodelIdentifier, out int packageIndex);
+            if (packageIndex != -1)
+            {
+                _packages[packageIndex].DeleteSupplementaryFile(filePath);
+            }
+        }
+
+        public bool IsSubmodelPresent(string submodelIdentifier)
+        {
+            return IsSubmodelPresent(submodelIdentifier, out _, out _);
         }
 
         private bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
@@ -336,6 +363,116 @@ namespace AasxServerStandardBib.Services
                 Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the ConceptDescription.");
+            }
+        }
+
+        public Stream GetFileFromPackage(string submodelIdentifier, string fileName)
+        {
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                var _ = GetSubmodelById(submodelIdentifier, out int packageIndex);
+                return _packages[packageIndex].GetLocalStreamFromPackage(fileName);
+            }
+            else
+            {
+                _logger.LogError($"File name is empty.");
+                throw new UnprocessableEntityException($"File name is empty.");
+            }
+        }
+
+        public void ReplaceAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas)
+        {
+            var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
+            if (aas != null && packageIndex != -1)
+            {
+                var existingIndex = _packages[packageIndex].AasEnv.AssetAdministrationShells.IndexOf(aas);
+                _packages[packageIndex].AasEnv.AssetAdministrationShells.Remove(aas);
+                _packages[packageIndex].AasEnv.AssetAdministrationShells.Insert(existingIndex, newAas);
+                Program.signalNewData(1);
+            }
+        }
+
+        public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
+        {
+            var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
+            if (submodel != null && packageIndex != -1)
+            {
+                var existingIndex = _packages[packageIndex].AasEnv.Submodels.IndexOf(submodel);
+                _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
+                _packages[packageIndex].AasEnv.Submodels.Insert(existingIndex, newSubmodel);
+                Program.signalNewData(1);
+            }
+        }
+
+        public List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null)
+        {
+            List<ISubmodel> output = new List<ISubmodel>();
+
+            //Get All Submodels
+            foreach (var package in _packages)
+            {
+                if (package != null)
+                {
+                    var env = package.AasEnv;
+                    if (env != null)
+                    {
+                        foreach (var s in env.Submodels)
+                        {
+                            //TODO:jtikekar uncomment and support
+                            //if (SecurityCheckTestOnly(s.IdShort, "", s))
+                            output.Add(s);
+                        }
+                    }
+                }
+            }
+
+            //Apply filters
+            if (output.Any())
+            {
+                //Filter w.r.t idShort
+                if (!string.IsNullOrEmpty(idShort))
+                {
+                    var submodels = output.Where(s => s.IdShort.Equals(idShort)).ToList();
+                    if (submodels.IsNullOrEmpty())
+                    {
+                        _logger.LogInformation($"Submodels with IdShort {idShort} Not Found.");
+                    }
+
+                    output = submodels;
+                }
+
+                //Filter w.r.t. SemanticId
+                if (reqSemanticId != null)
+                {
+                    if (output.Any())
+                    {
+                        var submodels = output.Where(s => s.SemanticId.Matches(reqSemanticId)).ToList();
+                        if (submodels.IsNullOrEmpty())
+                        {
+                            _logger.LogInformation($"Submodels with requested SemnaticId Not Found.");
+                        }
+
+                        output = submodels;
+                    }
+
+                }
+            }
+
+            return output;
+        }
+
+        public ISubmodel CreateSubmodel(ISubmodel newSubmodel)
+        {
+            if (EmptyPackageAvailable(out int emptyPackageIndex))
+            {
+
+                _packages[emptyPackageIndex].AasEnv.Submodels.Add(newSubmodel);
+                Program.signalNewData(2);
+                return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
+            }
+            else
+            {
+                throw new Exception("No empty environment package available in the server.");
             }
         }
 

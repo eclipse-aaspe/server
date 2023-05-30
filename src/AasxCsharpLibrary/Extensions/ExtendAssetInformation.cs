@@ -45,7 +45,6 @@ namespace Extensions
 
             assetInformation.AssetKind = assetKind;
 
-
             //Assign GlobalAssetId
             assetInformation.GlobalAssetId = sourceAsset.identification.id;
 

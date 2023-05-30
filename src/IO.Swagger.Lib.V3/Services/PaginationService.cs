@@ -17,8 +17,8 @@ namespace IO.Swagger.Lib.V3.Services
         public List<T> GetPaginatedList<T>(List<T> sourceList, PaginationParameters paginationParameters)
         {
             var result = new List<T>();
-            var startIndex = paginationParameters.From;
-            var endIndex = startIndex + paginationParameters.Size - 1;
+            var startIndex = paginationParameters.Cursor;
+            var endIndex = startIndex + paginationParameters.Limit - 1;
 
             //cap the endIndex
             if (endIndex > sourceList.Count - 1)

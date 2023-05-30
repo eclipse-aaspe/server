@@ -83,6 +83,7 @@ namespace AasxServerBlazor
             services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
             services.AddTransient<IMetamodelVerificationService, MetamodelVerificationService>();
             services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+            services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
             //TODO:jtikekar uncomment
             //services.AddTransient<IAssetAdministrationShellEnvironmentService, AssetAdministrationShellEnvironmentService>();
             //services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();

@@ -7,6 +7,8 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 This source code may use other Open Source software components (see LICENSE.txt).
 */
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,8 +16,6 @@ using System.IO.Packaging;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 // ReSharper disable All .. as this is legacy code!
 
@@ -1398,6 +1398,7 @@ namespace AasxCompatibilityModels
             {
                 return "Asset";
             }
+
 
             public Tuple<string, string> ToCaptionInfo()
             {
