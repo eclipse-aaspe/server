@@ -106,6 +106,35 @@ namespace AasxServerStandardBib.Services
             }
         }
 
+        public void DeleteFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                _submodelService.DeleteFileByPath(submodelIdentifier, idShortPath);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
+        public void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                //delete the submodel first, this should eventually delete the submodel reference from all the AASs
+                _submodelService.DeleteSubmodelById(submodelIdentifier);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
         public void DeleteSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
             var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
@@ -150,6 +179,8 @@ namespace AasxServerStandardBib.Services
                 }
             }
         }
+
+
 
         public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<SpecificAssetId> assetIds = null, string idShort = null)
         {
@@ -233,6 +264,25 @@ namespace AasxServerStandardBib.Services
         {
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
             return aas.AssetInformation;
+        }
+
+        public void DeleteThumbnail(string aasIdentifier)
+        {
+            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
+            if (aas != null)
+            {
+                if (aas.AssetInformation != null)
+                {
+                    if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
+                    {
+                        _packageEnvService.DeleteAssetInformationThumbnail(packageIndex, aas.AssetInformation.DefaultThumbnail);
+                    }
+                    else
+                    {
+                        throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
+                    }
+                }
+            }
         }
 
         public string GetThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize)
@@ -341,6 +391,125 @@ namespace AasxServerStandardBib.Services
             }
 
             return false;
+        }
+
+        public string GetFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
+        {
+            content = null;
+            fileSize = 0;
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                return _submodelService.GetFileByPath(submodelIdentifier, idShortPath, out content, out fileSize);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+
+        }
+
+        public ISubmodel GetSubmodelById(string aasIdentifier, string submodelIdentifier)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                return _submodelService.GetSubmodelById(submodelIdentifier);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
+        public ISubmodelElement GetSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                return _submodelService.GetSubmodelElementByPath(submodelIdentifier, idShortPath);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
+        public ISubmodelElement CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, bool first, ISubmodelElement newSubmodelElement)
+        {
+            var smFound = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (smFound)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                return _submodelService.CreateSubmodelElement(submodelIdentifier, newSubmodelElement, first);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
+        public ISubmodelElement CreateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, bool first, ISubmodelElement newSubmodelElement)
+        {
+            var smFound = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (smFound)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                return _submodelService.CreateSubmodelElementByPath(submodelIdentifier, idShortPath, first, newSubmodelElement);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
+        public void ReplaceAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas)
+        {
+            _verificationService.VerifyRequestBody(newAas);
+            _packageEnvService.ReplaceAssetAdministrationShellById(aasIdentifier, newAas);
+        }
+
+        public void ReplaceAssetInformation(string aasIdentifier, IAssetInformation newAssetInformation)
+        {
+            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
+            if (aas != null)
+            {
+                _verificationService.VerifyRequestBody(newAssetInformation);
+                aas.AssetInformation = newAssetInformation;
+                Program.signalNewData(0);
+            }
+        }
+
+        public void ReplaceSubmodelById(string aasIdentifier, string submodelIdentifier, Submodel newSubmodel)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                _submodelService.ReplaceSubmodelById(submodelIdentifier, newSubmodel);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+
+        }
+
+        public void ReplaceSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement newSme)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                _submodelService.ReplaceSubmodelElementByPath(submodelIdentifier, idShortPath, newSme);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
         }
 
         #endregion

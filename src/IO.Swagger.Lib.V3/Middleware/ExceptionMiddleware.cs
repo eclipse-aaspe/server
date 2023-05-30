@@ -88,6 +88,8 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.MessageType = Message.MessageTypeEnum.ErrorEnum;
                         break;
                     }
+                case EmptyCursorException:
+                case OperationNotSupported:
                 case InvalidNumberOfChildElementsException:
                 case NoIdentifierException:
                 case ArgumentNullException:
@@ -140,7 +142,6 @@ namespace IO.Swagger.Lib.V3.Middleware
                     }
             }
 
-            result.Success = false;
             result.Messages = new List<Message>() { message };
             await context.Response.WriteAsync(result.ToJson());
         }

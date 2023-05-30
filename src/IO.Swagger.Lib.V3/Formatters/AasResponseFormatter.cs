@@ -78,8 +78,8 @@ namespace IO.Swagger.Lib.V3.Formatters
 
                 foreach (var item in contextObjectType)
                 {
-                    //var json = Jsonization.Serialize.ToJsonObject(item);
-                    var json = LevelExtentSerializer.ToJsonObject(item, modifierContext);
+                    var json = Jsonization.Serialize.ToJsonObject(item);
+                    //var json = LevelExtentSerializer.ToJsonObject(item, modifierContext);
                     jsonArray.Add(json);
                 }
                 var writer = new Utf8JsonWriter(response.Body);

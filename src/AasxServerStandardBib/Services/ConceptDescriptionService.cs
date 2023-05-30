@@ -26,7 +26,7 @@ namespace AasxServerStandardBib.Services
         public IConceptDescription CreateConceptDescription(IConceptDescription body)
         {
             //Verify the body first
-            _verificationService.VerifyRequestBody(body);
+            //_verificationService.VerifyRequestBody(body);
 
             var found = _packageEnvService.IsConceptDescriptionPresent(body.Id);
             if (found)

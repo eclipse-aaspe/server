@@ -462,6 +462,8 @@ namespace AdminShellNS
                 }
             }
 
+
+
             return (aasEnv, openPackage);
         }
 
@@ -507,11 +509,37 @@ namespace AdminShellNS
 
                         // load package AASX
                         (_aasEnv, _openPackage) = LoadPackageAasx(fn, fnToLoad);
+
+                        //Assign default thumbnail path
+                        AssignDefaultThumbnailPath();
                         break;
                     }
                 default:
                     throw new Exception(
                         $"Does not know how to handle the extension {extension} of the file: {fn}");
+            }
+        }
+
+        private void AssignDefaultThumbnailPath()
+        {
+            Uri thumbUri = null;
+            // access
+            if (_openPackage == null)
+                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+            // get the thumbnail over the relationship
+            PackagePart thumbPart = null;
+            var xs = _openPackage.GetRelationshipsByType(
+                "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail");
+            foreach (var x in xs)
+                if (x.SourceUri.ToString() == "/")
+                {
+                    thumbPart = _openPackage.GetPart(x.TargetUri);
+                    thumbUri = x.TargetUri;
+                    break;
+                }
+            if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
+            {
+                _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
             }
         }
 
@@ -1526,6 +1554,31 @@ namespace AdminShellNS
             using (Stream dest = packagePart.GetStream())
             {
                 fileContent.CopyTo(dest);
+            }
+        }
+
+        public void DeleteSupplementaryFile(string filePath)
+        {
+            if (_openPackage == null)
+                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                var sourceUri = filePath.Replace(Path.DirectorySeparatorChar, '/');
+                _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+            }
+        }
+
+        public void DeleteAssetInformationThumbnail(IResource defaultThumbnail)
+        {
+            if (_openPackage == null)
+                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+
+            if (!string.IsNullOrEmpty(defaultThumbnail.Path))
+            {
+                var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
+                _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+
             }
         }
     }

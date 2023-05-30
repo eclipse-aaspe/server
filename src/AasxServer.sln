@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Lib.V3", "IO.Swa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasCore.Aas3_0", "AasCore.Aas3_0\AasCore.Aas3_0.csproj", "{02E9FAE5-A358-4D44-82FD-F864E868B135}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataTransferObjects", "DataTransferObjects\DataTransferObjects.csproj", "{136D762B-33E1-4350-B2A3-00FE0D170CAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -182,6 +184,24 @@ Global
 		{02E9FAE5-A358-4D44-82FD-F864E868B135}.Release|x64.Build.0 = Release|Any CPU
 		{02E9FAE5-A358-4D44-82FD-F864E868B135}.Release|x86.ActiveCfg = Release|Any CPU
 		{02E9FAE5-A358-4D44-82FD-F864E868B135}.Release|x86.Build.0 = Release|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Debug|x64.Build.0 = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Debug|x86.Build.0 = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.DebugSlow|x64.Build.0 = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.DebugSlow|x86.Build.0 = Debug|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x64.ActiveCfg = Release|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x64.Build.0 = Release|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x86.ActiveCfg = Release|Any CPU
+		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

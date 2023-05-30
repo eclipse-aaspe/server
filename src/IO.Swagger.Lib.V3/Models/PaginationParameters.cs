@@ -1,41 +1,66 @@
-﻿namespace IO.Swagger.Lib.V3.Models
+﻿using IO.Swagger.Lib.V3.Exceptions;
+using System;
+
+namespace IO.Swagger.Lib.V3.Models
 {
     public class PaginationParameters
     {
         const int MAX_RESULT_SIZE = 100;
 
-        /**
-         * The result set should start at this value.
-         */
-        public int From { get; set; } = 0;
 
-        private int _size = MAX_RESULT_SIZE;
 
-        public PaginationParameters(int? from, int? size)
+        private int _cursor = 0;
+
+        private int _limit = MAX_RESULT_SIZE;
+
+        public PaginationParameters(string? cursor, int? limit)
         {
-            if (from != null)
+            if (cursor.Equals(String.Empty))
             {
-                From = from.Value;
+                throw new EmptyCursorException();
+            }
+            else if (!string.IsNullOrEmpty(cursor))
+            {
+                int.TryParse(cursor, out _cursor);
+                Cursor = _cursor;
             }
 
-            if (size != null)
+            if (limit != null)
             {
-                Size = size.Value;
+                Limit = limit.Value;
             }
         }
 
         /**
-        * The maximum size of the result set.
+        * The maximum size of the result list.
         */
-        public int Size
+        public int Limit
         {
             get
             {
-                return _size;
+                return _limit;
             }
             set
             {
-                _size = (value > MAX_RESULT_SIZE) ? MAX_RESULT_SIZE : value;
+                //_limit = (value > MAX_RESULT_SIZE) ? MAX_RESULT_SIZE : value;
+                _limit = value;
+            }
+        }
+
+        /**
+         * The position from which to resume a result listing.
+         */
+        public int Cursor
+        {
+            get
+            {
+                return _cursor;
+            }
+            set
+            {
+                //TODO:jtikekar check with Andreas about Base64Encoding. May need to decode
+
+                _cursor = value;
             }
         }
 

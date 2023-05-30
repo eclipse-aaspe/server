@@ -24,14 +24,14 @@ namespace IO.Swagger.Models
     /// 
     /// </summary>
     [DataContract]
-    public partial class Result : IEquatable<Result>
+    public partial class GetAssetAdministrationShellsResult : PagedResult, IEquatable<GetAssetAdministrationShellsResult>
     { 
         /// <summary>
-        /// Gets or Sets Messages
+        /// Gets or Sets Result
         /// </summary>
 
-        [DataMember(Name="messages")]
-        public List<Message> Messages { get; set; }
+        [DataMember(Name="result")]
+        public List<AssetAdministrationShell> Result { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -40,8 +40,8 @@ namespace IO.Swagger.Models
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("class Result {\n");
-            sb.Append("  Messages: ").Append(Messages).Append("\n");
+            sb.Append("class GetAssetAdministrationShellsResult {\n");
+            sb.Append("  Result: ").Append(Result).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -50,7 +50,7 @@ namespace IO.Swagger.Models
         /// Returns the JSON string presentation of the object
         /// </summary>
         /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
+        public  new string ToJson()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
@@ -64,24 +64,24 @@ namespace IO.Swagger.Models
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((Result)obj);
+            return obj.GetType() == GetType() && Equals((GetAssetAdministrationShellsResult)obj);
         }
 
         /// <summary>
-        /// Returns true if Result instances are equal
+        /// Returns true if GetAssetAdministrationShellsResult instances are equal
         /// </summary>
-        /// <param name="other">Instance of Result to be compared</param>
+        /// <param name="other">Instance of GetAssetAdministrationShellsResult to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Result other)
+        public bool Equals(GetAssetAdministrationShellsResult other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
             return 
                 (
-                    Messages == other.Messages ||
-                    Messages != null &&
-                    Messages.SequenceEqual(other.Messages)
+                    Result == other.Result ||
+                    Result != null &&
+                    Result.SequenceEqual(other.Result)
                 );
         }
 
@@ -95,8 +95,8 @@ namespace IO.Swagger.Models
             {
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
-                    if (Messages != null)
-                    hashCode = hashCode * 59 + Messages.GetHashCode();
+                    if (Result != null)
+                    hashCode = hashCode * 59 + Result.GetHashCode();
                 return hashCode;
             }
         }
@@ -104,12 +104,12 @@ namespace IO.Swagger.Models
         #region Operators
         #pragma warning disable 1591
 
-        public static bool operator ==(Result left, Result right)
+        public static bool operator ==(GetAssetAdministrationShellsResult left, GetAssetAdministrationShellsResult right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(Result left, Result right)
+        public static bool operator !=(GetAssetAdministrationShellsResult left, GetAssetAdministrationShellsResult right)
         {
             return !Equals(left, right);
         }
