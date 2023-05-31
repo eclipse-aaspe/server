@@ -88,6 +88,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.MessageType = Message.MessageTypeEnum.ErrorEnum;
                         break;
                     }
+                case InvalidUpdateResourceException:
                 case EmptyCursorException:
                 case OperationNotSupported:
                 case InvalidNumberOfChildElementsException:

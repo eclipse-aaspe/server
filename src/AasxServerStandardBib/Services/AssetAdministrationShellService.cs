@@ -512,6 +512,20 @@ namespace AasxServerStandardBib.Services
             }
         }
 
+        public void UpdateSubmodelById(string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                _submodelService.UpdateSubmodelById(submodelIdentifier, newSubmodel);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
         #endregion
     }
 }

@@ -3,6 +3,7 @@ using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using AasxServerStandardBib.Transformers;
 using Extensions;
 using System;
 using System.Collections.Generic;
@@ -524,6 +525,18 @@ namespace AasxServerStandardBib.Services
             var output = _packageEnvService.CreateSubmodel(newSubmodel);
 
             return output;
+        }
+
+        public void UpdateSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
+        {
+            var submodel = _packageEnvService.GetSubmodelById(submodelIdentifier, out _);
+
+            //Verify the body first
+            _verificationService.VerifyRequestBody(newSubmodel);
+
+            Update.ToUpdateObject(submodel, newSubmodel);
+
+            Program.signalNewData(1);
         }
     }
 }

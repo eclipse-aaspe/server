@@ -31,6 +31,7 @@ namespace AasxServerStandardBib.Interfaces
         void ReplaceSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
         void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);
         void UpdateAssetInformation(AssetInformation body, string aasIdentifier);
+        void UpdateSubmodelById(string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel);
         void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream stream);
     }
 }
