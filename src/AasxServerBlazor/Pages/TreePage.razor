@@ -328,7 +328,8 @@
                         p = (p as ISubmodelElement).Parent;
                     }
                     var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
-                    path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
+                    // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
+                    path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                     <span style="color:white;background-color:blue;">URL:</span>
                     <span>&nbsp</span>
                     <a href="@path" target="_blank">@path</a><br>
@@ -1223,10 +1224,12 @@
                     }
 
                     string currentUrl = NavigationManager.Uri;
-                    //return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
-                    //"/submodel/submodel-elements/" + idShortPath + "/attachment";
-                    return currentUrl + "submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
-                    "/submodelelements/" + idShortPath + "/attachment";
+                    // return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
+                    // "/submodel/submodel-elements/" + idShortPath + "/attachment";
+                    return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
+                    "/submodel-elements/" + idShortPath + "/attachment";
+                    // return currentUrl + "submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
+                    // "/submodelelements/" + idShortPath + "/attachment";
 
                 }
             }

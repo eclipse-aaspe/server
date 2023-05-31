@@ -1500,28 +1500,13 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelAasRepository([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received request to update the submodel with id {decodedAasIdentifier} from the AAS with id {decodedAasIdentifier}");
+            _aasService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, body);
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
-
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            return NoContent();
         }
 
         /// <summary>
