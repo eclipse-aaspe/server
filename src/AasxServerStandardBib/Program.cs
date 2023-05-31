@@ -1358,6 +1358,13 @@ namespace AasxServer
 
         public static void Main(string[] args)
         {
+            Console.WriteLine("args:");
+            foreach (var a in args)
+            {
+                Console.WriteLine(a);
+            }
+            Console.WriteLine();
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 // AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
