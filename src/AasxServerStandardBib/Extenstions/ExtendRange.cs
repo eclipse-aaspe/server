@@ -28,7 +28,7 @@ namespace Extenstions
             }
             else
             {
-                Console.WriteLine($"ValueType {sourceRange.valueType} not found for property {range.IdShort}");
+                // Console.WriteLine($"ValueType {sourceRange.valueType} not found for property {range.IdShort}");
             }
 
             range.Max = sourceRange.max;

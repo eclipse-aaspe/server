@@ -35,7 +35,7 @@ namespace Extenstions
                     }
                     else
                     {
-                        Console.WriteLine($"KeyType value not found for property {property.IdShort}");
+                        // Console.WriteLine($"KeyType value not found for property {property.IdShort}");
                     }
                 }
                 property.ValueId = new Reference(ReferenceTypes.GlobalReference, keyList);

@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -287,6 +289,7 @@ namespace AdminShellNS
 
         private AasCore.Aas3_0_RC02.Environment _aasEnv = new AasCore.Aas3_0_RC02.Environment(new List<AssetAdministrationShell>(), new List<Submodel>(), new List<ConceptDescription>(), new List<DataSpecification>());
         private Package _openPackage = null;
+        private string _envXml = null;
         private readonly ListOfAasSupplementaryFile _pendingFilesToAdd = new ListOfAasSupplementaryFile();
         private readonly ListOfAasSupplementaryFile _pendingFilesToDelete = new ListOfAasSupplementaryFile();
 
@@ -298,19 +301,26 @@ namespace AdminShellNS
         {
             return write;
         }
+
         public void setWrite(bool status)
         {
             write = status;
         }
+
+        public string getEnvXml()
+        {   
+            return _envXml;
+        }
+
         public AdminShellPackageEnv(AasCore.Aas3_0_RC02.Environment env)
         {
             if (env != null)
                 _aasEnv = env;
         }
 
-        public AdminShellPackageEnv(string fn, bool indirectLoadSave = false)
+        public AdminShellPackageEnv(string fn, bool indirectLoadSave = false, bool loadXml = false)
         {
-            Load(fn, indirectLoadSave);
+            Load(fn, indirectLoadSave, loadXml);
             SetTempFn(fn);
         }
 
@@ -391,10 +401,11 @@ namespace AdminShellNS
         }
 
         /// <remarks><paramref name="fn"/> is unequal <paramref name="fnToLoad"/> if indirectLoadSave is used.</remarks>
-        private static (AasCore.Aas3_0_RC02.Environment, Package) LoadPackageAasx(string fn, string fnToLoad)
+        private static (AasCore.Aas3_0_RC02.Environment, Package, String) LoadPackageAasx(string fn, string fnToLoad, bool loadXml = false)
         {
             AasCore.Aas3_0_RC02.Environment aasEnv;
             Package openPackage = null;
+            string envXml = null;
 
             Package package;
             try
@@ -470,6 +481,15 @@ namespace AdminShellNS
 
                             if (aasEnv == null)
                                 throw new Exception("Type error for XML file!");
+
+                            if (loadXml)
+                            {
+                                s.Position = 0;
+                                using (StreamReader reader = new StreamReader(s, Encoding.UTF8))
+                                {
+                                    envXml = reader.ReadToEnd();
+                                }
+                            }
                         }
                     }
                 }
@@ -500,10 +520,10 @@ namespace AdminShellNS
                 }
             }
 
-            return (aasEnv, openPackage);
+            return (aasEnv, openPackage, envXml);
         }
 
-        public void Load(string fn, bool indirectLoadSave = false)
+        public void Load(string fn, bool indirectLoadSave = false, bool loadXml = false)
         {
             _fn = fn;
             _openPackage?.Close();
@@ -544,7 +564,7 @@ namespace AdminShellNS
                         }
 
                         // load package AASX
-                        (_aasEnv, _openPackage) = LoadPackageAasx(fn, fnToLoad);
+                        (_aasEnv, _openPackage, _envXml) = LoadPackageAasx(fn, fnToLoad, loadXml);
                         break;
                     }
                 default:

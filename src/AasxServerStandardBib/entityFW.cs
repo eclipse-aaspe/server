@@ -37,6 +37,7 @@ namespace AasxServer
         public string AssetKind { get; set; }
         public List<SubmodelSet> Submodels { get; } = new();
     }
+    
     public class SubmodelSet
     {
         public int Id { get; set; }
@@ -45,5 +46,7 @@ namespace AasxServer
         public string Aasx { get; set; }
         public string Idshort { get; set; }
         public string AasId { get; set; }
+        public string AllSemanticId { get; set; }
+        public string AllIdshort { get; set; }
     }
 }
