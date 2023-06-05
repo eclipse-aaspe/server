@@ -58,6 +58,12 @@ namespace AasxServerStandardBib.Migrations
                     b.Property<string>("Aasx")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AllIdshort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AllSemanticId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Idshort")
                         .HasColumnType("TEXT");
 

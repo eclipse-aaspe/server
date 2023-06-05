@@ -63,7 +63,7 @@ namespace Extensions
             }
             else
             {
-                Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
+                // Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
             }
             property.Value = sourceProperty.value;
             if (sourceProperty.valueId != null)
@@ -78,7 +78,7 @@ namespace Extensions
                     }
                     else
                     {
-                        Console.WriteLine($"KeyType value {sourceProperty.valueType} not found for property {property.IdShort}");
+                        // Console.WriteLine($"KeyType value {sourceProperty.valueType} not found for property {property.IdShort}");
                     }
                 }
                 property.ValueId = new Reference(ReferenceTypes.ExternalReference, keyList);
@@ -101,7 +101,7 @@ namespace Extensions
             }
             else
             {
-                Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
+                // Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
             }
             property.Value = sourceProperty.value;
             if (sourceProperty.valueId != null)
@@ -117,7 +117,7 @@ namespace Extensions
                     }
                     else
                     {
-                        Console.WriteLine($"KeyType value {sourceProperty.valueType} not found for property {property.IdShort}");
+                        // Console.WriteLine($"KeyType value {sourceProperty.valueType} not found for property {property.IdShort}");
                     }
                 }
                 property.ValueId = new Reference(ReferenceTypes.ExternalReference, keyList);
