@@ -132,8 +132,9 @@ namespace IO.Swagger.Registry.Controllers
                 else
                 {
                     // from database
+                    AasContext db = new AasContext();
                     var aasList = new List<AssetAdministrationShellDescriptor>();
-                    foreach (var aasDB in Program.db.AasSets)
+                    foreach (var aasDB in db.AasSets)
                     {
                         if (assetList.Count == 0 || assetList.Contains(Base64UrlEncoder.Encode(aasDB.AssetId)))
                             aasList.Add(createAasDescriptorFromDb(aasDB));
@@ -211,7 +212,8 @@ namespace IO.Swagger.Registry.Controllers
                 else
                 {
                     // from database
-                    foreach (var aasDB in Program.db.AasSets)
+                    AasContext db = new AasContext();
+                    foreach (var aasDB in db.AasSets)
                     {
                         if (assetList.Contains(aasDB.AssetId))
                             aasList.Add(aasDB.AasId);
@@ -386,8 +388,9 @@ namespace IO.Swagger.Registry.Controllers
                 else
                 {
                     // from database
+                    AasContext db = new AasContext();
                     var aasList = new List<AssetAdministrationShellDescriptor>();
-                    foreach (var aasDB in Program.db.AasSets)
+                    foreach (var aasDB in db.AasSets)
                     {
                         if (Base64UrlEncoder.Encode(aasDB.AasId) == aasIdentifier)
                             aasList.Add(createAasDescriptorFromDb(aasDB));
@@ -452,7 +455,7 @@ namespace IO.Swagger.Registry.Controllers
 
         public static AssetAdministrationShellDescriptor createAasDescriptorFromDb(AasSet aasDB)
         {
-            var db = Program.db;
+            AasContext db = new AasContext();
 
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
             //string asset = aas.assetRef?[0].Value;
@@ -485,9 +488,9 @@ namespace IO.Swagger.Registry.Controllers
             kvp.SubjectId = gr;
             ad.SpecificAssetIds = new List<IdentifierKeyValuePair>();
             ad.SpecificAssetIds.Add(kvp);
-            //
+
             // Submodels
-            var submodelDBList = db.SubmodelSets.Where(s => s.AasId == aasDB.AasId);
+            var submodelDBList = db.SubmodelSets.Where(s => s.AasNum == aasDB.AasNum);
             if (submodelDBList.Any())
             {
                 ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
