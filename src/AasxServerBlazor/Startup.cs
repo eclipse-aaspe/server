@@ -1,4 +1,5 @@
-﻿using AasxServerBlazor.Data;
+﻿using AasxServer;
+using AasxServerBlazor.Data;
 using AasxServerStandardBib.Extensions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
@@ -97,6 +98,11 @@ namespace AasxServerBlazor
             services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
             services.AddTransient<ISecurityService, SecurityService>();
+
+            // Add GraphQL services
+            services
+                .AddGraphQLServer()
+                .AddQueryType<Query>();
 
             // Add framework services.
             services
@@ -222,6 +228,7 @@ namespace AasxServerBlazor
                 });
                 endpoints.MapFallbackToPage("/_Host");
                 endpoints.MapControllers();
+                endpoints.MapGraphQL();
             });
 
         }
