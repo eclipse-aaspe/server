@@ -112,53 +112,61 @@ namespace AasxServer
     {
         public AASXSet GetAASXRaw(int AASXnum)
         {
-            AasContext db = new AasContext();
-
-            var aasx = db.AASXSets.Where(aasx => aasx.AASXNum == AASXnum).Single();
-            return aasx;
+            using (AasContext db = new AasContext())
+            {
+                var aasx = db.AASXSets.Where(aasx => aasx.AASXNum == AASXnum).Single();
+                return aasx;
+            }
         }
         public AasSet GetAasRaw(int aasnum)
         {
-            AasContext db = new AasContext();
-
-            var aas = db.AasSets.Where(aas => aas.AasNum == aasnum).Single();
-            return aas;
+            using (AasContext db = new AasContext())
+            {
+                var aas = db.AasSets.Where(aas => aas.AasNum == aasnum).Single();
+                return aas;
+            }
         }
         public SubmodelSet GetSubmodelRaw(int submodelnum)
         {
-            AasContext db = new AasContext();
-
-            var sub = db.SubmodelSets.Where(s => s.SubmodelNum == submodelnum).Single();
-            return sub;
+            using (AasContext db = new AasContext())
+            {
+                var sub = db.SubmodelSets.Where(s => s.SubmodelNum == submodelnum).Single();
+                return sub;
+            }
         }
         public SMESet GetSMERaw(int SMEnum)
         {
-            AasContext db = new AasContext();
-
-            var sme = db.SMESets.Where(s => s.SMENum == SMEnum).Single();
-            return sme;
+            using (AasContext db = new AasContext())
+            {
+                var sme = db.SMESets.Where(s => s.SMENum == SMEnum).Single();
+                return sme;
+            }
         }
         public List<SMESet> GetSMEListRaw(int submodelnum)
         {
-            AasContext db = new AasContext();
-
-            var list = db.SMESets.Where(s => s.SubmodelNum == submodelnum).ToList();
-            return list;
+            using (AasContext db = new AasContext())
+            {
+                var list = db.SMESets.Where(s => s.SubmodelNum == submodelnum).ToList();
+                return list;
+            }
         }
         public List<SubmodelResult> SearchSubmodels(string semanticId)
         {
-            AasContext db = new AasContext();
-
-            var subList = db.SubmodelSets.Where(s => s.SemanticId == semanticId).ToList();
             List<SubmodelResult> list = new List<SubmodelResult>();
-            foreach (var submodel in subList)
+
+            using (AasContext db = new AasContext())
             {
-                var sr = new SubmodelResult();
-                sr.submodelId= submodel.SubmodelId;
-                string sub64 = Base64UrlEncoder.Encode(sr.submodelId);
-                sr.url = Program.externalBlazor + "/submodels/" + sub64;
-                list.Add(sr);
+                var subList = db.SubmodelSets.Where(s => s.SemanticId == semanticId).ToList();
+                foreach (var submodel in subList)
+                {
+                    var sr = new SubmodelResult();
+                    sr.submodelId = submodel.SubmodelId;
+                    string sub64 = Base64UrlEncoder.Encode(sr.submodelId);
+                    sr.url = Program.externalBlazor + "/submodels/" + sub64;
+                    list.Add(sr);
+                }
             }
+
             return list;
         }
 
@@ -221,65 +229,67 @@ namespace AasxServer
         }
         public List<SmeResult> SearchSMEs(string semanticId = "", string equal = "", string lower = "", string upper = "")
         {
-            AasContext db = new AasContext();
             List<SmeResult> result = new List<SmeResult>();
             List<SMESet> list = new List<SMESet>();
 
-            if (semanticId == "" && equal == "" && lower == "" && upper == "")
-                return result;
-
-            if (semanticId != "")
+            using (AasContext db = new AasContext())
             {
-                list = db.SMESets.Where(s => s.SemanticId == semanticId).ToList();
-                if (equal != "")
+                if (semanticId == "" && equal == "" && lower == "" && upper == "")
+                    return result;
+
+                if (semanticId != "")
                 {
-                    var listEqual = list.Where(s => s.Value == equal).ToList();
-                    list = listEqual;
+                    list = db.SMESets.Where(s => s.SemanticId == semanticId).ToList();
+                    if (equal != "")
+                    {
+                        var listEqual = list.Where(s => s.Value == equal).ToList();
+                        list = listEqual;
+                    }
+                    else
+                    {
+                        if (lower != "" && upper != "")
+                        {
+                            var listLowerUpper = list.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
+                            list = listLowerUpper;
+                        }
+                    }
                 }
                 else
                 {
-                    if (lower != "" && upper != "")
+                    if (equal != "")
                     {
-                        var listLowerUpper = list.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                        list = listLowerUpper;
+                        var listEqual = db.SMESets.Where(s => s.Value == equal).ToList();
+                        list = listEqual;
+                    }
+                    else
+                    {
+                        if (lower != "" && upper != "")
+                        {
+                            var listLowerUpper = db.SMESets.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
+                            list = listLowerUpper;
+                        }
                     }
                 }
-            }
-            else
-            {
-                if (equal != "")
-                {
-                    var listEqual = db.SMESets.Where(s => s.Value == equal).ToList();
-                    list = listEqual;
-                }
-                else
-                {
-                    if (lower != "" && upper != "")
-                    {
-                        var listLowerUpper = db.SMESets.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                        list = listLowerUpper;
-                    }
-                }
-            }
 
-            foreach (var l in list)
-            {
-                SmeResult r = new SmeResult();
-                var submodelSet = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).Single();
-                r.submodelId = submodelSet.SubmodelId;
-                r.value = l.Value;
-                string path = l.Idshort;
-                long pnum = l.ParentSMENum;
-                while (pnum != 0)
+                foreach (var l in list)
                 {
-                    var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                    path = smeDB.Idshort + "." + path;
-                    pnum = smeDB.ParentSMENum;
+                    SmeResult r = new SmeResult();
+                    var submodelSet = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).Single();
+                    r.submodelId = submodelSet.SubmodelId;
+                    r.value = l.Value;
+                    string path = l.Idshort;
+                    long pnum = l.ParentSMENum;
+                    while (pnum != 0)
+                    {
+                        var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
+                        path = smeDB.Idshort + "." + path;
+                        pnum = smeDB.ParentSMENum;
+                    }
+                    r.idShortPath = path;
+                    string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                    r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
+                    result.Add(r);
                 }
-                r.idShortPath = path;
-                string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
-                result.Add(r);
             }
 
             return result;
@@ -598,26 +608,28 @@ namespace AasxServer
         public DBRead() { }
         static public Submodel getSubmodel(string submodelId)
         {
-            AasContext db = new AasContext();
-            var subDB = db.SubmodelSets
-                .OrderBy(s => s.SubmodelNum)
-                .Where(s => s.SubmodelId == submodelId)
-                .Single();
-
-            if (subDB != null)
+            using (AasContext db = new AasContext())
             {
-                var SMEList = db.SMESets
-                        .OrderBy(sme => sme.SMENum)
-                        .Where(sme => sme.SubmodelNum == subDB.SubmodelNum)
-                        .ToList();
+                var subDB = db.SubmodelSets
+                    .OrderBy(s => s.SubmodelNum)
+                    .Where(s => s.SubmodelId == submodelId)
+                    .Single();
 
-                Submodel submodel = new Submodel(submodelId);
-                submodel.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                    new List<Key>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
+                if (subDB != null)
+                {
+                    var SMEList = db.SMESets
+                            .OrderBy(sme => sme.SMENum)
+                            .Where(sme => sme.SubmodelNum == subDB.SubmodelNum)
+                            .ToList();
 
-                loadSME(submodel, null, null, SMEList, 0);
+                    Submodel submodel = new Submodel(submodelId);
+                    submodel.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
+                        new List<Key>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
 
-                return submodel;
+                    loadSME(submodel, null, null, SMEList, 0);
+
+                    return submodel;
+                }
             }
 
             return null;
