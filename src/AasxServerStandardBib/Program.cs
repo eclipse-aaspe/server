@@ -647,7 +647,7 @@ namespace AasxServer
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
 
-        private static int Run(CommandLineArguments a)
+        private static async Task<int> Run(CommandLineArguments a)
         {
 
             // Wait for Debugger
@@ -958,6 +958,10 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
+                List<Task> saveTasks = new List<Task>();
+                int maxTasks = 5;
+                int taskIndex = 0;
+
                 int fi = 0;
                 while (fi < fileNames.Length)
                 {
@@ -1069,7 +1073,35 @@ namespace AasxServer
                                         }
                                     }
 
-                                    db.SaveChanges();
+                                    Task t = db.SaveChangesAsync();
+                                    if (saveTasks.Count == maxTasks)
+                                    {
+                                        // search for completed task
+                                        int i = 0;
+                                        while (!saveTasks[i].IsCompleted && i < maxTasks)
+                                        {
+                                            i++;
+                                        }
+                                        if (i < maxTasks)
+                                        {
+                                            taskIndex = i;
+                                        }
+                                        else
+                                        {
+                                            await saveTasks[taskIndex];
+                                        }
+                                    }
+                                    if (taskIndex <= saveTasks.Count)
+                                    {
+                                        saveTasks.Add(t);
+                                    }
+                                    else
+                                    {
+                                        saveTasks[taskIndex] = t;
+                                    }
+                                    taskIndex++;
+                                    if (taskIndex >= maxTasks)
+                                        taskIndex= 0;
                                 }
                             }
                         }
