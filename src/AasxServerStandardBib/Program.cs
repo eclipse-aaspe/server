@@ -36,6 +36,7 @@ using System.Timers;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 using Formatting = Newtonsoft.Json.Formatting;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -319,49 +320,51 @@ namespace AasxServer
                     oldest = 0;
             }
 
-            AasContext db = new AasContext();
-            var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
-            if (aasDBList.Any())
+            using (AasContext db = new AasContext())
             {
-                lock (Program.changeAasxFile)
+                var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
+                if (aasDBList.Any())
                 {
-                    if (env[i] != null)
+                    lock (Program.changeAasxFile)
                     {
-                        Console.WriteLine("UNLOAD: " + envFileName[i]);
-                        if (env[i].getWrite())
+                        if (env[i] != null)
                         {
-                            saveEnv(i);
-                            env[i].setWrite(false);
+                            Console.WriteLine("UNLOAD: " + envFileName[i]);
+                            if (env[i].getWrite())
+                            {
+                                saveEnv(i);
+                                env[i].setWrite(false);
+                            }
+                            env[i].Close();
                         }
-                        env[i].Close();
-                    }
 
-                    var aasDB = aasDBList.First();
-                    long aasxNum = aasDB.AASXNum;
-                    var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                    var aasxDB = aasxDBList.First();
-                    string fn = aasxDB.AASX;
-                    envFileName[i] = fn;
+                        var aasDB = aasDBList.First();
+                        long aasxNum = aasDB.AASXNum;
+                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
+                        var aasxDB = aasxDBList.First();
+                        string fn = aasxDB.AASX;
+                        envFileName[i] = fn;
 
-                    env[i] = new AdminShellPackageEnv(fn);
-                    Console.WriteLine("LOAD: " + fn);
-                    DateTime timeStamp = DateTime.Now;
-                    foreach (var submodel in env[i].AasEnv.Submodels)
-                    {
-                        submodel.TimeStampCreate = timeStamp;
-                        submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents(timeStamp);
-                    }
-                    var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
-                    if (aas.Any())
-                    {
-                        var a = aas.First();
-                        a.TimeStampCreate = timeStamp;
-                        a.SetTimeStamp(timeStamp);
-                        output = a;
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
+                        env[i] = new AdminShellPackageEnv(fn);
+                        Console.WriteLine("LOAD: " + fn);
+                        DateTime timeStamp = DateTime.Now;
+                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        {
+                            submodel.TimeStampCreate = timeStamp;
+                            submodel.SetTimeStamp(timeStamp);
+                            submodel.SetAllParents(timeStamp);
+                        }
+                        var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
+                        if (aas.Any())
+                        {
+                            var a = aas.First();
+                            a.TimeStampCreate = timeStamp;
+                            a.SetTimeStamp(timeStamp);
+                            output = a;
+                            packageIndex = i;
+                            AasxServer.Program.signalNewData(2);
+                            return true;
+                        }
                     }
                 }
             }
@@ -401,50 +404,52 @@ namespace AasxServer
                     oldest = 0;
             }
 
-            AasContext db = new AasContext();
-            var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
-            if (submodelDBList.Any())
+            using (AasContext db = new AasContext())
             {
-                lock (Program.changeAasxFile)
+                var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
+                if (submodelDBList.Any())
                 {
-                    if (env[i] != null)
+                    lock (Program.changeAasxFile)
                     {
-                        Console.WriteLine("UNLOAD: " + envFileName[i]);
-                        if (env[i].getWrite())
+                        if (env[i] != null)
                         {
-                            saveEnv(i);
-                            env[i].setWrite(false);
+                            Console.WriteLine("UNLOAD: " + envFileName[i]);
+                            if (env[i].getWrite())
+                            {
+                                saveEnv(i);
+                                env[i].setWrite(false);
+                            }
+                            env[i].Close();
                         }
-                        env[i].Close();
-                    }
 
-                    var submodelDB = submodelDBList.First();
-                    long aasxNum = submodelDB.AASXNum;
-                    var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                    var aasxDB = aasxDBList.First();
-                    string fn = aasxDB.AASX;
-                    envFileName[i] = fn;
-                    env[i] = new AdminShellPackageEnv(fn);
-                    Console.WriteLine("LOAD: " + fn);
+                        var submodelDB = submodelDBList.First();
+                        long aasxNum = submodelDB.AASXNum;
+                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
+                        var aasxDB = aasxDBList.First();
+                        string fn = aasxDB.AASX;
+                        envFileName[i] = fn;
+                        env[i] = new AdminShellPackageEnv(fn);
+                        Console.WriteLine("LOAD: " + fn);
 
-                    DateTime timeStamp = DateTime.Now;
-                    var a = env[i].AasEnv.AssetAdministrationShells[0];
-                    a.TimeStampCreate = timeStamp;
-                    a.SetTimeStamp(timeStamp);
-                    foreach (var submodel in env[i].AasEnv.Submodels)
-                    {
-                        submodel.TimeStampCreate = timeStamp;
-                        submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents(timeStamp);
-                    }
+                        DateTime timeStamp = DateTime.Now;
+                        var a = env[i].AasEnv.AssetAdministrationShells[0];
+                        a.TimeStampCreate = timeStamp;
+                        a.SetTimeStamp(timeStamp);
+                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        {
+                            submodel.TimeStampCreate = timeStamp;
+                            submodel.SetTimeStamp(timeStamp);
+                            submodel.SetAllParents(timeStamp);
+                        }
 
-                    var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                    if (submodels.Any())
-                    {
-                        output = submodels.First();
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
+                        var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                        if (submodels.Any())
+                        {
+                            output = submodels.First();
+                            packageIndex = i;
+                            AasxServer.Program.signalNewData(2);
+                            return true;
+                        }
                     }
                 }
             }
@@ -607,7 +612,6 @@ namespace AasxServer
 
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
-        // public static AasContext db = new AasContext();
         public static bool withDb = true;
         public static int startIndex = 0;
         private class CommandLineArguments
@@ -913,34 +917,32 @@ namespace AasxServer
             int count = 0;
 
             // Clear DB
-            AasContext db = new AasContext();
-            DbConfigSet dbConfig = null;
             if (withDb && startIndex == 0)
             {
-                var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
-                task.Wait();
-                task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
-                task.Wait();
-                task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-                task.Wait();
-                task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
-                task.Wait();
-                task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
-                task.Wait();
-                dbConfig = new DbConfigSet
+                using (AasContext db = new AasContext())
                 {
-                    Id = 0,
-                    AasCount = 0,
-                    SubmodelCount = 0,
-                    AASXCount = 0,
-                    SMECount = 0
-                };
-                db.Add(dbConfig);
-            }
-            if (withDb && startIndex != 0)
-            {
-                var configDBList = db.DbConfigSets.Where(d => true);
-                dbConfig = configDBList.FirstOrDefault();
+                    DbConfigSet dbConfig = null;
+                    var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
+                    task.Wait();
+                    dbConfig = new DbConfigSet
+                    {
+                        Id = 0,
+                        AasCount = 0,
+                        SubmodelCount = 0,
+                        AASXCount = 0,
+                        SMECount = 0
+                    };
+                    db.Add(dbConfig);
+                    db.SaveChanges();
+                }
             }
 
             string[] fileNames = null;
@@ -993,72 +995,80 @@ namespace AasxServer
 
                             using (var asp = new AdminShellPackageEnv(fn, false, true))
                             {
-                                long aasxNum = ++dbConfig.AASXCount;
-                                var aasxDB = new AASXSet
+                                using (AasContext db = new AasContext())
                                 {
-                                    AASXNum = aasxNum,
-                                    AASX = fn
-                                };
-                                db.Add(aasxDB);
+                                    var configDBList = db.DbConfigSets.Where(d => true);
+                                    var dbConfig = configDBList.FirstOrDefault();
 
-                                var aas = asp.AasEnv.AssetAdministrationShells[0];
-                                var aasId = aas.Id;
-                                var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
-
-                                // Check security
-                                if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                                {
-                                    AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                                    AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                                }
-                                else
-                                {
-                                    if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                                    long aasxNum = ++dbConfig.AASXCount;
+                                    var aasxDB = new AASXSet
                                     {
-                                        long aasNum = ++dbConfig.AasCount;
-                                        var aasDB = new AasSet
-                                        {
-                                            AasNum = aasNum,
-                                            AasId = aasId,
-                                            AssetId = assetId,
-                                            AASXNum = aasxNum,
-                                            Idshort = aas.IdShort,
-                                            AssetKind = aas.AssetInformation.AssetKind.ToString()
-                                        };
-                                        db.Add(aasDB);
+                                        AASXNum = aasxNum,
+                                        AASX = fn
+                                    };
+                                    db.Add(aasxDB);
 
-                                        // Iterate submodels
-                                        if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                    var aas = asp.AasEnv.AssetAdministrationShells[0];
+                                    var aasId = aas.Id;
+                                    var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
+
+                                    // Check security
+                                    if (aas.IdShort.ToLower().Contains("globalsecurity"))
+                                    {
+                                        AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                                        AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                                    }
+                                    else
+                                    {
+                                        if (aasId != null && aasId != "" && assetId != null && assetId != "")
                                         {
-                                            foreach (var smr in aas.Submodels)
+                                            long aasNum = ++dbConfig.AasCount;
+                                            var aasDB = new AasSet
                                             {
-                                                var sm = asp.AasEnv.FindSubmodel(smr);
-                                                if (sm != null)
+                                                AasNum = aasNum,
+                                                AasId = aasId,
+                                                AssetId = assetId,
+                                                AASXNum = aasxNum,
+                                                Idshort = aas.IdShort,
+                                                AssetKind = aas.AssetInformation.AssetKind.ToString()
+                                            };
+                                            db.Add(aasDB);
+
+                                            // Iterate submodels
+                                            if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                            {
+                                                foreach (var smr in aas.Submodels)
                                                 {
-                                                    var semanticId = sm.SemanticId.GetAsIdentifier();
-                                                    if (semanticId == null)
-                                                        semanticId = "";
-
-                                                    long submodelNum = ++dbConfig.SubmodelCount;
-
-                                                    var submodelDB = new SubmodelSet
+                                                    var sm = asp.AasEnv.FindSubmodel(smr);
+                                                    if (sm != null)
                                                     {
-                                                        SubmodelNum = submodelNum,
-                                                        SubmodelId = sm.Id,
-                                                        SemanticId = semanticId,
-                                                        AASXNum = aasxNum,
-                                                        AasNum = aasNum,
-                                                        Idshort = sm.IdShort
-                                                    };
-                                                    db.Add(submodelDB);
+                                                        var semanticId = sm.SemanticId.GetAsIdentifier();
+                                                        if (semanticId == null)
+                                                            semanticId = "";
 
-                                                    VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
-                                                    v.Visit(sm);
+                                                        long submodelNum = ++dbConfig.SubmodelCount;
+
+                                                        var submodelDB = new SubmodelSet
+                                                        {
+                                                            SubmodelNum = submodelNum,
+                                                            SubmodelId = sm.Id,
+                                                            SemanticId = semanticId,
+                                                            AASXNum = aasxNum,
+                                                            AasNum = aasNum,
+                                                            Idshort = sm.IdShort
+                                                        };
+                                                        db.Add(submodelDB);
+
+                                                        VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
+                                                        v.Visit(sm);
+                                                    }
                                                 }
+                                                // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
                                             }
-                                            // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
                                         }
                                     }
+
+                                    db.SaveChanges();
                                 }
                             }
                         }
@@ -1086,10 +1096,12 @@ namespace AasxServer
                     {
                         if (fi % 500 == 0) // every 500
                         {
+                            /*
                             Console.WriteLine("DB Save Changes");
                             db.SaveChanges();
                             db.ChangeTracker.Clear();
                             System.GC.Collect();
+                            */
                         }
                     }
                     else
@@ -1099,10 +1111,12 @@ namespace AasxServer
                 }
                 if (withDb)
                 {
+                    /*
                     Console.WriteLine("DB Save Changes");
                     db.SaveChanges();
                     db.ChangeTracker.Clear();
                     System.GC.Collect();
+                    */
                 }
                 watch.Stop();
                 Console.WriteLine(fi + " AASX loaded in " + watch.ElapsedMilliseconds/1000 + "s");
