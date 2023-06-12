@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AasxServer;
 using AasxServerBlazor.Data;
 using IO.Swagger.V1RC03;
 using IO.Swagger.V1RC03.APIModels.ValueOnly;
@@ -82,6 +83,11 @@ namespace AasxServerBlazor
             services.AddTransient<IInputModifierService, InputModifierService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
             services.AddTransient<IValueOnlyDeserializerService, ValueOnlyDeserializerService>();
+
+            // Add GraphQL services
+            services
+                .AddGraphQLServer()
+                .AddQueryType<Query>();
 
             // Add framework services.
             services
@@ -225,6 +231,7 @@ namespace AasxServerBlazor
                 });
                 endpoints.MapFallbackToPage("/_Host");
                 endpoints.MapControllers();
+                endpoints.MapGraphQL();
             });
 
         }
