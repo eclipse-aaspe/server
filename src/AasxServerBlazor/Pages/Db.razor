@@ -344,6 +344,8 @@
                         @foreach (var submodelDB in nextPage)
                         {
                             count++;
+                            string submodel64 = Base64UrlEncoder.Encode((submodelDB.SubmodelId));
+                            string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
                             string shorturl = url.Substring(0, url.Length - "/submodel".Length);
                             int smeCount = db.SMESets
                                 .OrderBy(sme => sme.SMENum)
@@ -361,7 +363,8 @@
                                     <a href="@(shorturl + "/aasx?aasxnum=" + submodelDB.AASXNum + "&size=999")" target="_blank">aasx</a>
                                     <a href="@(shorturl + "/aas?aasnum=" + submodelDB.AasNum + "&size=999")" target="_blank">aas</a>
                                     <a href="@(shorturl + "/sme?submodelnum=" + submodelDB.SubmodelNum + "&size=999999")" target="_blank">sme:@(smeCount)</a>
-                                    <a href="@(shorturl + "/subjson?submodelid=" + submodelDB.SubmodelId)" target="_blank">json</a>
+                                    @*<a href="@(shorturl + "/subjson?submodelid=" + submodelDB.SubmodelId)" target="_blank">json</a>*@
+                                    <a href="@link" target="_blank">json</a>
                                 </td>
                             </tr>
                         }
@@ -377,7 +380,7 @@
                     var smDB = db.SubmodelSets.Where(s => s.SubmodelId == submodelid).Single();
                     if (smDB != null)
                     {
-                        string json = DBRead.getSubmodel(smDB.SubmodelId);
+                        string json = DBRead.getSubmodelJson(smDB.SubmodelId);
                         <span>@json</span>
                     }
                 }
