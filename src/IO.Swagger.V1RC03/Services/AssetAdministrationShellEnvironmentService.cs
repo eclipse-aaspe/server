@@ -1071,7 +1071,14 @@ namespace IO.Swagger.V1RC03.Services
                         var submodels = env.Submodels.Where(a => a.Id.Equals(submodelIdentifier));
                         if (submodels.Any())
                         {
-                            output = submodels.First();
+                            if (!Program.withDb)
+                            {
+                                output = submodels.First();
+                            }
+                            else
+                            {
+                                output = DBRead.getSubmodel(submodelIdentifier);
+                            }
                             packageIndex = Array.IndexOf(_packages, package);
                             return true;
                         }

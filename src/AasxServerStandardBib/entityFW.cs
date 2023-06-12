@@ -596,8 +596,7 @@ namespace AasxServer
     public class DBRead
     {
         public DBRead() { }
-
-        static public string getSubmodel(string submodelId)
+        static public Submodel getSubmodel(string submodelId)
         {
             AasContext db = new AasContext();
             var subDB = db.SubmodelSets
@@ -612,12 +611,24 @@ namespace AasxServer
                         .Where(sme => sme.SubmodelNum == subDB.SubmodelNum)
                         .ToList();
 
-                Submodel submodel = new Submodel (submodelId);
+                Submodel submodel = new Submodel(submodelId);
                 submodel.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
                     new List<Key>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
 
                 loadSME(submodel, null, null, SMEList, 0);
 
+                return submodel;
+            }
+
+            return null;
+        }
+
+        static public string getSubmodelJson(string submodelId)
+        {
+            var submodel = getSubmodel(submodelId);
+
+            if (submodel != null)
+            {
                 var j = Jsonization.Serialize.ToJsonObject(submodel);
                 string json = j.ToJsonString();
                 return json;
