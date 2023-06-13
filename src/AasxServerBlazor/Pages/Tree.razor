@@ -34,11 +34,19 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                             {
                                 border = "border:dotted;border-color:blue;";
                             }
-                            string detailsImage = createDetailsImage(it);
+                            bool svg = false;
+                            string detailsImage = createDetailsImage(it, out svg);
                             if (detailsImage != "")
                             {
-                                <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
-                                        src=data:image;base64,@detailsImage />
+                                if (!svg)
+                                {
+                                    <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
+                                         src=data:image;base64,@detailsImage />
+                                }
+                                else
+                                {
+                                    @*@detailsImage*@
+                                }
                             }
                         }
                     </div>       
