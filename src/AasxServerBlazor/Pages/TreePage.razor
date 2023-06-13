@@ -485,7 +485,9 @@
                     else
                     {
                         <br />
-                        @*<span>@detailsImage</span>*@
+                        <div>
+                            <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                        </div>
                     }
                 }
 
@@ -991,16 +993,12 @@
                                     {
                                         using (var m = new System.IO.MemoryStream())
                                         {
-                                            s.CopyTo(m);
-                                            if (split.Last().ToLower() != "svg")
-                                            {
-                                                return System.Convert.ToBase64String(m.ToArray());
-                                            }
-                                            else
+                                            if (split.Last().ToLower() == "svg")
                                             {
                                                 svg = true;
-                                                return System.Text.Encoding.ASCII.GetString(m.ToArray());
                                             }
+                                            s.CopyTo(m);
+                                            return System.Convert.ToBase64String(m.ToArray());
                                         }
                                     }
                                 }
