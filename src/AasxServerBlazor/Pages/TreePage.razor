@@ -472,13 +472,22 @@
             }
 
             @{
-                string detailsImage = createDetailsImage(selectedNode);
+                bool svg = false;
+                string detailsImage = createDetailsImage(selectedNode, out svg);
                 if (detailsImage != "")
                 {
-                    <br />
-                    <div>
-                        <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
-                    </div>
+                    if (!svg)
+                    {
+                        <br />
+                        <div>
+                            <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                        </div>
+                    }
+                    else
+                    {
+                        <br />
+                        @*<span>@detailsImage</span>*@
+                    }
                 }
 
                 if (selectedNode != null && (selectedNode.Tag is BasicEventElement be))
@@ -615,11 +624,11 @@
      filename,
      data
      );
-    /*
-    await js.InvokeAsync<object>(
+        /*
+        await js.InvokeAsync<object>(
         "saveAsFile",
         filename,
-        Convert.ToBase64String(data)
+    Convert.ToBase64String(data)
         );
         */
         /*
@@ -920,8 +929,9 @@
         }
     }
 
-    public static string createDetailsImage(Item item)
+    public static string createDetailsImage(Item item, out bool svg)
     {
+        svg = false;
         // System.IO.File.Delete("wwwroot/detailsImage.jpg");
 
         if (item == null)
@@ -973,6 +983,7 @@
                         case "jpg":
                         case "bmp":
                         case "png":
+                        case "svg":
                             try
                             {
                                 using (System.IO.Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value))
@@ -982,7 +993,15 @@
                                         using (var m = new System.IO.MemoryStream())
                                         {
                                             s.CopyTo(m);
-                                            return System.Convert.ToBase64String(m.ToArray());
+                                            if (split.Last().ToLower() != "svg")
+                                            {
+                                                return System.Convert.ToBase64String(m.ToArray());
+                                            }
+                                            else
+                                            {
+                                                svg = true;
+                                                return System.Text.Encoding.ASCII.GetString(m.ToArray());
+                                            }
                                         }
                                     }
                                 }
