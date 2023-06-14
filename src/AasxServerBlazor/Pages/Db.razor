@@ -379,7 +379,7 @@
                 {
                     if (submodelid != "")
                     {
-                        var smDB = db.SubmodelSets.Where(s => s.SubmodelId == submodelid).Single();
+                        var smDB = db.SubmodelSets.Where(s => s.SubmodelId == submodelid).ToList().First();
                         if (smDB != null)
                         {
                             string json = DBRead.getSubmodelJson(smDB.SubmodelId);
