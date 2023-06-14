@@ -115,7 +115,7 @@ namespace AasxServer
         {
             using (AasContext db = new AasContext())
             {
-                var aasx = db.AASXSets.Where(aasx => aasx.AASXNum == AASXnum).Single();
+                var aasx = db.AASXSets.Where(aasx => aasx.AASXNum == AASXnum).First();
                 return aasx;
             }
         }
@@ -123,7 +123,7 @@ namespace AasxServer
         {
             using (AasContext db = new AasContext())
             {
-                var aas = db.AasSets.Where(aas => aas.AasNum == aasnum).Single();
+                var aas = db.AasSets.Where(aas => aas.AasNum == aasnum).First();
                 return aas;
             }
         }
@@ -131,7 +131,7 @@ namespace AasxServer
         {
             using (AasContext db = new AasContext())
             {
-                var sub = db.SubmodelSets.Where(s => s.SubmodelNum == submodelnum).Single();
+                var sub = db.SubmodelSets.Where(s => s.SubmodelNum == submodelnum).First();
                 return sub;
             }
         }
@@ -139,7 +139,7 @@ namespace AasxServer
         {
             using (AasContext db = new AasContext())
             {
-                var sme = db.SMESets.Where(s => s.SMENum == SMEnum).Single();
+                var sme = db.SMESets.Where(s => s.SMENum == SMEnum).First();
                 return sme;
             }
         }
@@ -160,7 +160,7 @@ namespace AasxServer
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 Console.WriteLine();
                 Console.WriteLine("SearchSubmodels");
-                Console.WriteLine("Submodelss " + db.SubmodelSets.Count());
+                Console.WriteLine("Submodels " + db.SubmodelSets.Count());
 
                 var subList = db.SubmodelSets.Where(s => s.SemanticId == semanticId).ToList();
                 Console.WriteLine("Found " + subList.Count() + " Submodels in " + watch.ElapsedMilliseconds + "ms");
@@ -291,7 +291,7 @@ namespace AasxServer
                 foreach (var l in list)
                 {
                     SmeResult r = new SmeResult();
-                    var submodelSet = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).Single();
+                    var submodelSet = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
                     r.submodelId = submodelSet.SubmodelId;
                     r.value = l.Value;
                     string path = l.Idshort;
@@ -317,6 +317,7 @@ namespace AasxServer
             string equal = "", string lower = "", string upper = "")
         {
             List<SmeResult> result = new List<SmeResult>();
+            List<SMESet> list = new List<SMESet>();
 
             if ((submodelSemanticId == "" || semanticId == "") && (equal == "" || (lower == "" && upper == "")))
                 return result;
@@ -328,30 +329,70 @@ namespace AasxServer
                 Console.WriteLine("SearchSMEsInSubmodel");
                 Console.WriteLine("Submodels: " + db.SubmodelSets.Count() + " SMEs " + db.SMESets.Count());
 
-                var listJoin = db.SubmodelSets
-                    .Where(s => s.SemanticId == submodelSemanticId)
-                    .Join(db.SMESets,
-                        sub => sub.SubmodelNum,
-                        sme => sme.SubmodelNum,
-                        (sub, sme) => new
-                        {
-                            SemanticId = sme.SemanticId,
-                            Value = sme.Value,
-                            ValueType = sme.ValueType,
-                            Idshort = sme.Idshort,
-                            ParentSMENum = sme.ParentSMENum,
-                            SubmodelNum = sub.SubmodelNum
-                        }
-                    )
-                    .Where(j => j.SemanticId == semanticId && j.ValueType != "" && j.Value != "")
-                    .ToList();
-                Console.WriteLine("Create join of " + listJoin.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                watch.Restart();
+                if (false) // keep for future use
+                {
+                    var listJoin = db.SubmodelSets
+                        .Where(s => s.SemanticId == submodelSemanticId)
+                        .Join(db.SMESets,
+                            sub => sub.SubmodelNum,
+                            sme => sme.SubmodelNum,
+                            (sub, sme) => new
+                            {
+                                SemanticId = sme.SemanticId,
+                                Value = sme.Value,
+                                ValueType = sme.ValueType,
+                                Idshort = sme.Idshort,
+                                ParentSMENum = sme.ParentSMENum,
+                                SubmodelNum = sub.SubmodelNum
+                            }
+                        )
+                        .Where(j => j.SemanticId == semanticId && j.ValueType != "" && j.Value != "")
+                        .ToList();
+                    Console.WriteLine("Create join of " + listJoin.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                    watch.Restart();
 
-                var list= listJoin
-                    .Where(j => (equal != "" && j.Value == equal)
-                        || (equal == "" && isLowerUpper(j.ValueType, j.Value, lower, upper)))
-                    .ToList();
+                    var list2 = listJoin
+                        .Where(j => (equal != "" && j.Value == equal)
+                            || (equal == "" && isLowerUpper(j.ValueType, j.Value, lower, upper)))
+                        .ToList();
+                    Console.WriteLine("Filtered values to " + list2.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                    watch.Restart();
+                }
+
+                if (semanticId != "")
+                {
+                    list = db.SMESets.Where(s => s.SemanticId == semanticId).ToList();
+                    if (equal != "")
+                    {
+                        var listEqual = list.Where(s => s.Value == equal).ToList();
+                        list = listEqual;
+                    }
+                    else
+                    {
+                        if (lower != "" && upper != "")
+                        {
+                            var listLowerUpper = list.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
+                            list = listLowerUpper;
+                        }
+                    }
+                }
+                else
+                {
+                    if (equal != "")
+                    {
+                        var listEqual = db.SMESets.Where(s => s.Value == equal).ToList();
+                        list = listEqual;
+                    }
+                    else
+                    {
+                        if (lower != "" && upper != "")
+                        {
+                            var listLowerUpper = db.SMESets.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
+                            list = listLowerUpper;
+                        }
+                    }
+                }
+
                 Console.WriteLine("Filtered values to " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
@@ -359,22 +400,24 @@ namespace AasxServer
                 {
                     SmeResult r = new SmeResult();
                     var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
-                    if (submodelDB != null)
-                        r.submodelId = submodelDB.SubmodelId;
-                    r.value = l.Value;
-                    string path = l.Idshort;
-                    long pnum = l.ParentSMENum;
-                    while (pnum != 0)
+                    if (submodelDB != null && submodelDB.SemanticId == submodelSemanticId)
                     {
-                        var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                        if (smeDB != null)
-                            path = smeDB.Idshort + "." + path;
-                        pnum = smeDB.ParentSMENum;
+                        r.submodelId = submodelDB.SubmodelId;
+                        r.value = l.Value;
+                        string path = l.Idshort;
+                        long pnum = l.ParentSMENum;
+                        while (pnum != 0)
+                        {
+                            var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
+                            if (smeDB != null)
+                                path = smeDB.Idshort + "." + path;
+                            pnum = smeDB.ParentSMENum;
+                        }
+                        r.idShortPath = path;
+                        string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                        r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
+                        result.Add(r);
                     }
-                    r.idShortPath = path;
-                    string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                    r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
-                    result.Add(r);
                 }
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
