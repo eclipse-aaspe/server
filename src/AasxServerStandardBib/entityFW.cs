@@ -8,6 +8,7 @@ using Opc.Ua;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -156,7 +157,15 @@ namespace AasxServer
 
             using (AasContext db = new AasContext())
             {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Console.WriteLine();
+                Console.WriteLine("SearchSubmodels");
+                Console.WriteLine("Submodelss " + db.SubmodelSets.Count());
+
                 var subList = db.SubmodelSets.Where(s => s.SemanticId == semanticId).ToList();
+                Console.WriteLine("Found " + subList.Count() + " Submodels in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
                 foreach (var submodel in subList)
                 {
                     var sr = new SubmodelResult();
@@ -165,6 +174,7 @@ namespace AasxServer
                     sr.url = Program.externalBlazor + "/submodels/" + sub64;
                     list.Add(sr);
                 }
+                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
             return list;
@@ -232,10 +242,15 @@ namespace AasxServer
             List<SmeResult> result = new List<SmeResult>();
             List<SMESet> list = new List<SMESet>();
 
+            if (semanticId == "" && equal == "" && lower == "" && upper == "")
+                return result;
+
             using (AasContext db = new AasContext())
             {
-                if (semanticId == "" && equal == "" && lower == "" && upper == "")
-                    return result;
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Console.WriteLine();
+                Console.WriteLine("SearchSMEs");
+                Console.WriteLine("SMEs " + db.SMESets.Count());
 
                 if (semanticId != "")
                 {
@@ -270,6 +285,8 @@ namespace AasxServer
                         }
                     }
                 }
+                Console.WriteLine("Found " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
 
                 foreach (var l in list)
                 {
@@ -290,6 +307,76 @@ namespace AasxServer
                     r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
                     result.Add(r);
                 }
+                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            }
+
+            return result;
+        }
+
+        public List<SmeResult> SearchSMEsInSubmodel(string submodelSemanticId = "", string semanticId = "",
+            string equal = "", string lower = "", string upper = "")
+        {
+            List<SmeResult> result = new List<SmeResult>();
+
+            if ((submodelSemanticId == "" || semanticId == "") && (equal == "" || (lower == "" && upper == "")))
+                return result;
+
+            using (AasContext db = new AasContext())
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Console.WriteLine();
+                Console.WriteLine("SearchSMEsInSubmodel");
+                Console.WriteLine("Submodels: " + db.SubmodelSets.Count() + " SMEs " + db.SMESets.Count());
+
+                var listJoin = db.SubmodelSets
+                    .Where(s => s.SemanticId == submodelSemanticId)
+                    .Join(db.SMESets,
+                        sub => sub.SubmodelNum,
+                        sme => sme.SubmodelNum,
+                        (sub, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Value = sme.Value,
+                            ValueType = sme.ValueType,
+                            Idshort = sme.Idshort,
+                            ParentSMENum = sme.ParentSMENum,
+                            SubmodelNum = sub.SubmodelNum
+                        }
+                    )
+                    .Where(j => j.SemanticId == semanticId && j.ValueType != "" && j.Value != "")
+                    .ToList();
+                Console.WriteLine("Create join of " + listJoin.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var list= listJoin
+                    .Where(j => (equal != "" && j.Value == equal)
+                        || (equal == "" && isLowerUpper(j.ValueType, j.Value, lower, upper)))
+                    .ToList();
+                Console.WriteLine("Filtered values to " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                foreach (var l in list)
+                {
+                    SmeResult r = new SmeResult();
+                    var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
+                    if (submodelDB != null)
+                        r.submodelId = submodelDB.SubmodelId;
+                    r.value = l.Value;
+                    string path = l.Idshort;
+                    long pnum = l.ParentSMENum;
+                    while (pnum != 0)
+                    {
+                        var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
+                        if (smeDB != null)
+                            path = smeDB.Idshort + "." + path;
+                        pnum = smeDB.ParentSMENum;
+                    }
+                    r.idShortPath = path;
+                    string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                    r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
+                    result.Add(r);
+                }
+                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
             return result;
@@ -613,7 +700,8 @@ namespace AasxServer
                 var subDB = db.SubmodelSets
                     .OrderBy(s => s.SubmodelNum)
                     .Where(s => s.SubmodelId == submodelId)
-                    .Single();
+                    .ToList()
+                    .First();
 
                 if (subDB != null)
                 {
@@ -627,6 +715,11 @@ namespace AasxServer
                         new List<Key>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
 
                     loadSME(submodel, null, null, SMEList, 0);
+
+                    DateTime timeStamp = DateTime.Now;
+                    submodel.TimeStampCreate = timeStamp;
+                    submodel.SetTimeStamp(timeStamp);
+                    submodel.SetAllParents(timeStamp);
 
                     return submodel;
                 }
@@ -684,7 +777,10 @@ namespace AasxServer
                         nextSME = new AasCore.Aas3_0_RC02.File("text", idShort: smel.Idshort, value: smel.Value);
                         break;
                 }
-                if (nextSME != null && smel.SemanticId != "")
+                if (nextSME == null)
+                    continue;
+
+                if (smel.SemanticId != "")
                 {
                     nextSME.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
                         new List<Key>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
