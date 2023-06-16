@@ -3,12 +3,14 @@ using AasxRestServerLibrary;
 using Extenstions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Opc.Ua;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -218,6 +220,8 @@ namespace AasxServer
 
             if (valueType == "I")
             {
+                if (value.Length > 10)
+                    return (false);
                 if (!lower.All(char.IsDigit))
                     return false;
                 if (!upper.All(char.IsDigit))
@@ -236,6 +240,18 @@ namespace AasxServer
             }
 
             return false;
+        }
+
+        List<SMESet> getPage(AasContext c, int j, int pageSize, string lower, string upper)
+        {
+            var list = c.SMESets
+                .Where(s => s.SMEType == "P" && s.ValueType != "" && s.Value != "")
+                .Skip(j * pageSize)
+                .Take(pageSize)
+                .ToList()
+                .Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper))
+                .ToList();
+            return list;
         }
         public List<SmeResult> SearchSMEs(string semanticId = "", string equal = "", string lower = "", string upper = "")
         {
@@ -280,12 +296,59 @@ namespace AasxServer
                     {
                         if (lower != "" && upper != "")
                         {
-                            var listLowerUpper = db.SMESets.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                            list = listLowerUpper;
+                            int pageSize = 200000;
+                            int maxPages = 8;
+
+                            var count = db.SMESets
+                                .Where(s => s.SMEType == "P" && s.ValueType != "" && s.Value != "").Count();
+                            if (count < pageSize)
+                            {
+                                list = db.SMESets
+                                    .Where(s => s.SMEType == "P" && s.ValueType != "" && s.Value != "")
+                                    .ToList()
+                                    .Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
+                            }
+                            else
+                            {
+                                int pageCount = count / pageSize + 1;
+                                var tasks = new Task[maxPages];
+                                var listPage = new List<SMESet>[maxPages];
+                                var context = new AasContext[maxPages];
+
+                                Console.WriteLine(pageCount + " pages with size " + pageSize);
+                                int p = 0;
+                                while (p < pageCount)
+                                {
+                                    if (pageCount - p < maxPages)
+                                        maxPages = pageCount - p;
+
+                                    for (int i = 0; i < maxPages; i++)
+                                    {
+                                        int pp = p; // workaround task-for paradox
+                                        int j = i; // workaround task-for paradox
+                                        context[j] = new AasContext();
+                                        tasks[j] = Task.Run(() => listPage[j] = getPage(context[j], pp, pageSize, lower, upper));
+                                        p++;
+                                    }
+
+                                    for (int i = 0; i < maxPages; i++)
+                                    {
+                                        tasks[i].Wait();
+                                        list.AddRange(listPage[i]);
+
+                                        context[i].Dispose();
+                                        context[i] = null;
+                                        tasks[i].Dispose();
+                                        tasks[i] = null;
+                                        listPage[i] = null;
+                                    }
+                                    Console.WriteLine("Processing " + p * pageSize + "/" + count);
+                                }
+                            }
                         }
                     }
                 }
-                Console.WriteLine("Found " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                Console.WriteLine("Found and filtered " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
                 foreach (var l in list)
