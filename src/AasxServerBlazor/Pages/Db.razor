@@ -396,7 +396,7 @@
                     if (f != "")
                     {
                         found = db.SMESets.Count(sme =>
-                        sme.Value.ToLower().Contains(f)
+                        sme.getValue().ToLower().Contains(f)
                         || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f))
                         + "/";
                     }
@@ -423,8 +423,8 @@
                         nextPage = db.SMESets
                         .OrderBy(sme => sme.SMENum)
                         .Where(sme => sme.SMENum >= smenum && (submodelnum == 0 || sme.SubmodelNum == submodelnum) &&
-                        (sme.Value.ToLower().Contains(f)
-                        || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f)))
+                        (f == "" || (sme.SValue.ToLower().Contains(f)
+                        || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f))))
                         .Take(size)
                         .ToList();
                     }
@@ -461,7 +461,7 @@
                                     <td style="word-break:keep-all">@smeDB.SMEType</td>
                                     <td>@smeDB.Idshort</td>
                                     <td>@smeDB.SemanticId</td>
-                                    <td>@smeDB.Value</td>
+                                    <td>@smeDB.getValue()</td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
                                     <td style="word-break:keep-all">
                                         <a href="@(shorturl + "/submodel?submodelnum=" + smeDB.SubmodelNum + "&size=1")" target="_blank">sub</a>
@@ -493,7 +493,7 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.Value</span>
+                        <span>@smeDB.getValue()</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.ValueType</span>
                         <span style="background-color:blue;">&nbsp</span>
