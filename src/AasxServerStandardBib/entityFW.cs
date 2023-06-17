@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using System;
 using System.Collections.Generic;
@@ -95,8 +96,25 @@ namespace AasxServer
         public string SMEType { get; set; }
         public string Idshort { get; set; }
         public string SemanticId { get; set; }
-        public string Value { get; set; }
         public string ValueType { get; set; }
+        public string SValue { get; set; }
+        public long IValue { get; set; }
+        public double FValue { get; set; }
+
+        public string getValue()
+        {
+            switch (ValueType)
+            {
+                case "S":
+                    return SValue;
+                case "I":
+                    return IValue + "";
+                case "F":
+                    return FValue + "";
+            }
+
+            return "";
+        }
     }
 
     public class SubmodelResult
@@ -242,21 +260,53 @@ namespace AasxServer
             return false;
         }
 
-        List<SMESet> getPage(AasContext c, int j, int pageSize, string lower, string upper)
+        List<SMESet> getPage(AasContext c, int j, int pageSize, long lower, long upper)
         {
-            var list = c.SMESets
-                .Where(s => s.SMEType == "P" && s.ValueType != "" && s.Value != "")
+            List<SMESet> list = new List<SMESet>();
+            double fLower = 0;
+            double fUpper = 0;
+            try
+            {
+                fLower = lower;
+                fUpper = upper;
+            }
+            catch { }
+            list = c.SMESets
+                .Where(s => s.SMEType == "P" && 
+                        ((s.ValueType == "I" && s.IValue >= lower && s.IValue <= upper) ||
+                        (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)))
                 .Skip(j * pageSize)
                 .Take(pageSize)
-                .ToList()
-                .Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper))
                 .ToList();
             return list;
         }
-        public List<SmeResult> SearchSMEs(string semanticId = "", string equal = "", string lower = "", string upper = "")
+        public List<SmeResult> SearchSMEs(string submodelSemanticId = "", string semanticId = "", string equal = "", string lower = "", string upper = "")
         {
             List<SmeResult> result = new List<SmeResult>();
             List<SMESet> list = new List<SMESet>();
+
+            double fEqual = 0;
+            double fLower = 0;
+            double fUpper = 0;
+            long iEqual = 0;
+            long iLower = 0;
+            long iUpper = 0;
+            try
+            {
+                if (equal != "")
+                {
+                    fEqual = Convert.ToDouble(equal);
+                    iEqual = Convert.ToInt64(equal);
+                }
+                if (lower != "" && upper != "")
+                {
+                    fLower = Convert.ToDouble(lower);
+                    fUpper = Convert.ToDouble(upper);
+                    iLower = Convert.ToInt64(lower);
+                    iUpper = Convert.ToInt64(upper);
+                }
+            }
+            catch { }
 
             if (semanticId == "" && equal == "" && lower == "" && upper == "")
                 return result;
@@ -266,27 +316,86 @@ namespace AasxServer
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 Console.WriteLine();
                 Console.WriteLine("SearchSMEs");
-                Console.WriteLine("SMEs " + db.SMESets.Count());
+                Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                /*
+                var c = db.SMESets
+                    .Where(s => s.SMEType == "P" &&
+                        (semanticId == "" || s.SemanticId == semanticId)
+                        &&
+                        (
+                            (equal != "" &&
+                                (
+                                (s.ValueType == "I" && s.IValue == iEqual) ||
+                                (s.ValueType == "F" && s.FValue == fEqual)
+                                )
+                            )
+                            ||
+                            (lower != "" && upper != "" &&
+                                (
+                                (s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
+                                (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)
+                                )
+                            )
+                        )
+                    )
+                    .Count();
+                Console.WriteLine("Count number of found SMEs first: " + c + " in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+                */
+
+                list = db.SMESets
+                    .Where(s => s.SMEType == "P" && 
+                        (semanticId == "" || s.SemanticId == semanticId)
+                        &&
+                        (  
+                            (equal != "" &&
+                                (
+                                (s.ValueType == "I" && s.IValue == iEqual) ||
+                                (s.ValueType == "F" && s.FValue == fEqual)
+                                )
+                            )
+                            ||
+                            (lower != "" && upper != "" &&
+                                (
+                                (s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
+                                (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)
+                                )
+                            )
+                        )
+                    )
+                    .ToList();
 
                 if (semanticId != "")
                 {
-                    list = db.SMESets.Where(s => s.SemanticId == semanticId).ToList();
+                    /*
                     if (equal != "")
                     {
-                        var listEqual = list.Where(s => s.Value == equal).ToList();
-                        list = listEqual;
+                        list = db.SMESets
+                            .Where(s => s.SemanticId == semanticId)
+                            .Where(s => s.SMEType == "P" &&
+                                    ((s.ValueType == "I" && s.IValue == iEqual) ||
+                                    (s.ValueType == "F" && s.FValue == fEqual)))
+                            .ToList();
                     }
                     else
                     {
                         if (lower != "" && upper != "")
                         {
-                            var listLowerUpper = list.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                            list = listLowerUpper;
+                            list = db.SMESets
+                                .Where(s => s.SemanticId == semanticId)
+                                .Where(s => s.SMEType == "P" &&
+                                        ((s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
+                                        (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)))
+                                .ToList();
                         }
                     }
+                    */
                 }
                 else
                 {
+                    /*
                     if (equal != "")
                     {
                         var listEqual = db.SMESets.Where(s => s.Value == equal).ToList();
@@ -347,33 +456,102 @@ namespace AasxServer
                             }
                         }
                     }
+                    */
                 }
-                Console.WriteLine("Found and filtered " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                Console.WriteLine("Found  " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
                 foreach (var l in list)
                 {
                     SmeResult r = new SmeResult();
-                    var submodelSet = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
-                    r.submodelId = submodelSet.SubmodelId;
-                    r.value = l.Value;
-                    string path = l.Idshort;
-                    long pnum = l.ParentSMENum;
-                    while (pnum != 0)
+
+                    var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
+                    if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
                     {
-                        var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                        path = smeDB.Idshort + "." + path;
-                        pnum = smeDB.ParentSMENum;
+                        r.submodelId = submodelDB.SubmodelId;
+                        r.value = l.getValue();
+                        string path = l.Idshort;
+                        long pnum = l.ParentSMENum;
+                        while (pnum != 0)
+                        {
+                            var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
+                            path = smeDB.Idshort + "." + path;
+                            pnum = smeDB.ParentSMENum;
+                        }
+                        r.idShortPath = path;
+                        string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                        r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
+                        result.Add(r);
                     }
-                    r.idShortPath = path;
-                    string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                    r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
-                    result.Add(r);
                 }
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
             return result;
+        }
+
+        public int CountSMEs(string submodelSemanticId = "", string semanticId = "", string equal = "", string lower = "", string upper = "")
+        {
+            double fEqual = 0;
+            double fLower = 0;
+            double fUpper = 0;
+            long iEqual = 0;
+            long iLower = 0;
+            long iUpper = 0;
+            try
+            {
+                if (equal != "")
+                {
+                    fEqual = Convert.ToDouble(equal);
+                    iEqual = Convert.ToInt64(equal);
+                }
+                if (lower != "" && upper != "")
+                {
+                    fLower = Convert.ToDouble(lower);
+                    fUpper = Convert.ToDouble(upper);
+                    iLower = Convert.ToInt64(lower);
+                    iUpper = Convert.ToInt64(upper);
+                }
+            }
+            catch { }
+
+            if (semanticId == "" && equal == "" && lower == "" && upper == "")
+                return 0;
+
+            using (AasContext db = new AasContext())
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Console.WriteLine();
+                Console.WriteLine("CountSMEs");
+                Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var c = db.SMESets
+                    .Where(s => s.SMEType == "P" &&
+                        (semanticId == "" || s.SemanticId == semanticId)
+                        &&
+                        (
+                            (equal != "" &&
+                                (
+                                (s.ValueType == "I" && s.IValue == iEqual) ||
+                                (s.ValueType == "F" && s.FValue == fEqual)
+                                )
+                            )
+                            ||
+                            (lower != "" && upper != "" &&
+                                (
+                                (s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
+                                (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)
+                                )
+                            )
+                        )
+                    )
+                    .Count();
+
+                Console.WriteLine("Count number of " + c + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                return c;
+            }
+
         }
 
         public List<SmeResult> SearchSMEsInSubmodel(string submodelSemanticId = "", string semanticId = "",
@@ -385,6 +563,7 @@ namespace AasxServer
             if ((submodelSemanticId == "" || semanticId == "") && (equal == "" || (lower == "" && upper == "")))
                 return result;
 
+            /*
             using (AasContext db = new AasContext())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -402,7 +581,7 @@ namespace AasxServer
                             (sub, sme) => new
                             {
                                 SemanticId = sme.SemanticId,
-                                Value = sme.Value,
+                                Value = sme.SValue,
                                 ValueType = sme.ValueType,
                                 Idshort = sme.Idshort,
                                 ParentSMENum = sme.ParentSMENum,
@@ -484,6 +663,7 @@ namespace AasxServer
                 }
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
+            */
 
             return result;
         }
@@ -535,11 +715,24 @@ namespace AasxServer
             return null;
         }
 
-        private string getValueType(string v)
+        private string getValueAndType(string v, out string sValue, out long iValue, out double fValue)
         {
-            if (v.All(char.IsDigit))
+            sValue = "";
+            iValue = 0;
+            fValue = 0;
+
+            if (v.All(char.IsDigit) && v.Length <= 10)
             {
-                return "I";
+                try
+                {
+                    iValue = Convert.ToInt64(v);
+                    return ("I");
+                }
+                catch
+                {
+                    sValue = v;
+                    return "S";
+                }
             }
 
             if (v.Contains("."))
@@ -553,29 +746,48 @@ namespace AasxServer
                     if (c == '.')
                         continue;
                     if (!legal.Contains(c))
+                    {
+                        sValue = v;
                         return "S";
+                    }
                 }
-                return "F";
+
+                try
+                {
+                    var decSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+                    v = v.Replace(".", decSep);
+                    v = v.Replace(",", decSep);
+                    fValue = Convert.ToDouble(v);
+                    return "F";
+                }
+                catch { }
             }
 
+            sValue = v;
             return "S";
         }
-        private void getValue(ISubmodelElement sme, out string v, out string vt)
+        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
         {
-            v = "";
+            sValue = "";
+            iValue = 0;
+            fValue = 0;
             vt = "";
+            string v = "";
 
             if (sme is Property p)
             {
                 v = sme.ValueAsText();
                 if (v != "")
-                    vt = getValueType(v);
+                {
+                    vt = getValueAndType(v, out sValue, out iValue, out fValue);
+                }
             }
 
             if (sme is AasCore.Aas3_0_RC02.File f)
             {
                 v = f.Value;
                 vt = "S";
+                sValue = v;
             }
 
             if (sme is MultiLanguageProperty mlp)
@@ -591,27 +803,32 @@ namespace AasxServer
                             v += "$$";
                     }
                     vt = "S";
+                    sValue = v;
                 }
             }
             if (sme is AasCore.Aas3_0_RC02.Range r)
             {
                 v = r.Min;
-                if (v != "")
-                    vt = getValueType(v);
+                // if (v != "")
+                //    vt = getValueType(v);
 
                 var v2 = r.Max;
-                var vt2 = "";
-                if (v2 != "")
-                    vt2 = getValueType(v2);
+                // var vt2 = "";
+                // if (v2 != "")
+                //    vt2 = getValueType(v2);
 
                 v += "$$" + v2;
+                vt = "S";
+                sValue= v;
 
+                /*
                 if (vt == "S" || vt2 == "S")
                     vt = "S";
                 else if (vt == "I" && vt2 == "I")
                     vt = "I";
                 else
                     vt = "F";
+                */
             }
         }
         private long collectSMEData(ISubmodelElement sme)
@@ -627,9 +844,11 @@ namespace AasxServer
             if (semanticId == null)
                 semanticId = "";
 
-            string v = "";
             string vt = "";
-            getValue(sme, out v, out vt);
+            string sValue = "";
+            long iValue = 0;
+            double fValue = 0;
+            getValue(sme, out vt, out sValue, out iValue, out fValue);
 
             var smeDB = new SMESet
             {
@@ -638,7 +857,9 @@ namespace AasxServer
                 SemanticId = semanticId,
                 Idshort = sme.IdShort,
                 ValueType= vt,
-                Value = v,
+                SValue= sValue,
+                IValue= iValue,
+                FValue= fValue,
                 SubmodelNum = _smNum,
                 ParentSMENum = pn
             };
@@ -858,7 +1079,7 @@ namespace AasxServer
                 switch (smel.SMEType)
                 {
                     case "P":
-                        nextSME = new Property(DataTypeDefXsd.String, idShort: smel.Idshort, value: smel.Value);
+                        nextSME = new Property(DataTypeDefXsd.String, idShort: smel.Idshort, value: smel.getValue());
                         break;
                     case "SEC":
                         nextSME = new SubmodelElementCollection(idShort: smel.Idshort, value: new List<ISubmodelElement>());
@@ -866,9 +1087,9 @@ namespace AasxServer
                     case "MLP":
                         var mlp = new MultiLanguageProperty(idShort: smel.Idshort);
                         var ls = new List<LangString>();
-                        if (smel.Value != "")
+                        if (smel.SValue != "")
                         {
-                            var v = smel.Value.Split("$$");
+                            var v = smel.SValue.Split("$$");
                             int i = 0;
                             while (i < v.Length)
                             {
@@ -880,7 +1101,7 @@ namespace AasxServer
                         nextSME = mlp;
                         break;
                     case "F":
-                        nextSME = new AasCore.Aas3_0_RC02.File("text", idShort: smel.Idshort, value: smel.Value);
+                        nextSME = new AasCore.Aas3_0_RC02.File("text", idShort: smel.Idshort, value: smel.getValue());
                         break;
                 }
                 if (nextSME == null)
