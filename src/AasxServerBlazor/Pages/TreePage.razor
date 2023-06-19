@@ -171,7 +171,7 @@
                         }
                     }
                 }
-                for (int line = 0; line < 6; line++)
+                for (int line = 0; line < 20; line++)
                 {
                     string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
                     string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
@@ -1737,11 +1737,7 @@
                         }
                     }
                     break;
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -1793,12 +1789,7 @@
                         }
                     }
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -1844,11 +1835,7 @@
                     if (col == 0)
                         ret = getUnit(item, prop, col);
                     break;
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -1915,12 +1902,7 @@
                 case 3:
                     ret = getQualifiers(e.Qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -1954,13 +1936,7 @@
                 case 2:
                     ret = getQualifiers(f.Qualifiers, col);
                     break;
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2000,12 +1976,7 @@
                 case 3:
                     ret = getQualifiers(b.Qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2050,11 +2021,7 @@
                     if (col == 0)
                         ret = getUnit(item, r, col);
                     break;
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2107,12 +2074,7 @@
                 case 3:
                     ret = getQualifiers(op.Qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2168,12 +2130,7 @@
                     if (col == 0)
                         ret = getQualifiers(r.Qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2227,12 +2184,7 @@
                 case 3:
                     ret = getQualifiers(r.Qualifiers, col);
                     break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2287,13 +2239,7 @@
                 case 2:
                     ret = getQualifiers(r.Qualifiers, col);
                     break;
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }
@@ -2324,26 +2270,17 @@
                     }
                     break;
                 case 1:
-                case 2:
-                case 3:
-                case 4:
+                    ret = getQualifiers(mlp.Qualifiers, col);
+                    break;                
+                default:
                     ret = "";
-                    if (ls.Count > line - 1)
+                    if (ls.LangStrings.Count > line - 2)
                     {
                         if (col == 0)
-                            ret = ls[line - 1].Language;
+                            ret = ls.LangStrings[line - 2].Language;
                         if (col == 1)
-                            ret = ls[line - 1].Text + "";
+                            ret = ls.LangStrings[line - 2].Text + "";
                     }
-                    break;
-                case 5:
-                    ret = getQualifiers(mlp.Qualifiers, col);
-                    break;
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                    ret = "";
                     break;
             }
             return ret;
@@ -2371,14 +2308,7 @@
                 case 1:
                     ret = getQualifiers(sme.Qualifiers, col);
                     break;
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                default:
                     ret = "";
                     break;
             }

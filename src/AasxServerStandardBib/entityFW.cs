@@ -1093,7 +1093,7 @@ namespace AasxServer
                             int i = 0;
                             while (i < v.Length)
                             {
-                                ls.Add(new LangString(v[i / 2], v[i / 2 + 1]));
+                                ls.Add(new LangString(v[i], v[i + 1]));
                                 i += 2;
                             }
                         }
