@@ -1,5 +1,4 @@
-﻿
-using IO.Swagger.Lib.V3.SerializationModifiers;
+﻿using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -36,6 +35,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            //if (typeof(IDTO).IsAssignableFrom(context.ObjectType))
+            //{
+            //    return base.CanWriteResult(context);
+            //}
             if (IsGenericListOfIClass(context.Object))
             {
                 return base.CanWriteResult(context);
@@ -45,6 +48,7 @@ namespace IO.Swagger.Lib.V3.Formatters
         }
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
+            var httpContext = context.HttpContext;
             var response = context.HttpContext.Response;
 
             //SerializationModifier
@@ -86,6 +90,13 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonArray.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
+            //else if (typeof(IDTO).IsAssignableFrom(context.ObjectType))
+            //{
+            //    JsonSerializerOptions options = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+            //    options.Converters.Add(new JsonStringEnumConverter());
+            //    var json = JsonSerializer.Serialize(context.Object, options);
+            //    httpContext.Response.WriteAsync(json);
+            //}
 
             return Task.FromResult(response);
         }

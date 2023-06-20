@@ -3,10 +3,9 @@ using DataTransferObjects.CommonDTOs;
 
 namespace DataTransferObjects.MetadataDTOs
 {
-    //TODO jtikekar:DTOs for nested structure, may have performance impact
-
-    public record class PropertyMetadata(
-            DataTypeDefXsd valueType,
+    public record class BasicEventElementMetadata(
+            Direction direction,
+            StateOfEvent state,
             List<ExtensionDTO>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -16,5 +15,10 @@ namespace DataTransferObjects.MetadataDTOs
             List<ReferenceDTO>? supplementalSemanticIds = null,
             List<QualifierDTO>? qualifiers = null,
             List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            string modelType = "Property") : ISubmodelElementMetadata;
+            string? messageTopic = null,
+            ReferenceDTO? messageBroker = null,
+            string? lastUpdate = null,
+            string? minInterval = null,
+            string? maxInterval = null, string modelType = "BasicEventElement") : ISubmodelElementMetadata;
+
 }

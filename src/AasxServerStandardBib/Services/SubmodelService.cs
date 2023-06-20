@@ -536,7 +536,19 @@ namespace AasxServerStandardBib.Services
 
             Update.ToUpdateObject(submodel, newSubmodel);
 
-            Program.signalNewData(1);
+            Program.signalNewData(0);
+        }
+
+        public void UpdateSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme)
+        {
+            var submodelElement = GetSubmodelElementByPath(submodelIdentifier, idShortPath);
+
+            //Verify the body first
+            _verificationService.VerifyRequestBody(newSme);
+
+            Update.ToUpdateObject(submodelElement, newSme);
+
+            Program.signalNewData(0);
         }
     }
 }

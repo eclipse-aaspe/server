@@ -9,8 +9,10 @@
  */
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using DataTransferObjects.MetadataDTOs;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -33,14 +35,18 @@ namespace IO.Swagger.Controllers
         private readonly IBase64UrlDecoderService _decoderService;
         private readonly IAasRepositoryApiHelperService _aasRepoApiHelper;
         private readonly IReferenceModifierService _referenceModifierService;
+        private readonly IMappingService _mappingService;
+        private readonly IPathModifierService _pathModifierService;
 
-        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IAssetAdministrationShellService aasService, IBase64UrlDecoderService decoderService, IAasRepositoryApiHelperService aasRepoApiHelper, IReferenceModifierService referenceModifierService)
+        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IAssetAdministrationShellService aasService, IBase64UrlDecoderService decoderService, IAasRepositoryApiHelperService aasRepoApiHelper, IReferenceModifierService referenceModifierService, IMappingService mappingService, IPathModifierService pathModifierService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _aasService = aasService ?? throw new ArgumentNullException(nameof(aasService));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
             _aasRepoApiHelper = aasRepoApiHelper ?? throw new ArgumentNullException(nameof(aasRepoApiHelper));
-            _referenceModifierService = referenceModifierService;
+            _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
+            _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
+            _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
         }
 
         /// <summary>
@@ -380,7 +386,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
         {
-            return new ObjectResult(null);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            _logger.LogInformation($"Received request to get metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
+
+            var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
+
+            //TODO:jtikekar pagination, modifiers
+            var output = _mappingService.Map(smeList.ConvertAll(sme => (IClass)sme), "metadata");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -412,33 +427,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
         {
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(GetPathItemsResult));
+            var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received a request to get path for all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            var submodelElementsList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-
-            var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<GetPathItemsResult>(exampleJson)
-            : default(GetPathItemsResult);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //TODO:jtikekar support pagination and level modifier
+            var output = _pathModifierService.ToIdShortPath(submodelElementsList);
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -901,8 +899,7 @@ namespace IO.Swagger.Controllers
         [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdMetadataAasRepository")]
-        //[SwaggerResponse(statusCode: 200, type: typeof(SubmodelMetadata), description: "Requested Submodel")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested Submodel")]
+        [SwaggerResponse(statusCode: 200, type: typeof(SubmodelMetadata), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -911,7 +908,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            return new ObjectResult(null);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            _logger.LogInformation($"Received request to get metadat of the submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
+
+            var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+
+            //TODO:jtikekar modifier
+            var output = _mappingService.Map(submodel, "metadata");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -940,33 +946,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(List<string>));
+            var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received request to get path of a submodel with is {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "[ \"\", \"\" ]";
-
-            var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<List<string>>(exampleJson)
-            : default(List<string>);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //TODO:jtikekar support level modifier
+            var output = _pathModifierService.ToIdShortPath(submodel);
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -1100,8 +1089,7 @@ namespace IO.Swagger.Controllers
         [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathMetadataAasRepository")]
-        //[SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelElementsMetadataResult), description: "Requested submodel element")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested submodel element")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementMetadata), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -1110,7 +1098,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
         {
-            return new ObjectResult(null);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            _logger.LogInformation($"Received request to get metadata of the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
+
+            var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+
+            //TODO:jtikekar output modifiers
+            var output = _mappingService.Map(submodelElement, "metadata");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -1140,33 +1137,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(200, default(string));
+            var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received a request to get a path of a submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-            string exampleJson = null;
-            exampleJson = "\"\"";
-
-            var example = exampleJson != null
-            ? JsonConvert.DeserializeObject<string>(exampleJson)
-            : default(string);            //TODO: Change the data returned
-            return new ObjectResult(example);
+            //TODO:jtikekar support level modifier
+            var output = _pathModifierService.ToIdShortPath(submodelElement);
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -1503,7 +1483,7 @@ namespace IO.Swagger.Controllers
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            _logger.LogInformation($"Received request to update the submodel with id {decodedAasIdentifier} from the AAS with id {decodedAasIdentifier}");
+            _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
             _aasService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, body);
 
             return NoContent();
@@ -1534,30 +1514,20 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] SubmodelMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] object body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] SubmodelMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received Request to update for submodel with id {decodedSubmodelIdentifier} from the aas with id {decodedAasIdentifier}");
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            //Reverse mapping from Metadata to submodel element
+            ISubmodel submodel = _mappingService.Map(body, "metadata") as ISubmodel;
+            //TODO:jtikekar support level
+            //Update
+            _aasService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, submodel);
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            return NoContent();
         }
 
         /// <summary>
@@ -1637,30 +1607,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] SubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] object body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
+            _aasService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, body);
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
-
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            return NoContent();
         }
 
         /// <summary>
@@ -1688,31 +1643,21 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] object body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] ISubmodelElementMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
         //public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] SubmodelElementMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier} and the AAS with id {decodedAasIdentifier}");
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            //Reverse mapping from Metadata to submodel element
+            ISubmodelElement submodelElement = _mappingService.Map(body, "metadata") as ISubmodelElement;
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
+            //Update
+            _aasService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            return NoContent();
         }
 
         /// <summary>

@@ -19,5 +19,6 @@ namespace AasxServerStandardBib.Interfaces
         void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
         void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme);
         void UpdateSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
+        void UpdateSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme);
     }
 }

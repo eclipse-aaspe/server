@@ -1,12 +1,8 @@
-﻿using AasCore.Aas3_0;
-using DataTransferObjects.CommonDTOs;
+﻿using DataTransferObjects.CommonDTOs;
 
 namespace DataTransferObjects.MetadataDTOs
 {
-    //TODO jtikekar:DTOs for nested structure, may have performance impact
-
-    public record class PropertyMetadata(
-            DataTypeDefXsd valueType,
+    public record class FileMetadata(
             List<ExtensionDTO>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -16,5 +12,5 @@ namespace DataTransferObjects.MetadataDTOs
             List<ReferenceDTO>? supplementalSemanticIds = null,
             List<QualifierDTO>? qualifiers = null,
             List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            string modelType = "Property") : ISubmodelElementMetadata;
+            string modelType = "File") : ISubmodelElementMetadata;
 }
