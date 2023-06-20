@@ -3,10 +3,8 @@ using DataTransferObjects.CommonDTOs;
 
 namespace DataTransferObjects.MetadataDTOs
 {
-    //TODO jtikekar:DTOs for nested structure, may have performance impact
-
-    public record class PropertyMetadata(
-            DataTypeDefXsd valueType,
+    public record class SubmodelElementListMetadata(
+            AasSubmodelElements typeValueListElement,
             List<ExtensionDTO>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -16,5 +14,9 @@ namespace DataTransferObjects.MetadataDTOs
             List<ReferenceDTO>? supplementalSemanticIds = null,
             List<QualifierDTO>? qualifiers = null,
             List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            string modelType = "Property") : ISubmodelElementMetadata;
+            bool? orderRelevant = null,
+            ReferenceDTO? semanticIdListElement = null,
+            DataTypeDefXsd? valueTypeListElement = null,
+            List<ISubmodelElementMetadata>? value = null,
+            string modelType = "SubmodelElementList") : ISubmodelElementMetadata;
 }

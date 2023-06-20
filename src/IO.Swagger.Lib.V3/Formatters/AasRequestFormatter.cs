@@ -1,7 +1,10 @@
-﻿
+﻿using DataTransferObjects.MetadataDTOs;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
@@ -18,6 +21,14 @@ namespace IO.Swagger.Lib.V3.Formatters
         public override bool CanRead(InputFormatterContext context)
         {
             if (typeof(IClass).IsAssignableFrom(context.ModelType))
+            {
+                return true;
+            }
+            if (typeof(SubmodelMetadata).IsAssignableFrom(context.ModelType))
+            {
+                return true;
+            }
+            if (typeof(ISubmodelElementMetadata).IsAssignableFrom(context.ModelType))
             {
                 return true;
             }
@@ -63,8 +74,206 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 result = Jsonization.Deserialize.AssetInformationFrom(node);
             }
+            else if (typeof(SubmodelMetadata).IsAssignableFrom(type))
+            {
+                result = SubmodelMetadataFrom(node);
+            }
+            else if (typeof(ISubmodelElementMetadata).IsAssignableFrom(type))
+            {
+                result = ISubmodelElementMetadataFrom(node);
+            }
             return InputFormatterResult.SuccessAsync(result);
 
+        }
+
+        private SubmodelMetadata SubmodelMetadataFrom(JsonNode node)
+        {
+            SubmodelMetadata output = null;
+            //Using newtonsoft json because of known "EnumMemberAttribute" issue (https://github.com/dotnet/runtime/issues/74385) in case of ValueType
+            var serilizerSettings = new JsonSerializerSettings();
+            serilizerSettings.Converters.Add(new StringEnumConverter());
+
+            var obj = node as JsonObject;
+            if (obj == null)
+            {
+                throw new Exception($"Not a JSON object");
+            }
+            JsonNode? modelTypeNode = obj["modelType"];
+            if (modelTypeNode == null)
+            {
+                throw new Exception($"No model type found in the request.");
+            }
+            JsonValue? modelTypeValue = modelTypeNode as JsonValue;
+            if (modelTypeValue == null)
+            {
+                throw new Exception(
+                    "Expected JsonValue, " +
+                    $"but got {modelTypeNode.GetType()}");
+            }
+            modelTypeValue.TryGetValue<string>(out string? modelType);
+            if (modelType == null)
+            {
+                throw new Exception(
+                    "Expected a string, " +
+                    $"but the conversion failed from {modelTypeValue}");
+            }
+
+            if (modelType.Equals("submodel", StringComparison.OrdinalIgnoreCase))
+            {
+                var valueMetadata = ISubmodelElementMetadatListFrom(obj["submodelElements"]);
+
+                node["submodelElements"] = null;
+                var submodelMetadata = JsonConvert.DeserializeObject<SubmodelMetadata>(node.ToJsonString(), serilizerSettings);
+
+                output = new SubmodelMetadata(submodelMetadata.id, submodelMetadata.extensions, submodelMetadata.category, submodelMetadata.idShort, submodelMetadata.displayName, submodelMetadata.description, submodelMetadata.administration, submodelMetadata.kind, submodelMetadata.semanticId, submodelMetadata.supplementalSemanticIds, submodelMetadata.qualifiers, submodelMetadata.embeddedDataSpecifications, valueMetadata);
+            }
+
+            return output;
+        }
+
+        private ISubmodelElementMetadata ISubmodelElementMetadataFrom(JsonNode node)
+        {
+            ISubmodelElementMetadata output = null;
+            //Using newtonsoft json because of known "EnumMemberAttribute" issue (https://github.com/dotnet/runtime/issues/74385) in case of ValueType
+            var serilizerSettings = new JsonSerializerSettings();
+            serilizerSettings.Converters.Add(new StringEnumConverter());
+
+            var obj = node as JsonObject;
+            if (obj == null)
+            {
+                throw new Exception($"Not a JSON object");
+            }
+            JsonNode? modelTypeNode = obj["modelType"];
+            if (modelTypeNode == null)
+            {
+                throw new Exception($"No model type found in the request.");
+            }
+            JsonValue? modelTypeValue = modelTypeNode as JsonValue;
+            if (modelTypeValue == null)
+            {
+                throw new Exception(
+                    "Expected JsonValue, " +
+                    $"but got {modelTypeNode.GetType()}");
+            }
+            modelTypeValue.TryGetValue<string>(out string? modelType);
+            if (modelType == null)
+            {
+                throw new Exception(
+                    "Expected a string, " +
+                    $"but the conversion failed from {modelTypeValue}");
+            }
+
+            switch (modelType.ToLower())
+            {
+                case "property":
+                    {
+                        //var propertyMetadata = JsonSerializer.Deserialize<PropertyMetadata>(node);
+                        output = JsonConvert.DeserializeObject<PropertyMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "annotatedrelationshipelement":
+                    {
+                        var valueMetadata = ISubmodelElementMetadatListFrom(obj["annotations"]);
+
+                        node["annotations"] = null;
+                        var annotatedRelElement = JsonConvert.DeserializeObject<AnnotatedRelationshipElementMetadata>(node.ToJsonString(), serilizerSettings);
+
+                        output = new AnnotatedRelationshipElementMetadata(annotatedRelElement.extensions, annotatedRelElement.category, annotatedRelElement.idShort, annotatedRelElement.displayName, annotatedRelElement.description, annotatedRelElement.semanticId, annotatedRelElement.supplementalSemanticIds, annotatedRelElement.qualifiers, annotatedRelElement.embeddedDataSpecifications, valueMetadata);
+                        break;
+                    }
+                case "basiceventelement":
+                    {
+                        output = JsonConvert.DeserializeObject<BasicEventElementMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "blob":
+                    {
+                        output = JsonConvert.DeserializeObject<BlobMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "entity":
+                    {
+                        var valueMetadata = ISubmodelElementMetadatListFrom(obj["statements"]);
+
+                        node["statements"] = null;
+                        var entity = JsonConvert.DeserializeObject<EntityMetadata>(node.ToJsonString(), serilizerSettings);
+
+                        output = new EntityMetadata(entity.entityType, entity.extensions, entity.category, entity.idShort, entity.displayName, entity.description, entity.semanticId, entity.supplementalSemanticIds, entity.qualifiers, entity.embeddedDataSpecifications, valueMetadata);
+                        break;
+                    }
+                case "file":
+                    {
+                        output = JsonConvert.DeserializeObject<FileMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "multilanguageproperty":
+                    {
+                        output = JsonConvert.DeserializeObject<MultiLanguagePropertyMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "operation":
+                    {
+                        output = JsonConvert.DeserializeObject<OperationMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "range":
+                    {
+                        output = JsonConvert.DeserializeObject<RangeMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "referenceelement":
+                    {
+                        output = JsonConvert.DeserializeObject<ReferenceElementMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "relationshipelement":
+                    {
+                        output = JsonConvert.DeserializeObject<RelationshipElementMetadata>(node.ToJsonString(), serilizerSettings);
+                        break;
+                    }
+                case "submodelelementcollection":
+                    {
+
+                        var valueMetadata = ISubmodelElementMetadatListFrom(obj["value"]);
+
+                        node["value"] = null;
+                        var smeColl = JsonConvert.DeserializeObject<SubmodelElementCollectionMetadata>(node.ToJsonString(), serilizerSettings);
+
+                        output = new SubmodelElementCollectionMetadata(smeColl.extensions, smeColl.category, smeColl.idShort, smeColl.displayName, smeColl.description, smeColl.semanticId, smeColl.supplementalSemanticIds, smeColl.qualifiers, smeColl.embeddedDataSpecifications, valueMetadata);
+
+                        break;
+                    }
+                case "submodelelementlist":
+                    {
+                        var valueMetadata = ISubmodelElementMetadatListFrom(obj["value"]);
+
+                        node["value"] = null;
+                        var smeList = JsonConvert.DeserializeObject<SubmodelElementListMetadata>(node.ToJsonString(), serilizerSettings);
+
+                        output = new SubmodelElementListMetadata(smeList.typeValueListElement, smeList.extensions, smeList.category, smeList.idShort, smeList.displayName, smeList.description, smeList.semanticId, smeList.supplementalSemanticIds, smeList.qualifiers, smeList.embeddedDataSpecifications, smeList.orderRelevant, smeList.semanticIdListElement, smeList.valueTypeListElement, valueMetadata);
+                        break;
+                    }
+            }
+
+            return output;
+        }
+
+        private List<ISubmodelElementMetadata> ISubmodelElementMetadatListFrom(JsonNode jsonNode)
+        {
+            var valueArray = jsonNode as JsonArray;
+            if (valueArray == null)
+            {
+                throw new Exception(
+                    $"Expected a JsonArray, but got {jsonNode.GetType()}");
+            }
+            var valueMetadata = new List<ISubmodelElementMetadata>(
+                valueArray.Count);
+            foreach (JsonNode value in valueArray)
+            {
+                valueMetadata.Add(ISubmodelElementMetadataFrom(value));
+            }
+
+            return valueMetadata;
         }
     }
 }

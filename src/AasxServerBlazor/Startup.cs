@@ -8,6 +8,7 @@ using IO.Swagger.Filters;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Middleware;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.Services;
 //using IO.Swagger.Controllers;
 //using IO.Swagger.Filters;
@@ -85,15 +86,9 @@ namespace AasxServerBlazor
             services.AddTransient<IMetamodelVerificationService, MetamodelVerificationService>();
             services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
             services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
-            //TODO:jtikekar uncomment
-            //services.AddTransient<IAssetAdministrationShellEnvironmentService, AssetAdministrationShellEnvironmentService>();
-            //services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+            services.AddTransient<IMappingService, MappingService>();
+            services.AddTransient<IPathModifierService, PathModifierService>();
 
-            //services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
-            //services.AddTransient<IOutputModifiersService, OutputModifiersService>();
-            //services.AddTransient<IInputModifierService, InputModifierService>();
-            //services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
-            //services.AddTransient<IValueOnlyDeserializerService, ValueOnlyDeserializerService>();
 
             // Add framework services.
             services
@@ -107,9 +102,6 @@ namespace AasxServerBlazor
                     options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
                     options.InputFormatters.Add(new AasRequestFormatter());
                     options.OutputFormatters.Add(new AasResponseFormatter());
-                    //TODO:jtikekar uncomment
-                    //options.InputFormatters.Add(new AasCoreInputFormatter());
-                    //options.OutputFormatters.Add(new AasCoreOutputFormatter());
                 })
                 .AddNewtonsoftJson(opts =>
                 {
@@ -122,6 +114,7 @@ namespace AasxServerBlazor
                         }
                     };
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
+                    opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
                 });
             //TODO:jtikekar Uncomment
             //.AddXmlSerializerFormatters();
