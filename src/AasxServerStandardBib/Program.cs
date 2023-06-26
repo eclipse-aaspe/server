@@ -23,6 +23,7 @@ using System.CommandLine.IO;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -37,6 +38,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using static System.Formats.Asn1.AsnWriter;
 using Formatting = Newtonsoft.Json.Formatting;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -345,26 +347,57 @@ namespace AasxServer
                         string fn = aasxDB.AASX;
                         envFileName[i] = fn;
 
-                        env[i] = new AdminShellPackageEnv(fn);
-                        Console.WriteLine("LOAD: " + fn);
-                        DateTime timeStamp = DateTime.Now;
-                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        if (!withDbFiles)
                         {
-                            submodel.TimeStampCreate = timeStamp;
-                            submodel.SetTimeStamp(timeStamp);
-                            submodel.SetAllParents(timeStamp);
-                        }
-                        var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
-                        if (aas.Any())
-                        {
-                            var a = aas.First();
+                            Console.WriteLine("LOAD: " + fn);
+                            env[i] = new AdminShellPackageEnv(fn);
+
+                            DateTime timeStamp = DateTime.Now;
+                            var a = env[i].AasEnv.AssetAdministrationShells[0];
                             a.TimeStampCreate = timeStamp;
                             a.SetTimeStamp(timeStamp);
+                            foreach (var submodel in env[i].AasEnv.Submodels)
+                            {
+                                submodel.TimeStampCreate = timeStamp;
+                                submodel.SetTimeStamp(timeStamp);
+                                submodel.SetAllParents(timeStamp);
+                            }
                             output = a;
-                            packageIndex = i;
-                            AasxServer.Program.signalNewData(2);
-                            return true;
                         }
+                        else
+                        {
+                            Console.WriteLine("LOAD: " + aasDB.Idshort);
+                            env[i] = new AdminShellPackageEnv();
+                            env[i].SetFilename(fn);
+
+                            AssetAdministrationShell aas = new AssetAdministrationShell(
+                                id: aasDB.AasId,
+                                idShort: aasDB.Idshort,
+                                assetInformation: new AssetInformation(AssetKind.Type,
+                                    new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
+                                        new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
+                                    )
+                                );
+                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
+
+                            var submodelDBList = db.SubmodelSets
+                                .OrderBy(sm => sm.SubmodelNum)
+                                .Where(sm => sm.AasNum == aasDB.AasNum)
+                                .ToList();
+
+                            aas.Submodels = new List<Reference>();
+                            foreach (var submodelDB in submodelDBList)
+                            {
+                                var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
+                                aas.Submodels.Add(sm.GetReference());
+                                env[i].AasEnv.Submodels.Add(sm);
+                            }
+                            output = aas;
+                        }
+
+                        packageIndex = i;
+                        AasxServer.Program.signalNewData(2);
+                        return true;
                     }
                 }
             }
@@ -428,28 +461,67 @@ namespace AasxServer
                         var aasxDB = aasxDBList.First();
                         string fn = aasxDB.AASX;
                         envFileName[i] = fn;
-                        env[i] = new AdminShellPackageEnv(fn);
-                        Console.WriteLine("LOAD: " + fn);
 
-                        DateTime timeStamp = DateTime.Now;
-                        var a = env[i].AasEnv.AssetAdministrationShells[0];
-                        a.TimeStampCreate = timeStamp;
-                        a.SetTimeStamp(timeStamp);
-                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        if (!withDbFiles)
                         {
-                            submodel.TimeStampCreate = timeStamp;
-                            submodel.SetTimeStamp(timeStamp);
-                            submodel.SetAllParents(timeStamp);
+                            Console.WriteLine("LOAD: " + fn);
+                            env[i] = new AdminShellPackageEnv(fn);
+
+                            DateTime timeStamp = DateTime.Now;
+                            var a = env[i].AasEnv.AssetAdministrationShells[0];
+                            a.TimeStampCreate = timeStamp;
+                            a.SetTimeStamp(timeStamp);
+                            foreach (var submodel in env[i].AasEnv.Submodels)
+                            {
+                                submodel.TimeStampCreate = timeStamp;
+                                submodel.SetTimeStamp(timeStamp);
+                                submodel.SetAllParents(timeStamp);
+                            }
+
+                            var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                            if (submodels.Any())
+                            {
+                                output = submodels.First();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
+                            env[i] = new AdminShellPackageEnv();
+                            env[i].SetFilename(fn);
+
+                            var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
+                            var aasDB = aasDBList.First();
+
+                            AssetAdministrationShell aas = new AssetAdministrationShell(
+                                id: aasDB.AasId,
+                                idShort: aasDB.Idshort,
+                                assetInformation: new AssetInformation(AssetKind.Type,
+                                    new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
+                                        new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
+                                    )
+                                );
+                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
+
+                            var submodelDBList2 = db.SubmodelSets
+                                .OrderBy(sm => sm.SubmodelNum)
+                                .Where(sm => sm.AasNum == aasDB.AasNum)
+                                .ToList();
+
+                            aas.Submodels = new List<Reference>();
+                            foreach (var sDB in submodelDBList2)
+                            {
+                                var sm = DBRead.getSubmodel(sDB.SubmodelId);
+                                aas.Submodels.Add(sm.GetReference());
+                                env[i].AasEnv.Submodels.Add(sm);
+                                if (sDB.SubmodelId == submodelIdentifier)
+                                    output = sm;
+                            }
                         }
 
-                        var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                        if (submodels.Any())
-                        {
-                            output = submodels.First();
-                            packageIndex = i;
-                            AasxServer.Program.signalNewData(2);
-                            return true;
-                        }
+                        packageIndex = i;
+                        AasxServer.Program.signalNewData(2);
+                        return true;
                     }
                 }
             }
@@ -613,6 +685,7 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = true;
+        public static bool withDbFiles = true;
         public static int startIndex = 0;
         private class CommandLineArguments
         {
@@ -913,11 +986,15 @@ namespace AasxServer
                 }
             }
 
+            bool createFilesOnly = false;
+            if (System.IO.File.Exists(AasxHttpContextHelper.DataPath+"/FILES.ONLY"))
+                createFilesOnly = true;
+
             int envi = 0;
             int count = 0;
 
             // Clear DB
-            if (withDb && startIndex == 0)
+            if (withDb && startIndex == 0 && !createFilesOnly)
             {
                 using (AasContext db = new AasContext())
                 {
@@ -949,9 +1026,9 @@ namespace AasxServer
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath+"/xml"))
-                {
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
-                }
+                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/files"))
+                    Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/files");
 
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
@@ -999,109 +1076,159 @@ namespace AasxServer
 
                             using (var asp = new AdminShellPackageEnv(fn, false, true))
                             {
-                                using (AasContext db = new AasContext())
+                                if (!createFilesOnly)
                                 {
-                                    var configDBList = db.DbConfigSets.Where(d => true);
-                                    var dbConfig = configDBList.FirstOrDefault();
-
-                                    long aasxNum = ++dbConfig.AASXCount;
-                                    var aasxDB = new AASXSet
+                                    using (AasContext db = new AasContext())
                                     {
-                                        AASXNum = aasxNum,
-                                        AASX = fn
-                                    };
-                                    db.Add(aasxDB);
+                                        var configDBList = db.DbConfigSets.Where(d => true);
+                                        var dbConfig = configDBList.FirstOrDefault();
 
-                                    var aas = asp.AasEnv.AssetAdministrationShells[0];
-                                    var aasId = aas.Id;
-                                    var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
-
-                                    // Check security
-                                    if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                                    {
-                                        AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                                        AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                                    }
-                                    else
-                                    {
-                                        if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                                        long aasxNum = ++dbConfig.AASXCount;
+                                        var aasxDB = new AASXSet
                                         {
-                                            long aasNum = ++dbConfig.AasCount;
-                                            var aasDB = new AasSet
-                                            {
-                                                AasNum = aasNum,
-                                                AasId = aasId,
-                                                AssetId = assetId,
-                                                AASXNum = aasxNum,
-                                                Idshort = aas.IdShort,
-                                                AssetKind = aas.AssetInformation.AssetKind.ToString()
-                                            };
-                                            db.Add(aasDB);
+                                            AASXNum = aasxNum,
+                                            AASX = fn
+                                        };
+                                        db.Add(aasxDB);
 
-                                            // Iterate submodels
-                                            if (aas.Submodels != null && aas.Submodels.Count > 0)
-                                            {
-                                                foreach (var smr in aas.Submodels)
-                                                {
-                                                    var sm = asp.AasEnv.FindSubmodel(smr);
-                                                    if (sm != null)
-                                                    {
-                                                        var semanticId = sm.SemanticId.GetAsIdentifier();
-                                                        if (semanticId == null)
-                                                            semanticId = "";
+                                        var aas = asp.AasEnv.AssetAdministrationShells[0];
+                                        var aasId = aas.Id;
+                                        var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
 
-                                                        long submodelNum = ++dbConfig.SubmodelCount;
-
-                                                        var submodelDB = new SubmodelSet
-                                                        {
-                                                            SubmodelNum = submodelNum,
-                                                            SubmodelId = sm.Id,
-                                                            SemanticId = semanticId,
-                                                            AASXNum = aasxNum,
-                                                            AasNum = aasNum,
-                                                            Idshort = sm.IdShort
-                                                        };
-                                                        db.Add(submodelDB);
-
-                                                        VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
-                                                        v.Visit(sm);
-                                                    }
-                                                }
-                                                // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
-                                            }
-                                        }
-                                    }
-
-                                    Task t = db.SaveChangesAsync();
-                                    if (saveTasks.Count == maxTasks)
-                                    {
-                                        // search for completed task
-                                        int i = 0;
-                                        while (!saveTasks[i].IsCompleted && i < maxTasks)
+                                        // Check security
+                                        if (aas.IdShort.ToLower().Contains("globalsecurity"))
                                         {
-                                            i++;
-                                        }
-                                        if (i < maxTasks)
-                                        {
-                                            taskIndex = i;
+                                            AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                                            AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
                                         }
                                         else
                                         {
-                                            await saveTasks[taskIndex];
+                                            if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                                            {
+                                                long aasNum = ++dbConfig.AasCount;
+                                                var aasDB = new AasSet
+                                                {
+                                                    AasNum = aasNum,
+                                                    AasId = aasId,
+                                                    AssetId = assetId,
+                                                    AASXNum = aasxNum,
+                                                    Idshort = aas.IdShort,
+                                                    AssetKind = aas.AssetInformation.AssetKind.ToString()
+                                                };
+                                                db.Add(aasDB);
+
+                                                // Iterate submodels
+                                                if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                                {
+                                                    foreach (var smr in aas.Submodels)
+                                                    {
+                                                        var sm = asp.AasEnv.FindSubmodel(smr);
+                                                        if (sm != null)
+                                                        {
+                                                            var semanticId = sm.SemanticId.GetAsIdentifier();
+                                                            if (semanticId == null)
+                                                                semanticId = "";
+
+                                                            long submodelNum = ++dbConfig.SubmodelCount;
+
+                                                            var submodelDB = new SubmodelSet
+                                                            {
+                                                                SubmodelNum = submodelNum,
+                                                                SubmodelId = sm.Id,
+                                                                SemanticId = semanticId,
+                                                                AASXNum = aasxNum,
+                                                                AasNum = aasNum,
+                                                                Idshort = sm.IdShort
+                                                            };
+                                                            db.Add(submodelDB);
+
+                                                            VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
+                                                            v.Visit(sm);
+                                                        }
+                                                    }
+                                                    // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
+                                                }
+                                            }
+                                        }
+
+                                        Task t = db.SaveChangesAsync();
+                                        if (saveTasks.Count == maxTasks)
+                                        {
+                                            // search for completed task
+                                            int i = 0;
+                                            while (!saveTasks[i].IsCompleted && i < maxTasks)
+                                            {
+                                                i++;
+                                            }
+                                            if (i < maxTasks)
+                                            {
+                                                taskIndex = i;
+                                            }
+                                            else
+                                            {
+                                                await saveTasks[taskIndex];
+                                            }
+                                        }
+                                        if (taskIndex <= saveTasks.Count)
+                                        {
+                                            saveTasks.Add(t);
+                                        }
+                                        else
+                                        {
+                                            saveTasks[taskIndex] = t;
+                                        }
+                                        taskIndex++;
+                                        if (taskIndex >= maxTasks)
+                                            taskIndex = 0;
+                                    }
+                                }
+
+                                if (withDbFiles)
+                                {
+                                    try
+                                    {
+                                        string fcopyt = name + "__thumbnail";
+                                        fcopyt = fcopyt.Replace("/", "_");
+                                        fcopyt = fcopyt.Replace(".", "_");
+                                        Uri dummy = null;
+                                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                                        {
+                                            Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                            var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                            st.CopyTo(fst);
                                         }
                                     }
-                                    if (taskIndex <= saveTasks.Count)
+                                    catch { }
+
+                                    using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + name + ".zip", FileMode.Create))
+                                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                                     {
-                                        saveTasks.Add(t);
+                                        var files = asp.GetListOfSupplementaryFiles();
+                                        foreach (var f in files)
+                                        {
+                                            try
+                                            {
+                                                // string fcopy = name + "__" + f.Uri.OriginalString;
+                                                // fcopy = fcopy.Replace("/", "_");
+                                                // fcopy = fcopy.Replace(".", "_");
+                                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
+                                                {
+                                                    var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                                    Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                                                    using (var archiveStream = archiveFile.Open())
+                                                    {
+                                                        // Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                                                        // var fs = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                                                        s.CopyTo(archiveStream);
+                                                    }
+                                                }
+                                            }
+                                            catch { }
+                                        }
                                     }
-                                    else
-                                    {
-                                        saveTasks[taskIndex] = t;
-                                    }
-                                    taskIndex++;
-                                    if (taskIndex >= maxTasks)
-                                        taskIndex= 0;
                                 }
+
                             }
                         }
 
