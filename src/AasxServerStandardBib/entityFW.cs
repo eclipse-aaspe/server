@@ -1038,6 +1038,7 @@ namespace AasxServer
                             .ToList();
 
                     Submodel submodel = new Submodel(submodelId);
+                    submodel.IdShort = subDB.Idshort;
                     submodel.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
                         new List<Key>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
 

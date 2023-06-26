@@ -8,12 +8,15 @@ This source code may use other Open Source software components (see LICENSE.txt)
 */
 
 using AasCore.Aas3_0_RC02;
+using AasxRestServerLibrary;
 using Extenstions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.IO.Packaging;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -21,6 +24,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace AdminShellNS
@@ -1165,8 +1169,31 @@ namespace AdminShellNS
             return isLocal;
         }
 
-        public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open)
+        public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open, bool init = false)
         {
+            // DB
+            if (AasxServer.Program.withDb && AasxServer.Program.withDbFiles && !init)
+            {
+                using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + Path.GetFileName(Filename) + ".zip", FileMode.Open))
+                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                {
+                    var archiveFile = archive.GetEntry(uriString);
+                    var stream = archiveFile.Open();
+                    var ms = new MemoryStream();
+                    stream.CopyTo(ms);
+                    ms.Position = 0;
+                    return ms;
+                }
+
+                /*
+                string fcopy = Path.GetFileName(Filename) + "__" + uriString;
+                fcopy = fcopy.Replace("/", "_");
+                fcopy = fcopy.Replace(".", "_");
+                var s = System.IO.File.OpenRead(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                return s;
+                */
+            }
+
             // access
             try
             {
@@ -1233,8 +1260,18 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream(ref Uri thumbUri)
+        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
         {
+            // DB
+            if (AasxServer.Program.withDb && AasxServer.Program.withDbFiles && !init)
+            {
+                string fcopy = Path.GetFileName(Filename) + "__thumbnail";
+                fcopy = fcopy.Replace("/", "_");
+                fcopy = fcopy.Replace(".", "_");
+                var s = System.IO.File.OpenRead(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                return s;
+            }
+
             // access
             if (_openPackage == null)
                 throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
