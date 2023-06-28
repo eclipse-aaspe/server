@@ -1,4 +1,7 @@
-﻿using IO.Swagger.Lib.V3.SerializationModifiers;
+﻿using DataTransferObjects;
+using DataTransferObjects.ValueDTOs;
+using IO.Swagger.Lib.V3.SerializationModifiers;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -29,17 +32,29 @@ namespace IO.Swagger.Lib.V3.Formatters
                 (typeof(IClass).IsAssignableFrom(oType.GetGenericArguments()[0])));
         }
 
+        public static bool IsGenericListOfIValueDTO(object o)
+        {
+            var oType = o.GetType();
+            return oType.IsGenericType &&
+                (oType.GetGenericTypeDefinition() == typeof(List<>) &&
+                (typeof(IDTO).IsAssignableFrom(oType.GetGenericArguments()[0])));
+        }
+
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
             if (typeof(IClass).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
             }
-            //if (typeof(IDTO).IsAssignableFrom(context.ObjectType))
-            //{
-            //    return base.CanWriteResult(context);
-            //}
+            if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             if (IsGenericListOfIClass(context.Object))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (IsGenericListOfIValueDTO(context.Object))
             {
                 return base.CanWriteResult(context);
             }
@@ -90,13 +105,33 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonArray.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-            //else if (typeof(IDTO).IsAssignableFrom(context.ObjectType))
-            //{
-            //    JsonSerializerOptions options = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
-            //    options.Converters.Add(new JsonStringEnumConverter());
-            //    var json = JsonSerializer.Serialize(context.Object, options);
-            //    httpContext.Response.WriteAsync(json);
-            //}
+            else if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode json = ValueOnlyJsonSerializer.ToJsonObject((IValueDTO)context.Object);
+                var writer = new Utf8JsonWriter(response.Body);
+                json.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (IsGenericListOfIValueDTO(context.Object))
+            {
+
+                var jsonArray = new JsonArray();
+                IList genericList = (IList)context.Object;
+                List<IValueDTO> contextObjectType = new List<IValueDTO>();
+                foreach (var generic in genericList)
+                {
+                    contextObjectType.Add((IValueDTO)generic);
+                }
+
+                foreach (var item in contextObjectType)
+                {
+                    var json = ValueOnlyJsonSerializer.ToJsonObject((IValueDTO)item);
+                    jsonArray.Add(json);
+                }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
 
             return Task.FromResult(response);
         }

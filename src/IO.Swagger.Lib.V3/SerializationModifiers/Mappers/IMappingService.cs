@@ -1,5 +1,4 @@
 ﻿using DataTransferObjects;
-using DataTransferObjects.MetadataDTOs;
 using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
@@ -11,6 +10,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
         //object Map(object source);
         IDTO Map(IClass source, string mappingResolverKey);
         List<IDTO> Map(List<IClass> sourceList, string mappingResolverKey);
-        IClass Map(IMetadataDTO metadataDTO, string mappingResolverKey);
+        IClass Map(IDTO dto, string mappingResolverKey);
     }
 }

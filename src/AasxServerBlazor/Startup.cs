@@ -9,6 +9,7 @@ using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Middleware;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;
 //using IO.Swagger.Controllers;
 //using IO.Swagger.Filters;
@@ -87,6 +88,7 @@ namespace AasxServerBlazor
             services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
             services.AddTransient<IMappingService, MappingService>();
             services.AddTransient<IPathModifierService, PathModifierService>();
+            services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
 
 
             // Add framework services.

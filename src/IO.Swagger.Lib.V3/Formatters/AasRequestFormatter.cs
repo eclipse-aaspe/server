@@ -1,5 +1,8 @@
 ﻿using DataTransferObjects.MetadataDTOs;
+using DataTransferObjects.ValueDTOs;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -24,11 +27,11 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return true;
             }
-            if (typeof(SubmodelMetadata).IsAssignableFrom(context.ModelType))
+            else if (typeof(IMetadataDTO).IsAssignableFrom(context.ModelType))
             {
                 return true;
             }
-            if (typeof(ISubmodelElementMetadata).IsAssignableFrom(context.ModelType))
+            else if (typeof(IValueDTO).IsAssignableFrom(context.ModelType))
             {
                 return true;
             }
@@ -81,6 +84,21 @@ namespace IO.Swagger.Lib.V3.Formatters
             else if (typeof(ISubmodelElementMetadata).IsAssignableFrom(type))
             {
                 result = ISubmodelElementMetadataFrom(node);
+            }
+            else if (typeof(SubmodelValue).IsAssignableFrom(type))
+            {
+                var serviceProvider = context.HttpContext.RequestServices;
+                var valueOnlyJsonDeserializerService = serviceProvider.GetRequiredService<IValueOnlyJsonDeserializer>();
+                var encodedSubmodelIdentifier = request.RouteValues["submodelIdentifier"] as string;
+                result = valueOnlyJsonDeserializerService.DeserializeSubmodelValue(node, encodedSubmodelIdentifier);
+            }
+            else if (typeof(IValueDTO).IsAssignableFrom(type))
+            {
+                var serviceProvider = context.HttpContext.RequestServices;
+                var valueOnlyJsonDeserializerService = serviceProvider.GetRequiredService<IValueOnlyJsonDeserializer>();
+                var encodedSubmodelIdentifier = request.RouteValues["submodelIdentifier"] as string;
+                string idShortPath = (string)request.RouteValues["idShortPath"];
+                result = valueOnlyJsonDeserializerService.DeserializeSubmodelElementValue(node, encodedSubmodelIdentifier, idShortPath);
             }
             return InputFormatterResult.SuccessAsync(result);
 
