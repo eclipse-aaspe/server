@@ -298,7 +298,7 @@ namespace AasxServer
             if (Program.isLoading)
                 return false;
 
-            int i = 0;
+            int i = envimin;
             while (i < env.Length)
             {
                 if (env[i] == null)
@@ -319,7 +319,7 @@ namespace AasxServer
             {
                 i = oldest++;
                 if (oldest == env.Length)
-                    oldest = 0;
+                    oldest = envimin;
             }
 
             using (AasContext db = new AasContext())
@@ -413,7 +413,7 @@ namespace AasxServer
             if (Program.isLoading)
                 return false;
 
-            int i = 0;
+            int i = envimin;
             while (i < env.Length)
             {
                 if (env[i] == null)
@@ -434,7 +434,7 @@ namespace AasxServer
             {
                 i = oldest++;
                 if (oldest == env.Length)
-                    oldest = 0;
+                    oldest = envimin;
             }
 
             using (AasContext db = new AasContext())
@@ -529,6 +529,7 @@ namespace AasxServer
             return false;
         }
 
+        public static int envimin = 0;
         public static int envimax = 200;
         public static AdminShellPackageEnv[] env = null;
         public static string[] envFileName = null;
@@ -1041,13 +1042,29 @@ namespace AasxServer
                 int fi = 0;
                 while (fi < fileNames.Length)
                 {
+                    fn = fileNames[fi];
+                    if (fn.ToLower().Contains("globalsecurity"))
+                    {
+                        envFileName[envi] = fn;
+                        env[envi] = new AdminShellPackageEnv(fn, true, false);
+                        AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
+                        AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                        envi++;
+                        envimin = envi;
+                        oldest= envi;
+                        fi++;
+                        // envFileName[envi] = null;
+                        // env[envi].Close();
+                        // env[envi].Dispose();
+                        // env[envi] = null;
+                    }
+
                     if (fi < startIndex)
                     {
                         fi++;
                         continue;
                     }
 
-                    fn = fileNames[fi];
 
                     if (fn != "" && envi < envimax)
                     {
@@ -1098,8 +1115,8 @@ namespace AasxServer
                                         // Check security
                                         if (aas.IdShort.ToLower().Contains("globalsecurity"))
                                         {
-                                            AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                                            AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                                            // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                                            // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
                                         }
                                         else
                                         {
@@ -1228,7 +1245,6 @@ namespace AasxServer
                                         }
                                     }
                                 }
-
                             }
                         }
 

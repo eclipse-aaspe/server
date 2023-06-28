@@ -4427,7 +4427,7 @@ namespace AasxRestServerLibrary
                                                             var f = sme2 as AasCore.Aas3_0.File;
                                                             serverCertfileNames = new string[1];
                                                             serverCerts = new X509Certificate2[1];
-                                                            var s = Program.env[i].GetLocalStreamFromPackage(f.Value);
+                                                            var s = Program.env[i].GetLocalStreamFromPackage(f.Value, init: true);
                                                             if (s != null)
                                                             {
                                                                 using (var m = new MemoryStream())
