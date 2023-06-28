@@ -10,6 +10,7 @@
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using DataTransferObjects.MetadataDTOs;
+using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
@@ -322,7 +323,7 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsValueOnlySubmodelRepo")]
         //[SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelElementsValueResult), description: "List of found submodel elements")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "List of found submodel elements")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<ISubmodelElementValue>), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -331,7 +332,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
         {
-            return new ObjectResult(null);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+
+            var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
+
+            //TODO:jtikekar support modifiers
+            var output = _mappingService.Map(submodelElements.ConvertAll(sme => (IClass)sme), "value");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -505,7 +513,7 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelsValueOnly")]
         //[SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelsValueResult), description: "Requested Submodels")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested Submodels")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelValue>), description: "Requested Submodels")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -514,7 +522,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
         {
-            return new ObjectResult(null);
+            _logger.LogInformation($"Received a request to get all the submodels.");
+
+            var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
+
+            var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+
+            //TODO:jtikekar pagination and output modifier
+            var output = _mappingService.Map(submodelList.ConvertAll(sm => (IClass)sm), "value");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -868,7 +884,7 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdValueOnly")]
         //[SwaggerResponse(statusCode: 200, type: typeof(SubmodelValue), description: "Requested Submodel")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested Submodel")]
+        [SwaggerResponse(statusCode: 200, type: typeof(SubmodelValue), description: "Requested Submodel")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -877,7 +893,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
         {
-            return new ObjectResult(null);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
+
+            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+
+            //TODO:jtikekar support level and extent
+            var output = _mappingService.Map(submodel, "value");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -1047,7 +1070,7 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathValueOnlySubmodelRepo")]
         //[SwaggerResponse(statusCode: 200, type: typeof(SubmodelElementValue), description: "Requested submodel element")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested submodel element")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementValue), description: "Requested submodel element")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -1056,7 +1079,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string extent)
         {
-            return new ObjectResult(null);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+
+            var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+
+            //TODO:jtikekar level and extent modifier
+            var output = _mappingService.Map(submodelElement, "value");
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -1355,30 +1385,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] object body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            var submodel = _mappingService.Map(body, "value") as Submodel;
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            return NoContent();
         }
 
         /// <summary>
@@ -1479,30 +1495,18 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] SubmodelElementValue body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] object body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
         {
-            //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(204);
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            _logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
 
-            //TODO: Uncomment the next line to return response 400 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(400, default(Result));
+            ISubmodelElement submodelElement = _mappingService.Map(body, "value") as ISubmodelElement;
 
-            //TODO: Uncomment the next line to return response 401 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(401, default(Result));
+            //TODO jtikekar level modifier
 
-            //TODO: Uncomment the next line to return response 403 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(403, default(Result));
-
-            //TODO: Uncomment the next line to return response 404 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(404, default(Result));
-
-            //TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(500, default(Result));
-
-            //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            // return StatusCode(0, default(Result));
-
-            throw new NotImplementedException();
+            //Update
+            _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
+            return NoContent();
         }
 
         /// <summary>

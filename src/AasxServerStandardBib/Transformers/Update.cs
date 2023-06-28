@@ -1,4 +1,6 @@
-﻿namespace AasxServerStandardBib.Transformers
+﻿using System;
+
+namespace AasxServerStandardBib.Transformers
 {
     public static class Update
     {
@@ -6,6 +8,8 @@
 
         public static void ToUpdateObject(IClass source, IClass target)
         {
+            if (source == null) { throw new ArgumentNullException(nameof(source)); }
+            if (target == null) { throw new ArgumentNullException(nameof(target)); }
             Transformer.Visit(source, target);
         }
     }
