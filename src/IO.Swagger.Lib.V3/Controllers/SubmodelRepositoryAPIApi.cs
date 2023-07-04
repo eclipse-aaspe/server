@@ -9,10 +9,12 @@
  */
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
+using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.Services;
 using IO.Swagger.Models;
@@ -39,8 +41,10 @@ namespace IO.Swagger.Controllers
         private readonly IJsonQueryDeserializer _jsonQueryDeserializer;
         private readonly IMappingService _mappingService;
         private readonly IPathModifierService _pathModifierService;
+        private readonly ILevelExtentModifierService _levelExtentModifierService;
+        private readonly IPaginationService _paginationService;
 
-        public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService, IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService, IPathModifierService pathModifierService)
+        public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService, IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService, IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
@@ -49,6 +53,8 @@ namespace IO.Swagger.Controllers
             _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
             _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
             _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
+            _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
+            _paginationService = paginationService ?? throw new ArgumentNullException(nameof(pathModifierService));
         }
 
         /// <summary>
@@ -175,15 +181,21 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
 
-            var output = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
+            var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar pagination
+            var smePaginatedList = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, level, extent);
+            var output = new PagedResult()
+            {
+                result = smeLevelList,
+                paging_metadata = smePaginatedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -213,7 +225,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -221,8 +233,14 @@ namespace IO.Swagger.Controllers
 
             var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar output modifier
-            var output = _mappingService.Map(smeList.ConvertAll(sme => (IClass)sme), "metadata");
+            var smePagedList = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+            var smeListLevel = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result, level);
+            var smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
+            var output = new MetadataPagedResult()
+            {
+                result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme),
+                paging_metadata = smePagedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -251,7 +269,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelElementsPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
@@ -288,7 +306,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -296,10 +314,15 @@ namespace IO.Swagger.Controllers
 
             var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar Pagination and output modifiers level
-
+            //TODO:jtikekar level not applicable
+            var smePagedList = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
             //TODO:jtikekar check performace imapct due to ConvertAll
-            var output = _referenceModifierService.GetReferenceResult(smeList.ConvertAll(sme => (IReferable)sme));
+            var smeReferences = _referenceModifierService.GetReferenceResult(smePagedList.result.ConvertAll(sme => (IReferable)sme));
+            var output = new ReferencPagedResult()
+            {
+                result = smeReferences,
+                paging_metadata = smePagedList.paging_metadata,
+            };
             return new ObjectResult(output);
         }
 
@@ -330,15 +353,21 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
 
             var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar support modifiers
-            var output = _mappingService.Map(submodelElements.ConvertAll(sme => (IClass)sme), "value");
+            var smePagedList = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result, level, extent);
+            var smeValues = _mappingService.Map(smeLevelExtent, "value");
+            var output = new ValueOnlyPagedResult()
+            {
+                result = smeValues.ConvertAll(sme => (IValueDTO)sme),
+                paging_metadata = smePagedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -362,13 +391,13 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodels")]
         //[SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelsResult), description: "Requested Submodels")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested Submodels")]
+        [SwaggerResponse(statusCode: 200, type: typeof(PagedResult), description: "Requested Submodels")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodels([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodels([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             _logger.LogInformation($"Received a request to get all the submodels.");
 
@@ -376,8 +405,15 @@ namespace IO.Swagger.Controllers
 
             var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-            //TODO:jtikekar pagination and output modifier
-            return new ObjectResult(submodelList);
+            //TODO:jtikekar pagination
+            var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+            var smLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
+            var output = new PagedResult()
+            {
+                result = smLevelList,
+                paging_metadata = submodelsPagedList.paging_metadata
+            };
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -399,22 +435,27 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelsMetadata")]
         //[SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelsMetadataResult), description: "Requested Submodels")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested Submodels")]
+        [SwaggerResponse(statusCode: 200, type: typeof(MetadataPagedResult), description: "Requested Submodels")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelsMetadata([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelsMetadata([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             _logger.LogInformation($"Received request to get the metadata of all the submodels.");
             var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
             var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-            //TODO:jtikekar pagination and modifiers
-
-            var output = _mappingService.Map(submodelList.ConvertAll(sm => (IClass)sm), "metadata");
+            var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+            var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, level);
+            var smMetadataList = _mappingService.Map(submodelLevelList, "metadata");
+            var output = new MetadataPagedResult()
+            {
+                result = smMetadataList.ConvertAll(sme => (IMetadataDTO)sme),
+                paging_metadata = submodelPagedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -442,16 +483,22 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelsPath([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelsPath([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             _logger.LogInformation($"Received request to get the metadata of all the submodels.");
             var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
             var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-            //TODO:jtikekar pagination and modifiers
-
-            var output = _pathModifierService.ToIdShortPath(submodelList);
+            var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+            var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, level);
+            //TODO:jtikekar question, what if the first element is property, where path is not applicable
+            var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
+            var output = new PathPagedResult()
+            {
+                result = submodelsPath,
+                paging_metadata = submodelPagedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -479,7 +526,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             _logger.LogInformation($"Received a request to get all the submodels.");
 
@@ -487,8 +534,13 @@ namespace IO.Swagger.Controllers
 
             var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-            //TODO:jtikekar pagination and output modifier
-            var output = _referenceModifierService.GetReferenceResult(submodelList.ConvertAll(sm => (IReferable)sm));
+            var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+            var smReferences = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
+            var output = new ReferencPagedResult()
+            {
+                result = smReferences,
+                paging_metadata = submodelsPagedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -520,7 +572,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             _logger.LogInformation($"Received a request to get all the submodels.");
 
@@ -528,8 +580,14 @@ namespace IO.Swagger.Controllers
 
             var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-            //TODO:jtikekar pagination and output modifier
-            var output = _mappingService.Map(submodelList.ConvertAll(sm => (IClass)sm), "value");
+            var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+            var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
+            var submodelsValue = _mappingService.Map(submodelLevelList, "value");
+            var output = new ValueOnlyPagedResult()
+            {
+                result = submodelsValue.ConvertAll(sme => (IValueDTO)sme),
+                paging_metadata = submodelsPagedList.paging_metadata,
+            };
             return new ObjectResult(output);
         }
 
@@ -746,7 +804,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelById([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelById([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -754,8 +812,8 @@ namespace IO.Swagger.Controllers
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar  modifiers
-            return new ObjectResult(submodel);
+            var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -782,15 +840,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdMetadata([FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelByIdMetadata([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar:modifier
-            var output = _mappingService.Map(submodel, "metadata");
+            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
+            var output = _mappingService.Map(submodelLevel, "metadata");
             return new ObjectResult(output);
         }
 
@@ -817,16 +875,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdPath([FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelByIdPath([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar support modifier
-
-            var output = _pathModifierService.ToIdShortPath(submodel);
+            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
+            var output = _pathModifierService.ToIdShortPath(submodelLevel);
             return new ObjectResult(output);
         }
 
@@ -853,7 +910,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdReference([FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelByIdReference([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -861,7 +918,7 @@ namespace IO.Swagger.Controllers
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar  modifiers
+            //TODO:jtikekar  No moidifier should be applicable
             var output = _referenceModifierService.GetReferenceResult(submodel);
             return new ObjectResult(output);
         }
@@ -891,15 +948,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar support level and extent
-            var output = _mappingService.Map(submodel, "value");
+            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
+            var output = _mappingService.Map(submodelLevel, "value");
             return new ObjectResult(output);
         }
 
@@ -928,15 +985,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelElementByPathMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get metadata of submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
-            //TODO:jtikekar modifier
-
-            var output = _mappingService.Map(submodelElement, "metadata");
+            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
+            var output = _mappingService.Map(smeLevel, "metadata");
 
             return new ObjectResult(output);
         }
@@ -965,15 +1021,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to path of the submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier}");
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar support modifier
-            var output = _pathModifierService.ToIdShortPath(submodelElement);
+            var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
+            var output = _pathModifierService.ToIdShortPath(submodelElementLevel);
             return new ObjectResult(output);
         }
 
@@ -1001,7 +1057,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelElementByPathReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1009,7 +1065,7 @@ namespace IO.Swagger.Controllers
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar modifier??
+            //TODO:jtikekar modifier shoild not be applicable
             var output = _referenceModifierService.GetReferenceResult(submodelElement);
             return new ObjectResult(output);
         }
@@ -1039,15 +1095,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
 
-            var output = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar modifier??
+            var output = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level, extent);
             return new ObjectResult(output);
         }
 
@@ -1077,15 +1133,15 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar level and extent modifier
-            var output = _mappingService.Map(submodelElement, "value");
+            var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level, extent);
+            var output = _mappingService.Map(submodelElementLevel, "value");
             return new ObjectResult(output);
         }
 
@@ -1311,7 +1367,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelById([FromBody] Submodel body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelById([FromBody] Submodel body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1345,7 +1401,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received Patch Request for submodel with id {decodedSubmodelIdentifier}");
@@ -1385,7 +1441,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
@@ -1422,7 +1478,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] SubmodelElementMetadata body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
@@ -1460,7 +1516,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1495,7 +1551,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] SubmodelElementValue body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
@@ -1637,7 +1693,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelById([FromBody] Submodel body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PutSubmodelById([FromBody] Submodel body, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1673,7 +1729,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 

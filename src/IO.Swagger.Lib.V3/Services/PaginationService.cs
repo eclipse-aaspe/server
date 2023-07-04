@@ -1,6 +1,6 @@
 ﻿using AasxServerStandardBib.Logging;
 using IO.Swagger.Lib.V3.Interfaces;
-using IO.Swagger.Lib.V3.Models;
+using IO.Swagger.Models;
 using System;
 using System.Collections.Generic;
 
@@ -14,9 +14,9 @@ namespace IO.Swagger.Lib.V3.Services
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        public List<T> GetPaginatedList<T>(List<T> sourceList, PaginationParameters paginationParameters)
+        public PagedResult GetPaginatedList<T>(List<T> sourceList, PaginationParameters paginationParameters)
         {
-            var result = new List<T>();
+            var outputList = new List<T>();
             var startIndex = paginationParameters.Cursor;
             var endIndex = startIndex + paginationParameters.Limit - 1;
 
@@ -34,10 +34,24 @@ namespace IO.Swagger.Lib.V3.Services
 
             for (int i = startIndex; i <= endIndex; i++)
             {
-                result.Add(sourceList[i]);
+                outputList.Add(sourceList[i]);
             }
 
-            return result;
+            //Creating pagination result
+            var pagingMetadata = new PagedResultPagingMetadata();
+            if (endIndex < sourceList.Count - 1)
+            {
+                pagingMetadata.cursor = Convert.ToString(endIndex + 1);
+            }
+
+            var paginationResult = new PagedResult()
+            {
+                result = outputList.ConvertAll(r => (IClass)r),
+                paging_metadata = pagingMetadata
+            };
+
+            //return paginationResult;
+            return paginationResult;
         }
     }
 }

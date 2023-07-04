@@ -211,7 +211,7 @@ namespace AasxServerStandardBib.Services
 
                     if (aasList.Any())
                     {
-                        return aasList;
+                        output = aasList;
                     }
                     else
                     {

@@ -531,22 +531,26 @@ namespace Extensions
 
             if (sourceSubmodelElement.semanticId != null)
             {
-                var keyList = new List<IKey>();
-                foreach (var refKey in sourceSubmodelElement.semanticId.Keys)
+                List<IKey> keyList = null;
+                if (sourceSubmodelElement.semanticId.Keys != null)
                 {
-                    var keyType = Stringification.KeyTypesFromString(refKey.type);
-                    if (keyType != null)
+                    keyList = new List<IKey>();
+                    foreach (var refKey in sourceSubmodelElement.semanticId.Keys)
                     {
-                        // DECISION: After phone call with Birgit, set all CD to GlobalReference
-                        // assuming it is always a external concept
-                        if (keyType == KeyTypes.ConceptDescription)
-                            keyType = KeyTypes.GlobalReference;
+                        var keyType = Stringification.KeyTypesFromString(refKey.type);
+                        if (keyType != null)
+                        {
+                            // DECISION: After phone call with Birgit, set all CD to GlobalReference
+                            // assuming it is always a external concept
+                            if (keyType == KeyTypes.ConceptDescription)
+                                keyType = KeyTypes.GlobalReference;
 
-                        keyList.Add(new Key((KeyTypes)keyType, refKey.value));
-                    }
-                    else
-                    {
-                        Console.WriteLine($"KeyType value {refKey.type} not found.");
+                            keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                        }
+                        else
+                        {
+                            Console.WriteLine($"KeyType value {refKey.type} not found.");
+                        }
                     }
                 }
                 submodelElement.SemanticId = new Reference(ReferenceTypes.ExternalReference, keyList);
