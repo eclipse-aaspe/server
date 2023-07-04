@@ -35,9 +35,17 @@ namespace IO.Swagger.Lib.V3.Formatters
         public static bool IsGenericListOfIValueDTO(object o)
         {
             var oType = o.GetType();
+            bool IsValueDTO = false;
+            if (o is List<IDTO> list)
+            {
+                if (list[0] is IValueDTO)
+                {
+                    IsValueDTO = true;
+                }
+            }
             return oType.IsGenericType &&
                 (oType.GetGenericTypeDefinition() == typeof(List<>) &&
-                (typeof(IDTO).IsAssignableFrom(oType.GetGenericArguments()[0])));
+                IsValueDTO);
         }
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
@@ -91,9 +99,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                     contextObjectType.Add((IClass)generic);
                 }
 
+                //TODO:jtikekar remove
                 //Validate Modifiers
-                SerializationModifiersValidator.Validate(contextObjectType, level, extent);
-                var modifierContext = new SerializationModifierContext(level, extent);
+                //SerializationModifiersValidator.Validate(contextObjectType, level, extent);
+                //var modifierContext = new LevelExtentModifierContext(level, extent);
 
                 foreach (var item in contextObjectType)
                 {

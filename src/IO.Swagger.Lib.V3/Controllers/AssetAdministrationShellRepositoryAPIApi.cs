@@ -9,10 +9,12 @@
  */
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
+using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -38,8 +40,10 @@ namespace IO.Swagger.Controllers
         private readonly IReferenceModifierService _referenceModifierService;
         private readonly IMappingService _mappingService;
         private readonly IPathModifierService _pathModifierService;
+        private readonly ILevelExtentModifierService _levelExtentModifierService;
+        private readonly IPaginationService _paginationService;
 
-        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IAssetAdministrationShellService aasService, IBase64UrlDecoderService decoderService, IAasRepositoryApiHelperService aasRepoApiHelper, IReferenceModifierService referenceModifierService, IMappingService mappingService, IPathModifierService pathModifierService)
+        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IAssetAdministrationShellService aasService, IBase64UrlDecoderService decoderService, IAasRepositoryApiHelperService aasRepoApiHelper, IReferenceModifierService referenceModifierService, IMappingService mappingService, IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _aasService = aasService ?? throw new ArgumentNullException(nameof(aasService));
@@ -48,6 +52,8 @@ namespace IO.Swagger.Controllers
             _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
             _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
             _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
+            _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
+            _paginationService = paginationService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
         }
 
         /// <summary>
@@ -265,7 +271,7 @@ namespace IO.Swagger.Controllers
         [Route("/shells")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShells")]
-        [SwaggerResponse(statusCode: 200, type: typeof(GetAssetAdministrationShellsResult), description: "Requested Asset Administration Shells")]
+        [SwaggerResponse(statusCode: 200, type: typeof(PagedResult), description: "Requested Asset Administration Shells")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -275,11 +281,9 @@ namespace IO.Swagger.Controllers
         {
             _logger.LogInformation($"Received the request to get all Asset Administration Shells.");
 
-            List<IAssetAdministrationShell> aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
-
-            //TODO: jtikekar Pagination
-
-            return new ObjectResult(aasList);
+            var aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
+            var output = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -309,11 +313,14 @@ namespace IO.Swagger.Controllers
         {
             _logger.LogInformation($"Received the request to get all Asset Administration Shells.");
 
-            List<IAssetAdministrationShell> aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
-
-            //TODO:jtikekar check performance Impact
-            var output = _referenceModifierService.GetReferenceResult(aasList.ConvertAll(aas => (IReferable)aas));
-
+            var aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
+            var aasPaginatedList = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
+            var references = _referenceModifierService.GetReferenceResult(aasPaginatedList.result.ConvertAll(a => (IReferable)a));
+            var output = new ReferencPagedResult
+            {
+                result = references,
+                paging_metadata = aasPaginatedList.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -344,17 +351,22 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelElementsAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get all the submodel elements from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
-            var output = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar Pagination and output modifiers
-
+            var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result.ConvertAll(sme => (IClass)sme), level, extent);
+            var output = new PagedResult()
+            {
+                result = smeLevelList.ConvertAll(sme => (IClass)sme),
+                paging_metadata = smePaginated.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -377,15 +389,14 @@ namespace IO.Swagger.Controllers
         [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsMetadataAasRepository")]
-        //[SwaggerResponse(statusCode: 200, type: typeof(List<GetSubmodelElementsMetadataResult>), description: "List of found submodel elements")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<object>), description: "List of found submodel elements")]
+        [SwaggerResponse(statusCode: 200, type: typeof(MetadataPagedResult), description: "List of found submodel elements")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelElementsMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -394,8 +405,14 @@ namespace IO.Swagger.Controllers
 
             var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar pagination, modifiers
-            var output = _mappingService.Map(smeList.ConvertAll(sme => (IClass)sme), "metadata");
+            var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result.ConvertAll(sme => (IClass)sme), level);
+            var smeMetadataList = _mappingService.Map(smeLevelList, "metadata");
+            var output = new MetadataPagedResult
+            {
+                result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme),
+                paging_metadata = smePaginated.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -426,7 +443,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetAllSubmodelElementsPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
@@ -435,8 +452,14 @@ namespace IO.Swagger.Controllers
 
             var submodelElementsList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar support pagination and level modifier
-            var output = _pathModifierService.ToIdShortPath(submodelElementsList);
+            var smePaginated = _paginationService.GetPaginatedList(submodelElementsList, new PaginationParameters(cursor, limit));
+            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result.ConvertAll(sme => (IClass)sme), level, extent);
+            var smePathList = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
+            var output = new PathPagedResult
+            {
+                result = smePathList,
+                paging_metadata = smePaginated.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -459,7 +482,7 @@ namespace IO.Swagger.Controllers
         [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsReferenceAasRepository")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<GetReferencesResult>), description: "List of References of the found submodel elements")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ReferencPagedResult), description: "List of References of the found submodel elements")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -475,11 +498,14 @@ namespace IO.Swagger.Controllers
 
             var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar Pagination and output modifiers level
-
             //TODO:jtikekar check performace imapct due to ConvertAll
-            var output = _referenceModifierService.GetReferenceResult(smeList.ConvertAll(sme => (IReferable)sme));
-
+            var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+            var smeReferenceList = _referenceModifierService.GetReferenceResult(smePaginated.result.ConvertAll(sme => (IReferable)sme));
+            var output = new ReferencPagedResult
+            {
+                result = smeReferenceList,
+                paging_metadata = smePaginated.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -503,14 +529,14 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsValueOnlyAasRepository")]
         //[SwaggerResponse(statusCode: 200, type: typeof(List<GetSubmodelElementsValueResult>), description: "List of found submodel elements in their ValueOnly representation")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<object>), description: "List of found submodel elements in their ValueOnly representation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ValueOnlyPagedResult), description: "List of found submodel elements in their ValueOnly representation")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetAllSubmodelElementsValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -519,8 +545,14 @@ namespace IO.Swagger.Controllers
 
             var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar apply pagination and modifier
-            var output = _mappingService.Map(submodelElements.ConvertAll(sme => (IClass)sme), "value");
+            var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result.ConvertAll(sme => (IClass)sme), level);
+            var smeValueList = _mappingService.Map(smeLevelList, "value");
+            var output = new ValueOnlyPagedResult
+            {
+                result = smeValueList.ConvertAll(sme => (IValueDTO)sme),
+                paging_metadata = smePaginated.paging_metadata
+            };
             return new ObjectResult(output);
         }
 
@@ -554,10 +586,9 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get all the submodel references from the AAS with id {aasIdentifier}.");
 
-            var output = _aasService.GetAllSubmodelReferencesFromAas(decodedAasIdentifier);
+            var submodels = _aasService.GetAllSubmodelReferencesFromAas(decodedAasIdentifier);
 
-            //TODO: jtikekar pagination 
-
+            var output = _paginationService.GetPaginatedList(submodels, new PaginationParameters(cursor, limit));
             return new ObjectResult(output);
         }
 
@@ -879,16 +910,16 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelByIdAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
 
-            var output = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar output modifiers
+            var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
             return new ObjectResult(output);
         }
 
@@ -916,7 +947,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelByIdMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -925,8 +956,8 @@ namespace IO.Swagger.Controllers
 
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar modifier
-            var output = _mappingService.Map(submodel, "metadata");
+            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
+            var output = _mappingService.Map(submodelLevel, "metadata");
             return new ObjectResult(output);
         }
 
@@ -954,7 +985,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelByIdPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
@@ -963,8 +994,8 @@ namespace IO.Swagger.Controllers
 
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar support level modifier
-            var output = _pathModifierService.ToIdShortPath(submodel);
+            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
+            var output = _pathModifierService.ToIdShortPath(submodelLevel);
             return new ObjectResult(output);
         }
 
@@ -992,7 +1023,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdReferenceAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelByIdReferenceAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1001,7 +1032,7 @@ namespace IO.Swagger.Controllers
 
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar output modifiers
+            //TODO:jtikekar Level not applicable
 
             var output = _referenceModifierService.GetReferenceResult(submodel);
             return new ObjectResult(output);
@@ -1033,7 +1064,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelByIdValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelByIdValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1042,9 +1073,8 @@ namespace IO.Swagger.Controllers
 
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar Apply modifiers
-
-            var output = _mappingService.Map(submodel, "value");
+            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
+            var output = _mappingService.Map(submodelLevel, "value");
             return new ObjectResult(output);
         }
 
@@ -1076,17 +1106,17 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelElementByPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
-            var output = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar output modifiers
-            return new ObjectResult(output);
+            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level, extent);
+            return new ObjectResult(smeLevel);
         }
 
         /// <summary>
@@ -1116,7 +1146,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelElementByPathMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1125,8 +1155,8 @@ namespace IO.Swagger.Controllers
 
             var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar output modifiers
-            var output = _mappingService.Map(submodelElement, "metadata");
+            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
+            var output = _mappingService.Map(smeLevel, "metadata");
             return new ObjectResult(output);
         }
 
@@ -1155,7 +1185,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult GetSubmodelElementByPathPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
@@ -1164,8 +1194,8 @@ namespace IO.Swagger.Controllers
 
             var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar support level modifier
-            var output = _pathModifierService.ToIdShortPath(submodelElement);
+            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
+            var output = _pathModifierService.ToIdShortPath(smeLevel);
             return new ObjectResult(output);
         }
 
@@ -1203,7 +1233,7 @@ namespace IO.Swagger.Controllers
 
             var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar output modifiers
+            //TODO:jtikekar Level should not be applicable
 
             var output = _referenceModifierService.GetReferenceResult(submodelElement);
             return new ObjectResult(output);
@@ -1238,7 +1268,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetSubmodelElementByPathValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level, [FromQuery] string extent)
+        public virtual IActionResult GetSubmodelElementByPathValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1247,8 +1277,8 @@ namespace IO.Swagger.Controllers
 
             var submodelElement = _aasService.GetSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar apply modifiers
-            var output = _mappingService.Map(submodelElement, "value");
+            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level, extent);
+            var output = _mappingService.Map(smeLevel, "value");
             return new ObjectResult(output);
         }
 
@@ -1507,7 +1537,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelAasRepository([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelAasRepository([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1543,7 +1573,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] SubmodelMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] SubmodelMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] SubmodelMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1584,7 +1614,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelByIdValueOnlyAasRepository([FromBody] SubmodelValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelByIdValueOnlyAasRepository([FromBody] SubmodelValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelByIdValueOnlyAasRepository([FromBody] SubmodelValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1625,7 +1655,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] SubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1661,7 +1691,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] ISubmodelElementMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] ISubmodelElementMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         //public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] SubmodelElementMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -1704,7 +1734,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         //public virtual IActionResult PatchSubmodelElementValueByPathValueOnly([FromBody] SubmodelElementValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
-        public virtual IActionResult PatchSubmodelElementValueByPathValueOnly([FromBody] ISubmodelElementValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+        public virtual IActionResult PatchSubmodelElementValueByPathValueOnly([FromBody] ISubmodelElementValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);

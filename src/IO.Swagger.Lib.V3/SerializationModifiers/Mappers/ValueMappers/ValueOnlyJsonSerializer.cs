@@ -244,7 +244,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
             var valueObject = new JsonObject();
             valueObject["contentType"] = blobValue.contentType;
-            valueObject["value"] = JsonValue.Create(System.Convert.ToBase64String(blobValue.value));
+            if (blobValue.value != null)
+            {
+                valueObject["value"] = JsonValue.Create(System.Convert.ToBase64String(blobValue.value));
+            }
 
             result[blobValue.idShort] = valueObject;
 

@@ -20,7 +20,7 @@ namespace IO.Swagger.Models
     /// 
     /// </summary>
     [DataContract]
-    public partial class GetSubmodelElementsResult : PagedResult, IEquatable<GetSubmodelElementsResult>
+    public partial class GetSubmodelElementsResult : IEquatable<GetSubmodelElementsResult>
     {
         /// <summary>
         /// Gets or Sets Result

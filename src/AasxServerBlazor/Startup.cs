@@ -90,6 +90,7 @@ namespace AasxServerBlazor
             services.AddTransient<IMappingService, MappingService>();
             services.AddTransient<IPathModifierService, PathModifierService>();
             services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
+            services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
 
 
             // Add framework services.

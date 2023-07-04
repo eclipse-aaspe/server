@@ -1,7 +1,4 @@
-﻿using IO.Swagger.Lib.V3.Exceptions;
-using System;
-
-namespace IO.Swagger.Lib.V3.Models
+﻿namespace IO.Swagger.Models
 {
     public class PaginationParameters
     {
@@ -15,9 +12,9 @@ namespace IO.Swagger.Lib.V3.Models
 
         public PaginationParameters(string? cursor, int? limit)
         {
-            if (cursor.Equals(String.Empty))
+            if (string.IsNullOrEmpty(cursor))
             {
-                throw new EmptyCursorException();
+                Cursor = _cursor = 0;
             }
             else if (!string.IsNullOrEmpty(cursor))
             {
