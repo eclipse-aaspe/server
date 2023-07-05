@@ -16,6 +16,7 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -31,13 +32,15 @@ namespace IO.Swagger.Controllers
         private readonly IBase64UrlDecoderService _decoderService;
         private readonly IConceptDescriptionService _cdService;
         private readonly IJsonQueryDeserializer _jsonQueryDeserializer;
+        private readonly IPaginationService _paginationService;
 
-        public ConceptDescriptionRepositoryAPIApiController(IAppLogger<ConceptDescriptionRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IConceptDescriptionService cdService, IJsonQueryDeserializer jsonQueryDeserializer)
+        public ConceptDescriptionRepositoryAPIApiController(IAppLogger<ConceptDescriptionRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IConceptDescriptionService cdService, IJsonQueryDeserializer jsonQueryDeserializer, IPaginationService paginationService)
         {
-            _logger = logger;
-            _decoderService = decoderService;
-            _cdService = cdService;
-            _jsonQueryDeserializer = jsonQueryDeserializer;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
+            _cdService = cdService ?? throw new ArgumentNullException(nameof(cdService));
+            _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
+            _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         }
         /// <summary>
         /// Deletes a Concept Description
@@ -101,8 +104,8 @@ namespace IO.Swagger.Controllers
 
             var cdList = _cdService.GetAllConceptDescriptions(idShort, reqIsCaseOf, reqDataSpecificationRef);
 
-            //TODO:jtikekar Pagination
-            return new ObjectResult(cdList);
+            var output = _paginationService.GetPaginatedList(cdList, new PaginationParameters(cursor, limit));
+            return new ObjectResult(output);
         }
 
         /// <summary>

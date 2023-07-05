@@ -1,13 +1,18 @@
 ﻿using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
+using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
+using IO.Swagger.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
@@ -46,6 +51,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             Type type = context.ModelType;
             var request = context.HttpContext.Request;
             object result = null;
+
 
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(request.Body).Result;
 
@@ -100,8 +106,37 @@ namespace IO.Swagger.Lib.V3.Formatters
                 string idShortPath = (string)request.RouteValues["idShortPath"];
                 result = valueOnlyJsonDeserializerService.DeserializeSubmodelElementValue(node, encodedSubmodelIdentifier, idShortPath);
             }
+
+            //Validate modifiers
+            //SerializationModifier
+            GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
+            SerializationModifiersValidator.Validate(result, level, extent);
+
             return InputFormatterResult.SuccessAsync(result);
 
+        }
+
+        private void GetSerializationMidifiersFromRequest(HttpRequest request, out LevelEnum level, out ExtentEnum extent)
+        {
+            request.Query.TryGetValue("level", out StringValues levelValues);
+            if (levelValues.Any())
+            {
+                Enum.TryParse(levelValues.First(), out level);
+            }
+            else
+            {
+                level = LevelEnum.Deep;
+            }
+
+            request.Query.TryGetValue("extent", out StringValues extenValues);
+            if (extenValues.Any())
+            {
+                Enum.TryParse(extenValues.First(), out extent);
+            }
+            else
+            {
+                extent = ExtentEnum.WithoutBlobValue;
+            }
         }
 
         private SubmodelMetadata SubmodelMetadataFrom(JsonNode node)
@@ -278,6 +313,8 @@ namespace IO.Swagger.Lib.V3.Formatters
 
         private List<ISubmodelElementMetadata> ISubmodelElementMetadatListFrom(JsonNode jsonNode)
         {
+            if (jsonNode == null) return null;
+
             var valueArray = jsonNode as JsonArray;
             if (valueArray == null)
             {

@@ -10,10 +10,13 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public bool IncludeChildren { get; set; }
 
+        public bool IsRoot { get; set; }
+
         public LevelExtentModifierContext(LevelEnum level, ExtentEnum extent)
         {
             Level = level;
             Extent = extent;
+            IsRoot = true;
             IncludeChildren = true;
         }
     }
