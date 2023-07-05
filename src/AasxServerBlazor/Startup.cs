@@ -30,7 +30,6 @@ using System.IO;
 
 namespace AasxServerBlazor
 {
-    //TODO:jtikekar change to startup instead of startupV3
     public class Startup
     {
         private const string _corsPolicyName = "AllowAll";

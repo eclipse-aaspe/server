@@ -405,7 +405,6 @@ namespace IO.Swagger.Controllers
 
             var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-            //TODO:jtikekar pagination
             var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
             var smLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
             var output = new PagedResult()
@@ -1409,7 +1408,6 @@ namespace IO.Swagger.Controllers
             //Reverse mapping from Metadata to submodel element
             ISubmodel submodel = _mappingService.Map(body, "metadata") as ISubmodel;
 
-            //TODO:jtikekar support level
             //Update
             _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
 
@@ -1558,8 +1556,6 @@ namespace IO.Swagger.Controllers
 
             ISubmodelElement submodelElement = _mappingService.Map(body, "value") as ISubmodelElement;
 
-            //TODO jtikekar level modifier
-
             //Update
             _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
             return NoContent();
@@ -1701,7 +1697,6 @@ namespace IO.Swagger.Controllers
 
             _submodelService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
 
-            //TODO:jtikekar modifier
             return NoContent();
         }
 

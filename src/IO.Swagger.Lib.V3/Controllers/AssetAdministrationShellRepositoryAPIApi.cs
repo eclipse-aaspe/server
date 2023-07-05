@@ -1582,7 +1582,6 @@ namespace IO.Swagger.Controllers
 
             //Reverse mapping from Metadata to submodel element
             ISubmodel submodel = _mappingService.Map(body, "metadata") as ISubmodel;
-            //TODO:jtikekar support level
             //Update
             _aasService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, submodel);
 
@@ -1994,7 +1993,6 @@ namespace IO.Swagger.Controllers
 
             _aasService.ReplaceSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, body);
 
-            //TODO:jtikekar modifier
             return NoContent();
         }
 

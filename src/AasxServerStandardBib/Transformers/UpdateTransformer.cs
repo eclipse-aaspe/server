@@ -17,7 +17,7 @@ namespace AasxServerStandardBib.Transformers
             if (context is IAnnotatedRelationshipElement target)
             {
                 //As per the specifications, check for smes first. If any of the resource not available, do not change the server
-                if (target.Annotations.Any())
+                if (target.Annotations != null && target.Annotations.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.Annotations.Count < target.Annotations.Count)
@@ -194,7 +194,7 @@ namespace AasxServerStandardBib.Transformers
             if (context is IEntity target)
             {
                 //As per the specifications, check for smes first. If any of the resource not available, do not change the server
-                if (target.Statements.Any())
+                if (target.Statements != null && target.Statements.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.Statements.Count < target.Statements.Count)
@@ -357,7 +357,7 @@ namespace AasxServerStandardBib.Transformers
         {
             if (context is IOperation target)
             {
-                if (target.InputVariables.Any())
+                if (target.InputVariables != null && target.InputVariables.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.InputVariables.Count < target.InputVariables.Count)
@@ -370,7 +370,7 @@ namespace AasxServerStandardBib.Transformers
                     }
                 }
 
-                if (target.OutputVariables.Any())
+                if (target.OutputVariables != null && target.OutputVariables.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.OutputVariables.Count < target.OutputVariables.Count)
@@ -383,7 +383,7 @@ namespace AasxServerStandardBib.Transformers
                     }
                 }
 
-                if (target.InoutputVariables.Any())
+                if (target.InoutputVariables != null && target.InoutputVariables.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.InoutputVariables.Count < target.InoutputVariables.Count)
@@ -594,7 +594,7 @@ namespace AasxServerStandardBib.Transformers
             if (context is Submodel target)
             {
                 //As per the specifications, check for smes first. If any of the resource not available, do not change the server
-                if (target.SubmodelElements.Any())
+                if (target.SubmodelElements != null && target.SubmodelElements.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.SubmodelElements.Count < target.SubmodelElements.Count)
@@ -642,7 +642,7 @@ namespace AasxServerStandardBib.Transformers
             if (context is ISubmodelElementCollection target)
             {
                 //As per the specifications, check for smes first. If any of the resource not available, do not change the server
-                if (target.Value.Any())
+                if (target.Value != null && target.Value.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.Value.Count < target.Value.Count)
@@ -685,7 +685,7 @@ namespace AasxServerStandardBib.Transformers
             if (context is ISubmodelElementList target)
             {
                 //As per the specifications, check for smes first. If any of the resource not available, do not change the server
-                if (target.Value.Any())
+                if (target.Value != null && target.Value.Any())
                 {
                     //First check if number of elements in the server's resource are greater than or equal to the request's resource
                     if (that.Value.Count < target.Value.Count)

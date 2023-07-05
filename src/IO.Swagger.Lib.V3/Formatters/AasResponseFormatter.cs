@@ -99,11 +99,6 @@ namespace IO.Swagger.Lib.V3.Formatters
                     contextObjectType.Add((IClass)generic);
                 }
 
-                //TODO:jtikekar remove
-                //Validate Modifiers
-                //SerializationModifiersValidator.Validate(contextObjectType, level, extent);
-                //var modifierContext = new LevelExtentModifierContext(level, extent);
-
                 foreach (var item in contextObjectType)
                 {
                     var json = Jsonization.Serialize.ToJsonObject(item);
