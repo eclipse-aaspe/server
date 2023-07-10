@@ -11,6 +11,8 @@ using IO.Swagger.Attributes;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Collections.Generic;
+using static IO.Swagger.Models.ServiceDescription;
 
 namespace IO.Swagger.Controllers
 {
@@ -30,13 +32,20 @@ namespace IO.Swagger.Controllers
         [Route("/description")]
         [ValidateModelState]
         [SwaggerOperation("GetDescription")]
-        //[SwaggerResponse(statusCode: 200, type: typeof(ServiceDescription), description: "Requested Description")]
-        [SwaggerResponse(statusCode: 200, type: typeof(object), description: "Requested Description")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ServiceDescription), description: "Requested Description")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         public virtual IActionResult GetDescription()
         {
-            return new ObjectResult(null);
+            var output = new ServiceDescription();
+            output.Profiles = new List<ProfilesEnum>
+            {
+                ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationV30Enum,
+                ProfilesEnum.SubmodelRepositoryServiceSpecificationV30Enum,
+                ProfilesEnum.AasxFileServerServiceSpecificationV30Enum,
+                ProfilesEnum.RegistryAndDiscoveryServiceSpecificationV30Enum
+            };
+            return new ObjectResult(output);
         }
     }
 }

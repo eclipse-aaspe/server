@@ -90,6 +90,8 @@ namespace AasxServerBlazor
             services.AddTransient<IPathModifierService, PathModifierService>();
             services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
             services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
+            services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
+            services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
 
 
             // Add framework services.
@@ -118,7 +120,6 @@ namespace AasxServerBlazor
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
                     opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
                 });
-            //TODO:jtikekar Uncomment
             //.AddXmlSerializerFormatters();
 
             services
