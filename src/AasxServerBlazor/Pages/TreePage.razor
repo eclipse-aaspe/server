@@ -610,10 +610,10 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
+    /*
+    await js.InvokeAsync<object>(
+        "saveAsFile",
+        filename,
         Convert.ToBase64String(data)
         );
         */
@@ -1651,7 +1651,10 @@
                         if (col == 1)
                             ret = asset.GlobalAssetId + "";
                         if (col == 2)
-                            ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + "";
+                            if(asset.GlobalAssetId != null)
+                            {
+                                ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + "";
+                            }
                     }
                     break;
                 case 3:
