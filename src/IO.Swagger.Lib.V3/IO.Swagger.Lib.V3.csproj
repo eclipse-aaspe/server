@@ -9,6 +9,9 @@
     <PackageId>IO.Swagger</PackageId>
     <OutputType>Library</OutputType>
   </PropertyGroup>
+	<PropertyGroup>
+		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+	</PropertyGroup>
 	<ItemGroup>
 		<Using Include="AasCore.Aas3_0" />
 	</ItemGroup>
