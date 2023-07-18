@@ -1,4 +1,5 @@
-﻿using DataTransferObjects;
+﻿using AdminShellNS.Lib.V3.Models;
+using DataTransferObjects;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
@@ -54,6 +55,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            if (typeof(ValueOnlyPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
@@ -102,11 +107,35 @@ namespace IO.Swagger.Lib.V3.Formatters
                 foreach (var item in contextObjectType)
                 {
                     var json = Jsonization.Serialize.ToJsonObject(item);
-                    //var json = LevelExtentSerializer.ToJsonObject(item, modifierContext);
                     jsonArray.Add(json);
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(ValueOnlyPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                if (context.Object is ValueOnlyPagedResult pagedResult)
+                {
+                    cursor = pagedResult.paging_metadata.cursor;
+                    foreach (var item in pagedResult.result)
+                    {
+                        var json = ValueOnlyJsonSerializer.ToJsonObject(item);
+                        jsonArray.Add(json);
+                    }
+                }
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+                jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
             else if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
@@ -118,7 +147,6 @@ namespace IO.Swagger.Lib.V3.Formatters
             }
             else if (IsGenericListOfIValueDTO(context.Object))
             {
-
                 var jsonArray = new JsonArray();
                 IList genericList = (IList)context.Object;
                 List<IValueDTO> contextObjectType = new List<IValueDTO>();
@@ -129,7 +157,7 @@ namespace IO.Swagger.Lib.V3.Formatters
 
                 foreach (var item in contextObjectType)
                 {
-                    var json = ValueOnlyJsonSerializer.ToJsonObject((IValueDTO)item);
+                    var json = ValueOnlyJsonSerializer.ToJsonObject(item);
                     jsonArray.Add(json);
                 }
                 var writer = new Utf8JsonWriter(response.Body);

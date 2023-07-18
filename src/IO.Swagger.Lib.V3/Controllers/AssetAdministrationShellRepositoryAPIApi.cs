@@ -17,6 +17,7 @@ using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
@@ -30,6 +31,7 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
+    [Authorize(Policy = "SecurityPolicy")]
     [ApiController]
     public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     {

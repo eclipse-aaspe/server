@@ -8,14 +8,17 @@ using IO.Swagger.Filters;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Middleware;
+using IO.Swagger.Lib.V3.Security;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;
+using Microsoft.AspNetCore.Authorization;
 //using IO.Swagger.Controllers;
 //using IO.Swagger.Filters;
 //using IO.Swagger.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,7 +76,8 @@ namespace AasxServerBlazor
             services.AddControllers();
 
             services.AddLazyResolution();
-
+            services.AddSingleton<IAuthorizationHandler, SecurityHandler>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
             services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
@@ -91,7 +95,7 @@ namespace AasxServerBlazor
             services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
             services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
-
+            services.AddTransient<ISecurityService, SecurityService>();
 
             // Add framework services.
             services
@@ -138,33 +142,6 @@ namespace AasxServerBlazor
                         TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
                     });
 
-                    //TODO:jtikekar uncomment
-                    //c.SchemaFilter<EnumSchemaFilter>();
-
-                    //c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
-                    //{
-                    //    Name = "Authorization",
-                    //    Type = SecuritySchemeType.Http,
-                    //    Scheme = "basic",
-                    //    In = ParameterLocation.Header,
-                    //    Description = "Basic Authorization header using the Bearer scheme."
-                    //});
-
-                    //c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                    //{
-                    //    {
-                    //          new OpenApiSecurityScheme
-                    //            {
-                    //                Reference = new OpenApiReference
-                    //                {
-                    //                    Type = ReferenceType.SecurityScheme,
-                    //                    Id = "basic"
-                    //                }
-                    //            },
-                    //            new string[] {}
-                    //    }
-                    //});
-
                     c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
 
@@ -177,6 +154,13 @@ namespace AasxServerBlazor
 
                     c.OperationFilter<GeneratePathParamsValidationFilter>();
                 });
+            services.AddAuthorization(c =>
+            {
+                c.AddPolicy("SecurityPolicy", policy =>
+                {
+                    policy.Requirements.Add(new SecurityRequirement());
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -199,7 +183,7 @@ namespace AasxServerBlazor
 
             app.UseRouting();
             //app.UseAuthentication();
-            //app.UseAuthorization();
+            app.UseAuthorization();
 
             app.UseCors(_corsPolicyName);
 
