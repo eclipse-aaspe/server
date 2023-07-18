@@ -146,13 +146,8 @@ namespace IO.Swagger.Controllers
 
             var packages = _fileService.GetAllAASXPackageIds(decodedAasId);
 
-            var paginatedPackages = _paginationService.GetPaginatedList(packages, new PaginationParameters(cursor, limit));
-            var output = new PackageDescriptionPagedResult()
-            {
-                result = paginatedPackages.result.ConvertAll(p => (PackageDescription)p),
-                paging_metadata = paginatedPackages.paging_metadata
-            };
-            return new ObjectResult(output);
+            var paginatedPackages = _paginationService.GetPaginatedPackageDescriptionList(packages, new PaginationParameters(cursor, limit));
+            return new ObjectResult(paginatedPackages);
         }
 
         /// <summary>
