@@ -396,7 +396,7 @@
                     if (f != "")
                     {
                         found = db.SMESets.Count(sme =>
-                        sme.getValue().ToLower().Contains(f)
+                        sme.SValue.ToLower().Contains(f)
                         || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f))
                         + "/";
                     }
