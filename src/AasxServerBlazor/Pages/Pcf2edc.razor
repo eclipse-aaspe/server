@@ -1,11 +1,11 @@
 ﻿@page "/pcf2edc";
 
-@using AasCore.Aas3_0_RC02
+@using AasCore.Aas3_0
 @using Data
 @inject AASService SubmodelService
 @inject CredentialService cs
 @using AasxServer;
-@using Extenstions;
+@using Extensions;
 @using Microsoft.IdentityModel.Tokens;
 @using System.Drawing;
 @using System.Globalization;
@@ -457,7 +457,7 @@
         return path;
     }
 
-    static string getSmLink(Submodel sm)
+    static string getSmLink(ISubmodel sm)
     {
         string endpoint = null;
         var idEncoded = Base64UrlEncoder.Encode(sm.Id);

@@ -2,7 +2,7 @@
 @inject NavigationManager NavMan
 @inject Data.AASService SubmodelService
 @* @inject Data.CredentialService cs *@
-@using AasCore.Aas3_0_RC02;
+@using AasCore.Aas3_0;
 @using AasxServer
 @using System
 @using Microsoft.IdentityModel.Tokens;
@@ -238,7 +238,7 @@
     static bool edit = false;
 
     //TODO: code duplication with Pcf2.razor
-    static string getAasLink(AssetAdministrationShell aas)
+    static string getAasLink(IAssetAdministrationShell aas)
     {
         string endpoint = null;
         var idEncoded = Base64UrlEncoder.Encode(aas.Id);

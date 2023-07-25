@@ -329,7 +329,7 @@
                                                         text = text.Replace(" - COPY", "");
                                                     return text;
                                                 }
-                                                node.aas.Submodels.Sort(delegate(Reference a, Reference b)
+                                                node.aas.Submodels.Sort(delegate(IReference a, IReference b)
                                                  {
                                                      var idA = new string(Program.env?[node.envIndex].AasEnv.FindSubmodel(a)?.IdShort);
                                                      idA = cleanupIdShort(idA);

@@ -13,11 +13,11 @@ using System.Text.Json.Nodes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AasCore.Aas3_0_RC02;
+using AasCore.Aas3_0;
 using AasxRestServerLibrary;
 using AasxServer;
 using AdminShellNS;
-using Extenstions;
+using Extensions;
 using IdentityModel;
 using IdentityModel.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -1468,17 +1468,19 @@ namespace AasxServer
                                         foreach (var v in sm.SubmodelElements)
                                         {
                                             string s = "";
-                                            s = e?.GlobalAssetId;
-                                            if (s != "")
+                                            if (v is Entity e)
                                             {
-                                                // check if first entity is newer than last cfp creation
-                                                string s = "";
-                                                //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
-                                                //s = e?.assetRef?.Keys?[0].Value;
-                                                s = e?.GlobalAssetId?.Keys?[0].Value;
+                                                s = e?.GlobalAssetId;
                                                 if (s != "")
                                                 {
-                                                    bom.Add(s);
+                                                    // check if first entity is newer than last cfp creation
+                                                    //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
+                                                    //s = e?.assetRef?.Keys?[0].Value;
+                                                    s = e?.GlobalAssetId;
+                                                    if (s != "")
+                                                    {
+                                                        bom.Add(s);
+                                                    }
                                                 }
                                             }
                                         }
@@ -1519,7 +1521,7 @@ namespace AasxServer
                                                 if (p.Value != null)
                                                 {
                                                     string s = null;
-                                                    foreach (var ls in p.Value.LangStrings)
+                                                    foreach (var ls in p.Value)
                                                     {
                                                         if (ls.Language.ToLower() == "en")
                                                         {

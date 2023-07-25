@@ -47,7 +47,7 @@ namespace AasxServer
         public static void initByFile(List<AasxCredentialsEntry> cList, string fileName)
         {
             cList.Clear();
-            if (File.Exists(fileName))
+            if (System.IO.File.Exists(fileName))
             {
                 try
                 {   // Open the text file using a stream reader.
@@ -246,7 +246,7 @@ namespace AasxServer
                 Console.WriteLine("OpenID Discovery JSON:");
                 Console.WriteLine(disco.Raw);
 
-                if (!File.Exists(clientCertificate))
+                if (!System.IO.File.Exists(clientCertificate))
                 {
                     Console.WriteLine(clientCertificate + " does not exist!");
                     return;
