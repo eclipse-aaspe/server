@@ -7,7 +7,7 @@ COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor
 
-FROM mcr.microsoft.com/dotnet/aspnet:3.1 as base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 as base
 RUN apt-get update && apt-get install -y libgdiplus
 EXPOSE 51210
 EXPOSE 51310
