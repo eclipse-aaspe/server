@@ -4,7 +4,7 @@ using AasxMqttServer;
 using AasxRestServerLibrary;
 using AasxServerStandardBib.Migrations;
 using AdminShellNS;
-using Extenstions;
+using Extensions;
 using Jose;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -282,7 +282,7 @@ namespace AasxServer
         }
 
         static int oldest = 0;
-        public static bool loadPackageForAas(string aasIdentifier, out AssetAdministrationShell output, out int packageIndex)
+        public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
             if (!withDb)
@@ -360,7 +360,7 @@ namespace AasxServer
             return false;
         }
 
-        public static bool loadPackageForSubmodel(string submodelIdentifier, out Submodel output, out int packageIndex)
+        public static bool loadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
             output = null; packageIndex = -1;
             if (!withDb)
@@ -962,7 +962,7 @@ namespace AasxServer
                         {
                             var aas = env[envi].AasEnv.AssetAdministrationShells[0];
                             var aasId = aas.Id;
-                            var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
+                            var assetId = aas.AssetInformation.GlobalAssetId;
 
                             // Check security
                             if (aas.IdShort.ToLower().Contains("globalsecurity"))

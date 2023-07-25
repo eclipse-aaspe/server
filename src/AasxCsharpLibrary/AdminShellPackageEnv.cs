@@ -282,7 +282,7 @@ namespace AdminShellNS
             return _envXml;
         }
 
-        public AdminShellPackageEnv(AasCore.Aas3_0_RC02.Environment env)
+        public AdminShellPackageEnv(AasCore.Aas3_0.Environment env)
         {
             if (env != null)
                 _aasEnv = env;
