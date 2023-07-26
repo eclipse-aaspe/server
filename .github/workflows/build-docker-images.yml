@@ -1,4 +1,4 @@
-name: build-docekr-images-workflow
+name: build-docker-images-workflow
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   build-docker-images:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     if: contains(github.event.pull_request.body, 'The workflow check-release was intentionally skipped.') == false
     steps:
       - uses: actions/checkout@master
