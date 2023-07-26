@@ -1156,7 +1156,7 @@ namespace AasxServer
                                                             db.Add(submodelDB);
 
                                                             VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
-                                                            v.VisitSubmodel(sm);
+                                                            v.Visit(sm);
                                                         }
                                                     }
                                                     // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));

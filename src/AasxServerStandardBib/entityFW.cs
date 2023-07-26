@@ -889,83 +889,83 @@ namespace AasxServer
         }
         public override void VisitSubmodel(ISubmodel that)
         {
-            base.Visit(that);
+            base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitRelationshipElement(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitSubmodelElementList(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitSubmodelElementCollection(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitProperty(IProperty that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitProperty(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitMultiLanguageProperty(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitRange(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitReferenceElement(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitBlob(IBlob that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitBlob(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitFile(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitAnnotatedRelationshipElement(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitEntity(IEntity that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitEntity(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitEventPayload(IEventPayload that)
@@ -978,7 +978,7 @@ namespace AasxServer
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitOperation(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitOperationVariable(IOperationVariable that)
@@ -988,7 +988,7 @@ namespace AasxServer
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
-            base.Visit(that);
+            base.VisitCapability(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
         public override void VisitConceptDescription(IConceptDescription that)
@@ -1000,23 +1000,52 @@ namespace AasxServer
         public override void VisitKey(IKey that)
         {
         }
-        /*
-        public override void VisitLangString(ILangString that)
-        {
-        }
-        public override void VisitLangStringSet(ILangStringSet that)
-        {
-        }
-        public override void VisitDataSpecificationContent(IDataSpecificationContent that)
-        {
-        }
-        public override void VisitDataSpecification(IDataSpecification that)
-        {
-        }
-        */
+
         public override void VisitEnvironment(AasCore.Aas3_0.IEnvironment that)
         {
         }
+
+        public override void VisitLangStringNameType(
+            ILangStringNameType that
+        )
+        { }
+        public override void VisitLangStringTextType(
+            ILangStringTextType that
+        )
+        { }
+        public override void VisitEmbeddedDataSpecification(
+            IEmbeddedDataSpecification that
+        )
+        { }
+        public override void VisitLevelType(
+            ILevelType that
+        )
+        { }
+        public override void VisitValueReferencePair(
+            IValueReferencePair that
+        )
+        { }
+        public override void VisitValueList(
+            IValueList that
+        )
+        { }
+        public override void VisitLangStringPreferredNameTypeIec61360(
+            ILangStringPreferredNameTypeIec61360 that
+        )
+        { }
+        public override void VisitLangStringShortNameTypeIec61360(
+            ILangStringShortNameTypeIec61360 that
+        )
+        { }
+        public override void VisitLangStringDefinitionTypeIec61360(
+            ILangStringDefinitionTypeIec61360 that
+        )
+        { }
+        public override void VisitDataSpecificationIec61360(
+            IDataSpecificationIec61360 that
+        )
+        { }
+
     }
 
     public class DBRead
