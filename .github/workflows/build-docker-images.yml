@@ -23,8 +23,8 @@ jobs:
           -t aasx-server-blazor-for-demo:latest `
           -f src/docker/Dockerfile-AasxServerBlazor `
           .
-
-    - name: Upload image
-      uses: ishworkh/container-image-artifact-upload@v1.0.0
-      with:
-        image: "aasx-server-blazor-for-demo:latest"
+          
+      - name: Upload image
+        uses: ishworkh/container-image-artifact-upload@v1.0.0
+        with:
+          image: "aasx-server-blazor-for-demo:latest"
