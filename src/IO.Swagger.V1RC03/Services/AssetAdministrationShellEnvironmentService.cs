@@ -19,7 +19,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static IO.Swagger.V1RC03.Controllers.AssetAdministrationShellEnvironmentAPIController;
-using File = AasCore.Aas3_0_RC02.File;
+using File = AasCore.Aas3_0.File;
 
 namespace IO.Swagger.V1RC03.Services
 {

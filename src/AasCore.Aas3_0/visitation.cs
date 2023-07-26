@@ -132,6 +132,7 @@ namespace AasCore.Aas3_0
             public void VisitDataSpecificationIec61360(
                 IDataSpecificationIec61360 that
             );
+            // OZ: void Visit(Extension that);
         }  // public interface IVisitor
 
         /// <summary>

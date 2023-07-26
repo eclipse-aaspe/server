@@ -2274,12 +2274,12 @@
                     break;                
                 default:
                     ret = "";
-                    if (ls.LangStrings.Count > line - 2)
+                    if (ls.Count > line - 2)
                     {
                         if (col == 0)
-                            ret = ls.LangStrings[line - 2].Language;
+                            ret = ls[line - 2].Language;
                         if (col == 1)
-                            ret = ls.LangStrings[line - 2].Text + "";
+                            ret = ls[line - 2].Text + "";
                     }
                     break;
             }

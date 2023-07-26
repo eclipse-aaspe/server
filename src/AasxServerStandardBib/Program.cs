@@ -373,10 +373,9 @@ namespace AasxServer
                             AssetAdministrationShell aas = new AssetAdministrationShell(
                                 id: aasDB.AasId,
                                 idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type,
-                                    new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                        new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
-                                    )
+                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
+                                    /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                        new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) }) */
                                 );
                             env[i].AasEnv.AssetAdministrationShells.Add(aas);
 
@@ -385,7 +384,7 @@ namespace AasxServer
                                 .Where(sm => sm.AasNum == aasDB.AasNum)
                                 .ToList();
 
-                            aas.Submodels = new List<Reference>();
+                            aas.Submodels = new List<AasCore.Aas3_0.IReference> ();
                             foreach (var submodelDB in submodelDBList)
                             {
                                 var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
@@ -496,10 +495,10 @@ namespace AasxServer
                             AssetAdministrationShell aas = new AssetAdministrationShell(
                                 id: aasDB.AasId,
                                 idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type,
-                                    new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                                        new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
-                                    )
+                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
+                                    /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                        new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
+                                    ) */
                                 );
                             env[i].AasEnv.AssetAdministrationShells.Add(aas);
 
@@ -508,7 +507,7 @@ namespace AasxServer
                                 .Where(sm => sm.AasNum == aasDB.AasNum)
                                 .ToList();
 
-                            aas.Submodels = new List<Reference>();
+                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
                             foreach (var sDB in submodelDBList2)
                             {
                                 var sm = DBRead.getSubmodel(sDB.SubmodelId);
@@ -1053,10 +1052,7 @@ namespace AasxServer
                         envimin = envi;
                         oldest= envi;
                         fi++;
-                        // envFileName[envi] = null;
-                        // env[envi].Close();
-                        // env[envi].Dispose();
-                        // env[envi] = null;
+                        continue;
                     }
 
                     if (fi < startIndex)
@@ -1110,7 +1106,7 @@ namespace AasxServer
 
                                         var aas = asp.AasEnv.AssetAdministrationShells[0];
                                         var aasId = aas.Id;
-                                        var assetId = aas.AssetInformation.GlobalAssetId.GetAsIdentifier();
+                                        var assetId = aas.AssetInformation.GlobalAssetId;
 
                                         // Check security
                                         if (aas.IdShort.ToLower().Contains("globalsecurity"))
@@ -1160,7 +1156,7 @@ namespace AasxServer
                                                             db.Add(submodelDB);
 
                                                             VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
-                                                            v.Visit(sm);
+                                                            v.VisitSubmodel(sm);
                                                         }
                                                     }
                                                     // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
@@ -1208,7 +1204,8 @@ namespace AasxServer
                                         fcopyt = fcopyt.Replace("/", "_");
                                         fcopyt = fcopyt.Replace(".", "_");
                                         Uri dummy = null;
-                                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true,
+                                            withDb: withDb, withDbFiles: withDbFiles, dataPath: AasxHttpContextHelper.DataPath))
                                         {
                                             Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
                                             var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
@@ -1228,7 +1225,8 @@ namespace AasxServer
                                                 // string fcopy = name + "__" + f.Uri.OriginalString;
                                                 // fcopy = fcopy.Replace("/", "_");
                                                 // fcopy = fcopy.Replace(".", "_");
-                                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
+                                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true,
+                                                    withDb : withDb, withDbFiles : withDbFiles, dataPath : AasxHttpContextHelper.DataPath))
                                                 {
                                                     var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
                                                     Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);

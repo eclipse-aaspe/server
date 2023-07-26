@@ -1,6 +1,6 @@
-﻿using AasCore.Aas3_0_RC02;
+﻿using AasCore.Aas3_0;
 using AasxRestServerLibrary;
-using Extenstions;
+using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,7 +18,7 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
-using static AasCore.Aas3_0_RC02.Visitation;
+using static AasCore.Aas3_0.Visitation;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -697,11 +697,11 @@ namespace AasxServer
                 return "MLP";
             if (sme is ReferenceElement)
                 return ("RE");
-            if (sme is AasCore.Aas3_0_RC02.Range)
+            if (sme is AasCore.Aas3_0.Range)
                 return "R";
             if (sme is Blob)
                 return "B";
-            if (sme is AasCore.Aas3_0_RC02.File)
+            if (sme is AasCore.Aas3_0.File)
                 return "F";
             if (sme is AnnotatedRelationshipElement)
                 return "ARE";
@@ -783,7 +783,7 @@ namespace AasxServer
                 }
             }
 
-            if (sme is AasCore.Aas3_0_RC02.File f)
+            if (sme is AasCore.Aas3_0.File f)
             {
                 v = f.Value;
                 vt = "S";
@@ -795,18 +795,18 @@ namespace AasxServer
                 var ls = mlp.Value;
                 if (ls != null)
                 {
-                    for (int i = 0; i < ls.LangStrings.Count; i++)
+                    for (int i = 0; i < ls.Count; i++)
                     {
-                        v += ls.LangStrings[i].Language + "$$";
-                        v += ls.LangStrings[i].Text;
-                        if (i < ls.LangStrings.Count - 1)
+                        v += ls[i].Language + "$$";
+                        v += ls[i].Text;
+                        if (i < ls.Count - 1)
                             v += "$$";
                     }
                     vt = "S";
                     sValue = v;
                 }
             }
-            if (sme is AasCore.Aas3_0_RC02.Range r)
+            if (sme is AasCore.Aas3_0.Range r)
             {
                 v = r.Min;
                 // if (v != "")
@@ -866,153 +866,155 @@ namespace AasxServer
             _db.Add(smeDB);
             return smeNum;
         }
-        public override void Visit(Extension that)
+        public override void VisitExtension(IExtension that)
         {
         }
-        public override void Visit(AdministrativeInformation that)
+        public override void VisitAdministrativeInformation(IAdministrativeInformation that)
         {
         }
-        public override void Visit(Qualifier that)
+        public override void VisitQualifier(IQualifier that)
         {
         }
-        public override void Visit(AssetAdministrationShell that)
+        public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
         }
-        public override void Visit(AssetInformation that)
+        public override void VisitAssetInformation(IAssetInformation that)
         {
         }
-        public override void Visit(Resource that)
+        public override void VisitResource(IResource that)
         {
         }
-        public override void Visit(SpecificAssetId that)
+        public override void VisitSpecificAssetId(ISpecificAssetId that)
         {
         }
-        public override void Visit(Submodel that)
+        public override void VisitSubmodel(ISubmodel that)
         {
             base.Visit(that);
         }
-        public override void Visit(RelationshipElement that)
+        public override void VisitRelationshipElement(IRelationshipElement that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(SubmodelElementList that)
+        public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(SubmodelElementCollection that)
+        public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(Property that)
+        public override void VisitProperty(IProperty that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(MultiLanguageProperty that)
+        public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(AasCore.Aas3_0_RC02.Range that)
+        public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(ReferenceElement that)
+        public override void VisitReferenceElement(IReferenceElement that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(Blob that)
+        public override void VisitBlob(IBlob that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(AasCore.Aas3_0_RC02.File that)
+        public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(AnnotatedRelationshipElement that)
+        public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(Entity that)
+        public override void VisitEntity(IEntity that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(EventPayload that)
+        public override void VisitEventPayload(IEventPayload that)
         {
         }
-        public override void Visit(BasicEventElement that)
+        public override void VisitBasicEventElement(IBasicEventElement that)
         {
         }
-        public override void Visit(Operation that)
-        {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
-            base.Visit(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
-        }
-        public override void Visit(OperationVariable that)
-        {
-        }
-        public override void Visit(Capability that)
+        public override void VisitOperation(IOperation that)
         {
             long smeNum = collectSMEData(that);
             _parentNum.Add(smeNum);
             base.Visit(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
-        public override void Visit(ConceptDescription that)
+        public override void VisitOperationVariable(IOperationVariable that)
         {
         }
-        public override void Visit(Reference that)
+        public override void VisitCapability(ICapability that)
+        {
+            long smeNum = collectSMEData(that);
+            _parentNum.Add(smeNum);
+            base.Visit(that);
+            _parentNum.RemoveAt(_parentNum.Count - 1);
+        }
+        public override void VisitConceptDescription(IConceptDescription that)
         {
         }
-        public override void Visit(Key that)
+        public override void VisitReference(AasCore.Aas3_0.IReference that)
         {
         }
-        public override void Visit(LangString that)
+        public override void VisitKey(IKey that)
         {
         }
-        public override void Visit(LangStringSet that)
+        /*
+        public override void VisitLangString(ILangString that)
         {
         }
-        public override void Visit(DataSpecificationContent that)
+        public override void VisitLangStringSet(ILangStringSet that)
         {
         }
-        public override void Visit(DataSpecification that)
+        public override void VisitDataSpecificationContent(IDataSpecificationContent that)
         {
         }
-        public override void Visit(AasCore.Aas3_0_RC02.Environment that)
+        public override void VisitDataSpecification(IDataSpecification that)
+        {
+        }
+        */
+        public override void VisitEnvironment(AasCore.Aas3_0.IEnvironment that)
         {
         }
     }
@@ -1039,8 +1041,8 @@ namespace AasxServer
 
                     Submodel submodel = new Submodel(submodelId);
                     submodel.IdShort = subDB.Idshort;
-                    submodel.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                        new List<Key>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
+                    submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                        new List<IKey>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
 
                     loadSME(submodel, null, null, SMEList, 0);
 
@@ -1087,22 +1089,22 @@ namespace AasxServer
                         break;
                     case "MLP":
                         var mlp = new MultiLanguageProperty(idShort: smel.Idshort);
-                        var ls = new List<LangString>();
+                        var ls = new List<ILangStringTextType>();
                         if (smel.SValue != "")
                         {
                             var v = smel.SValue.Split("$$");
                             int i = 0;
                             while (i < v.Length)
                             {
-                                ls.Add(new LangString(v[i], v[i + 1]));
+                                ls.Add(new LangStringTextType(v[i], v[i + 1]));
                                 i += 2;
                             }
                         }
-                        mlp.Value = new LangStringSet(ls);
+                        mlp.Value = ls;
                         nextSME = mlp;
                         break;
                     case "F":
-                        nextSME = new AasCore.Aas3_0_RC02.File("text", idShort: smel.Idshort, value: smel.getValue());
+                        nextSME = new AasCore.Aas3_0.File("text", idShort: smel.Idshort, value: smel.getValue());
                         break;
                 }
                 if (nextSME == null)
@@ -1110,8 +1112,8 @@ namespace AasxServer
 
                 if (smel.SemanticId != "")
                 {
-                    nextSME.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference,
-                        new List<Key>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
+                    nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                        new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
                 }
 
                 if (sme == null)

@@ -8,10 +8,10 @@ This source code may use other Open Source software components (see LICENSE.txt)
 */
 
 
-using AasxRestServerLibrary;
-using Extenstions;
+
+using Extensions;
 using Newtonsoft.Json;
-using ScottPlot.Drawing.Colormaps;
+// using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1210,12 +1210,13 @@ namespace AdminShellNS
             return isLocal;
         }
 
-        public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open, bool init = false)
+        public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open, FileAccess access = FileAccess.ReadWrite,
+            bool init = false, bool withDb = false, bool withDbFiles = false, string dataPath = "")
         {
             // DB
-            if (AasxServer.Program.withDb && AasxServer.Program.withDbFiles && !init)
+            if (withDb && !init)
             {
-                using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + Path.GetFileName(Filename) + ".zip", FileMode.Open))
+                using (var fileStream = new FileStream(dataPath + "/files/" + Path.GetFileName(Filename) + ".zip", FileMode.Open))
                 using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                 {
                     var archiveFile = archive.GetEntry(uriString);
@@ -1225,14 +1226,6 @@ namespace AdminShellNS
                     ms.Position = 0;
                     return ms;
                 }
-
-                /*
-                string fcopy = Path.GetFileName(Filename) + "__" + uriString;
-                fcopy = fcopy.Replace("/", "_");
-                fcopy = fcopy.Replace(".", "_");
-                var s = System.IO.File.OpenRead(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                return s;
-                */
             }
 
             // access
@@ -1297,15 +1290,15 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
+        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false, bool withDb = false, bool withDbFiles = false, string dataPath = "")
         {
             // DB
-            if (AasxServer.Program.withDb && AasxServer.Program.withDbFiles && !init)
+            if (withDb && withDbFiles && !init)
             {
                 string fcopy = Path.GetFileName(Filename) + "__thumbnail";
                 fcopy = fcopy.Replace("/", "_");
                 fcopy = fcopy.Replace(".", "_");
-                var s = System.IO.File.OpenRead(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                var s = System.IO.File.OpenRead(dataPath + "/files/" + fcopy + ".dat");
                 return s;
             }
 
