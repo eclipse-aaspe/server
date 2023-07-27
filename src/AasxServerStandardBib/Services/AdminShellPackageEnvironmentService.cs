@@ -132,6 +132,9 @@ namespace AasxServerStandardBib.Services
         private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
+
+            Program.loadPackageForAas(aasIdentifier, out output, out packageIndex);
+
             foreach (var package in _packages)
             {
                 if (package != null)
@@ -234,6 +237,9 @@ namespace AasxServerStandardBib.Services
         {
             output = null;
             packageIndex = -1;
+
+            Program.loadPackageForSubmodel(submodelIdentifier, out output, out packageIndex);
+
             foreach (var package in _packages)
             {
                 if (package != null)
@@ -244,7 +250,14 @@ namespace AasxServerStandardBib.Services
                         var submodels = env.Submodels.Where(a => a.Id.Equals(submodelIdentifier));
                         if (submodels.Any())
                         {
-                            output = submodels.First();
+                            if (!Program.withDb)
+                            {
+                                output = submodels.First();
+                            }
+                            else
+                            {
+                                output = DBRead.getSubmodel(submodelIdentifier);
+                            }
                             packageIndex = Array.IndexOf(_packages, package);
                             return true;
                         }

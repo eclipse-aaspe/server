@@ -932,6 +932,9 @@ namespace AasxServer
             }
             */
 
+            // Pass global options to subprojects
+            AdminShellNS.AdminShellPackageEnv.setGlobalOptions(withDb, withDbFiles, a.DataPath);
+
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
@@ -1204,8 +1207,7 @@ namespace AasxServer
                                         fcopyt = fcopyt.Replace("/", "_");
                                         fcopyt = fcopyt.Replace(".", "_");
                                         Uri dummy = null;
-                                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true,
-                                            withDb: withDb, withDbFiles: withDbFiles, dataPath: AasxHttpContextHelper.DataPath))
+                                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                                         {
                                             Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
                                             var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
@@ -1225,8 +1227,7 @@ namespace AasxServer
                                                 // string fcopy = name + "__" + f.Uri.OriginalString;
                                                 // fcopy = fcopy.Replace("/", "_");
                                                 // fcopy = fcopy.Replace(".", "_");
-                                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true,
-                                                    withDb : withDb, withDbFiles : withDbFiles, dataPath : AasxHttpContextHelper.DataPath))
+                                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                                                 {
                                                     var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
                                                     Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);

@@ -1210,8 +1210,17 @@ namespace AdminShellNS
             return isLocal;
         }
 
-        public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open, FileAccess access = FileAccess.ReadWrite,
-            bool init = false, bool withDb = false, bool withDbFiles = false, string dataPath = "")
+        public static bool withDb = false;
+        public static bool withDbFiles = false;
+        public static string dataPath = "";
+        public static void setGlobalOptions(bool _withDb, bool _withDbFiles, string _dataPath)
+        {
+            withDb= _withDb;
+            withDbFiles= _withDbFiles;
+            dataPath= _dataPath;
+        }
+
+        public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open, FileAccess access = FileAccess.ReadWrite, bool init = false)
         {
             // DB
             if (withDb && !init)
@@ -1290,7 +1299,7 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false, bool withDb = false, bool withDbFiles = false, string dataPath = "")
+        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
         {
             // DB
             if (withDb && withDbFiles && !init)
