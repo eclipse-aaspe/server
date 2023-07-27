@@ -480,7 +480,7 @@ namespace AasxServer
                         }
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                        r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
+                        r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
                         result.Add(r);
                     }
                 }
