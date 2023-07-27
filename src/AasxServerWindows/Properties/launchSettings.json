@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "AasxServerWindows": {
-      "commandName": "Project",
-      //"commandLineArgs": "--rest --data-path C:\\Users\\pakala\\Downloads\\AW__AASX_Registry --connect  http://192.168.178.23:52000,test_ovgu,1000 --name Test_OVGU",
-      "commandLineArgs": "--rest --port 51310 --no-security --data-path \"C:\\Development\\AASX\" --edit"
-    }
-  }
-}
