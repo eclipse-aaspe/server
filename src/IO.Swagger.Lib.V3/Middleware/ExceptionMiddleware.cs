@@ -1,4 +1,5 @@
-﻿using AasxServerStandardBib.Exceptions;
+﻿using AasSecurity.Exceptions;
+using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Exceptions;
 using IO.Swagger.Lib.V3.Exceptions;

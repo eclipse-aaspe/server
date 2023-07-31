@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Threading.Tasks;
 
-namespace IO.Swagger.Lib.V3.Security
+namespace AasSecurity
 {
     public class SecurityHandler : AuthorizationHandler<SecurityRequirement>
     {
@@ -15,6 +13,8 @@ namespace IO.Swagger.Lib.V3.Security
             _httpContextAccessor = httpContextAccessor;
             _securityService = securityService;
         }
+
+
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SecurityRequirement requirement)
         {
             Console.WriteLine($"Authorizing the request.");
@@ -44,5 +44,7 @@ namespace IO.Swagger.Lib.V3.Security
             context.Succeed(requirement);
             return Task.CompletedTask;
         }
+
+
     }
 }

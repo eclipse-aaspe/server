@@ -72,6 +72,7 @@ namespace IO.Swagger.Lib.V3.Services
                 content = System.IO.File.ReadAllBytes(copyFileName);
                 string fileName = Path.GetFileName(requestedFileName);
                 fileSize = content.Length;
+                _packages[packageIndex].SetFilename(requestedFileName);
 
                 //Delete Temp file
                 System.IO.File.Delete(copyFileName);
