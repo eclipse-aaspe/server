@@ -11,6 +11,7 @@ namespace AasxServerStandardBib.Logging
         {
             ArgumentNullException.ThrowIfNull(loggerFactory);
             _logger = loggerFactory.CreateLogger<T>();
+            ApplicationLogging.LoggerFactory = loggerFactory;
         }
 
         public void LogDebug(string message, params object[] args) => _logger.LogDebug(message, args);

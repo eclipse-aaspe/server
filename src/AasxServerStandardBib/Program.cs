@@ -1518,21 +1518,23 @@ namespace AasxServer
             {
                 // no OPC UA: wait only for CTRL-C
                 Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
-                ManualResetEvent quitEvent = new ManualResetEvent(false);
-                try
-                {
-                    Console.CancelKeyPress += (sender, eArgs) =>
-                    {
-                        quitEvent.Set();
-                        //eArgs.Cancel = true;
-                    };
-                }
-                catch
-                {
-                }
 
-                // wait for timeout or Ctrl-C
-                quitEvent.WaitOne(Timeout.Infinite);
+                //jtikekar moved this code to Blazor's Program.cs
+                //ManualResetEvent quitEvent = new ManualResetEvent(false);
+                //try
+                //{
+                //    Console.CancelKeyPress += (sender, eArgs) =>
+                //    {
+                //        quitEvent.Set();
+                //        //eArgs.Cancel = true;
+                //    };
+                //}
+                //catch
+                //{
+                //}
+
+                //// wait for timeout or Ctrl-C
+                //quitEvent.WaitOne(Timeout.Infinite);
             }
 
             // wait for RETURN

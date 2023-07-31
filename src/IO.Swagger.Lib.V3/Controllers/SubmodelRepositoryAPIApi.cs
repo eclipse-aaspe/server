@@ -20,7 +20,7 @@ using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.Services;
 using IO.Swagger.Models;
-using MailKit;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -41,6 +41,7 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
+    [Authorize(Policy = "SecurityPolicy")]
     [ApiController]
     public class SubmodelRepositoryAPIApiController : ControllerBase
     {

@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace IO.Swagger.Lib.V3.Security
+namespace AasSecurity
 {
     public interface ISecurityService
     {
-        void SecurityCheck(string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null);
+        void SecurityCheck(HttpContext httpContext, string objPath = "", string aasResourceType = null, IClass aasResource = null);
         void SecurityCheckInit(HttpContext context, string route, string httpOperation);
     }
 }

@@ -1,4 +1,4 @@
-﻿using AasxServer;
+﻿using AasSecurity;
 using AasxServerBlazor.Data;
 using AasxServerStandardBib.Extensions;
 using AasxServerStandardBib.Interfaces;
@@ -9,7 +9,6 @@ using IO.Swagger.Filters;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Middleware;
-using IO.Swagger.Lib.V3.Security;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;

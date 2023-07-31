@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace IO.Swagger.Lib.V3.Security
+namespace AasSecurity
 {
     public class SecurityRequirement : IAuthorizationRequirement
     {

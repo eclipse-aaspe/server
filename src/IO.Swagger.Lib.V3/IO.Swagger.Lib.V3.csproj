@@ -26,6 +26,7 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AasSecurity\AasSecurity.csproj" />
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
     <ProjectReference Include="..\DataTransferObjects\DataTransferObjects.csproj" />
   </ItemGroup>

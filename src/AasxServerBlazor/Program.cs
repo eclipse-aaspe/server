@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
-using AasxServer;
-using Microsoft.AspNetCore;
+﻿using AasSecurity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Threading;
 
 namespace AasxServerBlazor
 {
@@ -33,6 +27,30 @@ namespace AasxServerBlazor
 
             Program.con = config;
             AasxServer.Program.Main(args);
+            SecurityHelper.SecurityInit();
+            SecurityHelper.SecurityCertInit();
+
+            //QuitEvent
+            HandleQuitEvent();
+        }
+
+        static void HandleQuitEvent()
+        {
+            ManualResetEvent quitEvent = new(false);
+            try
+            {
+                Console.CancelKeyPress += (sender, eArgs) =>
+                {
+                    quitEvent.Set();
+                    eArgs.Cancel = true;
+                };
+            }
+            catch
+            {
+            }
+
+            // wait for timeout or Ctrl-C
+            quitEvent.WaitOne(Timeout.Infinite);
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

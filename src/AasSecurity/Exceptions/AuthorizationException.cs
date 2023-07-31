@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace IO.Swagger.Lib.V3.Exceptions
+﻿namespace AasSecurity.Exceptions
 {
     public class AuthorizationException : Exception
     {

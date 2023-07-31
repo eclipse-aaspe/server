@@ -25,7 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Lib.V3", "IO.Swa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasCore.Aas3_0", "AasCore.Aas3_0\AasCore.Aas3_0.csproj", "{02E9FAE5-A358-4D44-82FD-F864E868B135}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataTransferObjects", "DataTransferObjects\DataTransferObjects.csproj", "{136D762B-33E1-4350-B2A3-00FE0D170CAE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataTransferObjects", "DataTransferObjects\DataTransferObjects.csproj", "{136D762B-33E1-4350-B2A3-00FE0D170CAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasSecurity", "AasSecurity\AasSecurity.csproj", "{CC024318-080E-4CF3-8D46-479AE5EB6E25}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -202,6 +204,24 @@ Global
 		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x64.Build.0 = Release|Any CPU
 		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x86.ActiveCfg = Release|Any CPU
 		{136D762B-33E1-4350-B2A3-00FE0D170CAE}.Release|x86.Build.0 = Release|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Debug|x64.Build.0 = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Debug|x86.Build.0 = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.DebugSlow|x64.Build.0 = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.DebugSlow|x86.Build.0 = Debug|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Release|x64.ActiveCfg = Release|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Release|x64.Build.0 = Release|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Release|x86.ActiveCfg = Release|Any CPU
+		{CC024318-080E-4CF3-8D46-479AE5EB6E25}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
