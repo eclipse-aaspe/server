@@ -13,18 +13,24 @@ using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Attributes;
+using IO.Swagger.Lib.V3.Exceptions;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.Services;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
+using System.Net.Http;
 using System.Net.Mime;
+using System.Threading.Tasks;
+using static AasCore.Aas3_0.Reporting;
 
 namespace IO.Swagger.Controllers
 {
@@ -56,6 +62,7 @@ namespace IO.Swagger.Controllers
             _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
             _paginationService = paginationService ?? throw new ArgumentNullException(nameof(pathModifierService));
         }
+
         /// <summary>
         /// Deletes file content of an existing submodel element at a specified path within submodel elements hierarchy
         /// </summary>
@@ -786,6 +793,43 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpHead]
+        [Route("/submodels/{submodelIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSubmodelPolicyHeader")]
+        [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Header")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult GetSubmodelPolicyHeader([FromRoute][Required] string submodelIdentifier)
+        {
+            var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            _logger.LogInformation($"Received head request to get the submodel policy for id {decodedSubmodelIdentifier}");
+
+            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+
+            Response.Headers.Add("policy", submodel.IdShort);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Returns a specific Submodel
+        /// </summary>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="level">Determines the structural depth of the respective resource content</param>
+        /// <param name="extent">Determines to which extent the resource is being serialized</param>
+        /// <response code="200">Requested Submodel</response>
+        /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+        /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        // [HttpHead]
         [HttpGet]
         [Route("/submodels/{submodelIdentifier}")]
         [ValidateModelState]
@@ -805,8 +849,23 @@ namespace IO.Swagger.Controllers
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
+            // check policy
+            string policy = "";
+            foreach (var kvp in Request.Headers)
+            {
+                if (kvp.Key == "policy")
+                    policy= kvp.Value;
+            }
+            if (policy == "" || policy != submodel.IdShort)
+            {
+                throw new NotAllowed("Policy incorrect!");
+            }
+
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
-            return new ObjectResult(output);
+
+            var result = new ObjectResult(output);
+            Response.Headers.Add("policy", submodel.IdShort);
+            return result;
         }
 
         /// <summary>
@@ -1183,7 +1242,7 @@ namespace IO.Swagger.Controllers
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
 
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -1233,7 +1292,7 @@ namespace IO.Swagger.Controllers
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
 
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         /// <summary>
