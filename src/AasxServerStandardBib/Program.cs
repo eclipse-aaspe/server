@@ -1313,8 +1313,8 @@ namespace AasxServer
 
             if (!withDb)
             {
-                AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
             }
 
             Console.WriteLine();
