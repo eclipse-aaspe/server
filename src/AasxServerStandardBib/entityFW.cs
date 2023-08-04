@@ -41,12 +41,25 @@ namespace AasxServer
         {
             DbPath = AasxHttpContextHelper.DataPath + "/database.db";
         }
-        //protected override void OnConfiguring(DbContextOptionsBuilder options)
-        //    => options.UseSqlite($"Data Source={DbPath}");
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            // => options.UseNpgsql("Host=localhost; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
-            => options.UseNpgsql("Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
+        {
+            if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/POSTGRES.DAT"))
+            {
+                // options.UseNpgsql("Host=localhost; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
+                options.UseNpgsql("Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
+            }
+            else
+            {
+                    options.UseSqlite($"Data Source={DbPath}");
+            }
+        }
+
+        /*
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+            => options.UseNpgsql("Host=localhost; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
+            // => options.UseNpgsql("Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
+        */
     }
     public class DbConfigSet
     {
