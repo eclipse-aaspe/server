@@ -2,7 +2,7 @@
 using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
-using AasxServerStandardBib.Migrations;
+//using AasxServerStandardBib.Migrations;
 using AdminShellNS;
 using Extensions;
 using Jose;
@@ -1014,7 +1014,7 @@ namespace AasxServer
                     task.Wait();
                     dbConfig = new DbConfigSet
                     {
-                        Id = 0,
+                        Id = 1,
                         AasCount = 0,
                         SubmodelCount = 0,
                         AASXCount = 0,
@@ -1038,7 +1038,7 @@ namespace AasxServer
                 Array.Sort(fileNames);
 
                 List<Task> saveTasks = new List<Task>();
-                int maxTasks = 5;
+                int maxTasks = 1;
                 int taskIndex = 0;
 
                 int fi = 0;
@@ -1166,7 +1166,7 @@ namespace AasxServer
                                                 }
                                             }
                                         }
-
+                                        db.SaveChanges();
                                         Task t = db.SaveChangesAsync();
                                         if (saveTasks.Count == maxTasks)
                                         {
