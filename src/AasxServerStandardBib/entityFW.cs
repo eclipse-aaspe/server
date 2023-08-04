@@ -41,8 +41,11 @@ namespace AasxServer
         {
             DbPath = AasxHttpContextHelper.DataPath + "/database.db";
         }
+        //protected override void OnConfiguring(DbContextOptionsBuilder options)
+        //    => options.UseSqlite($"Data Source={DbPath}");
+
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite($"Data Source={DbPath}");
+            => options.UseNpgsql("Host=localhost; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
     }
     public class DbConfigSet
     {
