@@ -1001,6 +1001,8 @@ namespace AasxServer
             {
                 using (AasContext db = new AasContext())
                 {
+                    db.Database.EnsureCreated();
+
                     DbConfigSet dbConfig = null;
                     var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
                     task.Wait();
@@ -1303,7 +1305,7 @@ namespace AasxServer
                 if (saveTemp == -1)
                     return(0);
 
-                    if (withDb)
+                if (withDb)
                 {
                     /*
                     Console.WriteLine("DB Save Changes");
