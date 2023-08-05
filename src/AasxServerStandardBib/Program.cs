@@ -826,8 +826,8 @@ namespace AasxServer
             Program.noSecurity = a.NoSecurity;
             Program.edit = a.Edit;
             Program.readTemp = a.ReadTemp;
-            if (a.SaveTemp > 0)
-                saveTemp = a.SaveTemp;
+            // if (a.SaveTemp > 0)
+            saveTemp = a.SaveTemp;
             Program.htmlId = a.HtmlId;
             Program.withDb = a.WithDb;
             if (a.StartIndex > 0)
@@ -1071,6 +1071,22 @@ namespace AasxServer
                     {
                         string name = Path.GetFileName(fn);
                         string tempName = "./temp/" + Path.GetFileName(fn);
+
+                        // Convert to newest version only
+                        if (saveTemp == -1)
+                        {
+                            env[envi] = new AdminShellPackageEnv(fn, true, false);
+                            if (env[envi] == null)
+                            {
+                                Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                                return 1;
+                            }
+                            Console.WriteLine("SAVE TO TEMP: " + fn);
+                            Program.env[envi].SaveAs(tempName, true);
+                            fi++;
+                            continue;
+                        }
+
                         if (readTemp && System.IO.File.Exists(tempName))
                         {
                             fn = tempName;
@@ -1285,7 +1301,11 @@ namespace AasxServer
                         envi++;
                     }
                 }
-                if (withDb)
+
+                if (saveTemp == -1)
+                    return(0);
+
+                    if (withDb)
                 {
                     /*
                     Console.WriteLine("DB Save Changes");
@@ -1315,8 +1335,8 @@ namespace AasxServer
 
             if (!withDb)
             {
-                AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
             }
 
             Console.WriteLine();
