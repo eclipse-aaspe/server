@@ -47,12 +47,14 @@ namespace AasxServer
             if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/POSTGRES.DAT"))
             {
                 Console.WriteLine("Use POSTGRES");
+                Program.isPostgres= true;
                 // options.UseNpgsql("Host=localhost; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
                 options.UseNpgsql("Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
             }
             else
             {
                 Console.WriteLine("Use SQLITE");
+                Program.isPostgres = false;
                 options.UseSqlite($"Data Source={DbPath}");
             }
         }

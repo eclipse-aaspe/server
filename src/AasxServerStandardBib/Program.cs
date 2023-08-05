@@ -687,6 +687,7 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = true;
+        public static bool isPostgres = false;
         public static bool withDbFiles = true;
         public static int startIndex = 0;
         private class CommandLineArguments
