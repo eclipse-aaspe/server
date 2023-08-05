@@ -17,6 +17,14 @@
         }
         else
         {
+            if (Program.isPostgres)
+            {
+                <span>This is a PostgreSQL database!</span>
+            }
+            else
+            {
+                <span>This is a SQLite database!</span>
+            }
             string url = NavMan.Uri;
             var s = url.Split("?");
             url = s[0].ToLower();
