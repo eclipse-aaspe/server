@@ -17,14 +17,6 @@
         }
         else
         {
-            if (Program.isPostgres)
-            {
-                <span>This is a PostgreSQL database!</span>
-            }
-            else
-            {
-                <span>This is a SQLite database!</span>
-            }
             string url = NavMan.Uri;
             var s = url.Split("?");
             url = s[0].ToLower();
@@ -60,8 +52,8 @@
                 {
                     <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;" />
                     @code {
-            private string CurrentValue { get; set; }
-        }
+                        private string CurrentValue { get; set; }
+                    }
                     if (CurrentValue != null && CurrentValue != "")
                     {
                         // Syntax: index=xxx, size=xxx, search=xxx
@@ -112,6 +104,18 @@
 
                 if (!url.EndsWith("/aasx") && !url.EndsWith("/aas") && !url.EndsWith("/submodel") && !url.EndsWith("/subjson") && !url.EndsWith("/sme"))
                 {
+                    if (Program.isPostgres)
+                    {
+                        <span>PostgreSQL database</span>
+
+                        <br />
+                    }
+                    else
+                    {
+                        <span>SQLite database</span>
+
+                        <br />
+                    }
                     <br />
                     <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;">
                         <tr>
