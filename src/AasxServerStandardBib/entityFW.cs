@@ -44,18 +44,50 @@ namespace AasxServer
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/POSTGRES.DAT"))
+            string f = AasxHttpContextHelper.DataPath + "/CONNECTION.DAT";
+            string connection = "";
+            if (System.IO.File.Exists(f))
             {
-                Console.WriteLine("Use POSTGRES");
-                Program.isPostgres= true;
-                // options.UseNpgsql("Host=localhost; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
-                options.UseNpgsql("Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
+                try
+                {
+                    using (StreamReader sr = new StreamReader(f))
+                    {
+                        connection = sr.ReadLine();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(f + " not found!");
+                }
             }
-            else
+
+            if (connection == "")
             {
-                Console.WriteLine("Use SQLITE");
-                Program.isPostgres = false;
-                options.UseSqlite($"Data Source={DbPath}");
+                if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/POSTGRES.DAT"))
+                {
+                    connection = "Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432";
+                }
+                else
+                {
+                    connection = "Data Source={DbPath}";
+                }
+            }
+
+            if (connection != "")
+            {
+                if (connection.ToLower().Contains("host")) // postgres
+                {
+                    Console.WriteLine("Use POSTGRES");
+                    Program.isPostgres = true;
+                    options.UseNpgsql(connection);
+                }
+                else // SQLite
+                {
+                    Console.WriteLine("Use SQLITE");
+                    Program.isPostgres = false;
+                    options.UseSqlite(connection);
+                }
             }
         }
 
