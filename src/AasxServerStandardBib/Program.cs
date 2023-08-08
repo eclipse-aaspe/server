@@ -8,6 +8,7 @@ using Extenstions;
 using Jose;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit.Encodings;
 using Newtonsoft.Json;
@@ -70,6 +71,7 @@ namespace AasxServer
 
     public static class Program
    {
+        public static IConfiguration con { get; set; }
         public static string getBetween(AdminShellPackageEnv env, string strStart, string strEnd)
         {
            string strSource = env.getEnvXml();
@@ -1536,6 +1538,7 @@ namespace AasxServer
                 // AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
             }
 
+            AasContext._con = con;
             string nl = System.Environment.NewLine;
 
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
