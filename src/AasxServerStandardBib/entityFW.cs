@@ -70,13 +70,13 @@ namespace AasxServer
                             Params[i] = "Password=" + dbPassword;
                         }
                     }
-                    Console.WriteLine("Use POSTGRES");
+                    Console.WriteLine("Use POSTGRES: " + connectionString);
                     Program.isPostgres = true;
                     options.UseNpgsql(connectionString);
                 }
                 else // SQLite
                 {
-                    Console.WriteLine("Use SQLITE");
+                    Console.WriteLine("Use SQLITE: " + connectionString);
                     Program.isPostgres = false;
                     options.UseSqlite(connectionString);
                 }
