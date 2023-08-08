@@ -53,6 +53,7 @@ namespace AasxServer
                     using (StreamReader sr = new StreamReader(f))
                     {
                         connection = sr.ReadLine();
+                        Console.WriteLine(AasxHttpContextHelper.DataPath + "/CONNECTION.DAT" + " : " + connection);
                     }
                 }
                 catch (Exception e)
@@ -70,7 +71,7 @@ namespace AasxServer
                 }
                 else
                 {
-                    connection = "Data Source={DbPath}";
+                    connection = "Data Source=" + DbPath;
                 }
             }
 
@@ -78,13 +79,13 @@ namespace AasxServer
             {
                 if (connection.ToLower().Contains("host")) // postgres
                 {
-                    Console.WriteLine("Use POSTGRES");
+                    Console.WriteLine("Use POSTGRES: " + connection);
                     Program.isPostgres = true;
                     options.UseNpgsql(connection);
                 }
                 else // SQLite
                 {
-                    Console.WriteLine("Use SQLITE");
+                    Console.WriteLine("Use SQLITE: " + connection);
                     Program.isPostgres = false;
                     options.UseSqlite(connection);
                 }
