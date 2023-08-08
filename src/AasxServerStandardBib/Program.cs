@@ -1002,10 +1002,24 @@ namespace AasxServer
             // Clear DB
             if (withDb && startIndex == 0 && !createFilesOnly)
             {
+                if (isPostgres)
+                {
+                    using (PostgreAasContext db = new PostgreAasContext())
+                    {
+                        db.Database.Migrate();
+                    }
+                }
+                else
+                {
+                    using (SqliteAasContext db = new SqliteAasContext())
+                    {
+
+                        db.Database.Migrate();
+                    }
+                }
+
                 using (AasContext db = new AasContext())
                 {
-                    db.Database.EnsureCreated();
-
                     DbConfigSet dbConfig = null;
                     var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
                     task.Wait();
@@ -1537,6 +1551,11 @@ namespace AasxServer
             }
 
             AasContext._con = con;
+            if (con["DatabaseConnection:ConnectionString"] != null)
+            {
+                isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+            }
+
             string nl = System.Environment.NewLine;
 
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
