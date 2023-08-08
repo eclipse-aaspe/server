@@ -2,6 +2,7 @@
 using AasxRestServerLibrary;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +37,7 @@ namespace AasxServer
         public DbSet<SubmodelSet> SubmodelSets { get; set; }
         public DbSet<SMESet> SMESets { get; set; }
         public string DbPath { get; }
+        public static IConfiguration _con { get; set; }
 
         public AasContext()
         {
@@ -44,6 +46,47 @@ namespace AasxServer
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
+            string connectionString = "";
+            if (_con == null)
+            {
+                throw new Exception("No Configuration!");
+            }
+            connectionString = _con["DatabaseConnection:ConnectionString"];
+            if (connectionString != null)
+            {
+                if (connectionString.ToLower().Contains("host")) // Postgres
+                {
+                    string[] Params = connectionString.Split(";");
+                    string dbPassword = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string dbUser = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    for (int i = 0; i < Params.Length; i++)
+                    {
+                        if (Params[i].Contains("Username") && dbUser != null)
+                        {
+                            Params[i] = "Username=" + dbUser;
+                        }
+                        if (Params[i].Contains("Password") && dbPassword != null)
+                        {
+                            Params[i] = "Password=" + dbPassword;
+                        }
+                    }
+                    Console.WriteLine("Use POSTGRES");
+                    Program.isPostgres = true;
+                    options.UseNpgsql(connectionString);
+                }
+                else // SQLite
+                {
+                    Console.WriteLine("Use SQLITE");
+                    Program.isPostgres = false;
+                    options.UseSqlite(connectionString);
+                }
+            }
+            else
+            {
+                throw new Exception("No connectionString in appsettings");
+            }
+
+            /*
             string f = AasxHttpContextHelper.DataPath + "/CONNECTION.DAT";
             string connection = "";
             if (System.IO.File.Exists(f))
@@ -90,6 +133,7 @@ namespace AasxServer
                     options.UseSqlite(connection);
                 }
             }
+            */
         }
 
         /*

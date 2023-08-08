@@ -29,6 +29,7 @@ namespace AasxServerBlazor
 
             CreateHostBuilder(args).Build().RunAsync();
 
+            Program.con = config;
             AasxServer.Program.Main(args);
         }
 
