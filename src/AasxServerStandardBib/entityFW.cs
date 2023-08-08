@@ -142,6 +142,38 @@ namespace AasxServer
             // => options.UseNpgsql("Host=aasx-server-postgres; Database=AAS; Username=postgres; Password=postres; Include Error Detail=true; Port=5432");
         */
     }
+
+    public class SqliteAasContext : AasContext
+    {
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        {
+            if (_con == null)
+            {
+                options.UseSqlite("");
+            }
+            else
+            {
+                var connectionString = _con["DatabaseConnection:ConnectionString"];
+                options.UseSqlite(connectionString);
+            }
+        }
+    }
+
+    public class PostgreAasContext : AasContext
+    {
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        {
+            if (_con == null)
+            {
+                options.UseNpgsql("");
+            }
+            else
+            {
+                var connectionString = _con["DatabaseConnection:ConnectionString"];
+                options.UseNpgsql(connectionString);
+            }
+        }
+    }
     public class DbConfigSet
     {
         public int Id { get; set; }
