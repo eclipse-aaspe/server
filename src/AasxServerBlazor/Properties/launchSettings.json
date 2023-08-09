@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--start-index 10000 --with-db --aasx-in-memory 6 --save-temp 10 --data-path \"C:\\Development\\PCF3\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--start-index 10000 --with-db --aasx-in-memory 6 --save-temp 10 --data-path \"C:\\Development\\DB\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
