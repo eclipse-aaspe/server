@@ -7,10 +7,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AasxServerStandardBib.Migrations
+namespace AasxServerStandardBib.Migrations.Postgres
 {
-    [DbContext(typeof(AasContext))]
-    partial class AasContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PostgreAasContext))]
+    partial class PostgreAasContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

@@ -2,6 +2,7 @@
 using AasxRestServerLibrary;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,9 +24,14 @@ using static AasCore.Aas3_0.Visitation;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
+// Initial Migration
+// Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
+// Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
 // Change database:
-// Add-Migration XXXX
-// Update-Database
+// Add-Migration XXX -Context SqliteAasContext
+// Add-Migration XXX -Context PostgreAasContext
+// Update-Database -Context SqliteAasContext
+// Update-Database -Context PostgreAasContext
 
 namespace AasxServer
 {
@@ -54,6 +60,8 @@ namespace AasxServer
             connectionString = _con["DatabaseConnection:ConnectionString"];
             if (connectionString != null)
             {
+                if (connectionString.Contains("$DATAPATH"))
+                    connectionString = connectionString.Replace("$DATAPATH", AasxHttpContextHelper.DataPath);
                 if (connectionString.ToLower().Contains("host")) // Postgres
                 {
                     string[] Params = connectionString.Split(";");
@@ -154,6 +162,8 @@ namespace AasxServer
             else
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
+                if (connectionString.Contains("$DATAPATH"))
+                    connectionString = connectionString.Replace("$DATAPATH", AasxHttpContextHelper.DataPath);
                 options.UseSqlite(connectionString);
             }
         }
@@ -170,6 +180,8 @@ namespace AasxServer
             else
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
+                if (connectionString.Contains("$DATAPATH"))
+                    connectionString = connectionString.Replace("$DATAPATH", AasxHttpContextHelper.DataPath);
                 options.UseNpgsql(connectionString);
             }
         }
