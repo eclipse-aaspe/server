@@ -3375,23 +3375,27 @@ namespace AasxRestServerLibrary
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
         {
             string error = "";
+            string getPolicy = null;
             bool withAllow = false;
-            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow,
+            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
                 objPath, aasOrSubmodel, objectAasOrSubmodel);
         }
         public static bool checkAccessLevelWithAllow(string currentRole, string operation, string neededRights,
-            out bool withAllow, string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+            out bool withAllow, string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null,
+            string policy = null)
         {
             string error = "";
+            string getPolicy = null;
             withAllow = false;
-            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow,
-                objPath, aasOrSubmodel, objectAasOrSubmodel);
+            return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
+                objPath, aasOrSubmodel, objectAasOrSubmodel, policy);
         }
         public static bool checkAccessLevelWithError(out string error, string currentRole, string operation,
-            string neededRights, out bool withAllow,
-            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null)
+            string neededRights, out bool withAllow, out string getPolicy,
+            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, string policy = null)
         {
             error = "";
+            getPolicy = null;
             withAllow = false;
             
             if (Program.secretStringAPI != null)
@@ -3447,7 +3451,7 @@ namespace AasxRestServerLibrary
                         {
                             if (securityRole[iRole].permission == neededRights)
                             {
-                                return checkUsage(out error, securityRole[iRole]);
+                                return checkUsage(out error, securityRole[iRole], out getPolicy);
                             }
                         }
                     }
@@ -3460,6 +3464,7 @@ namespace AasxRestServerLibrary
                 // no objects below must have deny
                 string deepestDeny = "";
                 string deepestAllow = "";
+                securityRoleClass deepestAllowRole = null;
                 foreach (var role in securityRole)
                 {
                     if (role.name != currentRole)
@@ -3479,6 +3484,7 @@ namespace AasxRestServerLibrary
                                         {
                                             deepestAllow = s.IdShort;
                                             withAllow = true;
+                                            deepestAllowRole = role;
                                         }
                                     }
                                     if (role.kind == "deny")
@@ -3501,6 +3507,7 @@ namespace AasxRestServerLibrary
                                         {
                                             deepestAllow = objPath;
                                             withAllow = true;
+                                            deepestAllowRole = role;
                                         }
                                     }
                                     if (role.kind == "deny")
@@ -3539,6 +3546,7 @@ namespace AasxRestServerLibrary
                                 {
                                     deepestAllow = role.objPath;
                                     withAllow = true;
+                                    deepestAllowRole = role;
                                 }
                             }
                         }
@@ -3554,16 +3562,17 @@ namespace AasxRestServerLibrary
                     error = "DENY " + deepestDeny;
                     return false;
                 }
-                return true;
+                return checkUsage(out error, deepestAllowRole, out getPolicy, policy);
             }
 
             error = "ALLOW not defined";
             return false;
         }
 
-        public static bool checkUsage(out string error, securityRoleClass sr)
+        public static bool checkUsage(out string error, securityRoleClass sr, out string getPolicy, string policy = null)
         {
             error = "";
+            getPolicy= null;
 
             if (sr.usage == null)
                 return true;
@@ -3648,6 +3657,16 @@ namespace AasxRestServerLibrary
                             }
                         }
                         break;
+                    case "policy":
+                        getPolicy = (sme as Property).Value;
+                        if (policy == null ||  getPolicy == policy)
+                        {
+                            Program.signalNewData(0);
+                            return true;
+                        }
+                        break;
+                    case "policyRequestedResource":
+                        break;
                 }
             }
 
@@ -3725,9 +3744,20 @@ namespace AasxRestServerLibrary
         }
         public static string SecurityCheck(NameValueCollection queryString, NameValueCollection headers, ref int index)
         {
+            string policy = "";
+            string policyRequestedResource = "";
+
+            return SecurityCheckWithPolicy(queryString, headers, ref index, out policy, out policyRequestedResource);
+        }
+
+        public static string SecurityCheckWithPolicy(NameValueCollection queryString, NameValueCollection headers, ref int index,
+            out string policy, out string policyRequestedResource)
+        {
             Console.WriteLine("SecurityCheck");
             bool error = false;
             string accessrights = null;
+            policy = "";
+            policyRequestedResource = "";
 
             // receive token with sessionID inside
             // check if token is signed by sessionRandom
@@ -3889,6 +3919,17 @@ namespace AasxRestServerLibrary
                         {
                             serverName = "keycloak";
                         }
+                        try
+                        {
+                            policy = parsed2.SelectToken("policy").Value<string>();
+                        }
+                        catch { }
+                        try
+                        {
+                            policyRequestedResource = parsed2.SelectToken("policyRequestedResource").Value<string>();
+                        }
+                        catch { }
+
                         if (email != "")
                         {
                             user = email.ToLower();

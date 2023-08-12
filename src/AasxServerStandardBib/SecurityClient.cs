@@ -27,6 +27,9 @@ using System.Security.Cryptography;
 using MimeKit.Cryptography;
 using Org.BouncyCastle.Crypto;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Linq;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System.Threading.Channels;
 
 namespace AasxServer
 {
@@ -205,6 +208,12 @@ namespace AasxServer
                         case "calculate_cfp":
                             operation_calculate_cfp(op, envIndex, timeStamp);
                             break;
+                        default:
+                            if (idShort.Substring(0, 3) == "get")
+                            {
+                                operation_get_put(op, envIndex, timeStamp);
+                            }
+                            break;
                     }
                 }
             }
@@ -234,7 +243,7 @@ namespace AasxServer
                 var inputRef = input.Value;
                 if (!(inputRef is ReferenceElement))
                     return;
-                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
+                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                 if (refElement is SubmodelElementCollection re)
                     smec = re;
             }
@@ -315,155 +324,190 @@ namespace AasxServer
                                 if (valid) return;
                             }
 
-                            var handler = new HttpClientHandler();
-                            if (proxy != null)
-                                handler.Proxy = proxy;
-                            else
-                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                            var client = new HttpClient(handler);
-                            DiscoveryDocumentResponse disco = null;
-
-                            client.Timeout = TimeSpan.FromSeconds(10);
-                            var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
-                            task.Wait();
-                            if (disco.IsError) return;
-                            Console.WriteLine("OpenID Discovery JSON:");
-                            Console.WriteLine(disco.Raw);
-
-                            var serverCert = new X509Certificate2();
-                            Stream s = null;
-                            try
-                            {
-                                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.Value);
-                            }
-                            catch { }
-                            if (s == null) return;
-
-                            using (var m = new System.IO.MemoryStream())
-                            {
-                                s.CopyTo(m);
-                                var b = m.GetBuffer();
-                                serverCert = new X509Certificate2(b);
-                                Console.WriteLine("Auth server certificate: " + authServerCertificate.Value);
-                            }
-
-                            string[] x5c = null;
-                            X509Certificate2 certificate = null;
-                            string certificatePassword = clientCertificatePassWord.Value;
-                            Stream s2 = null;
-                            try
-                            {
-                                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.Value);
-                            }
-                            catch { }
-                            if (s2 == null) return;
-                            if (s2 != null)
-                            {
-                                X509Certificate2Collection xc = new X509Certificate2Collection();
-                                using (var m = new System.IO.MemoryStream())
-                                {
-                                    s2.CopyTo(m);
-                                    var b = m.GetBuffer();
-                                    xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
-                                    certificate = new X509Certificate2(b, certificatePassword);
-                                    Console.WriteLine("Client certificate: " + clientCertificate.Value);
-                                }
-
-                                string[] X509Base64 = new string[xc.Count];
-
-                                int j = xc.Count;
-                                var xce = xc.GetEnumerator();
-                                for (int i = 0; i < xc.Count; i++)
-                                {
-                                    xce.MoveNext();
-                                    X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
-                                }
-                                x5c = X509Base64;
-
-                                var credential = new X509SigningCredentials(certificate);
-                                string clientId = "client.jwt";
-                                string email = "";
-                                string subject = certificate.Subject;
-                                var split = subject.Split(new Char[] { ',' });
-                                if (split[0] != "")
-                                {
-                                    var split2 = split[0].Split(new Char[] { '=' });
-                                    if (split2[0] == "E")
-                                    {
-                                        email = split2[1];
-                                    }
-                                }
-                                Console.WriteLine("email: " + email);
-
-                                var now = DateTime.UtcNow;
-                                var token = new JwtSecurityToken(
-                                        clientId,
-                                        disco.TokenEndpoint,
-                                        new List<Claim>()
-                                        {
-                                                        new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
-                                                        new Claim(JwtClaimTypes.Subject, clientId),
-                                                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
-                                                        // OZ
-                                                        new Claim(JwtClaimTypes.Email, email)
-                                        },
-                                        now,
-                                        now.AddMinutes(1),
-                                        credential)
-                                ;
-
-                                token.Header.Add("x5c", x5c);
-                                var tokenHandler = new JwtSecurityTokenHandler();
-                                string clientToken = tokenHandler.WriteToken(token);
-
-                                TokenResponse response = null;
-                                client.Timeout = TimeSpan.FromSeconds(20);
-                                task = Task.Run(async () =>
-                                {
-                                    response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-                                    {
-                                        Address = disco.TokenEndpoint,
-                                        Scope = "resource1.scope1",
-
-                                        ClientAssertion =
-                                        {
-                                            Type = OidcConstants.ClientAssertionTypes.JwtBearer,
-                                            Value = clientToken
-                                        }
-                                    });
-                                });
-                                task.Wait();
-
-                                if (response.IsError) return;
-
-                                accessToken.Value = response.AccessToken;
-                                accessToken.SetTimeStamp(timeStamp);
-                            }
+                            accessToken.Value = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                                clientCertificate, clientCertificatePassWord);
+                            accessToken.SetTimeStamp(timeStamp);
                         }
                         break;
                 }
             }
         }
 
+        static string getAccessToken(int envIndex, Property authServerEndPoint, AasCore.Aas3_0.File authServerCertificate,
+            AasCore.Aas3_0.File clientCertificate, Property clientCertificatePassWord,
+            string policy = "", string policyRequestedResource = "")
+        {
+            var handler = new HttpClientHandler();
+            if (proxy != null)
+                handler.Proxy = proxy;
+            else
+                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            var client = new HttpClient(handler);
+            DiscoveryDocumentResponse disco = null;
+
+            client.Timeout = TimeSpan.FromSeconds(20);
+            var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
+            task.Wait();
+            if (disco.IsError) return "";
+            Console.WriteLine("Get OpenID Discovery JSON");
+            // Console.WriteLine(disco.Raw);
+
+            var serverCert = new X509Certificate2();
+            Stream s = null;
+            try
+            {
+                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.Value, access:FileAccess.Read);
+            }
+            catch { }
+            if (s == null)
+            {
+                Console.WriteLine("Stream error!");
+                return "";
+            }
+
+            using (var m = new System.IO.MemoryStream())
+            {
+                s.CopyTo(m);
+                var b = m.GetBuffer();
+                serverCert = new X509Certificate2(b);
+                Console.WriteLine("Auth server certificate: " + authServerCertificate.Value);
+                s.Close();
+            }
+
+            string[] x5c = null;
+            X509Certificate2 certificate = null;
+            string certificatePassword = clientCertificatePassWord.Value;
+            Stream s2 = null;
+            try
+            {
+                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.Value, access: FileAccess.Read);
+            }
+            catch { }
+            if (s2 == null)
+            {
+                Console.WriteLine("Stream error!");
+                return "";
+            }
+            if (s2 != null)
+            {
+                X509Certificate2Collection xc = new X509Certificate2Collection();
+                using (var m = new System.IO.MemoryStream())
+                {
+                    s2.CopyTo(m);
+                    var b = m.GetBuffer();
+                    xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
+                    certificate = new X509Certificate2(b, certificatePassword);
+                    Console.WriteLine("Client certificate: " + clientCertificate.Value);
+                    s2.Close();
+                }
+
+                string[] X509Base64 = new string[xc.Count];
+
+                int j = xc.Count;
+                var xce = xc.GetEnumerator();
+                for (int i = 0; i < xc.Count; i++)
+                {
+                    xce.MoveNext();
+                    X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                }
+                x5c = X509Base64;
+
+                var credential = new X509SigningCredentials(certificate);
+                string clientId = "client.jwt";
+                string email = "";
+                string subject = certificate.Subject;
+                var split = subject.Split(new Char[] { ',' });
+                if (split[0] != "")
+                {
+                    var split2 = split[0].Split(new Char[] { '=' });
+                    if (split2[0] == "E")
+                    {
+                        email = split2[1];
+                    }
+                }
+                Console.WriteLine("email: " + email);
+
+                var now = DateTime.UtcNow;
+                var claimList =
+                    new List<Claim>()
+                        {
+                                                        new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
+                                                        new Claim(JwtClaimTypes.Subject, clientId),
+                                                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
+                                                        // OZ
+                                                        new Claim(JwtClaimTypes.Email, email),
+                        };
+                if (policy != "")
+                    claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
+                if (policyRequestedResource != "")
+                    claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
+                var token = new JwtSecurityToken(
+                        clientId,
+                        disco.TokenEndpoint,
+                        claimList,
+                        now,
+                        now.AddMinutes(1),
+                        credential)
+                ;
+
+                token.Header.Add("x5c", x5c);
+                var tokenHandler = new JwtSecurityTokenHandler();
+                string clientToken = tokenHandler.WriteToken(token);
+
+                TokenResponse response = null;
+                // client.Timeout = TimeSpan.FromSeconds(20);
+                task = Task.Run(async () =>
+                {
+                    response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+                    {
+                        Address = disco.TokenEndpoint,
+                        Scope = "resource1.scope1",
+
+                        ClientAssertion =
+                                        {
+                                            Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+                                            Value = clientToken
+                                        }
+                    });
+                });
+                task.Wait();
+
+                if (response.IsError) return "";
+
+                return response.AccessToken;
+            }
+
+            return "";
+        }
         static void operation_get_put(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
             // inputVariable sourceEndPoint: property
-            // inputVariable reference sourcePath: property
+            // inputVariable  sourcePath: property
             // inputVariable reference destinationElement: collection
+            // inputVariable HEAD: property
 
             string opName = op.IdShort.ToLower();
+            if (opName.Substring(0, 4) == "get-")
+                opName = "get";
 
             SubmodelElementCollection authentication = null;
             Property authType = null;
+            Property authServerEndPoint = null;
             Property accessToken = null;
             Property userName = null;
             Property passWord = null;
             AasCore.Aas3_0.File authServerCertificate = null;
+            AasCore.Aas3_0.File clientCertificate = null;
+            Property clientCertificatePassWord = null;
+
             Property endPoint = null;
             Property path = null;
             SubmodelElementCollection elementCollection = null;
             Submodel elementSubmodel = null;
+            Property head = null;
+            Property duration = null;
+
             Property lastDiff = null;
             Property status = null;
             Property mode = null;
@@ -471,6 +515,10 @@ namespace AasxServer
             SubmodelElementCollection smec = null;
             Submodel sm = null;
             Property p = null;
+
+            HttpClient client = null;
+            HttpClientHandler handler = null;
+
             foreach (var input in op.InputVariables)
             {
                 smec = null;
@@ -483,7 +531,7 @@ namespace AasxServer
                 }
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                     if (refElement is Submodel)
@@ -513,6 +561,10 @@ namespace AasxServer
                         if (p != null)
                             mode = p;
                         break;
+                    case "head":
+                        if (p != null)
+                            head = p;
+                        break;
                 }
             }
             foreach (var output in op.OutputVariables)
@@ -527,7 +579,7 @@ namespace AasxServer
                 }
                 if (outputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).GetModelReference());
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                     if (refElement is Submodel)
@@ -542,6 +594,10 @@ namespace AasxServer
                     case "status":
                         if (p != null)
                             status = p;
+                        break;
+                    case "duration":
+                        if (p != null)
+                            duration = p;
                         break;
                 }
             }
@@ -587,21 +643,31 @@ namespace AasxServer
                                 authServerCertificate = sme2 as AasCore.Aas3_0.File;
                             }
                             break;
+                        case "authserverendpoint":
+                            if (sme2 is Property)
+                            {
+                                authServerEndPoint = sme2 as Property;
+                            }
+                            break;
+                        case "clientcertificate":
+                            if (sme2 is AasCore.Aas3_0.File)
+                            {
+                                clientCertificate = sme2 as AasCore.Aas3_0.File;
+                            }
+                            break;
+                        case "clientcertificatepassword":
+                            if (sme2 is Property)
+                            {
+                                clientCertificatePassWord = sme2 as Property;
+                            }
+                            break;
                     }
                 }
             }
 
-            var handler = new HttpClientHandler();
-            if (proxy != null)
-                handler.Proxy = proxy;
-            else
-                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-            var client = new HttpClient(handler);
-            client.Timeout = TimeSpan.FromSeconds(20);
-            if (accessToken != null)
-                client.SetBearerToken(accessToken.Value);
-
-            string requestPath = endPoint.Value + "/" + path.Value;
+            string requestPath = endPoint.Value;
+            if (path.Value != "")
+                requestPath += "/" + path.Value;
             HttpResponseMessage response = null;
             Task task = null;
             string diffPath = "";
@@ -619,10 +685,11 @@ namespace AasxServer
 
             if (status != null)
                 status.Value = "OK";
+
             if (opName == "get" || opName == "getdiff")
             {
-                if (splitPath.Length < 2)
-                    return;
+                // if (splitPath.Length < 2)
+                    // return;
 
                 DateTime last = new DateTime();
                 if (opName == "getdiff")
@@ -656,20 +723,99 @@ namespace AasxServer
                     }
                 }
 
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                handler = new HttpClientHandler();
+
+                if (!requestPath.Contains("localhost"))
+                {
+                    if (proxy != null)
+                        handler.Proxy = proxy;
+                    else
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                }
+                client = new HttpClient(handler);
+                client.Timeout = TimeSpan.FromSeconds(20);
+
+                string policy = "";
+                string policyRequestedResource = "";
+                // test, if usage policy is needed
+                if (head != null && head.Value == "1")
+                {
+                    /*
+                    var t = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                        clientCertificate, clientCertificatePassWord,
+                        "", "");
+                    if (t == "")
+                        return;
+                    client.SetBearerToken(t);
+                    */
+
+                    try
+                    {
+                        task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
+                        task.Wait();
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            if (status != null)
+                            {
+                                status.Value = response.StatusCode.ToString() + " ; " +
+                                    response.Content.ReadAsStringAsync().Result + " ; " +
+                                    "HEAD " + requestPath;
+                                Program.signalNewData(1);
+                            }
+                            return;
+                        }
+
+                        foreach (var kvp in response.Headers)
+                        {
+                            if (kvp.Key == "policy")
+                                policy = kvp.Value.FirstOrDefault();
+                            if (kvp.Key == "policyRequestedResource")
+                                policyRequestedResource = kvp.Value.FirstOrDefault();
+                        }
+
+                        if (policy == "" || policyRequestedResource == "")
+                            return;
+                    }
+                    catch
+                    {
+                        return;
+                    }
+
+                    var t = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                        clientCertificate, clientCertificatePassWord,
+                        policy, policyRequestedResource);
+                    if (t == "")
+                        return;
+                    accessToken.Value = t;
+                    client.SetBearerToken(t);
+                    Console.WriteLine(t);
+                }
+
                 try
                 {
-                    task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
-                    task.Wait();
-                    if (!response.IsSuccessStatusCode)
+                    using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
                     {
-                        if (status != null)
+                        /*
+                        if (policy != "")
+                            requestMessage.Headers.Add("policy", policy);
+                        if (policyRequestedResource != "")
+                            requestMessage.Headers.Add("policyRequestedResource", policyRequestedResource);
+                        */
+
+                        task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
+                        task.Wait();
+                        if (!response.IsSuccessStatusCode)
                         {
-                            status.Value = response.StatusCode.ToString() + " ; " +
-                                response.Content.ReadAsStringAsync().Result + " ; " +
-                                "GET " + requestPath;
-                            Program.signalNewData(1);
+                            if (status != null)
+                            {
+                                status.Value = response.StatusCode.ToString() + " ; " +
+                                    response.Content.ReadAsStringAsync().Result + " ; " +
+                                    "GET " + requestPath;
+                                Program.signalNewData(1);
+                            }
+                            return;
                         }
-                        return;
                     }
                 }
                 catch
@@ -702,26 +848,46 @@ namespace AasxServer
                         }
                         if (elementSubmodel != null)
                         {
-                            receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
-                                json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                            // receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
+                            //    json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                            receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
+
                             receiveSubmodel.SetTimeStamp(timeStamp);
                             receiveSubmodel.SetAllParents(timeStamp);
 
                             // need id for idempotent behaviour
-                            if (receiveSubmodel.Id == null || receiveSubmodel.Id != elementSubmodel.Id)
+                            if (receiveSubmodel.Id == null /*|| receiveSubmodel.Id != elementSubmodel.Id*/)
                                 return;
+                            receiveSubmodel.Id = elementSubmodel.Id;
 
-                            var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(receiveSubmodel.Id);
+                            var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
 
                             // datastructure update
                             if (Program.env == null || Program.env[envIndex].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
                                 return;
 
                             // add Submodel
-                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(receiveSubmodel.Id);
+                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(elementSubmodel.Id);
                             if (existingSm != null)
                                 Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
                             Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
+                            for (int s = 0; s < aas.Submodels.Count; s++)
+                            {
+                                if (aas.Submodels[s].Keys[0].Value == existingSm.Id)
+                                {
+                                    aas.Submodels.RemoveAt(s);
+                                    break;
+                                }
+                            }
+                            aas.Submodels.Add(receiveSubmodel.GetModelReference());
+
+                            watch.Stop();
+                            if (duration != null)
+                                duration.Value = watch.ElapsedMilliseconds + " ms";
+                            Program.signalNewData(2); // new tree, nodes opened
+                            return;
                         }
                     }
                     if (opName == "getdiff")
@@ -826,6 +992,21 @@ namespace AasxServer
                     lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                 Program.signalNewData(1);
             }
+
+            handler = new HttpClientHandler();
+
+            if (!requestPath.Contains("localhost"))
+            {
+                if (proxy != null)
+                    handler.Proxy = proxy;
+                else
+                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            }
+            client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromSeconds(20);
+            if (accessToken != null)
+                client.SetBearerToken(accessToken.Value);
+
             if (opName == "put" || opName == "putdiff")
             {
                 SubmodelElementCollection diffCollection = null;
@@ -1054,7 +1235,7 @@ namespace AasxServer
                 }
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).GetModelReference());
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                 }

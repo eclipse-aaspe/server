@@ -42,14 +42,16 @@ namespace IO.Swagger.Lib.V3.Security
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, bool testOnly = false)
         {
             bool withAllow = false;
-            return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out withAllow,
+            string getPolicy = null;
+            return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out withAllow, out  getPolicy,
                 objPath, aasOrSubmodel, objectAasOrSubmodel, testOnly);
         }
 
-        public static bool CheckAccessRightsWithAllow(string currentRole, string operation, string neededRights, out bool withAllow,
+        public static bool CheckAccessRightsWithAllow(string currentRole, string operation, string neededRights, out bool withAllow, out string getPolicy,
            string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, bool testOnly = false)
         {
             string error = "Access not allowed";
+            getPolicy = null;
             withAllow = false;
 
             if (Program.secretStringAPI != null)
@@ -62,7 +64,7 @@ namespace IO.Swagger.Lib.V3.Security
             else
             {
                 if (AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
-                    out error, currentRole, operation, neededRights, out withAllow,
+                    out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
                     objPath, aasOrSubmodel, objectAasOrSubmodel))
                     return true;
 

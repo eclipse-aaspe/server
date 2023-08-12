@@ -35,8 +35,9 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                                 border = "border:dotted;border-color:blue;";
                             }
                             bool svg = false;
-                            string detailsImage = createDetailsImage(it, out svg);
-                            if (detailsImage != "")
+                            bool url = false;
+                            string detailsImage = createDetailsImage(it, out url, out svg);
+                            if (detailsImage != "" && !url)
                             {
                                 if (!svg)
                                 {

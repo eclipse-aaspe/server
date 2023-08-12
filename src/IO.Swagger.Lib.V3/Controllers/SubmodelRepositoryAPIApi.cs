@@ -25,11 +25,13 @@ using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mime;
 using System.Threading.Tasks;
+using System.Web;
 using static AasCore.Aas3_0.Reporting;
 
 namespace IO.Swagger.Controllers
@@ -812,7 +814,21 @@ namespace IO.Swagger.Controllers
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            Response.Headers.Add("policy", submodel.IdShort);
+            string error = null;
+            var access = false;
+            bool withAllow = false;
+            string getPolicy = null;
+            // check, if access to submodel is allowed
+            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, null, "/submodels", "READ", out withAllow, out getPolicy,
+                submodel.IdShort, "sm", submodel, null);
+            if (!access)
+            {
+                throw new NotAllowed("Policy incorrect!");
+            }
+
+            Response.Headers.Add("policy", getPolicy);
+            Response.Headers.Add("policyRequestedResource", Request.Path.Value);
+            
             return Ok();
         }
 
@@ -849,14 +865,56 @@ namespace IO.Swagger.Controllers
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            // check policy
             string policy = "";
+            string policyRequestedResource = "";
+
+            int index = -1;
+            NameValueCollection query = HttpUtility.ParseQueryString(Request.QueryString.ToString());
+            NameValueCollection headers = new NameValueCollection();
             foreach (var kvp in Request.Headers)
             {
-                if (kvp.Key == "policy")
-                    policy= kvp.Value;
+                headers.Add(kvp.Key.ToString(), kvp.Value.ToString());
             }
-            if (policy == "" || policy != submodel.IdShort)
+            string accessRights = AasxRestServerLibrary.AasxHttpContextHelper.SecurityCheckWithPolicy(query, headers, ref index,
+                out policy, out policyRequestedResource);
+            string ar = "";
+            if (accessRights != null)
+                ar = accessRights;
+            Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
+
+            if (accessRights == null)
+            {
+                // Look for policies in header instead of token
+                foreach (var kvp in Request.Headers)
+                {
+                    if (kvp.Key == "policy")
+                        policy = kvp.Value;
+                    if (kvp.Key == "policyRequestedResource")
+                        policyRequestedResource = kvp.Value;
+                }
+            }
+
+            string path = Request.Path.Value;
+            if (accessRights != null && (policyRequestedResource == "" || !path.Contains(policyRequestedResource)))
+            {
+                Console.WriteLine("Path: " + path);
+                Console.WriteLine("policyRequestedResource: " + policyRequestedResource);
+                throw new NotAllowed("Policy URL incorrect!");
+            }
+
+            string error = null;
+            var access = false;
+            bool withAllow = false;
+            string getPolicy = null;
+            // check, if access to submodel is allowed
+            /*
+            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+                null, "/submodels", "READ", out withAllow,
+                    submodel.IdShort, "sm", submodel, policy);
+            */
+            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, null, "/submodels", "READ", out withAllow, out getPolicy,
+                submodel.IdShort, "sm", submodel, policy);
+            if (!access)
             {
                 throw new NotAllowed("Policy incorrect!");
             }
@@ -864,7 +922,7 @@ namespace IO.Swagger.Controllers
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
 
             var result = new ObjectResult(output);
-            Response.Headers.Add("policy", submodel.IdShort);
+            Response.Headers.Add("policy", policy);
             return result;
         }
 

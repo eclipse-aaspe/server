@@ -473,22 +473,43 @@
 
             @{
                 bool svg = false;
-                string detailsImage = createDetailsImage(selectedNode, out svg);
+                bool url = false;
+                string detailsImage = createDetailsImage(selectedNode, out url, out svg);
                 if (detailsImage != "")
                 {
                     if (!svg)
                     {
-                        <br />
-                        <div>
-                            <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
-                        </div>
+                        if (!url)
+                        {
+                            <br />
+                            <div>
+                                <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                            </div>
+                        }
+                        else
+                        {
+                            <br />
+                            <div>
+                                <img src="@detailsImage" style="max-width: 50%" alt="Details Image" />
+                            </div>
+                        }
                     }
                     else
                     {
-                        <br />
-                        <div>
-                            <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
-                        </div>
+                        if (!url)
+                        {
+                            <br />
+                            <div>
+                                <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                            </div>
+                        }
+                        else
+                        {
+                            <br />
+                            <div>
+                                <img src="detailsImage" style="max-width: 50%" alt="Details Image" />
+                            </div>
+                        }
                     }
                 }
 
@@ -931,9 +952,10 @@
         }
     }
 
-    public static string createDetailsImage(Item item, out bool svg)
+    public static string createDetailsImage(Item item, out bool url, out bool svg)
     {
         svg = false;
+        url = false;
         // System.IO.File.Delete("wwwroot/detailsImage.jpg");
 
         if (item == null)
@@ -1007,6 +1029,11 @@
                             catch { }
                             break;
                     }
+                }
+                else
+                {
+                    url = true;
+                    return f.Value;
                 }
             }
         }
