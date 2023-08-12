@@ -345,6 +345,9 @@ namespace AasxServer
             var client = new HttpClient(handler);
             DiscoveryDocumentResponse disco = null;
 
+            if (authServerEndPoint == null)
+                return "";
+
             client.Timeout = TimeSpan.FromSeconds(20);
             var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
             task.Wait();
@@ -506,6 +509,7 @@ namespace AasxServer
             SubmodelElementCollection elementCollection = null;
             Submodel elementSubmodel = null;
             Property head = null;
+            Property loop = null;
             Property duration = null;
 
             Property lastDiff = null;
@@ -564,6 +568,10 @@ namespace AasxServer
                     case "head":
                         if (p != null)
                             head = p;
+                        break;
+                    case "loop":
+                        if (p != null)
+                            loop = p;
                         break;
                 }
             }
@@ -665,65 +673,353 @@ namespace AasxServer
                 }
             }
 
-            string requestPath = endPoint.Value;
-            if (path.Value != "")
-                requestPath += "/" + path.Value;
-            HttpResponseMessage response = null;
-            Task task = null;
-            string diffPath = "";
-            var splitPath = path.Value.Split('.');
-            string aasPath = splitPath[0];
-            string subPath = "";
-            int i = 1;
-            string pre = "";
-            while (i < splitPath.Length)
+            int loopCount = 1;
+            if (loop != null)
             {
-                subPath += pre + splitPath[i];
-                pre = ".";
-                i++;
+                loopCount = Convert.ToInt32(loop.Value);
             }
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
-            if (status != null)
-                status.Value = "OK";
-
-            if (opName == "get" || opName == "getdiff")
+            for (int l = 0; l < loopCount; l++)
             {
-                // if (splitPath.Length < 2)
-                    // return;
+                if (loop != null)
+                    loop.Value = l+1 + "";
+                if (duration != null)
+                    duration.Value = watch.ElapsedMilliseconds + " ms";
+                Program.signalNewData(0);
 
-                DateTime last = new DateTime();
-                if (opName == "getdiff")
+                string requestPath = endPoint.Value;
+                if (path.Value != "")
+                    requestPath += "/" + path.Value;
+                HttpResponseMessage response = null;
+                Task task = null;
+                string diffPath = "";
+                var splitPath = path.Value.Split('.');
+                string aasPath = splitPath[0];
+                string subPath = "";
+                int i = 1;
+                string pre = "";
+                while (i < splitPath.Length)
                 {
-                    if (lastDiff == null)
-                        return;
-                    if (elementCollection == null)
-                        return;
-
-                    if (lastDiff.Value == "")
-                    {
-                        opName = "get";
-                        requestPath = endPoint.Value + "/aas/" + aasPath +
-                            "/submodels/" + splitPath[1] + "/elements";
-                        i = 2;
-                        while (i < splitPath.Length)
-                        {
-                            requestPath += "/" + splitPath[i];
-                            i++;
-                        }
-                        requestPath += "/complete";
-                    }
-                    else
-                    {
-                        last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
-                        requestPath = endPoint.Value +
-                            "/diffjson/aas/" + splitPath[0] +
-                            "?path=" + subPath;
-                        requestPath += "."; // to avoid wrong data by prefix only
-                        requestPath += "&time=" + lastDiff.Value;
-                    }
+                    subPath += pre + splitPath[i];
+                    pre = ".";
+                    i++;
                 }
 
-                var watch = System.Diagnostics.Stopwatch.StartNew();
+                if (status != null)
+                    status.Value = "OK";
+
+                if (opName == "get" || opName == "getdiff")
+                {
+                    // if (splitPath.Length < 2)
+                    // return;
+
+                    DateTime last = new DateTime();
+                    if (opName == "getdiff")
+                    {
+                        if (lastDiff == null)
+                            continue;
+                        if (elementCollection == null)
+                            continue;
+
+                        if (lastDiff.Value == "")
+                        {
+                            opName = "get";
+                            requestPath = endPoint.Value + "/aas/" + aasPath +
+                                "/submodels/" + splitPath[1] + "/elements";
+                            i = 2;
+                            while (i < splitPath.Length)
+                            {
+                                requestPath += "/" + splitPath[i];
+                                i++;
+                            }
+                            requestPath += "/complete";
+                        }
+                        else
+                        {
+                            last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
+                            requestPath = endPoint.Value +
+                                "/diffjson/aas/" + splitPath[0] +
+                                "?path=" + subPath;
+                            requestPath += "."; // to avoid wrong data by prefix only
+                            requestPath += "&time=" + lastDiff.Value;
+                        }
+                    }
+
+                    handler = new HttpClientHandler();
+
+                    if (!requestPath.Contains("localhost"))
+                    {
+                        if (proxy != null)
+                            handler.Proxy = proxy;
+                        else
+                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                    }
+                    client = new HttpClient(handler);
+                    client.Timeout = TimeSpan.FromSeconds(20);
+
+                    string policy = "";
+                    string policyRequestedResource = "";
+                    string t = "";
+                    // test, if usage policy is needed
+                    if (head != null && head.Value != "" && head.Value != " ")
+                    {
+                        if (head.Value.Contains("T1"))
+                        {
+                            t = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                                clientCertificate, clientCertificatePassWord,
+                                "", "");
+                            if (t == "")
+                                continue;
+                            Console.WriteLine("Token1");
+                            Console.WriteLine(t);
+                            client.SetBearerToken(t);
+                        }
+
+                        try
+                        {
+                            task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
+                            task.Wait();
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                if (status != null)
+                                {
+                                    status.Value = response.StatusCode.ToString() + " ; " +
+                                        response.Content.ReadAsStringAsync().Result + " ; " +
+                                        "HEAD " + requestPath;
+                                    Program.signalNewData(0);
+                                }
+                                continue;
+                            }
+
+                            foreach (var kvp in response.Headers)
+                            {
+                                if (kvp.Key == "policy")
+                                    policy = kvp.Value.FirstOrDefault();
+                                if (kvp.Key == "policyRequestedResource")
+                                    policyRequestedResource = kvp.Value.FirstOrDefault();
+                            }
+
+                            if (policy == "" || policyRequestedResource == "")
+                            {
+                                Console.WriteLine("HEAD: No policy!");
+                            }
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+
+                        if (head.Value.Contains("T2"))
+                        {
+                            t = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                                clientCertificate, clientCertificatePassWord,
+                                policy, policyRequestedResource);
+                            if (t == "")
+                                continue;
+                            accessToken.Value = t;
+                            client.SetBearerToken(t);
+                            Console.WriteLine("Token2");
+                            Console.WriteLine(t);
+                        }
+                    }
+
+                    try
+                    {
+                        using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
+                        {
+                            /*
+                            if (policy != "")
+                                requestMessage.Headers.Add("policy", policy);
+                            if (policyRequestedResource != "")
+                                requestMessage.Headers.Add("policyRequestedResource", policyRequestedResource);
+                            */
+
+                            task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
+                            task.Wait();
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                if (status != null)
+                                {
+                                    status.Value = response.StatusCode.ToString() + " ; " +
+                                        response.Content.ReadAsStringAsync().Result + " ; " +
+                                        "GET " + requestPath;
+                                    Program.signalNewData(0);
+                                }
+                                continue;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    string json = response.Content.ReadAsStringAsync().Result;
+                    SubmodelElementCollection receiveCollection = null;
+                    Submodel receiveSubmodel = null;
+                    try
+                    {
+                        if (opName == "get")
+                        {
+                            if (elementCollection != null)
+                            {
+                                JObject parsed = JObject.Parse(json);
+                                foreach (JProperty jp1 in (JToken)parsed)
+                                {
+                                    if (jp1.Name == "elem")
+                                    {
+                                        string text = jp1.Value.ToString();
+                                        receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
+                                            text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                        elementCollection.Value = receiveCollection.Value;
+                                        elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
+                                        elementCollection.SetTimeStamp(timeStamp);
+                                    }
+                                }
+                            }
+                            if (elementSubmodel != null)
+                            {
+                                // receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
+                                //    json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
+
+                                receiveSubmodel.SetTimeStamp(timeStamp);
+                                receiveSubmodel.SetAllParents(timeStamp);
+
+                                // need id for idempotent behaviour
+                                if (receiveSubmodel.Id == null /*|| receiveSubmodel.Id != elementSubmodel.Id*/)
+                                    continue;
+                                receiveSubmodel.Id = elementSubmodel.Id;
+
+                                var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
+
+                                // datastructure update
+                                if (Program.env == null || Program.env[envIndex].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
+                                    continue;
+
+                                // add Submodel
+                                var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(elementSubmodel.Id);
+                                if (existingSm != null)
+                                    Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
+                                Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
+                                for (int s = 0; s < aas.Submodels.Count; s++)
+                                {
+                                    if (aas.Submodels[s].Keys[0].Value == existingSm.Id)
+                                    {
+                                        aas.Submodels.RemoveAt(s);
+                                        break;
+                                    }
+                                }
+                                aas.Submodels.Add(receiveSubmodel.GetModelReference());
+
+                                continue;
+                            }
+                        }
+                        if (opName == "getdiff")
+                        {
+                            // lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                            List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
+                            diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
+                            foreach (var d in diffList)
+                            {
+                                if (d.type == "SMEC")
+                                {
+                                    if (d.path.Length > subPath.Length && subPath == d.path.Substring(0, subPath.Length))
+                                    {
+                                        switch (d.mode)
+                                        {
+                                            case "CREATE":
+                                            case "UPDATE":
+                                                splitPath = d.path.Split('.');
+                                                if (splitPath.Length < 2)
+                                                    continue;
+                                                requestPath = endPoint.Value + "/aas/" + aasPath +
+                                                    "/submodels/" + splitPath[0] + "/elements";
+                                                i = 1;
+                                                while (i < splitPath.Length)
+                                                {
+                                                    requestPath += "/" + splitPath[i];
+                                                    i++;
+                                                }
+                                                requestPath += "/complete";
+                                                try
+                                                {
+                                                    task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                                                    task.Wait();
+                                                    if (!response.IsSuccessStatusCode)
+                                                    {
+                                                        if (status != null)
+                                                        {
+                                                            status.Value = response.StatusCode.ToString() + " ; " +
+                                                                response.Content.ReadAsStringAsync().Result + " ; " +
+                                                                "GET " + requestPath;
+                                                            Program.signalNewData(0);
+                                                        }
+                                                        continue;
+                                                    }
+                                                }
+                                                catch
+                                                {
+                                                    continue;
+                                                }
+
+                                                json = response.Content.ReadAsStringAsync().Result;
+                                                JObject parsed = JObject.Parse(json);
+                                                foreach (JProperty jp1 in (JToken)parsed)
+                                                {
+                                                    if (jp1.Name == "elem")
+                                                    {
+                                                        string text = jp1.Value.ToString();
+                                                        receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
+                                                            text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                                        break;
+                                                    }
+                                                }
+
+                                                bool found = false;
+                                                foreach (var smew in elementCollection.Value)
+                                                {
+                                                    var sme = smew;
+                                                    if (sme.IdShort == receiveCollection.IdShort)
+                                                    {
+                                                        if (sme is SubmodelElementCollection smc)
+                                                        {
+                                                            if (d.mode == "UPDATE")
+                                                            {
+                                                                smc.Value = receiveCollection.Value;
+                                                                smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
+                                                                smc.SetTimeStamp(timeStamp);
+                                                            }
+                                                            found = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if (!found && d.mode == "CREATE")
+                                                {
+                                                    elementCollection.Value.Add(receiveCollection);
+                                                    receiveCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, timeStamp);
+                                                    receiveCollection.SetTimeStamp(timeStamp);
+                                                }
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (lastDiff != null)
+                        lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    Program.signalNewData(0);
+                }
+
                 handler = new HttpClientHandler();
 
                 if (!requestPath.Contains("localhost"))
@@ -735,478 +1031,216 @@ namespace AasxServer
                 }
                 client = new HttpClient(handler);
                 client.Timeout = TimeSpan.FromSeconds(20);
+                if (accessToken != null)
+                    client.SetBearerToken(accessToken.Value);
 
-                string policy = "";
-                string policyRequestedResource = "";
-                // test, if usage policy is needed
-                if (head != null && head.Value == "1")
+                if (opName == "put" || opName == "putdiff")
                 {
-                    /*
-                    var t = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
-                        clientCertificate, clientCertificatePassWord,
-                        "", "");
-                    if (t == "")
-                        return;
-                    client.SetBearerToken(t);
-                    */
-
-                    try
+                    SubmodelElementCollection diffCollection = null;
+                    DateTime last = new DateTime();
+                    int count = 1;
+                    if (mode != null && mode.Value == "clear")
+                        opName = "put";
+                    if (opName == "putdiff")
                     {
-                        task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
-                        task.Wait();
-                        if (!response.IsSuccessStatusCode)
+                        if (lastDiff == null)
+                            continue;
+                        if (elementCollection == null)
+                            continue;
+                        diffCollection = elementCollection;
+                        count = elementCollection.Value.Count;
+                        if (lastDiff.Value == "")
                         {
-                            if (status != null)
-                            {
-                                status.Value = response.StatusCode.ToString() + " ; " +
-                                    response.Content.ReadAsStringAsync().Result + " ; " +
-                                    "HEAD " + requestPath;
-                                Program.signalNewData(1);
-                            }
-                            return;
-                        }
-
-                        foreach (var kvp in response.Headers)
-                        {
-                            if (kvp.Key == "policy")
-                                policy = kvp.Value.FirstOrDefault();
-                            if (kvp.Key == "policyRequestedResource")
-                                policyRequestedResource = kvp.Value.FirstOrDefault();
-                        }
-
-                        if (policy == "" || policyRequestedResource == "")
-                            return;
-                    }
-                    catch
-                    {
-                        return;
-                    }
-
-                    var t = getAccessToken(envIndex, authServerEndPoint, authServerCertificate,
-                        clientCertificate, clientCertificatePassWord,
-                        policy, policyRequestedResource);
-                    if (t == "")
-                        return;
-                    accessToken.Value = t;
-                    client.SetBearerToken(t);
-                    Console.WriteLine(t);
-                }
-
-                try
-                {
-                    using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
-                    {
-                        /*
-                        if (policy != "")
-                            requestMessage.Headers.Add("policy", policy);
-                        if (policyRequestedResource != "")
-                            requestMessage.Headers.Add("policyRequestedResource", policyRequestedResource);
-                        */
-
-                        task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
-                        task.Wait();
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            if (status != null)
-                            {
-                                status.Value = response.StatusCode.ToString() + " ; " +
-                                    response.Content.ReadAsStringAsync().Result + " ; " +
-                                    "GET " + requestPath;
-                                Program.signalNewData(1);
-                            }
-                            return;
-                        }
-                    }
-                }
-                catch
-                {
-                    return;
-                }
-
-                string json = response.Content.ReadAsStringAsync().Result;
-                SubmodelElementCollection receiveCollection = null;
-                Submodel receiveSubmodel = null;
-                try
-                {
-                    if (opName == "get")
-                    {
-                        if (elementCollection != null)
-                        {
-                            JObject parsed = JObject.Parse(json);
-                            foreach (JProperty jp1 in (JToken)parsed)
-                            {
-                                if (jp1.Name == "elem")
-                                {
-                                    string text = jp1.Value.ToString();
-                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                        text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                    elementCollection.Value = receiveCollection.Value;
-                                    elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
-                                    elementCollection.SetTimeStamp(timeStamp);
-                                }
-                            }
-                        }
-                        if (elementSubmodel != null)
-                        {
-                            // receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
-                            //    json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                            receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
-
-                            receiveSubmodel.SetTimeStamp(timeStamp);
-                            receiveSubmodel.SetAllParents(timeStamp);
-
-                            // need id for idempotent behaviour
-                            if (receiveSubmodel.Id == null /*|| receiveSubmodel.Id != elementSubmodel.Id*/)
-                                return;
-                            receiveSubmodel.Id = elementSubmodel.Id;
-
-                            var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
-
-                            // datastructure update
-                            if (Program.env == null || Program.env[envIndex].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
-                                return;
-
-                            // add Submodel
-                            var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(elementSubmodel.Id);
-                            if (existingSm != null)
-                                Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
-                            Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
-                            for (int s = 0; s < aas.Submodels.Count; s++)
-                            {
-                                if (aas.Submodels[s].Keys[0].Value == existingSm.Id)
-                                {
-                                    aas.Submodels.RemoveAt(s);
-                                    break;
-                                }
-                            }
-                            aas.Submodels.Add(receiveSubmodel.GetModelReference());
-
-                            watch.Stop();
-                            if (duration != null)
-                                duration.Value = watch.ElapsedMilliseconds + " ms";
-                            Program.signalNewData(2); // new tree, nodes opened
-                            return;
-                        }
-                    }
-                    if (opName == "getdiff")
-                    {
-                        // lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                        List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
-                        diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
-                        foreach (var d in diffList)
-                        {
-                            if (d.type == "SMEC")
-                            {
-                                if (d.path.Length > subPath.Length && subPath == d.path.Substring(0, subPath.Length))
-                                {
-                                    switch (d.mode)
-                                    {
-                                        case "CREATE":
-                                        case "UPDATE":
-                                            splitPath = d.path.Split('.');
-                                            if (splitPath.Length < 2)
-                                                return;
-                                            requestPath = endPoint.Value + "/aas/" + aasPath +
-                                                "/submodels/" + splitPath[0] + "/elements";
-                                            i = 1;
-                                            while (i < splitPath.Length)
-                                            {
-                                                requestPath += "/" + splitPath[i];
-                                                i++;
-                                            }
-                                            requestPath += "/complete";
-                                            try
-                                            {
-                                                task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
-                                                task.Wait();
-                                                if (!response.IsSuccessStatusCode)
-                                                {
-                                                    if (status != null)
-                                                    {
-                                                        status.Value = response.StatusCode.ToString() + " ; " +
-                                                            response.Content.ReadAsStringAsync().Result + " ; " +
-                                                            "GET " + requestPath;
-                                                        Program.signalNewData(1);
-                                                    }
-                                                    return;
-                                                }
-                                            }
-                                            catch
-                                            {
-                                                return;
-                                            }
-
-                                            json = response.Content.ReadAsStringAsync().Result;
-                                            JObject parsed = JObject.Parse(json);
-                                            foreach (JProperty jp1 in (JToken)parsed)
-                                            {
-                                                if (jp1.Name == "elem")
-                                                {
-                                                    string text = jp1.Value.ToString();
-                                                    receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                                        text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                                    break;
-                                                }
-                                            }
-
-                                            bool found = false;
-                                            foreach (var smew in elementCollection.Value)
-                                            {
-                                                var sme = smew;
-                                                if (sme.IdShort == receiveCollection.IdShort)
-                                                {
-                                                    if (sme is SubmodelElementCollection smc)
-                                                    {
-                                                        if (d.mode == "UPDATE")
-                                                        {
-                                                            smc.Value = receiveCollection.Value;
-                                                            smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
-                                                            smc.SetTimeStamp(timeStamp);
-                                                        }
-                                                        found = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            if (!found && d.mode == "CREATE")
-                                            {
-                                                elementCollection.Value.Add(receiveCollection);
-                                                receiveCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, timeStamp);
-                                                receiveCollection.SetTimeStamp(timeStamp);
-                                                Program.signalNewData(2);
-                                            }
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                    return;
-                }
-                if (lastDiff != null)
-                    lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                Program.signalNewData(1);
-            }
-
-            handler = new HttpClientHandler();
-
-            if (!requestPath.Contains("localhost"))
-            {
-                if (proxy != null)
-                    handler.Proxy = proxy;
-                else
-                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-            }
-            client = new HttpClient(handler);
-            client.Timeout = TimeSpan.FromSeconds(20);
-            if (accessToken != null)
-                client.SetBearerToken(accessToken.Value);
-
-            if (opName == "put" || opName == "putdiff")
-            {
-                SubmodelElementCollection diffCollection = null;
-                DateTime last = new DateTime();
-                int count = 1;
-                if (mode != null && mode.Value == "clear")
-                    opName = "put";
-                if (opName == "putdiff")
-                {
-                    if (lastDiff == null)
-                        return;
-                    if (elementCollection == null)
-                        return;
-                    diffCollection = elementCollection;
-                    count = elementCollection.Value.Count;
-                    if (lastDiff.Value == "")
-                    {
-                        // get "latestData" from server
-                        bool error = false;
-                        splitPath = path.Value.Split('/');
-                        requestPath = endPoint.Value + "/aas/" + splitPath[1] +
-                            "/submodels/" + splitPath[3];
-                        requestPath += "/elements/" + elementCollection.IdShort;
-                        requestPath += "/latestData/complete";
-                        try
-                        {
-                            task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
-                            task.Wait();
-                            if (!response.IsSuccessStatusCode)
-                            {
-                                if (status != null)
-                                {
-                                    status.Value = response.StatusCode.ToString() + " ; " +
-                                        response.Content.ReadAsStringAsync().Result + " ; " +
-                                        "GET " + requestPath;
-                                }
-                                error = true;
-                            }
-                        }
-                        catch
-                        {
-                            error = true;
-                        }
-
-                        int highDataIndex = -1;
-                        int lowDataIndex = 0;
-                        int totalSamples = 0;
-                        if (!error)
-                        {
+                            // get "latestData" from server
+                            bool error = false;
+                            splitPath = path.Value.Split('/');
+                            requestPath = endPoint.Value + "/aas/" + splitPath[1] +
+                                "/submodels/" + splitPath[3];
+                            requestPath += "/elements/" + elementCollection.IdShort;
+                            requestPath += "/latestData/complete";
                             try
                             {
-                                string json = response.Content.ReadAsStringAsync().Result;
-                                JObject parsed = JObject.Parse(json);
-                                foreach (JProperty jp1 in (JToken)parsed)
+                                task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                                task.Wait();
+                                if (!response.IsSuccessStatusCode)
                                 {
-                                    if (jp1.Name == "elem")
+                                    if (status != null)
                                     {
-                                        string text = jp1.Value.ToString();
-                                        var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                            text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                        foreach (var sme in receiveCollection.Value)
-                                        {
-                                            var e = sme;
-                                            if (e is Property ep)
-                                            {
-                                                if (ep.IdShort == "highDataIndex")
-                                                {
-                                                    highDataIndex = Convert.ToInt32(ep.Value);
-                                                    lowDataIndex = highDataIndex + 1;
-                                                }
-                                                if (ep.IdShort == "totalSamples")
-                                                {
-                                                    totalSamples = Convert.ToInt32(ep.Value);
-                                                }
-                                            }
-                                        }
-                                        if (elementCollection.Value.Count == 1)
-                                        {
-                                            if (elementCollection.Value[0] is SubmodelElementCollection smc)
-                                            {
-                                                if (smc.IdShort == "latestData")
-                                                {
-                                                    if (smc.Value.Count == 0)
-                                                        return;
-                                                    foreach (var sme in smc.Value)
-                                                    {
-                                                        var e = sme;
-                                                        if (e is Property ep)
-                                                        {
-                                                            if (ep.IdShort == "highDataIndex")
-                                                            {
-                                                                ep.Value = highDataIndex.ToString();
-                                                            }
-                                                            if (ep.IdShort == "lowDataIndex")
-                                                            {
-                                                                ep.Value = lowDataIndex.ToString();
-                                                            }
-                                                            if (ep.IdShort == "totalSamples")
-                                                            {
-                                                                ep.Value = totalSamples.ToString();
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        status.Value = response.StatusCode.ToString() + " ; " +
+                                            response.Content.ReadAsStringAsync().Result + " ; " +
+                                            "GET " + requestPath;
                                     }
+                                    error = true;
                                 }
                             }
                             catch
                             {
                                 error = true;
                             }
-                        }
-                        if (error || highDataIndex == -1)
-                        {
-                            opName = "put";
+
+                            int highDataIndex = -1;
+                            int lowDataIndex = 0;
+                            int totalSamples = 0;
+                            if (!error)
+                            {
+                                try
+                                {
+                                    string json = response.Content.ReadAsStringAsync().Result;
+                                    JObject parsed = JObject.Parse(json);
+                                    foreach (JProperty jp1 in (JToken)parsed)
+                                    {
+                                        if (jp1.Name == "elem")
+                                        {
+                                            string text = jp1.Value.ToString();
+                                            var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
+                                                text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                            foreach (var sme in receiveCollection.Value)
+                                            {
+                                                var e = sme;
+                                                if (e is Property ep)
+                                                {
+                                                    if (ep.IdShort == "highDataIndex")
+                                                    {
+                                                        highDataIndex = Convert.ToInt32(ep.Value);
+                                                        lowDataIndex = highDataIndex + 1;
+                                                    }
+                                                    if (ep.IdShort == "totalSamples")
+                                                    {
+                                                        totalSamples = Convert.ToInt32(ep.Value);
+                                                    }
+                                                }
+                                            }
+                                            if (elementCollection.Value.Count == 1)
+                                            {
+                                                if (elementCollection.Value[0] is SubmodelElementCollection smc)
+                                                {
+                                                    if (smc.IdShort == "latestData")
+                                                    {
+                                                        if (smc.Value.Count == 0)
+                                                            continue;
+                                                        foreach (var sme in smc.Value)
+                                                        {
+                                                            var e = sme;
+                                                            if (e is Property ep)
+                                                            {
+                                                                if (ep.IdShort == "highDataIndex")
+                                                                {
+                                                                    ep.Value = highDataIndex.ToString();
+                                                                }
+                                                                if (ep.IdShort == "lowDataIndex")
+                                                                {
+                                                                    ep.Value = lowDataIndex.ToString();
+                                                                }
+                                                                if (ep.IdShort == "totalSamples")
+                                                                {
+                                                                    ep.Value = totalSamples.ToString();
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    error = true;
+                                }
+                            }
+                            if (error || highDataIndex == -1)
+                            {
+                                opName = "put";
+                            }
+                            else
+                            {
+                                if (lastDiff != null)
+                                    lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                            }
                         }
                         else
                         {
-                            if (lastDiff != null)
-                                lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                            last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
                         }
                     }
-                    else
-                    {
-                        last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
-                    }
-                }
 
-                for (i = 0; i < count; i++)
-                {
-                    bool error = false;
-                    string statusValue = "";
-                    string json = "";
-                    try
+                    for (i = 0; i < count; i++)
                     {
-                        if (opName == "putdiff")
-                        {
-                            var sme = diffCollection.Value[i];
-                            if (!(sme is SubmodelElementCollection))
-                                return;
-                            elementCollection = sme as SubmodelElementCollection;
-                            diffPath = "/" + diffCollection.IdShort;
-                            if (elementCollection.TimeStamp <= last)
-                                elementCollection = null;
-                        }
-                        if (elementCollection != null)
-                            json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
-                        if (elementSubmodel != null)
-                            json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
-                    }
-                    catch
-                    {
-                        statusValue = "error PUTDIFF index: " + i + " old " + count +
-                            " new " + diffCollection.Value.Count;
-                        Console.WriteLine(statusValue);
-                        error = true;
-                    }
-                    if (json != "")
-                    {
+                        bool error = false;
+                        string statusValue = "";
+                        string json = "";
                         try
                         {
-                            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                            task = Task.Run(async () =>
+                            if (opName == "putdiff")
                             {
-                                response = await client.PutAsync(
-                                    requestPath + diffPath, content);
-                            });
-                            task.Wait();
+                                var sme = diffCollection.Value[i];
+                                if (!(sme is SubmodelElementCollection))
+                                    continue;
+                                elementCollection = sme as SubmodelElementCollection;
+                                diffPath = "/" + diffCollection.IdShort;
+                                if (elementCollection.TimeStamp <= last)
+                                    elementCollection = null;
+                            }
+                            if (elementCollection != null)
+                                json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
+                            if (elementSubmodel != null)
+                                json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
                         }
                         catch
                         {
+                            statusValue = "error PUTDIFF index: " + i + " old " + count +
+                                " new " + diffCollection.Value.Count;
+                            Console.WriteLine(statusValue);
                             error = true;
                         }
-                        if (error || !response.IsSuccessStatusCode)
+                        if (json != "")
                         {
-                            if (response != null)
+                            try
                             {
-                                statusValue = response.StatusCode.ToString() + " ; " +
-                                    response.Content.ReadAsStringAsync().Result + " ; " +
-                                    "PUT " + requestPath;
+                                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                                task = Task.Run(async () =>
+                                {
+                                    response = await client.PutAsync(
+                                        requestPath + diffPath, content);
+                                });
+                                task.Wait();
                             }
-                            error = true;
+                            catch
+                            {
+                                error = true;
+                            }
+                            if (error || !response.IsSuccessStatusCode)
+                            {
+                                if (response != null)
+                                {
+                                    statusValue = response.StatusCode.ToString() + " ; " +
+                                        response.Content.ReadAsStringAsync().Result + " ; " +
+                                        "PUT " + requestPath;
+                                }
+                                error = true;
+                            }
                         }
-                    }
-                    if (error)
-                    {
-                        if (status != null)
+                        if (error)
                         {
-                            status.Value = statusValue;
-                            Program.signalNewData(1);
+                            if (status != null)
+                            {
+                                status.Value = statusValue;
+                                Program.signalNewData(0);
+                            }
+                            continue;
                         }
-                        return;
                     }
-                }
 
-                if (lastDiff != null)
-                    lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    if (lastDiff != null)
+                        lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                }
             }
+            if (loop != null)
+                loop.Value = loopCount + "";
+            watch.Stop();
+            if (duration != null)
+                duration.Value = watch.ElapsedMilliseconds + " ms";
+            Program.signalNewData(2); // new tree, nodes opened
         }
         static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
         {
