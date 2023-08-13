@@ -275,6 +275,8 @@
                     {
                         if (selectedNode.Tag is Property)
                         {
+                            if (CurrentValue == " ")
+                                CurrentValue = "";
                             (selectedNode.Tag as Property).Value = CurrentValue;
                             (selectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
                             Program.env[selectedNode.envIndex].setWrite(true);
