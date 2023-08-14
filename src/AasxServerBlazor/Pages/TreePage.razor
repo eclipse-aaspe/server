@@ -21,7 +21,8 @@
             word-wrap: break-word; word-break: break-all; position: sticky">
         @updateVisibleTree(Items, selectedNode)
         @if (Program.isLoading)
-        {<span style="color:white;background-color:blue;">Loading...</span>
+        {
+            <span style="color:white;background-color:blue;">Loading...</span>
         }
         else
         { 
@@ -45,7 +46,9 @@
                 {
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 }*@
-                @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
+                @{ 
+                string getPolicy = null;
+                if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
                 {
                     var display = false;
                     var access = false;
@@ -53,9 +56,16 @@
                     if (context.Tag is Submodel sm)
                     {
                         // check, if access to submodel is allowed
+                        /*
                         access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
                             null, "/submodels", "READ", out withAllow,
                                 sm.IdShort, "sm", sm);
+                        */
+                        string error = "";
+                        withAllow = false;
+                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
+                            out error, null, "/submodels", "READ", out withAllow, out getPolicy,
+                            sm.IdShort, "sm", sm, null);
                         display = true;
                     }
                     if (context.Tag is ISubmodelElement sme)
@@ -69,9 +79,15 @@
                         }
                         path = (p as Submodel).IdShort + "." + path;
                         // check, if access to submodelelement is allowed
+                        /*
                         access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
                             null, "/submodelelements", "READ", out withAllow,
                                 path, "", p);
+                        */
+                        string error = "";
+                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
+                        out error, null, "/submodelelements", "READ", out withAllow, out getPolicy,
+                        path, "", p, null);
                         display = true;
                     }
                     if (display)
@@ -100,8 +116,13 @@
                 }
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
-                <strong><span style="color:blue">@getSymbols(context)</span></strong>
+                @if (getPolicy != null)
+                {
+                    <span style="color:blue">&nbsp @getPolicy</span>
+                }
+                <span style="color:blue;font-size:14px">@getSymbols(context)</span>
                 <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
+                }
             </TitleTemplate>
         </Tree>
     </div>

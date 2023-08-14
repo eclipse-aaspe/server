@@ -3661,7 +3661,7 @@ namespace AasxRestServerLibrary
                         getPolicy = (sme as Property).Value;
                         if (policy == null ||  getPolicy == policy)
                         {
-                            Program.signalNewData(0);
+                            // Program.signalNewData(0);
                             return true;
                         }
                         break;
@@ -3670,7 +3670,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            Program.signalNewData(0);
+            // Program.signalNewData(0);
             return false;
         }
 
