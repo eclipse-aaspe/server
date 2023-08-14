@@ -915,7 +915,8 @@ namespace AasxServer
                             }
                         }
 
-                        if (steps.Value.Contains("22") || (clientToken != null && clientToken.Value == ""))
+                        if ((steps.Value.Contains("22") && steps.Value.Contains("1H"))
+                            || (clientToken != null && clientToken.Value == ""))
                         {
                             clientToken.Value = "";
                             if (!createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
