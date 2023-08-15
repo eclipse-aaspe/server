@@ -10,6 +10,7 @@
 
 using AasxServer;
 using Extensions;
+using IdentityModel;
 using IdentityModel.Client;
 using IO.Swagger.Registry.Attributes;
 using IO.Swagger.Registry.Models;
@@ -20,12 +21,15 @@ using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -510,7 +514,8 @@ namespace IO.Swagger.Registry.Controllers
                         esm.ProtocolInformation.EndpointAddress =
                             AasxServer.Program.externalBlazor + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Identification) + "/submodels/" +
-                            Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
+                            Base64UrlEncoder.Encode(sd.Identification);
+                            // Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
                         // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Models.Endpoint>();
@@ -580,7 +585,8 @@ namespace IO.Swagger.Registry.Controllers
                         esm.ProtocolInformation.EndpointAddress =
                             AasxServer.Program.externalBlazor + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Identification) + "/submodels/" +
-                            Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
+                            Base64UrlEncoder.Encode(sd.Identification);
+                            // Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
                         // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Models.Endpoint>();
@@ -612,7 +618,7 @@ namespace IO.Swagger.Registry.Controllers
                                     federate = true;
                             }
 
-                            if (federate)
+                            if (federate && (sme is Property))
                             {
                                 if (sd.FederatedElements == null)
                                     sd.FederatedElements = new List<string>();
@@ -1009,6 +1015,8 @@ namespace IO.Swagger.Registry.Controllers
             return url;
         }
 
+        public static X509Certificate2 certificate = null;
+
 #pragma warning disable CS1591 // Fehledes XML-Kommentar für öffentlich sichtbaren Typ oder Element
 #pragma warning disable IDE1006 // Benennungsstile
         public static void initRegistry(List<AasxCredentialsEntry> cList, DateTime timestamp, bool initAgain = false)
@@ -1106,9 +1114,36 @@ namespace IO.Swagger.Registry.Controllers
                             if (env != null)
                             {
                                 var aas = env.AasEnv.AssetAdministrationShells[0];
-                                if (aas.IdShort != "REGISTRY")
+                                if (aas.IdShort != "REGISTRY" && aas.IdShort != "myAASwithGlobalSecurityMetaModel")
                                 {
                                     addAasToRegistry(env, timestamp);
+                                }
+                                if (aas.IdShort == "PcfViewTask")
+                                {
+                                    string certificatePassword = "i40";
+                                    Stream s2 = null;
+                                    try
+                                    {
+                                        s2 = env.GetLocalStreamFromPackage("/aasx/files/Andreas_Orzelski_Chain.pfx", access: FileAccess.Read);
+                                    }
+                                    catch { }
+                                    if (s2 == null)
+                                    {
+                                        Console.WriteLine("Stream error!");
+                                        continue;
+                                    }
+
+                                    X509Certificate2Collection xc = new X509Certificate2Collection();
+                                    using (var m = new System.IO.MemoryStream())
+                                    {
+                                        s2.CopyTo(m);
+                                        var b = m.GetBuffer();
+                                        xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
+                                        certificate = new X509Certificate2(b, certificatePassword);
+                                        Console.WriteLine("Client certificate: " + "/aasx/files/Andreas_Orzelski_Chain.pfx");
+                                        s2.Close();
+                                    }
+
                                 }
                             }
                         }
@@ -1126,12 +1161,13 @@ namespace IO.Swagger.Registry.Controllers
 
                         var handler = new HttpClientHandler();
 
-                        //
-                        if (AasxServer.AasxTask.proxy != null)
-                            handler.Proxy = AasxServer.AasxTask.proxy;
-                        else
-                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                        //
+                        if (!requestPath.Contains("localhost"))
+                        {
+                            if (AasxServer.AasxTask.proxy != null)
+                                handler.Proxy = AasxServer.AasxTask.proxy;
+                            else
+                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                        }
 
                         var client = new HttpClient(handler);
                         client.Timeout = TimeSpan.FromSeconds(3);
@@ -1179,7 +1215,11 @@ namespace IO.Swagger.Registry.Controllers
                             initiallyEmpty = i;
                             foreach (var ad in aasDescriptors)
                             {
+                                if (ad == null) // why does this happen?
+                                    continue;
                                 if (ad.IdShort == "myAASwithGlobalSecurityMetaModel")
+                                    continue;
+                                if (ad.IdShort == "REGISTRY")
                                     continue;
 
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -1233,6 +1273,7 @@ namespace IO.Swagger.Registry.Controllers
                                     }
 
                                     AasxServer.Program.submodelAPIcount++;
+                                    string clientToken = "";
 
                                     switch (sd.IdShort)
                                     {
@@ -1244,7 +1285,55 @@ namespace IO.Swagger.Registry.Controllers
                                             // copy specific submodels locally
                                             try
                                             {
+                                                // HEAD to get policy for submodel
                                                 requestPath += queryPara;
+                                                Console.WriteLine("HEAD Submodel " + requestPath);
+                                                var task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
+                                                task.Wait();
+
+                                                string userName = "aorzelski@phoenixcontact.com";
+                                                string policy = "";
+                                                string policyRequestedResource = "";
+                                                foreach (var kvp in response.Headers)
+                                                {
+                                                    if (kvp.Key == "policy")
+                                                        policy = kvp.Value.FirstOrDefault();
+                                                    if (kvp.Key == "policyRequestedResource")
+                                                        policyRequestedResource = kvp.Value.FirstOrDefault();
+                                                }
+
+                                                if (policy != "")
+                                                {
+                                                    var credential = new X509SigningCredentials(certificate);
+                                                    string clientId = "client.jwt";
+                                                    string subject = certificate.Subject;
+                                                    var now = DateTime.UtcNow;
+                                                    var claimList =
+                                                        new List<Claim>()
+                                                            {
+                                                        new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
+                                                        new Claim(JwtClaimTypes.Subject, clientId),
+                                                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
+
+                                                        new Claim("userName", userName),
+                                                            };
+                                                    if (policy != "")
+                                                        claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
+                                                    if (policyRequestedResource != "")
+                                                        claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
+                                                    var token = new JwtSecurityToken(
+                                                            clientId,
+                                                            policyRequestedResource,
+                                                            claimList,
+                                                            now,
+                                                            now.AddDays(1),
+                                                            credential)
+                                                    ;
+                                                    var tokenHandler = new JwtSecurityTokenHandler();
+                                                    clientToken = tokenHandler.WriteToken(token);
+                                                    client.SetBearerToken(clientToken);
+                                                }
+
                                                 Console.WriteLine("GET Submodel " + requestPath);
                                                 var task1 = Task.Run(async () =>
                                                 {
@@ -1259,7 +1348,11 @@ namespace IO.Swagger.Registry.Controllers
                                                     var sm = new Submodel("");
                                                     sm = Jsonization.Deserialize.SubmodelFrom(node);
                                                     sm.IdShort += " - COPY";
-                                                    sm.Extensions = new List<IExtension> { new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress) };
+                                                    sm.Extensions = new List<IExtension>
+                                                    {
+                                                        new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress),
+                                                        new Extension("clientToken", value: clientToken)
+                                                    };
                                                     sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
                                                     aas.AddSubmodelReference(sm.GetReference());
                                                     newEnv.AasEnv.Submodels.Add(sm);
@@ -1318,7 +1411,11 @@ namespace IO.Swagger.Registry.Controllers
                                             if (external)
                                                 sm.IdShort = sd.IdShort + " - EXTERNAL";
                                         }
-                                        sm.Extensions = new List<IExtension> { new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress) };
+                                        sm.Extensions = new List<IExtension>
+                                        {
+                                            new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.EndpointAddress),
+                                            new Extension("clientToken", value: clientToken)
+                                        };
                                         sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
                                         aas.AddSubmodelReference(sm.GetReference());
                                         newEnv.AasEnv.Submodels.Add(sm);

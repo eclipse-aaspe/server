@@ -348,6 +348,7 @@ namespace AasxServer
             string policy = "", string policyRequestedResource = "")
         {
             var handler = new HttpClientHandler();
+
             if (proxy != null)
                 handler.Proxy = proxy;
             else
@@ -426,6 +427,7 @@ namespace AasxServer
                 {
                     xce.MoveNext();
                     X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                    // X509Base64[--j] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
                 }
                 x5c = X509Base64;
 
@@ -1515,15 +1517,25 @@ namespace AasxServer
                                 {
                                     if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[0].Name == "endpoint")
                                     {
+                                        var requestPath = sm.Extensions[0].Value;
+
                                         var handler = new HttpClientHandler();
-                                        if (AasxServer.AasxTask.proxy != null)
-                                            handler.Proxy = AasxServer.AasxTask.proxy;
-                                        else
-                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                        if (!requestPath.Contains("localhost"))
+                                        {
+                                            if (AasxServer.AasxTask.proxy != null)
+                                                handler.Proxy = AasxServer.AasxTask.proxy;
+                                            else
+                                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                        }
 
                                         var client = new HttpClient(handler);
 
-                                        var requestPath = sm.Extensions[0].Value;
+                                        string clientToken = "";
+                                        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Name == "clientToken")
+                                            clientToken = sm.Extensions[1].Value;
+                                        if (clientToken != "")
+                                            client.SetBearerToken(clientToken);
+
                                         string queryPara = "";
                                         string userPW = "";
                                         string urlEdcWrapper = "";

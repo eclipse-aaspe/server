@@ -411,6 +411,7 @@
                                                             {
                                                                 if (replace != "")
                                                                     smlink = replace;
+                                                                queryPara = addBearer(queryPara, sm);
                                                                 if (queryPara != "")
                                                                 {
                                                                     smlink += "?" + queryPara;
@@ -429,7 +430,8 @@
                                                             {
                                                                 filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
                                                             }
-                                                            <a href="@link" target="_blank" onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&smUrl=@System.Net.WebUtility.UrlEncode(sm.Id)'; return false;" style="margin-right: 2px;"><img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
+                                                            <a href="@link" target="_blank" onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&smUrl=@System.Net.WebUtility.UrlEncode(sm.Id)'; return false;" style="margin-right: 2px;">
+                                                                <img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
                                                         }
                                                     }
                                                 }
@@ -521,6 +523,22 @@
         return endpoint;
     }
 
+    static string addBearer(string queryPara, ISubmodel sm)
+    {
+        string clientToken = "";
+        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Value == "clientToken")
+            clientToken = sm.Extensions[1].Value;
+        if (clientToken != "")
+        {
+            if (queryPara == "")
+            {
+                return clientToken;
+            }
+            return queryPara + "&" + clientToken;
+        }
+        return queryPara;        
+    }
+
     static string getAasLink(AssetAdministrationShell aas)
     {
         string endpoint = null;
@@ -559,15 +577,18 @@
                             var sme = f;
                             string path = sme.IdShort;
                             var p = sme.Parent;
-                            while (!(p is Submodel))
+                            while (p != null && !(p is Submodel))
                             {
                                 path = (p as ISubmodelElement).IdShort + "." + path;
                                 p = (p as ISubmodelElement).Parent;
                             }
+                            if (p == null)
+                                return path;
+
                             var sm = p as Submodel;
                             // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
                             string endpoint = getSmLink(sm);
-                            path = endpoint + "/submodelelements/" + path;
+                            path = endpoint + "/submodel-elements/" + path;
                             path += "/attachment";
 
                             string queryPara = "";
@@ -578,6 +599,7 @@
                             {
                                 if (replace != "")
                                     path = replace;
+                                queryPara = addBearer(queryPara, sm);
                                 if (queryPara != "")
                                 {
                                     path += "?" + queryPara;

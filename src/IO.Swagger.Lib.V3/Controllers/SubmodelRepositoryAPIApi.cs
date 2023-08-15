@@ -180,6 +180,7 @@ namespace IO.Swagger.Controllers
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
         [Route("/submodels/{submodelIdentifier}/submodel-elements")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElements")]
         [SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelElementsResult), description: "List of found submodel elements")]
@@ -350,6 +351,7 @@ namespace IO.Swagger.Controllers
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
         [Route("/submodels/{submodelIdentifier}/submodel-elements/$value")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/$value")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsValueOnlySubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(ValueOnlyPagedResult), description: "List of found submodel elements")]
@@ -608,6 +610,7 @@ namespace IO.Swagger.Controllers
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
         [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("GetFileByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested file")]
@@ -882,6 +885,7 @@ namespace IO.Swagger.Controllers
                 ar = accessRights;
             Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
 
+            /*
             if (accessRights == null)
             {
                 // Look for policies in header instead of token
@@ -901,8 +905,9 @@ namespace IO.Swagger.Controllers
                 Console.WriteLine("policyRequestedResource: " + policyRequestedResource);
                 throw new NotAllowed("Policy URL incorrect!");
             }
+            */
 
-            string error = null;
+            string error = "";
             var access = false;
             bool withAllow = false;
             string getPolicy = null;
@@ -912,10 +917,12 @@ namespace IO.Swagger.Controllers
                 null, "/submodels", "READ", out withAllow,
                     submodel.IdShort, "sm", submodel, policy);
             */
-            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, null, "/submodels", "READ", out withAllow, out getPolicy,
+            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, accessRights, "/submodels", "READ", out withAllow, out getPolicy,
                 submodel.IdShort, "sm", submodel, policy);
             if (!access)
             {
+                if (error != "")
+                    throw new NotAllowed(error);
                 throw new NotAllowed("Policy incorrect!");
             }
 
@@ -1191,6 +1198,7 @@ namespace IO.Swagger.Controllers
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
         [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathSubmodelRepo")]
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]

@@ -3659,7 +3659,7 @@ namespace AasxRestServerLibrary
                         break;
                     case "policy":
                         getPolicy = (sme as Property).Value;
-                        if (policy == null ||  getPolicy == policy)
+                        if (policy == null ||  policy.Contains(getPolicy))
                         {
                             // Program.signalNewData(0);
                             return true;

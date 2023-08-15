@@ -10,11 +10,11 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--aasx-in-memory 1000 --data-path \"C:\\Development\\policy\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--aasx-in-memory 1000 --data-path \"C:\\Development\\PCF2\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "AASREGISTRY": "https://registry.dpp40-2-v2.industrialdigitaltwin.org",
+        "AASREGISTRY": "http://localhost:5002",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelView.html",
         "AASREGISTRY2": "https://registry.dpp40-3-v2.industrialdigitaltwin.org"
       },

@@ -30,7 +30,8 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                     <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
                             string border = "";
-                            if (AasxServer.Program.env[it.envIndex].getWrite())
+                            var env = AasxServer.Program.env[it.envIndex];
+                            if (env != null && env.getWrite())
                             {
                                 border = "border:dotted;border-color:blue;";
                             }

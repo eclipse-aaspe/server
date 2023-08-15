@@ -672,9 +672,9 @@
      );
         /*
         await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
-    Convert.ToBase64String(data)
+    "saveAsFile",
+    filename,
+        Convert.ToBase64String(data)
         );
         */
         /*
@@ -997,6 +997,9 @@
                 {
                     // if (Program.env[item.envIndex].IsOpen)
                     {
+                        if (Program.env[item.envIndex] == null)
+                            return "";
+
                         using (System.IO.Stream s = Program.env[item.envIndex].GetLocalThumbnailStream())
                         {
                             if (s != null)
