@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace AasxServerStandardBib.Interfaces
 {
@@ -16,6 +17,7 @@ namespace AasxServerStandardBib.Interfaces
         ISubmodel GetSubmodelById(string submodelIdentifier);
         ISubmodelElement GetSubmodelElementByPath(string submodelIdentifier, string idShortPath);
         bool IsSubmodelElementPresent(string submodelIdentifier, string idShortPath);
+        void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream fileContent);
         void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
         void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme);
         void UpdateSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);

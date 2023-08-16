@@ -26,6 +26,7 @@ namespace AasxServerStandardBib.Interfaces
         string GetThumbnail(string aasIdentifier, out byte[] content, out long fileSize);
         void ReplaceAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas);
         void ReplaceAssetInformation(string aasIdentifier, IAssetInformation newAssetInformation);
+        void ReplaceFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
         void ReplaceSubmodelById(string aasIdentifier, string submodelIdentifier, Submodel newSubmodel);
         void ReplaceSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
         void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);

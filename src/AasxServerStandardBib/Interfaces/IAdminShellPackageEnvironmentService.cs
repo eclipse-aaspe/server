@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace AasxServerStandardBib.Interfaces
 {
@@ -40,6 +41,7 @@ namespace AasxServerStandardBib.Interfaces
         bool IsConceptDescriptionPresent(string cdIdentifier);
         IConceptDescription CreateConceptDescription(IConceptDescription body);
         void UpdateConceptDescriptionById(IConceptDescription body, string cdIdentifier);
+        Task ReplaceSupplementaryFileInPackage(string submodelIdentifier, string sourceFile, string targetFile, string contentType, MemoryStream fileContent);
 
 
 

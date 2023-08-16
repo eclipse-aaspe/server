@@ -35,6 +35,14 @@ namespace AasSecurity
                                 }
                             }
                             break;
+                        case "basicauth":
+                            {
+                                if (submodelElement is SubmodelElementCollection basicAuth)
+                                {
+                                    ParseBasicAuth(basicAuth);
+                                }
+                                break;
+                            }
                         default:
                             {
                                 _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing SecuritySettingsForServer.");
@@ -44,6 +52,21 @@ namespace AasSecurity
                 }
             }
         }
+
+        private static void ParseBasicAuth(SubmodelElementCollection basicAuth)
+        {
+            if (basicAuth != null && basicAuth.Value != null)
+            {
+                foreach (var submodelElement in basicAuth.Value)
+                {
+                    if (submodelElement is Property property)
+                    {
+                        GlobalSecurityVariables.SecurityUsernamePassword.TryAdd(property.IdShort!, property.Value!);
+                    }
+                }
+            }
+        }
+
         private static void ParseAuthenticationServer(AdminShellPackageEnv env, SubmodelElementCollection authServer)
         {
             if (authServer != null && authServer.Value != null)

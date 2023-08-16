@@ -13,7 +13,6 @@
         internal KindOfPermissionEnum? Kind { get; set; }
         internal ISubmodel Submodel { get; set; }
         internal string SemanticId { get; set; }
-        //TODO:jtikekar: check if needed
         internal ISubmodelElementCollection Usage { get; set; }
     }
 }

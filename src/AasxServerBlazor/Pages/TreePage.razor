@@ -1,7 +1,10 @@
 ﻿@page "/"
 @inject AASService SubmodelService
 @inject NavigationManager NavigationManager
+@inject ISecurityService SecService
 @using AasCore.Aas3_0
+@using AasSecurity;
+@using AasSecurity.Models;
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
 @using System
@@ -44,7 +47,8 @@
                 {
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 }*@
-                @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
+                @* @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification) *@
+                @if (GlobalSecurityVariables.WithAuthentication)
                 {
                     var display = false;
                     var access = false;
@@ -52,9 +56,11 @@
                     if (context.Tag is Submodel sm)
                     {
                         // check, if access to submodel is allowed
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
                             null, "/submodels", "READ", out withAllow,
-                                sm.IdShort, "sm", sm);
+                                sm.IdShort, "sm", sm); *@
+                        access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ, out string error,out withAllow,sm.IdShort!, "submodel", sm);
+                        @* access = TestSecurityBlazor.CheckAccessRightsWithAllow(null, "/submodels", AccessRights.READ, out string error,out withAllow, sm.IdShort!, "submodel", sm); *@
                         display = true;
                     }
                     if (context.Tag is ISubmodelElement sme)
@@ -68,9 +74,10 @@
                         }
                         path = (p as Submodel).IdShort + "." + path;
                         // check, if access to submodelelement is allowed
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
                             null, "/submodelelements", "READ", out withAllow,
-                                path, "", p);
+                                path, "", p); *@
+                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ, out string error, out withAllow, path, "", p);
                         display = true;
                     }
                     if (display)

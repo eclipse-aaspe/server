@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AasxServerStandardBib.Services
 {
@@ -474,6 +475,12 @@ namespace AasxServerStandardBib.Services
             {
                 throw new Exception("No empty environment package available in the server.");
             }
+        }
+
+        public Task ReplaceSupplementaryFileInPackage(string submodelIdentifier, string sourceFile, string targetFile, string contentType, MemoryStream fileContent)
+        {
+            var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
+            return _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(sourceFile, targetFile, contentType, fileContent);
         }
 
         #endregion
