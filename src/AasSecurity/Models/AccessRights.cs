@@ -1,6 +1,6 @@
 ﻿namespace AasSecurity.Models
 {
-    internal enum AccessRights
+    public enum AccessRights
     {
         CREATE,
         UPDATE,

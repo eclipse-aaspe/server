@@ -52,8 +52,7 @@ namespace AasSecurity
                                             break;
                                         default:
                                             {
-                                                //TODO:jtikekar @Andreas why??
-                                                submodel.SetAllParents();
+
                                             }
                                             break;
                                     }
@@ -63,11 +62,6 @@ namespace AasSecurity
                     }
                 }
             }
-        }
-
-        public static void SecurityCertInit()
-        {
-            //TODO:jtikekar check with Andreas, if needs to be implemented
         }
 
         internal static X509Certificate2? FindServerCertificate(string serverName)

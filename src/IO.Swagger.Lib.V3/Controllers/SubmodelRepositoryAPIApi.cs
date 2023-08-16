@@ -22,6 +22,7 @@ using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.Services;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -30,9 +31,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.IO;
+using System.Linq;
 using System.Net.Mime;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using static AasCore.Aas3_0.Reporting;
@@ -42,7 +48,7 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
-    [Authorize(Policy = "SecurityPolicy")]
+    [Authorize(AuthenticationSchemes = "AasSecurityAuth")]
     [ApiController]
     public class SubmodelRepositoryAPIApiController : ControllerBase
     {
@@ -55,8 +61,9 @@ namespace IO.Swagger.Controllers
         private readonly IPathModifierService _pathModifierService;
         private readonly ILevelExtentModifierService _levelExtentModifierService;
         private readonly IPaginationService _paginationService;
+        private readonly IAuthorizationService _authorizationService;
 
-        public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService, IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService, IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService)
+        public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService, IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService, IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService, IAuthorizationService authorizationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
@@ -67,6 +74,7 @@ namespace IO.Swagger.Controllers
             _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
             _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
             _paginationService = paginationService ?? throw new ArgumentNullException(nameof(pathModifierService));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
 
         /// <summary>
@@ -96,6 +104,22 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to delete a file at {idShortPath} from the submodel {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             _submodelService.DeleteFileByPath(decodedSubmodelIdentifier, idShortPath);
 
@@ -159,6 +183,22 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             _logger.LogInformation($"Received a request to delete a submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
 
@@ -199,6 +239,15 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
@@ -242,6 +291,15 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
@@ -284,6 +342,16 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult GetAllSubmodelElementsPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
+            _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
@@ -323,6 +391,15 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
@@ -369,6 +446,15 @@ namespace IO.Swagger.Controllers
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
@@ -630,6 +716,22 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to get file at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var fileName = _submodelService.GetFileByPath(decodedSubmodelIdentifier, idShortPath, out byte[] content, out long fileSize);
 
@@ -873,6 +975,15 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                }
+            }
 
             string policy = "";
             string policyRequestedResource = "";
@@ -981,6 +1092,15 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                }
+            }
 
             var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
             var output = _mappingService.Map(submodelLevel, "metadata");
@@ -1016,6 +1136,15 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                }
+            }
 
             var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
             var output = _pathModifierService.ToIdShortPath(submodelLevel);
@@ -1051,6 +1180,15 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                }
+            }
 
             var output = _referenceModifierService.GetReferenceResult(submodel);
             return new ObjectResult(output);
@@ -1086,6 +1224,15 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                }
+            }
 
             var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
             var output = _mappingService.Map(submodelLevel, "value");
@@ -1122,6 +1269,22 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get metadata of submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
             var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
             var output = _mappingService.Map(smeLevel, "metadata");
 
@@ -1158,6 +1321,22 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to path of the submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier}");
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
             var output = _pathModifierService.ToIdShortPath(submodelElementLevel);
@@ -1193,6 +1372,22 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
@@ -1232,6 +1427,22 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
@@ -1268,6 +1479,22 @@ namespace IO.Swagger.Controllers
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
@@ -1746,6 +1973,22 @@ namespace IO.Swagger.Controllers
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to create a new submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var output = _submodelService.CreateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, first, body);
 
@@ -1781,6 +2024,21 @@ namespace IO.Swagger.Controllers
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to create a new submodel element in the submodel with id {decodedSubmodelIdentifier}");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + body.IdShort)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             var output = _submodelService.CreateSubmodelElement(decodedSubmodelIdentifier, body, first);
 
@@ -1850,8 +2108,55 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} deom the submodel with id {decodedSubmodelIdentifier}.");
+            if (!Program.noSecurity)
+            {
+                var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+                var claimsList = new List<Claim>(User.Claims)
+                {
+                    new Claim("IdShortPath", submodel.IdShort + "." + body.IdShort)
+                };
+                var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+                var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+                var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                }
+            }
 
             _submodelService.ReplaceSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy
+        /// </summary>
+        /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+        /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+        /// <param name="file">File to upload</param>
+        /// <response code="204">Submodel element updated successfully</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not Found</response>
+        /// <response code="0">Default error handling for unmentioned status codes</response>
+        [HttpPut]
+        [Route("/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/attachment")]
+        [ValidateModelState]
+        [SwaggerOperation("PutFileByPathSubmodelRepo")]
+        [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PutFileByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute] string idShortPath, IFormFile file)
+        {
+            var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            var stream = new MemoryStream();
+            file.CopyTo(stream);
+            string fileName = file.FileName;
+            string contentType = file.ContentType;
+
+            _submodelService.ReplaceFileByPath(decodedSubmodelId, idShortPath, fileName, contentType, stream);
 
             return NoContent();
         }

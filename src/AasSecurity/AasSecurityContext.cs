@@ -3,9 +3,9 @@ using AasSecurity.Models;
 
 namespace AasSecurity
 {
-    internal class AasSecurityContext
+    public class AasSecurityContext
     {
-        internal AasSecurityContext(string accessRole, string route, string httpOperation)
+        public AasSecurityContext(string accessRole, string route, string httpOperation)
         {
             AccessRole = accessRole;
             Route = route;
@@ -17,7 +17,6 @@ namespace AasSecurity
                 case "get":
                     NeededRights = AccessRights.READ;
                     break;
-                //TODO:jtikekar change to "REPLACE"
                 case "put":
                     NeededRights = AccessRights.UPDATE;
                     break;

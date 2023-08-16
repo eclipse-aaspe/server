@@ -1,7 +1,10 @@
 ﻿@page "/"
 @inject AASService SubmodelService
 @inject NavigationManager NavigationManager
+@inject ISecurityService SecService
 @using AasCore.Aas3_0
+@using AasSecurity;
+@using AasSecurity.Models;
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
 @using System
@@ -35,20 +38,10 @@
               HasChildNodes="@(item => item.Childs?.Any() == true)"
               HtmlId="@(item => GetHtmlId(item))">
             <TitleTemplate>
-                @{ //// SubmodelService.syncSubTree(context);
-                }
-                @*//No need for "Coll" to be red, now "Coll" is part of V3
-                @if(IsSmColl(context))
-                {
-                    <span style="color:white;background-color:red;">@ViewNodeType(context)</span>
-                }
-                else
-                {
-                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                }*@
                 @{ 
                 string getPolicy = null;
-                if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification)
+                @* @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification) *@
+                @if (GlobalSecurityVariables.WithAuthentication)
                 {
                     var display = false;
                     var access = false;
@@ -56,16 +49,18 @@
                     if (context.Tag is Submodel sm)
                     {
                         // check, if access to submodel is allowed
-                        /*
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-                            null, "/submodels", "READ", out withAllow,
-                                sm.IdShort, "sm", sm);
-                        */
                         string error = "";
                         withAllow = false;
+                        // JUIJUI
                         access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                             out error, null, "/submodels", "READ", out withAllow, out getPolicy,
                             sm.IdShort, "sm", sm, null);
+                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+                            null, "/submodels", "READ", out withAllow,
+                                sm.IdShort, "sm", sm); *@
+                        access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
+                            out error, out withAllow, sm.IdShort!, "submodel", sm);
+                        // JUIJUI
                         display = true;
                     }
                     if (context.Tag is ISubmodelElement sme)
@@ -85,10 +80,13 @@
                                 path, "", p);
                         */
                         string error = "";
+                        // JUIJUI
                         access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                         out error, null, "/submodelelements", "READ", out withAllow, out getPolicy,
                         path, "", p, null);
+                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ, out error, out withAllow, path, "", p);
                         display = true;
+                        // JUIJUI
                     }
                     if (display)
                     {

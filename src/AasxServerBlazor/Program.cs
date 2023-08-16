@@ -29,8 +29,6 @@ namespace AasxServerBlazor
             Program.con = config;
             AasxServer.Program.Main(args);
             SecurityHelper.SecurityInit();
-            SecurityHelper.SecurityCertInit();
-
             //QuitEvent
             HandleQuitEvent();
         }

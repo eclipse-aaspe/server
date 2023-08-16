@@ -36,7 +36,11 @@ namespace AasSecurity
                                     }
                                     break;
                                 }
-                                //TODO:jtikekar default
+                            default:
+                                {
+                                    _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AccessControlPolicyPoint.");
+                                    break;
+                                }
                         }
                     }
 
@@ -178,6 +182,7 @@ namespace AasSecurity
                             Enum.TryParse(permission, true, out AccessRights accessRight);
                             securityRole.Permission = accessRight;
                             securityRole.Kind = permPerObject.Permission.KindOfPermission;
+                            securityRole.Usage = permPerObject.Usage;
                             GlobalSecurityVariables.SecurityRoles.Add(securityRole);
                         }
                     }
@@ -238,6 +243,20 @@ namespace AasSecurity
                             securityRole.SemanticId += ":" + split[j];
                     }
                 }
+                //The permission is on AAS Property
+                else
+                {
+                    securityRole.ObjectType = "submodelElement";
+                    IReferable parent = objectProperty;
+                    string path = parent.IdShort!;
+                    while (parent.Parent != null)
+                    {
+                        parent = (IReferable)parent.Parent;
+                        path = parent.IdShort! + "." + path;
+                    }
+                    securityRole.Submodel = parent as Submodel;
+                    securityRole.ObjectPath = path;
+                }
             }
         }
 
@@ -288,6 +307,14 @@ namespace AasSecurity
                                     }
                                 }
 
+                                break;
+                            }
+                        case "usage":
+                            {
+                                if (submodelElement is ISubmodelElementCollection usageCollection)
+                                {
+                                    output.Usage = Copying.Deep(usageCollection);
+                                }
                                 break;
                             }
                         default:

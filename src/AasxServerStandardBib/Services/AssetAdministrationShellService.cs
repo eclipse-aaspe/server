@@ -540,6 +540,20 @@ namespace AasxServerStandardBib.Services
             }
         }
 
+        public void ReplaceFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream fileContent)
+        {
+            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
+            if (found)
+            {
+                _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                _submodelService.ReplaceFileByPath(submodelIdentifier, idShortPath, fileName, contentType, fileContent);
+            }
+            else
+            {
+                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            }
+        }
+
         #endregion
     }
 }

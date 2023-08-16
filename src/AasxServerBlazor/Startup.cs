@@ -78,7 +78,7 @@ namespace AasxServerBlazor
             services.AddControllers();
 
             services.AddLazyResolution();
-            services.AddSingleton<IAuthorizationHandler, SecurityHandler>();
+            services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
@@ -161,10 +161,13 @@ namespace AasxServerBlazor
 
                     c.OperationFilter<GeneratePathParamsValidationFilter>();
                 });
+            services.AddAuthentication("AasSecurityAuth")
+                .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>("AasSecurityAuth", null);
             services.AddAuthorization(c =>
             {
                 c.AddPolicy("SecurityPolicy", policy =>
                 {
+                    policy.AuthenticationSchemes.Add("AasSecurityAuth");
                     policy.Requirements.Add(new SecurityRequirement());
                 });
             });
@@ -187,7 +190,6 @@ namespace AasxServerBlazor
             // app.UseHttpsRedirection();
 
             app.UseStaticFiles();
-
             app.UseRouting();
             //app.UseAuthentication();
             app.UseAuthorization();
