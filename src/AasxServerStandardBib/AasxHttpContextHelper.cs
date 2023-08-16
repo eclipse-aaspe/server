@@ -6,6 +6,7 @@ using Grapevine.Interfaces.Server;
 using Grapevine.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
+using IdentityModel;
 using Jose;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -21,6 +22,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -3750,6 +3752,14 @@ namespace AasxRestServerLibrary
             return SecurityCheckWithPolicy(queryString, headers, ref index, out policy, out policyRequestedResource);
         }
 
+        class userCert
+        {
+            public string userName = "";
+            public X509Certificate2 certificate = null;
+        }
+
+        static List<userCert> certList = new List<userCert>();
+        public static object lockCertList = new object();
         public static string SecurityCheckWithPolicy(NameValueCollection queryString, NameValueCollection headers, ref int index,
             out string policy, out string policyRequestedResource)
         {
@@ -3770,6 +3780,7 @@ namespace AasxRestServerLibrary
             string random = null;
             string bearerToken = null;
             string user = null;
+            string certificate = null;
 
             index = -1; // not found
 
@@ -3917,7 +3928,7 @@ namespace AasxRestServerLibrary
                         }
                         catch
                         {
-                            serverName = "keycloak";
+                            // serverName = "keycloak";
                         }
                         try
                         {
@@ -3934,6 +3945,15 @@ namespace AasxRestServerLibrary
                         {
                             user = email.ToLower();
                         }
+
+
+                        try
+                        {
+                            user = parsed2.SelectToken("userName").Value<string>();
+                            user = user.ToLower();
+                        }
+                        catch { }
+
                         if (serverName != "") // token from Auth Server
                         {
                             X509Certificate2 cert = serverCertFind(serverName);
@@ -3959,10 +3979,66 @@ namespace AasxRestServerLibrary
 
                             try
                             {
-                                user = parsed2.SelectToken("userName").Value<string>();
-                                user = user.ToLower();
+                                certificate = parsed2.SelectToken("certificate").Value<string>();
                             }
                             catch { }
+
+                            if (certificate != "")
+                            {
+                                lock (lockCertList)
+                                {
+                                    Byte[] certFileBytes = Convert.FromBase64String(certificate);
+                                    var x509 = new X509Certificate2(certFileBytes);
+                                    int i = 0;
+                                    for (i = 0; i < certList.Count; i++)
+                                    {
+                                        if (certList[i].userName == user)
+                                        {
+                                            if (certList[i].certificate != null)
+                                                certList[i].certificate.Dispose();
+                                            certList[i].certificate = x509;
+                                            break;
+                                        }
+                                    }
+                                    if (i == certList.Count)
+                                    {
+                                        var cl = new userCert();
+                                        cl.userName = user;
+                                        cl.certificate = x509;
+                                        certList.Add(cl);
+                                    }
+                                }
+                            }
+                        }
+                        else // client token
+                        {
+                            X509Certificate2 x509 = null;
+                            lock (lockCertList)
+                            {
+                                int i = 0;
+                                for (i = 0; i < certList.Count; i++)
+                                {
+                                    if (certList[i].userName == user)
+                                    {
+                                        x509 = certList[i].certificate;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            try
+                            {
+                                Jose.JWT.Decode(bearerToken, x509.GetRSAPublicKey(), JwsAlgorithm.RS256); // correctly signed by stored client cert?
+                            }
+                            catch
+                            {
+                                x509 = null;
+                            }
+                            if (x509 == null)
+                            {
+                                Console.WriteLine("Invalid client token!");
+                                return null;
+                            }
                         }
                     }
                 }
