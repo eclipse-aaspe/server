@@ -525,6 +525,9 @@
 
     static string addBearer(string queryPara, ISubmodel sm)
     {
+        if (!Program.withPolicy)
+            return queryPara;
+
         string clientToken = "";
         if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Value == "clientToken")
             clientToken = sm.Extensions[1].Value;

@@ -690,6 +690,8 @@ namespace AasxServer
         public static bool isPostgres = false;
         public static bool withDbFiles = true;
         public static int startIndex = 0;
+
+        public static bool withPolicy = false;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local

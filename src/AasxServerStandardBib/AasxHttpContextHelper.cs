@@ -3660,6 +3660,9 @@ namespace AasxRestServerLibrary
                         }
                         break;
                     case "policy":
+                        if (!Program.withPolicy)
+                            return true;
+
                         getPolicy = (sme as Property).Value;
                         if (policy == null ||  policy.Contains(getPolicy))
                         {
