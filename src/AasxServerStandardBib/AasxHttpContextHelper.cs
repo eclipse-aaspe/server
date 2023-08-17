@@ -3453,7 +3453,7 @@ namespace AasxRestServerLibrary
                         {
                             if (securityRole[iRole].permission == neededRights)
                             {
-                                return checkUsage(out error, securityRole[iRole], out getPolicy);
+                                return checkPolicy(out error, securityRole[iRole], out getPolicy);
                             }
                         }
                     }
@@ -3564,14 +3564,14 @@ namespace AasxRestServerLibrary
                     error = "DENY " + deepestDeny;
                     return false;
                 }
-                return checkUsage(out error, deepestAllowRole, out getPolicy, policy);
+                return checkPolicy(out error, deepestAllowRole, out getPolicy, policy);
             }
 
             error = "ALLOW not defined";
             return false;
         }
 
-        public static bool checkUsage(out string error, securityRoleClass sr, out string getPolicy, string policy = null)
+        public static bool checkPolicy(out string error, securityRoleClass sr, out string getPolicy, string policy = null)
         {
             error = "";
             getPolicy= null;
@@ -3660,10 +3660,10 @@ namespace AasxRestServerLibrary
                         }
                         break;
                     case "policy":
+                        getPolicy = (sme as Property).Value;
+
                         if (!Program.withPolicy)
                             return true;
-
-                        getPolicy = (sme as Property).Value;
                         if (policy == null ||  policy.Contains(getPolicy))
                         {
                             // Program.signalNewData(0);

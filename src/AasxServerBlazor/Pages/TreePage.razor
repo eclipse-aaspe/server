@@ -116,7 +116,7 @@
                 }
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
-                @if (getPolicy != null)
+                @if (Program.withPolicy && getPolicy != null)
                 {
                     <span style="color:blue">&nbsp @getPolicy</span>
                 }

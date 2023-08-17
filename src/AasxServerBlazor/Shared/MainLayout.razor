@@ -150,6 +150,10 @@
                                             {
                                                 AasxServer.Program.submodelAPIcount = 0;
                                             }
+                                            else if (CurrentValue.Contains("FORCE-POLICY"))
+                                            {
+                                                Program.withPolicy = CurrentValue.Contains("ON");
+                                            }
                                             else if (CurrentValue.Contains("get="))
                                             {
                                                 CurrentValue = CurrentValue.Replace("get=", "");

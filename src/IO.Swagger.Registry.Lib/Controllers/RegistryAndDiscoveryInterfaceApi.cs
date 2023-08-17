@@ -1338,11 +1338,14 @@ namespace IO.Swagger.Registry.Controllers
                                                 }
 
                                                 Console.WriteLine("GET Submodel " + requestPath);
-                                                var task1 = Task.Run(async () =>
-                                                {
-                                                    response = await client.GetAsync(requestPath);
-                                                });
+                                                var request = new HttpRequestMessage(HttpMethod.Get, requestPath);
+                                                if (Program.withPolicy)
+                                                    request.Headers.Add("FORCE-POLICY", "ON");
+                                                if (!Program.withPolicy)
+                                                    request.Headers.Add("FORCE-POLICY", "OFF");
+                                                var task1 = Task.Run(async () => { response = await client.SendAsync(request); });
                                                 task1.Wait();
+
                                                 if (response.IsSuccessStatusCode)
                                                 {
                                                     json = response.Content.ReadAsStringAsync().Result;
