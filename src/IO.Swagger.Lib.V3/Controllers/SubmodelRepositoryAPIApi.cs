@@ -20,6 +20,7 @@ using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.Services;
 using IO.Swagger.Models;
+using MailKit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -884,12 +885,17 @@ namespace IO.Swagger.Controllers
                     Console.WriteLine("FORCE-POLICY " + kvp.Value);
                 }
             }
-            string accessRights = AasxRestServerLibrary.AasxHttpContextHelper.SecurityCheckWithPolicy(query, headers, ref index,
-                out policy, out policyRequestedResource);
-            string ar = "";
-            if (accessRights != null)
-                ar = accessRights;
-            Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
+
+            string accessRights = null;
+            if (!Program.noSecurity)
+            {
+                accessRights = AasxRestServerLibrary.AasxHttpContextHelper.SecurityCheckWithPolicy(query, headers, ref index,
+                    out policy, out policyRequestedResource);
+                string ar = "";
+                if (accessRights != null)
+                    ar = accessRights;
+                Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
+            }
 
             /*
             if (accessRights == null)
@@ -923,13 +929,16 @@ namespace IO.Swagger.Controllers
                 null, "/submodels", "READ", out withAllow,
                     submodel.IdShort, "sm", submodel, policy);
             */
-            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, accessRights, "/submodels", "READ", out withAllow, out getPolicy,
-                submodel.IdShort, "sm", submodel, policy);
-            if (!access)
+            if (!Program.noSecurity)
             {
-                if (error != "")
-                    throw new NotAllowed(error);
-                throw new NotAllowed("Policy incorrect!");
+                access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, accessRights, "/submodels", "READ", out withAllow, out getPolicy,
+                submodel.IdShort, "sm", submodel, policy);
+                if (!access)
+                {
+                    if (error != "")
+                        throw new NotAllowed(error);
+                    throw new NotAllowed("Policy incorrect!");
+                }
             }
 
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);

@@ -3575,6 +3575,8 @@ namespace AasxRestServerLibrary
         {
             error = "";
             getPolicy= null;
+            Property pPolicy = null;
+            AasCore.Aas3_0.File fPolicy = null;
 
             if (sr.usage == null)
                 return true;
@@ -3660,18 +3662,46 @@ namespace AasxRestServerLibrary
                         }
                         break;
                     case "policy":
-                        getPolicy = (sme as Property).Value;
-
-                        if (!Program.withPolicy)
-                            return true;
-                        if (policy == null ||  policy.Contains(getPolicy))
-                        {
-                            // Program.signalNewData(0);
-                            return true;
-                        }
+                        pPolicy = sme as Property;
+                        break;
+                    case "license":
+                        fPolicy = sme as AasCore.Aas3_0.File;
                         break;
                     case "policyRequestedResource":
                         break;
+                }
+            }
+
+            if (pPolicy != null)
+            {
+                if (!Program.withPolicy)
+                    return true;
+
+                getPolicy = pPolicy.Value;
+                if (getPolicy == "" && fPolicy != null)
+                {
+                    try
+                    {
+                        using (System.IO.Stream s = Program.env[sr.usageEnvIndex].GetLocalStreamFromPackage(fPolicy.Value))
+                        using (SHA256 mySHA256 = SHA256.Create())
+                        {
+                            if (s != null)
+                            {
+                                s.Position= 0;
+                                byte[] hashValue = mySHA256.ComputeHash(s);
+                                getPolicy = Convert.ToHexString(hashValue);
+                                Console.WriteLine("hash: " + getPolicy);
+                                pPolicy.Value = getPolicy;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                if (policy == null || policy.Contains(getPolicy))
+                {
+                    // Program.signalNewData(0);
+                    return true;
                 }
             }
 
@@ -4444,6 +4474,7 @@ namespace AasxRestServerLibrary
             public Submodel submodel = null;
             public string semanticId = "";
             public SubmodelElementCollection usage = null;
+            public int usageEnvIndex = -1;
             public securityRoleClass() { }
         }
         public static List<securityRoleClass> securityRole = null;
@@ -4690,7 +4721,10 @@ namespace AasxRestServerLibrary
                                             {
                                                 securityRoleClass src = new securityRoleClass();
                                                 if (smc9 != null)
+                                                {
                                                     src.usage = smc9;
+                                                    src.usageEnvIndex = i;
+                                                }
                                                 if (r.IdShort.Contains(":"))
                                                 {
                                                     split = r.IdShort.Split(':');
