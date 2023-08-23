@@ -24908,9 +24908,10 @@ namespace AasCore.Aas3_0
                     "dataSpecificationContent",
                     NS);
 
-                this.Visit(
-                    that.DataSpecificationContent,
-                    writer);
+                if (that.DataSpecificationContent != null)
+                    this.Visit(
+                        that.DataSpecificationContent,
+                        writer);
 
                 writer.WriteEndElement();
             }  // private void EmbeddedDataSpecificationToSequence

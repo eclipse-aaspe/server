@@ -1268,7 +1268,8 @@ namespace AasCore.Aas3_0
                         that.EmbeddedDataSpecifications.Count);
                     foreach (var item in that.EmbeddedDataSpecifications)
                     {
-                        theEmbeddedDataSpecifications.Add(Deep(item));
+                        if (item.DataSpecification != null && item.DataSpecificationContent != null)
+                           theEmbeddedDataSpecifications.Add(Deep(item));
                     }
                 }
 
