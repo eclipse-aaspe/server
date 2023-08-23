@@ -89,16 +89,54 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                     b.ToTable("DbConfigSets");
                 });
 
-            modelBuilder.Entity("AasxServer.SMESet", b =>
+            modelBuilder.Entity("AasxServer.DoubleValue", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("FValue")
+                    b.Property<string>("Annotation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ParentSMENum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Value")
                         .HasColumnType("REAL");
 
-                    b.Property<long>("IValue")
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentSMENum");
+
+                    b.ToTable("DValueSets");
+                });
+
+            modelBuilder.Entity("AasxServer.IntValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Annotation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ParentSMENum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentSMENum");
+
+                    b.ToTable("IValueSets");
+                });
+
+            modelBuilder.Entity("AasxServer.SMESet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Idshort")
@@ -111,9 +149,6 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SMEType")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SValue")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")
@@ -132,6 +167,28 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                     b.HasIndex("SubmodelNum");
 
                     b.ToTable("SMESets");
+                });
+
+            modelBuilder.Entity("AasxServer.StringValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Annotation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ParentSMENum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentSMENum");
+
+                    b.ToTable("SValueSets");
                 });
 
             modelBuilder.Entity("AasxServer.SubmodelSet", b =>

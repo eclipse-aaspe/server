@@ -26,6 +26,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -1008,15 +1009,22 @@ namespace AasxServer
                 {
                     using (PostgreAasContext db = new PostgreAasContext())
                     {
-                        db.Database.Migrate();
+                        try
+                        {
+                            db.Database.Migrate();
+                        }
+                        catch { }
                     }
                 }
                 else
                 {
                     using (SqliteAasContext db = new SqliteAasContext())
                     {
-
-                        db.Database.Migrate();
+                        try
+                        {
+                            db.Database.Migrate();
+                        }
+                        catch { }
                     }
                 }
 
@@ -1032,6 +1040,12 @@ namespace AasxServer
                     task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
                     task.Wait();
                     task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
                     task.Wait();
                     dbConfig = new DbConfigSet
                     {

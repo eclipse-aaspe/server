@@ -59,6 +59,36 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 });
 
             migrationBuilder.CreateTable(
+                name: "DValueSets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ParentSMENum = table.Column<long>(type: "INTEGER", nullable: false),
+                    Value = table.Column<double>(type: "REAL", nullable: false),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DValueSets", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IValueSets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ParentSMENum = table.Column<long>(type: "INTEGER", nullable: false),
+                    Value = table.Column<long>(type: "INTEGER", nullable: false),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IValueSets", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SMESets",
                 columns: table => new
                 {
@@ -70,10 +100,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                     SMEType = table.Column<string>(type: "TEXT", nullable: true),
                     Idshort = table.Column<string>(type: "TEXT", nullable: true),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true),
-                    ValueType = table.Column<string>(type: "TEXT", nullable: true),
-                    SValue = table.Column<string>(type: "TEXT", nullable: true),
-                    IValue = table.Column<long>(type: "INTEGER", nullable: false),
-                    FValue = table.Column<double>(type: "REAL", nullable: false)
+                    ValueType = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -98,6 +125,21 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                     table.PrimaryKey("PK_SubmodelSets", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "SValueSets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ParentSMENum = table.Column<long>(type: "INTEGER", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: true),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SValueSets", x => x.Id);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AasSets_AasNum",
                 table: "AasSets",
@@ -107,6 +149,16 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 name: "IX_AASXSets_AASXNum",
                 table: "AASXSets",
                 column: "AASXNum");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DValueSets_ParentSMENum",
+                table: "DValueSets",
+                column: "ParentSMENum");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IValueSets_ParentSMENum",
+                table: "IValueSets",
+                column: "ParentSMENum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SMESets_SMENum",
@@ -122,6 +174,11 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 name: "IX_SubmodelSets_SubmodelNum",
                 table: "SubmodelSets",
                 column: "SubmodelNum");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SValueSets_ParentSMENum",
+                table: "SValueSets",
+                column: "ParentSMENum");
         }
 
         /// <inheritdoc />
@@ -137,10 +194,19 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 name: "DbConfigSets");
 
             migrationBuilder.DropTable(
+                name: "DValueSets");
+
+            migrationBuilder.DropTable(
+                name: "IValueSets");
+
+            migrationBuilder.DropTable(
                 name: "SMESets");
 
             migrationBuilder.DropTable(
                 name: "SubmodelSets");
+
+            migrationBuilder.DropTable(
+                name: "SValueSets");
         }
     }
 }

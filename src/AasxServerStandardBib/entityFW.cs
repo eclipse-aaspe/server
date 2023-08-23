@@ -1,32 +1,22 @@
-﻿using AasCore.Aas3_0;
-using AasxRestServerLibrary;
+﻿using AasxRestServerLibrary;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using Opc.Ua;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Printing;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using static AasCore.Aas3_0.Visitation;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 
 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
+
 // Initial Migration
 // Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
 // Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
+
 // Change database:
 // Add-Migration XXX -Context SqliteAasContext
 // Add-Migration XXX -Context PostgreAasContext
@@ -42,6 +32,9 @@ namespace AasxServer
         public DbSet<AasSet> AasSets { get; set; }
         public DbSet<SubmodelSet> SubmodelSets { get; set; }
         public DbSet<SMESet> SMESets { get; set; }
+        public DbSet<StringValue> SValueSets { get; set; }
+        public DbSet<IntValue> IValueSets { get; set; }
+        public DbSet<DoubleValue> DValueSets { get; set; }
         public string DbPath { get; }
         public static IConfiguration _con { get; set; }
 
@@ -239,23 +232,120 @@ namespace AasxServer
         public string Idshort { get; set; }
         public string SemanticId { get; set; }
         public string ValueType { get; set; }
-        public string SValue { get; set; }
-        public long IValue { get; set; }
-        public double FValue { get; set; }
 
         public string getValue()
         {
-            switch (ValueType)
+            using (AasContext db = new AasContext())
             {
-                case "S":
-                    return SValue;
-                case "I":
-                    return IValue + "";
-                case "F":
-                    return FValue + "";
+                switch (ValueType)
+                {
+                    case "S":
+                        return db.SValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList().First();
+                    case "I":
+                        return db.IValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList().First() + "";
+                    case "F":
+                        return db.DValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList().First() + "";
+                }
+            }
+            return "";
+        }
+
+        public List<string> getMLPValue()
+        {
+            var list = new List<String>();
+            if (SMEType == "MLP")
+            {
+                using (AasContext db = new AasContext())
+                {
+                    var MLPValueSetList = db.SValueSets
+                        .Where(s => s.ParentSMENum == SMENum)
+                        .ToList();
+                    foreach (var MLPValue in MLPValueSetList)
+                    {
+                        list.Add(MLPValue.Annotation);
+                        list.Add(MLPValue.Value);
+                    }
+                    return list;
+                }
             }
 
-            return "";
+            return new List<string>();
+        }
+
+        public static List<StringValue> getValueList(List<SMESet> smesets)
+        {
+            var smeNums = smesets.OrderBy(s => s.SMENum).Select(s => s.SMENum).ToList();
+            long first = smeNums.First();
+            long last = smeNums.Last();
+            List<StringValue> valueList = null;
+            using (AasContext db = new AasContext())
+            {
+                /* Syntax korrekt, kann aber nicht übersetzt werden
+                valueList = db.SValueSets
+                    .Union(db.IValueSets.Select(v => v.asStringValue()))
+                    .Union(db.DValueSets.Select(v => v.asStringValue()))
+                    .Where(v => smeNums.Contains(v.ParentSMENum))
+                    .OrderBy(v => v.ParentSMENum)
+                    .ToList();
+                */
+
+                // SValue, IValue, DValue Tabellen zusammenführen
+                var watch2 = System.Diagnostics.Stopwatch.StartNew();
+                valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM IValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM DValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last)
+                    .Where(v => smeNums.Contains(v.ParentSMENum))
+                    .OrderBy(v => v.ParentSMENum)
+                    .ToList();
+                watch2.Stop();
+                Console.WriteLine("It took this time: " + watch2.ElapsedMilliseconds);
+            }
+            return valueList;
+        }
+    }
+
+    [Index(nameof(ParentSMENum))]
+    public class IntValue
+    {
+        public int Id { get; set; }
+        public long ParentSMENum { get; set; }
+        public long Value { get; set; }
+        public string Annotation { get; set; }
+        public StringValue asStringValue()
+        {
+            return new StringValue
+            {
+                Id = Id,
+                ParentSMENum = ParentSMENum,
+                Annotation = Annotation,
+                Value = Value.ToString()
+            };
+        }
+    }
+
+    [Index(nameof(ParentSMENum))]
+    public class StringValue
+    {
+        public int Id { get; set; }
+        public long ParentSMENum { get; set; }
+        public string Value { get; set; }
+        public string Annotation { get; set; }
+    }
+
+    [Index(nameof(ParentSMENum))]
+    public class DoubleValue
+    {
+        public int Id { get; set; }
+        public long ParentSMENum { get; set; }
+        public double Value { get; set; }
+        public string Annotation { get; set; }
+        public StringValue asStringValue()
+        {
+            return new StringValue
+            {
+                Id = Id,
+                ParentSMENum = ParentSMENum,
+                Annotation = Annotation,
+                Value = Value.ToString()
+            };
         }
     }
 
@@ -413,6 +503,7 @@ namespace AasxServer
                 fUpper = upper;
             }
             catch { }
+            /*
             list = c.SMESets
                 .Where(s => s.SMEType == "P" && 
                         ((s.ValueType == "I" && s.IValue >= lower && s.IValue <= upper) ||
@@ -420,6 +511,7 @@ namespace AasxServer
                 .Skip(j * pageSize)
                 .Take(pageSize)
                 .ToList();
+            */
             return list;
         }
         public List<SmeResult> SearchSMEs(string submodelSemanticId = "", string semanticId = "", string equal = "", string lower = "", string upper = "")
@@ -487,6 +579,7 @@ namespace AasxServer
                 watch.Restart();
                 */
 
+                /*
                 list = db.SMESets
                     .Where(s => s.SMEType == "P" && 
                         (semanticId == "" || s.SemanticId == semanticId)
@@ -508,6 +601,29 @@ namespace AasxServer
                         )
                     )
                     .ToList();
+                */
+
+                if (equal != "")
+                {
+                    var ValList = db.IValueSets.Where(v => v.Value.ToString() == equal).Select(v => v.ParentSMENum).ToList();
+                    ValList.AddRange(db.DValueSets.Where(v => v.Value.ToString() == equal).Select(v => v.ParentSMENum).ToList());
+                    ValList.AddRange(db.SValueSets.Where(v => v.Value == equal).Select(v => v.ParentSMENum).ToList());
+
+                    // Erst zusammenfügen, dann suchen? 
+                    /*
+                    var ValList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets UNION SELECT * FROM IValueSets UNION SELECT * FROM DValueSets")
+                    .Where(v => v.Value == equal).Select(v => v.ParentSMENum).ToList();
+                    */
+                    var list2 = db.SMESets.Where(s => ValList.Contains(s.SMENum)).ToList();
+                    list.AddRange(list2.Except(list));
+                }
+                if (upper != "" || lower != "")
+                {
+                    var ValList = db.IValueSets.Where(v => v.Value > iLower && v.Value < iUpper).Select(v => v.ParentSMENum).ToList();
+                    ValList.AddRange(db.DValueSets.Where(v => v.Value > fLower && v.Value < fUpper).Select(v => v.ParentSMENum).ToList());
+                    var list2 = db.SMESets.Where(s => ValList.Contains(s.SMENum)).ToList();
+                    list.AddRange(list2.Except(list));
+                }
 
                 if (semanticId != "")
                 {
@@ -668,6 +784,8 @@ namespace AasxServer
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
+                int c = 0;
+                /*
                 var c = db.SMESets
                     .Where(s => s.SMEType == "P" &&
                         (semanticId == "" || s.SemanticId == semanticId)
@@ -689,11 +807,11 @@ namespace AasxServer
                         )
                     )
                     .Count();
+                */
 
                 Console.WriteLine("Count number of " + c + " SMEs in " + watch.ElapsedMilliseconds + "ms");
                 return c;
             }
-
         }
 
         public List<SmeResult> SearchSMEsInSubmodel(string submodelSemanticId = "", string semanticId = "",
@@ -908,7 +1026,7 @@ namespace AasxServer
             sValue = v;
             return "S";
         }
-        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
+        private void getValue(ISubmodelElement sme, long smeNum, out string vt, out string sValue, out long iValue, out double fValue)
         {
             sValue = "";
             iValue = 0;
@@ -939,10 +1057,13 @@ namespace AasxServer
                 {
                     for (int i = 0; i < ls.Count; i++)
                     {
-                        v += ls[i].Language + "$$";
-                        v += ls[i].Text;
-                        if (i < ls.Count - 1)
-                            v += "$$";
+                        var mlpval = new StringValue()
+                        {
+                            Annotation = ls[i].Language,
+                            Value = ls[i].Text,
+                            ParentSMENum = smeNum
+                        };
+                        _db.Add(mlpval);
                     }
                     vt = "S";
                     sValue = v;
@@ -990,7 +1111,38 @@ namespace AasxServer
             string sValue = "";
             long iValue = 0;
             double fValue = 0;
-            getValue(sme, out vt, out sValue, out iValue, out fValue);
+            getValue(sme, smeNum, out vt, out sValue, out iValue, out fValue);
+
+            if (vt == "S" && st != "MLP")
+            {
+                var ValueDB = new StringValue
+                {
+                    ParentSMENum = smeNum,
+                    Value = sValue,
+                    Annotation = ""
+                };
+                _db.Add(ValueDB);
+            }
+            if (vt == "I")
+            {
+                var ValueDB = new IntValue
+                {
+                    ParentSMENum = smeNum,
+                    Value = iValue,
+                    Annotation = ""
+                };
+                _db.Add(ValueDB);
+            }
+            if (vt == "F")
+            {
+                var ValueDB = new DoubleValue
+                {
+                    ParentSMENum = smeNum,
+                    Value = fValue,
+                    Annotation = ""
+                };
+                _db.Add(ValueDB);
+            }
 
             var smeDB = new SMESet
             {
@@ -999,9 +1151,6 @@ namespace AasxServer
                 SemanticId = semanticId,
                 Idshort = sme.IdShort,
                 ValueType= vt,
-                SValue= sValue,
-                IValue= iValue,
-                FValue= fValue,
                 SubmodelNum = _smNum,
                 ParentSMENum = pn
             };
@@ -1261,16 +1410,18 @@ namespace AasxServer
                     case "MLP":
                         var mlp = new MultiLanguageProperty(idShort: smel.Idshort);
                         var ls = new List<ILangStringTextType>();
-                        if (smel.SValue != "")
+
+                        using (AasContext db = new AasContext())
                         {
-                            var v = smel.SValue.Split("$$");
-                            int i = 0;
-                            while (i < v.Length)
+                            var SValueSetList = db.SValueSets
+                                .Where(s => s.ParentSMENum == smel.SMENum)
+                                .ToList();
+                            foreach (var MLPValue in SValueSetList)
                             {
-                                ls.Add(new LangStringTextType(v[i], v[i + 1]));
-                                i += 2;
+                                ls.Add(new LangStringTextType(MLPValue.Annotation, MLPValue.Value));
                             }
                         }
+
                         mlp.Value = ls;
                         nextSME = mlp;
                         break;

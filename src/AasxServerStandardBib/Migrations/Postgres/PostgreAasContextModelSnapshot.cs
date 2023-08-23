@@ -100,7 +100,7 @@ namespace AasxServerStandardBib.Migrations.Postgres
                     b.ToTable("DbConfigSets");
                 });
 
-            modelBuilder.Entity("AasxServer.SMESet", b =>
+            modelBuilder.Entity("AasxServer.DoubleValue", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -108,11 +108,53 @@ namespace AasxServerStandardBib.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<double>("FValue")
+                    b.Property<string>("Annotation")
+                        .HasColumnType("text");
+
+                    b.Property<long>("ParentSMENum")
+                        .HasColumnType("bigint");
+
+                    b.Property<double>("Value")
                         .HasColumnType("double precision");
 
-                    b.Property<long>("IValue")
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentSMENum");
+
+                    b.ToTable("DValueSets");
+                });
+
+            modelBuilder.Entity("AasxServer.IntValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Annotation")
+                        .HasColumnType("text");
+
+                    b.Property<long>("ParentSMENum")
                         .HasColumnType("bigint");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentSMENum");
+
+                    b.ToTable("IValueSets");
+                });
+
+            modelBuilder.Entity("AasxServer.SMESet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Idshort")
                         .HasColumnType("text");
@@ -124,9 +166,6 @@ namespace AasxServerStandardBib.Migrations.Postgres
                         .HasColumnType("bigint");
 
                     b.Property<string>("SMEType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SValue")
                         .HasColumnType("text");
 
                     b.Property<string>("SemanticId")
@@ -145,6 +184,30 @@ namespace AasxServerStandardBib.Migrations.Postgres
                     b.HasIndex("SubmodelNum");
 
                     b.ToTable("SMESets");
+                });
+
+            modelBuilder.Entity("AasxServer.StringValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Annotation")
+                        .HasColumnType("text");
+
+                    b.Property<long>("ParentSMENum")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentSMENum");
+
+                    b.ToTable("SValueSets");
                 });
 
             modelBuilder.Entity("AasxServer.SubmodelSet", b =>
