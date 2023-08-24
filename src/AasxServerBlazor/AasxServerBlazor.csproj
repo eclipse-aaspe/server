@@ -16,7 +16,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Using Include="AasCore.Aas3_0"/>
+		<Using Include="AasCore.Aas3_0" />
 	</ItemGroup>
 
   <ItemGroup>
@@ -62,6 +62,7 @@
 
   <ItemGroup>
     <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
+    <Content Remove="wwwroot\db-schema.jpg" />
     <Content Remove="wwwroot\Logo_IDTA.jpg" />
     <Content Remove="wwwroot\sm_icons\bom.svg" />
     <Content Remove="wwwroot\sm_icons\pcf v1.0.svg" />

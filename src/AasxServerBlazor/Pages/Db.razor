@@ -205,6 +205,9 @@
                         </tr>
                     </table>
                     <br />
+                    <b>Database structure:</b>
+                    <br />
+                    <img src="db-schema.jpg" />
                 }
 
                 if (url.EndsWith("/aasx"))
@@ -244,7 +247,7 @@
                                     nextPage = db.AASXSets
                                     .OrderBy(a => a.AASXNum)
                                     .Where(a => a.AASXNum >= aasxnum &&
-                                    a.AASX.ToLower().Contains(f))
+                                        a.AASX.ToLower().Contains(f))
                                     .Take(size)
                                     .ToList();
                                 }
@@ -354,7 +357,7 @@
 
                     <span>
                         &nbsp&nbsp@("Submodel#: " + found + total + " size=" + size + " search=" + search
-              + " aasxnum=" + aasxnum + " aasnum=" + aasnum + " submodelnum=" + submodelnum)
+                            + " aasxnum=" + aasxnum + " aasnum=" + aasnum + " submodelnum=" + submodelnum)
                     </span>
                     <br />
                     <br />
@@ -386,7 +389,7 @@
                                     .OrderBy(s => s.SubmodelNum)
                                     .Where(s => s.SubmodelNum >= submodelnum &&
                                     (aasxnum == 0 || s.AASXNum == aasxnum) && (aasnum == 0 || s.AasNum == aasnum) &&
-                                    (s.SubmodelId.ToLower().Contains(f)
+                                    (f == "" || s.SubmodelId.ToLower().Contains(f)
                                     || s.Idshort.ToLower().Contains(f) || s.SemanticId.ToLower().Contains(f)))
                                     .Take(size)
                                     .ToList();
@@ -444,12 +447,14 @@
                     string found = "";
                     if (f != "")
                     {
-                        /*
-                        found = db.SMESets.Count(sme =>
-                        sme.SValue.ToLower().Contains(f)
-                        || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f))
-                        + "/";
-                        */
+                        found = db.SMESets
+                        .OrderBy(sme => sme.SMENum)
+                        .Where(sme => sme.SMENum >= smenum && (submodelnum == 0 || sme.SubmodelNum == submodelnum) &&
+                            (f == "" || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f)
+                            || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToLower().Contains(f)))
+                            || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(f)))
+                            || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(f)))
+                        )).Count() + "/";
                     }
                     <span>
                         &nbsp&nbsp@("SubmodelElements#: " + found + total + " size=" + size + " search=" + search
@@ -474,7 +479,11 @@
                         nextPage = db.SMESets
                         .OrderBy(sme => sme.SMENum)
                         .Where(sme => sme.SMENum >= smenum && (submodelnum == 0 || sme.SubmodelNum == submodelnum) &&
-                        (f == "" || (sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f))))
+                        (f == "" || sme.Idshort.ToLower().Contains(f) || sme.SemanticId.ToLower().Contains(f)
+                            || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToLower().Contains(f)))
+                            || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(f)))
+                            || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(f)))
+                        ))
                         .Take(size)
                         .ToList();
                     }
@@ -540,7 +549,7 @@
                                         @if (smeDB.SMEType == "MLP")
                                         {
                                             <br>
-                                            <a href="@(shorturl + "/svalue?&smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
+                                            <a href="@(shorturl + "/svalue?smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
                                         }
                                     </td>
                                 </tr>
@@ -816,6 +825,9 @@
 
                     <br />
                 }
+
+                watch1.Stop();
+                <span>@("Elapsed ms: " + watch1.ElapsedMilliseconds)</span>
             }
 
             <br />

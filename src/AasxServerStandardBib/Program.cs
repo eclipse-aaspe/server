@@ -1007,24 +1007,18 @@ namespace AasxServer
             {
                 if (isPostgres)
                 {
+                    Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
                     {
-                        try
-                        {
-                            db.Database.Migrate();
-                        }
-                        catch { }
+                        db.Database.Migrate();
                     }
                 }
                 else
                 {
+                    Console.WriteLine("Use SQLITE");
                     using (SqliteAasContext db = new SqliteAasContext())
                     {
-                        try
-                        {
-                            db.Database.Migrate();
-                        }
-                        catch { }
+                        db.Database.Migrate();
                     }
                 }
 
@@ -1218,6 +1212,7 @@ namespace AasxServer
                                             }
                                         }
                                         db.SaveChanges();
+                                        /*
                                         Task t = db.SaveChangesAsync();
                                         if (saveTasks.Count == maxTasks)
                                         {
@@ -1247,6 +1242,7 @@ namespace AasxServer
                                         taskIndex++;
                                         if (taskIndex >= maxTasks)
                                             taskIndex = 0;
+                                        */
                                     }
                                 }
 

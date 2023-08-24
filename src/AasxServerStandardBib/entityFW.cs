@@ -6,6 +6,7 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -71,13 +72,13 @@ namespace AasxServer
                             Params[i] = "Password=" + dbPassword;
                         }
                     }
-                    Console.WriteLine("Use POSTGRES: " + connectionString);
+                    // Console.WriteLine("Use POSTGRES: " + connectionString);
                     Program.isPostgres = true;
                     options.UseNpgsql(connectionString);
                 }
                 else // SQLite
                 {
-                    Console.WriteLine("Use SQLITE: " + connectionString);
+                    // Console.WriteLine("Use SQLITE: " + connectionString);
                     Program.isPostgres = false;
                     options.UseSqlite(connectionString);
                 }
@@ -240,11 +241,20 @@ namespace AasxServer
                 switch (ValueType)
                 {
                     case "S":
-                        return db.SValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList().First();
+                        var ls = db.SValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList();
+                        if (ls.Count != 0)
+                            return ls.First() + "";
+                        break;
                     case "I":
-                        return db.IValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList().First() + "";
+                        var li = db.IValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList();
+                        if (li.Count != 0)
+                            return li.First() + "";
+                        break;
                     case "F":
-                        return db.DValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList().First() + "";
+                        var ld = db.DValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList();
+                        if (ld.Count != 0)
+                            return ld.First() + "";
+                        break;
                 }
             }
             return "";
@@ -514,35 +524,43 @@ namespace AasxServer
             */
             return list;
         }
-        public List<SmeResult> SearchSMEs(string submodelSemanticId = "", string semanticId = "", string equal = "", string lower = "", string upper = "")
+        public List<SmeResult> SearchSMEs(
+            string submodelSemanticId = "", string semanticId = "",
+            string equal = "", string lower = "", string upper = "", string contains = "")
         {
             List<SmeResult> result = new List<SmeResult>();
             List<SMESet> list = new List<SMESet>();
 
-            double fEqual = 0;
-            double fLower = 0;
-            double fUpper = 0;
+            bool withI = false;
             long iEqual = 0;
             long iLower = 0;
             long iUpper = 0;
+            bool withF = false;
+            double fEqual = 0;
+            double fLower = 0;
+            double fUpper = 0;
             try
             {
                 if (equal != "")
                 {
-                    fEqual = Convert.ToDouble(equal);
                     iEqual = Convert.ToInt64(equal);
+                    withI = true;
+                    fEqual = Convert.ToDouble(equal);
+                    withF= true;
                 }
-                if (lower != "" && upper != "")
+                else if (lower != "" && upper != "")
                 {
-                    fLower = Convert.ToDouble(lower);
-                    fUpper = Convert.ToDouble(upper);
                     iLower = Convert.ToInt64(lower);
                     iUpper = Convert.ToInt64(upper);
+                    withI = true;
+                    fLower = Convert.ToDouble(lower);
+                    fUpper = Convert.ToDouble(upper);
+                    withF = true;
                 }
             }
             catch { }
 
-            if (semanticId == "" && equal == "" && lower == "" && upper == "")
+            if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
                 return result;
 
             using (AasContext db = new AasContext())
@@ -553,23 +571,27 @@ namespace AasxServer
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                /*
                 var c = db.SMESets
-                    .Where(s => s.SMEType == "P" &&
+                    .Where(s => s.ValueType != "" &&
                         (semanticId == "" || s.SemanticId == semanticId)
                         &&
                         (
+                            (contains != "" &&
+                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value.Contains(contains)))
+                            )
+                            ||
                             (equal != "" &&
                                 (
-                                (s.ValueType == "I" && s.IValue == iEqual) ||
-                                (s.ValueType == "F" && s.FValue == fEqual)
+                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == equal)) ||
+                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == iEqual)) ||
+                                (withF && s.ValueType == "F" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == fEqual))
                                 )
                             )
                             ||
                             (lower != "" && upper != "" &&
                                 (
-                                (s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
-                                (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)
+                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= iLower && v.Value <= iUpper)) ||
+                                (withF && s.ValueType == "F" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= fLower && v.Value <= fUpper))
                                 )
                             )
                         )
@@ -577,145 +599,34 @@ namespace AasxServer
                     .Count();
                 Console.WriteLine("Count number of found SMEs first: " + c + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
-                */
 
-                /*
                 list = db.SMESets
-                    .Where(s => s.SMEType == "P" && 
+                    .Where(s => s.ValueType != "" &&
                         (semanticId == "" || s.SemanticId == semanticId)
                         &&
-                        (  
+                        (
+                            (contains != "" &&
+                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value.Contains(contains)))
+                            )
+                            ||
                             (equal != "" &&
                                 (
-                                (s.ValueType == "I" && s.IValue == iEqual) ||
-                                (s.ValueType == "F" && s.FValue == fEqual)
+                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == equal)) ||
+                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == iEqual)) ||
+                                (withF && s.ValueType == "F" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == fEqual))
                                 )
                             )
                             ||
                             (lower != "" && upper != "" &&
                                 (
-                                (s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
-                                (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)
+                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= iLower && v.Value <= iUpper)) ||
+                                (withF && s.ValueType == "F" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= fLower && v.Value <= fUpper))
                                 )
                             )
                         )
                     )
                     .ToList();
-                */
 
-                if (equal != "")
-                {
-                    var ValList = db.IValueSets.Where(v => v.Value.ToString() == equal).Select(v => v.ParentSMENum).ToList();
-                    ValList.AddRange(db.DValueSets.Where(v => v.Value.ToString() == equal).Select(v => v.ParentSMENum).ToList());
-                    ValList.AddRange(db.SValueSets.Where(v => v.Value == equal).Select(v => v.ParentSMENum).ToList());
-
-                    // Erst zusammenfügen, dann suchen? 
-                    /*
-                    var ValList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets UNION SELECT * FROM IValueSets UNION SELECT * FROM DValueSets")
-                    .Where(v => v.Value == equal).Select(v => v.ParentSMENum).ToList();
-                    */
-                    var list2 = db.SMESets.Where(s => ValList.Contains(s.SMENum)).ToList();
-                    list.AddRange(list2.Except(list));
-                }
-                if (upper != "" || lower != "")
-                {
-                    var ValList = db.IValueSets.Where(v => v.Value > iLower && v.Value < iUpper).Select(v => v.ParentSMENum).ToList();
-                    ValList.AddRange(db.DValueSets.Where(v => v.Value > fLower && v.Value < fUpper).Select(v => v.ParentSMENum).ToList());
-                    var list2 = db.SMESets.Where(s => ValList.Contains(s.SMENum)).ToList();
-                    list.AddRange(list2.Except(list));
-                }
-
-                if (semanticId != "")
-                {
-                    /*
-                    if (equal != "")
-                    {
-                        list = db.SMESets
-                            .Where(s => s.SemanticId == semanticId)
-                            .Where(s => s.SMEType == "P" &&
-                                    ((s.ValueType == "I" && s.IValue == iEqual) ||
-                                    (s.ValueType == "F" && s.FValue == fEqual)))
-                            .ToList();
-                    }
-                    else
-                    {
-                        if (lower != "" && upper != "")
-                        {
-                            list = db.SMESets
-                                .Where(s => s.SemanticId == semanticId)
-                                .Where(s => s.SMEType == "P" &&
-                                        ((s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
-                                        (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)))
-                                .ToList();
-                        }
-                    }
-                    */
-                }
-                else
-                {
-                    /*
-                    if (equal != "")
-                    {
-                        var listEqual = db.SMESets.Where(s => s.Value == equal).ToList();
-                        list = listEqual;
-                    }
-                    else
-                    {
-                        if (lower != "" && upper != "")
-                        {
-                            int pageSize = 200000;
-                            int maxPages = 8;
-
-                            var count = db.SMESets
-                                .Where(s => s.SMEType == "P" && s.ValueType != "" && s.Value != "").Count();
-                            if (count < pageSize)
-                            {
-                                list = db.SMESets
-                                    .Where(s => s.SMEType == "P" && s.ValueType != "" && s.Value != "")
-                                    .ToList()
-                                    .Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                            }
-                            else
-                            {
-                                int pageCount = count / pageSize + 1;
-                                var tasks = new Task[maxPages];
-                                var listPage = new List<SMESet>[maxPages];
-                                var context = new AasContext[maxPages];
-
-                                Console.WriteLine(pageCount + " pages with size " + pageSize);
-                                int p = 0;
-                                while (p < pageCount)
-                                {
-                                    if (pageCount - p < maxPages)
-                                        maxPages = pageCount - p;
-
-                                    for (int i = 0; i < maxPages; i++)
-                                    {
-                                        int pp = p; // workaround task-for paradox
-                                        int j = i; // workaround task-for paradox
-                                        context[j] = new AasContext();
-                                        tasks[j] = Task.Run(() => listPage[j] = getPage(context[j], pp, pageSize, lower, upper));
-                                        p++;
-                                    }
-
-                                    for (int i = 0; i < maxPages; i++)
-                                    {
-                                        tasks[i].Wait();
-                                        list.AddRange(listPage[i]);
-
-                                        context[i].Dispose();
-                                        context[i] = null;
-                                        tasks[i].Dispose();
-                                        tasks[i] = null;
-                                        listPage[i] = null;
-                                    }
-                                    Console.WriteLine("Processing " + p * pageSize + "/" + count);
-                                }
-                            }
-                        }
-                    }
-                    */
-                }
                 Console.WriteLine("Found  " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
