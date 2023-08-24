@@ -51,7 +51,8 @@
 
             using (AasContext db = new AasContext())
             {
-                if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/submodel") || url.EndsWith("/sme"))
+                if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/submodel") || url.EndsWith("/sme")
+                    || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
                 {
                     <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;" />
                     @code {
@@ -268,6 +269,7 @@
                         </tbody>
                     </table>
                     <span>@("Count: " + count)</span>
+                    <br />
                 }
 
                 if (url.EndsWith("/aas"))
@@ -340,6 +342,7 @@
                         </tbody>
                     </table>
                     <span>@("Count: " + count)</span>
+                    <br />
                 }
 
                 if (url.EndsWith("/submodel"))
@@ -425,6 +428,7 @@
                         </tbody>
                     </table>
                     <span>@("Count: " + count)</span>
+                    <br />
                 }
 
                 if (url.EndsWith("/subjson"))
@@ -461,10 +465,6 @@
                             + " submodelnum=" + submodelnum + " smenum=" + smenum)
                     </span>
                     <br />
-                    watch1.Stop();
-                    w1 = watch1.ElapsedMilliseconds;
-                    // <span>@("Time data count(ms): " + w1)</span>
-                    var watch2 = System.Diagnostics.Stopwatch.StartNew();
                     <br />
                     List<SMESet> nextPage = null;
                     if (submodelnum == 0 && smenum == 0 && f == "")
@@ -487,10 +487,6 @@
                         .Take(size)
                         .ToList();
                     }
-                    watch2.Stop();
-                    w2 = watch2.ElapsedMilliseconds;
-                    var watch3 = System.Diagnostics.Stopwatch.StartNew();
-                    // <span>@("Time data query(ms): " + w2)</span>
                     <b><span style="color:red;">First 1000 as TABLE</span></b>
                     <br />
                     <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
@@ -588,99 +584,32 @@
                     }
                     <br />
                     <span>@("Count: " + count)</span>
-
-                    <br />
-                    watch3.Stop();
-                    w3 = watch3.ElapsedMilliseconds;
-                    // <span>@("Time table(ms): " + w3)</span>
-                }
-
-                if (url.EndsWith("/ivalue"))
-                {
-                    total = db.IValueSets.Count();
-
-                    List<IntValue> nextPage = null;
-                    if (submodelnum == 0 && smenum == 0 && f == "")
-                    {
-                        nextPage = db.IValueSets
-                        .OrderBy(v => v.Id)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        nextPage = db.IValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => v.ParentSMENum == smenum)
-                        .Take(size)
-                        .ToList();
-                    }
-                    <b><span style="color:red;">First 1000 as TABLE</span></b>
-                    <br />
-                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                        <thead>
-                            <tr>
-                                <th style="word-break:keep-all">ParentSMENum#</th>
-                                <th style="word-break:keep-all">Value</th>
-                                <th style="word-break:keep-all">Annotation#</th>
-                                <th style="word-break:keep-all">links</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < nextPage.Count && i < 1000; i++)
-                            {
-                                count++;
-                                var smeDB = nextPage[i];
-                                string shorturl = url.Substring(0, url.Length - "/ivalue".Length);
-                                <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
-                                    <td style="word-break:keep-all">@smeDB.Value</td>
-                                    <td style="word-break:keep-all"><b>@smeDB.Annotation</b></td>
-                                    <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMENum != 0)
-                                        {
-                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                    <b><span style="color:red;">All other as text</span></b>
-                    <br />
-                    @for (int i = 1000; i < nextPage.Count; i++)
-                    {
-                        count++;
-                        var smeDB = nextPage[i];
-                        string shorturl = url.Substring(0, url.Length - "/ivalue".Length);
-                        <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.ParentSMENum</span>
-                        <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.Value</span>
-                        <span style="background-color:blue;">&nbsp</span>
-                        <span><b>@smeDB.Annotation</b></span>
-                        <span style="background-color:blue;">&nbsp</span>
-                        @if (smeDB.ParentSMENum != 0)
-                        {
-                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                        }
-                        <br />
-                    }
-                    <br />
-                    <span>@("Count: " + count)</span>
-
                     <br />
                 }
 
                 if (url.EndsWith("/svalue"))
                 {
                     total = db.SValueSets.Count();
+                    string found = "";
+                    if (f != "")
+                    {
+                        found = db.SValueSets
+                        .OrderBy(p => p.ParentSMENum)
+                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && (f == "" || v.Value.Contains(f)))
+                        .Count() + "/";
+                    }
+                    <span>
+                        &nbsp&nbsp@("SValues#: " + found + total + " size=" + size + " search=" + search
+                          + " smenum=" + smenum)
+                    </span>
+                    <br />
+                    <br />
 
                     List<StringValue> nextPage = null;
-                    if (submodelnum == 0 && smenum == 0 && f == "")
+                    if (smenum == 0 && f == "")
                     {
                         nextPage = db.SValueSets
-                        .OrderBy(v => v.Id)
+                        .OrderBy(v => v.ParentSMENum)
                         .Take(size)
                         .ToList();
                     }
@@ -688,7 +617,7 @@
                     {
                         nextPage = db.SValueSets
                         .OrderBy(v => v.ParentSMENum)
-                        .Where(v => v.ParentSMENum == smenum)
+                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && (f == "" || v.Value.Contains(f)))
                         .Take(size)
                         .ToList();
                     }
@@ -697,7 +626,7 @@
                     <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                         <thead>
                             <tr>
-                                <th style="word-break:keep-all">ParentSMENum#</th>
+                                <th style="word-break:keep-all">Par#</th>
                                 <th style="word-break:keep-all">Value</th>
                                 <th style="word-break:keep-all">Annotation</th>
                                 <th style="word-break:keep-all">links</th>
@@ -745,27 +674,52 @@
                     }
                     <br />
                     <span>@("Count: " + count)</span>
-
                     <br />
                 }
 
-                if (url.EndsWith("/dvalue"))
+                if (url.EndsWith("/ivalue"))
                 {
-                    total = db.DValueSets.Count();
+                    bool withI = false;
+                    long iEqual = 0;
+                    try
+                    {
+                        if (f != "")
+                        {
+                            iEqual = Convert.ToInt64(f);
+                            withI = true;
+                        }
+                    }
+                    catch { }
 
-                    List<DoubleValue> nextPage = null;
+                    total = db.IValueSets.Count();
+                    string found = "";
+                    if (f != "")
+                    {
+                        found = db.IValueSets
+                        .OrderBy(p => p.ParentSMENum)
+                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && withI && (f == "" || v.Value == iEqual))
+                        .Count() + "/";
+                    }
+                    <span>
+                        &nbsp&nbsp@("IValues#: " + found + total + " size=" + size + " search=" + search
+                          + " smenum=" + smenum)
+                    </span>
+                    <br />
+                    <br />
+
+                    List<IntValue> nextPage = null;
                     if (submodelnum == 0 && smenum == 0 && f == "")
                     {
-                        nextPage = db.DValueSets
+                        nextPage = db.IValueSets
                         .OrderBy(v => v.Id)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
-                        nextPage = db.DValueSets
+                        nextPage = db.IValueSets
                         .OrderBy(v => v.ParentSMENum)
-                        .Where(v => v.ParentSMENum == smenum)
+                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && withI && (f == "" || v.Value == iEqual))
                         .Take(size)
                         .ToList();
                     }
@@ -774,7 +728,109 @@
                     <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                         <thead>
                             <tr>
-                                <th style="word-break:keep-all">ParentSMENum#</th>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation#</th>
+                                <th style="word-break:keep-all">links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < nextPage.Count && i < 1000; i++)
+                            {
+                                count++;
+                                var smeDB = nextPage[i];
+                                string shorturl = url.Substring(0, url.Length - "/ivalue".Length);
+                                <tr>
+                                    <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
+                                    <td style="word-break:keep-all">@smeDB.Value</td>
+                                    <td style="word-break:keep-all"><b>@smeDB.Annotation</b></td>
+                                    <td style="word-break:keep-all">
+                                        @if (smeDB.ParentSMENum != 0)
+                                        {
+                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <b><span style="color:red;">All other as text</span></b>
+                    <br />
+                    @for (int i = 1000; i < nextPage.Count; i++)
+                    {
+                        count++;
+                        var smeDB = nextPage[i];
+                        string shorturl = url.Substring(0, url.Length - "/ivalue".Length);
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.ParentSMENum</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Value</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span><b>@smeDB.Annotation</b></span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        @if (smeDB.ParentSMENum != 0)
+                        {
+                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
+                        }
+                        <br />
+                    }
+                    <br />
+                    <span>@("Count: " + count)</span>
+                    <br />
+                }
+
+                if (url.EndsWith("/dvalue"))
+                {
+                    bool withF = false;
+                    double fEqual = 0;
+                    try
+                    {
+                        if (f != "")
+                        {
+                            fEqual = Convert.ToDouble(f);
+                            withF = true;
+                        }
+                    }
+                    catch { }
+
+                    total = db.DValueSets.Count();
+                    string found = "";
+                    if (f != "")
+                    {
+                        found = db.DValueSets
+                        .OrderBy(p => p.ParentSMENum)
+                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && withF && (f == "" || v.Value == fEqual))
+                        .Count() + "/";
+                    }
+                    <span>
+                        &nbsp&nbsp@("DValues#: " + found + total + " size=" + size + " search=" + search
+                          + " smenum=" + smenum)
+                    </span>
+                    <br />
+                    <br />
+
+                    List<DoubleValue> nextPage = null;
+                    if (submodelnum == 0 && smenum == 0 && f == "")
+                    {
+                        nextPage = db.DValueSets
+                        .OrderBy(v => v.ParentSMENum)
+                        .Take(size)
+                        .ToList();
+                    }
+                    else
+                    {
+                        nextPage = db.DValueSets
+                        .OrderBy(v => v.ParentSMENum)
+                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && withF && (f == "" || v.Value == fEqual))
+                        .Take(size)
+                        .ToList();
+                    }
+                    <b><span style="color:red;">First 1000 as TABLE</span></b>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
                                 <th style="word-break:keep-all">Value</th>
                                 <th style="word-break:keep-all">Annotation</th>
                                 <th style="word-break:keep-all">links</th>
@@ -822,7 +878,6 @@
                     }
                     <br />
                     <span>@("Count: " + count)</span>
-
                     <br />
                 }
 
