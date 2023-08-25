@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -374,46 +375,6 @@ namespace AasxServer
     }
     public class Query
     {
-        public AASXSet GetAASXRaw(int AASXnum)
-        {
-            using (AasContext db = new AasContext())
-            {
-                var aasx = db.AASXSets.Where(aasx => aasx.AASXNum == AASXnum).First();
-                return aasx;
-            }
-        }
-        public AasSet GetAasRaw(int aasnum)
-        {
-            using (AasContext db = new AasContext())
-            {
-                var aas = db.AasSets.Where(aas => aas.AasNum == aasnum).First();
-                return aas;
-            }
-        }
-        public SubmodelSet GetSubmodelRaw(int submodelnum)
-        {
-            using (AasContext db = new AasContext())
-            {
-                var sub = db.SubmodelSets.Where(s => s.SubmodelNum == submodelnum).First();
-                return sub;
-            }
-        }
-        public SMESet GetSMERaw(int SMEnum)
-        {
-            using (AasContext db = new AasContext())
-            {
-                var sme = db.SMESets.Where(s => s.SMENum == SMEnum).First();
-                return sme;
-            }
-        }
-        public List<SMESet> GetSMEListRaw(int submodelnum)
-        {
-            using (AasContext db = new AasContext())
-            {
-                var list = db.SMESets.Where(s => s.SubmodelNum == submodelnum).ToList();
-                return list;
-            }
-        }
         public List<SubmodelResult> SearchSubmodels(string semanticId)
         {
             List<SubmodelResult> list = new List<SubmodelResult>();
@@ -503,34 +464,11 @@ namespace AasxServer
             return false;
         }
 
-        List<SMESet> getPage(AasContext c, int j, int pageSize, long lower, long upper)
-        {
-            List<SMESet> list = new List<SMESet>();
-            double fLower = 0;
-            double fUpper = 0;
-            try
-            {
-                fLower = lower;
-                fUpper = upper;
-            }
-            catch { }
-            /*
-            list = c.SMESets
-                .Where(s => s.SMEType == "P" && 
-                        ((s.ValueType == "I" && s.IValue >= lower && s.IValue <= upper) ||
-                        (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)))
-                .Skip(j * pageSize)
-                .Take(pageSize)
-                .ToList();
-            */
-            return list;
-        }
         public List<SmeResult> SearchSMEs(
             string submodelSemanticId = "", string semanticId = "",
             string equal = "", string lower = "", string upper = "", string contains = "")
         {
             List<SmeResult> result = new List<SmeResult>();
-            List<SMESet> list = new List<SMESet>();
 
             bool withI = false;
             long iEqual = 0;
@@ -572,280 +510,69 @@ namespace AasxServer
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                int c = 0;
-                /*
-                c = db.SMESets
-                    .Where(s => s.ValueType != "" &&
-                        (semanticId == "" || s.SemanticId == semanticId)
-                        &&
-                        (
-                            (contains != "" &&
-                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value.Contains(contains)))
-                            )
-                            ||
-                            (equal != "" &&
-                                (
-                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == equal)) ||
-                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == iEqual)) ||
-                                (withF && s.ValueType == "F" && db.DValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == fEqual))
-                                )
-                            )
-                            ||
-                            (lower != "" && upper != "" &&
-                                (
-                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= iLower && v.Value <= iUpper)) ||
-                                (withF && s.ValueType == "F" && db.DValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= fLower && v.Value <= fUpper))
-                                )
-                            )
-                        )
-                    )
-                    .Count();
-                */
-
-                /*
-                if (contains != "")
-                {
-                    c = db.SValueSets.Where(v => v.Value.Contains(contains)).Select(v => v.ParentSMENum).Count();
-                }
-                else if (equal != "")
-                {
-                    c = db.IValueSets.Where(v => v.Value == iEqual).Select(v => v.ParentSMENum).Count();
-                    c += db.DValueSets.Where(v => v.Value == fEqual).Select(v => v.ParentSMENum).Count();
-                    c += db.SValueSets.Where(v => v.Value == equal).Select(v => v.ParentSMENum).Count();
-                }
-                else if (upper != "" || lower != "")
-                {
-                    c = db.IValueSets.Where(v => v.Value >= iLower && v.Value <= iUpper).Select(v => v.ParentSMENum).Count();
-                    c += db.DValueSets.Where(v => v.Value >= fLower && v.Value <= fUpper).Select(v => v.ParentSMENum).Count();
-                }
-
-                Console.WriteLine("Count number of found SMEs first: " + c + " in " + watch.ElapsedMilliseconds + "ms");
-                watch.Restart();
-                */
-
-                /*
-                list = db.SMESets
-                    .Where(s => s.ValueType != "" &&
-                        (semanticId == "" || s.SemanticId == semanticId)
-                        &&
-                        (
-                            (contains != "" &&
-                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value.Contains(contains)))
-                            )
-                            ||
-                            (equal != "" &&
-                                (
-                                (s.ValueType == "S" && db.SValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == equal)) ||
-                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == iEqual)) ||
-                                (withF && s.ValueType == "F" && db.DValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value == fEqual))
-                                )
-                            )
-                            ||
-                            (lower != "" && upper != "" &&
-                                (
-                                (withI && s.ValueType == "I" && db.IValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= iLower && v.Value <= iUpper)) ||
-                                (withF && s.ValueType == "F" && db.DValueSets.Any(v => v.ParentSMENum == s.SMENum && v.Value >= fLower && v.Value <= fUpper))
-                                )
-                            )
-                        )
-                    )
-                    .ToList();
-
-                Console.WriteLine("Found  " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                watch.Restart();
-                */
-
-                /*
-                List<long> pnumList = new List<long>();
-                if (contains != "")
-                {
-                    pnumList = db.SValueSets.Where(v => v.Value.Contains(contains)).Select(v => v.ParentSMENum).ToList();
-
-                }
-                else if (equal != "")
-                {
-                    if (withI)
-                        pnumList = db.IValueSets.Where(v => v.Value == iEqual).Select(v => v.ParentSMENum).ToList();
-                    if (withF)
-                        pnumList.AddRange(db.DValueSets.Where(v => v.Value == fEqual).Select(v => v.ParentSMENum).ToList());
-                    pnumList.AddRange(db.SValueSets.Where(v => v.Value == equal).Select(v => v.ParentSMENum).ToList());
-                }
-                else if (upper != "" || lower != "")
-                {
-                    if (withI)
-                        pnumList = db.IValueSets.Where(v => v.Value >= iLower && v.Value <= iUpper).Select(v => v.ParentSMENum).ToList();
-                    if (withF)
-                        pnumList.AddRange(db.DValueSets.Where(v => v.Value >= fLower && v.Value <= fUpper).Select(v => v.ParentSMENum).ToList());
-                }
-                if (pnumList.Count > 0)
-                {
-                    Console.WriteLine("Found1 " + pnumList.Count() + " Parent SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
-
-                    list = db.SMESets.Where(s => pnumList.Contains(s.SMENum) && (semanticId == "" || s.SemanticId == semanticId)).ToList();
-                    list = db.SMESets.Where(s => pnumList.Contains(s.SMENum) && (semanticId == "" || s.SemanticId == semanticId)).ToList();
-
-                    Console.WriteLine("Found2 " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
-                }
-                */
-
                 bool withContains = (contains != "");
                 bool withEqual = !withContains && (equal != "");
                 bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
 
-                /*
-                List<StringValue> sList = new List<StringValue>();
-                List<IntValue> iList = new List<IntValue>();
-                List<DoubleValue> dList = new List<DoubleValue>();
-                if (contains != "")
-                {
-                    sList = db.SValueSets.Where(v => v.Value.Contains(contains)).ToList();
-                }
-                else if (equal != "")
-                {
-                    if (withI)
-                        iList = db.IValueSets.Where(v => v.Value == iEqual).ToList();
-                    if (withF)
-                        dList = db.DValueSets.Where(v => v.Value == fEqual).ToList();
-                    sList = db.SValueSets.Where(v => v.Value == equal).ToList();
-                }
-                else if (upper != "" || lower != "")
-                */
-                {
-                    var jList = db.SValueSets.Where(v =>
-                        (withContains && v.Value.Contains(contains)) ||
-                        (withEqual && v.Value == equal)
-                        )
-                        .Join(db.SMESets,
-                            v => v.ParentSMENum,
-                            sme => sme.SMENum,
-                            (v, sme) => new
-                            {
-                                SemanticId = sme.SemanticId,
-                                Idshort = sme.Idshort,
-                                SubmodelNum = sme.SubmodelNum,
-                                Value = v.Value.ToString(),
-                                ParentSMENum = sme.ParentSMENum
-                            }
-                        )
-                        .Where(s => semanticId == "" || s.SemanticId == semanticId)
-                        .ToList();
-
-                    jList.AddRange(db.IValueSets.Where(v =>
-                        (withEqual && withI && v.Value == iEqual) ||
-                        (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
-                        )
-                        .Join(db.SMESets,
-                            v => v.ParentSMENum,
-                            sme => sme.SMENum,
-                            (v, sme) => new
-                            {
-                                SemanticId = sme.SemanticId,
-                                Idshort = sme.Idshort,
-                                SubmodelNum = sme.SubmodelNum,
-                                Value = v.Value.ToString(),
-                                ParentSMENum = sme.ParentSMENum
-                            }
-                        )
-                        .Where(s => semanticId == "" || s.SemanticId == semanticId)
-                        .ToList());
-
-
-                    jList.AddRange(db.DValueSets.Where(v =>
-                        (withEqual && withF && v.Value == fEqual) ||
-                        (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
-                        )
-                        .Join(db.SMESets,
-                            v => v.ParentSMENum,
-                            sme => sme.SMENum,
-                            (v, sme) => new
-                            {
-                                SemanticId = sme.SemanticId,
-                                Idshort = sme.Idshort,
-                                SubmodelNum = sme.SubmodelNum,
-                                Value = v.Value.ToString(),
-                                ParentSMENum = sme.ParentSMENum
-                            }
-                        )
-                        .Where(s => semanticId == "" || s.SemanticId == semanticId)
-                        .ToList());
-
-                    Console.WriteLine("FoundJ " + jList.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
-
-                    foreach (var l in jList)
-                    {
-                        SmeResult r = new SmeResult();
-
-                        var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
-                        if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
+                var list = db.SValueSets.Where(v =>
+                    (withContains && v.Value.Contains(contains)) ||
+                    (withEqual && v.Value == equal)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
                         {
-                            r.submodelId = submodelDB.SubmodelId;
-                            r.value = l.Value;
-                            string path = l.Idshort;
-                            long pnum = l.ParentSMENum;
-                            while (pnum != 0)
-                            {
-                                var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                                path = smeDB.Idshort + "." + path;
-                                pnum = smeDB.ParentSMENum;
-                            }
-                            r.idShortPath = path;
-                            string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                            r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
-                            result.Add(r);
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            Value = v.Value.ToString(),
+                            ParentSMENum = sme.ParentSMENum
                         }
-                    }
-                    Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
-                }
-                // int count = sList.Count + iList.Count + dList.Count;
-                if (false)
-                {
-                    Console.WriteLine("Found1 " + "count" + " Parent SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
+                    )
+                    .Where(s => semanticId == "" || s.SemanticId == semanticId)
+                    .ToList();
 
-                    // list = db.SMESets.Where(s => pnumList.Contains(s.SMENum) && (semanticId == "" || s.SemanticId == semanticId)).ToList();
-                    /*
-                    list = db.SMESets.Where(s => (semanticId == "" || s.SemanticId == semanticId) &&
-                        ((sList.Count != 0 && sList.Where(v => v.ParentSMENum == s.SMENum).Count() != 0) ||
-                        (iList.Count != 0 && iList.Where(v => v.ParentSMENum == s.SMENum).Count() != 0) ||
-                        (dList.Count != 0 && dList.Where(v => v.ParentSMENum == s.SMENum).Count() != 0)
-                        )
-                    ).ToList();
-                    */
+                list.AddRange(db.IValueSets.Where(v =>
+                    (withEqual && withI && v.Value == iEqual) ||
+                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            Value = v.Value.ToString(),
+                            ParentSMENum = sme.ParentSMENum
+                        }
+                    )
+                    .Where(s => semanticId == "" || s.SemanticId == semanticId)
+                    .ToList());
 
-                    var xlist = db.SValueSets.Where(v => v.Value == equal)
-                        .Join(db.SMESets,
-                            sl => sl.ParentSMENum,
-                            sme => sme.SMENum,
-                            (sl, sme) => new
-                            {
-                                SemanticId = sme.SemanticId,
-                                Idshort = sme.Idshort,
-                                SubmodelNum = sme.SubmodelNum
-                            }
-                        )
-                        .Where(s => s.SemanticId == semanticId)
-                        .ToList();
+                list.AddRange(db.DValueSets.Where(v =>
+                    (withEqual && withF && v.Value == fEqual) ||
+                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            Value = v.Value.ToString(),
+                            ParentSMENum = sme.ParentSMENum
+                        }
+                    )
+                    .Where(s => semanticId == "" || s.SemanticId == semanticId)
+                    .ToList());
 
-                    /*
-                    var list2 = db.SMESets.Where(s => semanticId == "" || s.SemanticId == semanticId)
-                        .Join(db.SValueSets,
-                            sme => sme.SMENum,
-                            sl => sl.ParentSMENum,
-                            (sme, sl) => new
-                            {
-                                SemanticId = sme.SemanticId,
-                                Idshort = sme.Idshort,
-                                SubmodelNum = sme.SubmodelNum
-                            }
-                        ).ToList();
-                    */
-
-                    // Console.WriteLine("Found2 " + xlist.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
-                }
+                Console.WriteLine("Found " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
 
                 foreach (var l in list)
                 {
@@ -855,7 +582,7 @@ namespace AasxServer
                     if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
                     {
                         r.submodelId = submodelDB.SubmodelId;
-                        r.value = l.getValue();
+                        r.value = l.Value;
                         string path = l.Idshort;
                         long pnum = l.ParentSMENum;
                         while (pnum != 0)
@@ -870,190 +597,124 @@ namespace AasxServer
                         result.Add(r);
                     }
                 }
-                // Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
             return result;
         }
 
-        public int CountSMEs(string submodelSemanticId = "", string semanticId = "", string equal = "", string lower = "", string upper = "")
+        public int CountSMEs(
+            string submodelSemanticId = "", string semanticId = "",
+            string equal = "", string lower = "", string upper = "", string contains = "")
+
         {
-            double fEqual = 0;
-            double fLower = 0;
-            double fUpper = 0;
+            bool withI = false;
             long iEqual = 0;
             long iLower = 0;
             long iUpper = 0;
+            bool withF = false;
+            double fEqual = 0;
+            double fLower = 0;
+            double fUpper = 0;
             try
             {
                 if (equal != "")
                 {
-                    fEqual = Convert.ToDouble(equal);
                     iEqual = Convert.ToInt64(equal);
+                    withI = true;
+                    fEqual = Convert.ToDouble(equal);
+                    withF = true;
                 }
-                if (lower != "" && upper != "")
+                else if (lower != "" && upper != "")
                 {
-                    fLower = Convert.ToDouble(lower);
-                    fUpper = Convert.ToDouble(upper);
                     iLower = Convert.ToInt64(lower);
                     iUpper = Convert.ToInt64(upper);
+                    withI = true;
+                    fLower = Convert.ToDouble(lower);
+                    fUpper = Convert.ToDouble(upper);
+                    withF = true;
                 }
             }
             catch { }
 
-            if (semanticId == "" && equal == "" && lower == "" && upper == "")
+            if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
                 return 0;
+
+            int c = 0;
 
             using (AasContext db = new AasContext())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 Console.WriteLine();
-                Console.WriteLine("CountSMEs");
+                Console.WriteLine("SearchSMEs");
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                int c = 0;
-                /*
-                var c = db.SMESets
-                    .Where(s => s.SMEType == "P" &&
-                        (semanticId == "" || s.SemanticId == semanticId)
-                        &&
-                        (
-                            (equal != "" &&
-                                (
-                                (s.ValueType == "I" && s.IValue == iEqual) ||
-                                (s.ValueType == "F" && s.FValue == fEqual)
-                                )
-                            )
-                            ||
-                            (lower != "" && upper != "" &&
-                                (
-                                (s.ValueType == "I" && s.IValue >= iLower && s.IValue <= iUpper) ||
-                                (s.ValueType == "F" && s.FValue >= fLower && s.FValue <= fUpper)
-                                )
-                            )
-                        )
+                bool withContains = (contains != "");
+                bool withEqual = !withContains && (equal != "");
+                bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
+
+                c = db.SValueSets.Where(v =>
+                    (withContains && v.Value.Contains(contains)) ||
+                    (withEqual && v.Value == equal)
                     )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            Value = v.Value.ToString(),
+                            ParentSMENum = sme.ParentSMENum
+                        }
+                    )
+                    .Where(s => semanticId == "" || s.SemanticId == semanticId)
                     .Count();
-                */
 
-                Console.WriteLine("Count number of " + c + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                return c;
+                c += db.IValueSets.Where(v =>
+                    (withEqual && withI && v.Value == iEqual) ||
+                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            Value = v.Value.ToString(),
+                            ParentSMENum = sme.ParentSMENum
+                        }
+                    )
+                    .Where(s => semanticId == "" || s.SemanticId == semanticId)
+                    .Count();
+
+                 c += db.DValueSets.Where(v =>
+                    (withEqual && withF && v.Value == fEqual) ||
+                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            Value = v.Value.ToString(),
+                            ParentSMENum = sme.ParentSMENum
+                        }
+                    )
+                    .Where(s => semanticId == "" || s.SemanticId == semanticId)
+                    .Count();
+
+                Console.WriteLine("Count " + c + " SMEs in " + watch.ElapsedMilliseconds + "ms");
             }
-        }
 
-        public List<SmeResult> SearchSMEsInSubmodel(string submodelSemanticId = "", string semanticId = "",
-            string equal = "", string lower = "", string upper = "")
-        {
-            List<SmeResult> result = new List<SmeResult>();
-            List<SMESet> list = new List<SMESet>();
-
-            if ((submodelSemanticId == "" || semanticId == "") && (equal == "" || (lower == "" && upper == "")))
-                return result;
-
-            /*
-            using (AasContext db = new AasContext())
-            {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                Console.WriteLine();
-                Console.WriteLine("SearchSMEsInSubmodel");
-                Console.WriteLine("Submodels: " + db.SubmodelSets.Count() + " SMEs " + db.SMESets.Count());
-
-                if (false) // keep for future use
-                {
-                    var listJoin = db.SubmodelSets
-                        .Where(s => s.SemanticId == submodelSemanticId)
-                        .Join(db.SMESets,
-                            sub => sub.SubmodelNum,
-                            sme => sme.SubmodelNum,
-                            (sub, sme) => new
-                            {
-                                SemanticId = sme.SemanticId,
-                                Value = sme.SValue,
-                                ValueType = sme.ValueType,
-                                Idshort = sme.Idshort,
-                                ParentSMENum = sme.ParentSMENum,
-                                SubmodelNum = sub.SubmodelNum
-                            }
-                        )
-                        .Where(j => j.SemanticId == semanticId && j.ValueType != "" && j.Value != "")
-                        .ToList();
-                    Console.WriteLine("Create join of " + listJoin.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
-
-                    var list2 = listJoin
-                        .Where(j => (equal != "" && j.Value == equal)
-                            || (equal == "" && isLowerUpper(j.ValueType, j.Value, lower, upper)))
-                        .ToList();
-                    Console.WriteLine("Filtered values to " + list2.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                    watch.Restart();
-                }
-
-                if (semanticId != "")
-                {
-                    list = db.SMESets.Where(s => s.SemanticId == semanticId).ToList();
-                    if (equal != "")
-                    {
-                        var listEqual = list.Where(s => s.Value == equal).ToList();
-                        list = listEqual;
-                    }
-                    else
-                    {
-                        if (lower != "" && upper != "")
-                        {
-                            var listLowerUpper = list.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                            list = listLowerUpper;
-                        }
-                    }
-                }
-                else
-                {
-                    if (equal != "")
-                    {
-                        var listEqual = db.SMESets.Where(s => s.Value == equal).ToList();
-                        list = listEqual;
-                    }
-                    else
-                    {
-                        if (lower != "" && upper != "")
-                        {
-                            var listLowerUpper = db.SMESets.Where(s => isLowerUpper(s.ValueType, s.Value, lower, upper)).ToList();
-                            list = listLowerUpper;
-                        }
-                    }
-                }
-
-                Console.WriteLine("Filtered values to " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
-                watch.Restart();
-
-                foreach (var l in list)
-                {
-                    SmeResult r = new SmeResult();
-                    var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
-                    if (submodelDB != null && submodelDB.SemanticId == submodelSemanticId)
-                    {
-                        r.submodelId = submodelDB.SubmodelId;
-                        r.value = l.Value;
-                        string path = l.Idshort;
-                        long pnum = l.ParentSMENum;
-                        while (pnum != 0)
-                        {
-                            var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                            if (smeDB != null)
-                                path = smeDB.Idshort + "." + path;
-                            pnum = smeDB.ParentSMENum;
-                        }
-                        r.idShortPath = path;
-                        string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                        r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodelelements/" + path;
-                        result.Add(r);
-                    }
-                }
-                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
-            }
-            */
-
-            return result;
+            return c;
         }
     }
 
