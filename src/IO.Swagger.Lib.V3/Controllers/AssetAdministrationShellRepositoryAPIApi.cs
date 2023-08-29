@@ -739,6 +739,8 @@ namespace IO.Swagger.Controllers
 
             HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
             HttpContext.Response.ContentLength = fileSize;
+            if (fileName.ToLower().EndsWith(".svg"))
+                HttpContext.Response.ContentType = "image/svg+xml";
             HttpContext.Response.Body.WriteAsync(content);
             return new EmptyResult();
         }

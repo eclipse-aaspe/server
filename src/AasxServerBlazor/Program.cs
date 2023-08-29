@@ -22,7 +22,9 @@ namespace AasxServerBlazor
 
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json").Build();
+                .AddJsonFile("appsettings.json")
+                .AddEnvironmentVariables()
+                .Build();
             string[] url = config["Kestrel:Endpoints:Http:Url"].Split(':');
             if (url[2] != null)
                 AasxServer.Program.blazorPort = url[2];

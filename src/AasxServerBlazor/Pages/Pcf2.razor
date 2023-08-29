@@ -17,7 +17,7 @@
     // AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
     // AasxTask.cfpNode node = AasxTask.root;
     float total = 0.0f;
-    if (AasxTask.root != null)
+    if (AasxTask.root != null && AasxTask.root.cradleToGateCombination != null)
     {
         try
         {
@@ -578,6 +578,7 @@
                     case "jpg":
                     case "bmp":
                     case "png":
+                    case "svg":
                         try
                         {
                             // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
