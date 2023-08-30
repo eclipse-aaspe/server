@@ -20889,7 +20889,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -20943,7 +20943,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.RefersTo != null)
+                if (that.RefersTo != null && that.RefersTo.Count > 0)
                 {
                     writer.WriteStartElement(
                         "refersTo",
@@ -20977,7 +20977,7 @@ namespace AasCore.Aas3_0
                 Aas.IAdministrativeInformation that,
                 Xml.XmlWriter writer)
             {
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -21073,7 +21073,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -21172,7 +21172,7 @@ namespace AasCore.Aas3_0
                 Aas.IAssetAdministrationShell that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -21212,7 +21212,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -21228,7 +21228,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -21266,7 +21266,7 @@ namespace AasCore.Aas3_0
 
                 writer.WriteEndElement();
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -21305,7 +21305,7 @@ namespace AasCore.Aas3_0
 
                 writer.WriteEndElement();
 
-                if (that.Submodels != null)
+                if (that.Submodels != null && that.Submodels.Count > 0)
                 {
                     writer.WriteStartElement(
                         "submodels",
@@ -21365,7 +21365,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SpecificAssetIds != null)
+                if (that.SpecificAssetIds != null && that.SpecificAssetIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "specificAssetIds",
@@ -21476,7 +21476,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -21541,7 +21541,7 @@ namespace AasCore.Aas3_0
                 Aas.ISubmodel that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -21581,7 +21581,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -21597,7 +21597,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -21665,7 +21665,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -21681,7 +21681,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -21697,7 +21697,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -21713,7 +21713,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SubmodelElements != null)
+                if (that.SubmodelElements != null && that.SubmodelElements.Count > 0)
                 {
                     writer.WriteStartElement(
                         "submodelElements",
@@ -21747,7 +21747,7 @@ namespace AasCore.Aas3_0
                 Aas.IRelationshipElement that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -21787,7 +21787,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -21803,7 +21803,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -21832,7 +21832,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -21848,7 +21848,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -21864,7 +21864,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -21918,7 +21918,7 @@ namespace AasCore.Aas3_0
                 Aas.ISubmodelElementList that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -21958,7 +21958,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -21974,7 +21974,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -22003,7 +22003,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -22019,7 +22019,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -22035,7 +22035,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -22107,7 +22107,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Value != null)
+                if (that.Value != null && that.Value.Count > 0)
                 {
                     writer.WriteStartElement(
                         "value",
@@ -22141,7 +22141,7 @@ namespace AasCore.Aas3_0
                 Aas.ISubmodelElementCollection that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -22181,7 +22181,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -22197,7 +22197,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -22226,7 +22226,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -22242,7 +22242,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -22258,7 +22258,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -22274,7 +22274,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Value != null)
+                if (that.Value != null && that.Value.Count > 0)
                 {
                     writer.WriteStartElement(
                         "value",
@@ -22308,7 +22308,7 @@ namespace AasCore.Aas3_0
                 Aas.IProperty that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -22348,7 +22348,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -22364,7 +22364,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -22393,7 +22393,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -22409,7 +22409,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -22425,7 +22425,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -22498,7 +22498,7 @@ namespace AasCore.Aas3_0
                 Aas.IMultiLanguageProperty that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -22538,7 +22538,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -22554,7 +22554,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -22583,7 +22583,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -22599,7 +22599,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -22615,7 +22615,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -22678,7 +22678,7 @@ namespace AasCore.Aas3_0
                 Aas.IRange that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -22718,7 +22718,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -22734,7 +22734,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -22763,7 +22763,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -22779,7 +22779,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -22795,7 +22795,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -22867,7 +22867,7 @@ namespace AasCore.Aas3_0
                 Aas.IReferenceElement that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -22907,7 +22907,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -22923,7 +22923,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -22952,7 +22952,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -22968,7 +22968,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -22984,7 +22984,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -23031,7 +23031,7 @@ namespace AasCore.Aas3_0
                 Aas.IBlob that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -23071,7 +23071,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -23087,7 +23087,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -23116,7 +23116,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -23132,7 +23132,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -23148,7 +23148,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -23205,7 +23205,7 @@ namespace AasCore.Aas3_0
                 Aas.IFile that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -23245,7 +23245,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -23261,7 +23261,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -23290,7 +23290,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -23306,7 +23306,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -23322,7 +23322,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -23377,7 +23377,7 @@ namespace AasCore.Aas3_0
                 Aas.IAnnotatedRelationshipElement that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -23417,7 +23417,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -23433,7 +23433,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -23462,7 +23462,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -23478,7 +23478,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -23494,7 +23494,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -23530,7 +23530,7 @@ namespace AasCore.Aas3_0
 
                 writer.WriteEndElement();
 
-                if (that.Annotations != null)
+                if (that.Annotations != null && that.Annotations.Count > 0)
                 {
                     writer.WriteStartElement(
                         "annotations",
@@ -23564,7 +23564,7 @@ namespace AasCore.Aas3_0
                 Aas.IEntity that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -23604,7 +23604,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -23620,7 +23620,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -23649,7 +23649,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -23665,7 +23665,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -23681,7 +23681,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -23697,7 +23697,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Statements != null)
+                if (that.Statements != null && that.Statements.Count > 0)
                 {
                     writer.WriteStartElement(
                         "statements",
@@ -23739,7 +23739,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SpecificAssetIds != null)
+                if (that.SpecificAssetIds != null && that.SpecificAssetIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "specificAssetIds",
@@ -23885,7 +23885,7 @@ namespace AasCore.Aas3_0
                 Aas.IBasicEventElement that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -23925,7 +23925,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -23941,7 +23941,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -23970,7 +23970,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -23986,7 +23986,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -24002,7 +24002,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -24135,7 +24135,7 @@ namespace AasCore.Aas3_0
                 Aas.IOperation that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -24175,7 +24175,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -24191,7 +24191,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -24220,7 +24220,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -24236,7 +24236,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -24252,7 +24252,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -24268,7 +24268,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.InputVariables != null)
+                if (that.InputVariables != null && that.InputVariables.Count > 0)
                 {
                     writer.WriteStartElement(
                         "inputVariables",
@@ -24284,7 +24284,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.OutputVariables != null)
+                if (that.OutputVariables != null && that.OutputVariables.Count > 0)
                 {
                     writer.WriteStartElement(
                         "outputVariables",
@@ -24300,7 +24300,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.InoutputVariables != null)
+                if (that.InoutputVariables != null && that.InoutputVariables.Count > 0)
                 {
                     writer.WriteStartElement(
                         "inoutputVariables",
@@ -24362,7 +24362,7 @@ namespace AasCore.Aas3_0
                 Aas.ICapability that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -24402,7 +24402,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -24418,7 +24418,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -24447,7 +24447,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.SupplementalSemanticIds != null)
+                if (that.SupplementalSemanticIds != null && that.SupplementalSemanticIds.Count > 0)
                 {
                     writer.WriteStartElement(
                         "supplementalSemanticIds",
@@ -24463,7 +24463,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Qualifiers != null)
+                if (that.Qualifiers != null && that.Qualifiers.Count > 0)
                 {
                     writer.WriteStartElement(
                         "qualifiers",
@@ -24479,7 +24479,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -24513,7 +24513,7 @@ namespace AasCore.Aas3_0
                 Aas.IConceptDescription that,
                 Xml.XmlWriter writer)
             {
-                if (that.Extensions != null)
+                if (that.Extensions != null && that.Extensions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "extensions",
@@ -24553,7 +24553,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.DisplayName != null)
+                if (that.DisplayName != null && that.DisplayName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "displayName",
@@ -24569,7 +24569,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Description != null)
+                if (that.Description != null && that.Description.Count > 0)
                 {
                     writer.WriteStartElement(
                         "description",
@@ -24607,7 +24607,7 @@ namespace AasCore.Aas3_0
 
                 writer.WriteEndElement();
 
-                if (that.EmbeddedDataSpecifications != null)
+                if (that.EmbeddedDataSpecifications != null && that.EmbeddedDataSpecifications.Count > 0)
                 {
                     writer.WriteStartElement(
                         "embeddedDataSpecifications",
@@ -24623,7 +24623,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.IsCaseOf != null)
+                if (that.IsCaseOf != null && that.IsCaseOf.Count > 0)
                 {
                     writer.WriteStartElement(
                         "isCaseOf",
@@ -24684,18 +24684,21 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                writer.WriteStartElement(
-                    "keys",
-                    NS);
-
-                foreach (var item in that.Keys)
+                if (that.Keys != null && that.Keys.Count > 0)
                 {
-                    this.Visit(
-                        item,
-                        writer);
-                }
+                    writer.WriteStartElement(
+                        "keys",
+                        NS);
 
-                writer.WriteEndElement();
+                    foreach (var item in that.Keys)
+                    {
+                        this.Visit(
+                            item,
+                            writer);
+                    }
+
+                    writer.WriteEndElement();
+                }
             }  // private void ReferenceToSequence
 
             public override void VisitReference(
@@ -24828,7 +24831,7 @@ namespace AasCore.Aas3_0
                 Aas.IEnvironment that,
                 Xml.XmlWriter writer)
             {
-                if (that.AssetAdministrationShells != null)
+                if (that.AssetAdministrationShells != null && that.AssetAdministrationShells.Count > 0)
                 {
                     writer.WriteStartElement(
                         "assetAdministrationShells",
@@ -24844,7 +24847,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Submodels != null)
+                if (that.Submodels != null && that.Submodels.Count > 0)
                 {
                     writer.WriteStartElement(
                         "submodels",
@@ -24860,7 +24863,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.ConceptDescriptions != null)
+                if (that.ConceptDescriptions != null && that.ConceptDescriptions.Count > 0)
                 {
                     writer.WriteStartElement(
                         "conceptDescriptions",
@@ -25024,18 +25027,21 @@ namespace AasCore.Aas3_0
                 Aas.IValueList that,
                 Xml.XmlWriter writer)
             {
-                writer.WriteStartElement(
-                    "valueReferencePairs",
-                    NS);
-
-                foreach (var item in that.ValueReferencePairs)
+                if (that.ValueReferencePairs != null && that.ValueReferencePairs.Count > 0)
                 {
-                    this.Visit(
-                        item,
-                        writer);
-                }
+                    writer.WriteStartElement(
+                        "valueReferencePairs",
+                        NS);
 
-                writer.WriteEndElement();
+                    foreach (var item in that.ValueReferencePairs)
+                    {
+                        this.Visit(
+                            item,
+                            writer);
+                    }
+
+                    writer.WriteEndElement();
+                }
             }  // private void ValueListToSequence
 
             public override void VisitValueList(
@@ -25163,20 +25169,23 @@ namespace AasCore.Aas3_0
                 Aas.IDataSpecificationIec61360 that,
                 Xml.XmlWriter writer)
             {
-                writer.WriteStartElement(
-                    "preferredName",
-                    NS);
-
-                foreach (var item in that.PreferredName)
+                if (that.PreferredName != null && that.PreferredName.Count > 0)
                 {
-                    this.Visit(
-                        item,
-                        writer);
+                    writer.WriteStartElement(
+                        "preferredName",
+                        NS);
+
+                    foreach (var item in that.PreferredName)
+                    {
+                        this.Visit(
+                            item,
+                            writer);
+                    }
+
+                    writer.WriteEndElement();
                 }
 
-                writer.WriteEndElement();
-
-                if (that.ShortName != null)
+                if (that.ShortName != null && that.ShortName.Count > 0)
                 {
                     writer.WriteStartElement(
                         "shortName",
@@ -25258,7 +25267,7 @@ namespace AasCore.Aas3_0
                     writer.WriteEndElement();
                 }
 
-                if (that.Definition != null)
+                if (that.Definition != null && that.Definition.Count > 0)
                 {
                     writer.WriteStartElement(
                         "definition",
