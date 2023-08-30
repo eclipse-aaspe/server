@@ -10,7 +10,7 @@ https://github.com/admin-shell-io/aasx-server/workflows/Build-and-publish-docker
 )
 
 AASX Server serves Industrie 4.0 AASX packages accessible by REST, OPC UA and
-MQTT protocols.
+MQTT protocols..
 
 The AASX Server is based on code of AASX Package Explorer (
 https://github.com/admin-shell-io/aasx-package-explorer
