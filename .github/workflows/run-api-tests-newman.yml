@@ -26,13 +26,14 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ./src/AasxServerBlazor/AasxServerBlazor.csproj
     - name: Build
-      run: dotnet build ./src/AasxServerBlazor/AasxServerBlazor.csproj -c Release -o ./build
+      #run: dotnet build ./src/AasxServerBlazor/AasxServerBlazor.csproj -c Release -o ./build
+      run: dotnet publish -c Release -o ./build ./src/AasxServerBlazor
     - name: Start Test Server And Execute Test Scripts
       run: |
        ls -l
        cd build
        ls -l
-       dotnet AasxServerBlazor.dll --no-security --data-path ../test/rest_api/data --rest --host 0.0.0.0 
+       dotnet AasxServerBlazor.dll --rest --no-security --data-path ../test/rest_api/data --host 0.0.0.0 $OPTIONSAASXSERVER
        sleep 10
        cd ..
        newman run ./test/rest_api/postman/AASTests.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
