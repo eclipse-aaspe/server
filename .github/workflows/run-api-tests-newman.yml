@@ -30,9 +30,7 @@ jobs:
       run: dotnet publish -c Release -o ./build ./src/AasxServerBlazor
     - name: Start Test Server And Execute Test Scripts
       run: |
-       ls -l
        cd build
-       ls -l
        dotnet AasxServerBlazor.dll --rest --no-security --data-path ../test/rest_api/data --host 0.0.0.0 $OPTIONSAASXSERVER &
        sleep 10
        cd ..
