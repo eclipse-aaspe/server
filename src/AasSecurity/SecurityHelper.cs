@@ -11,12 +11,12 @@ namespace AasSecurity
      */
     public static class SecurityHelper
     {
-        private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityHelper");
+        //private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityHelper");
 
         public static void SecurityInit()
         {
             GlobalSecurityVariables.WithAuthentication = !Program.noSecurity;
-            _logger.LogInformation($"IsSecurityEnabled: {GlobalSecurityVariables.WithAuthentication}");
+            //_logger.LogInformation($"IsSecurityEnabled: {GlobalSecurityVariables.WithAuthentication}");
             ParseSecurityMetamodel();
         }
 
@@ -39,14 +39,14 @@ namespace AasSecurity
                                     {
                                         case "securitysettingsforserver":
                                             {
-                                                _logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
+                                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
                                                 SecuritySettingsForServerParser.ParseSecuritySettingsForServer(env, submodel);
                                             }
                                             break;
                                         case "securitymetamodelforaas":
                                         case "securitymetamodelforserver":
                                             {
-                                                _logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
+                                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
                                                 SecurityMetamodelParser.ParserSecurityMetamodel(env, submodel);
                                             }
                                             break;
