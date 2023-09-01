@@ -1047,23 +1047,29 @@ namespace AasxServer
 
                 using (AasContext db = new AasContext())
                 {
+                    try
+                    {
+                        var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
+                        task.Wait();
+                        task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
+                        task.Wait();
+                    }
+                    catch
+                    {
+                    }
                     DbConfigSet dbConfig = null;
-                    var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
-                    task.Wait();
                     dbConfig = new DbConfigSet
                     {
                         Id = 1,
