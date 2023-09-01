@@ -1002,8 +1002,8 @@ namespace AasxServer
             int envi = 0;
             int count = 0;
 
-            // Clear DB
-            if (withDb && startIndex == 0 && !createFilesOnly)
+            // Migrate
+            if (withDb)
             {
                 if (isPostgres)
                 {
@@ -1021,7 +1021,11 @@ namespace AasxServer
                         db.Database.Migrate();
                     }
                 }
+            }
 
+            // Clear DB
+            if (withDb && startIndex == 0 && !createFilesOnly)
+            {
                 using (AasContext db = new AasContext())
                 {
                     DbConfigSet dbConfig = null;
@@ -1073,261 +1077,269 @@ namespace AasxServer
                 int fi = 0;
                 while (fi < fileNames.Length)
                 {
-                    fn = fileNames[fi];
-                    if (fn.ToLower().Contains("globalsecurity"))
+                    try
                     {
-                        envFileName[envi] = fn;
-                        env[envi] = new AdminShellPackageEnv(fn, true, false);
-                        AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
-                        AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                        envi++;
-                        envimin = envi;
-                        oldest= envi;
-                        fi++;
-                        continue;
-                    }
-
-                    if (fi < startIndex)
-                    {
-                        fi++;
-                        continue;
-                    }
-
-
-                    if (fn != "" && envi < envimax)
-                    {
-                        string name = Path.GetFileName(fn);
-                        string tempName = "./temp/" + Path.GetFileName(fn);
-
-                        // Convert to newest version only
-                        if (saveTemp == -1)
+                        fn = fileNames[fi];
+                        if (fn.ToLower().Contains("globalsecurity"))
                         {
+                            envFileName[envi] = fn;
                             env[envi] = new AdminShellPackageEnv(fn, true, false);
-                            if (env[envi] == null)
-                            {
-                                Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                return 1;
-                            }
-                            Console.WriteLine("SAVE TO TEMP: " + fn);
-                            Program.env[envi].SaveAs(tempName, true);
+                            AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
+                            AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                            envi++;
+                            envimin = envi;
+                            oldest = envi;
                             fi++;
                             continue;
                         }
 
-                        if (readTemp && System.IO.File.Exists(tempName))
+                        if (fi < startIndex)
                         {
-                            fn = tempName;
+                            fi++;
+                            continue;
                         }
 
-                        Console.WriteLine((fi + 1) + "/" + fileNames.Length + " "+ watch.ElapsedMilliseconds / 1000 + "s" + " Loading {0}...", fn);
-                        envFileName[envi] = fn;
-                        if (!withDb)
+
+                        if (fn != "" && envi < envimax)
                         {
-                            env[envi] = new AdminShellPackageEnv(fn, true, false);
-                            if (env[envi] == null)
+                            string name = Path.GetFileName(fn);
+                            string tempName = "./temp/" + Path.GetFileName(fn);
+
+                            // Convert to newest version only
+                            if (saveTemp == -1)
                             {
-                                Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                return 1;
+                                env[envi] = new AdminShellPackageEnv(fn, true, false);
+                                if (env[envi] == null)
+                                {
+                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                                    return 1;
+                                }
+                                Console.WriteLine("SAVE TO TEMP: " + fn);
+                                Program.env[envi].SaveAs(tempName, true);
+                                fi++;
+                                continue;
+                            }
+
+                            if (readTemp && System.IO.File.Exists(tempName))
+                            {
+                                fn = tempName;
+                            }
+
+                            Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s" + " Loading {0}...", fn);
+                            envFileName[envi] = fn;
+                            if (!withDb)
+                            {
+                                env[envi] = new AdminShellPackageEnv(fn, true, false);
+                                if (env[envi] == null)
+                                {
+                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                                    return 1;
+                                }
+                            }
+                            else
+                            {
+                                envFileName[envi] = null;
+                                env[envi] = null;
+
+                                using (var asp = new AdminShellPackageEnv(fn, false, true))
+                                {
+                                    if (!createFilesOnly)
+                                    {
+                                        using (AasContext db = new AasContext())
+                                        {
+                                            var configDBList = db.DbConfigSets.Where(d => true);
+                                            var dbConfig = configDBList.FirstOrDefault();
+
+                                            long aasxNum = ++dbConfig.AASXCount;
+                                            var aasxDB = new AASXSet
+                                            {
+                                                AASXNum = aasxNum,
+                                                AASX = fn
+                                            };
+                                            db.Add(aasxDB);
+
+                                            var aas = asp.AasEnv.AssetAdministrationShells[0];
+                                            var aasId = aas.Id;
+                                            var assetId = aas.AssetInformation.GlobalAssetId;
+
+                                            // Check security
+                                            if (aas.IdShort.ToLower().Contains("globalsecurity"))
+                                            {
+                                                // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                                                // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                                            }
+                                            else
+                                            {
+                                                if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                                                {
+                                                    long aasNum = ++dbConfig.AasCount;
+                                                    var aasDB = new AasSet
+                                                    {
+                                                        AasNum = aasNum,
+                                                        AasId = aasId,
+                                                        AssetId = assetId,
+                                                        AASXNum = aasxNum,
+                                                        Idshort = aas.IdShort,
+                                                        AssetKind = aas.AssetInformation.AssetKind.ToString()
+                                                    };
+                                                    db.Add(aasDB);
+
+                                                    // Iterate submodels
+                                                    if (aas.Submodels != null && aas.Submodels.Count > 0)
+                                                    {
+                                                        foreach (var smr in aas.Submodels)
+                                                        {
+                                                            var sm = asp.AasEnv.FindSubmodel(smr);
+                                                            if (sm != null)
+                                                            {
+                                                                var semanticId = sm.SemanticId.GetAsIdentifier();
+                                                                if (semanticId == null)
+                                                                    semanticId = "";
+
+                                                                long submodelNum = ++dbConfig.SubmodelCount;
+
+                                                                var submodelDB = new SubmodelSet
+                                                                {
+                                                                    SubmodelNum = submodelNum,
+                                                                    SubmodelId = sm.Id,
+                                                                    SemanticId = semanticId,
+                                                                    AASXNum = aasxNum,
+                                                                    AasNum = aasNum,
+                                                                    Idshort = sm.IdShort
+                                                                };
+                                                                db.Add(submodelDB);
+
+                                                                VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
+                                                                v.Visit(sm);
+                                                            }
+                                                        }
+                                                        // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
+                                                    }
+                                                }
+                                            }
+                                            db.SaveChanges();
+                                            /*
+                                            Task t = db.SaveChangesAsync();
+                                            if (saveTasks.Count == maxTasks)
+                                            {
+                                                // search for completed task
+                                                int i = 0;
+                                                while (!saveTasks[i].IsCompleted && i < maxTasks)
+                                                {
+                                                    i++;
+                                                }
+                                                if (i < maxTasks)
+                                                {
+                                                    taskIndex = i;
+                                                }
+                                                else
+                                                {
+                                                    await saveTasks[taskIndex];
+                                                }
+                                            }
+                                            if (taskIndex <= saveTasks.Count)
+                                            {
+                                                saveTasks.Add(t);
+                                            }
+                                            else
+                                            {
+                                                saveTasks[taskIndex] = t;
+                                            }
+                                            taskIndex++;
+                                            if (taskIndex >= maxTasks)
+                                                taskIndex = 0;
+                                            */
+                                        }
+                                    }
+
+                                    if (withDbFiles)
+                                    {
+                                        try
+                                        {
+                                            string fcopyt = name + "__thumbnail";
+                                            fcopyt = fcopyt.Replace("/", "_");
+                                            fcopyt = fcopyt.Replace(".", "_");
+                                            Uri dummy = null;
+                                            using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                                            {
+                                                Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                                var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                                st.CopyTo(fst);
+                                            }
+                                        }
+                                        catch { }
+
+                                        using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + name + ".zip", FileMode.Create))
+                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+                                        {
+                                            var files = asp.GetListOfSupplementaryFiles();
+                                            foreach (var f in files)
+                                            {
+                                                try
+                                                {
+                                                    // string fcopy = name + "__" + f.Uri.OriginalString;
+                                                    // fcopy = fcopy.Replace("/", "_");
+                                                    // fcopy = fcopy.Replace(".", "_");
+                                                    using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
+                                                    {
+                                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                                        Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                                                        using (var archiveStream = archiveFile.Open())
+                                                        {
+                                                            // Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                                                            // var fs = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                                                            s.CopyTo(archiveStream);
+                                                        }
+                                                    }
+                                                }
+                                                catch { }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // check if signed
+                            string fileCert = "./user/" + name + ".cer";
+                            if (System.IO.File.Exists(fileCert))
+                            {
+                                X509Certificate2 x509 = new X509Certificate2(fileCert);
+                                envSymbols[envi] = "S";
+                                envSubjectIssuer[envi] = x509.Subject;
+
+                                X509Chain chain = new X509Chain();
+                                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                                bool isValid = chain.Build(x509);
+                                if (isValid)
+                                {
+                                    envSymbols[envi] += ";V";
+                                    envSubjectIssuer[envi] += ";" + x509.Issuer;
+                                }
+                            }
+                        }
+                        fi++;
+                        if (withDb)
+                        {
+                            if (fi % 500 == 0) // every 500
+                            {
+                                /*
+                                Console.WriteLine("DB Save Changes");
+                                db.SaveChanges();
+                                db.ChangeTracker.Clear();
+                                System.GC.Collect();
+                                */
                             }
                         }
                         else
                         {
-                            envFileName[envi] = null;
-                            env[envi] = null;
-
-                            using (var asp = new AdminShellPackageEnv(fn, false, true))
-                            {
-                                if (!createFilesOnly)
-                                {
-                                    using (AasContext db = new AasContext())
-                                    {
-                                        var configDBList = db.DbConfigSets.Where(d => true);
-                                        var dbConfig = configDBList.FirstOrDefault();
-
-                                        long aasxNum = ++dbConfig.AASXCount;
-                                        var aasxDB = new AASXSet
-                                        {
-                                            AASXNum = aasxNum,
-                                            AASX = fn
-                                        };
-                                        db.Add(aasxDB);
-
-                                        var aas = asp.AasEnv.AssetAdministrationShells[0];
-                                        var aasId = aas.Id;
-                                        var assetId = aas.AssetInformation.GlobalAssetId;
-
-                                        // Check security
-                                        if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                                        {
-                                            // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                                            // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                                        }
-                                        else
-                                        {
-                                            if (aasId != null && aasId != "" && assetId != null && assetId != "")
-                                            {
-                                                long aasNum = ++dbConfig.AasCount;
-                                                var aasDB = new AasSet
-                                                {
-                                                    AasNum = aasNum,
-                                                    AasId = aasId,
-                                                    AssetId = assetId,
-                                                    AASXNum = aasxNum,
-                                                    Idshort = aas.IdShort,
-                                                    AssetKind = aas.AssetInformation.AssetKind.ToString()
-                                                };
-                                                db.Add(aasDB);
-
-                                                // Iterate submodels
-                                                if (aas.Submodels != null && aas.Submodels.Count > 0)
-                                                {
-                                                    foreach (var smr in aas.Submodels)
-                                                    {
-                                                        var sm = asp.AasEnv.FindSubmodel(smr);
-                                                        if (sm != null)
-                                                        {
-                                                            var semanticId = sm.SemanticId.GetAsIdentifier();
-                                                            if (semanticId == null)
-                                                                semanticId = "";
-
-                                                            long submodelNum = ++dbConfig.SubmodelCount;
-
-                                                            var submodelDB = new SubmodelSet
-                                                            {
-                                                                SubmodelNum = submodelNum,
-                                                                SubmodelId = sm.Id,
-                                                                SemanticId = semanticId,
-                                                                AASXNum = aasxNum,
-                                                                AasNum = aasNum,
-                                                                Idshort = sm.IdShort
-                                                            };
-                                                            db.Add(submodelDB);
-
-                                                            VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
-                                                            v.Visit(sm);
-                                                        }
-                                                    }
-                                                    // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
-                                                }
-                                            }
-                                        }
-                                        db.SaveChanges();
-                                        /*
-                                        Task t = db.SaveChangesAsync();
-                                        if (saveTasks.Count == maxTasks)
-                                        {
-                                            // search for completed task
-                                            int i = 0;
-                                            while (!saveTasks[i].IsCompleted && i < maxTasks)
-                                            {
-                                                i++;
-                                            }
-                                            if (i < maxTasks)
-                                            {
-                                                taskIndex = i;
-                                            }
-                                            else
-                                            {
-                                                await saveTasks[taskIndex];
-                                            }
-                                        }
-                                        if (taskIndex <= saveTasks.Count)
-                                        {
-                                            saveTasks.Add(t);
-                                        }
-                                        else
-                                        {
-                                            saveTasks[taskIndex] = t;
-                                        }
-                                        taskIndex++;
-                                        if (taskIndex >= maxTasks)
-                                            taskIndex = 0;
-                                        */
-                                    }
-                                }
-
-                                if (withDbFiles)
-                                {
-                                    try
-                                    {
-                                        string fcopyt = name + "__thumbnail";
-                                        fcopyt = fcopyt.Replace("/", "_");
-                                        fcopyt = fcopyt.Replace(".", "_");
-                                        Uri dummy = null;
-                                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
-                                        {
-                                            Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                            var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                            st.CopyTo(fst);
-                                        }
-                                    }
-                                    catch { }
-
-                                    using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                                    {
-                                        var files = asp.GetListOfSupplementaryFiles();
-                                        foreach (var f in files)
-                                        {
-                                            try
-                                            {
-                                                // string fcopy = name + "__" + f.Uri.OriginalString;
-                                                // fcopy = fcopy.Replace("/", "_");
-                                                // fcopy = fcopy.Replace(".", "_");
-                                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                                {
-                                                    var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                                    Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                                    using (var archiveStream = archiveFile.Open())
-                                                    {
-                                                        // Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                                        // var fs = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                                        s.CopyTo(archiveStream);
-                                                    }
-                                                }
-                                            }
-                                            catch { }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // check if signed
-                        string fileCert = "./user/" + name + ".cer";
-                        if (System.IO.File.Exists(fileCert))
-                        {
-                            X509Certificate2 x509 = new X509Certificate2(fileCert);
-                            envSymbols[envi] = "S";
-                            envSubjectIssuer[envi] = x509.Subject;
-
-                            X509Chain chain = new X509Chain();
-                            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                            bool isValid = chain.Build(x509);
-                            if (isValid)
-                            {
-                                envSymbols[envi] += ";V";
-                                envSubjectIssuer[envi] += ";" + x509.Issuer;
-                            }
+                            envi++;
                         }
                     }
-                    fi++;
-                    if (withDb)
+                    catch
                     {
-                        if (fi % 500 == 0) // every 500
-                        {
-                            /*
-                            Console.WriteLine("DB Save Changes");
-                            db.SaveChanges();
-                            db.ChangeTracker.Clear();
-                            System.GC.Collect();
-                            */
-                        }
-                    }
-                    else
-                    {
-                        envi++;
+                        Console.WriteLine("Error with " + fileNames[fi]);
+                        fi++;
                     }
                 }
 

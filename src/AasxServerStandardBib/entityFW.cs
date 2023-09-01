@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
+using SpookilySharp;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -340,6 +341,7 @@ namespace AasxServer
         public long ParentSMENum { get; set; }
         public string Value { get; set; }
         public string Annotation { get; set; }
+        public long Hash { get; set; }
     }
 
     [Index(nameof(ParentSMENum))]
@@ -514,9 +516,16 @@ namespace AasxServer
                 bool withEqual = !withContains && (equal != "");
                 bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
 
+                long hashvalue = 0;
+                if (withEqual)
+                {
+                    hashvalue = equal.SpookyHash64();
+                }
+                
+
                 var list = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal)
+                    (withEqual && (!withHash || v.Hash == hashvalue) && v.Value == equal)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -603,6 +612,7 @@ namespace AasxServer
             return result;
         }
 
+        bool withHash = true;
         public int CountSMEs(
             string submodelSemanticId = "", string semanticId = "",
             string equal = "", string lower = "", string upper = "", string contains = "")
@@ -646,7 +656,7 @@ namespace AasxServer
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 Console.WriteLine();
-                Console.WriteLine("SearchSMEs");
+                Console.WriteLine("CountSMEs");
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
@@ -654,9 +664,15 @@ namespace AasxServer
                 bool withEqual = !withContains && (equal != "");
                 bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
 
+                long hashvalue = 0;
+                if (withEqual)
+                {
+                    hashvalue = equal.SpookyHash64();
+                }
+
                 c = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal)
+                    (withEqual && (!withHash || v.Hash == hashvalue) && v.Value == equal) 
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -850,7 +866,8 @@ namespace AasxServer
                         {
                             Annotation = ls[i].Language,
                             Value = ls[i].Text,
-                            ParentSMENum = smeNum
+                            ParentSMENum = smeNum,
+                            Hash = ls[i].Text.SpookyHash64()
                         };
                         _db.Add(mlpval);
                     }
@@ -908,8 +925,9 @@ namespace AasxServer
                 {
                     ParentSMENum = smeNum,
                     Value = sValue,
-                    Annotation = ""
-                };
+                    Annotation = "",
+                    Hash = sValue.SpookyHash64()
+            };
                 _db.Add(ValueDB);
             }
             if (vt == "I")

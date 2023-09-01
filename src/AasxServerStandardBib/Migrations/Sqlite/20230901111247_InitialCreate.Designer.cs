@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerStandardBib.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20230823141705_InitialCreate")]
+    [Migration("20230901111247_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -180,6 +180,9 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
                     b.Property<string>("Annotation")
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("Hash")
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("ParentSMENum")
                         .HasColumnType("INTEGER");
