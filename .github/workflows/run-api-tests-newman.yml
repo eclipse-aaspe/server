@@ -1,0 +1,43 @@
+name: newman_tests
+
+on:
+  push
+  #workflow_dispatch
+
+jobs:
+  api-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+    - name: Setup Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: Install Newman and HTML Reporter
+      run: |
+       npm install -g newman@5.3.1
+       npm install -g newman-reporter-htmlextra@1.22.7
+    - name: Restore dependencies
+      run: dotnet restore ./src/AasxServerBlazor/AasxServerBlazor.csproj
+    - name: Build
+      run: dotnet build ./src/AasxServerBlazor/AasxServerBlazor.csproj -c Release -o ./build
+    - name: Start Test Server And Execute Test Scripts
+      run: |
+       cd build
+       dotnet ./AasxServerBlazor.dll --aspnet --data-path ../test/rest_api/data &
+       sleep 10
+       cd ..
+       newman run ./test/rest_api/postman/AASTests.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
+       kill -9 `lsof -i:5001 -t`
+    - name: Upload Report
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: report.html
+        path: ./report.html
