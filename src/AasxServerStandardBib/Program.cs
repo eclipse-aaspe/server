@@ -1003,7 +1003,6 @@ namespace AasxServer
             int count = 0;
 
             // Migrate always
-            /*
             if (withDb)
             {
                 if (isPostgres)
@@ -1023,11 +1022,11 @@ namespace AasxServer
                     }
                 }
             }
-            */
 
             // Clear DB
             if (withDb && startIndex == 0 && !createFilesOnly)
             {
+                /*
                 if (isPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
@@ -1044,31 +1043,27 @@ namespace AasxServer
                         db.Database.Migrate();
                     }
                 }
+                */
 
                 using (AasContext db = new AasContext())
                 {
-                    try
-                    {
-                        var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
-                        task.Wait();
-                        task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
-                        task.Wait();
-                    }
-                    catch
-                    {
-                    }
+                    var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
+                    task.Wait();
+                    task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
+                    task.Wait();
+
                     DbConfigSet dbConfig = null;
                     dbConfig = new DbConfigSet
                     {
