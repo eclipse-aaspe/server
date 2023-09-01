@@ -1002,7 +1002,8 @@ namespace AasxServer
             int envi = 0;
             int count = 0;
 
-            // Migrate
+            // Migrate always
+            /*
             if (withDb)
             {
                 if (isPostgres)
@@ -1022,10 +1023,28 @@ namespace AasxServer
                     }
                 }
             }
+            */
 
             // Clear DB
             if (withDb && startIndex == 0 && !createFilesOnly)
             {
+                if (isPostgres)
+                {
+                    Console.WriteLine("Use POSTGRES");
+                    using (PostgreAasContext db = new PostgreAasContext())
+                    {
+                        db.Database.Migrate();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Use SQLITE");
+                    using (SqliteAasContext db = new SqliteAasContext())
+                    {
+                        db.Database.Migrate();
+                    }
+                }
+
                 using (AasContext db = new AasContext())
                 {
                     DbConfigSet dbConfig = null;
