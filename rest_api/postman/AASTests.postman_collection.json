@@ -1,0 +1,1268 @@
+{
+	"info": {
+		"_postman_id": "ad2147f6-d564-40aa-8723-9bcde9cfce4a",
+		"name": "AASTests",
+		"description": "Collection dedicated for basic Operations on Submodel Elements.\n\nSome test data is predefined and is available in a special aasx demo file.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SubmodelElements",
+			"item": [
+				{
+					"name": "property",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is Property\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"Property\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"ValueId is defined\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.valueId).to.be.not.undefined;\r",
+									"    pm.expect(response.valueId.type).to.be.not.undefined;\r",
+									"    pm.expect(response.valueId.keys).to.be.not.undefined;\r",
+									"    });\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testProperty",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "submodelelementcollection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is SubmodelElementCollection\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"SubmodelElementCollection\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Value is array and length greater than 0\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.value).to.be.an(\"array\");\r",
+									"    pm.expect(response.value.length).to.be.greaterThan(0);\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"SubmodelElement Child is defined correctly\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    for (let i = 0; i < response.value.length; i++) {\r",
+									"        pm.expect(response.value[i].idShort).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].idShort).to.be.not.null;\r",
+									"        pm.expect(response.value[i].valueType).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].valueType).to.be.not.null;\r",
+									"        pm.expect(response.value[i].value).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].value).to.be.not.null;\r",
+									"        pm.expect(response.value[i].modelType).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].modelType).to.be.not.null;\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testSMC",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "submodelelementlist",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is SubmodelElementList\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"SubmodelElementList\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"typeValueListElement is defined and not null\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.typeValueListElement).to.be.not.undefined;\r",
+									"    pm.expect(response.typeValueListElement).to.be.not.null;\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Value is array and length greater than 0\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.value).to.be.an(\"array\");\r",
+									"    pm.expect(response.value.length).to.be.greaterThan(0);\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"SubmodelElement Child is defined correctly\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    for (let i = 0; i < response.value.length; i++) {\r",
+									"        pm.expect(response.value[i].idShort).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].idShort).to.be.not.null;\r",
+									"        pm.expect(response.value[i].valueType).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].valueType).to.be.not.null;\r",
+									"        pm.expect(response.value[i].value).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].value).to.be.not.null;\r",
+									"        pm.expect(response.value[i].modelType).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i].modelType).to.be.not.null;\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testSML",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "multilanguage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is MultiLanguageProperty\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"MultiLanguageProperty\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"MultiLanguageProperty Value is defined properly\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.value).to.be.an(\"array\");\r",
+									"    pm.expect(response.value.length).to.greaterThan(0);\r",
+									"    for (let i = 0; i < response.value.length; i++) {\r",
+									"        pm.expect(response.value[i]).to.be.not.undefined;\r",
+									"        pm.expect(response.value[i]).to.be.not.null;\r",
+									"    }\r",
+									"    });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testMLP",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "range",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Min is defined and not null\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.min).to.be.not.undefined;\r",
+									"    pm.expect(response.min).to.be.not.null;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Max is defined and not null\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.max).to.be.not.undefined;\r",
+									"    pm.expect(response.max).to.be.not.null;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Model Type is Range\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"Range\");\r",
+									"    });\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testrange",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "blob",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is Blob\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"Blob\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"contentType is defined and not null\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.contentType).to.be.not.undefined;\r",
+									"    pm.expect(response.contentType).to.be.not.null;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testBlob",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ref",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is ReferenceElement\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"ReferenceElement\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Value Type is defined and not null\", () => {\r",
+									"        const response = pm.response.json();\r",
+									"        pm.expect(response.value.type).to.be.not.undefined;\r",
+									"        pm.expect(response.value.type).to.be.not.null;\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Value ReferredSemanticId is defined and not null\", () => {\r",
+									"        const response = pm.response.json();\r",
+									"        pm.expect(response.value.referredSemanticId).to.be.not.undefined;\r",
+									"        pm.expect(response.value.referredSemanticId).to.be.not.null;\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Value ReferredSemanticId type is defined and not null\", () => {\r",
+									"        const response = pm.response.json();\r",
+									"        pm.expect(response.value.referredSemanticId.type).to.be.not.undefined;\r",
+									"        pm.expect(response.value.referredSemanticId.type).to.be.not.null;\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Value ReferredSemanticId Keys is defined and not null and array\", () => {\r",
+									"        const response = pm.response.json();\r",
+									"        pm.expect(response.value.referredSemanticId.keys).to.be.not.undefined;\r",
+									"        pm.expect(response.value.referredSemanticId.keys).to.be.not.null;\r",
+									"        pm.expect(response.value.referredSemanticId.keys).to.be.an(\"array\");\r",
+									"    });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testReference",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "relationship",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is RelationshipElement\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"RelationshipElement\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"First is defined\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.first).to.be.not.undefined;\r",
+									"    pm.expect(response.first.type).to.be.not.undefined;\r",
+									"    pm.expect(response.first.keys).to.be.not.undefined;\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"Second is defined\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.second).to.be.not.undefined;\r",
+									"    pm.expect(response.second.type).to.be.not.undefined;\r",
+									"    pm.expect(response.second.keys).to.be.not.undefined;\r",
+									"    });\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testRelationship",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "file",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is File\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"File\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"ContentType is defined\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.contentType).to.be.not.undefined;\r",
+									"    pm.expect(response.contentType).to.be.not.null;\r",
+									"    });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testFile",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "capability",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Model Type is Property\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.modelType).to.eql(\"Property\");\r",
+									"    });\r",
+									"\r",
+									"pm.test(\"ValueId is defined\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.valueId).to.be.not.undefined;\r",
+									"    pm.expect(response.valueId.type).to.be.not.undefined;\r",
+									"    pm.expect(response.valueId.keys).to.be.not.undefined;\r",
+									"    });\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"strictSSL": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath?content=normal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shells",
+								":aasIdentifier",
+								"submodels",
+								":submodelIdentifier",
+								"submodel-elements",
+								":idShortPath"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "",
+									"description": "Determines the structural depth of the respective resource content",
+									"disabled": true
+								},
+								{
+									"key": "content",
+									"value": "normal",
+									"description": "Determines the request or response kind of the resource"
+								},
+								{
+									"key": "extent",
+									"value": "",
+									"description": "Determines to which extent the resource is being serialized",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "aasIdentifier",
+									"value": "{{aas_id_b64}}",
+									"description": "(Required) The Asset Administration Shell’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "submodelIdentifier",
+									"value": "{{sm_id_b64}}",
+									"description": "(Required) The Submodel’s unique id (BASE64-URL-encoded)"
+								},
+								{
+									"key": "idShortPath",
+									"value": "testProperty",
+									"description": "(Required) IdShort path to the submodel element (dot-separated)"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+							"",
+							"pm.test(\"IdShort exists as a string\", () => {",
+							"    const response = pm.response.json();",
+							"    pm.expect(response.idShort).to.be.a(\"string\");",
+							"    });",
+							"",
+							"if (pm.response.json().modelType != \"Range\" && pm.response.json().modelType != \"Blob\" && pm.response.json().modelType != \"RelationshipElement\" ){ //Range uses min/max, not value, Blob doesnt have value",
+							"    pm.test(\"Value is defined and not null\", () => {",
+							"        const response = pm.response.json();",
+							"        pm.expect(response.value).to.be.not.undefined;",
+							"        pm.expect(response.value).to.be.not.null;",
+							"    });",
+							"}",
+							"",
+							"if (pm.response.json().valueType == \"Range\" || pm.response.json().valueType == \"Property\" ){ //Only Range and Property have ValueType",
+							"    pm.test(\"ValueType is defined and not null\", () => {",
+							"        const response = pm.response.json();",
+							"        pm.expect(response.valueType).to.be.not.undefined;",
+							"        pm.expect(response.valueType).to.be.not.null;",
+							"    });",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "submodel",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Model Type is Submodel\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.modelType).to.eql(\"Submodel\");\r",
+							"    });\r",
+							"\r",
+							"pm.test(\"DisplayName is array and length greater than 0\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.displayName).to.be.an(\"array\");\r",
+							"    pm.expect(response.displayName.length).to.be.greaterThan(0);\r",
+							"    });\r",
+							"\r",
+							"pm.test(\"DisplayName Elements are defined correctly\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    for (let i = 0; i < response.displayName.length; i++) {\r",
+							"        pm.expect(response.displayName[i].language).to.be.not.undefined;\r",
+							"        pm.expect(response.displayName[i].language).to.be.not.null;\r",
+							"        pm.expect(response.displayName[i].text).to.be.not.undefined;\r",
+							"        pm.expect(response.displayName[i].text).to.be.not.null;\r",
+							"    }\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Administration is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.administration).to.be.not.undefined;\r",
+							"    pm.expect(response.administration).to.be.not.null;\r",
+							"    pm.expect(response.administration.version).to.be.not.undefined;\r",
+							"    pm.expect(response.administration.version).to.be.not.null;\r",
+							"    pm.expect(response.administration.revision).to.be.not.undefined;\r",
+							"    pm.expect(response.administration.revision).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Id is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.id).to.be.not.undefined;\r",
+							"    pm.expect(response.id).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Kind is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.kind).to.be.not.undefined;\r",
+							"    pm.expect(response.kind).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"SemanticId is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.semanticId).to.be.not.undefined;\r",
+							"    pm.expect(response.semanticId).to.be.not.null;\r",
+							"    pm.expect(response.semanticId.type).to.be.not.undefined;\r",
+							"    pm.expect(response.semanticId.type).to.be.not.null;\r",
+							"    pm.expect(response.semanticId.keys).to.be.not.undefined;\r",
+							"    pm.expect(response.semanticId.keys).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"SubmodelElements is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.submodelElements).to.be.not.undefined;\r",
+							"    pm.expect(response.submodelElements).to.be.not.null;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"shells",
+						":aasIdentifier",
+						"submodels",
+						":submodelIdentifier"
+					],
+					"variable": [
+						{
+							"key": "aasIdentifier",
+							"value": "{{aas_id_b64}}"
+						},
+						{
+							"key": "submodelIdentifier",
+							"value": "{{sm_id_b64}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "aas",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Model Type is AssetAdministrationShell\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.modelType).to.eql(\"AssetAdministrationShell\");\r",
+							"    });\r",
+							"\r",
+							"pm.test(\"Description is array and length greater than 0\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.description).to.be.an(\"array\");\r",
+							"    pm.expect(response.description.length).to.be.greaterThan(0);\r",
+							"    });\r",
+							"\r",
+							"pm.test(\"Description Elements are defined correctly\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    for (let i = 0; i < response.description.length; i++) {\r",
+							"        pm.expect(response.description[i].language).to.be.not.undefined;\r",
+							"        pm.expect(response.description[i].language).to.be.not.null;\r",
+							"        pm.expect(response.description[i].text).to.be.not.undefined;\r",
+							"        pm.expect(response.description[i].text).to.be.not.null;\r",
+							"    }\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Id is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.id).to.be.not.undefined;\r",
+							"    pm.expect(response.id).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation AssetKind is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.assetKind).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation.assetKind).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation globalAssetId is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.globalAssetId).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation.globalAssetId).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation assetType is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.assetType).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation.assetType).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation SpecificAssetIds is defined\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.specificAssetIds).to.be.not.undefined;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Submodels is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.submodels).to.be.not.undefined;\r",
+							"    pm.expect(response.submodels).to.be.not.null;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/shells/:aasIdentifier",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"shells",
+						":aasIdentifier"
+					],
+					"variable": [
+						{
+							"key": "aasIdentifier",
+							"value": "{{aas_id_b64}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "aas Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Model Type is AssetAdministrationShell\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.modelType).to.eql(\"AssetAdministrationShell\");\r",
+							"    });\r",
+							"\r",
+							"pm.test(\"Description is array and length greater than 0\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.description).to.be.an(\"array\");\r",
+							"    pm.expect(response.description.length).to.be.greaterThan(0);\r",
+							"    });\r",
+							"\r",
+							"pm.test(\"Description Elements are defined correctly\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    for (let i = 0; i < response.description.length; i++) {\r",
+							"        pm.expect(response.description[i].language).to.be.not.undefined;\r",
+							"        pm.expect(response.description[i].language).to.be.not.null;\r",
+							"        pm.expect(response.description[i].text).to.be.not.undefined;\r",
+							"        pm.expect(response.description[i].text).to.be.not.null;\r",
+							"    }\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Id is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.id).to.be.not.undefined;\r",
+							"    pm.expect(response.id).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation AssetKind is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.assetKind).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation.assetKind).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation globalAssetId is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.globalAssetId).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation.globalAssetId).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation assetType is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.assetType).to.be.not.undefined;\r",
+							"    pm.expect(response.assetInformation.assetType).to.be.not.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"AssetInformation SpecificAssetIds is defined\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.assetInformation.specificAssetIds).to.be.not.undefined;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Submodels is defined and not null\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response.submodels).to.be.not.undefined;\r",
+							"    pm.expect(response.submodels).to.be.not.null;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/shells/:aasIdentifier",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"shells",
+						":aasIdentifier"
+					],
+					"variable": [
+						{
+							"key": "aasIdentifier",
+							"value": "{{aas_id_b64}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+					"",
+					"pm.test(\"IdShort exists as a string\", () => {",
+					"    const response = pm.response.json();",
+					"    pm.expect(response.idShort).to.be.a(\"string\");",
+					"    });"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "aas_id_b64",
+			"value": "QXNzZXRBZG1pbmlzdHJhdGlvblNoZWxsLS0tMTU4NzZDQUU=",
+			"type": "string"
+		},
+		{
+			"key": "sm_id_b64",
+			"value": "aHR0cHM6Ly9leGFtcGxlLmNvbS9pZHMvc20vOTA0MV84MDMyXzIwMjJfNTM3Ng==",
+			"type": "string"
+		},
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5001",
+			"type": "string"
+		}
+	]
+}
