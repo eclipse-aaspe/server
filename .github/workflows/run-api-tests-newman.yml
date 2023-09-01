@@ -33,7 +33,7 @@ jobs:
        ls -l
        cd build
        ls -l
-       dotnet AasxServerBlazor.dll --rest --no-security --data-path ../test/rest_api/data --host 0.0.0.0 $OPTIONSAASXSERVER
+       dotnet AasxServerBlazor.dll --rest --no-security --data-path ../test/rest_api/data --host 0.0.0.0 $OPTIONSAASXSERVER &
        sleep 10
        cd ..
        newman run ./test/rest_api/postman/AASTests.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
