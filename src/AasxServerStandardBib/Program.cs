@@ -1097,7 +1097,7 @@ namespace AasxServer
                 int fi = 0;
                 while (fi < fileNames.Length)
                 {
-                    try
+                    // try
                     {
                         fn = fileNames[fi];
                         if (fn.ToLower().Contains("globalsecurity"))
@@ -1356,11 +1356,13 @@ namespace AasxServer
                             envi++;
                         }
                     }
+                    /*
                     catch
                     {
                         Console.WriteLine("Error with " + fileNames[fi]);
                         fi++;
                     }
+                    */
                 }
 
                 if (saveTemp == -1)
