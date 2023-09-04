@@ -36,7 +36,8 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
             }
             else if (IsGenericListOfAasDesc(context.Object))
             {
-                return base.CanWriteResult(context);
+                //return base.CanWriteResult(context);
+                return true;
             }
             else if (typeof(AasDescriptorPagedResult).IsAssignableFrom(context.ObjectType))
             {
