@@ -504,9 +504,6 @@
                                             if (sme is File f)
                                             {
                                                 PreviewFile[count] = f.Value;
-                                                string path = getPath(f);
-                                                if (path != null)
-                                                    PreviewFileUrl[count] = path;
                                             }
                                         }
 
@@ -673,6 +670,21 @@
                                         }
                                     }
                                 }
+                                if (sm.IdShort.ToLower() == "handoverdocumentation")
+                                {
+                                    if (PreviewFile[count] != "")
+                                    {
+                                        var sme = findeSMEValue(sm: sm, value: PreviewFile[count]);
+                                        if (sme != null)
+                                        {
+                                            var path = getPath(sme);
+                                            if (path != null)
+                                            {
+                                                PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                            }
+                                        }
+                                    }
+                                }
                                 if (sm.IdShort.ToLower() == "technicaldata")
                                 {
                                     TechnicalData.Add(sm as Submodel);
@@ -775,6 +787,56 @@
                 iLevel[level]++;
                 while (level >= 0 && iLevel[level] == levelSMEs[level].Count)
                 {
+                    level--;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    ISubmodelElement findeSMEValue(ISubmodel sm = null, ISubmodelElementCollection smc = null, string value = null)
+    {
+        if (value == null)
+            return null;
+
+        int level = 0;
+        List<List<ISubmodelElement>> levelSMEs = new List<List<ISubmodelElement>>();
+        List<int> iLevel = new List<int>();
+        iLevel.Add(0);
+
+        if (sm != null)
+        {
+            levelSMEs.Add(sm.SubmodelElements);
+        }
+        else if (smc != null)
+        {
+            levelSMEs.Add(smc.Value);
+        }
+        else
+            return null;
+
+        while (level >= 0 && levelSMEs[level] != null && levelSMEs[level].Count != 0)
+        {
+            while (level >= 0 && iLevel[level] < levelSMEs[level].Count)
+            {
+                ISubmodelElement sme = levelSMEs[level][iLevel[level]];
+
+                if (sme.ValueAsText() == value)
+                    return sme;
+                if (sme is SubmodelElementCollection smc2)
+                {
+                    iLevel[level]++;
+                    levelSMEs.Add(smc2.Value);
+                    iLevel.Add(0);
+                    level++;
+                    continue;
+                }
+                iLevel[level]++;
+                while (level >= 0 && iLevel[level] == levelSMEs[level].Count)
+                {
+                    levelSMEs.RemoveAt(level);
+                    iLevel.RemoveAt(level);
                     level--;
                 }
             }
