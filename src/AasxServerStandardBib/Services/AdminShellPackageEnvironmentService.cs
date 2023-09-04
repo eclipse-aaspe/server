@@ -75,7 +75,7 @@ namespace AasxServerStandardBib.Services
                 {
                     _logger.LogDebug($"Deleted Asset Administration Shell with id {aas.Id}");
                     //if no more shells in the environment, then remove the environment
-                    //TODO:jtikekar: what about submodels and concept descriptions for the same environment
+                    // TODO (jtikekar, 2023-09-04): what about submodels and concept descriptions for the same environment
                     if (_packages[packageIndex].AasEnv.AssetAdministrationShells.Count == 0)
                     {
                         _packages[packageIndex] = null;
@@ -285,7 +285,6 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        //TODO:jtikekar hide out packageIndex ??
         public IConceptDescription GetConceptDescriptionById(string cdIdentifier, out int packageIndex)
         {
             var found = IsConceptDescriptionPresent(cdIdentifier, out IConceptDescription output, out packageIndex);
@@ -432,7 +431,7 @@ namespace AasxServerStandardBib.Services
                     {
                         foreach (var s in env.Submodels)
                         {
-                            //TODO:jtikekar uncomment and support
+                            // TODO (jtikekar, 2023-09-04): uncomment and support
                             //if (SecurityCheckTestOnly(s.IdShort, "", s))
                             output.Add(s);
                         }

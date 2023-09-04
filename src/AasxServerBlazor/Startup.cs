@@ -6,21 +6,21 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Services;
 using IO.Swagger.Controllers;
-using IO.Swagger.Filters;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Middleware;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;
+using IO.Swagger.Registry.Lib.V3.Formatters;
+using IO.Swagger.Registry.Lib.V3.Interfaces;
+using IO.Swagger.Registry.Lib.V3.Services;
 using Microsoft.AspNetCore.Authorization;
-//using IO.Swagger.Controllers;
-//using IO.Swagger.Filters;
-//using IO.Swagger.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,6 +56,11 @@ namespace AasxServerBlazor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            //jtikekar: changed w.r.t. AasDescriptorResponseFormatter
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+            });
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
@@ -80,6 +85,7 @@ namespace AasxServerBlazor
             services.AddLazyResolution();
             services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
             services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
@@ -98,6 +104,8 @@ namespace AasxServerBlazor
             services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
             services.AddTransient<ISecurityService, SecurityService>();
+            services.AddTransient<IAasRegistryService, AasRegistryService>();
+            services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
 
             // Add GraphQL services
             services
@@ -116,6 +124,9 @@ namespace AasxServerBlazor
                     options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
                     options.InputFormatters.Add(new AasRequestFormatter());
                     options.OutputFormatters.Add(new AasResponseFormatter());
+                    options.InputFormatters.Add(new AasDescriptorRequestFormatter());
+                    options.OutputFormatters.Add(new AasDescriptorResponseFormatter());
+
                 })
                 .AddNewtonsoftJson(opts =>
                 {
@@ -159,7 +170,7 @@ namespace AasxServerBlazor
                     // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
                     // Use [ValidateModelState] on Actions to actually validate it in C# as well!
 
-                    c.OperationFilter<GeneratePathParamsValidationFilter>();
+                    c.OperationFilter<IO.Swagger.Filters.GeneratePathParamsValidationFilter>();
                 });
             services.AddAuthentication("AasSecurityAuth")
                 .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>("AasSecurityAuth", null);

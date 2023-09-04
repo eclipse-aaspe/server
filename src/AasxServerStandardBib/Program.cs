@@ -1843,7 +1843,7 @@ namespace AasxServer
         /* AAS Detail Part 2 Descriptor Definitions END*/
 
         /* Creation of AAS Descriptor */
-        //TODO: jtikekar Remove for now
+        // TODO (jtikekar, 2023-09-04): Remove for now
         public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
         {
             aasDescriptor aasD = new aasDescriptor();

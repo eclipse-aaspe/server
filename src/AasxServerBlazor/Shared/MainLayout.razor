@@ -4,7 +4,9 @@
 @* @inject Data.CredentialService cs *@
 @using AasCore.Aas3_0;
 @using AasxServer
+@inject IRegistryInitializerService AasRegistryService
 @using System
+@using IO.Swagger.Registry.Lib.V3.Interfaces;
 @using Microsoft.IdentityModel.Tokens;
 <style>
     .loader {
@@ -207,6 +209,10 @@
                                                 AasxServer.AasxTask.resetTimeStamp();
                                                 loading = false;
                                             }
+                                            // JUIJUI
+                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
+                                            AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
+                                            // JUIJUI
                                             CurrentValue = "";
                                             this.StateHasChanged();
                                         }

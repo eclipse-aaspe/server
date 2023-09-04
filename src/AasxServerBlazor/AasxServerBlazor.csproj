@@ -33,12 +33,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AasSecurity\AasSecurity.csproj" />
     <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
     <ProjectReference Include="..\es6numberserializer\es6numberserializer.csproj" />
     <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj" />
+    <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj" />
     <!--<ProjectReference Include="..\IO.Swagger.AasEnvApi.V1RC03\src\IO.Swagger\IO.Swagger.AasEnvApi.V1RC03.csproj" />-->
     <!--<ProjectReference Include="..\IO.Swagger.Lib\IO.Swagger.Lib.csproj" />-->
-    <ProjectReference Include="..\IO.Swagger.Registry.Lib\IO.Swagger.Registry.csproj" />
     <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
   </ItemGroup>
 

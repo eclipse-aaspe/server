@@ -1,6 +1,6 @@
 ﻿namespace Extensions
 {
-    //TODO:jtikekar remove
+    // TODO (jtikekar, 2023-09-04):Remove
     public static class ExtendLangString
     {
         // constants

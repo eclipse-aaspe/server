@@ -254,7 +254,7 @@ namespace AasOpcUaServer
         }
 
         //public NodeState CreateAddElements(NodeState parent, CreateMode mode, AssetKind kind = null,
-        //TODO: jtikekar What should be the default of AssetKind
+        // TODO (jtikekar, 2023-09-04): What should be the default of AssetKind
         public NodeState CreateAddElements(NodeState parent, CreateMode mode, AssetKind kind = AssetKind.Type,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
@@ -279,7 +279,7 @@ namespace AasOpcUaServer
         }
 
         //public NodeState CreateAddElements(NodeState parent, CreateMode mode, ModelingKind kind = null,
-        //TODO:jtikekar: default value of ModellingKind
+        // TODO (jtikekar, 2023-09-04): default value of ModellingKind
         public NodeState CreateAddElements(NodeState parent, CreateMode mode, ModellingKind kind = ModellingKind.Template,
             AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
         {
@@ -1166,19 +1166,11 @@ namespace AasOpcUaServer
 
             // containing element
             var to = GetTypeObject().NodeId;
-            //TODO:jtikekar Collection does not have order 
-            //if (coll.ordered && this.typeObjectOrdered != null)
-            //    to = this.typeObjectOrdered.NodeId;
             var o = this.entityBuilder.CreateAddObject(parent, CreateMode.Instance,
                 "" + coll.IdShort, ReferenceTypeIds.HasComponent, to);
 
             // populate common attributes
             base.PopulateInstanceObject(o, coll);
-
-            // own attributes
-            //TODO: jtikekar Collection does not have allow duplicates
-            //this.entityBuilder.CreateAddPropertyState<bool>(o, CreateMode.Instance, "AllowDuplicates",
-            //    DataTypeIds.Boolean, coll.allowDuplicates, defaultSettings: true);
 
             // values
             if (coll.Value != null)
@@ -1646,7 +1638,7 @@ namespace AasOpcUaServer
                 modellingRule: AasUaNodeHelper.ModellingRule.Mandatory);
         }
 
-        //TODO: jtikekar Temporarily commented
+        // TODO (jtikekar, 2023-09-04): jtikekar Temporarily commented
         //public NodeState CreateAddElements(NodeState parent, CreateMode mode,
         //    AdminShell.DataSpecificationIEC61360 ds = null,
         //    AasUaNodeHelper.ModellingRule modellingRule = AasUaNodeHelper.ModellingRule.None)
@@ -1788,7 +1780,7 @@ namespace AasOpcUaServer
                     modellingRule: AasUaNodeHelper.ModellingRule.OptionalPlaceholder);
 
                 // data specification is a child
-                //TODO: jtikekar : Temporarily commented
+                // TODO (jtikekar, 2023-09-04): Temporarily commented
                 //this.entityBuilder.AasTypes.DataSpecificationIEC61360.CreateAddElements(o, CreateMode.Type,
                 //    modellingRule: AasUaNodeHelper.ModellingRule.MandatoryPlaceholder);
             }
@@ -1838,7 +1830,7 @@ namespace AasOpcUaServer
                     // Conventional approach: build up a speaking name
                     // but: shall be target of "HasDictionaryEntry", therefore the __PURE__ identifications 
                     // need to be the name!
-                    //TODO: jtikekar Temporarily commented
+                    // TODO (jtikekar, 2023-09-04): Temporarily commented
                     //if (cd.GetIEC61360() != null)
                     //{
                     //    var ds = cd.GetIEC61360();
@@ -1878,14 +1870,14 @@ namespace AasOpcUaServer
                             o, CreateMode.Instance, ico, "IsCaseOf");
 
                 // HasDataSpecification solely under the viewpoint of IEC61360
-                //TODO: jtikekar Temporarily commented
+                // TODO (jtikekar, 2023-09-04): Temporarily commented
                 //var eds = cd.embeddedDataSpecification?.IEC61360;
                 //if (eds != null)
                 //    this.entityBuilder.AasTypes.Reference.CreateAddElements(
                 //        o, CreateMode.Instance, eds.dataSpecification, "DataSpecification");
 
                 // data specification is a child
-                //TODO: jtikekar Temporarily commented
+                /// TODO (jtikekar, 2023-09-04): Temporarily commented
                 //var ds61360 = cd.embeddedDataSpecification?.IEC61360Content;
                 //if (ds61360 != null)
                 //{

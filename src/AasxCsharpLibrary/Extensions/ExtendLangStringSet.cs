@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Extensions
 {
-    //TODO:jtikekar remove or seperate
+    // TODO (jtikekar, 2023-09-04): remove or seperate
     public static class ExtendLangStringSet
     {
         #region AasxPackageExplorer

@@ -55,7 +55,7 @@
             }
             set
             {
-                //TODO:jtikekar check with Andreas about Base64Encoding. May need to decode
+                // TODO (jtikekar, 2023-09-04): @Andreas about Base64Encoding. May need to decode
 
                 _cursor = value;
             }

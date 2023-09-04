@@ -699,7 +699,7 @@ namespace AasxDemonstration
                             continue;
 
                         // relevant?
-                        //TODO:jtikekar check with Andreas
+                        // TODO (jtikekar, 2023-09-04): check with Andreas
                         //if ((smcsegt.Kind.Value == ModellingKind.Template) && first)
                         {
                             first = false;

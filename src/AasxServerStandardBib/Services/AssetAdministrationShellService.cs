@@ -51,7 +51,7 @@ namespace AasxServerStandardBib.Services
             //Verify request body
             _verificationService.VerifyRequestBody(body);
 
-            //TODO:jtikekar to check if submodel with requested submodelReference exists in the server
+            // TODO (jtikekar, 2023-09-04): to check if submodel with requested submodelReference exists in the server
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
 
             if (aas != null)
@@ -97,7 +97,6 @@ namespace AasxServerStandardBib.Services
 
         public void DeleteAssetAdministrationShellById(string aasIdentifier)
         {
-            //TODO:jtikekar can be further refactored??
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
 
             if (aas != null && packageIndex != -1)

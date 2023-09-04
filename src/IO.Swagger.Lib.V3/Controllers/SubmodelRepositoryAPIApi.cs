@@ -355,8 +355,8 @@ namespace IO.Swagger.Controllers
 
             var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar pagination and modifier
-            //TODO: not complete implemented
+            // TODO (jtikekar, 2023-09-04): pagination and modifier
+            // TODO (jtikekar, 2023-09-04): not complete implemented
             var output = _pathModifierService.ToIdShortPath(submodelElementList);
             return new ObjectResult(output);
         }
@@ -403,9 +403,7 @@ namespace IO.Swagger.Controllers
 
             var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-            //TODO:jtikekar level not applicable
             var smePagedList = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
-            //TODO:jtikekar check performace imapct due to ConvertAll
             var smeReferences = _referenceModifierService.GetReferenceResult(smePagedList.result.ConvertAll(sme => (IReferable)sme));
             var output = new ReferencPagedResult()
             {
@@ -587,7 +585,7 @@ namespace IO.Swagger.Controllers
 
             var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
             var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, level);
-            //TODO:jtikekar question, what if the first element is property, where path is not applicable
+            // TODO (jtikekar, 2023-09-04): @Andreas, what if the first element is property, where path is not applicable
             var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
             var output = new PathPagedResult()
             {
@@ -981,7 +979,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1098,7 +1096,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1142,7 +1140,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1186,7 +1184,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1230,7 +1228,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1391,7 +1389,6 @@ namespace IO.Swagger.Controllers
 
             var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
 
-            //TODO:jtikekar modifier shoild not be applicable
             var output = _referenceModifierService.GetReferenceResult(submodelElement);
             return new ObjectResult(output);
         }

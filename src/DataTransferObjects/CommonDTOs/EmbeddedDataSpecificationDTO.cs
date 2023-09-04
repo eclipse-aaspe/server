@@ -1,5 +1,5 @@
 ﻿namespace DataTransferObjects.CommonDTOs
 {
-    //TODO:jtikekar support DataSpecificationContent
+    // TODO (jtikekar, 2023-09-04): support DataSpecificationContent
     public record class EmbeddedDataSpecificationDTO(ReferenceDTO dataSpecification) : IDTO;
 }

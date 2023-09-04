@@ -231,7 +231,6 @@ namespace Extensions
 
 #endif
 
-        //TODO:jtikekar to test
         public static AasCore.Aas3_0.Environment CreateFromExistingEnvironment(this AasCore.Aas3_0.Environment environment, AasCore.Aas3_0.Environment sourceEnvironment, List<IAssetAdministrationShell> filterForAas = null, List<AssetInformation> filterForAssets = null, List<ISubmodel> filterForSubmodel = null, List<IConceptDescription> filterForConceptDescriptions = null)
         {
             if (filterForAas == null)
@@ -588,7 +587,6 @@ namespace Extensions
             }
         }
 
-        //TODO: jtikekar Need to test
         public static IReferable FindReferableByReference(
             this AasCore.Aas3_0.Environment environment,
             IReference reference,
@@ -878,7 +876,7 @@ namespace Extensions
                 return res;
             }
             else
-            //TODO:jtikekar support asset
+            // TODO (jtikekar, 2023-09-04):support asset
             if (typeof(T) == typeof(AssetInformation))
             {
                 // check, if exist or not exist

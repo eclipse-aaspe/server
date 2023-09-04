@@ -115,7 +115,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -157,7 +157,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
             return new ObjectResult(output);
