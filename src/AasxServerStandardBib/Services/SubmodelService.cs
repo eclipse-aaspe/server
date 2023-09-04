@@ -49,7 +49,6 @@ namespace AasxServerStandardBib.Services
             return false;
         }
 
-        //TODO:jtikekar refactor
         private ISubmodelElement GetSubmodelElementByPath(IReferable parent, string idShortPath, out IReferable outParent)
         {
             outParent = parent;

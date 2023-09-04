@@ -520,7 +520,7 @@ namespace AasxServer
                 }
             }
 
-            //TODO:jtikekar moved to Security project
+            //moved to Security project
             //AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
             AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
 
@@ -940,7 +940,7 @@ namespace AasxServer
         /* AAS Detail Part 2 Descriptor Definitions END*/
 
         /* Creation of AAS Descriptor */
-        //TODO: jtikekar Remove for now
+        // TODO (jtikekar, 2023-09-04): Remove for now
         public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
         {
             aasDescriptor aasD = new aasDescriptor();

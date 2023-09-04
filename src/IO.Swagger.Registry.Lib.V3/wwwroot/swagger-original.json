@@ -1,0 +1,1789 @@
+{
+  "openapi" : "3.0.3",
+  "info" : {
+    "title" : "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Registry Service Specification",
+    "description" : "The Full Profile of the Asset Administration Shell Registry Service Specification as part of the [Specification of the Asset Administration Shell: Part 2](http://industrialdigitaltwin.org/en/content-hub).  \nPublisher: Industrial Digital Twin Association (IDTA) 2023",
+    "contact" : {
+      "name" : "Industrial Digital Twin Association (IDTA)",
+      "email" : "info@idtwin.org"
+    },
+    "license" : {
+      "name" : "CC BY 4.0",
+      "url" : "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "version" : "V3.0.1_SSP-001"
+  },
+  "servers" : [ {
+    "url" : "{protocol}://{host_name}:{port}/api/{version_prefix}",
+    "variables" : {
+      "protocol" : {
+        "description" : "Allows access through http and https (recommended)",
+        "default" : "https",
+        "enum" : [ "http", "https" ]
+      },
+      "host_name" : {
+        "description" : "Hostname of server hosting the api",
+        "default" : "admin-shell.io"
+      },
+      "port" : {
+        "description" : "80 is default for http, 443 for https",
+        "default" : "443",
+        "enum" : [ "80", "443" ]
+      },
+      "version_prefix" : {
+        "default" : "v3.0",
+        "enum" : [ "v3.0" ]
+      }
+    }
+  } ],
+  "paths" : {
+    "/shell-descriptors" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns all Asset Administration Shell Descriptors",
+        "operationId" : "GetAllAssetAdministrationShellDescriptors",
+        "parameters" : [ {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "The maximum number of elements in the response array",
+          "required" : false,
+          "schema" : {
+            "minimum" : 1,
+            "type" : "integer"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "description" : "A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "assetKind",
+          "in" : "query",
+          "description" : "The Asset's kind (Instance or Type)",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/AssetKind"
+          }
+        }, {
+          "name" : "assetType",
+          "in" : "query",
+          "description" : "The Asset's type (UTF8-BASE64-URL-encoded)",
+          "required" : false,
+          "schema" : {
+            "maxLength" : 2000,
+            "minLength" : 1,
+            "pattern" : "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell Descriptors",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GetAssetAdministrationShellDescriptorsResult"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellDescriptors/3/0", "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellDescriptorsByAssetKind/3/0", "https://admin-shell.io/aas/API/GetAllAssetAdministrationShellDescriptorsByAssetType/3/0" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Creates a new Asset Administration Shell Descriptor, i.e. registers an AAS",
+        "operationId" : "PostAssetAdministrationShellDescriptor",
+        "requestBody" : {
+          "description" : "Asset Administration Shell Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Asset Administration Shell Descriptor created successfully",
+            "headers" : {
+              "Location" : {
+                "description" : "URL of the newly created resource",
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostAssetAdministrationShellDescriptor/3/0" ]
+      }
+    },
+    "/shell-descriptors/{aasIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns a specific Asset Administration Shell Descriptor",
+        "operationId" : "GetAssetAdministrationShellDescriptorById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Asset Administration Shell Descriptor",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAssetAdministrationShellDescriptorById/3/0" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Updates an existing Asset Administration Shell Descriptor",
+        "operationId" : "PutAssetAdministrationShellDescriptorById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Asset Administration Shell Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell Descriptor updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutAssetAdministrationShellDescriptorById/3/0" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Deletes an Asset Administration Shell Descriptor, i.e. de-registers an AAS",
+        "operationId" : "DeleteAssetAdministrationShellDescriptorById",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Asset Administration Shell Descriptor deleted successfully"
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteAssetAdministrationShellDescriptorById/3/0" ]
+      }
+    },
+    "/shell-descriptors/{aasIdentifier}/submodel-descriptors" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns all Submodel Descriptors",
+        "operationId" : "GetAllSubmodelDescriptorsThroughSuperpath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "The maximum number of elements in the response array",
+          "required" : false,
+          "schema" : {
+            "minimum" : 1,
+            "type" : "integer"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "description" : "A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel Descriptors",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GetSubmodelDescriptorsResult"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetAllSubmodelDescriptors/3/0" ]
+      },
+      "post" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Creates a new Submodel Descriptor, i.e. registers a submodel",
+        "operationId" : "PostSubmodelDescriptor-ThroughSuperpath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Submodel Descriptor created successfully",
+            "headers" : {
+              "Location" : {
+                "description" : "URL of the newly created resource",
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PostSubmodelDescriptor/3/0" ]
+      }
+    },
+    "/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}" : {
+      "get" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Returns a specific Submodel Descriptor",
+        "operationId" : "GetSubmodelDescriptorByIdThroughSuperpath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Requested Submodel Descriptor",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubmodelDescriptor"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/GetSubmodelDescriptorById/3/0" ]
+      },
+      "put" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Updates an existing Submodel Descriptor",
+        "operationId" : "PutSubmodelDescriptorByIdThroughSuperpath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "requestBody" : {
+          "description" : "Submodel Descriptor object",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Submodel Descriptor updated successfully"
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/PutSubmodelDescriptorById/3/0" ]
+      },
+      "delete" : {
+        "tags" : [ "Asset Administration Shell Registry API" ],
+        "summary" : "Deletes a Submodel Descriptor, i.e. de-registers a submodel",
+        "operationId" : "DeleteSubmodelDescriptorByIdThroughSuperpath",
+        "parameters" : [ {
+          "name" : "aasIdentifier",
+          "in" : "path",
+          "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        }, {
+          "name" : "submodelIdentifier",
+          "in" : "path",
+          "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Submodel Descriptor deleted successfully"
+          },
+          "400" : {
+            "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/DeleteSubmodelDescriptorById/3/0" ]
+      }
+    },
+    "/description" : {
+      "get" : {
+        "tags" : [ "Description API" ],
+        "summary" : "Returns the self-describing information of a network resource (ServiceDescription)",
+        "operationId" : "GetDescription",
+        "responses" : {
+          "200" : {
+            "description" : "Requested Description",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ServiceDescription"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Forbidden",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error handling for unmentioned status codes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Result"
+                }
+              }
+            }
+          }
+        },
+        "x-semanticIds" : [ "https://admin-shell.io/aas/API/Descriptor/GetDescription/3/0" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "AssetKind" : {
+        "type" : "string",
+        "enum" : [ "Instance", "NotApplicable", "Type" ]
+      },
+      "GetAssetAdministrationShellDescriptorsResult" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PagedResult"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "result" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/AssetAdministrationShellDescriptor"
+              }
+            }
+          }
+        } ]
+      },
+      "PagedResult" : {
+        "type" : "object",
+        "properties" : {
+          "paging_metadata" : {
+            "$ref" : "#/components/schemas/PagedResult_paging_metadata"
+          }
+        }
+      },
+      "AssetAdministrationShellDescriptor" : {
+        "required" : [ "id" ],
+        "type" : "object",
+        "example" : "{ \"id\": \"https://example.org/aas/motor\", \"endpoints\": [ { \"protocolInformation\": { \"href\": \"https://localhost:1234/api/v3.0/aas\", \"endpointProtocol\": \"HTTP\", \"endpointProtocolVersion\": [\"1.1\"] }, \"interface\": \"AAS-3.0\" }, { \"protocolInformation\": { \"href\": \"opc.tcp://localhost:4840\" }, \"interface\": \"AAS-3.0\" }, { \"protocolInformation\": { \"href\": \"https://localhost:5678\", \"endpointProtocol\": \"HTTP\", \"endpointProtocolVersion\": [\"1.1\"], \"subprotocol\": \"OPC UA Basic SOAP\", \"subprotocolBody\": \"ns=2;s=MyAAS\", \"subprotocolBodyEncoding\": \"application/soap+xml\" }, \"interface\": \"AAS-3.0\" } ] }",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Descriptor"
+        }, {
+          "properties" : {
+            "administration" : {
+              "$ref" : "#/components/schemas/AdministrativeInformation"
+            },
+            "assetKind" : {
+              "$ref" : "#/components/schemas/AssetKind"
+            },
+            "assetType" : {
+              "maxLength" : 2000,
+              "minLength" : 1,
+              "pattern" : "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+              "type" : "string"
+            },
+            "endpoints" : {
+              "minItems" : 1,
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Endpoint"
+              }
+            },
+            "globalAssetId" : {
+              "maxLength" : 2000,
+              "minLength" : 1,
+              "pattern" : "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+              "type" : "string"
+            },
+            "idShort" : {
+              "maxLength" : 128,
+              "type" : "string"
+            },
+            "id" : {
+              "maxLength" : 2000,
+              "minLength" : 1,
+              "pattern" : "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+              "type" : "string"
+            },
+            "specificAssetIds" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SpecificAssetId"
+              }
+            },
+            "submodelDescriptors" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          }
+        } ]
+      },
+      "Descriptor" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LangStringTextType"
+            }
+          },
+          "displayName" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LangStringNameType"
+            }
+          },
+          "extensions" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Extension"
+            }
+          }
+        },
+        "example" : "{ \"endpoints\": [ { \"protocolInformation\": { \"href\": \"https://localhost:1234/api/v3.0/aas\", \"endpointProtocolVersion\": [\"1.1\"] }, \"interface\": \"AAS-3.0\" }, { \"protocolInformation\": { \"href\": \"opc.tcp://localhost:4840\" }, \"interface\": \"AAS-3.0\" }, { \"protocolInformation\": { \"href\": \"https://localhost:5678\", \"endpointProtocolVersion\": [\"1.1\"], \"subprotocol\": \"OPC UA Basic SOAP\", \"subprotocolBody\": \"ns=2;s=MyAAS\", \"subprotocolBodyEncoding\": \"application/soap+xml\" }, \"interface\": \"AAS-3.0\" } ] }"
+      },
+      "LangStringTextType" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractLangString"
+        }, {
+          "properties" : {
+            "text" : {
+              "maxLength" : 1023
+            }
+          }
+        } ]
+      },
+      "AbstractLangString" : {
+        "required" : [ "language", "text" ],
+        "type" : "object",
+        "properties" : {
+          "language" : {
+            "pattern" : "^(([a-zA-Z]{2,3}(-[a-zA-Z]{3}(-[a-zA-Z]{3}){2})?|[a-zA-Z]{4}|[a-zA-Z]{5,8})(-[a-zA-Z]{4})?(-([a-zA-Z]{2}|[0-9]{3}))?(-(([a-zA-Z0-9]){5,8}|[0-9]([a-zA-Z0-9]){3}))*(-[0-9A-WY-Za-wy-z](-([a-zA-Z0-9]){2,8})+)*(-[xX](-([a-zA-Z0-9]){1,8})+)?|[xX](-([a-zA-Z0-9]){1,8})+|((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)))$",
+            "type" : "string"
+          },
+          "text" : {
+            "minLength" : 1,
+            "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+            "type" : "string"
+          }
+        }
+      },
+      "LangStringNameType" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractLangString"
+        }, {
+          "properties" : {
+            "text" : {
+              "maxLength" : 128
+            }
+          }
+        } ]
+      },
+      "Extension" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "name" ],
+          "properties" : {
+            "name" : {
+              "maxLength" : 128,
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "valueType" : {
+              "$ref" : "#/components/schemas/DataTypeDefXsd"
+            },
+            "value" : {
+              "type" : "string"
+            },
+            "refersTo" : {
+              "minItems" : 1,
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              }
+            }
+          }
+        } ]
+      },
+      "HasSemantics" : {
+        "type" : "object",
+        "properties" : {
+          "semanticId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "supplementalSemanticIds" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "Reference" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ReferenceParent"
+        }, {
+          "properties" : {
+            "referredSemanticId" : {
+              "$ref" : "#/components/schemas/ReferenceParent"
+            }
+          }
+        } ]
+      },
+      "ReferenceParent" : {
+        "required" : [ "keys", "type" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "$ref" : "#/components/schemas/ReferenceTypes"
+          },
+          "keys" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Key"
+            }
+          }
+        }
+      },
+      "ReferenceTypes" : {
+        "type" : "string",
+        "enum" : [ "ExternalReference", "ModelReference" ]
+      },
+      "Key" : {
+        "required" : [ "type", "value" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "$ref" : "#/components/schemas/KeyTypes"
+          },
+          "value" : {
+            "maxLength" : 2000,
+            "minLength" : 1,
+            "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+            "type" : "string"
+          }
+        }
+      },
+      "KeyTypes" : {
+        "type" : "string",
+        "enum" : [ "AnnotatedRelationshipElement", "AssetAdministrationShell", "BasicEventElement", "Blob", "Capability", "ConceptDescription", "DataElement", "Entity", "EventElement", "File", "FragmentReference", "GlobalReference", "Identifiable", "MultiLanguageProperty", "Operation", "Property", "Range", "Referable", "ReferenceElement", "RelationshipElement", "Submodel", "SubmodelElement", "SubmodelElementCollection", "SubmodelElementList" ]
+      },
+      "DataTypeDefXsd" : {
+        "type" : "string",
+        "enum" : [ "xs:anyURI", "xs:base64Binary", "xs:boolean", "xs:byte", "xs:date", "xs:dateTime", "xs:decimal", "xs:double", "xs:duration", "xs:float", "xs:gDay", "xs:gMonth", "xs:gMonthDay", "xs:gYear", "xs:gYearMonth", "xs:hexBinary", "xs:int", "xs:integer", "xs:long", "xs:negativeInteger", "xs:nonNegativeInteger", "xs:nonPositiveInteger", "xs:positiveInteger", "xs:short", "xs:string", "xs:time", "xs:unsignedByte", "xs:unsignedInt", "xs:unsignedLong", "xs:unsignedShort" ]
+      },
+      "AdministrativeInformation" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasDataSpecification"
+        }, {
+          "properties" : {
+            "version" : {
+              "type" : "string",
+              "allOf" : [ {
+                "maxLength" : 4,
+                "minLength" : 1
+              }, {
+                "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$"
+              }, {
+                "pattern" : "^(0|[1-9][0-9]*)$"
+              } ]
+            },
+            "revision" : {
+              "type" : "string",
+              "allOf" : [ {
+                "maxLength" : 4,
+                "minLength" : 1
+              }, {
+                "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$"
+              }, {
+                "pattern" : "^(0|[1-9][0-9]*)$"
+              } ]
+            },
+            "creator" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "templateId" : {
+              "maxLength" : 2000,
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "HasDataSpecification" : {
+        "type" : "object",
+        "properties" : {
+          "embeddedDataSpecifications" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EmbeddedDataSpecification"
+            }
+          }
+        }
+      },
+      "EmbeddedDataSpecification" : {
+        "required" : [ "dataSpecification", "dataSpecificationContent" ],
+        "type" : "object",
+        "properties" : {
+          "dataSpecification" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "dataSpecificationContent" : {
+            "$ref" : "#/components/schemas/DataSpecificationContent_choice"
+          }
+        }
+      },
+      "DataSpecificationContent_choice" : {
+        "oneOf" : [ {
+          "$ref" : "#/components/schemas/DataSpecificationIec61360"
+        } ]
+      },
+      "DataSpecificationIec61360" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/DataSpecificationContent"
+        }, {
+          "required" : [ "preferredName" ],
+          "properties" : {
+            "preferredName" : {
+              "minItems" : 1,
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangStringPreferredNameTypeIec61360"
+              }
+            },
+            "shortName" : {
+              "minItems" : 1,
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangStringShortNameTypeIec61360"
+              }
+            },
+            "unit" : {
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "unitId" : {
+              "$ref" : "#/components/schemas/Reference"
+            },
+            "sourceOfDefinition" : {
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "symbol" : {
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "dataType" : {
+              "$ref" : "#/components/schemas/DataTypeIec61360"
+            },
+            "definition" : {
+              "minItems" : 1,
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LangStringDefinitionTypeIec61360"
+              }
+            },
+            "valueFormat" : {
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "valueList" : {
+              "$ref" : "#/components/schemas/ValueList"
+            },
+            "value" : {
+              "maxLength" : 2000,
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "levelType" : {
+              "$ref" : "#/components/schemas/LevelType"
+            },
+            "modelType" : {
+              "pattern" : "DataSpecificationIec61360",
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "DataSpecificationContent" : {
+        "required" : [ "modelType" ],
+        "type" : "object",
+        "properties" : {
+          "modelType" : {
+            "$ref" : "#/components/schemas/ModelType"
+          }
+        }
+      },
+      "ModelType" : {
+        "type" : "string",
+        "enum" : [ "AnnotatedRelationshipElement", "AssetAdministrationShell", "BasicEventElement", "Blob", "Capability", "ConceptDescription", "DataSpecificationIec61360", "Entity", "File", "MultiLanguageProperty", "Operation", "Property", "Range", "ReferenceElement", "RelationshipElement", "Submodel", "SubmodelElementCollection", "SubmodelElementList" ]
+      },
+      "LangStringPreferredNameTypeIec61360" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractLangString"
+        }, {
+          "properties" : {
+            "text" : {
+              "maxLength" : 255
+            }
+          }
+        } ]
+      },
+      "LangStringShortNameTypeIec61360" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractLangString"
+        }, {
+          "properties" : {
+            "text" : {
+              "maxLength" : 18
+            }
+          }
+        } ]
+      },
+      "DataTypeIec61360" : {
+        "type" : "string",
+        "enum" : [ "BLOB", "BOOLEAN", "DATE", "FILE", "HTML", "INTEGER_COUNT", "INTEGER_CURRENCY", "INTEGER_MEASURE", "IRDI", "IRI", "RATIONAL", "RATIONAL_MEASURE", "REAL_COUNT", "REAL_CURRENCY", "REAL_MEASURE", "STRING", "STRING_TRANSLATABLE", "TIME", "TIMESTAMP" ]
+      },
+      "LangStringDefinitionTypeIec61360" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractLangString"
+        }, {
+          "properties" : {
+            "text" : {
+              "maxLength" : 1023
+            }
+          }
+        } ]
+      },
+      "ValueList" : {
+        "required" : [ "valueReferencePairs" ],
+        "type" : "object",
+        "properties" : {
+          "valueReferencePairs" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ValueReferencePair"
+            }
+          }
+        }
+      },
+      "ValueReferencePair" : {
+        "required" : [ "value", "valueId" ],
+        "type" : "object",
+        "properties" : {
+          "value" : {
+            "maxLength" : 2000,
+            "minLength" : 1,
+            "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+            "type" : "string"
+          },
+          "valueId" : {
+            "$ref" : "#/components/schemas/Reference"
+          }
+        }
+      },
+      "LevelType" : {
+        "required" : [ "max", "min", "nom", "typ" ],
+        "type" : "object",
+        "properties" : {
+          "min" : {
+            "type" : "boolean"
+          },
+          "nom" : {
+            "type" : "boolean"
+          },
+          "typ" : {
+            "type" : "boolean"
+          },
+          "max" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Endpoint" : {
+        "required" : [ "interface", "protocolInformation" ],
+        "type" : "object",
+        "properties" : {
+          "interface" : {
+            "maxLength" : 128,
+            "type" : "string"
+          },
+          "protocolInformation" : {
+            "$ref" : "#/components/schemas/ProtocolInformation"
+          }
+        }
+      },
+      "ProtocolInformation" : {
+        "required" : [ "href" ],
+        "type" : "object",
+        "properties" : {
+          "href" : {
+            "maxLength" : 2048,
+            "type" : "string"
+          },
+          "endpointProtocol" : {
+            "maxLength" : 128,
+            "type" : "string"
+          },
+          "endpointProtocolVersion" : {
+            "type" : "array",
+            "items" : {
+              "maxLength" : 128,
+              "type" : "string"
+            }
+          },
+          "subprotocol" : {
+            "maxLength" : 128,
+            "type" : "string"
+          },
+          "subprotocolBody" : {
+            "maxLength" : 128,
+            "type" : "string"
+          },
+          "subprotocolBodyEncoding" : {
+            "maxLength" : 128,
+            "type" : "string"
+          },
+          "securityAttributes" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProtocolInformation_securityAttributes"
+            }
+          }
+        }
+      },
+      "SpecificAssetId" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/HasSemantics"
+        }, {
+          "required" : [ "name", "value" ],
+          "properties" : {
+            "name" : {
+              "maxLength" : 64,
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "value" : {
+              "maxLength" : 2000,
+              "minLength" : 1,
+              "pattern" : "^([\\t\\n\\r -퟿-�]|\\ud800[\\udc00-\\udfff]|[\\ud801-\\udbfe][\\udc00-\\udfff]|\\udbff[\\udc00-\\udfff])*$",
+              "type" : "string"
+            },
+            "externalSubjectId" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        } ]
+      },
+      "SubmodelDescriptor" : {
+        "required" : [ "endpoints", "id" ],
+        "type" : "object",
+        "properties" : {
+          "administration" : {
+            "$ref" : "#/components/schemas/AdministrativeInformation"
+          },
+          "endpoints" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Endpoint"
+            }
+          },
+          "idShort" : {
+            "maxLength" : 128,
+            "type" : "string"
+          },
+          "id" : {
+            "maxLength" : 2000,
+            "minLength" : 1,
+            "pattern" : "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+            "type" : "string"
+          },
+          "semanticId" : {
+            "$ref" : "#/components/schemas/Reference"
+          },
+          "supplementalSemanticId" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reference"
+            }
+          }
+        },
+        "example" : "{ \"id\": \"https://admin-shell.io/zvei/nameplate/1/0/Nameplate\", \"endpoints\": [ { \"href\": { \"href\": \"https://localhost:1234/api/v3.0/submodel\", \"endpointProtocol\": \"HTTP\", \"endpointProtocolVersion\": [\"1.1\"] }, \"interface\": \"AAS-3.0\" }, { \"protocolInformation\": { \"href\": \"opc.tcp://localhost:4840\" }, \"interface\": \"AAS-3.0\" }, { \"protocolInformation\": { \"href\": \"https://localhost:5678\", \"endpointProtocol\": \"HTTP\", \"endpointProtocolVersion\": [\"1.1\"], \"subprotocol\": \"OPC UA Basic SOAP\", \"subprotocolBody\": \"ns=2;s=MyAAS\", \"subprotocolBodyEncoding\": \"application/soap+xml\" }, \"interface\": \"AAS-3.0\" } ] }",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Descriptor"
+        } ]
+      },
+      "Result" : {
+        "type" : "object",
+        "properties" : {
+          "messages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Message"
+            }
+          }
+        }
+      },
+      "Message" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "maxLength" : 32,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "correlationId" : {
+            "maxLength" : 128,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "messageType" : {
+            "type" : "string",
+            "enum" : [ "Undefined", "Info", "Warning", "Error", "Exception" ]
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "timestamp" : {
+            "pattern" : "^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\\.[0-9]+)?)|24:00:00(\\.0+)?)(Z|\\+00:00|-00:00)$",
+            "type" : "string"
+          }
+        }
+      },
+      "GetSubmodelDescriptorsResult" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PagedResult"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "result" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SubmodelDescriptor"
+              }
+            }
+          }
+        } ]
+      },
+      "ServiceDescription" : {
+        "type" : "object",
+        "properties" : {
+          "profiles" : {
+            "minItems" : 1,
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellServiceSpecification/SSP-002", "https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-002", "https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-003", "https://admin-shell.io/aas/API/3/0/AasxFileServerServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-002", "https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-002", "https://admin-shell.io/aas/API/3/0/DiscoveryServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRepositoryServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRepositoryServiceSpecification/SSP-002", "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-001", "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-002", "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-003", "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-004", "https://admin-shell.io/aas/API/3/0/ConceptDescriptionServiceSpecification/SSP-001" ]
+            }
+          }
+        },
+        "description" : "The Description object enables servers to present their capabilities to the clients, in particular which profiles they implement. At least one defined profile is required. Additional, proprietary attributes might be included. Nevertheless, the server must not expect that a regular client understands them.",
+        "example" : "{\n  \"profiles\": [\n    \"https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-002\",\n    \"https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-002\"\n  ]\n}"
+      },
+      "PagedResult_paging_metadata" : {
+        "type" : "object",
+        "properties" : {
+          "cursor" : {
+            "type" : "string",
+            "example" : "wJlCDLIl6KTWypN7T6vc6nWEmEYe99Hjf1XY1xmqV-M=#"
+          }
+        }
+      },
+      "ProtocolInformation_securityAttributes" : {
+        "required" : [ "key", "type", "value" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "enum" : [ "NONE", "RFC_TLSA", "W3C_DID" ]
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "responses" : {
+      "bad-request" : {
+        "description" : "Bad Request, e.g. the request parameters of the format of the request body is wrong.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "forbidden" : {
+        "description" : "Forbidden",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "internal-server-error" : {
+        "description" : "Internal Server Error",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "default" : {
+        "description" : "Default error handling for unmentioned status codes",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "conflict" : {
+        "description" : "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "not-found" : {
+        "description" : "Not Found",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      }
+    },
+    "parameters" : {
+      "Limit" : {
+        "name" : "limit",
+        "in" : "query",
+        "description" : "The maximum number of elements in the response array",
+        "required" : false,
+        "schema" : {
+          "minimum" : 1,
+          "type" : "integer"
+        }
+      },
+      "Cursor" : {
+        "name" : "cursor",
+        "in" : "query",
+        "description" : "A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue",
+        "required" : false,
+        "schema" : {
+          "type" : "string"
+        }
+      },
+      "AssetKind" : {
+        "name" : "assetKind",
+        "in" : "query",
+        "description" : "The Asset's kind (Instance or Type)",
+        "required" : false,
+        "schema" : {
+          "$ref" : "#/components/schemas/AssetKind"
+        }
+      },
+      "AssetType" : {
+        "name" : "assetType",
+        "in" : "query",
+        "description" : "The Asset's type (UTF8-BASE64-URL-encoded)",
+        "required" : false,
+        "schema" : {
+          "maxLength" : 2000,
+          "minLength" : 1,
+          "pattern" : "^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+          "type" : "string"
+        }
+      },
+      "AssetAdministrationShellIdentifier" : {
+        "name" : "aasIdentifier",
+        "in" : "path",
+        "description" : "The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)",
+        "required" : true,
+        "style" : "simple",
+        "explode" : false,
+        "schema" : {
+          "type" : "string",
+          "format" : "byte"
+        }
+      },
+      "SubmodelIdentifier" : {
+        "name" : "submodelIdentifier",
+        "in" : "path",
+        "description" : "The Submodel’s unique id (UTF8-BASE64-URL-encoded)",
+        "required" : true,
+        "style" : "simple",
+        "explode" : false,
+        "schema" : {
+          "type" : "string",
+          "format" : "byte"
+        }
+      }
+    }
+  }
+}

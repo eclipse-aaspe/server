@@ -37,7 +37,7 @@ namespace Extensions
         {
             if (ct == ContentTypes.Iec61360)
                 return new DataSpecificationIec61360(null);
-            //TODO:jtikekar DataSpecificationPhysicalUnit
+            // TODO (jtikekar, 2023-09-04): DataSpecificationPhysicalUnit
             //if (ct == ContentTypes.PhysicalUnit)
             //    return new DataSpecificationPhysicalUnit("", "", null);
             return null;
@@ -55,7 +55,7 @@ namespace Extensions
         {
             if (content is DataSpecificationIec61360)
                 return ContentTypes.Iec61360;
-            //TODO:jtikekar DataSpecificationPhysicalUnit
+            // TODO (jtikekar, 2023-09-04): DataSpecificationPhysicalUnit
             //if (content is DataSpecificationPhysicalUnit)
             //    return ContentTypes.PhysicalUnit;
             return ContentTypes.NoInfo;

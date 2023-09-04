@@ -320,7 +320,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        //TODO:jtikekar assetIds: string or specific asset id, and what about Base64Uel encoding
+        // TODO (jtikekar, 2023-09-04): assetIds: string or specific asset id, and what about Base64Uel encoding
         //public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<string> assetIds, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor)
         public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<SpecificAssetId> assetIds, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor)
         {
@@ -354,7 +354,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        //TODO:jtikekar assetIds: string or specific asset id, and what about Base64Uel encoding
+        // TODO (jtikekar, 2023-09-04): assetIds: string or specific asset id, and what about Base64Uel encoding
         //public virtual IActionResult GetAllAssetAdministrationShellsReference([FromQuery] List<string> assetIds, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor)
         public virtual IActionResult GetAllAssetAdministrationShellsReference([FromQuery] List<SpecificAssetId> assetIds, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor)
         {
@@ -581,7 +581,7 @@ namespace IO.Swagger.Controllers
 
             var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            //TODO:jtikekar check performace imapct due to ConvertAll
+            // TODO (jtikekar, 2023-09-04): check performace imapct due to ConvertAll
             var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
             var smeReferenceList = _referenceModifierService.GetReferenceResult(smePaginated.result.ConvertAll(sme => (IReferable)sme));
             var output = new ReferencPagedResult
@@ -711,9 +711,18 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get the AAS with id {aasIdentifier}.");
 
-            var output = _aasService.GetAssetAdministrationShellById(decodedAasIdentifier);
+            var aas = _aasService.GetAssetAdministrationShellById(decodedAasIdentifier);
 
-            return new ObjectResult(output);
+            var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                var failedReasons = authResult.Failure.FailureReasons;
+                if (failedReasons != null && failedReasons.Any())
+                {
+                    throw new NotAllowed(failedReasons.First().Message);
+                }
+            }
+            return new ObjectResult(aas);
         }
 
         /// <summary>
@@ -1028,13 +1037,12 @@ namespace IO.Swagger.Controllers
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                var failedReason = authResult.Failure.FailureReasons.First();
-                if (failedReason != null)
+                var failedReasons = authResult.Failure.FailureReasons;
+                if (failedReasons != null && failedReasons.Any())
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReasons.First().Message);
                 }
             }
-            //_securityService.SecurityCheck(HttpContext, submodel.IdShort, "submodel", submodel);
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
             return new ObjectResult(output);
         }
@@ -1077,7 +1085,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1124,7 +1132,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1170,7 +1178,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1217,7 +1225,7 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message); //TODO:jtikekar write AuthResultMiddlewareHandler
+                    throw new NotAllowed(failedReason.Message);
                 }
             }
 
@@ -1442,7 +1450,7 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            //TODO:jtikekar Level should not be applicable
+            //Level should not be applicable
 
             var output = _referenceModifierService.GetReferenceResult(submodelElement);
             return new ObjectResult(output);
@@ -1865,7 +1873,6 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to update the sumodel with id {decodedSubmodelIdentifier} from the aas with tid {decodedAasIdentifier} by value.");
 
-            //TODO:jtikekar applay level modifier
             var submodel = _mappingService.Map(body, "value") as Submodel;
 
             _aasService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, submodel);

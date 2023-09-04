@@ -719,7 +719,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            //TODO:jtikekar remove
+            // TODO (jtikekar, 2023-09-04):Remove
             if (context.Request.RawUrl.Equals("/aas/0/core") && obj is ExpandoObject findAasReturn)
             {
                 var value = new JsonObject();
@@ -2083,7 +2083,7 @@ namespace AasxRestServerLibrary
                     var cd = this.Packages[0].AasEnv.FindConceptDescriptionByReference(sme.SemanticId);
                     if (cd != null)
                     {
-                        //TODO: jtikekar Temporarily commented
+                        // TODO (jtikekar, 2023-09-04): Temporarily commented
                         //var ds = cd.GetIEC61360();
                         //if (ds != null)
                         //{
@@ -2750,7 +2750,7 @@ namespace AasxRestServerLibrary
                 // describe
                 dynamic o = new ExpandoObject();
                 o.IdShort = cd.IdShort;
-                //TODO: jtikekar temporarily commented 
+                // TODO (jtikekar, 2023-09-04): temporarily commented 
                 //o.shortName = cd.GetDefaultShortName();
                 o.identification = cd.Id;
                 o.isCaseOf = cd.IsCaseOf;

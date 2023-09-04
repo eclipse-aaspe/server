@@ -1,17 +1,17 @@
 ﻿using AasxRestServerLibrary;
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
+using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
+using AdminShellNS.Models;
 using Extensions;
-using IO.Swagger.Lib.V3.Interfaces;
-using IO.Swagger.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace IO.Swagger.Lib.V3.Services
+namespace AasxServerStandardBib.Services
 {
     public class AasxFileServerInterfaceService : IAasxFileServerInterfaceService
     {
@@ -55,8 +55,9 @@ namespace IO.Swagger.Lib.V3.Services
             }
         }
 
-        public string GetAASXByPackageId(string packageId, out byte[] content, out long fileSize)
+        public string GetAASXByPackageId(string packageId, out byte[] content, out long fileSize, out IAssetAdministrationShell aas)
         {
+            aas = null;
             content = null;
             fileSize = 0;
             int packageIndex = int.Parse(packageId);
@@ -73,6 +74,9 @@ namespace IO.Swagger.Lib.V3.Services
                 string fileName = Path.GetFileName(requestedFileName);
                 fileSize = content.Length;
                 _packages[packageIndex].SetFilename(requestedFileName);
+
+                //Set aas
+                aas = requestedPackage.AasEnv.AssetAdministrationShells[0];
 
                 //Delete Temp file
                 System.IO.File.Delete(copyFileName);
@@ -100,6 +104,9 @@ namespace IO.Swagger.Lib.V3.Services
                     System.IO.File.Copy(copyFileName, newFileName, true);
                     Program.envFileName[packageIndex] = newFileName;
                     _packages[packageIndex].SetFilename(newFileName);
+
+                    //Set aas
+                    aas = requestedPackage.AasEnv.AssetAdministrationShells[0];
 
                     //Delete Temp file
                     System.IO.File.Delete(copyFileName);
@@ -142,6 +149,21 @@ namespace IO.Swagger.Lib.V3.Services
             }
 
             return output;
+        }
+
+        public IAssetAdministrationShell GetAssetAdministrationShellByPackageId(string packageId)
+        {
+            int packageIndex = int.Parse(packageId);
+            var requestedPackage = _packages[packageIndex];
+            if (requestedPackage != null && requestedPackage.AasEnv != null)
+            {
+                if (requestedPackage.AasEnv.AssetAdministrationShells != null)
+                {
+                    return requestedPackage.AasEnv.AssetAdministrationShells.First();
+                }
+            }
+
+            return null;
         }
 
         public string PostAASXPackage(byte[] fileContent, string fileName)

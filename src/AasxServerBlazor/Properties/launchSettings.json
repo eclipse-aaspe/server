@@ -11,7 +11,7 @@
     "AasxServerBlazor": {
       "commandName": "Project",
       //"commandLineArgs": "--no-security --data-path \"C:\\Development\\AASX\\v3security\" --edit --external-blazor http://localhost:5001",
-      "commandLineArgs": "--data-path \"C:\\Development\\AASX\\v3security\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--rest --data-path \"C:\\Development\\AASX\\v3security\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

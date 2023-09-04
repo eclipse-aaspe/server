@@ -97,8 +97,8 @@ namespace AdminShellNS
             public static IReferable CreateAdequateType(string elementName)
             {
                 if (elementName == KeyTypes.AssetAdministrationShell.ToString())
-                    return new AssetAdministrationShell("", null);   //TODO: jtikekar: refactor default
-                //if (elementName == "Asset")  //TODO: jtikekar Change
+                    return new AssetAdministrationShell("", null);
+                //if (elementName == "Asset") 
                 //    return new AssetInformation(AssetKind.Instance);
                 if (elementName == KeyTypes.ConceptDescription.ToString())
                     return new ConceptDescription("");
@@ -111,7 +111,6 @@ namespace AdminShellNS
 
             private static ISubmodelElement CreateSubmodelElementIstance(string typeName)
             {
-                //TODO: jtikekar Need to test
                 Type type = Type.GetType(typeName);
                 if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
                     return null;

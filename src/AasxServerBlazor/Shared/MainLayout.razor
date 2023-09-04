@@ -1,7 +1,9 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
 @inject Data.CredentialService cs
+@inject IRegistryInitializerService AasRegistryService
 @using System
+@using IO.Swagger.Registry.Lib.V3.Interfaces;
 
 @*<div class="sidebar">
     <NavMenu />
@@ -12,7 +14,7 @@
         {
             input = "anonymous";
             AasxServer.AasxCredentials.initEmpty(cs.credentials);
-            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
+            AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
         }
         bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
             || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/");
@@ -106,8 +108,8 @@
                                                 AasxServer.AasxCredentials.initByUserPW(cs.credentials, role, CurrentValue);
                                                 input = role;
                                             }
-                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
-                                                cs.credentials, DateTime.UtcNow, true);
+
+                                            AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
                                         }
                                         CurrentValue = "";
                                         this.StateHasChanged();

@@ -91,6 +91,87 @@ namespace AasxServer
             cList.Add(c);
         }
 
+        public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW, out string urlEdcWrapper)
+        {
+            queryPara = "";
+            userPW = "";
+            urlEdcWrapper = "";
+            List<string> qp = new List<string>();
+            bool result = false;
+
+            for (int i = 0; i < cList.Count; i++)
+            {
+                int lenPrefix = cList[i].urlPrefix.Length;
+                int lenUrl = urlPath.Length;
+                if (lenPrefix <= lenUrl)
+                {
+                    string u = urlPath.Substring(0, lenPrefix);
+                    if (cList[i].urlPrefix == "*" || u == cList[i].urlPrefix)
+                    {
+                        switch (cList[i].type)
+                        {
+                            case "email":
+                                qp.Add("Email=" + cList[i].parameters[0]);
+                                result = true;
+                                break;
+                            case "basicauth": // for http header
+                            case "userpw": // as query parameter _up
+                                if (cList[i].parameters.Count == 2)
+                                {
+                                    var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
+                                    var bytes = Encoding.ASCII.GetBytes(upw);
+                                    var basicAuth64 = Convert.ToBase64String(bytes);
+                                    switch (cList[i].type)
+                                    {
+                                        case "basicauth": // for http header
+                                            userPW = basicAuth64;
+                                            break;
+                                        case "userpw": // as query parameter _up
+                                            qp.Add("_up=" + basicAuth64);
+                                            break;
+                                    }
+                                    result = true;
+                                }
+                                break;
+                            case "bearer":
+                                bearerCheckAndInit(cList[i]);
+                                qp.Add("bearer=" + cList[i].bearer);
+                                result = true;
+                                break;
+                            case "querypara":
+                                if (cList[i].parameters.Count == 2)
+                                {
+                                    qp.Add(cList[i].parameters[0] + "=" + cList[i].parameters[1]);
+                                    result = true;
+                                }
+                                break;
+                            case "edc":
+                                if (cList[i].parameters.Count == 3)
+                                {
+                                    var upw = cList[i].parameters[0] + ":" + cList[i].parameters[1];
+                                    var bytes = Encoding.ASCII.GetBytes(upw);
+                                    var basicAuth64 = Convert.ToBase64String(bytes);
+                                    userPW = basicAuth64;
+                                    // urlEdcWrapper = cList[i].parameters[2];
+                                    urlEdcWrapper = urlPath.Replace(u, cList[i].parameters[2]);
+                                }
+                                result = true;
+                                break;
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < qp.Count; i++)
+            {
+                if (i == 0)
+                    queryPara = qp[0];
+                else
+                    queryPara += "&" + qp[i];
+            }
+
+            return result;
+        }
+
         public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW)
         {
             queryPara = "";

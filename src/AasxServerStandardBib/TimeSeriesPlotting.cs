@@ -1649,7 +1649,7 @@ namespace AasxServerStandardBib
                 // create CD
                 //var cd = ConceptDescription.CreateNew(idShort, idType, id);
                 var cd = new ConceptDescription(id, idShort: idShort);
-                //TODO: jtikekar Temporarily commented
+                // TODO (jtikekar, 2023-09-04): Temporarily commented
                 //var dsiec = cd.CreateDataSpecWithContentIec61360();
                 //dsiec.preferredName = new AdminShell.LangStringSetIEC61360(lang, "" + idShort);
                 //dsiec.definition = new AdminShell.LangStringSetIEC61360(lang,
@@ -1871,12 +1871,12 @@ namespace AasxServerStandardBib
                     // no? then look for CD information
                     if (cd != null)
                     {
-                        //TODO: jtikekar Temporarily commented
+                        // TODO (jtikekar, 2023-09-04): Temporarily commented
                         //if (!HasContent(better))
                         //    better = cd.GetDefaultPreferredName(defaultLang);
                         if (!HasContent(better))
                             better = cd.IdShort;
-                        //TODO: jtikekar Temporarily commented
+                        // TODO (jtikekar, 2023-09-04): Temporarily commented
                         //if (HasContent(better) && true == HasContent(cd.IEC61360Content?.unit))
                         //    better += $" [{cd.IEC61360Content?.unit}]";
                     }

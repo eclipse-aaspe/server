@@ -1,6 +1,7 @@
 ﻿using AasSecurity.Models;
 using AasxServer;
 using AasxServerStandardBib.Logging;
+using Extensions;
 using Jose;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -196,7 +197,7 @@ namespace AasSecurity
                 _logger.LogDebug(ex.StackTrace);
             }
 
-            //TODO:jtikekar refactor
+            // TODO (jtikekar, 2023-09-04): refactor
             return "";
         }
 
@@ -376,7 +377,6 @@ namespace AasSecurity
 
             if (Program.secretStringAPI != null)
             {
-                //TODO:jtikekar @Andreas, why currentRole as accessRight? ==> Leave it as it is
                 if (currentRole == "CREATE")
                 {
                     return true;
@@ -384,28 +384,11 @@ namespace AasSecurity
             }
             else
             {
+                // TODO (jtikekar, 2023-09-04): uncomment
                 if (CheckAccessLevelWithError(
                     out error, currentRole, operation, neededRights, out withAllow,
                     objPath, aasResourceType, aasResource))
                     return true;
-
-                if (currentRole == null)
-                {
-                    //TODO:jtikekar @Andreas, do we need this code? ==> for openIdConnect
-
-                    //if (Program.redirectServer != "")
-                    //{
-                    //    NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                    //    string originalRequest = context.Request.Url.ToString();
-                    //    queryString.Add("OriginalRequest", originalRequest);
-                    //    Console.WriteLine("\nRedirect OriginalRequset: " + originalRequest);
-                    //    string response = Program.redirectServer + "?" + "authType=" + Program.authType + "&" + queryString;
-                    //    Console.WriteLine("Redirect Response: " + response + "\n");
-                    //    SendRedirectResponse(context, response);
-                    //    return false;
-                    //}
-
-                }
             }
 
             // Exception
@@ -435,17 +418,48 @@ namespace AasSecurity
                 " objPath = " + objPath
                 );
 
+            if (aasResource == null)
+            {
+                //API security check
+                return CheckAccessLevelApi(currentRole, operation, neededRights, out error);
+            }
+
             if (string.IsNullOrEmpty(objPath))
             {
                 return CheckAccessLevelEmptyObjPath(currentRole, operation, aasResourceType, aasResource, neededRights, out error);
             }
 
-            if (objPath != string.Empty && (operation.Equals("/submodel-elements") || operation.Contains("/submodels")))
+            if (objPath != string.Empty && (operation.Contains("/submodel-elements") || operation.Contains("/submodels")))
             {
                 return CheckAccessLevelForOperation(currentRole, operation, aasResourceType, aasResource, neededRights, objPath, out withAllow, out error);
             }
 
             error = "ALLOW not defined";
+            return false;
+        }
+
+        private static bool CheckAccessLevelApi(string currentRole, string operation, AccessRights neededRights, out string error)
+        {
+            error = string.Empty;
+            if (GlobalSecurityVariables.SecurityRoles != null)
+            {
+                foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
+                {
+                    if (securityRole.Name == currentRole && securityRole.ObjectType == "api" &&
+                        securityRole.Permission == neededRights)
+                    {
+                        if (securityRole.ApiOperation == "*" || MatchApiOperation(securityRole.ApiOperation, operation))
+                        {
+                            if (securityRole.Permission == neededRights)
+                            {
+                                return CheckUsage(out error, securityRole);
+                            }
+                        }
+                    }
+                }
+            }
+
+            error = "API access NOT allowed!";
             return false;
         }
 
@@ -543,7 +557,9 @@ namespace AasSecurity
                 {
                     if (aasResourceType == "aas" && securityRole.ObjectType == "aas")
                     {
-                        if (aasResourceType != null && securityRole.ObjectReference == aasResource && securityRole.Permission == neededRights)
+                        var aas = aasResource as IAssetAdministrationShell;
+                        //if (aasResourceType != null && securityRole.ObjectReference == aasResource && securityRole.Permission == neededRights)
+                        if (aasResourceType != null && aas.EqualsAas((IAssetAdministrationShell)securityRole.ObjectReference) && securityRole.Permission == neededRights)
                         {
                             if ((securityRole.Condition == "" && securityRole.Name == currentRole) ||
                                     (securityRole.Condition == "not" && securityRole.Name != currentRole))
@@ -559,18 +575,52 @@ namespace AasSecurity
                         }
                     }
 
-                    if (securityRole.Name == currentRole && securityRole.ObjectType == "api" &&
-                        securityRole.Permission == neededRights)
-                    {
-                        if (securityRole.ApiOperation == "*" || securityRole.ApiOperation == operation)
-                        {
-                            if (securityRole.Permission == neededRights)
-                            {
-                                return CheckUsage(out error, securityRole);
-                            }
-                        }
-                    }
+                    // TODO (jtikekar, 2023-09-04): remove
+                    //if (securityRole.Name == currentRole && securityRole.ObjectType == "api" &&
+                    //    securityRole.Permission == neededRights)
+                    //{
+                    //    if (securityRole.ApiOperation == "*" || MatchApiOperation(securityRole.ApiOperation, operation))
+                    //    {
+                    //        if (securityRole.Permission == neededRights)
+                    //        {
+                    //            return CheckUsage(out error, securityRole);
+                    //        }
+                    //    }
+                    //}
                 }
+            }
+
+            return false;
+        }
+
+        private static bool MatchApiOperation(string apiOperation, string operation)
+        {
+            if (apiOperation == operation)
+                return true;
+
+            var apiOpSplit = apiOperation.Split('/');
+            var opSplit = operation.Split('/');
+            bool match = false;
+            if (apiOpSplit.Length == opSplit.Length)
+            {
+                for (int i = 0; i < apiOpSplit.Length; i++)
+                {
+                    if (apiOpSplit[i].Equals(opSplit[i]))
+                    {
+                        match = true;
+                    }
+                    else if (apiOpSplit[i].StartsWith("{"))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        match = false;
+                    }
+
+                }
+
+                return match;
             }
 
             return false;

@@ -1,4 +1,5 @@
-﻿using IO.Swagger.Models;
+﻿using AdminShellNS.Models;
+using IO.Swagger.Models;
 using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.Models
