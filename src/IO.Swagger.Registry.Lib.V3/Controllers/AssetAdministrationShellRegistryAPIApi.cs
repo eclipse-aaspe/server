@@ -290,6 +290,7 @@ namespace IO.Swagger.Controllers
         /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
+        //TODO (jtikekar, 2023-09-04): Routes are different than old impl
         [HttpPost]
         [Route("/shell-descriptors")]
         [ValidateModelState]
@@ -334,6 +335,7 @@ namespace IO.Swagger.Controllers
         /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
+
         [HttpPost]
         [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
         [ValidateModelState]
@@ -458,10 +460,10 @@ namespace IO.Swagger.Controllers
         }
 
         [HttpPost]
-        [Route("/registry/overwrite-shell-descriptors")]
+        [Route("/overwrite-shell-descriptors")]
         [ValidateModelState]
         [SwaggerOperation("PostMultipleAssetAdministrationShellDescriptors")]
-        [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShellDescriptor), description: "Asset Administration Shell Descriptors created successfully")]
+        [SwaggerResponse(statusCode: 201, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Asset Administration Shell Descriptors created successfully")]
         public virtual IActionResult PostMultipleAssetAdministrationShellDescriptor([FromBody] List<AssetAdministrationShellDescriptor> body)
         {
             var timestamp = DateTime.UtcNow;
@@ -470,8 +472,66 @@ namespace IO.Swagger.Controllers
 
             _registryInitializerService.CreateMultipleAssetAdministrationShellDescriptor(body, timestamp);
 
-            return CreatedAtAction("PostMultipleAssetAdministrationShellDescriptors", body);
+            return new ObjectResult("ok");
 
+        }
+
+        /// <summary>
+        /// Returns a list of Asset Administration Shell ids based on Asset identifier key-value-pairs
+        /// </summary>
+        /// <param name="assetIds">The key-value-pair of an Asset identifier (BASE64-URL-encoded JSON-serialized key-value-pairs)</param>
+        /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
+        /// <response code="200">Requested Asset Administration Shell ids</response>
+        [HttpGet]
+        [Route("/lookup/shells")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
+        //TODO (jtikekar, 2023-09-04): @Andreas IdentifierKeyValuePair, may be use SPecificAssetId
+        //public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
+        //    [FromQuery] List<IdentifierKeyValuePair> assetIds,
+        //    [FromQuery] String assetId)
+        public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
+            [FromQuery] List<KeyValuePair<object, string>> assetIds,
+            [FromQuery] string assetId)
+        {
+            try
+            {
+                //collect aasetIds from list
+                var assetList = new List<String>();
+                foreach (var kv in assetIds)
+                {
+                    if (kv.Value != "")
+                    {
+                        var decodedAssetId = _decoderService.Decode("assetId", kv.Value);
+                        assetList.Add(decodedAssetId);
+                    }
+                }
+                // single assetId
+                if (assetId != null && assetId != "")
+                {
+                    var decodedAssetId = _decoderService.Decode("assetId", assetId);
+                    assetList.Add(decodedAssetId);
+                }
+
+                var aasList = new List<String>();
+
+                var aasDecsriptorList = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetList: assetList);
+
+                foreach (var ad in aasDecsriptorList)
+                {
+                    if (ad != null)
+                    {
+                        aasList.Add(ad.Id);
+                    }
+                }
+
+                return new ObjectResult(aasList);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using IO.Swagger.Registry.Lib.V3.Serializers;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
@@ -19,6 +20,10 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
         public override bool CanRead(InputFormatterContext context)
         {
             if (typeof(AssetAdministrationShellDescriptor).IsAssignableFrom(context.ModelType))
+            {
+                return true;
+            }
+            else if (typeof(List<AssetAdministrationShellDescriptor>).IsAssignableFrom(context.ModelType))
             {
                 return true;
             }
@@ -39,6 +44,16 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
             if (type == typeof(AssetAdministrationShellDescriptor))
             {
                 result = DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(node);
+            }
+            else if (type == typeof(List<AssetAdministrationShellDescriptor>))
+            {
+                var aasDescList = new List<AssetAdministrationShellDescriptor>();
+                var jsonArray = node as JsonArray;
+                foreach (var item in jsonArray)
+                {
+                    aasDescList.Add(DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(item));
+                }
+                result = aasDescList;
             }
             else
             {
