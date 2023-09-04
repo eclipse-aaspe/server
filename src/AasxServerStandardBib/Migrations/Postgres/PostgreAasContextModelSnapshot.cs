@@ -197,9 +197,6 @@ namespace AasxServerStandardBib.Migrations.Postgres
                     b.Property<string>("Annotation")
                         .HasColumnType("text");
 
-                    b.Property<long>("Hash")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("ParentSMENum")
                         .HasColumnType("bigint");
 

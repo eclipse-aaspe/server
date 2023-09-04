@@ -133,8 +133,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .Annotation("Sqlite:Autoincrement", true),
                     ParentSMENum = table.Column<long>(type: "INTEGER", nullable: false),
                     Value = table.Column<string>(type: "TEXT", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true),
-                    Hash = table.Column<long>(type: "INTEGER", nullable: false)
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

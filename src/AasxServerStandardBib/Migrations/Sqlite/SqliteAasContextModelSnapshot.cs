@@ -178,9 +178,6 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                     b.Property<string>("Annotation")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("Hash")
-                        .HasColumnType("INTEGER");
-
                     b.Property<long>("ParentSMENum")
                         .HasColumnType("INTEGER");
 

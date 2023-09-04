@@ -1,0 +1,857 @@
+﻿@page "/atex";
+@using AasxServer
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.IdentityModel.Tokens;
+@using Extensions;
+@using System.Globalization;
+@inject Data.AASService SubmodelService
+@inject NavigationManager NavMan
+
+<div>
+    @{
+        collectData();
+
+        for (int p = 0; p < countProject; p++)
+        {
+            int iOut = -1;
+            int iIn = -1;
+            for (int i = 0; i < count; i++)
+            {
+                if (eigensicheresbetriebsmittel[p] == ManufacturerProductType[i])
+                    iIn = i;
+                if (zugehoerigesbetriebsmittel[p] == ManufacturerProductType[i])
+                    iOut = i;
+            }
+            if (iOut == -1 || iIn == -1)
+                continue;
+
+            <div style="border-width:3px; border-style: solid; border-color: darkgrey">
+                <b>@projectName[p] : Nachweis der Eigensicherheit</b>
+                <br /><br />
+
+                <b>Zugehöriges Betriebsmittel</b><br>
+                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                    <thead>
+                        <tr>
+                            <th style="word-break:keep-all;width:18%">Bezeichnung</th>
+                            <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
+                            <th style="word-break:keep-all;width:17%">Hersteller</th>
+                            <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                            <th style="word-break:keep-all;width:6%">Uo</th>
+                            <th style="word-break:keep-all;width:6%">Io</th>
+                            <th style="word-break:keep-all;width:6%">Po</th>
+                            <th style="word-break:keep-all;width:6%">Lo</th>
+                            <th style="word-break:keep-all;width:6%">Co</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            for (int i = 0; i < count; i++)
+                            {
+                                if (i == iOut)
+                                {
+                                    <tr>
+                                        <td>@ManufacturerProductDesignation[i]</td>
+                                        <td>
+                                            @ManufacturerProductType[i]
+                                            @{
+                                                bool svg = false;
+                                                string detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image;base64,@detailsImage />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @ManufacturerName[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], ManufacturerLogo[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
+                                                         src=data:image;base64,@detailsImage />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
+                                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @TypeOfApproval[i]
+                                            @DesignationOfCertificateOrApproval[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image;base64,@detailsImage />
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                        </a>
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>@U[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@I[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@P[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@L[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@C[i].ToString(CultureInfo.InvariantCulture)</td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+
+                <b>Eigensicheres elektrische Betriebsmittel</b><br />
+                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                    <thead>
+                        <tr>
+                            <th style="word-break:keep-all;width:18%">Bezeichnung</th>
+                            <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
+                            <th style="word-break:keep-all;width:17%">Hersteller</th>
+                            <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                            <th style="word-break:keep-all;width:6%">Ui</th>
+                            <th style="word-break:keep-all;width:6%">Ii</th>
+                            <th style="word-break:keep-all;width:6%">Pi</th>
+                            <th style="word-break:keep-all;width:6%">Li</th>
+                            <th style="word-break:keep-all;width:6%">Ci</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            for (int i = 0; i < count; i++)
+                            {
+                                if (i == iIn)
+                                {
+                                    bool svg = false;
+                                    string detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
+
+                                    <tr>
+                                        <td>@ManufacturerProductDesignation[i]</td>
+                                        <td>
+                                            @ManufacturerProductType[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image;base64,@detailsImage />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @ManufacturerName[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], ManufacturerLogo[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image;base64,@detailsImage />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @TypeOfApproval[i]
+                                            @DesignationOfCertificateOrApproval[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">
+                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                             src=data:image;base64,@detailsImage />
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">
+                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                             src=data:image/svg+xml;base64,@detailsImage />
+                                                        </a>
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>@U[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@I[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@P[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@L[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@C[i].ToString(CultureInfo.InvariantCulture)</td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+                <br />
+                @{
+                    double Lc = cableLength[p] / 1000.0 * 1;
+                    double Cc = cableLength[p] / 1000.0 * 110;
+                    string color = "red";
+                    <span>
+                        <b>Kabellänge: @cableLength[p].ToString(CultureInfo.InvariantCulture)
+                        => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)</b></span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                        <tr>
+                            <td style="word-break:keep-all;width:70%">Bedingungen für Eigensicherheit</td>
+                            @{
+                                color = "red";
+                                @if (U[iOut] <= U[iIn]) color = "green";
+                            }
+                            <td style="word-break:keep-all;color:@color;width:6%">
+                                <b>
+                                    @("Uo <= Ui:")<br />
+                                    @(U[iOut].ToString(CultureInfo.InvariantCulture) + "<=" + U[iIn].ToString(CultureInfo.InvariantCulture))
+                                </b>
+                            </td>
+                            @{
+                                color = "red";
+                                if (I[iOut] <= I[iIn]) color = "green";
+                            }
+                            <td style="word-break:keep-all;color:@color;width:6%">
+                                <b>
+                                    @("Io <= Ii:")<br />
+                                    @(I[iOut].ToString(CultureInfo.InvariantCulture) + "<=" + I[iIn].ToString(CultureInfo.InvariantCulture))
+                                </b>
+                            </td>
+                            @{
+                                color = "red";
+                                if (P[iOut] <= P[iIn]) color = "green";
+                            }
+                            <td style="word-break:keep-all;color:@color;width:6%">
+                                <b>
+                                    @("Po <= Pi:")<br />
+                                    @(P[iOut].ToString(CultureInfo.InvariantCulture) + "<=" + P[iIn].ToString(CultureInfo.InvariantCulture))
+                                </b>
+                            </td>
+                            @{
+                                color = "red";
+                                if (0.5 * L[iOut] >= L[iIn] + Lc) color = "green";
+                            }
+                            <td style="word-break:keep-all;color:@color;width:6%">
+                                <b>
+                                    0,5 * Lo >= Li + Lc:<br>
+                                    0,5 * @L[iOut].ToString(CultureInfo.InvariantCulture) >= @L[iIn].ToString(CultureInfo.InvariantCulture)
+                                    + @Lc.ToString(CultureInfo.InvariantCulture)
+                                </b>
+                            </td>
+                            @{
+                                color = "red";
+                                if (0.5 * C[iOut] >= C[iIn] + Cc) color = "green";
+                            }
+                            <td style="word-break:keep-all;color:@color;width:6%">
+                                <b>
+                                    0,5 Co >= Ci + Cc:<br />
+                                    0,5 * @C[iOut].ToString(CultureInfo.InvariantCulture) >= @C[iIn].ToString(CultureInfo.InvariantCulture)
+                                    + @Cc.ToString(CultureInfo.InvariantCulture)
+                                </b>
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+            <br />
+            <br />
+        }
+    }
+</div>
+
+@code
+{
+    int countProject = 0;
+    List<SubmodelElementCollection> project = null;
+    List<string> projectName = null;
+    List<double> cableLength = null;
+    List<string> eigensicheresbetriebsmittel = null;
+    List<string> zugehoerigesbetriebsmittel = null;
+
+    int count = 0;
+    List<bool> isOutput = null;
+    List<int> envIndex = null;
+    List<Submodel> Nameplate = null;
+    List<Submodel> TechnicalData = null;
+    List<string> ManufacturerProductDesignation = null;
+    List<string> ManufacturerProductType = null;
+    List<string> ManufacturerName = null;
+    List<string> ManufacturerLogo = null;
+    List<string> ProductImage = null;
+    List<string> DesignationOfCertificateOrApproval = null;
+    List<string> PreviewFile = null;
+    List<string> PreviewFileUrl = null;
+    List<string> TypeOfApproval = null;
+    List<SubmodelElementCollection> SafetyRelatedPropertiesForActiveBehaviour = null;
+    List<SubmodelElementCollection> SafetyRelatedPropertiesForPassiveBehaviour = null;
+    List<Double> U = null;
+    List<Double> I = null;
+    List<Double> P = null;
+    List<Double> L = null;
+    List<Double> C = null;
+
+    void collectData()
+    {
+        countProject = 0;
+        project = new List<SubmodelElementCollection>();
+        projectName = new List<string>();
+        cableLength = new List<double>();
+        eigensicheresbetriebsmittel = new List<string>();
+        zugehoerigesbetriebsmittel = new List<string>();
+
+        count = 0;
+        isOutput = new List<bool>();
+        envIndex = new List<int>();
+        Nameplate = new List<Submodel>();
+        TechnicalData = new List<Submodel>();
+        ManufacturerProductDesignation = new List<string>();
+        ManufacturerProductType = new List<string>();
+        ManufacturerName = new List<string>();
+        ManufacturerLogo = new List<string>();
+        ProductImage = new List<string>();
+        DesignationOfCertificateOrApproval = new List<string>();
+        PreviewFile = new List<string>();
+        PreviewFileUrl = new List<string>();
+        TypeOfApproval = new List<string>();
+        SafetyRelatedPropertiesForActiveBehaviour = new List<SubmodelElementCollection>();
+        SafetyRelatedPropertiesForPassiveBehaviour = new List<SubmodelElementCollection>();
+        U = new List<double>();
+        I = new List<double>();
+        P = new List<double>();
+        L = new List<double>();
+        C = new List<double>();
+
+        int aascount = AasxServer.Program.env.Length;
+
+        for (int i = 0; i < aascount; i++)
+        {
+            var env = AasxServer.Program.env[i];
+            if (env != null)
+            {
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+
+                if (aas.Submodels != null && aas.Submodels.Count > 0)
+                {
+                    foreach (var smr in aas.Submodels)
+                    {
+                        var sm = env.AasEnv.FindSubmodel(smr);
+                        {
+                            if (sm != null && sm.IdShort != null)
+                            {
+                                if (sm.IdShort.ToLower() == "nachweiseigensicherheit" && sm.SubmodelElements != null)
+                                {
+                                    foreach (var s in sm.SubmodelElements)
+                                    {
+                                        if (s.IdShort.ToLower().Contains("projekt"))
+                                        {
+                                            if (s != null && s is SubmodelElementCollection smc)
+                                            {
+                                                project.Add(s as SubmodelElementCollection);
+                                                projectName.Add("");
+                                                cableLength.Add(0);
+                                                eigensicheresbetriebsmittel.Add("");
+                                                zugehoerigesbetriebsmittel.Add("");
+
+                                                var sme = findeSME(smc: project[countProject], idShortPath: "projektbezeichnung", ignore: true);
+                                                if (sme != null)
+                                                    projectName[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "eigensicheresbetriebsmittel", ignore: true);
+                                                if (sme != null)
+                                                    eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
+                                                if (sme != null)
+                                                    zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "leitungslaenge", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    try
+                                                    {
+                                                        cableLength[countProject] = Convert.ToDouble(sme.ValueAsText(), CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                                countProject++;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sm.IdShort.ToLower() == "nameplate")
+                                {
+                                    isOutput.Add(false);
+                                    envIndex.Add(i);
+                                    Nameplate.Add(sm as Submodel);
+                                    ManufacturerProductDesignation.Add("");
+                                    ManufacturerProductType.Add("");
+                                    ManufacturerName.Add("");
+                                    DesignationOfCertificateOrApproval.Add("");
+                                    PreviewFile.Add("");
+                                    PreviewFileUrl.Add("");
+                                    TypeOfApproval.Add("");
+                                    SafetyRelatedPropertiesForActiveBehaviour.Add(null);
+                                    SafetyRelatedPropertiesForPassiveBehaviour.Add(null);
+                                    U.Add(0);
+                                    I.Add(0);
+                                    P.Add(0);
+                                    L.Add(0);
+                                    C.Add(0);
+
+                                    var sme = findeSME(sm: sm, idShortPath: "ManufacturerProductDesignation", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        if (sme is Property p)
+                                            ManufacturerProductDesignation[count] = p.Value;
+                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        {
+                                            ManufacturerProductDesignation[count] = mlp.Value[0].Text;
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm, idShortPath: "ManufacturerProductType", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        if (sme is Property p)
+                                            ManufacturerProductType[count] = p.Value;
+                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        {
+                                            ManufacturerProductType[count] = mlp.Value[0].Text;
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm, idShortPath: "ManufacturerName", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        if (sme is Property p)
+                                            ManufacturerName[count] = p.Value;
+                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        {
+                                            ManufacturerName[count] = mlp.Value[0].Text;
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm,
+                                        idShortPath: "Markings.Marking.ExplosionSafeties.ExplosionSafety",
+                                        ignore: true, contains: true);
+                                    if (sme != null)
+                                    {
+                                        var s = sme as SubmodelElementCollection;
+
+                                        sme = findeSME(smc: s, idShortPath: "DesignationOfCertificateOrApproval", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                                DesignationOfCertificateOrApproval[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                DesignationOfCertificateOrApproval[count] = mlp.Value[0].Text;
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "PreviewFile", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                            {
+                                                PreviewFile[count] = f.Value;
+                                                string path = getPath(f);
+                                                if (path != null)
+                                                    PreviewFileUrl[count] = path;
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "TypeOfApproval", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                                TypeOfApproval[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                TypeOfApproval[count] = mlp.Value[0].Text;
+                                            }
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm,
+                                        idShortPath: "Markings.Marking.ExplosionSafeties.ExplosionSafety.ExternalElectricalCircuit.SafetyRelatedPropertiesForActiveBehaviour",
+                                        ignore: true, contains: true);
+                                    if (sme != null)
+                                    {
+                                        var s = sme as SubmodelElementCollection;
+                                        isOutput[count] = true;
+                                        SafetyRelatedPropertiesForActiveBehaviour[count] = s;
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxOutputPower", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    P[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }                                                
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxOutputVoltage", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    U[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxOutputCurrent", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    I[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxExternalCapacitance", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    C[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxExternalInductance", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    L[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        sme = findeSME(sm: sm,
+                                            idShortPath: "Markings.Marking.ExplosionSafeties.ExplosionSafety.ExternalElectricalCircuit.SafetyRelatedPropertiesForPassiveBehaviour",
+                                            ignore: true, contains: true);
+                                        if (sme != null)
+                                        {
+                                            var s = sme as SubmodelElementCollection;
+                                            SafetyRelatedPropertiesForPassiveBehaviour[count] = s as SubmodelElementCollection;
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInputPower", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        P[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInputVoltage", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        U[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInputCurrent", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        I[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInternalCapacitance", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        C[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInternalInductance", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        L[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sm.IdShort.ToLower() == "technicaldata")
+                                {
+                                    TechnicalData.Add(sm as Submodel);
+                                    ManufacturerLogo.Add("");
+                                    ProductImage.Add("");
+
+                                    var sme = findeSME(sm: sm, idShortPath: "GeneralInformation", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        var g = sme as SubmodelElementCollection;
+                                        sme = findeSME(smc: g, idShortPath: "ManufacturerLogo", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                                ManufacturerLogo[count] = f.Value;
+                                        }
+                                        sme = findeSME(smc: g, idShortPath: "ProductImage", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                                ProductImage[count] = f.Value;
+                                        }
+                                    }
+
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    string getPath(ISubmodelElement sme)
+    {
+        string path = sme.IdShort;
+        var p = sme.Parent;
+        while (p != null && !(p is Submodel))
+        {
+            path = (p as ISubmodelElement).IdShort + "." + path;
+            p = (p as ISubmodelElement).Parent;
+        }
+        if (p == null)
+            return null;
+
+        var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
+        path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path + "/attachment";
+        return path;
+    }
+
+    ISubmodelElement findeSME(ISubmodel sm = null, ISubmodelElementCollection smc = null, string idShortPath = null,
+        bool ignore = false, bool contains = false)
+    {
+        if (idShortPath == null)
+            return null;
+        var path = idShortPath.Split(".");
+
+        int level = 0;
+        List<ISubmodelElement>[] levelSMEs = new List<ISubmodelElement>[path.Length];
+        int[] iLevel = new int[path.Length];
+        iLevel[0] = 0;
+
+        if (sm != null)
+        {
+            levelSMEs[0] = sm.SubmodelElements;
+        }
+        else if (smc != null)
+        {
+            levelSMEs[0] = smc.Value;
+        }
+        else
+            return null;
+
+        while (level >= 0 && level < path.Length && levelSMEs[level] != null && levelSMEs[level].Count != 0)
+        {
+            while (level >= 0 && iLevel[level] < levelSMEs[level].Count)
+            {
+                ISubmodelElement sme = levelSMEs[level][iLevel[level]];
+                string id1 = sme.IdShort;
+                string id2 = path[level];
+                if (ignore)
+                {
+                    id1 = id1.ToLower();
+                    id2 = id2.ToLower();
+                }
+                if (id1 == id2 || (contains && id1.Contains(id2)))
+                {
+                    if (level == path.Count() - 1)
+                        return sme;
+                    if (sme is SubmodelElementCollection smc2)
+                    {
+                        iLevel[level]++;
+                        levelSMEs[level + 1] = smc2.Value;
+                        iLevel[level + 1] = 0;
+                        level++;
+                        continue;
+                    }
+                }
+                iLevel[level]++;
+                while (level >= 0 && iLevel[level] == levelSMEs[level].Count)
+                {
+                    level--;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static string createDetailsImage(int envIndex, string filePath, out bool svg)
+    {
+        svg = false;
+
+        if (!string.IsNullOrEmpty(filePath))
+        {
+            string[] split = filePath.Split(new Char[] { '/' });
+            if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+            {
+                split = filePath.Split(new Char[] { '.' });
+                switch (split.Last().ToLower())
+                {
+                    case "jpg":
+                    case "bmp":
+                    case "png":
+                    case "svg":
+                        try
+                        {
+                            using (System.IO.Stream s = Program.env[envIndex].GetLocalStreamFromPackage(filePath))
+                            {
+                                if (s != null)
+                                {
+                                    using (var m = new System.IO.MemoryStream())
+                                    {
+                                        if (split.Last().ToLower() == "svg")
+                                        {
+                                            svg = true;
+                                        }
+                                        s.CopyTo(m);
+                                        return System.Convert.ToBase64String(m.ToArray());
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                        break;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    protected override void OnInitialized()
+    {
+        SubmodelService.NewDataAvailable += NewData;
+    }
+
+    public void Dispose()
+    {
+        SubmodelService.NewDataAvailable -= NewData;
+    }
+
+    void NewData(object source, EventArgs args)
+    {
+        if (Program.isLoading)
+            return;
+
+        if (args is Program.NewDataAvailableArgs newArgs)
+        {
+            int newDataMode = newArgs.signalNewDataMode;
+            InvokeAsync(() => this.StateHasChanged());
+            // InvokeAsync(() => NavMan.NavigateTo(NavMan.Uri, true));
+            /*
+            if (newDataMode != 0)
+            {
+                InvokeAsync(() => this.StateHasChanged());
+            }
+            */
+        }
+    }
+}

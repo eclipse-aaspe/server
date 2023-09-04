@@ -301,7 +301,8 @@
                             (selectedNode.Tag as Property).Value = CurrentValue;
                             (selectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
                             Program.env[selectedNode.envIndex].setWrite(true);
-                            this.StateHasChanged();
+                            Program.signalNewData(0);
+                            // this.StateHasChanged();
                         }
                         CurrentValue = "";
                     }

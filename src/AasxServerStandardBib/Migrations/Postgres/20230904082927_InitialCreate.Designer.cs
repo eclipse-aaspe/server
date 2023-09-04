@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AasxServerStandardBib.Migrations.Postgres
 {
     [DbContext(typeof(PostgreAasContext))]
-    [Migration("20230901172916_InitialCreate")]
+    [Migration("20230904082927_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -199,9 +199,6 @@ namespace AasxServerStandardBib.Migrations.Postgres
 
                     b.Property<string>("Annotation")
                         .HasColumnType("text");
-
-                    b.Property<long>("Hash")
-                        .HasColumnType("bigint");
 
                     b.Property<long>("ParentSMENum")
                         .HasColumnType("bigint");

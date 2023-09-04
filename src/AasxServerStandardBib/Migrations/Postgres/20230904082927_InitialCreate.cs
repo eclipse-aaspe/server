@@ -134,8 +134,7 @@ namespace AasxServerStandardBib.Migrations.Postgres
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ParentSMENum = table.Column<long>(type: "bigint", nullable: false),
                     Value = table.Column<string>(type: "text", nullable: true),
-                    Annotation = table.Column<string>(type: "text", nullable: true),
-                    Hash = table.Column<long>(type: "bigint", nullable: false)
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
