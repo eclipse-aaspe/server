@@ -142,7 +142,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllAssetAdministrationShellDescriptors([FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string assetKind, [FromQuery] string assetType)
         {
-            // TODO (jtikekar, 2023-09-04): @Andreas AssetType to be treated as assetId?
+            // TODO (jtikekar, 2023-09-04): AssetType resembles AssetId from old Implementation
             List<string> assetList = null;
             if (!string.IsNullOrEmpty(assetType))
             {
@@ -307,8 +307,8 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to create a new AAS Descriptor");
 
-            // TODO (jtikekar, 2023-09-04): @Andreas why?
-            bool test = true;
+            // TODO (jtikekar, 2023-09-04): Just for testing purpose. Remove during refactoring
+            bool test = false;
             if (test)
             {
                 string jsonAd = DescriptorSerializer.ToJsonObject(body).ToJsonString();
@@ -487,12 +487,8 @@ namespace IO.Swagger.Controllers
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
-        //TODO (jtikekar, 2023-09-04): @Andreas IdentifierKeyValuePair, may be use SPecificAssetId
-        //public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
-        //    [FromQuery] List<IdentifierKeyValuePair> assetIds,
-        //    [FromQuery] String assetId)
         public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
-            [FromQuery] List<KeyValuePair<object, string>> assetIds,
+            [FromQuery] List<SpecificAssetId> assetIds,
             [FromQuery] string assetId)
         {
             try
