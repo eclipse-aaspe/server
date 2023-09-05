@@ -457,12 +457,12 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 if (sd.FederatedElements == null)
                                     sd.FederatedElements = new List<string>();
                                 string json = null;
-                                // TODO (jtikekar, 2023-09-04): @Andreas why two serializations
-                                json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
-                                    new JsonSerializerSettings
-                                    {
-                                        NullValueHandling = NullValueHandling.Ignore
-                                    });
+                                // TODO (jtikekar, 2023-09-04): @Andreas why two serializations 
+                                //json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
+                                //    new JsonSerializerSettings
+                                //    {
+                                //        NullValueHandling = NullValueHandling.Ignore
+                                //    });
                                 var j = Jsonization.Serialize.ToJsonObject(sme);
                                 json = j.ToJsonString();
                                 /*
@@ -502,7 +502,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             sd.Id = sm.Id + "_VC";
                             esm = new Models.Endpoint();
                             esm.ProtocolInformation = new ProtocolInformation();
-                            // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded
+                            // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable creditentials
                             esm.ProtocolInformation.Href =
                                 "https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
                                 "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
