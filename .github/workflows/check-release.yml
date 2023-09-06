@@ -66,8 +66,8 @@ jobs:
           name: AasxServerCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerCore.zip
 
-      - name: Upload AasxServerWindows
-        uses: actions/upload-artifact@v2
-        with:
-          name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
+      # - name: Upload AasxServerWindows
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+      #     path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
