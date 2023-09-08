@@ -2,7 +2,8 @@ name: Build-and-publish-docker-images-workflow
 
 on:
   push:
-    - jtikekar/masterV3.0
+    branches:
+      - jtikekar/masterV3.0
 
   release:
     types: [published]
