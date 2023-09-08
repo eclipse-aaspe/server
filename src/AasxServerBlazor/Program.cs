@@ -11,6 +11,7 @@ namespace AasxServerBlazor
 {
     public class Program1
     {
+
         public static void Main(string[] args)
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
@@ -24,13 +25,18 @@ namespace AasxServerBlazor
             if (url[2] != null)
                 AasxServer.Program.blazorPort = url[2];
 
-            CreateHostBuilder(args).Build().RunAsync();
+            var host = CreateHostBuilder(args).Build();
+
+            host.RunAsync();
 
             Program.con = config;
             AasxServer.Program.Main(args);
             SecurityHelper.SecurityInit();
+
+            host.WaitForShutdownAsync();
+
             //QuitEvent
-            HandleQuitEvent();
+            //HandleQuitEvent();
         }
 
         static void HandleQuitEvent()
