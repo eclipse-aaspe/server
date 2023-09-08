@@ -7,8 +7,6 @@ on:
     types: [opened, synchronize, reopened, edited]
 
   push:
-    branches:
-      - jtikekar/masterV3.0
 
 jobs:
   build-docker-images:

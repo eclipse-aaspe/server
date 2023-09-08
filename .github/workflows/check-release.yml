@@ -7,9 +7,6 @@ on:
     types: [opened, synchronize, reopened, edited]
 
   push:
-    branches:
-      - master
-      - jtikekar/masterV3.0
 
 jobs:
   Check-release:
