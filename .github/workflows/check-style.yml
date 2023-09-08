@@ -7,8 +7,6 @@ on:
     types: [opened, synchronize, reopened, edited]
 
   push:
-    branches:
-      - master
 
 jobs:
   Check-style:

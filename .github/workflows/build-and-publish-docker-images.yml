@@ -2,8 +2,6 @@ name: Build-and-publish-docker-images-workflow
 
 on:
   push:
-    branches:
-      - '**V3**'
 
   release:
     types: [published]
