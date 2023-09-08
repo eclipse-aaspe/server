@@ -356,7 +356,14 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
             AasxServer.Program.initializingRegistry = false;
 
-            Console.WriteLine($"Registry initialization complete.{aasRegistry.SubmodelElements.Count}");
+            if (aasRegistry != null && aasRegistry.SubmodelElements != null)
+            {
+                Console.WriteLine($"Registry initialization complete.{aasRegistry.SubmodelElements.Count}");
+            }
+            else
+            {
+                Console.WriteLine($"Registry is empty");
+            }
         }
 
         #region PrivateMethods
