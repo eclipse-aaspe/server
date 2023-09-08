@@ -130,8 +130,10 @@
                             text = text.Replace("%BLAZOR%", Program.externalBlazor);
                             if (text.Contains("%ACCESSRULES%"))
                             {
-                                string accessRules = AasxRestServerLibrary.AasxHttpContextHelper.securityAccessRules();
-                                <table border=1 cellpadding=4>
+                                // string accessRules = AasxRestServerLibrary.AasxHttpContextHelper.securityAccessRules();
+                                string accessRules = SecService.GetSecurityRules();
+                                <table class="table table-bordered table-sm">
+                                @*<table border=1 cellpadding=4>*@
                                     <thead>
                                         <tr>
                                             <th>Name</th>

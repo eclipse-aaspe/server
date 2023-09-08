@@ -108,19 +108,24 @@ namespace AasSecurity
                 _logger.LogInformation("Request could not be authorized successfully.");
 
                 //Checking the redirect configuration
-                if (!string.IsNullOrEmpty(Program.redirectServer) && (accessRole == "isNotAuthenticated" || accessRole == null))
+                if (httpRoute.Contains("/packages/"))
                 {
-                    _logger.LogDebug("Request can be redirected.");
-                    System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                    string originalRequest = _httpContextAccessor.HttpContext.Request.GetDisplayUrl();
-                    queryString.Add("OriginalRequest", originalRequest);
-                    _logger.LogDebug("Redirect OriginalRequset: " + originalRequest);
-                    string response = Program.redirectServer + "?" + "authType=" + Program.authType + "&" + queryString;
-                    _logger.LogDebug("Redirect Response: " + response + "\n");
+                    if (!string.IsNullOrEmpty(Program.redirectServer) && (accessRole == "isNotAuthenticated" || accessRole == null))
+                    {
+                        _logger.LogDebug("Request can be redirected.");
+                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                        string originalRequest = _httpContextAccessor.HttpContext.Request.GetDisplayUrl();
+                        queryString.Add("OriginalRequest", originalRequest);
+                        _logger.LogDebug("Redirect OriginalRequset: " + originalRequest);
+                        string response = Program.redirectServer + "?" + "authType=" + Program.authType + "&" + queryString;
+                        _logger.LogDebug("Redirect Response: " + response + "\n");
 
-                    CreateRedirectResponse(response);
-                    context.Fail();
+                        CreateRedirectResponse(response);
+                        context.Fail();
 
+                    }
+                    else
+                        context.Fail(new AuthorizationFailureReason(this, error));
                 }
                 else
                     context.Fail(new AuthorizationFailureReason(this, error));

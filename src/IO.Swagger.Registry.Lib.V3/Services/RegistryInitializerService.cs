@@ -143,7 +143,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                         string json = null;
                         string accessToken = null;
-                        string requestPath = greg + "/" + "registry/shell-descriptors";
+                        //string requestPath = greg + "/" + "registry/shell-descriptors";
+                        string requestPath = greg + "/shell-descriptors";
 
                         var handler = new HttpClientHandler();
 
@@ -421,7 +422,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         esm.ProtocolInformation.Href =
                             AasxServer.Program.externalBlazor + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
-                            Base64UrlEncoder.Encode(sd.Id) + "/submodel/";
+                            Base64UrlEncoder.Encode(sd.Id);
                         // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Models.Endpoint>();
@@ -552,7 +553,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 string requestPath = pr;
                 if (!requestPath.Contains("?"))
                 {
-                    requestPath = requestPath + "/registry/shell-descriptors";
+                    //requestPath = requestPath + "/registry/shell-descriptors";
+                    requestPath = requestPath + "/shell-descriptors";
                 }
                 //string json = JsonConvert.SerializeObject(ad);
                 string json = DescriptorSerializer.ToJsonObject(ad).ToJsonString();

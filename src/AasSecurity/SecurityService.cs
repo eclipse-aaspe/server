@@ -403,7 +403,6 @@ namespace AasSecurity
 
         private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, string objPath, string aasResourceType, IClass aasResource)
         {
-            error = "";
             withAllow = false;
 
             if (currentRole == null)
@@ -440,7 +439,6 @@ namespace AasSecurity
 
         private static bool CheckAccessLevelApi(string currentRole, string operation, AccessRights neededRights, out string error)
         {
-            error = string.Empty;
             if (GlobalSecurityVariables.SecurityRoles != null)
             {
                 foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
@@ -550,7 +548,7 @@ namespace AasSecurity
 
         private static bool CheckAccessLevelEmptyObjPath(string currentRole, string operation, string aasResourceType, IClass aasResource, AccessRights neededRights, out string error)
         {
-            error = string.Empty;
+            //error = string.Empty;
             if (GlobalSecurityVariables.SecurityRoles != null)
             {
                 foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
@@ -565,7 +563,10 @@ namespace AasSecurity
                                     (securityRole.Condition == "not" && securityRole.Name != currentRole))
                             {
                                 if (securityRole.Kind == KindOfPermissionEnum.Allow)
+                                {
+                                    error = "";
                                     return true;
+                                }
                                 if (securityRole.Kind == KindOfPermissionEnum.Deny)
                                 {
                                     error = "DENY AAS " + (aasResource as AssetAdministrationShell).Id;
@@ -589,7 +590,7 @@ namespace AasSecurity
                     //}
                 }
             }
-
+            error = "ALLOW not defined";
             return false;
         }
 
@@ -721,5 +722,41 @@ namespace AasSecurity
             return false;
         }
 
+        public string GetSecurityRules()
+        {
+            string rules = "";
+
+            foreach (var r in GlobalSecurityVariables.SecurityRoles)
+            {
+                if (r.Condition != null)
+                    rules += r.Condition;
+                if (r.Name != null)
+                    rules += r.Name;
+                rules += "\t";
+                if (r.Kind != null)
+                    rules += r.Kind.ToString();
+                rules += "\t";
+                if (r.Permission != null)
+                    rules += r.Permission.ToString();
+                rules += "\t";
+                if (r.ObjectType != null)
+                    rules += r.ObjectType;
+                rules += "\t";
+                if (r.ApiOperation != null)
+                    rules += r.ApiOperation;
+                rules += "\t";
+                if (r.ObjectType != null)
+                    rules += r.ObjectType;
+                rules += "\t";
+                if (r.SemanticId != null)
+                    rules += r.SemanticId;
+                rules += "\t";
+                if (r.RulePath != null)
+                    rules += r.RulePath;
+                rules += "\n";
+            }
+
+            return rules;
+        }
     }
 }
