@@ -1,15 +1,13 @@
 ﻿using AasSecurity.Models;
-using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace AasSecurity
 {
     // TODO (jtikekar, 2023-09-04): whether to make it static
     internal class SecurityMetamodelParser
     {
-        private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityMetamodelParser");
+        //private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityMetamodelParser");
         internal static void ParserSecurityMetamodel(AdminShellPackageEnv env, ISubmodel submodel)
         {
             var accessControlPolicyPoints = ParseAccessControlPolicyPoint(env, submodel);
@@ -38,7 +36,7 @@ namespace AasSecurity
                                 }
                             default:
                                 {
-                                    _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AccessControlPolicyPoint.");
+                                    //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AccessControlPolicyPoint.");
                                     break;
                                 }
                         }
@@ -86,7 +84,7 @@ namespace AasSecurity
                             }
                         default:
                             {
-                                _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing PolicyAdministrationPoint.");
+                                //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing PolicyAdministrationPoint.");
                                 break;
                             }
                     }
@@ -134,7 +132,7 @@ namespace AasSecurity
                             }
                         default:
                             {
-                                _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AccessPermissionRule.");
+                                //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AccessPermissionRule.");
                                 break;
                             }
                     }
@@ -319,7 +317,7 @@ namespace AasSecurity
                             }
                         default:
                             {
-                                _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing PermissionPerObject.");
+                                //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing PermissionPerObject.");
                                 break;
                             }
                     }

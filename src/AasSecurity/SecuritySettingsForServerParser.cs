@@ -1,15 +1,13 @@
 ﻿using AasSecurity.Models;
 using AasxServer;
-using AasxServerStandardBib.Logging;
 using AdminShellNS;
-using Microsoft.Extensions.Logging;
 using System.Security.Cryptography.X509Certificates;
 
 namespace AasSecurity
 {
     internal static class SecuritySettingsForServerParser
     {
-        private static ILogger _logger = ApplicationLogging.CreateLogger("SecuritySettingsForServerParser");
+        //private static ILogger _logger = ApplicationLogging.CreateLogger("SecuritySettingsForServerParser");
 
         internal static void ParseSecuritySettingsForServer(AdminShellPackageEnv env, ISubmodel submodel)
         {
@@ -45,7 +43,7 @@ namespace AasSecurity
                             }
                         default:
                             {
-                                _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing SecuritySettingsForServer.");
+                                //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing SecuritySettingsForServer.");
                                 break;
                             }
                     }
@@ -105,7 +103,7 @@ namespace AasSecurity
                                             GlobalSecurityVariables.ServerCertificates.Add(new X509Certificate2(buffer));
                                             string[] split = publicCert.Value.Split('/');
                                             GlobalSecurityVariables.ServerCertFileNames.Add(split[3]);
-                                            _logger.LogDebug($"Loaded auth server certificate: {split[3]}");
+                                            //_logger.LogDebug($"Loaded auth server certificate: {split[3]}");
                                         }
                                     }
                                 }
@@ -113,7 +111,7 @@ namespace AasSecurity
                             }
                         default:
                             {
-                                _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AuthenticationServer.");
+                                //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing AuthenticationServer.");
                                 break;
                             }
                     }
@@ -189,7 +187,7 @@ namespace AasSecurity
 
                                     default:
                                         {
-                                            _logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing RoleMappings.");
+                                            //_logger.LogError($"Unhandled submodel element {submodelElement.IdShort} while parsing RoleMappings.");
                                             break;
                                         }
                                 }
