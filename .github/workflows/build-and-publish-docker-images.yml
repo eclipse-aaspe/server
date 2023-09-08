@@ -2,10 +2,7 @@ name: Build-and-publish-docker-images-workflow
 
 on:
   push:
-    branches:
-      - main
-      - master
-      - '*/Fix-*-docker*'
+    - jtikekar/masterV3.0
 
   release:
     types: [published]
@@ -13,18 +10,20 @@ on:
 jobs:
   Build-and-publish-docker-images:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false
+    if: |
+      contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false &&
+      contains(github.event.head_commit.message, 'DockerHub')
     steps:
       - uses: actions/checkout@master
         
-      - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v1
-        with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-blazor-for-demo
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor
+      # - name: Build and publish AasxServerBlazor
+      #   uses: docker/build-push-action@v1
+      #   with:
+      #     username: adminshellio
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #     repository: adminshellio/aasx-server-blazor-for-demo
+      #     tag_with_ref: true
+      #     dockerfile: src/docker/Dockerfile-AasxServerBlazor
 
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v1
@@ -32,41 +31,42 @@ jobs:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: adminshellio/aasx-server-blazor-for-demo-arm32
+          tags: v3latest
           tag_with_ref: true
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm32
 
-      - name: Build and publish AasxServerBlazor-arm64
-        uses: docker/build-push-action@v1
-        with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-blazor-for-demo-arm64
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
+      # - name: Build and publish AasxServerBlazor-arm64
+      #   uses: docker/build-push-action@v1
+      #   with:
+      #     username: adminshellio
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #     repository: adminshellio/aasx-server-blazor-for-demo-arm64
+      #     tag_with_ref: true
+      #     dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
 
-      - name: Build and publish AasxServerCore
-        uses: docker/build-push-action@v1
-        with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-core-for-demo
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerCore
+      # - name: Build and publish AasxServerCore
+      #   uses: docker/build-push-action@v1
+      #   with:
+      #     username: adminshellio
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #     repository: adminshellio/aasx-server-core-for-demo
+      #     tag_with_ref: true
+      #     dockerfile: src/docker/Dockerfile-AasxServerCore
 
-      - name: Build and publish AasxServerCore-arm32
-        uses: docker/build-push-action@v1
-        with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-core-for-demo-arm32
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerCore-arm32
+      # - name: Build and publish AasxServerCore-arm32
+      #   uses: docker/build-push-action@v1
+      #   with:
+      #     username: adminshellio
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #     repository: adminshellio/aasx-server-core-for-demo-arm32
+      #     tag_with_ref: true
+      #     dockerfile: src/docker/Dockerfile-AasxServerCore-arm32
 
-      - name: Build and publish AasxServerCore-arm64
-        uses: docker/build-push-action@v1
-        with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-core-for-demo-arm64
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerCore-arm64
+      # - name: Build and publish AasxServerCore-arm64
+      #   uses: docker/build-push-action@v1
+      #   with:
+      #     username: adminshellio
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #     repository: adminshellio/aasx-server-core-for-demo-arm64
+      #     tag_with_ref: true
+      #     dockerfile: src/docker/Dockerfile-AasxServerCore-arm64
