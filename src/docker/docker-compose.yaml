@@ -1,0 +1,9 @@
+services:
+  aasx-server:
+    container_name: aasx-server
+    hostname: aasx-server
+    image: adminshellio/aasx-server-blazor-for-demo:v3latest
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    command: --start-index 0 --no-security --edit --data-path /usr/share/aasxs --external-blazor http://localhost:5001
