@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - master
+      - jtikekar/masterV3.0
 
 jobs:
   Check-release:
@@ -36,10 +37,10 @@ jobs:
 
           Write-Output "::set-output name=timestamp::$timestamp"
 
-      - name: Install .NET core
+      - name: Install .NET core 6.0
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '3.1.100'
+          dotnet-version: '6.0.x'
 
       - name: Build for release
         working-directory: src
@@ -65,8 +66,8 @@ jobs:
           name: AasxServerCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerCore.zip
 
-      - name: Upload AasxServerWindows
-        uses: actions/upload-artifact@v2
-        with:
-          name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
+      # - name: Upload AasxServerWindows
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+      #     path: artefacts/release/LATEST.alpha/AasxServerWindows.zip

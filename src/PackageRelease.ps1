@@ -22,7 +22,6 @@ function PackageRelease($outputDir)
     $targets = $(
     "AasxServerBlazor"
     "AasxServerCore"
-    "AasxServerWindows"
     )
 
     New-Item -ItemType Directory -Force -Path $outputDir|Out-Null

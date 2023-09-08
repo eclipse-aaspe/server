@@ -7,6 +7,10 @@
     <UserSecretsId>ef550880-6a5f-4e0c-b634-8284f1dc5445</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;UseAasxCompatibilityModels</DefineConstants>
     <DebugType>portable</DebugType>
