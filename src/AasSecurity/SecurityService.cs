@@ -557,7 +557,7 @@ namespace AasSecurity
                     {
                         var aas = aasResource as IAssetAdministrationShell;
                         //if (aasResourceType != null && securityRole.ObjectReference == aasResource && securityRole.Permission == neededRights)
-                        if (aasResourceType != null && aas.EqualsAas((IAssetAdministrationShell)securityRole.ObjectReference) && securityRole.Permission == neededRights)
+                        if (aasResourceType != null && (aas.EqualsAas((IAssetAdministrationShell)securityRole.ObjectReference) || securityRole.AAS == "*") && securityRole.Permission == neededRights)
                         {
                             if ((securityRole.Condition == "" && securityRole.Name == currentRole) ||
                                     (securityRole.Condition == "not" && securityRole.Name != currentRole))

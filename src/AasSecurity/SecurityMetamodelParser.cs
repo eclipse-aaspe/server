@@ -241,6 +241,17 @@ namespace AasSecurity
                             securityRole.SemanticId += ":" + split[j];
                     }
                 }
+                else if (propValue.Contains("aas"))
+                {
+                    string[] split = propValue.Split(':');
+                    if (split[0] == "aas")
+                    {
+                        securityRole.ObjectType = split[0];
+                        securityRole.AAS = split[1];
+                        for (int j = 2; j < split.Length; j++)
+                            securityRole.AAS += ":" + split[j];
+                    }
+                }
                 //The permission is on AAS Property
                 else
                 {
