@@ -14,5 +14,6 @@
         internal ISubmodel Submodel { get; set; }
         internal string SemanticId { get; set; }
         internal ISubmodelElementCollection Usage { get; set; }
+        internal string AAS { get; set; }
     }
 }
