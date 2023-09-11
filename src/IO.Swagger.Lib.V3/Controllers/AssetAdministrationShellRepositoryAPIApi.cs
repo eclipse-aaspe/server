@@ -92,6 +92,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to delete AAS with id {decodedAasIdentifier}");
             _aasService.DeleteAssetAdministrationShellById(decodedAasIdentifier);
 
+
             return NoContent();
         }
 
