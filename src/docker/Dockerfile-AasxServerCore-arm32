@@ -1,4 +1,4 @@
-# Based on https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/Dockerfile.debian-arm32
+ # Based on https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/Dockerfile.debian-arm32
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /repo/src
 
