@@ -41,7 +41,7 @@ jobs:
       - name: Install .NET core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '3.1.100'
+          dotnet-version: '6.0.x'
 
       - name: Build for the release
         working-directory: src
