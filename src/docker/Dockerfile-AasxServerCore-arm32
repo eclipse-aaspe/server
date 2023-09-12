@@ -6,9 +6,9 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-RUN dotnet restore -r linux-arm
+RUN dotnet restore -r linux-arm32
 
-RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore -r linux-arm --self-contained false --no-restore
+RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore -r linux-arm32 --self-contained false --no-restore
 
 FROM mcr.microsoft.com/dotnet/runtime:6.0-bullseye-slim-arm32v7
 EXPOSE 51210
