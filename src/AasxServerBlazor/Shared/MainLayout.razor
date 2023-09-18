@@ -8,6 +8,7 @@
 @using System
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
 @using Microsoft.IdentityModel.Tokens;
+
 <style>
     .loader {
     width: 28px;
@@ -29,6 +30,7 @@
     }
     } 
 </style>
+
 @*<div class="sidebar">
     <NavMenu />
 </div>*@
@@ -46,7 +48,8 @@
             {
                 input = "anonymous";
                 AasxServer.AasxCredentials.initAnonymous(cs.credentials);
-                IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
+                // IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
+                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
                 AasxServer.AasxTask.resetTimeStamp();
             }
             bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
@@ -201,18 +204,14 @@
                                                 StateHasChanged();
                                                 await Task.Delay(1); //hack to let frontend update
                                                 var watch = System.Diagnostics.Stopwatch.StartNew();
-                                                IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
-                                                cs.credentials, DateTime.UtcNow, true);
+                                                // IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow, true);
+                                                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
                                                 watch.Stop();
                                                 Console.WriteLine(watch.ElapsedMilliseconds + " ms");
                                                 watchText = "in " + ((watch.ElapsedMilliseconds + 500) / 1000).ToString() + "s";
                                                 AasxServer.AasxTask.resetTimeStamp();
                                                 loading = false;
                                             }
-                                            // JUIJUI
-                                            IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(
-                                            AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
-                                            // JUIJUI
                                             CurrentValue = "";
                                             this.StateHasChanged();
                                         }
@@ -294,11 +293,14 @@
 
                 link = "?aasUrl=" + getAasLink(aas);
 
-                var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                if (registry.Count != 0)
+                // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                // JUIJUI
+                var registry = AasRegistryService.GetAasRegistry();
+                if (registry != null)
                 {
-                    link += "&registryURL=" + registry[0];
+                    // link += "&registryURL=" + registry[0];
                 }
+                // JUIJUI
 
                 var queryPara = "";
                 var userPW = "";
