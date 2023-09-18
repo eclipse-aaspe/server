@@ -31,6 +31,7 @@ using System.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Threading.Channels;
 using System.CommandLine.Parsing;
+using Microsoft.EntityFrameworkCore;
 
 namespace AasxServer
 {
@@ -2115,7 +2116,44 @@ namespace AasxServer
                     {
                         lock (Program.changeAasxFile)
                         {
-                            Program.saveEnv(envi);
+                            var aasList = Program.env[envi].AasEnv.AssetAdministrationShells;
+                            var aasIds = aasList.Select(x => x.Id).ToList();
+
+                            var submodelList = Program.env[envi].AasEnv.Submodels;
+                            var submodelIds = submodelList.Select(x => x.Id).ToList();
+
+                            Dictionary<string, long> aasToDeleteAASXNumsDic;
+
+                            using (AasContext db = new AasContext())
+                            {
+                                //Deleting all related Aas, Submodel and SME
+                                //Join zwischen Liste und DB Tabelle nicht möglich, deswegen Contains für AAS und Submodelle
+                                aasToDeleteAASXNumsDic = db.AasSets.Where(x => aasIds.Contains(x.AasId)).ToDictionary(x => x.AasId, x => x.AASXNum);
+                                db.AasSets.Where(x => aasIds.Contains(x.AasId)).ExecuteDelete();
+                                var submodelsToDeleteNums = db.SubmodelSets.Where(x => submodelIds.Contains(x.SubmodelId)).Select(x => x.SubmodelNum).ToList();
+
+                                db.SubmodelSets.Where(x => submodelIds.Contains(x.SubmodelId)).ExecuteDelete();
+
+                                var smeToDeleteNums = db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SubmodelNum)).Select(x => x.SMENum).ToList();
+                                db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SubmodelNum)).ExecuteDelete();
+
+                                db.IValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
+                                db.SValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
+                                db.DValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
+
+                                //Load Everything back in
+                                foreach (IAssetAdministrationShell aas in aasList)
+                                {
+                                    long assxNum = 0;
+                                    if (aasToDeleteAASXNumsDic.ContainsKey(aas.Id))
+                                    {
+                                        assxNum = aasToDeleteAASXNumsDic[aas.Id];
+                                    }
+                                    VisitorAASX.LoadAASInDB(db, aas, assxNum, Program.env[envi]);
+                                }
+                                db.SaveChanges();
+                            }
+                            //Program.saveEnv(envi);
                             Program.env[envi].setWrite(false);
                             newData = true;
                         }

@@ -1192,49 +1192,7 @@ namespace AasxServer
                                             {
                                                 if (aasId != null && aasId != "" && assetId != null && assetId != "")
                                                 {
-                                                    long aasNum = ++dbConfig.AasCount;
-                                                    var aasDB = new AasSet
-                                                    {
-                                                        AasNum = aasNum,
-                                                        AasId = aasId,
-                                                        AssetId = assetId,
-                                                        AASXNum = aasxNum,
-                                                        Idshort = aas.IdShort,
-                                                        AssetKind = aas.AssetInformation.AssetKind.ToString()
-                                                    };
-                                                    db.Add(aasDB);
-
-                                                    // Iterate submodels
-                                                    if (aas.Submodels != null && aas.Submodels.Count > 0)
-                                                    {
-                                                        foreach (var smr in aas.Submodels)
-                                                        {
-                                                            var sm = asp.AasEnv.FindSubmodel(smr);
-                                                            if (sm != null)
-                                                            {
-                                                                var semanticId = sm.SemanticId.GetAsIdentifier();
-                                                                if (semanticId == null)
-                                                                    semanticId = "";
-
-                                                                long submodelNum = ++dbConfig.SubmodelCount;
-
-                                                                var submodelDB = new SubmodelSet
-                                                                {
-                                                                    SubmodelNum = submodelNum,
-                                                                    SubmodelId = sm.Id,
-                                                                    SemanticId = semanticId,
-                                                                    AASXNum = aasxNum,
-                                                                    AasNum = aasNum,
-                                                                    Idshort = sm.IdShort
-                                                                };
-                                                                db.Add(submodelDB);
-
-                                                                VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
-                                                                v.Visit(sm);
-                                                            }
-                                                        }
-                                                        // createDbFiles(slist, env[envi], AasxHttpContextHelper.DataPath, Path.GetFileNameWithoutExtension(name));
-                                                    }
+                                                    VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
                                                 }
                                             }
                                             db.SaveChanges();

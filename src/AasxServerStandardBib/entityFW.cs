@@ -1,4 +1,5 @@
 ﻿using AasxRestServerLibrary;
+using AdminShellNS;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -732,7 +733,60 @@ namespace AasxServer
             _smNum = smNum;
             _parentNum = new List<long>();
         }
-        
+
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp)
+        {
+            var dbConfig = db.DbConfigSets.FirstOrDefault();
+            LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
+        }
+
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DbConfigSet dbConfig)
+        {
+
+            long aasNum = ++dbConfig.AasCount;
+            var aasDB = new AasSet
+            {
+                AasNum = aasNum,
+                AasId = aas.Id,
+                AssetId = aas.AssetInformation.GlobalAssetId,
+                AASXNum = aasxNum,
+                Idshort = aas.IdShort,
+                AssetKind = aas.AssetInformation.AssetKind.ToString()
+            };
+            db.Add(aasDB);
+
+            // Iterate submodels
+            if (aas.Submodels != null && aas.Submodels.Count > 0)
+            {
+                foreach (var smr in aas.Submodels)
+                {
+                    var sm = asp.AasEnv.FindSubmodel(smr);
+                    if (sm != null)
+                    {
+                        var semanticId = sm.SemanticId.GetAsIdentifier();
+                        if (semanticId == null)
+                            semanticId = "";
+
+                        long submodelNum = ++dbConfig.SubmodelCount;
+
+                        var submodelDB = new SubmodelSet
+                        {
+                            SubmodelNum = submodelNum,
+                            SubmodelId = sm.Id,
+                            SemanticId = semanticId,
+                            AASXNum = aasxNum,
+                            AasNum = aasNum,
+                            Idshort = sm.IdShort
+                        };
+                        db.Add(submodelDB);
+
+                        VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
+                        v.Visit(sm);
+                    }
+                }
+            }
+        }
+
         private string shortType(ISubmodelElement sme)
         {
             if (sme is Property)
