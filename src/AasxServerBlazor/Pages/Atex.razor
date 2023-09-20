@@ -237,6 +237,7 @@
                         }
                     </tbody>
                 </table>
+
                 <br />
                 @{
                     double Lc = cableLength[p] / 1000.0 * 1;
@@ -307,6 +308,111 @@
             </div>
             <br />
             <br />
+
+            <b>Alle zugehörigen Betriebsmittel</b>
+
+            <br>
+            <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                <thead>
+                    <tr>
+                        <th style="word-break:keep-all;width:18%">Bezeichnung</th>
+                        <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
+                        <th style="word-break:keep-all;width:17%">Hersteller</th>
+                        <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                        <th style="word-break:keep-all;width:6%">Uo</th>
+                        <th style="word-break:keep-all;width:6%">Io</th>
+                        <th style="word-break:keep-all;width:6%">Po</th>
+                        <th style="word-break:keep-all;width:6%">Lo</th>
+                        <th style="word-break:keep-all;width:6%">Co</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        for (int i = 0; i < count; i++)
+                        {
+                            if (isOutput[i])
+                            {
+                                <tr>
+                                    <td>@ManufacturerProductDesignation[i]</td>
+                                    <td>
+                                        @ManufacturerProductType[i]
+                                        @{
+                                            bool svg = false;
+                                            string detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
+
+                                            @if (detailsImage != "")
+                                            {
+                                                if (!svg)
+                                                {
+                                                    <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                     src=data:image;base64,@detailsImage />
+                                                }
+                                                else
+                                                {
+                                                    <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                     src=data:image/svg+xml;base64,@detailsImage />
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @ManufacturerName[i]
+                                        @{
+                                            svg = false;
+                                            detailsImage = createDetailsImage(envIndex[i], ManufacturerLogo[i], out svg);
+
+                                            @if (detailsImage != "")
+                                            {
+                                                if (!svg)
+                                                {
+                                                    <img style="max-height:50px;object-fit:contain" alt="Details Image"
+                                     src=data:image;base64,@detailsImage />
+                                                }
+                                                else
+                                                {
+                                                    <img style="max-height:50px;object-fit:contain" alt="Details Image"
+                                     src=data:image/svg+xml;base64,@detailsImage />
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @TypeOfApproval[i]
+                                        @DesignationOfCertificateOrApproval[i]
+                                        @{
+                                            svg = false;
+                                            detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+
+                                            @if (detailsImage != "")
+                                            {
+                                                if (!svg)
+                                                {
+                                                    <a href="@PreviewFileUrl[i]" target="_blank">
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image;base64,@detailsImage />
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a href="@PreviewFileUrl[i]" target="_blank">
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    </a>
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                    <td>@U[i].ToString(CultureInfo.InvariantCulture)</td>
+                                    <td>@I[i].ToString(CultureInfo.InvariantCulture)</td>
+                                    <td>@P[i].ToString(CultureInfo.InvariantCulture)</td>
+                                    <td>@L[i].ToString(CultureInfo.InvariantCulture)</td>
+                                    <td>@C[i].ToString(CultureInfo.InvariantCulture)</td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
         }
     }
 </div>
@@ -574,7 +680,11 @@
                                             {
                                                 try
                                                 {
-                                                    C[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    string v = p.Value;
+                                                    // fix generator bug
+                                                    if (v.Contains(" nF"))
+                                                        v = v.Replace(" nF", "");
+                                                    C[count] = Convert.ToDouble(v, CultureInfo.InvariantCulture);
                                                 }
                                                 catch { }
                                             }
