@@ -29,109 +29,6 @@
                 <b>@projectName[p] : Nachweis der Eigensicherheit</b>
                 <br /><br />
 
-                <b>Zugehöriges Betriebsmittel</b><br>
-                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
-                    <thead>
-                        <tr>
-                            <th style="word-break:keep-all;width:18%">Bezeichnung</th>
-                            <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
-                            <th style="word-break:keep-all;width:17%">Hersteller</th>
-                            <th style="word-break:keep-all;width:17%">Bescheinigung</th>
-                            <th style="word-break:keep-all;width:6%">Uo</th>
-                            <th style="word-break:keep-all;width:6%">Io</th>
-                            <th style="word-break:keep-all;width:6%">Po</th>
-                            <th style="word-break:keep-all;width:6%">Lo</th>
-                            <th style="word-break:keep-all;width:6%">Co</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{
-                            for (int i = 0; i < count; i++)
-                            {
-                                if (i == iOut)
-                                {
-                                    <tr>
-                                        <td>@ManufacturerProductDesignation[i]</td>
-                                        <td>
-                                            @ManufacturerProductType[i]
-                                            @{
-                                                bool svg = false;
-                                                string detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
-
-                                                @if (detailsImage != "")
-                                                {
-                                                    if (!svg)
-                                                    {
-                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                                         src=data:image;base64,@detailsImage />
-                                                    }
-                                                    else
-                                                    {
-                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                                         src=data:image/svg+xml;base64,@detailsImage />
-                                                    }
-                                                }
-                                            }
-                                        </td>
-                                        <td>
-                                            @ManufacturerName[i]
-                                            @{
-                                                svg = false;
-                                                detailsImage = createDetailsImage(envIndex[i], ManufacturerLogo[i], out svg);
-
-                                                @if (detailsImage != "")
-                                                {
-                                                    if (!svg)
-                                                    {
-                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
-                                                         src=data:image;base64,@detailsImage />
-                                                    }
-                                                    else
-                                                    {
-                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
-                                                         src=data:image/svg+xml;base64,@detailsImage />
-                                                    }
-                                                }
-                                            }
-                                        </td>
-                                        <td>
-                                            @TypeOfApproval[i]
-                                            @DesignationOfCertificateOrApproval[i]
-                                            @{
-                                                svg = false;
-                                                detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
-
-                                                @if (detailsImage != "")
-                                                {
-                                                    if (!svg)
-                                                    {
-                                                        <a href="@PreviewFileUrl[i]" target="_blank">
-                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                                         src=data:image;base64,@detailsImage />
-                                                        </a>
-                                                    }
-                                                    else
-                                                    {
-                                                        <a href="@PreviewFileUrl[i]" target="_blank">
-                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                                         src=data:image/svg+xml;base64,@detailsImage />
-                                                        </a>
-                                                    }
-                                                }
-                                            }
-                                        </td>
-                                        <td>@U[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@I[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@P[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@L[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@C[i].ToString(CultureInfo.InvariantCulture)</td>
-                                    </tr>
-                                }
-                            }
-                        }
-                    </tbody>
-                </table>
-
                 <b>Eigensicheres elektrische Betriebsmittel</b><br />
                 <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                     <thead>
@@ -160,6 +57,8 @@
                                         <td>@ManufacturerProductDesignation[i]</td>
                                         <td>
                                             @ManufacturerProductType[i]
+                                            <br>
+                                            @Program.env[envIndex[i]].AasEnv.AssetAdministrationShells[0].IdShort
                                             @{
                                                 svg = false;
                                                 detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
@@ -244,67 +143,251 @@
                     double Cc = cableLength[p] / 1000.0 * 110;
                     string color = "red";
                     <span>
-                        <b>Kabellänge: @cableLength[p].ToString(CultureInfo.InvariantCulture)
-                        => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)</b></span>
+                        <b>
+                            Kabellänge: @cableLength[p].ToString(CultureInfo.InvariantCulture)
+                            => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)
+                        </b>
+                    </span>
                     <br />
                     <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                         <tr>
                             <td style="word-break:keep-all;width:70%">Bedingungen für Eigensicherheit</td>
-                            @{
-                                color = "red";
-                                @if (U[iOut] <= U[iIn]) color = "green";
-                            }
-                            <td style="word-break:keep-all;color:@color;width:6%">
+                            <td style="word-break:keep-all">
                                 <b>
                                     @("Uo <= Ui:")<br />
-                                    @(U[iOut].ToString(CultureInfo.InvariantCulture) + "<=" + U[iIn].ToString(CultureInfo.InvariantCulture))
                                 </b>
                             </td>
-                            @{
-                                color = "red";
-                                if (I[iOut] <= I[iIn]) color = "green";
-                            }
-                            <td style="word-break:keep-all;color:@color;width:6%">
+                            <td style="word-break:keep-all;">
                                 <b>
                                     @("Io <= Ii:")<br />
-                                    @(I[iOut].ToString(CultureInfo.InvariantCulture) + "<=" + I[iIn].ToString(CultureInfo.InvariantCulture))
                                 </b>
                             </td>
-                            @{
-                                color = "red";
-                                if (P[iOut] <= P[iIn]) color = "green";
-                            }
-                            <td style="word-break:keep-all;color:@color;width:6%">
+                            <td style="word-break:keep-all;">
                                 <b>
                                     @("Po <= Pi:")<br />
-                                    @(P[iOut].ToString(CultureInfo.InvariantCulture) + "<=" + P[iIn].ToString(CultureInfo.InvariantCulture))
                                 </b>
                             </td>
-                            @{
-                                color = "red";
-                                if (0.5 * L[iOut] >= L[iIn] + Lc) color = "green";
-                            }
-                            <td style="word-break:keep-all;color:@color;width:6%">
+                            <td style="word-break:keep-all;">
                                 <b>
                                     0,5 * Lo >= Li + Lc:<br>
-                                    0,5 * @L[iOut].ToString(CultureInfo.InvariantCulture) >= @L[iIn].ToString(CultureInfo.InvariantCulture)
-                                    + @Lc.ToString(CultureInfo.InvariantCulture)
                                 </b>
                             </td>
-                            @{
-                                color = "red";
-                                if (0.5 * C[iOut] >= C[iIn] + Cc) color = "green";
-                            }
-                            <td style="word-break:keep-all;color:@color;width:6%">
+                            <td style="word-break:keep-all;">
                                 <b>
                                     0,5 Co >= Ci + Cc:<br />
-                                    0,5 * @C[iOut].ToString(CultureInfo.InvariantCulture) >= @C[iIn].ToString(CultureInfo.InvariantCulture)
-                                    + @Cc.ToString(CultureInfo.InvariantCulture)
                                 </b>
                             </td>
                         </tr>
                     </table>
                 }
+                <br>
+
+                <b>Zugehöriges Betriebsmittel</b><br>
+                Alternativen:
+                <input @bind="Alternatives[iOut]" style="width:500px; border-width: 1px; border-color: black;" />
+                @*
+                @code {
+                    private string CurrentValue { get; set; }
+                }
+                @if (CurrentValue != null && CurrentValue != "")
+                {
+                    if (CurrentValue == " ")
+                        CurrentValue = "";
+                    Alternatives[iOut] = CurrentValue;
+                    CurrentValue = "";
+                }
+                *@
+                <br>
+                
+                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                    <thead>
+                        <tr>
+                            <th style="word-break:keep-all;width:18%">Bezeichnung</th>
+                            <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
+                            <th style="word-break:keep-all;width:17%">Hersteller</th>
+                            <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                            <th style="word-break:keep-all;width:6%">Uo</th>
+                            <th style="word-break:keep-all;width:6%">Io</th>
+                            <th style="word-break:keep-all;width:6%">Po</th>
+                            <th style="word-break:keep-all;width:6%">Lo</th>
+                            <th style="word-break:keep-all;width:6%">Co</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            for (int i = 0; i < count; i++)
+                            {
+                                bool show = (i == iOut);
+
+                                string idShort = @Program.env[envIndex[i]].AasEnv.AssetAdministrationShells[0].IdShort;
+                                if (Alternatives[iOut] != "" && idShort.Contains(Alternatives[iOut]))
+                                {
+                                    show = true;
+                                }
+
+                                if (show)
+                                {
+                                    <tr>
+                                        <td>@ManufacturerProductDesignation[i]</td>
+                                        <td>
+                                            @if (i == iOut)
+                                            {
+                                                <b>
+                                                    @ManufacturerProductType[i]
+                                                </b>
+                                            }
+                                            else
+                                            {
+                                                <span>
+                                                    @ManufacturerProductType[i]
+                                                </span>
+                                            }
+                                            <br>
+                                            @Program.env[envIndex[i]].AasEnv.AssetAdministrationShells[0].IdShort
+                                            @{
+                                                bool svg = false;
+                                                string detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image;base64,@detailsImage />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @ManufacturerName[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], ManufacturerLogo[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
+                                                         src=data:image;base64,@detailsImage />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
+                                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @TypeOfApproval[i]
+                                            @DesignationOfCertificateOrApproval[i]
+                                            @{
+                                                svg = false;
+                                                detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+
+                                                @if (detailsImage != "")
+                                                {
+                                                    if (!svg)
+                                                    {
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">
+                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image;base64,@detailsImage />
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">
+                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                        </a>
+                                                    }
+                                                }
+                                            }
+                                        </td>
+                                        @{
+                                            color = "red";
+                                            @if (U[i] <= U[iIn]) color = "green";
+                                        }
+                                        <td>
+                                            @U[i].ToString(CultureInfo.InvariantCulture)
+                                            <br><br>
+                                            <span style="word-break:keep-all;color:@color;">
+                                                <b>
+                                                    @("Uo <= Ui:")<br />
+                                                    @(U[i].ToString(CultureInfo.InvariantCulture) + "<=" + U[iIn].ToString(CultureInfo.InvariantCulture))
+                                                </b>
+                                            </span>
+                                        </td>
+                                        @{
+                                            color = "red";
+                                            if (I[i] <= I[iIn]) color = "green";
+                                        }
+                                        <td>
+                                            @I[i].ToString(CultureInfo.InvariantCulture)
+                                            <br><br>
+                                            <span style="word-break:keep-all;color:@color;">
+                                                <b>
+                                                    @("Io <= Ii:")<br />
+                                                    @(I[i].ToString(CultureInfo.InvariantCulture) + "<=" + I[iIn].ToString(CultureInfo.InvariantCulture))
+                                                </b>
+                                            </span>
+                                        </td>
+                                        @{
+                                            color = "red";
+                                            if (P[i] <= P[iIn]) color = "green";
+                                        }
+                                        <td>
+                                            @P[i].ToString(CultureInfo.InvariantCulture)
+                                            <br><br>
+                                            <span style="word-break:keep-all;color:@color;">
+                                                <b>
+                                                    @("Po <= Pi:")<br />
+                                                    @(P[i].ToString(CultureInfo.InvariantCulture) + "<=" + P[iIn].ToString(CultureInfo.InvariantCulture))
+                                                </b>
+                                            </span>
+                                        </td>
+                                        @{
+                                            color = "red";
+                                            if (0.5 * L[i] >= L[iIn] + Lc) color = "green";
+                                        }
+                                        <td>
+                                            @L[i].ToString(CultureInfo.InvariantCulture)
+                                            <br><br>
+                                            <span style="word-break:keep-all;color:@color;">
+                                                <b>
+                                                    0,5 * Lo >= Li + Lc:<br>
+                                                    0,5 * @L[i].ToString(CultureInfo.InvariantCulture) >= @L[iIn].ToString(CultureInfo.InvariantCulture)
+                                                    + @Lc.ToString(CultureInfo.InvariantCulture)
+                                                </b>
+                                            </span>
+                                        </td>
+                                        @{
+                                            color = "red";
+                                            if (0.5 * C[i] >= C[iIn] + Cc) color = "green";
+                                        }
+                                        <td>
+                                            @C[i].ToString(CultureInfo.InvariantCulture)
+                                            <br><br>
+                                            <span style="word-break:keep-all;color:@color;">
+                                                <b>
+                                                    0,5 Co >= Ci + Cc:<br />
+                                                    0,5 * @C[i].ToString(CultureInfo.InvariantCulture) >= @C[iIn].ToString(CultureInfo.InvariantCulture)
+                                                    + @Cc.ToString(CultureInfo.InvariantCulture)
+                                                </b>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
             </div>
             <br />
             <br />
@@ -337,6 +420,8 @@
                                 <td>@ManufacturerProductDesignation[i]</td>
                                 <td>
                                     @ManufacturerProductType[i]
+                                    <br>
+                                    @Program.env[envIndex[i]].AasEnv.AssetAdministrationShells[0].IdShort
                                     @{
                                         bool svg = false;
                                         string detailsImage = createDetailsImage(envIndex[i], ProductImage[i], out svg);
@@ -449,6 +534,7 @@
     List<Double> P = null;
     List<Double> L = null;
     List<Double> C = null;
+    List<string> Alternatives = null;
 
     void collectData()
     {
@@ -480,6 +566,8 @@
         P = new List<double>();
         L = new List<double>();
         C = new List<double>();
+        if (Alternatives == null)
+            Alternatives = new List<string>();
 
         int aascount = AasxServer.Program.env.Length;
 
@@ -554,6 +642,8 @@
                                     P.Add(0);
                                     L.Add(0);
                                     C.Add(0);
+                                    if (C.Count > Alternatives.Count)
+                                        Alternatives.Add("");
 
                                     var sme = findeSME(sm: sm, idShortPath: "ManufacturerProductDesignation", ignore: true);
                                     if (sme != null)
