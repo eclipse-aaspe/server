@@ -30,6 +30,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         static List<string> federatedElemensSemanticId = new List<string>();
         static int submodelRegistryCount = 0;
 
+        public List<string> GetRegistryList()
+        {
+            return getRegistry;
+        }
         public ISubmodel GetAasRegistry()
         {
             return aasRegistry;

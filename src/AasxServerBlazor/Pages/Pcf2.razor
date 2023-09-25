@@ -4,8 +4,10 @@
 @using Data
 @inject AASService SubmodelService
 @* @inject CredentialService cs *@
+@inject IRegistryInitializerService AasRegistryService
 @using AasxServer;
 @using Extensions;
+@using IO.Swagger.Registry.Lib.V3.Interfaces;
 @using Microsoft.IdentityModel.Tokens;
 @using System.Drawing;
 @using System.Globalization;
@@ -281,13 +283,14 @@
                                             string iframePath = getIframePath();
                                             link = getAasLink(@node.aas);
                                             // JUIJUI
-                                            /*
-                                            var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                                            
+                                            // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
+                                            var registry = AasRegistryService.GetRegistryList();
                                             if (registry.Count != 0)
                                             {
                                                 link += "&registryURL=" + registry[0];
                                             }
-                                            */
+                                           
                                             // JUIJUI
                                             queryPara = "";
                                             userPW = "";

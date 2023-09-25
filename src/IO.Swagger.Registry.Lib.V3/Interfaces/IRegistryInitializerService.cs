@@ -10,6 +10,7 @@ namespace IO.Swagger.Registry.Lib.V3.Interfaces
         void CreateAssetAdministrationShellDescriptor(AssetAdministrationShellDescriptor newAasDesc, DateTime timestamp, bool initial = false);
         void CreateMultipleAssetAdministrationShellDescriptor(List<AssetAdministrationShellDescriptor> body, DateTime timestamp);
         ISubmodel GetAasRegistry();
+        List<string> GetRegistryList();
         void InitRegistry(List<AasxCredentialsEntry> cList, DateTime timestamp, bool initAgain = false);
     }
 }

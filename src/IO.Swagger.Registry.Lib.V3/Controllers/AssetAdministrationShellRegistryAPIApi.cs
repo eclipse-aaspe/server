@@ -143,7 +143,7 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult GetAllAssetAdministrationShellDescriptors([FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] string assetKind, [FromQuery] string assetType)
         {
             // TODO (jtikekar, 2023-09-04): AssetType resembles AssetId from old Implementation
-            List<string> assetList = null;
+            List<string> assetList = new List<string>();
             if (!string.IsNullOrEmpty(assetType))
             {
                 var decodedAssetType = _decoderService.Decode("assetType", assetType);
@@ -152,8 +152,31 @@ namespace IO.Swagger.Controllers
                     decodedAssetType
                 };
             }
-            var aasDescrptiors = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetKind, assetList);
-            var output = _paginationService.GetPaginatedList(aasDescrptiors, new Models.PaginationParameters(cursor, limit));
+
+            List<AssetAdministrationShellDescriptor> aasDescriptors;
+            if (!Program.withDb)
+            {
+                // from memory
+                aasDescriptors = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetKind, assetList);
+            }
+            else
+            {
+                //From DB
+                aasDescriptors = new List<AssetAdministrationShellDescriptor>();
+                using (AasContext db = new AasContext())
+                {
+                    foreach (var aasDB in db.AasSets)
+                    {
+                        if (assetList.Count == 0 || assetList.Contains(aasDB.AssetId))
+                        {
+                            var aasDesc = _aasRegistryService.CreateAasDescriptorFromDB(aasDB);
+                            aasDescriptors.Add(aasDesc);
+                        }
+                    }
+                }
+            }
+
+            var output = _paginationService.GetPaginatedList(aasDescriptors, new Models.PaginationParameters(cursor, limit));
             return new ObjectResult(output);
         }
 
@@ -228,10 +251,29 @@ namespace IO.Swagger.Controllers
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             _logger.LogInformation($"Received request to get the AAS Descriptor by Id");
-            var aasList = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(aasIdentifier: decodedAasIdentifier);
-            if (aasList.Any())
+            if (!Program.withDb)
             {
-                return new ObjectResult(aasList.First());
+                var aasList = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(aasIdentifier: decodedAasIdentifier);
+                if (aasList.Any())
+                {
+                    return new ObjectResult(aasList.First());
+                }
+            }
+            else
+            {
+                // from database
+                using (AasContext db = new AasContext())
+                {
+                    foreach (var aasDB in db.AasSets)
+                    {
+                        if (decodedAasIdentifier.Equals(aasDB.AasId))
+                        {
+                            var aasDesc = _aasRegistryService.CreateAasDescriptorFromDB(aasDB);
+                            return new ObjectResult(aasDesc);
+                        }
+                    }
+                }
+
             }
 
             return NotFound();
@@ -512,13 +554,28 @@ namespace IO.Swagger.Controllers
 
                 var aasList = new List<String>();
 
-                var aasDecsriptorList = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetList: assetList);
-
-                foreach (var ad in aasDecsriptorList)
+                if (!Program.withDb)
                 {
-                    if (ad != null)
+                    var aasDecsriptorList = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetList: assetList);
+
+                    foreach (var ad in aasDecsriptorList)
                     {
-                        aasList.Add(ad.Id);
+                        if (ad != null)
+                        {
+                            aasList.Add(ad.Id);
+                        }
+                    }
+                }
+                else
+                {
+                    // from database
+                    using (AasContext db = new AasContext())
+                    {
+                        foreach (var aasDB in db.AasSets)
+                        {
+                            if (assetList.Contains(aasDB.AssetId))
+                                aasList.Add(aasDB.AasId);
+                        }
                     }
                 }
 

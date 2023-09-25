@@ -295,10 +295,10 @@
 
                 // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
                 // JUIJUI
-                var registry = AasRegistryService.GetAasRegistry();
-                if (registry != null)
+                var registry = AasRegistryService.GetRegistryList();
+                if (registry != null && registry.Count != 0)
                 {
-                    // link += "&registryURL=" + registry[0];
+                    link += "&registryURL=" + registry[0];
                 }
                 // JUIJUI
 

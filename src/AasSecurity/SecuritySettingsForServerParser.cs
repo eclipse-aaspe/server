@@ -93,7 +93,7 @@ namespace AasSecurity
                             {
                                 if (submodelElement is AasCore.Aas3_0.File publicCert)
                                 {
-                                    var certStream = env.GetLocalStreamFromPackage(publicCert.Value);
+                                    var certStream = env.GetLocalStreamFromPackage(publicCert.Value, init: true);
                                     if (certStream != null)
                                     {
                                         using (var memoryStream = new MemoryStream())

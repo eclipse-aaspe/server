@@ -15,5 +15,6 @@
         internal string SemanticId { get; set; }
         internal ISubmodelElementCollection Usage { get; set; }
         internal string AAS { get; set; }
+        internal int UsageEnvIndex { get; set; } = -1;
     }
 }

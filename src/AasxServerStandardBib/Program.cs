@@ -1,5 +1,4 @@
-﻿using AasCore.Aas3_0;
-using AasOpcUaServer;
+﻿using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
 //using AasxServerStandardBib.Migrations;
@@ -7,10 +6,8 @@ using AdminShellNS;
 using Extensions;
 using Jose;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using MimeKit.Encodings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -26,7 +23,6 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -37,10 +33,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
-using static Org.BouncyCastle.Math.EC.ECCurve;
-using static System.Formats.Asn1.AsnWriter;
 using Formatting = Newtonsoft.Json.Formatting;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -70,18 +63,18 @@ namespace AasxServer
     }
 
     public static class Program
-   {
+    {
         public static IConfiguration con { get; set; }
         public static string getBetween(AdminShellPackageEnv env, string strStart, string strEnd)
         {
-           string strSource = env.getEnvXml();
-           if (strSource != null && strSource.Contains(strStart) && strSource.Contains(strEnd))
-           {
+            string strSource = env.getEnvXml();
+            if (strSource != null && strSource.Contains(strStart) && strSource.Contains(strEnd))
+            {
                 int Start, End;
                 Start = strSource.IndexOf(strStart, 0) + strStart.Length;
                 End = strSource.IndexOf(strEnd, Start);
                 return strSource.Substring(Start, End - Start);
-           }
+            }
 
             return "";
         }
@@ -125,7 +118,7 @@ namespace AasxServer
                         }
                         else if (search.Contains(reader.Name))
                         {
-                            switch(reader.Name)
+                            switch (reader.Name)
                             {
                                 case "aas:semanticId":
                                 case "semanticId":
@@ -377,8 +370,8 @@ namespace AasxServer
                                 id: aasDB.AasId,
                                 idShort: aasDB.Idshort,
                                 assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                    /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                        new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) }) */
+                                /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                    new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) }) */
                                 );
                             env[i].AasEnv.AssetAdministrationShells.Add(aas);
 
@@ -387,7 +380,7 @@ namespace AasxServer
                                 .Where(sm => sm.AasNum == aasDB.AasNum)
                                 .ToList();
 
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference> ();
+                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
                             foreach (var submodelDB in submodelDBList)
                             {
                                 var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
@@ -499,9 +492,9 @@ namespace AasxServer
                                 id: aasDB.AasId,
                                 idShort: aasDB.Idshort,
                                 assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                    /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                        new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
-                                    ) */
+                                /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                    new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
+                                ) */
                                 );
                             env[i].AasEnv.AssetAdministrationShells.Add(aas);
 
@@ -689,7 +682,7 @@ namespace AasxServer
 
         public static bool withDb = false;
         public static bool isPostgres = false;
-        public static bool withDbFiles = true;
+        public static bool withDbFiles = true; //As per discussion with Andreas (25.09.2023)
         public static int startIndex = 0;
 
         public static bool withPolicy = true;
@@ -996,7 +989,7 @@ namespace AasxServer
             }
 
             bool createFilesOnly = false;
-            if (System.IO.File.Exists(AasxHttpContextHelper.DataPath+"/FILES.ONLY"))
+            if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/FILES.ONLY"))
                 createFilesOnly = true;
 
             int envi = 0;
@@ -1081,7 +1074,7 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                if (!Directory.Exists(AasxHttpContextHelper.DataPath+"/xml"))
+                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/files"))
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/files");
@@ -1104,8 +1097,9 @@ namespace AasxServer
                         {
                             envFileName[envi] = fn;
                             env[envi] = new AdminShellPackageEnv(fn, true, false);
-                            AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
-                            AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                            //TODO:jtikekar
+                            //AasxHttpContextHelper.securityInit(); // read users and access rights from AASX Security
+                            //AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
                             envi++;
                             envimin = envi;
                             oldest = envi;
@@ -1324,7 +1318,7 @@ namespace AasxServer
                 }
 
                 if (saveTemp == -1)
-                    return(0);
+                    return (0);
 
                 if (withDb)
                 {
@@ -1336,7 +1330,7 @@ namespace AasxServer
                     */
                 }
                 watch.Stop();
-                Console.WriteLine(fi + " AASX loaded in " + watch.ElapsedMilliseconds/1000 + "s");
+                Console.WriteLine(fi + " AASX loaded in " + watch.ElapsedMilliseconds / 1000 + "s");
 
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
                 Array.Sort(fileNames);
@@ -1687,7 +1681,7 @@ namespace AasxServer
             }
 
             rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
-                (CommandLineArguments a) =>
+                async (CommandLineArguments a) =>
                 {
                     /*
                     if (!(a.Rest || a.Opc || a.Mqtt))
@@ -1698,7 +1692,11 @@ namespace AasxServer
                     }
                     */
 
-                    return Run(a);
+                    //return Run(a);
+                    var task = Run(a);
+                    task.Wait();
+                    var op = task.Result;
+                    return op;
                 });
 
             int exitCode = rootCommand.InvokeAsync(args).Result;

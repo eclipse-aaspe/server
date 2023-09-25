@@ -36,6 +36,8 @@ namespace AasSecurity
             var httpRequest = _httpContextAccessor.HttpContext!.Request;
             string httpRoute = httpRequest.Path.Value!;
             bool isAuthorized = false;
+            string getPolicy = null;
+            string policy = null;
             string accessRole = ""; string idShortPath = null; string error = null;
             AccessRights neededRights = AccessRights.READ;
             var claims = context.User;
@@ -48,15 +50,20 @@ namespace AasSecurity
                     idShortPath = claims.FindFirst("IdShortPath")!.Value;
                 }
                 Enum.TryParse(right, out neededRights);
+                var policyclaim = claims.FindFirst("Policy");
+                if (policyclaim != null)
+                {
+                    policy = policyclaim.Value;
+                }
             }
             if (!string.IsNullOrEmpty(idShortPath))
             {
                 var parentSubmodel = resource as ISubmodel;
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, idShortPath, null, parentSubmodel);
+                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, idShortPath, null, parentSubmodel);
             }
             else if (resource is ISubmodel submodel)
             {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, submodel.IdShort!, "submodel", submodel);
+                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, submodel.IdShort!, "submodel", submodel, policy);
             }
             else if (resource is IAssetAdministrationShell aas)
             {
@@ -67,40 +74,45 @@ namespace AasSecurity
                     if (isGetAllPackagesApi)
                     {
                         httpRoute = "/packages";
-                        isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _);
+                        isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
                     }
                 }
                 else if (httpRoute.Contains("/packages/"))
                 {
                     //This if AASX File Server IF call, hence check the security for API Operation
-                    bool isAuthorisedApi = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _);
+                    bool isAuthorisedApi = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
                     //Check the security for the resource aas
-                    bool isAuthorisedAas = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, "", "aas", aas);
+                    bool isAuthorisedAas = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, "", "aas", aas);
                     isAuthorized = isAuthorisedApi && isAuthorisedAas;
                 }
                 else
                 {
                     //The request is solely for AAS
-                    isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, "", "aas", aas);
+                    isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, "", "aas", aas);
                 }
 
             }
             else if (resource is List<IConceptDescription> || resource is IConceptDescription)
             {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _);
+                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
             }
             else if (resource is List<PackageDescription> packages)
             {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _);
+                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
             }
             else if (resource is string resourceString && resourceString.IsNullOrEmpty())
             {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _);
+                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
             }
 
             if (isAuthorized)
             {
                 _logger.LogInformation("Request authorized successfully.");
+                if (getPolicy != null)
+                {
+                    _httpContextAccessor.HttpContext.Response.Headers.Append("policy", getPolicy);
+                    _httpContextAccessor.HttpContext.Response.Headers.Append("policyRequestedResource", httpRequest.Path.Value);
+                }
                 context.Succeed(requirement);
             }
             else

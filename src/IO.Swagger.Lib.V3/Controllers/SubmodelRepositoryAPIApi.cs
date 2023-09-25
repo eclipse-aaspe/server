@@ -15,7 +15,6 @@ using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Attributes;
-using IO.Swagger.Lib.V3.Exceptions;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
@@ -24,24 +23,15 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Web;
-using static AasCore.Aas3_0.Reporting;
 
 namespace IO.Swagger.Controllers
 {
@@ -891,6 +881,7 @@ namespace IO.Swagger.Controllers
             return new ObjectResult(example);
         }
 
+        //TODO:jtikekar @Andreas the route is same as GetSubmodelById
         /// <summary>
         /// Returns a specific Submodel
         /// </summary>
@@ -923,24 +914,37 @@ namespace IO.Swagger.Controllers
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
-            string error = null;
-            var access = false;
-            bool withAllow = false;
-            string getPolicy = null;
-            // check, if access to submodel is allowed
-            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, null, "/submodels", "READ", out withAllow, out getPolicy,
-                submodel.IdShort, "sm", submodel, null);
-            if (!access)
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
             {
-                throw new NotAllowed("Policy incorrect!");
+                var failedReason = authResult.Failure.FailureReasons.First();
+                if (failedReason != null)
+                {
+                    throw new NotAllowed(failedReason.Message);
+                }
             }
 
-            Response.Headers.Add("policy", getPolicy);
-            Response.Headers.Add("policyRequestedResource", Request.Path.Value);
-            
+            //jtikekar: handled by AuthorizationHandler
+            //string error = null;
+            //var access = false;
+            //bool withAllow = false;
+            //string getPolicy = null;
+            //// check, if access to submodel is allowed
+            //access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, null, "/submodels", "READ", out withAllow, out getPolicy,
+            //    submodel.IdShort, "sm", submodel, null);
+
+            //if (!access)
+            //{
+            //    throw new NotAllowed("Policy incorrect!");
+            //}
+
+            //Response.Headers.Add("policy", getPolicy);
+            //Response.Headers.Add("policyRequestedResource", Request.Path.Value);
+
             return Ok();
         }
 
+        //TODO:jtikekar @Andreas what about GetSubmodel from AAS-Repo?
         /// <summary>
         /// Returns a specific Submodel
         /// </summary>
@@ -979,86 +983,93 @@ namespace IO.Swagger.Controllers
                 var failedReason = authResult.Failure.FailureReasons.First();
                 if (failedReason != null)
                 {
-                    throw new NotAllowed(failedReason.Message);
+                    if (failedReason.Message != "")
+                    {
+                        throw new NotAllowed(failedReason.Message);
+                    }
+                    else
+                    {
+                        throw new NotAllowed("Policy incorrect!");
+                    }
                 }
             }
 
-            string policy = "";
-            string policyRequestedResource = "";
+            //string policy = "";
+            //string policyRequestedResource = "";
 
-            int index = -1;
-            NameValueCollection query = HttpUtility.ParseQueryString(Request.QueryString.ToString());
-            NameValueCollection headers = new NameValueCollection();
-            foreach (var kvp in Request.Headers)
-            {
-                headers.Add(kvp.Key, kvp.Value);
-                if (kvp.Key == "FORCE-POLICY")
-                {
-                    Program.withPolicy = !(kvp.Value == "OFF");
-                    Console.WriteLine("FORCE-POLICY " + kvp.Value);
-                }
-            }
+            //int index = -1;
+            //NameValueCollection query = HttpUtility.ParseQueryString(Request.QueryString.ToString());
+            //NameValueCollection headers = new NameValueCollection();
+            //foreach (var kvp in Request.Headers)
+            //{
+            //    headers.Add(kvp.Key, kvp.Value);
+            //    if (kvp.Key == "FORCE-POLICY")
+            //    {
+            //        Program.withPolicy = !(kvp.Value == "OFF");
+            //        Console.WriteLine("FORCE-POLICY " + kvp.Value);
+            //    }
+            //}
 
-            string accessRights = null;
-            if (!Program.noSecurity)
-            {
-                accessRights = AasxRestServerLibrary.AasxHttpContextHelper.SecurityCheckWithPolicy(query, headers, ref index,
-                    out policy, out policyRequestedResource);
-                string ar = "";
-                if (accessRights != null)
-                    ar = accessRights;
-                Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
-            }
+            //string accessRights = null;
+            //if (!Program.noSecurity)
+            //{
+            //    accessRights = AasxRestServerLibrary.AasxHttpContextHelper.SecurityCheckWithPolicy(query, headers, ref index,
+            //        out policy, out policyRequestedResource);
+            //    string ar = "";
+            //    if (accessRights != null)
+            //        ar = accessRights;
+            //    Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
+            //}
 
-            /*
-            if (accessRights == null)
-            {
-                // Look for policies in header instead of token
-                foreach (var kvp in Request.Headers)
-                {
-                    if (kvp.Key == "policy")
-                        policy = kvp.Value;
-                    if (kvp.Key == "policyRequestedResource")
-                        policyRequestedResource = kvp.Value;
-                }
-            }
+            ///*
+            //if (accessRights == null)
+            //{
+            //    // Look for policies in header instead of token
+            //    foreach (var kvp in Request.Headers)
+            //    {
+            //        if (kvp.Key == "policy")
+            //            policy = kvp.Value;
+            //        if (kvp.Key == "policyRequestedResource")
+            //            policyRequestedResource = kvp.Value;
+            //    }
+            //}
 
-            string path = Request.Path.Value;
-            if (accessRights != null && (policyRequestedResource == "" || !path.Contains(policyRequestedResource)))
-            {
-                Console.WriteLine("Path: " + path);
-                Console.WriteLine("policyRequestedResource: " + policyRequestedResource);
-                throw new NotAllowed("Policy URL incorrect!");
-            }
-            */
+            //string path = Request.Path.Value;
+            //if (accessRights != null && (policyRequestedResource == "" || !path.Contains(policyRequestedResource)))
+            //{
+            //    Console.WriteLine("Path: " + path);
+            //    Console.WriteLine("policyRequestedResource: " + policyRequestedResource);
+            //    throw new NotAllowed("Policy URL incorrect!");
+            //}
+            //*/
 
-            string error = "";
-            var access = false;
-            bool withAllow = false;
-            string getPolicy = null;
-            // check, if access to submodel is allowed
-            /*
-            access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-                null, "/submodels", "READ", out withAllow,
-                    submodel.IdShort, "sm", submodel, policy);
-            */
-            if (!Program.noSecurity)
-            {
-                access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, accessRights, "/submodels", "READ", out withAllow, out getPolicy,
-                submodel.IdShort, "sm", submodel, policy);
-                if (!access)
-                {
-                    if (error != "")
-                        throw new NotAllowed(error);
-                    throw new NotAllowed("Policy incorrect!");
-                }
-            }
+            //string error = "";
+            //var access = false;
+            //bool withAllow = false;
+            //string getPolicy = null;
+            //// check, if access to submodel is allowed
+            ///*
+            //access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
+            //    null, "/submodels", "READ", out withAllow,
+            //        submodel.IdShort, "sm", submodel, policy);
+            //*/
+            //if (!Program.noSecurity)
+            //{
+            //    access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, accessRights, "/submodels", "READ", out withAllow, out getPolicy,
+            //    submodel.IdShort, "sm", submodel, policy);
+            //    if (!access)
+            //    {
+            //        if (error != "")
+            //            throw new NotAllowed(error);
+            //        throw new NotAllowed("Policy incorrect!");
+            //    }
+            //}
 
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
 
-            var result = new ObjectResult(output);
-            Response.Headers.Add("policy", policy);
-            return result;
+            //TODO:jtikekar @Andreas, in earlier API policy set as getPolicy
+            //Response.Headers.Add("policy", policy);
+            return new ObjectResult(output);
         }
 
         /// <summary>

@@ -52,6 +52,7 @@
                         string error = "";
                         withAllow = false;
                         // JUIJUI
+                        //TODO:jtikekar Remove after testing
                         access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                             out error, null, "/submodels", "READ", out withAllow, out getPolicy,
                             sm.IdShort, "sm", sm, null);
@@ -59,7 +60,7 @@
                             null, "/submodels", "READ", out withAllow,
                                 sm.IdShort, "sm", sm); *@
                         access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                            out error, out withAllow, sm.IdShort!, "submodel", sm);
+                            out error, out withAllow, out getPolicy,sm.IdShort!, "submodel", sm);
                         // JUIJUI
                         display = true;
                     }
@@ -81,10 +82,11 @@
                         */
                         string error = "";
                         // JUIJUI
+                        //TODO:jtikekar Remove after testing
                         access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                         out error, null, "/submodelelements", "READ", out withAllow, out getPolicy,
                         path, "", p, null);
-                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ, out error, out withAllow, path, "", p);
+                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ, out error, out withAllow, out getPolicy, path, "", p);
                         display = true;
                         // JUIJUI
                     }
