@@ -36,8 +36,8 @@ namespace AasSecurity
             var httpRequest = _httpContextAccessor.HttpContext!.Request;
             string httpRoute = httpRequest.Path.Value!;
             bool isAuthorized = false;
-            string getPolicy = null;
-            string policy = null;
+            string getPolicy = "";
+            string policy = "";
             string accessRole = ""; string idShortPath = null; string error = null;
             AccessRights neededRights = AccessRights.READ;
             var claims = context.User;

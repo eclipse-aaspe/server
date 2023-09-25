@@ -72,8 +72,8 @@ namespace AasSecurity
             string? user = null;
             bool error = false;
             string? bearerToken = null;
-            policy = null;
-            policyRequestedResource = null;
+            policy = "";
+            policyRequestedResource = "";
 
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
@@ -133,8 +133,8 @@ namespace AasSecurity
 
         private string? HandleBearerToken(string? bearerToken, ref string? user, ref bool error, out string policy, out string policyRequestedResource)
         {
-            policy = null;
-            policyRequestedResource = null;
+            policy = "";
+            policyRequestedResource = "";
             if (bearerToken == null)
                 return null;
 
@@ -379,24 +379,24 @@ namespace AasSecurity
             return null;
         }
 
-        public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy, string objPath = null, string aasResourceType = null, IClass aasResource = null, string policy = null)
+        public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy, string objPath = null, string aasResourceType = null, IClass aasResource = null, string policy = "")
         {
             return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy, objPath, aasResourceType, aasResource, policy: policy);
         }
 
         private static bool CheckAccessRights(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy,
-            string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = null)
+            string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = "")
         {
             withAllow = false;
             return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out error, out withAllow, out getPolicy,
                 objPath, aasResourceType, aasResource, testOnly, policy);
         }
 
-        private static bool CheckAccessRightsWithAllow(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy, string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = null)
+        private static bool CheckAccessRightsWithAllow(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy, string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = "")
         {
             error = "Access not allowed";
             withAllow = false;
-            getPolicy = null;
+            getPolicy = "";
 
             if (Program.secretStringAPI != null)
             {
@@ -424,10 +424,10 @@ namespace AasSecurity
             return false;
         }
 
-        private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, out string getPolicy, string objPath, string aasResourceType, IClass aasResource, string policy = null)
+        private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, out string getPolicy, string objPath, string aasResourceType, IClass aasResource, string policy = "")
         {
             withAllow = false;
-            getPolicy = null;
+            getPolicy = "";
 
             if (currentRole == null)
             {
@@ -463,7 +463,7 @@ namespace AasSecurity
 
         private static bool CheckAccessLevelApi(string currentRole, string operation, AccessRights neededRights, out string error, out string getPolicy)
         {
-            getPolicy = null;
+            getPolicy = "";
             if (GlobalSecurityVariables.SecurityRoles != null)
             {
                 foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
@@ -487,10 +487,10 @@ namespace AasSecurity
             return false;
         }
 
-        private static bool CheckPolicy(out string error, SecurityRole securityRole, out string getPolicy, string policy = null)
+        private static bool CheckPolicy(out string error, SecurityRole securityRole, out string getPolicy, string policy = "")
         {
             error = "";
-            getPolicy = null;
+            getPolicy = "";
             Property pPolicy = null;
             AasCore.Aas3_0.File fPolicy = null;
 
@@ -614,7 +614,7 @@ namespace AasSecurity
                     catch { }
                 }
 
-                if (policy == null || policy.Contains(getPolicy))
+                if (policy == "" || policy.Contains(getPolicy))
                 {
                     // Program.signalNewData(0);
                     return true;
@@ -625,14 +625,14 @@ namespace AasSecurity
             return false;
         }
 
-        private static bool CheckAccessLevelForOperation(string currentRole, string operation, string aasResourceType, IClass aasResource, AccessRights neededRights, string objPath, out bool withAllow, out string getPolicy, out string error, string policy = null)
+        private static bool CheckAccessLevelForOperation(string currentRole, string operation, string aasResourceType, IClass aasResource, AccessRights neededRights, string objPath, out bool withAllow, out string getPolicy, out string error, string policy = "")
         {
             error = "";
             withAllow = false;
             string deepestDeny = "";
             string deepestAllow = "";
             SecurityRole deepestAllowRole = null;
-            getPolicy = null;
+            getPolicy = "";
             foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
             {
                 if (!securityRole.Name.Equals(currentRole))

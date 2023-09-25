@@ -682,7 +682,7 @@ namespace AasxServer
 
         public static bool withDb = false;
         public static bool isPostgres = false;
-        public static bool withDbFiles = true; //As per discussion with Andreas (25.09.2023)
+        public static bool withDbFiles = false;
         public static int startIndex = 0;
 
         public static bool withPolicy = true;
