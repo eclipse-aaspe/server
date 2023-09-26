@@ -7,6 +7,5 @@
         internal Permission Permission { get; set; }
 
         internal ISubmodelElementCollection Usage { get; set; } //Refactor in future
-
     }
 }

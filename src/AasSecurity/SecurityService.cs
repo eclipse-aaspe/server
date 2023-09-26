@@ -123,6 +123,11 @@ namespace AasSecurity
                                 accessRole = securityRight.Role;
                                 return accessRole;
                             }
+                            if (user == securityRight.Name)
+                            {
+                                accessRole = securityRight.Role;
+                                return accessRole;
+                            }
                         }
                     }
                 }
@@ -598,7 +603,7 @@ namespace AasSecurity
                 {
                     try
                     {
-                        using (Stream s = Program.env[securityRole.UsageEnvIndex].GetLocalStreamFromPackage(fPolicy.Value))
+                        using (Stream s = securityRole.UsageEnv.GetLocalStreamFromPackage(fPolicy.Value))
                         using (SHA256 mySHA256 = SHA256.Create())
                         {
                             if (s != null)

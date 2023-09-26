@@ -1,4 +1,6 @@
-﻿namespace AasSecurity.Models
+﻿using AdminShellNS;
+
+namespace AasSecurity.Models
 {
     internal class SecurityRole
     {
@@ -15,6 +17,6 @@
         internal string SemanticId { get; set; }
         internal ISubmodelElementCollection Usage { get; set; }
         internal string AAS { get; set; }
-        internal int UsageEnvIndex { get; set; } = -1;
+        internal AdminShellPackageEnv UsageEnv { get; set; } = null;
     }
 }

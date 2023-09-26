@@ -49,7 +49,7 @@
                 input = "anonymous";
                 AasxServer.AasxCredentials.initAnonymous(cs.credentials);
                 // IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(cs.credentials, DateTime.UtcNow);
-                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
+                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
                 AasxServer.AasxTask.resetTimeStamp();
             }
             bool isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")

@@ -6,6 +6,7 @@ using IO.Swagger.Registry.Lib.V3.Models;
 using IO.Swagger.Registry.Lib.V3.Serializers;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -143,7 +144,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 {
                     foreach (var greg in getRegistry)
                     {
-                        List<AssetAdministrationShellDescriptor> aasDescriptors = null;
+                        List<AssetAdministrationShellDescriptor> aasDescriptors = new List<AssetAdministrationShellDescriptor>();
 
                         string json = null;
                         string accessToken = null;
@@ -152,12 +153,13 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                         var handler = new HttpClientHandler();
 
-                        //
-                        if (AasxServer.AasxTask.proxy != null)
-                            handler.Proxy = AasxServer.AasxTask.proxy;
-                        else
-                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                        //
+                        if (!requestPath.Contains("localhost"))
+                        {
+                            if (AasxServer.AasxTask.proxy != null)
+                                handler.Proxy = AasxServer.AasxTask.proxy;
+                            else
+                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                        }
 
                         var client = new HttpClient(handler);
                         client.Timeout = TimeSpan.FromSeconds(3);
@@ -176,7 +178,27 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             task.Wait();
                             json = response.Content.ReadAsStringAsync().Result;
                             // TODO (jtikekar, 2023-09-04): check this call flow
-                            aasDescriptors = JsonConvert.DeserializeObject<List<AssetAdministrationShellDescriptor>>(json);
+                            // aasDescriptors = JsonConvert.DeserializeObject<List<AssetAdministrationShellDescriptor>>(json);
+                            if (!string.IsNullOrEmpty(json))
+                            {
+                                MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                if (node is JsonObject jo)
+                                {
+                                    if (jo.ContainsKey("result"))
+                                    {
+                                        node = (JsonNode)jo["result"];
+                                        if (node is JsonArray a)
+                                        {
+                                            foreach (JsonNode n in a)
+                                            {
+                                                if (n != null)
+                                                    aasDescriptors.Add(DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(n));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             error = !response.IsSuccessStatusCode;
                         }
                         catch
@@ -464,7 +486,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     federate = true;
                             }
 
-                            if (federate)
+                            if (false && federate)
                             {
                                 // TODO (jtikekar, 2023-09-04): @Andreas No Federated elements in sm Descriptor as per spec
                                 if (sd.FederatedElements == null)

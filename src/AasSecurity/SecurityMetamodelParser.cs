@@ -140,12 +140,12 @@ namespace AasSecurity
             }
             if (output != null)
             {
-                CreateSecurityRule(output);
+                CreateSecurityRule(env, output);
             }
             return output;
         }
 
-        private static void CreateSecurityRule(AccessPermissionRule accPermRule)
+        private static void CreateSecurityRule(AdminShellPackageEnv env, AccessPermissionRule accPermRule)
         {
             if (accPermRule.TargetSubjectAttributes != null && accPermRule.PermissionsPerObject != null)
             {
@@ -181,6 +181,7 @@ namespace AasSecurity
                             securityRole.Permission = accessRight;
                             securityRole.Kind = permPerObject.Permission.KindOfPermission;
                             securityRole.Usage = permPerObject.Usage;
+                            securityRole.UsageEnv = env;
                             GlobalSecurityVariables.SecurityRoles.Add(securityRole);
                         }
                     }
