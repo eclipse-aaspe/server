@@ -911,6 +911,7 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received head request to get the submodel policy for id {decodedSubmodelIdentifier}");
+            Console.WriteLine($"Received head request to get the submodel policy for id {decodedSubmodelIdentifier}");
 
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 

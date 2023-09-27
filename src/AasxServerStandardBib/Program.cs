@@ -713,6 +713,7 @@ namespace AasxServer
             public bool HtmlId { get; set; }
             public int AasxInMemory { get; set; }
             public bool WithDb { get; set; }
+            public bool NoDbFiles { get; set; }
             public int StartIndex { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
@@ -827,6 +828,9 @@ namespace AasxServer
             saveTemp = a.SaveTemp;
             Program.htmlId = a.HtmlId;
             Program.withDb = a.WithDb;
+            Program.withDbFiles = a.WithDb;
+            if (a.NoDbFiles)
+                Program.withDbFiles = false;
             if (a.StartIndex > 0)
                 startIndex = a.StartIndex;
             if (a.AasxInMemory > 0)
@@ -1660,6 +1664,10 @@ namespace AasxServer
                 new Option<bool>(
                     new[] {"--with-db"},
                     "If set, will use DB by Entity Framework"),
+
+                new Option<bool>(
+                    new[] {"--no-db-files"},
+                    "If set, do not export files from AASX into ZIP"),
 
                 new Option<int>(
                     new[] {"--start-index"},

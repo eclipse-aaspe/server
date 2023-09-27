@@ -108,7 +108,7 @@ namespace AasSecurity
             if (isAuthorized)
             {
                 _logger.LogInformation("Request authorized successfully.");
-                if (getPolicy != null)
+                if (getPolicy != "")
                 {
                     _httpContextAccessor.HttpContext.Response.Headers.Append("policy", getPolicy);
                     _httpContextAccessor.HttpContext.Response.Headers.Append("policyRequestedResource", httpRequest.Path.Value);
