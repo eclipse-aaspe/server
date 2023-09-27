@@ -916,6 +916,14 @@ namespace IO.Swagger.Controllers
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+
+            // JUIJUI
+            // with HEAD the needed policy shall be returned
+            // access must be checked, but no given policy is ok
+            // to be changed
+
+            return Ok();
+
             if (!authResult.Succeeded)
             {
                 var failedReason = authResult.Failure.FailureReasons.First();

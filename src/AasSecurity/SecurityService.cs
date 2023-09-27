@@ -593,37 +593,37 @@ namespace AasSecurity
                 }
             }
 
-            if (pPolicy != null)
-            {
-                if (!Program.withPolicy)
-                    return true;
+            if (!Program.withPolicy || pPolicy == null)
+                return true;
 
-                getPolicy = pPolicy.Value;
-                if (getPolicy == "" && fPolicy != null)
+            getPolicy = pPolicy.Value;
+            if (getPolicy == "" && fPolicy != null)
+            {
+                try
                 {
-                    try
+                    using (Stream s = securityRole.UsageEnv.GetLocalStreamFromPackage(fPolicy.Value))
+                    using (SHA256 mySHA256 = SHA256.Create())
                     {
-                        using (Stream s = securityRole.UsageEnv.GetLocalStreamFromPackage(fPolicy.Value))
-                        using (SHA256 mySHA256 = SHA256.Create())
+                        if (s != null)
                         {
-                            if (s != null)
-                            {
-                                s.Position = 0;
-                                byte[] hashValue = mySHA256.ComputeHash(s);
-                                getPolicy = Convert.ToHexString(hashValue);
-                                Console.WriteLine("hash: " + getPolicy);
-                                pPolicy.Value = getPolicy;
-                            }
+                            s.Position = 0;
+                            byte[] hashValue = mySHA256.ComputeHash(s);
+                            getPolicy = Convert.ToHexString(hashValue);
+                            Console.WriteLine("hash: " + getPolicy);
+                            pPolicy.Value = getPolicy;
                         }
                     }
-                    catch { }
                 }
+                catch { }
+            }
 
-                if (policy == "" || policy.Contains(getPolicy))
-                {
-                    // Program.signalNewData(0);
-                    return true;
-                }
+            if (getPolicy == "")
+                return true;
+
+            if (policy != "" && policy.Contains(getPolicy))
+            {
+                // Program.signalNewData(0);
+                return true;
             }
 
             // Program.signalNewData(0);

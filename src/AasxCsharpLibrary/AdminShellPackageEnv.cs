@@ -1326,14 +1326,16 @@ namespace AdminShellNS
                     break;
                 }
             if (thumbPart == null)
-                throw (new Exception("Unable to find AASX thumbnail. Aborting!"));
+                // throw (new Exception("Unable to find AASX thumbnail. Aborting!"));
+                return null;
 
             var result = thumbPart.GetStream(FileMode.Open);
 
             // Post-condition
             if (!(result == null || result.CanRead))
             {
-                throw new InvalidOperationException("Unexpected unreadable result stream");
+                // throw new InvalidOperationException("Unexpected unreadable result stream");
+                return null;
             }
 
             return result;
@@ -1351,7 +1353,8 @@ namespace AdminShellNS
             // Post-condition
             if (!(result == null || result.CanRead))
             {
-                throw new InvalidOperationException("Unexpected unreadable result stream");
+                // throw new InvalidOperationException("Unexpected unreadable result stream");
+                return null;
             }
 
             return result;

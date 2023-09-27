@@ -14,6 +14,7 @@ namespace AasSecurity
                 case "post":
                     NeededRights = AccessRights.CREATE;
                     break;
+                case "head":
                 case "get":
                     NeededRights = AccessRights.READ;
                     break;
