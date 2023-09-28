@@ -63,6 +63,11 @@ namespace AasSecurity
             }
             else if (resource is ISubmodel submodel)
             {
+                var httpOperation = httpRequest.Method;
+                if (httpOperation.ToLower().Equals("head"))
+                {
+                    policy = null;
+                }
                 isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, submodel.IdShort!, "submodel", submodel, policy);
             }
             else if (resource is IAssetAdministrationShell aas)
@@ -105,22 +110,16 @@ namespace AasSecurity
                 isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
             }
 
-            if (getPolicy != "")
-            {
-                _httpContextAccessor.HttpContext.Response.Headers.Append("policy", getPolicy);
-                _httpContextAccessor.HttpContext.Response.Headers.Append("policyRequestedResource", httpRequest.Path.Value);
-            }
-
             if (isAuthorized)
             {
                 _logger.LogInformation("Request authorized successfully.");
-                /*
+
                 if (getPolicy != "")
                 {
                     _httpContextAccessor.HttpContext.Response.Headers.Append("policy", getPolicy);
                     _httpContextAccessor.HttpContext.Response.Headers.Append("policyRequestedResource", httpRequest.Path.Value);
                 }
-                */
+
                 context.Succeed(requirement);
             }
             else
