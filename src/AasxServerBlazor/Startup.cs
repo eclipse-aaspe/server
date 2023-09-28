@@ -59,6 +59,7 @@ namespace AasxServerBlazor
             services.Configure<KestrelServerOptions>(options =>
             {
                 options.AllowSynchronousIO = true;
+                options.Limits.MaxRequestBodySize = int.MaxValue;
             });
             services.AddRazorPages();
             services.AddServerSideBlazor();
