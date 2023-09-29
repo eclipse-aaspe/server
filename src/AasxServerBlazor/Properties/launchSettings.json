@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --save-temp 10 --aasx-in-memory 1000 --data-path \"C:\\Development\\pcf-view\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--no-security --save-temp 10 --aasx-in-memory 1000 --data-path \"C:\\Development\\PCF3\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

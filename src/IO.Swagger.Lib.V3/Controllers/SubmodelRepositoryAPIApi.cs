@@ -14,6 +14,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
+using Extensions;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
@@ -205,6 +206,7 @@ namespace IO.Swagger.Controllers
         /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
         /// <param name="level">Determines the structural depth of the respective resource content</param>
         /// <param name="extent">Determines to which extent the resource is being serialized</param>
+        /// <param name="diff">Filters response, only elements changed after DateTime</param>
         /// <response code="200">List of found submodel elements</response>
         /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
         /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -224,7 +226,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
+        public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string submodelIdentifier,
+            [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent, [FromQuery] string diff)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -241,6 +244,17 @@ namespace IO.Swagger.Controllers
 
             var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
+            DateTime _diff = new DateTime();
+            if (diff != null && diff != "")
+            {
+                try
+                {
+                    _diff = DateTime.Parse(diff).ToUniversalTime();
+                    submodelElements = filterSubmodelElements(submodelElements, _diff);
+                }
+                catch { }
+            }
+
             var smePaginatedList = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
             var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, level, extent);
             var output = new PagedResult()
@@ -249,6 +263,51 @@ namespace IO.Swagger.Controllers
                 paging_metadata = smePaginatedList.paging_metadata
             };
             return new ObjectResult(output);
+        }
+
+        List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diff)
+        {
+            var output = new List<ISubmodelElement>();
+            var smeDiff = new List<ISubmodelElement>();
+
+            foreach (var sme in submodelElements)
+            {
+                if (sme.TimeStampTree >= diff)
+                {
+                    if (sme is SubmodelElementCollection smc)
+                    {
+                        smeDiff = filterSubmodelElements(smc.Value, diff);
+                        smc.Value = new List<ISubmodelElement>();
+                        if (smeDiff.Count != 0)
+                        {
+                            smc.Value = smeDiff;
+                            output.Add(smc);
+                        }
+                        else if (smc.TimeStamp >= diff)
+                        {
+                            output.Add(smc);
+                        }
+                    }
+                    else if (sme is SubmodelElementList sml)
+                    {
+                        smeDiff = filterSubmodelElements(sml.Value, diff);
+                        sml.Value = new List<ISubmodelElement>();
+                        if (smeDiff.Count != 0)
+                        {
+                            sml.Value = smeDiff;
+                            output.Add(sml);
+                        }
+                        else if (sml.TimeStamp >= diff)
+                        {
+                            output.Add(sml);
+                        }
+                    }
+                    else
+                        output.Add(sme);
+                }
+            }
+
+            return output;
         }
 
         /// <summary>
@@ -276,7 +335,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
+        public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier,
+            [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 

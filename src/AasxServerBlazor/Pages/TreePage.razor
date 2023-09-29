@@ -1497,7 +1497,7 @@
 
         if (o is IReferable r)
             // ret += " (" + r.TimeStamp.Ticks + ") ";
-            ret += " (" + r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
+            ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
 
         return ret;
     }

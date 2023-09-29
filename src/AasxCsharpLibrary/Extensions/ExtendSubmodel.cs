@@ -387,6 +387,7 @@ namespace Extensions
             submodelElement.Parent = parent;
             submodelElement.TimeStamp = timestamp;
             submodelElement.TimeStampCreate = timestamp;
+            submodelElement.TimeStampTree = timestamp;
 
             foreach (var childElement in submodelElement.EnumerateChildren())
             {
