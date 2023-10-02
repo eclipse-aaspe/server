@@ -511,7 +511,7 @@ namespace AasxServerStandardBib.Services
             return _packageEnvService.GetAllSubmodels(reqSemanticId, idShort);
         }
 
-        public ISubmodel CreateSubmodel(ISubmodel newSubmodel)
+        public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier)
         {
             //Verify the body first
             _verificationService.VerifyRequestBody(newSubmodel);
@@ -523,7 +523,7 @@ namespace AasxServerStandardBib.Services
                 throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
             }
 
-            var output = _packageEnvService.CreateSubmodel(newSubmodel);
+            var output = _packageEnvService.CreateSubmodel(newSubmodel, aasIdentifier);
 
             return output;
         }

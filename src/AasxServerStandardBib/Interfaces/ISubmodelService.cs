@@ -5,7 +5,7 @@ namespace AasxServerStandardBib.Interfaces
 {
     public interface ISubmodelService
     {
-        ISubmodel CreateSubmodel(ISubmodel newSubmodel);
+        ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier);
         ISubmodelElement CreateSubmodelElement(string submodelIdentifier, ISubmodelElement newSubmodelElement, bool first);
         ISubmodelElement CreateSubmodelElementByPath(string submodelIdentifier, string idShortPath, bool first, ISubmodelElement newSubmodelElement);
         void DeleteFileByPath(string submodelIdentifier, string idShortPath);

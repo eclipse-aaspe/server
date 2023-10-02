@@ -2065,6 +2065,7 @@ namespace IO.Swagger.Controllers
         /// Creates a new Submodel
         /// </summary>
         /// <param name="body">Submodel object</param>
+        /// <param name="aasIdentifier">The AAS’s unique id (UTF8-BASE64-URL-encoded)</param>
         /// <response code="201">Submodel created successfully</response>
         /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
         /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -2083,11 +2084,13 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostSubmodel([FromBody] Submodel body)
+        public virtual IActionResult PostSubmodel([FromBody] Submodel body, [FromQuery] string aasIdentifier)
         {
             _logger.LogInformation($"Received request to create a submodel.");
 
-            var output = _submodelService.CreateSubmodel(body);
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+
+            var output = _submodelService.CreateSubmodel(body, decodedAasIdentifier);
 
             return CreatedAtAction("PostSubmodel", output);
         }

@@ -29,7 +29,7 @@ namespace AasxServerStandardBib.Interfaces
         void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
         List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null);
         bool IsSubmodelPresent(string submodelIdentifier);
-        ISubmodel CreateSubmodel(ISubmodel newSubmodel);
+        ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null);
 
         #endregion
 

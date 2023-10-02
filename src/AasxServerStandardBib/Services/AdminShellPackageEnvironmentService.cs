@@ -474,8 +474,29 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public ISubmodel CreateSubmodel(ISubmodel newSubmodel)
+        public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null)
         {
+            //Check if Submodel exists
+            var found = IsSubmodelPresent(newSubmodel.Id, out _, out _);
+            if (found)
+            {
+                throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
+            }
+
+            //Check if corresponding AAS exist. If yes, then add to the same environment
+            if (!string.IsNullOrEmpty(aasIdentifier))
+            {
+                var aasFound = IsAssetAdministrationShellPresent(aasIdentifier, out IAssetAdministrationShell aas, out int packageIndex);
+                if (aasFound)
+                {
+                    newSubmodel.SetAllParents(DateTime.UtcNow);
+                    aas.Submodels.Add(newSubmodel.GetReference());
+                    _packages[packageIndex].AasEnv.Submodels.Add(newSubmodel);
+                    AasxServer.Program.signalNewData(2);
+                    return newSubmodel; // TODO: jtikekar find proper solution
+                }
+            }
+
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
 
