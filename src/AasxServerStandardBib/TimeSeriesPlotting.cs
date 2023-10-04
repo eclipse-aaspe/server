@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 //using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerStandardBib
@@ -1277,38 +1278,41 @@ namespace AasxServerStandardBib
             var tsvAllowed = new[]
             {
             //pcts.CD_RecordId.Id,
-            pcts.CD_RecordId.Id,
-            pcts.CD_UtcTime.Id,
-            pcts.CD_TaiTime.Id,
-            pcts.CD_Time.Id,
-            pcts.CD_TimeDuration.Id,
-            pcts.CD_ValueArray.Id,
-            pcts.CD_ExternalDataFile.Id
-        };
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0" /*pcts.CD_ValueArray.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ExternalDataFile/1/0" /*pcts.CD_ExternalDataFile.Id*/
+            };
 
             var tsrAllowed = new[]
             {
-            pcts.CD_RecordId.Id,
-            pcts.CD_UtcTime.Id,
-            pcts.CD_TaiTime.Id,
-            pcts.CD_Time.Id,
-            pcts.CD_TimeDuration.Id,
-            pcts.CD_ValueArray.Id
-        };
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/,
+            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0" /*pcts.CD_ValueArray.Id*/
+            };
 
             // find variables?
             foreach (var smcvar in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(
-                pcts.CD_TimeSeriesVariable.Id))
+                "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesVariable/1/0" /*pcts.CD_TimeSeriesVariable.Id*/))
             {
                 // makes only sense with record id
                 var recid = "" + smcvar.Value.FindFirstSemanticIdAs<Property>(
-                    pcts.CD_RecordId.Id)?.Value?.Trim();
+                    "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/)?.Value?.Trim();
                 if (recid.Length < 1)
                     continue;
 
                 // add need a value array as well!
                 //var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>(pcts.CD_ValueArray.Id)?.Value?.Trim();
-                var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>(pcts.CD_ValueArray.Id).Value.ToString().Trim();
+                var vv = smcvar.Value.FindFirstSemanticIdAs<Blob>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0");
+                var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0"
+                    /*pcts.CD_ValueArray.Id*/).Value.ToString().Trim();
+                valarr = System.Text.Encoding.ASCII.GetString(vv.Value);
                 if (valarr.Length < 1)
                     continue;
 
@@ -1342,11 +1346,12 @@ namespace AasxServerStandardBib
             }
 
             // find records?
-            foreach (var smcrec in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(pcts.CD_TimeSeriesRecord.Id))
+            foreach (var smcrec in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(
+                "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesRecord/1/0" /*pcts.CD_TimeSeriesRecord.Id)*/))
             {
                 // makes only sense with a numerical record id
                 var recid = "" + smcrec.Value.FindFirstSemanticIdAs<Property>(
-                    pcts.CD_RecordId.Id)?.Value?.Trim();
+                    "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/)?.Value?.Trim();
                 if (recid.Length < 1)
                     continue;
                 if (!int.TryParse(recid, out var dataIndex))
@@ -1496,19 +1501,19 @@ namespace AasxServerStandardBib
 
             // detect
             Property prop = null;
-            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_UtcTime.Id);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Utc, prop);
 
-            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_TaiTime.Id);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Tai, prop);
 
-            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_Time.Id);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Plain, prop);
 
-            prop = smc.Value.FindFirstSemanticIdAs<Property>(pcts.CD_TimeDuration.Id);
+            prop = smc.Value.FindFirstSemanticIdAs<Property>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/);
             if (prop != null)
                 return new Tuple<TimeSeriesTimeAxis, Property>(TimeSeriesTimeAxis.Plain, prop);
 

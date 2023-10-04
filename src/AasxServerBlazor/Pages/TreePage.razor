@@ -403,7 +403,8 @@
                             var pcts = ZveiTimeSeriesDataV10.Static;
 
                             //var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
-                            var tssReference = pcts.CD_TimeSeriesSegment.GetCdReference();
+                            // var tssReference = pcts.CD_TimeSeriesSegment.GetCdReference();
+                            var tssReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
                             //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
                             //var tssReference = new Reference(k);
                             //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
@@ -416,16 +417,17 @@
                             else
                             {
                                 // search for segements on current level
-                                var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReference.GetAsExactlyOneKey().Value);
+                                // var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReference.GetAsExactlyOneKey().Value);
+                                var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReferenceKey, MatchMode.Relaxed);
 
-        if (smcAllValues.Count() != 0)
-        {
-            foreach (var smcseg in smcAllValues)
-            {
-                TimeSeriesAddSegmentData(pcts, tsd, smcseg);
-            }
-        }
-    }
+                                if (smcAllValues.Count() != 0)
+                                {
+                                    foreach (var smcseg in smcAllValues)
+                                    {
+                                        TimeSeriesAddSegmentData(pcts, tsd, smcseg);
+                                    }
+                                }
+                            }
 
                             _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
                             watchTimeToProcessImage.Stop();
