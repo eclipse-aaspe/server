@@ -14,7 +14,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Org.BouncyCastle.Asn1.Ocsp;
-using System.Drawing;
+// using System.Drawing;
 
 namespace AasxServer
 {

@@ -1245,7 +1245,7 @@ namespace AasxServerStandardBib
                 return null;
             }
 
-            public ScottPlot.Drawing.Palette GetScottPalette()
+            public ScottPlot.IPalette GetScottPalette()
             {
                 if (HasContent(palette) == true)
                     foreach (var pl in ScottPlot.Palette.GetPalettes())
@@ -1485,7 +1485,7 @@ namespace AasxServerStandardBib
                 // Referable
                 this.ReadLibrary(
                     Assembly.GetExecutingAssembly(), "Resources." + "ZveiTimeSeriesDataV10.json");
-                this.RetrieveEntriesFromLibraryByReflection(typeof(ZveiTimeSeriesDataV10), useFieldNames: true);
+                // this.RetrieveEntriesFromLibraryByReflection(typeof(ZveiTimeSeriesDataV10), useFieldNames: true);
             }
         }
 
