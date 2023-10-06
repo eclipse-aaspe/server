@@ -23,6 +23,7 @@ AasxServerWindows will not be further developed, since .NET 6 works well also on
 Please ignore the "Connect to REST by:" message.  
   
 Maybe you put your AASXs into ./aasxs.  
+In the examples below please change YOURPORT and YOURURL.  
   
 You may run AASX server directly by dotnet:  
 ```
@@ -45,7 +46,6 @@ docker.io/adminshellio/aasx-server-blazor-for-demo:main
 ```
   
 If you like to use docker compose, see docker-compose.yaml below.  
-Please change YOURPORT and YOURURL.  
   
 ```
 services:  
