@@ -8,45 +8,45 @@ https://github.com/admin-shell-io/aasx-server/workflows/Build-and-package-releas
 ) ![Build-and-publish-docker-images-workflow](
 https://github.com/admin-shell-io/aasx-server/workflows/Build-and-publish-docker-images-workflow/badge.svg
 )
-
-AASX Server is now V3 and branch main includes a first release:
-https://github.com/admin-shell-io/aasx-server/releases/tag/v2023-09-13.alpha
-The latest work takes place in branch policy3, which will be included in main then.
-
-A demo server is running on https://v3.admin-shell-io.com.
-https://v3.admin-shell-io.com/swagger shows the API and you can try it manually.
-
-Mainly AasxServerBlazor is currently used, but AasxServerCore will also be supported.
-AasxServerWindows will not be further developed, since .NET 6 works well also on Windows.
---rest, --host, --port are no more supported and will be removed soon. This was the old V2 API.
-Please ignore the "Connect to REST by:" message.
-
-The related docker is:
-docker.io/adminshellio/aasx-server-blazor-for-demo:main
-
-Put your AASXs into ./aasxs and you may run the docker by e.g.:
-docker run
--p 5001:5001
---restart unless-stopped
--v ./aasxs:/AasxServerBlazor/aasxs
-docker.io/adminshellio/aasx-server-blazor-for-demo:main
-
-If you like to use docker compose, see docker-compose.yaml below.
-Please change YOURPORT and YOURURL.
-
-services:
-  aasx-server:
-    container_name: aasx-server
-    image: docker.io/adminshellio/aasx-server-blazor-for-demo:main
-    restart: unless-stopped
-    ports:
-      - YOURPORT:5001
-    environment:
-      - Kestrel__Endpoints__Http__Url=http://*:5001
-    volumes:
-      - ./aasxs:/usr/share/aasxs
-    command: --no-security --data-path /usr/share/aasxs --external-blazor YOURURL
-
+  
+AASX Server is now V3 and branch main includes a first release:  
+https://github.com/admin-shell-io/aasx-server/releases/tag/v2023-09-13.alpha  
+The latest work takes place in branch policy3, which will be included in main then.  
+  
+A demo server is running on https://v3.admin-shell-io.com.  
+https://v3.admin-shell-io.com/swagger shows the API and you can try it manually.  
+  
+Mainly AasxServerBlazor is currently used, but AasxServerCore will also be supported.  
+AasxServerWindows will not be further developed, since .NET 6 works well also on Windows.  
+--rest, --host, --port are no more supported and will be removed soon. This was the old V2 API.  
+Please ignore the "Connect to REST by:" message.  
+  
+The related docker is:  
+docker.io/adminshellio/aasx-server-blazor-for-demo:main  
+  
+Put your AASXs into ./aasxs and you may run the docker by e.g.:  
+docker run  
+-p 5001:5001  
+--restart unless-stopped  
+-v ./aasxs:/AasxServerBlazor/aasxs  
+docker.io/adminshellio/aasx-server-blazor-for-demo:main  
+  
+If you like to use docker compose, see docker-compose.yaml below.  
+Please change YOURPORT and YOURURL.  
+  
+services:  
+  aasx-server:  
+    container_name: aasx-server  
+    image: docker.io/adminshellio/aasx-server-blazor-for-demo:main  
+    restart: unless-stopped  
+    ports:  
+      - YOURPORT:5001  
+    environment:  
+      - Kestrel__Endpoints__Http__Url=http://*:5001  
+    volumes:  
+      - ./aasxs:/usr/share/aasxs  
+    command: --no-security --data-path /usr/share/aasxs --external-blazor YOURURL  
+  
 
 # OLD DOCUMENTATION
 
