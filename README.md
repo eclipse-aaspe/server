@@ -25,15 +25,18 @@ The related docker is:
 docker.io/adminshellio/aasx-server-blazor-for-demo:main  
   
 Put your AASXs into ./aasxs and you may run the docker by e.g.:  
+```
 docker run  
 -p 5001:5001  
 --restart unless-stopped  
 -v ./aasxs:/AasxServerBlazor/aasxs  
 docker.io/adminshellio/aasx-server-blazor-for-demo:main  
+```
   
 If you like to use docker compose, see docker-compose.yaml below.  
 Please change YOURPORT and YOURURL.  
   
+```
 services:  
   aasx-server:  
     container_name: aasx-server  
@@ -46,8 +49,9 @@ services:
     volumes:  
       - ./aasxs:/usr/share/aasxs  
     command: --no-security --data-path /usr/share/aasxs --external-blazor YOURURL  
-  
+```
 
+  
 # OLD DOCUMENTATION
 
 This documentation will be updated to V3 soon.
