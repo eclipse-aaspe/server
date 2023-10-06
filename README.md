@@ -15,6 +15,7 @@ The latest work takes place in branch policy3, which will be included in main th
   
 A demo server is running on https://v3.admin-shell-io.com.  
 https://v3.admin-shell-io.com/swagger shows the API and you can try it manually.  
+An AASX Server with security enabled can be found here: https://v3security.admin-shell-io.com/. Please click on readme.  
   
 Mainly AasxServerBlazor is currently used, but AasxServerCore will also be supported.  
 AasxServerWindows will not be further developed, since .NET 6 works well also on Windows.  
