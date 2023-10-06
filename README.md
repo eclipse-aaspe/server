@@ -21,6 +21,16 @@ AasxServerWindows will not be further developed, since .NET 6 works well also on
 --rest, --host, --port are no more supported and will be removed soon. This was the old V2 API.  
 Please ignore the "Connect to REST by:" message.  
   
+Maybe you put your AASXs into ./aasxs.  
+  
+You may run AASX server directly by dotnet:  
+```
+export DOTNET_gcServer=1  
+export Kestrel__Endpoints__Http__Url=http://*:YOURPORT  
+dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL  
+```
+(ASP.NET Core Runtime 6.0 can be downloaded here: https://dotnet.microsoft.com/en-us/download/dotnet/6.0)  
+  
 The related docker is:  
 docker.io/adminshellio/aasx-server-blazor-for-demo:main  
   
