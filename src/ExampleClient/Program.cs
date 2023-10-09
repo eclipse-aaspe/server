@@ -1,10 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using System.Net;
-using System.Text.Json.Nodes;
-using System.Text;
 using AasCore.Aas3_0;
-using static System.Net.WebRequestMethods;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
+using System.Text;
+using System.Text.Json.Nodes;
 
 Console.WriteLine("AAS Example Client V3");
 Console.WriteLine();

@@ -29,7 +29,6 @@ namespace Extensions
             AasxCompatibilityModels.AdminShellV20.LangStringSetIEC61360 src)
         {
             lss = new List<ILangStringPreferredNameTypeIec61360>();
-            //if (!sourceLangStrings.langString.IsNullOrEmpty())
             if (src != null && src.Count != 0)
             {
                 foreach (var sourceLangString in src)

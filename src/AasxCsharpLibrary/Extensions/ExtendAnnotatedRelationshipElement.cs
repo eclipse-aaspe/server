@@ -1,4 +1,5 @@
 ﻿using AdminShellNS.Display;
+using AdminShellNS.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +55,7 @@ namespace Extensions
                 return null;
             }
 
-            if (sourceAnnotedRelElement.annotations != null)
+            if (!sourceAnnotedRelElement.annotations.IsNullOrEmpty())
             {
                 annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
                 foreach (var submodelElementWrapper in sourceAnnotedRelElement.annotations)
@@ -74,6 +75,10 @@ namespace Extensions
 
         public static T FindFirstIdShortAs<T>(this AnnotatedRelationshipElement annotedRelationshipElement, string idShort) where T : ISubmodelElement
         {
+            if (annotedRelationshipElement.Annotations.IsNullOrEmpty())
+            {
+                return default;
+            }
 
             var submodelElements = annotedRelationshipElement.Annotations.Where(sme => sme != null && sme is T && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));
 

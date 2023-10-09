@@ -66,7 +66,7 @@ namespace Extensions
                 // Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
             }
             property.Value = sourceProperty.value;
-            if (sourceProperty.valueId != null)
+            if (sourceProperty.valueId != null && !sourceProperty.valueId.IsEmpty)
             {
                 var keyList = new List<IKey>();
                 foreach (var refKey in sourceProperty.valueId.Keys)
@@ -104,7 +104,7 @@ namespace Extensions
                 // Console.WriteLine($"ValueType {sourceProperty.valueType} not found for property {sourceProperty.idShort}");
             }
             property.Value = sourceProperty.value;
-            if (sourceProperty.valueId != null)
+            if (sourceProperty.valueId != null && !sourceProperty.valueId.IsEmpty)
             {
                 var keyList = new List<IKey>();
                 foreach (var refKey in sourceProperty.valueId.Keys)

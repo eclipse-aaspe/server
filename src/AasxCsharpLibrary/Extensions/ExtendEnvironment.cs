@@ -1,4 +1,5 @@
 ﻿using AdminShellNS;
+using AdminShellNS.Extensions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -114,7 +115,7 @@ namespace Extensions
         public static AasCore.Aas3_0.Environment ConvertFromV10(this AasCore.Aas3_0.Environment environment, AasxCompatibilityModels.AdminShellV10.AdministrationShellEnv sourceEnvironement)
         {
             //Convert Administration Shells
-            if (sourceEnvironement.AdministrationShells != null)
+            if (!sourceEnvironement.AdministrationShells.IsNullOrEmpty())
             {
                 if (environment.AssetAdministrationShells == null)
                 {
@@ -138,7 +139,7 @@ namespace Extensions
             }
 
             //Convert Submodels
-            if (sourceEnvironement.Submodels != null)
+            if (!sourceEnvironement.Submodels.IsNullOrEmpty())
             {
                 if (environment.Submodels == null)
                 {
@@ -152,7 +153,7 @@ namespace Extensions
                 }
             }
 
-            if (sourceEnvironement.ConceptDescriptions != null)
+            if (!sourceEnvironement.ConceptDescriptions.IsNullOrEmpty())
             {
                 if (environment.ConceptDescriptions == null)
                 {
@@ -173,7 +174,7 @@ namespace Extensions
         public static AasCore.Aas3_0.Environment ConvertFromV20(this AasCore.Aas3_0.Environment environment, AasxCompatibilityModels.AdminShellV20.AdministrationShellEnv sourceEnvironement)
         {
             //Convert Administration Shells
-            if (sourceEnvironement.AdministrationShells != null)
+            if (!sourceEnvironement.AdministrationShells.IsNullOrEmpty())
             {
                 if (environment.AssetAdministrationShells == null)
                 {
@@ -198,7 +199,7 @@ namespace Extensions
             }
 
             //Convert Submodels
-            if (sourceEnvironement.Submodels != null)
+            if (!sourceEnvironement.Submodels.IsNullOrEmpty())
             {
                 if (environment.Submodels == null)
                 {
@@ -212,7 +213,7 @@ namespace Extensions
                 }
             }
 
-            if (sourceEnvironement.ConceptDescriptions != null)
+            if (!sourceEnvironement.ConceptDescriptions.IsNullOrEmpty())
             {
                 if (environment.ConceptDescriptions == null)
                 {
@@ -256,20 +257,23 @@ namespace Extensions
             //var outputEnvironment = new AasCore.Aas3_0_RC02.Environment();  
 
             //Copy AssetAdministrationShells
-            foreach (var aas in sourceEnvironment.AssetAdministrationShells)
+            if (!sourceEnvironment.AssetAdministrationShells.IsNullOrEmpty())
             {
-                if (filterForAas.Contains(aas))
+                foreach (var aas in sourceEnvironment.AssetAdministrationShells)
                 {
-                    environment.AssetAdministrationShells.Add(aas);
-
-                    if (aas.Submodels != null && aas.Submodels.Count > 0)
+                    if (filterForAas.Contains(aas))
                     {
-                        foreach (var submodelReference in aas.Submodels)
+                        environment.AssetAdministrationShells.Add(aas);
+
+                        if (aas.Submodels != null && aas.Submodels.Count > 0)
                         {
-                            var submodel = sourceEnvironment.FindSubmodel(submodelReference);
-                            if (submodel != null)
+                            foreach (var submodelReference in aas.Submodels)
                             {
-                                filterForSubmodel.Add(submodel);
+                                var submodel = sourceEnvironment.FindSubmodel(submodelReference);
+                                if (submodel != null)
+                                {
+                                    filterForSubmodel.Add(submodel);
+                                }
                             }
                         }
                     }
@@ -277,23 +281,29 @@ namespace Extensions
             }
 
             //Copy Submodel
-            foreach (var submodel in sourceEnvironment.Submodels)
+            if (!sourceEnvironment.Submodels.IsNullOrEmpty())
             {
-                if (filterForSubmodel.Contains(submodel))
+                foreach (var submodel in sourceEnvironment.Submodels)
                 {
-                    environment.Submodels.Add(submodel);
+                    if (filterForSubmodel.Contains(submodel))
+                    {
+                        environment.Submodels.Add(submodel);
 
-                    //Find Used CDs
-                    environment.CreateFromExistingEnvRecurseForCDs(sourceEnvironment, submodel.SubmodelElements, ref filterForConceptDescriptions);
+                        //Find Used CDs
+                        environment.CreateFromExistingEnvRecurseForCDs(sourceEnvironment, submodel.SubmodelElements, ref filterForConceptDescriptions);
+                    }
                 }
             }
 
             //Copy ConceptDescription
-            foreach (var conceptDescription in sourceEnvironment.ConceptDescriptions)
+            if (!sourceEnvironment.ConceptDescriptions.IsNullOrEmpty())
             {
-                if (filterForConceptDescriptions.Contains(conceptDescription))
+                foreach (var conceptDescription in sourceEnvironment.ConceptDescriptions)
                 {
-                    environment.ConceptDescriptions.Add(conceptDescription);
+                    if (filterForConceptDescriptions.Contains(conceptDescription))
+                    {
+                        environment.ConceptDescriptions.Add(conceptDescription);
+                    }
                 }
             }
 
@@ -303,7 +313,7 @@ namespace Extensions
 
         public static void CreateFromExistingEnvRecurseForCDs(this AasCore.Aas3_0.Environment environment, AasCore.Aas3_0.Environment sourceEnvironment, List<ISubmodelElement> submodelElements, ref List<IConceptDescription> filterForConceptDescription)
         {
-            if (submodelElements == null || submodelElements.Count == 0 || filterForConceptDescription == null || filterForConceptDescription.Count == 0)
+            if (submodelElements.IsNullOrEmpty() || filterForConceptDescription.IsNullOrEmpty())
             {
                 return;
             }

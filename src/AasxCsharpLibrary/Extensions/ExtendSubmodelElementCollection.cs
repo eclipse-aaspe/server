@@ -1,4 +1,5 @@
 ﻿using AdminShellNS.Display;
+using AdminShellNS.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -76,16 +77,19 @@ namespace Extensions
 
             if (!shallowCopy)
             {
-                foreach (var submodelElementWrapper in sourceSmeCollection.value)
+                if (!sourceSmeCollection.value.IsNullOrEmpty())
                 {
-                    var sourceSubmodelElement = submodelElementWrapper.submodelElement;
-                    ISubmodelElement outputSubmodelElement = null;
-                    if (sourceSubmodelElement != null)
+                    foreach (var submodelElementWrapper in sourceSmeCollection.value)
                     {
-                        outputSubmodelElement = outputSubmodelElement.ConvertFromV10(sourceSubmodelElement, shallowCopy);
-                    }
+                        var sourceSubmodelElement = submodelElementWrapper.submodelElement;
+                        ISubmodelElement outputSubmodelElement = null;
+                        if (sourceSubmodelElement != null)
+                        {
+                            outputSubmodelElement = outputSubmodelElement.ConvertFromV10(sourceSubmodelElement, shallowCopy);
+                        }
 
-                    submodelElementCollection.Value.Add(outputSubmodelElement);
+                        submodelElementCollection.Value.Add(outputSubmodelElement);
+                    }
                 }
             }
 
@@ -104,16 +108,19 @@ namespace Extensions
 
             if (!shallowCopy)
             {
-                foreach (var submodelElementWrapper in sourceSmeCollection.value)
+                if (!sourceSmeCollection.value.IsNullOrEmpty())
                 {
-                    var sourceSubmodelElement = submodelElementWrapper.submodelElement;
-                    ISubmodelElement outputSubmodelElement = null;
-                    if (sourceSubmodelElement != null)
+                    foreach (var submodelElementWrapper in sourceSmeCollection.value)
                     {
-                        outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelElement, shallowCopy);
-                    }
+                        var sourceSubmodelElement = submodelElementWrapper.submodelElement;
+                        ISubmodelElement outputSubmodelElement = null;
+                        if (sourceSubmodelElement != null)
+                        {
+                            outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelElement, shallowCopy);
+                        }
 
-                    submodelElementCollection.Value.Add(outputSubmodelElement);
+                        submodelElementCollection.Value.Add(outputSubmodelElement);
+                    }
                 }
             }
 

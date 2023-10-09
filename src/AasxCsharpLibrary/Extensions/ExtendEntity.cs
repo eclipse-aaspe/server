@@ -1,4 +1,5 @@
 ﻿using AdminShellNS.Display;
+using AdminShellNS.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace Extensions
                 return null;
             }
 
-            if (sourceEntity.statements != null)
+            if (sourceEntity.statements.IsNullOrEmpty())
             {
                 entity.Statements ??= new List<ISubmodelElement>();
                 foreach (var submodelElementWrapper in sourceEntity.statements)
@@ -67,7 +68,7 @@ namespace Extensions
                 }
             }
 
-            if (sourceEntity.assetRef != null)
+            if (sourceEntity.assetRef != null && !sourceEntity.assetRef.IsEmpty)
             {
                 // TODO (jtikekar, 2023-09-04):jtikekar whether to convert to Global or specific asset id
                 var assetRef = ExtensionsUtil.ConvertReferenceFromV20(sourceEntity.assetRef, ReferenceTypes.ExternalReference);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdminShellNS.Extensions;
+using System;
 using System.Collections.Generic;
 
 namespace Extensions
@@ -98,7 +99,7 @@ namespace Extensions
         {
 
             //if (!sourceLangStrings.langString.IsNullOrEmpty())
-            if (sourceLangStrings.langString != null && sourceLangStrings.langString.Count != 0)
+            if (!sourceLangStrings.langString.IsNullOrEmpty())
             {
                 langStringSet = new List<ILangStringTextType>();
                 foreach (var sourceLangString in sourceLangStrings.langString)

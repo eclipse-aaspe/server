@@ -585,7 +585,7 @@ namespace AasxServerStandardBib.Services
                             }
 
                             var targetFile = Path.Combine(sourcePath, fileName);
-                            targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
+                            targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar); //TODO:jtikekar: better way to handle
                             Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
                             file.Value = FormatFileName(targetFile);
                             AasxServer.Program.signalNewData(2);

@@ -1,5 +1,6 @@
 ﻿using AdminShellNS;
 using AdminShellNS.Display;
+using AdminShellNS.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -131,7 +132,7 @@ namespace Extensions
                 submodel.Administration = new AdministrativeInformation(version: sourceSubmodel.administration.version, revision: sourceSubmodel.administration.revision);
             }
 
-            if (sourceSubmodel.semanticId != null)
+            if (sourceSubmodel.semanticId != null && !sourceSubmodel.semanticId.IsEmpty)
             {
                 var keyList = new List<IKey>();
                 foreach (var refKey in sourceSubmodel.semanticId.Keys)
@@ -161,7 +162,7 @@ namespace Extensions
                 }
             }
 
-            if (sourceSubmodel.qualifiers != null && sourceSubmodel.qualifiers.Count != 0)
+            if (!sourceSubmodel.qualifiers.IsNullOrEmpty())
             {
                 if (submodel.Qualifiers == null && submodel.Qualifiers.Count != 0)
                 {
@@ -176,7 +177,7 @@ namespace Extensions
                 }
             }
 
-            if (!shallowCopy && sourceSubmodel.submodelElements != null)
+            if (!shallowCopy && !sourceSubmodel.submodelElements.IsNullOrEmpty())
             {
                 if (submodel.SubmodelElements == null)
                 {
@@ -220,7 +221,7 @@ namespace Extensions
                 sm.Administration = new AdministrativeInformation(
                     version: srcSM.administration.version, revision: srcSM.administration.revision);
 
-            if (srcSM.semanticId != null)
+            if (srcSM.semanticId != null && !srcSM.semanticId.IsEmpty)
             {
                 var keyList = new List<IKey>();
                 foreach (var refKey in srcSM.semanticId.Keys)
@@ -250,7 +251,7 @@ namespace Extensions
                 }
             }
 
-            if (srcSM.qualifiers != null && srcSM.qualifiers.Count != 0)
+            if (!srcSM.qualifiers.IsNullOrEmpty())
             {
                 if (sm.Qualifiers == null)
                 {
@@ -265,7 +266,7 @@ namespace Extensions
                 }
             }
 
-            if (!shallowCopy && srcSM.submodelElements != null)
+            if (!shallowCopy && !srcSM.submodelElements.IsNullOrEmpty())
             {
                 if (sm.SubmodelElements == null)
                 {

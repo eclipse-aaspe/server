@@ -1,4 +1,5 @@
 ﻿using AasxCompatibilityModels;
+using AdminShellNS.Extensions;
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +11,7 @@ namespace Extensions
         public static Reference ConvertReferenceFromV10(AdminShellV10.Reference sourceReference, ReferenceTypes referenceTypes)
         {
             Reference outputReference = null;
-            if (sourceReference != null)
+            if (sourceReference != null && !sourceReference.IsEmpty)
             {
                 var keyList = new List<IKey>();
                 foreach (var refKey in sourceReference.Keys)
@@ -34,7 +35,7 @@ namespace Extensions
         public static Reference ConvertReferenceFromV20(AdminShellV20.Reference sourceReference, ReferenceTypes referenceTypes)
         {
             Reference outputReference = null;
-            if (sourceReference != null)
+            if (sourceReference != null && !sourceReference.IsEmpty)
             {
                 var keyList = new List<IKey>();
                 foreach (var refKey in sourceReference.Keys)
@@ -61,24 +62,33 @@ namespace Extensions
 
         internal static List<ILangStringTextType> ConvertDescriptionFromV10(AdminShellV10.Description sourceDescription)
         {
-            var newLangStrList = new List<ILangStringTextType>();
-            foreach (var ls in sourceDescription.langString)
+            if (!sourceDescription.langString.IsNullOrEmpty())
             {
-                newLangStrList.Add(new LangStringTextType(ls.lang, ls.str));
-            }
+                var newLangStrList = new List<ILangStringTextType>();
+                foreach (var ls in sourceDescription.langString)
+                {
+                    newLangStrList.Add(new LangStringTextType(ls.lang, ls.str));
+                }
 
-            return new List<ILangStringTextType>(newLangStrList);
+                return new List<ILangStringTextType>(newLangStrList);
+            }
+            return null;
         }
 
         internal static List<ILangStringTextType> ConvertDescriptionFromV20(AdminShellV20.Description sourceDescription)
         {
-            var newLangStrList = new List<ILangStringTextType>();
-            foreach (var ls in sourceDescription.langString)
+            if (!sourceDescription.langString.IsNullOrEmpty())
             {
-                newLangStrList.Add(new LangStringTextType(ls.lang, ls.str));
+                var newLangStrList = new List<ILangStringTextType>();
+                foreach (var ls in sourceDescription.langString)
+                {
+                    newLangStrList.Add(new LangStringTextType(ls.lang, ls.str));
+                }
+
+                return new List<ILangStringTextType>(newLangStrList);
             }
 
-            return new List<ILangStringTextType>(newLangStrList);
+            return null;
         }
 
         internal static KeyTypes GetKeyType(IClass aasElement)

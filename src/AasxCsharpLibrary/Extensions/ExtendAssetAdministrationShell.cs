@@ -1,4 +1,5 @@
 ﻿using AdminShellNS;
+using AdminShellNS.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -115,35 +116,50 @@ namespace Extensions
                 assetAdministrationShell.Administration = new AdministrativeInformation(version: sourceAas.administration.version, revision: sourceAas.administration.revision);
             }
 
-            if (sourceAas.derivedFrom != null)
+            if (sourceAas.derivedFrom != null && !sourceAas.derivedFrom.IsEmpty)
             {
-                var key = new Key(KeyTypes.AssetAdministrationShell, sourceAas.identification.id);
-                assetAdministrationShell.DerivedFrom = new Reference(ReferenceTypes.ModelReference, new List<IKey>() { key });
+                var newKeyList = new List<IKey>();
+
+                foreach (var sourceKey in sourceAas.derivedFrom.Keys)
+                {
+                    var keyType = Stringification.KeyTypesFromString(sourceKey.type);
+                    if (keyType != null)
+                    {
+                        newKeyList.Add(new Key((KeyTypes)keyType, sourceKey.value));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"KeyType value {sourceKey.type} not found.");
+                    }
+                }
+                assetAdministrationShell.DerivedFrom = new Reference(ReferenceTypes.ExternalReference, newKeyList);
             }
 
-            if (sourceAas.submodelRefs != null || sourceAas.submodelRefs.Count != 0)
+            if (!sourceAas.submodelRefs.IsNullOrEmpty())
             {
                 foreach (var submodelRef in sourceAas.submodelRefs)
                 {
-                    var keyList = new List<IKey>();
-                    foreach (var refKey in submodelRef.Keys)
+                    if (!submodelRef.IsEmpty)
                     {
-                        //keyList.Add(new Key(ExtensionsUtil.GetKeyTypeFromString(refKey.type), refKey.value));
-                        var keyType = Stringification.KeyTypesFromString(refKey.type);
-                        if (keyType != null)
+                        var keyList = new List<IKey>();
+                        foreach (var refKey in submodelRef.Keys)
                         {
-                            keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                            var keyType = Stringification.KeyTypesFromString(refKey.type);
+                            if (keyType != null)
+                            {
+                                keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                            }
+                            else
+                            {
+                                Console.WriteLine($"KeyType value {refKey.type} not found.");
+                            }
                         }
-                        else
+                        if (assetAdministrationShell.Submodels.IsNullOrEmpty())
                         {
-                            Console.WriteLine($"KeyType value {refKey.type} not found.");
+                            assetAdministrationShell.Submodels = new List<IReference>();
                         }
+                        assetAdministrationShell.Submodels.Add(new Reference(ReferenceTypes.ModelReference, keyList));
                     }
-                    if (assetAdministrationShell.Submodels == null)
-                    {
-                        assetAdministrationShell.Submodels = new List<IReference>();
-                    }
-                    assetAdministrationShell.Submodels.Add(new Reference(ReferenceTypes.ModelReference, keyList));
                 }
             }
 
@@ -155,9 +171,12 @@ namespace Extensions
                 }
                 foreach (var dataSpecification in sourceAas.hasDataSpecification.reference)
                 {
-                    assetAdministrationShell.EmbeddedDataSpecifications.Add(new EmbeddedDataSpecification(
-                        ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.ExternalReference),
-                        null));
+                    if (!dataSpecification.IsEmpty)
+                    {
+                        assetAdministrationShell.EmbeddedDataSpecifications.Add(new EmbeddedDataSpecification(
+                                        ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.ExternalReference),
+                                        null));
+                    }
                 }
             }
 
@@ -192,33 +211,48 @@ namespace Extensions
 
             if (sourceAas.derivedFrom != null)
             {
-                var key = new Key(KeyTypes.AssetAdministrationShell, sourceAas.identification.id);
-                assetAdministrationShell.DerivedFrom = new Reference(ReferenceTypes.ModelReference, new List<IKey>() { key });
+                var newKeyList = new List<IKey>();
+
+                foreach (var sourceKey in sourceAas.derivedFrom.Keys)
+                {
+                    var keyType = Stringification.KeyTypesFromString(sourceKey.type);
+                    if (keyType != null)
+                    {
+                        newKeyList.Add(new Key((KeyTypes)keyType, sourceKey.value));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"KeyType value {sourceKey.type} not found.");
+                    }
+                }
+                assetAdministrationShell.DerivedFrom = new Reference(ReferenceTypes.ExternalReference, newKeyList);
             }
 
             if (sourceAas.submodelRefs != null || sourceAas.submodelRefs.Count != 0)
             {
                 foreach (var submodelRef in sourceAas.submodelRefs)
                 {
-                    var keyList = new List<IKey>();
-                    foreach (var refKey in submodelRef.Keys)
+                    if (!submodelRef.IsEmpty)
                     {
-                        //keyList.Add(new Key(ExtensionsUtil.GetKeyTypeFromString(refKey.type), refKey.value));
-                        var keyType = Stringification.KeyTypesFromString(refKey.type);
-                        if (keyType != null)
+                        var keyList = new List<IKey>();
+                        foreach (var refKey in submodelRef.Keys)
                         {
-                            keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                            var keyType = Stringification.KeyTypesFromString(refKey.type);
+                            if (keyType != null)
+                            {
+                                keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                            }
+                            else
+                            {
+                                Console.WriteLine($"KeyType value {refKey.type} not found.");
+                            }
                         }
-                        else
+                        if (assetAdministrationShell.Submodels == null)
                         {
-                            Console.WriteLine($"KeyType value {refKey.type} not found.");
+                            assetAdministrationShell.Submodels = new List<IReference>();
                         }
+                        assetAdministrationShell.Submodels.Add(new Reference(ReferenceTypes.ModelReference, keyList));
                     }
-                    if (assetAdministrationShell.Submodels == null)
-                    {
-                        assetAdministrationShell.Submodels = new List<IReference>();
-                    }
-                    assetAdministrationShell.Submodels.Add(new Reference(ReferenceTypes.ModelReference, keyList));
                 }
             }
 
@@ -234,10 +268,13 @@ namespace Extensions
                 {
                     if (sourceDataSpec.dataSpecification != null)
                     {
-                        assetAdministrationShell.EmbeddedDataSpecifications.Add(
-                            new EmbeddedDataSpecification(
-                                ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.ExternalReference),
-                                null));
+                        if (!sourceDataSpec.dataSpecification.IsEmpty)
+                        {
+                            assetAdministrationShell.EmbeddedDataSpecifications.Add(
+                                                new EmbeddedDataSpecification(
+                                                    ExtensionsUtil.ConvertReferenceFromV20(sourceDataSpec.dataSpecification, ReferenceTypes.ExternalReference),
+                                                    null));
+                        }
                     }
                 }
             }
