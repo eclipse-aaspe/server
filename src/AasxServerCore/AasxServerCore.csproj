@@ -6,6 +6,10 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+	</PropertyGroup>
+
   <ItemGroup>
     <None Remove="NLog.config" />
   </ItemGroup>
