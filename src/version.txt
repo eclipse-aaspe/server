@@ -1,2 +1,2 @@
 Version from the branch: pipeline-version-dev
-Using the commit: ad7c3a2
+Using the commit: 0a4cdc0: Updating versioning-workflow.yml
