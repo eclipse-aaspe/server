@@ -1,0 +1,20 @@
+name: versioning-workflow
+
+on:
+  push:
+
+jobs:
+  versioning:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.body, 'The workflow versioning-workflow was intentionally skipped.') == false
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Display the path
+        run: |
+          cd src
+          rm -f version.txt
+          touch version.txt
+          echo "Version from the branch: ${GITHUB_REF_NAME}"
+          echo "Using the commit: $(git rev-parse --short "$GITHUB_SHA")"
+        shell: bash
