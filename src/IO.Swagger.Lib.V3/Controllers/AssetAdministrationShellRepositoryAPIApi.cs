@@ -2327,7 +2327,7 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodelelements/{idShortPath}/attachment")]
+        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("PutFileByPath")]
         [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
