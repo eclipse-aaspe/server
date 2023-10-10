@@ -10,11 +10,19 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      - name: Display the path
+      - name: Write Version
         run: |
           cd src
           rm -f version.txt
           touch version.txt
-          echo "Version from the branch: ${GITHUB_REF_NAME}"
-          echo "Using the commit: $(git rev-parse --short "$GITHUB_SHA")"
+          echo "Version from the branch: ${GITHUB_REF_NAME}" >> version.txt
+          echo "Using the commit: $(git rev-parse --short "$GITHUB_SHA")" >> version.txt
         shell: bash
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "versioning pipeline"
+          git config --global user.email "test?"
+          git add -A
+          git commit -m "chore: writing version to version.txt"
+          git push
