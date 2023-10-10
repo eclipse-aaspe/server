@@ -1555,9 +1555,12 @@ namespace AasxServer
             }
 
             AasContext._con = con;
-            if (con["DatabaseConnection:ConnectionString"] != null)
+            if (con != null)
             {
-                isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+                if (con["DatabaseConnection:ConnectionString"] != null)
+                {
+                    isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+                }
             }
 
             string nl = System.Environment.NewLine;
