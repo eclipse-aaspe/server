@@ -1363,11 +1363,12 @@ namespace AasxServer
 
             if (a.Rest)
             {
-                Console.WriteLine("Connect to REST by: {0}:{1}", a.Host, a.Port);
+                Console.WriteLine("--rest argument is not supported anymore, as the old V2 related REST APIs are deprecated. Please find the new REST APIs on the port 5001.");
+                //Console.WriteLine("Connect to REST by: {0}:{1}", a.Host, a.Port);
 
-                AasxRestServer.Start(env, a.Host, a.Port, a.Https); // without Logger
+                //AasxRestServer.Start(env, a.Host, a.Port, a.Https); // without Logger
 
-                Console.WriteLine("REST Server started.");
+                //Console.WriteLine("REST Server started.");
             }
 
             //i40LanguageRuntime.initialize();
