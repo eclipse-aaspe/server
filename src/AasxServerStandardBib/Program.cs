@@ -2984,196 +2984,199 @@ namespace AasxServer
                 int i = 0;
                 while (i < env.Length && env[i] != null)
                 {
-                    foreach (var sm in env[i].AasEnv.Submodels)
+                    if (env[i].AasEnv.Submodels != null)
                     {
-                        if (sm != null && sm.IdShort != null)
+                        foreach (var sm in env[i].AasEnv.Submodels)
                         {
-                            int count = sm.Qualifiers != null ? sm.Qualifiers.Count : 0;
-                            if (count != 0)
+                            if (sm != null && sm.IdShort != null)
                             {
-                                var q = sm.Qualifiers[0] as Qualifier;
-                                if (q.Type == "SCRIPT")
+                                int count = sm.Qualifiers != null ? sm.Qualifiers.Count : 0;
+                                if (count != 0)
                                 {
-                                    // Triple
-                                    // Reference to property with Number
-                                    // Reference to submodel with numbers/strings
-                                    // Reference to property to store found text
-                                    count = sm.SubmodelElements.Count;
-                                    int smi = 0;
-                                    while (smi < count)
+                                    var q = sm.Qualifiers[0] as Qualifier;
+                                    if (q.Type == "SCRIPT")
                                     {
-                                        var sme1 = sm.SubmodelElements[smi++];
-                                        if (sme1.Qualifiers == null || sme1.Qualifiers.Count == 0)
+                                        // Triple
+                                        // Reference to property with Number
+                                        // Reference to submodel with numbers/strings
+                                        // Reference to property to store found text
+                                        count = sm.SubmodelElements.Count;
+                                        int smi = 0;
+                                        while (smi < count)
                                         {
-                                            continue;
-                                        }
-                                        var qq = sme1.Qualifiers[0] as Qualifier;
-
-                                        if (qq.Type == "Add")
-                                        {
-                                            int v = Convert.ToInt32((sme1 as Property).Value);
-                                            v += Convert.ToInt32(qq.Value);
-                                            (sme1 as Property).Value = v.ToString();
-                                            continue;
-                                        }
-
-                                        if (qq.Type == "GetValue")
-                                        {
-                                            /*
-                                            if (!(sme1 is ReferenceElement))
+                                            var sme1 = sm.SubmodelElements[smi++];
+                                            if (sme1.Qualifiers == null || sme1.Qualifiers.Count == 0)
                                             {
                                                 continue;
                                             }
+                                            var qq = sme1.Qualifiers[0] as Qualifier;
 
-                                            string url = qq.Value;
-                                            string username = "";
-                                            string password = "";
-
-                                            if (sme1.qualifiers.Count == 3)
+                                            if (qq.Type == "Add")
                                             {
-                                                qq = sme1.qualifiers[1] as Qualifier;
-                                                if (qq.type != "Username")
-                                                    continue;
-                                                username = qq.Value;
-                                                qq = sme1.qualifiers[2] as Qualifier;
-                                                if (qq.type != "Password")
-                                                    continue;
-                                                password = qq.Value;
-                                            }
-
-                                            var handler = new HttpClientHandler();
-                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                                            var client = new HttpClient(handler);
-
-                                            if (username != "" && password != "")
-                                            {
-                                                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                                                        Convert.ToBase64String(authToken));
-                                            }
-
-                                            string response = await client.GetStringAsync(url);
-
-                                            var r12 = sme1 as ReferenceElement;
-                                            var ref12 = env[i].AasEnv.FindReferableByReference(r12.Value);
-                                            if (ref12 is Property)
-                                            {
-                                                var p1 = ref12 as Property;
-                                                p1.Value = response;
-                                            }
-                                            continue;
-                                            */
-                                        }
-
-                                        if (qq.Type == "GetJSON")
-                                        {
-                                            if (init)
-                                                return;
-
-                                            if (Program.isLoading)
-                                                return;
-
-                                            if (!(sme1 is ReferenceElement))
-                                            {
+                                                int v = Convert.ToInt32((sme1 as Property).Value);
+                                                v += Convert.ToInt32(qq.Value);
+                                                (sme1 as Property).Value = v.ToString();
                                                 continue;
                                             }
 
-                                            string url = qq.Value;
-                                            string username = "";
-                                            string password = "";
-
-                                            if (sme1.Qualifiers.Count == 3)
+                                            if (qq.Type == "GetValue")
                                             {
-                                                qq = sme1.Qualifiers[1] as Qualifier;
-                                                if (qq.Type != "Username")
-                                                    continue;
-                                                username = qq.Value;
-                                                qq = sme1.Qualifiers[2] as Qualifier;
-                                                if (qq.Type != "Password")
-                                                    continue;
-                                                password = qq.Value;
-                                            }
-
-                                            var handler = new HttpClientHandler();
-                                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                                            var client = new HttpClient(handler);
-
-                                            if (username != "" && password != "")
-                                            {
-                                                var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                                                        Convert.ToBase64String(authToken));
-                                            }
-
-                                            Console.WriteLine("GetJSON: " + url);
-                                            string response = client.GetStringAsync(url).Result;
-                                            Console.WriteLine(response);
-
-                                            if (response != "")
-                                            {
-                                                var r12 = sme1 as ReferenceElement;
-                                                var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
-                                                if (ref12 is SubmodelElementCollection)
+                                                /*
+                                                if (!(sme1 is ReferenceElement))
                                                 {
-                                                    var c1 = ref12 as SubmodelElementCollection;
-                                                    // if (c1.Value.Count == 0)
+                                                    continue;
+                                                }
+
+                                                string url = qq.Value;
+                                                string username = "";
+                                                string password = "";
+
+                                                if (sme1.qualifiers.Count == 3)
+                                                {
+                                                    qq = sme1.qualifiers[1] as Qualifier;
+                                                    if (qq.type != "Username")
+                                                        continue;
+                                                    username = qq.Value;
+                                                    qq = sme1.qualifiers[2] as Qualifier;
+                                                    if (qq.type != "Password")
+                                                        continue;
+                                                    password = qq.Value;
+                                                }
+
+                                                var handler = new HttpClientHandler();
+                                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                                var client = new HttpClient(handler);
+
+                                                if (username != "" && password != "")
+                                                {
+                                                    var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                                                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                            Convert.ToBase64String(authToken));
+                                                }
+
+                                                string response = await client.GetStringAsync(url);
+
+                                                var r12 = sme1 as ReferenceElement;
+                                                var ref12 = env[i].AasEnv.FindReferableByReference(r12.Value);
+                                                if (ref12 is Property)
+                                                {
+                                                    var p1 = ref12 as Property;
+                                                    p1.Value = response;
+                                                }
+                                                continue;
+                                                */
+                                            }
+
+                                            if (qq.Type == "GetJSON")
+                                            {
+                                                if (init)
+                                                    return;
+
+                                                if (Program.isLoading)
+                                                    return;
+
+                                                if (!(sme1 is ReferenceElement))
+                                                {
+                                                    continue;
+                                                }
+
+                                                string url = qq.Value;
+                                                string username = "";
+                                                string password = "";
+
+                                                if (sme1.Qualifiers.Count == 3)
+                                                {
+                                                    qq = sme1.Qualifiers[1] as Qualifier;
+                                                    if (qq.Type != "Username")
+                                                        continue;
+                                                    username = qq.Value;
+                                                    qq = sme1.Qualifiers[2] as Qualifier;
+                                                    if (qq.Type != "Password")
+                                                        continue;
+                                                    password = qq.Value;
+                                                }
+
+                                                var handler = new HttpClientHandler();
+                                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                                var client = new HttpClient(handler);
+
+                                                if (username != "" && password != "")
+                                                {
+                                                    var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
+                                                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                            Convert.ToBase64String(authToken));
+                                                }
+
+                                                Console.WriteLine("GetJSON: " + url);
+                                                string response = client.GetStringAsync(url).Result;
+                                                Console.WriteLine(response);
+
+                                                if (response != "")
+                                                {
+                                                    var r12 = sme1 as ReferenceElement;
+                                                    var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
+                                                    if (ref12 is SubmodelElementCollection)
                                                     {
-                                                        // dynamic model = JObject.Parse(response);
-                                                        JObject parsed = JObject.Parse(response);
-                                                        parseJson(c1, parsed, null);
+                                                        var c1 = ref12 as SubmodelElementCollection;
+                                                        // if (c1.Value.Count == 0)
+                                                        {
+                                                            // dynamic model = JObject.Parse(response);
+                                                            JObject parsed = JObject.Parse(response);
+                                                            parseJson(c1, parsed, null);
+                                                        }
                                                     }
                                                 }
+                                                continue;
                                             }
-                                            continue;
-                                        }
 
-                                        if (qq.Type != "SearchNumber" || smi >= count)
-                                        {
-                                            continue;
-                                        }
-                                        var sme2 = sm.SubmodelElements[smi++];
-                                        if (sme2.Qualifiers.Count == 0)
-                                        {
-                                            continue;
-                                        }
-                                        qq = sme2.Qualifiers[0] as Qualifier;
-                                        if (qq.Type != "SearchList" || smi >= count)
-                                        {
-                                            continue;
-                                        }
-                                        var sme3 = sm.SubmodelElements[smi++];
-                                        if (sme3.Qualifiers.Count == 0)
-                                        {
-                                            continue;
-                                        }
-                                        qq = sme3.Qualifiers[0] as Qualifier;
-                                        if (qq.Type != "SearchResult")
-                                        {
-                                            break;
-                                        }
-                                        if (sme1 is ReferenceElement &&
-                                            sme2 is ReferenceElement &&
-                                            sme3 is ReferenceElement)
-                                        {
-                                            var r1 = sme1 as ReferenceElement;
-                                            var r2 = sme2 as ReferenceElement;
-                                            var r3 = sme3 as ReferenceElement;
-                                            var ref1 = env[i].AasEnv.FindReferableByReference(r1.GetModelReference());
-                                            var ref2 = env[i].AasEnv.FindReferableByReference(r2.GetModelReference());
-                                            var ref3 = env[i].AasEnv.FindReferableByReference(r3.GetModelReference());
-                                            if (ref1 is Property && ref2 is Submodel && ref3 is Property)
+                                            if (qq.Type != "SearchNumber" || smi >= count)
                                             {
-                                                var p1 = ref1 as Property;
-                                                // Simulate changes
-                                                var sm2 = ref2 as Submodel;
-                                                var p3 = ref3 as Property;
-                                                int count2 = sm2.SubmodelElements.Count;
-                                                for (int j = 0; j < count2; j++)
+                                                continue;
+                                            }
+                                            var sme2 = sm.SubmodelElements[smi++];
+                                            if (sme2.Qualifiers.Count == 0)
+                                            {
+                                                continue;
+                                            }
+                                            qq = sme2.Qualifiers[0] as Qualifier;
+                                            if (qq.Type != "SearchList" || smi >= count)
+                                            {
+                                                continue;
+                                            }
+                                            var sme3 = sm.SubmodelElements[smi++];
+                                            if (sme3.Qualifiers.Count == 0)
+                                            {
+                                                continue;
+                                            }
+                                            qq = sme3.Qualifiers[0] as Qualifier;
+                                            if (qq.Type != "SearchResult")
+                                            {
+                                                break;
+                                            }
+                                            if (sme1 is ReferenceElement &&
+                                                sme2 is ReferenceElement &&
+                                                sme3 is ReferenceElement)
+                                            {
+                                                var r1 = sme1 as ReferenceElement;
+                                                var r2 = sme2 as ReferenceElement;
+                                                var r3 = sme3 as ReferenceElement;
+                                                var ref1 = env[i].AasEnv.FindReferableByReference(r1.GetModelReference());
+                                                var ref2 = env[i].AasEnv.FindReferableByReference(r2.GetModelReference());
+                                                var ref3 = env[i].AasEnv.FindReferableByReference(r3.GetModelReference());
+                                                if (ref1 is Property && ref2 is Submodel && ref3 is Property)
                                                 {
-                                                    var sme = sm2.SubmodelElements[j];
-                                                    if (sme.IdShort == p1.Value)
+                                                    var p1 = ref1 as Property;
+                                                    // Simulate changes
+                                                    var sm2 = ref2 as Submodel;
+                                                    var p3 = ref3 as Property;
+                                                    int count2 = sm2.SubmodelElements.Count;
+                                                    for (int j = 0; j < count2; j++)
                                                     {
-                                                        p3.Value = (sme as Property).Value;
+                                                        var sme = sm2.SubmodelElements[j];
+                                                        if (sme.IdShort == p1.Value)
+                                                        {
+                                                            p3.Value = (sme as Property).Value;
+                                                        }
                                                     }
                                                 }
                                             }

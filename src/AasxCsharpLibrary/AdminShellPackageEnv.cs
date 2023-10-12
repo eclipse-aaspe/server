@@ -18,12 +18,10 @@ using System.IO;
 using System.IO.Compression;
 using System.IO.Packaging;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace AdminShellNS
@@ -283,7 +281,7 @@ namespace AdminShellNS
         }
 
         public string getEnvXml()
-        {   
+        {
             return _envXml;
         }
 
@@ -1050,7 +1048,7 @@ namespace AdminShellNS
                         {
                             package.Close();
                             System.IO.File.Copy(_tempFn, _fn, overwrite: true);
-                            _openPackage = Package.Open(_tempFn, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            _openPackage = Package.Open(_tempFn, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
                         }
                         catch (Exception ex)
                         {
@@ -1215,9 +1213,9 @@ namespace AdminShellNS
         public static string dataPath = "";
         public static void setGlobalOptions(bool _withDb, bool _withDbFiles, string _dataPath)
         {
-            withDb= _withDb;
-            withDbFiles= _withDbFiles;
-            dataPath= _dataPath;
+            withDb = _withDb;
+            withDbFiles = _withDbFiles;
+            dataPath = _dataPath;
         }
 
         public Stream GetLocalStreamFromPackage(string uriString, FileMode mode = FileMode.Open, FileAccess access = FileAccess.ReadWrite, bool init = false)
@@ -1604,29 +1602,37 @@ namespace AdminShellNS
 
         public void EmbeddAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent)
         {
-            // access
-            if (_openPackage == null)
-                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
-
-            if (!string.IsNullOrEmpty(defaultThumbnail.Path))
+            try
             {
-                var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
-                _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+                // access
+                if (_openPackage == null)
+                    throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
 
+                if (!string.IsNullOrEmpty(defaultThumbnail.Path))
+                {
+                    var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
+                    _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+
+                }
+                var targetUri = PackUriHelper.CreatePartUri(new Uri(defaultThumbnail.Path, UriKind.RelativeOrAbsolute));
+
+                PackagePart packagePart = _openPackage.CreatePart(targetUri, defaultThumbnail.ContentType, compressionOption: CompressionOption.Maximum);
+
+                _openPackage.CreateRelationship(packagePart.Uri, TargetMode.Internal,
+                                            "http://schemas.openxmlformats.org/package/2006/" +
+                                            "relationships/metadata/thumbnail");
+
+                //Write to the part
+                fileContent.Position = 0;
+                using (Stream dest = packagePart.GetStream())
+                {
+                    fileContent.CopyTo(dest);
+                }
             }
-            var targetUri = PackUriHelper.CreatePartUri(new Uri(defaultThumbnail.Path, UriKind.RelativeOrAbsolute));
-
-            PackagePart packagePart = _openPackage.CreatePart(targetUri, defaultThumbnail.ContentType, compressionOption: CompressionOption.Maximum);
-
-            _openPackage.CreateRelationship(packagePart.Uri, TargetMode.Internal,
-                                        "http://schemas.openxmlformats.org/package/2006/" +
-                                        "relationships/metadata/thumbnail");
-
-            //Write to the part
-            fileContent.Position = 0;
-            using (Stream dest = packagePart.GetStream())
+            catch (Exception ex)
             {
-                fileContent.CopyTo(dest);
+                throw new Exception(ex.Message);
+                throw new Exception(ex.StackTrace);
             }
         }
 

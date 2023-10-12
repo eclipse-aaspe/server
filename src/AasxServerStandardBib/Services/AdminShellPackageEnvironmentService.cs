@@ -490,6 +490,7 @@ namespace AasxServerStandardBib.Services
                 if (aasFound)
                 {
                     newSubmodel.SetAllParents(DateTime.UtcNow);
+                    aas.Submodels ??= new List<IReference>();
                     aas.Submodels.Add(newSubmodel.GetReference());
                     _packages[packageIndex].AasEnv.Submodels.Add(newSubmodel);
                     AasxServer.Program.signalNewData(2);
