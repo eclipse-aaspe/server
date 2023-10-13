@@ -232,12 +232,68 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformOperation(IOperation that, LevelExtentModifierContext context)
         {
-            throw new System.NotImplementedException();
+            var output = Copying.Deep(that);
+
+            if (output != null)
+            {
+                context.IsRoot = false;
+                if (context.Level == LevelEnum.Core)
+                {
+                    output.InputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.InputVariables)
+                    {
+                        context.IncludeChildren = false;
+                        output.InputVariables.Add((IOperationVariable)Transform(child, context));
+                    }
+
+                    output.OutputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.OutputVariables)
+                    {
+                        context.IncludeChildren = false;
+                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
+                    }
+
+                    output.InoutputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.InoutputVariables)
+                    {
+                        context.IncludeChildren = false;
+                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
+                    }
+                }
+                else
+                {
+                    output.InputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.InputVariables)
+                    {
+                        output.InputVariables.Add((IOperationVariable)Transform(child, context));
+                    }
+
+                    output.OutputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.OutputVariables)
+                    {
+                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
+                    }
+
+                    output.InoutputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.InoutputVariables)
+                    {
+                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
+                    }
+                }
+            }
+
+            return output;
         }
 
         public override IClass TransformOperationVariable(IOperationVariable that, LevelExtentModifierContext context)
         {
-            throw new System.NotImplementedException();
+            var output = Copying.Deep(that);
+            if (output != null)
+            {
+                output.Value = (ISubmodelElement)Transform(that.Value, context);
+            }
+
+            return output;
         }
 
         public override IClass TransformProperty(IProperty that, LevelExtentModifierContext context)
