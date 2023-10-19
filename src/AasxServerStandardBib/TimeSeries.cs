@@ -783,7 +783,7 @@ namespace AasxTimeSeries
                             }
 
                             // tsb.latestData.Value.Clear();
-                            // tsb.latestData.SetTimeStamp(timeStamp);
+                            tsb.latestData.SetTimeStamp(timeStamp);
                             ISubmodelElement latestDataProperty = null;
                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("lowDataIndex");
                             if (latestDataProperty == null)

@@ -455,12 +455,18 @@
                                 <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
                                 <input type="time" @bind-value="plotFilter.toTime" />
                                 <div>
-                                    <button type="submit">Apply</button>
-                                    <button @onclick="plotFilter.SetInitialFilterState">Reset</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
-                                    <button @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
-                                    <button @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray" 
+                                        type="submit">Apply</button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                        @onclick="plotFilter.SetInitialFilterState">Reset</button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                        @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                        @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray" 
+                                        @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                        @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
                                 </div>
                             </EditForm>
 

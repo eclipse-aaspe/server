@@ -435,6 +435,7 @@ namespace Extensions
 
             referable.Parent = parent;
             referable.TimeStamp = timeStamp;
+            referable.TimeStampTree = timeStamp;
             referable.TimeStampCreate = timeStampCreate;
 
             foreach (var submodelElement in referable.EnumerateChildren())

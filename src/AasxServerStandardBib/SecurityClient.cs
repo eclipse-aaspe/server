@@ -32,6 +32,7 @@ using Org.BouncyCastle.Asn1.Ocsp;
 using System.Threading.Channels;
 using System.CommandLine.Parsing;
 using Microsoft.EntityFrameworkCore;
+using static QRCoder.PayloadGenerator;
 
 namespace AasxServer
 {
@@ -790,7 +791,7 @@ namespace AasxServer
                 HttpResponseMessage response = null;
                 Task task = null;
                 string diffPath = "";
-                var splitPath = path.Value.Split('.');
+                var splitPath = path.Value.Split('/');
                 string aasPath = splitPath[0];
                 string subPath = "";
                 int i = 1;
@@ -1132,7 +1133,7 @@ namespace AasxServer
 
                 handler = new HttpClientHandler();
 
-                if (!requestPath.Contains("localhost"))
+                if (!requestPath.Contains("localhost") && !requestPath.Contains("192.168."))
                 {
                     if (proxy != null)
                         handler.Proxy = proxy;
@@ -1164,13 +1165,15 @@ namespace AasxServer
                             // get "latestData" from server
                             bool error = false;
                             splitPath = path.Value.Split('/');
+                            /*
                             requestPath = endPoint.Value + "/aas/" + splitPath[1] +
                                 "/submodels/" + splitPath[3];
                             requestPath += "/elements/" + elementCollection.IdShort;
                             requestPath += "/latestData/complete";
+                            */
                             try
                             {
-                                task = Task.Run(async () => { response = await client.GetAsync(requestPath, HttpCompletionOption.ResponseHeadersRead); });
+                                task = Task.Run(async () => { response = await client.GetAsync(requestPath + ".latestData", HttpCompletionOption.ResponseHeadersRead); });
                                 task.Wait();
                                 if (!response.IsSuccessStatusCode)
                                 {
@@ -1196,14 +1199,18 @@ namespace AasxServer
                                 try
                                 {
                                     string json = response.Content.ReadAsStringAsync().Result;
-                                    JObject parsed = JObject.Parse(json);
-                                    foreach (JProperty jp1 in (JToken)parsed)
+                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                    var receiveCollection = Jsonization.Deserialize.SubmodelElementCollectionFrom(node);
+
+                                    // JObject parsed = JObject.Parse(json);
+                                    // foreach (JProperty jp1 in (JToken)parsed)
                                     {
-                                        if (jp1.Name == "elem")
+                                        // if (jp1.Name == "elem")
                                         {
-                                            string text = jp1.Value.ToString();
-                                            var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                                text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                            // string text = jp1.Value.ToString();
+                                            // var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
+                                            //    text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                             foreach (var sme in receiveCollection.Value)
                                             {
                                                 var e = sme;
@@ -1287,14 +1294,20 @@ namespace AasxServer
                                 if (!(sme is SubmodelElementCollection))
                                     continue;
                                 elementCollection = sme as SubmodelElementCollection;
-                                diffPath = "/" + diffCollection.IdShort;
+                                diffPath = "." + elementCollection.IdShort;
                                 if (elementCollection.TimeStamp <= last)
                                     elementCollection = null;
                             }
                             if (elementCollection != null)
-                                json = JsonConvert.SerializeObject(elementCollection, Formatting.Indented);
+                            {
+                                var j = Jsonization.Serialize.ToJsonObject(elementCollection);
+                                json = j.ToJsonString();
+                            }
                             if (elementSubmodel != null)
-                                json = JsonConvert.SerializeObject(elementSubmodel, Formatting.Indented);
+                            {
+                                var j = Jsonization.Serialize.ToJsonObject(elementSubmodel);
+                                json = j.ToJsonString();
+                            }
                         }
                         catch
                         {
@@ -1308,11 +1321,22 @@ namespace AasxServer
                             try
                             {
                                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                                task = Task.Run(async () =>
+                                if (opName == "put" || (elementCollection != null && elementCollection.IdShort == "latestData"))
                                 {
-                                    response = await client.PutAsync(
-                                        requestPath + diffPath, content);
-                                });
+                                    task = Task.Run(async () =>
+                                    {
+                                        response = await client.PutAsync(
+                                            requestPath + diffPath, content);
+                                    });
+                                } else
+                                if (opName == "putdiff")
+                                {
+                                    task = Task.Run(async () =>
+                                    {
+                                        response = await client.PostAsync(
+                                            requestPath, content);
+                                    });
+                                }
                                 task.Wait();
                             }
                             catch
