@@ -89,9 +89,17 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     if (sm != null && sm.IdShort != null)
                                     {
                                         if (sm.IdShort == "AASREGISTRY")
+                                        {
                                             aasRegistry = sm;
+                                            if (aasRegistry.SubmodelElements == null)
+                                                aasRegistry.SubmodelElements = new List<ISubmodelElement>();
+                                        }
                                         if (sm.IdShort == "SUBMODELREGISTRY")
+                                        {
                                             submodelRegistry = sm;
+                                            if (submodelRegistry.SubmodelElements == null)
+                                                submodelRegistry.SubmodelElements = new List<ISubmodelElement>();
+                                        }
                                     }
                                 }
                             }
@@ -563,6 +571,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             }
                         }
                         // add searchData for registry
+                        if (sm.SubmodelElements != null)
                         foreach (var se in sm.SubmodelElements)
                         {
                             var sme = se;
@@ -883,6 +892,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 smc.TimeStampCreate = timestamp;
                 smc.TimeStamp = timestamp;
                 cs.Value.Add(smc);
+                if (submodelRegistry.SubmodelElements == null)
+                    submodelRegistry.SubmodelElements = new List<ISubmodelElement>();
                 submodelRegistry?.SubmodelElements.Add(cs);
                 submodelRegistry?.SetAllParents(timestamp);
                 var r = new ReferenceElement(idShort: "ref_Submodel_" + iSubmodel++);
