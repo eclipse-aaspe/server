@@ -732,7 +732,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = { "PLCNEXTTARGET" };
+            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY" };
             foreach (var ev in evlist)
             {
                 string v = System.Environment.GetEnvironmentVariable(ev);
@@ -743,6 +743,19 @@ namespace AasxServer
                     Console.WriteLine("Variable: " + ev + " = " + v);
                     envVariables.Add(ev, v);
                 }
+            }
+            string w;
+            if (envVariables.TryGetValue("WITHPOLICY", out w))
+            {
+                if (w.ToLower() == "true" || w.ToLower() =="on")
+                {
+                    withPolicy = true;
+                }
+                if (w.ToLower() == "false" || w.ToLower() == "off")
+                {
+                    withPolicy = false;
+                }
+                Console.WriteLine("withPolicy: " + withPolicy);
             }
 
             if (a.Connect != null)

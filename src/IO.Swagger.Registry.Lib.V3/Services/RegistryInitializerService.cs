@@ -333,52 +333,55 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                             try
                                             {
                                                 // HEAD to get policy for submodel
-                                                requestPath += queryPara;
-                                                Console.WriteLine("HEAD Submodel " + requestPath);
-                                                var task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
-                                                task.Wait();
-
-                                                string userName = "aorzelski@phoenixcontact.com";
-                                                string policy = "";
-                                                string policyRequestedResource = "";
-                                                foreach (var kvp in response.Headers)
+                                                if (Program.withPolicy)
                                                 {
-                                                    if (kvp.Key == "policy")
-                                                        policy = kvp.Value.FirstOrDefault();
-                                                    if (kvp.Key == "policyRequestedResource")
-                                                        policyRequestedResource = kvp.Value.FirstOrDefault();
-                                                }
+                                                    requestPath += queryPara;
+                                                    Console.WriteLine("HEAD Submodel " + requestPath);
+                                                    var task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
+                                                    task.Wait();
 
-                                                if (policy != "")
-                                                {
-                                                    var credential = new X509SigningCredentials(certificate);
-                                                    string clientId = "client.jwt";
-                                                    string subject = certificate.Subject;
-                                                    var now = DateTime.UtcNow;
-                                                    var claimList =
-                                                        new List<Claim>()
-                                                            {
+                                                    string userName = "aorzelski@phoenixcontact.com";
+                                                    string policy = "";
+                                                    string policyRequestedResource = "";
+                                                    foreach (var kvp in response.Headers)
+                                                    {
+                                                        if (kvp.Key == "policy")
+                                                            policy = kvp.Value.FirstOrDefault();
+                                                        if (kvp.Key == "policyRequestedResource")
+                                                            policyRequestedResource = kvp.Value.FirstOrDefault();
+                                                    }
+
+                                                    if (policy != "")
+                                                    {
+                                                        var credential = new X509SigningCredentials(certificate);
+                                                        string clientId = "client.jwt";
+                                                        string subject = certificate.Subject;
+                                                        var now = DateTime.UtcNow;
+                                                        var claimList =
+                                                            new List<Claim>()
+                                                                {
                                                         new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
                                                         new Claim(JwtClaimTypes.Subject, clientId),
                                                         new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
 
                                                         new Claim("userName", userName),
-                                                            };
-                                                    if (policy != "")
-                                                        claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
-                                                    if (policyRequestedResource != "")
-                                                        claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
-                                                    var token = new JwtSecurityToken(
-                                                            clientId,
-                                                            policyRequestedResource,
-                                                            claimList,
-                                                            now,
-                                                            now.AddDays(1),
-                                                            credential)
-                                                    ;
-                                                    var tokenHandler = new JwtSecurityTokenHandler();
-                                                    clientToken = tokenHandler.WriteToken(token);
-                                                    client.SetBearerToken(clientToken);
+                                                                };
+                                                        if (policy != "")
+                                                            claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
+                                                        if (policyRequestedResource != "")
+                                                            claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
+                                                        var token = new JwtSecurityToken(
+                                                                clientId,
+                                                                policyRequestedResource,
+                                                                claimList,
+                                                                now,
+                                                                now.AddDays(1),
+                                                                credential)
+                                                        ;
+                                                        var tokenHandler = new JwtSecurityTokenHandler();
+                                                        clientToken = tokenHandler.WriteToken(token);
+                                                        client.SetBearerToken(clientToken);
+                                                    }
                                                 }
 
                                                 Console.WriteLine("GET Submodel " + requestPath);
