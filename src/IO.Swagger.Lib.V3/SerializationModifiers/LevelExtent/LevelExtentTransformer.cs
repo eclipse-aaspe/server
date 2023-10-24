@@ -421,19 +421,21 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
                     if (context.Level == LevelEnum.Core)
                     {
                         output.Value = new List<ISubmodelElement>();
-                        foreach (var child in that.Value)
-                        {
-                            context.IncludeChildren = false;
-                            output.Value.Add((ISubmodelElement)Transform(child, context));
-                        }
+                        if (that.Value != null)
+                            foreach (var child in that.Value)
+                            {
+                                context.IncludeChildren = false;
+                                output.Value.Add((ISubmodelElement)Transform(child, context));
+                            }
                     }
                     else
                     {
                         output.Value = new List<ISubmodelElement>();
-                        foreach (var child in that.Value)
-                        {
-                            output.Value.Add((ISubmodelElement)Transform(child, context));
-                        }
+                        if (that.Value != null)
+                            foreach (var child in that.Value)
+                            {
+                                output.Value.Add((ISubmodelElement)Transform(child, context));
+                            }
                     }
                 }
                 else
@@ -457,19 +459,21 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
                     if (context.Level == LevelEnum.Core)
                     {
                         output.Value = new List<ISubmodelElement>();
-                        foreach (var child in that.Value)
-                        {
-                            context.IncludeChildren = false;
-                            output.Value.Add((ISubmodelElement)Transform(child, context));
-                        }
+                        if (that.Value != null)
+                            foreach (var child in that.Value)
+                            {
+                                context.IncludeChildren = false;
+                                output.Value.Add((ISubmodelElement)Transform(child, context));
+                            }
                     }
                     else
                     {
                         output.Value = new List<ISubmodelElement>();
-                        foreach (var child in that.Value)
-                        {
-                            output.Value.Add((ISubmodelElement)Transform(child, context));
-                        }
+                        if (that.Value != null)
+                            foreach (var child in that.Value)
+                            {
+                                output.Value.Add((ISubmodelElement)Transform(child, context));
+                            }
                     }
                 }
                 else
