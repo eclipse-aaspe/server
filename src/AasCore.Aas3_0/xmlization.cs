@@ -3,7 +3,6 @@
  * Do NOT edit or append.
  */
 
-using System.Collections.Generic;  // can't alias
 using Aas = AasCore.Aas3_0;  // renamed
 using CodeAnalysis = System.Diagnostics.CodeAnalysis;
 using Xml = System.Xml;
