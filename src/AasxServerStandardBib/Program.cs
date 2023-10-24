@@ -685,7 +685,7 @@ namespace AasxServer
         public static bool withDbFiles = false;
         public static int startIndex = 0;
 
-        public static bool withPolicy = true;
+        public static bool withPolicy = false;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
