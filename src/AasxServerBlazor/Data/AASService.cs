@@ -227,6 +227,7 @@ namespace AasxServerBlazor.Data
         void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)
         {
             List<Item> smChilds = new List<Item>();
+            if (smec != null && smec.Value != null)
             foreach (var sme in smec.Value)
             {
                 if (sme != null && sme != null)
