@@ -24900,26 +24900,32 @@ namespace AasCore.Aas3_0
                 Aas.IEmbeddedDataSpecification that,
                 Xml.XmlWriter writer)
             {
-                writer.WriteStartElement(
-                    "dataSpecification",
-                    NS);
+                if (that.DataSpecification != null)
+                {
+                    writer.WriteStartElement(
+                                "dataSpecification",
+                                NS);
 
-                this.ReferenceToSequence(
-                    that.DataSpecification,
-                    writer);
-
-                writer.WriteEndElement();
-
-                writer.WriteStartElement(
-                    "dataSpecificationContent",
-                    NS);
-
-                if (that.DataSpecificationContent != null)
-                    this.Visit(
-                        that.DataSpecificationContent,
+                    this.ReferenceToSequence(
+                        that.DataSpecification,
                         writer);
 
-                writer.WriteEndElement();
+                    writer.WriteEndElement();
+                }
+
+                if (that.DataSpecificationContent != null)
+                {
+                    writer.WriteStartElement(
+                               "dataSpecificationContent",
+                               NS);
+
+                    if (that.DataSpecificationContent != null)
+                        this.Visit(
+                            that.DataSpecificationContent,
+                            writer);
+
+                    writer.WriteEndElement();
+                }
             }  // private void EmbeddedDataSpecificationToSequence
 
             public override void VisitEmbeddedDataSpecification(
