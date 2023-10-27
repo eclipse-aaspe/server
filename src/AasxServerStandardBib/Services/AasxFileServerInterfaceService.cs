@@ -187,9 +187,11 @@ namespace AasxServerStandardBib.Services
                 {
                     _packages[emptyPackageIndex] = newAasx;
                     _envFileNames[emptyPackageIndex] = newFileName;
+                    newAasx.AasEnv.AssetAdministrationShells[0].SetTimeStamp(DateTime.UtcNow);
                     foreach (var submodel in newAasx.AasEnv.Submodels)
                     {
-                        submodel.SetAllParents();
+                        //submodel.SetAllParents();
+                        submodel.SetParentAndTimestamp();
                     }
                     Program.signalNewData(2);
                     return emptyPackageIndex.ToString();

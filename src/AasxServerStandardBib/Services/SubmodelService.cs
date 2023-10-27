@@ -537,6 +537,8 @@ namespace AasxServerStandardBib.Services
 
             Update.ToUpdateObject(submodel, newSubmodel);
 
+            submodel.SetTimeStamp(DateTime.UtcNow);
+
             Program.signalNewData(0);
         }
 
@@ -548,6 +550,8 @@ namespace AasxServerStandardBib.Services
             _verificationService.VerifyRequestBody(newSme);
 
             Update.ToUpdateObject(submodelElement, newSme);
+
+            newSme.SetTimeStamp(DateTime.UtcNow);
 
             Program.signalNewData(0);
         }

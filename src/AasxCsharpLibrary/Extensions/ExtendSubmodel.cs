@@ -416,6 +416,16 @@ namespace Extensions
                     SetParentsForSME(submodel, sme);
         }
 
+        public static void SetParentAndTimestamp(this ISubmodel submodel)
+        {
+            submodel.SetTimeStamp(DateTime.UtcNow);
+
+            if (submodel.SubmodelElements != null)
+                foreach (var sme in submodel.SubmodelElements)
+                    sme.SetAllParentsAndTimestamps(submodel, DateTime.UtcNow, DateTime.UtcNow);
+        }
+
+
         public static void Add(this Submodel submodel, ISubmodelElement submodelElement)
         {
             if (submodel.SubmodelElements == null)
