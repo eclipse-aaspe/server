@@ -187,11 +187,14 @@ namespace AasxServerStandardBib.Services
                 {
                     _packages[emptyPackageIndex] = newAasx;
                     _envFileNames[emptyPackageIndex] = newFileName;
-                    newAasx.AasEnv.AssetAdministrationShells[0].SetTimeStamp(DateTime.UtcNow);
+                    var timeStamp = DateTime.UtcNow;
+                    newAasx.AasEnv.AssetAdministrationShells[0].TimeStampCreate = timeStamp;
+                    newAasx.AasEnv.AssetAdministrationShells[0].SetTimeStamp(timeStamp);
                     foreach (var submodel in newAasx.AasEnv.Submodels)
                     {
                         //submodel.SetAllParents();
-                        submodel.SetParentAndTimestamp();
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetParentAndTimestamp(timeStamp);
                     }
                     Program.signalNewData(2);
                     return emptyPackageIndex.ToString();

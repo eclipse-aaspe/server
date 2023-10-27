@@ -57,6 +57,9 @@ namespace AasxServerStandardBib.Services
             {
 
                 _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells.Add(body);
+                var timeStamp = DateTime.UtcNow;
+                body.TimeStampCreate = timeStamp;
+                body.SetTimeStamp(timeStamp);
                 Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells[0]; //Considering it is the first AAS being added to empty package.
             }
@@ -128,8 +131,6 @@ namespace AasxServerStandardBib.Services
             return IsAssetAdministrationShellPresent(aasIdentifier, out _, out _);
         }
 
-
-
         private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
@@ -165,6 +166,9 @@ namespace AasxServerStandardBib.Services
                 var aasIndex = _packages[packageIndex].AasEnv.AssetAdministrationShells.IndexOf(aas);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Remove(aas);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Insert(aasIndex, body);
+                var timeStamp = DateTime.UtcNow;
+                body.TimeStampCreate = timeStamp;
+                body.SetTimeStamp(timeStamp);
                 Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the AAS with requested AAS");
@@ -299,7 +303,6 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-
         private bool IsConceptDescriptionPresent(string cdIdentifier, out IConceptDescription output, out int packageIndex)
         {
             output = null;
@@ -356,6 +359,9 @@ namespace AasxServerStandardBib.Services
             {
 
                 _packages[emptyPackageIndex].AasEnv.ConceptDescriptions.Add(body);
+                var timeStamp = DateTime.UtcNow; 
+                body.TimeStampCreate = timeStamp;
+                body.SetTimeStamp(timeStamp);
                 Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.ConceptDescriptions[0]; //Considering it is the first AAS being added to empty package.
             }
@@ -373,6 +379,9 @@ namespace AasxServerStandardBib.Services
                 var cdIndex = _packages[packageIndex].AasEnv.ConceptDescriptions.IndexOf(conceptDescription);
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Insert(cdIndex, body);
+                var timeStamp = DateTime.UtcNow;
+                body.TimeStampCreate = timeStamp;
+                body.SetTimeStamp(timeStamp);
                 Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the ConceptDescription.");
@@ -401,6 +410,9 @@ namespace AasxServerStandardBib.Services
                 var existingIndex = _packages[packageIndex].AasEnv.AssetAdministrationShells.IndexOf(aas);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Remove(aas);
                 _packages[packageIndex].AasEnv.AssetAdministrationShells.Insert(existingIndex, newAas);
+                var timeStamp = DateTime.UtcNow;
+                newAas.TimeStampCreate = timeStamp;
+                newAas.SetTimeStamp(timeStamp);
                 Program.signalNewData(1);
             }
         }
@@ -413,6 +425,9 @@ namespace AasxServerStandardBib.Services
                 var existingIndex = _packages[packageIndex].AasEnv.Submodels.IndexOf(submodel);
                 _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
                 _packages[packageIndex].AasEnv.Submodels.Insert(existingIndex, newSubmodel);
+                var timeStamp = DateTime.UtcNow;
+                newSubmodel.TimeStampCreate = timeStamp;
+                newSubmodel.SetParentAndTimestamp(timeStamp);
                 Program.signalNewData(1);
             }
         }
@@ -493,6 +508,10 @@ namespace AasxServerStandardBib.Services
                     aas.Submodels ??= new List<IReference>();
                     aas.Submodels.Add(newSubmodel.GetReference());
                     _packages[packageIndex].AasEnv.Submodels.Add(newSubmodel);
+                    var timeStamp = DateTime.UtcNow;
+                    aas.SetTimeStamp(timeStamp);
+                    newSubmodel.TimeStampCreate = timeStamp;
+                    newSubmodel.SetTimeStamp(timeStamp);
                     AasxServer.Program.signalNewData(2);
                     return newSubmodel; // TODO: jtikekar find proper solution
                 }
@@ -500,8 +519,10 @@ namespace AasxServerStandardBib.Services
 
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
                 _packages[emptyPackageIndex].AasEnv.Submodels.Add(newSubmodel);
+                var timeStamp = DateTime.UtcNow;
+                newSubmodel.TimeStampCreate = timeStamp;
+                newSubmodel.SetTimeStamp(timeStamp);
                 Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
             }
