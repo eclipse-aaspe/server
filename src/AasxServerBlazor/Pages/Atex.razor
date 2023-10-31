@@ -26,17 +26,17 @@
                 continue;
 
             <div style="border-width:3px; border-style: solid; border-color: darkgrey">
-                <b>@projectName[p] : Nachweis der Eigensicherheit</b>
+                <b>@projectName[p] : Proof of intrinsic safety</b>
                 <br /><br />
 
-                <b>Eigensicheres elektrische Betriebsmittel</b><br />
+                <b>Intrinsically safe apparatus / field device</b><br />
                 <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                     <thead>
                         <tr>
-                            <th style="word-break:keep-all;width:18%">Bezeichnung</th>
-                            <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
-                            <th style="word-break:keep-all;width:17%">Hersteller</th>
-                            <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                            <th style="word-break:keep-all;width:18%">Designation</th>
+                            <th style="word-break:keep-all;width:18%">Type</th>
+                            <th style="word-break:keep-all;width:17%">Manufacturer</th>
+                            <th style="word-break:keep-all;width:17%">Approval</th>
                             <th style="word-break:keep-all;width:6%">Ui</th>
                             <th style="word-break:keep-all;width:6%">Ii</th>
                             <th style="word-break:keep-all;width:6%">Pi</th>
@@ -144,14 +144,14 @@
                     string color = "red";
                     <span>
                         <b>
-                            Kabellänge: @cableLength[p].ToString(CultureInfo.InvariantCulture)
+                            Cable length: @cableLength[p].ToString(CultureInfo.InvariantCulture)
                             => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)
                         </b>
                     </span>
                     <br />
                     <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                         <tr>
-                            <td style="word-break:keep-all;width:70%">Bedingungen für Eigensicherheit</td>
+                            <td style="word-break:keep-all;width:70%">Rules for intrinsic safety</td>
                             <td style="word-break:keep-all">
                                 <b>
                                     @("Uo <= Ui:")<br />
@@ -182,8 +182,8 @@
                 }
                 <br>
 
-                <b>Zugehöriges Betriebsmittel</b><br>
-                Alternativen:
+                <b>Associated apparatus</b><br>
+                Alternatives:
                 <input @bind="Alternatives[iOut]" style="width:500px; border-width: 1px; border-color: black;" />
                 @*
         @code {
@@ -202,10 +202,10 @@
                 <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                     <thead>
                         <tr>
-                            <th style="word-break:keep-all;width:18%">Bezeichnung</th>
-                            <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
-                            <th style="word-break:keep-all;width:17%">Hersteller</th>
-                            <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                            <th style="word-break:keep-all;width:18%">Designation</th>
+                            <th style="word-break:keep-all;width:18%">Type</th>
+                            <th style="word-break:keep-all;width:17%">Manufacturer</th>
+                            <th style="word-break:keep-all;width:17%">Approval</th>
                             <th style="word-break:keep-all;width:6%">Uo</th>
                             <th style="word-break:keep-all;width:6%">Io</th>
                             <th style="word-break:keep-all;width:6%">Po</th>
@@ -393,16 +393,16 @@
             <br />
         }
 
-        <b>Alle zugehörigen Betriebsmittel</b>
+        <b>All associated apparatus</b>
 
         <br>
         <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
             <thead>
                 <tr>
-                    <th style="word-break:keep-all;width:18%">Bezeichnung</th>
-                    <th style="word-break:keep-all;width:18%">Typenbezeichnung</th>
-                    <th style="word-break:keep-all;width:17%">Hersteller</th>
-                    <th style="word-break:keep-all;width:17%">Bescheinigung</th>
+                    <th style="word-break:keep-all;width:18%">Designation</th>
+                    <th style="word-break:keep-all;width:18%">Type</th>
+                    <th style="word-break:keep-all;width:17%">Manufacturer</th>
+                    <th style="word-break:keep-all;width:17%">Approval</th>
                     <th style="word-break:keep-all;width:6%">Uo</th>
                     <th style="word-break:keep-all;width:6%">Io</th>
                     <th style="word-break:keep-all;width:6%">Po</th>
@@ -586,11 +586,11 @@
                         {
                             if (sm != null && sm.IdShort != null)
                             {
-                                if (sm.IdShort.ToLower() == "nachweiseigensicherheit" && sm.SubmodelElements != null)
+                                if ((sm.IdShort.ToLower() == "nachweiseigensicherheit" || sm.IdShort.ToLower() == "proofofintrinsicsafety") && sm.SubmodelElements != null)
                                 {
                                     foreach (var s in sm.SubmodelElements)
                                     {
-                                        if (s.IdShort.ToLower().Contains("projekt"))
+                                        if (s.IdShort.ToLower().Contains("projekt") || s.IdShort.ToLower().Contains("loop"))
                                         {
                                             if (s != null && s is SubmodelElementCollection smc)
                                             {
@@ -603,13 +603,31 @@
                                                 var sme = findeSME(smc: project[countProject], idShortPath: "projektbezeichnung", ignore: true);
                                                 if (sme != null)
                                                     projectName[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "projectname", ignore: true);
+                                                if (sme != null)
+                                                    projectName[countProject] = sme.ValueAsText();
                                                 sme = findeSME(smc: project[countProject], idShortPath: "eigensicheresbetriebsmittel", ignore: true);
+                                                if (sme != null)
+                                                    eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "intrinsicallysafeapparatus", ignore: true);
                                                 if (sme != null)
                                                     eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
                                                 sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
                                                 if (sme != null)
                                                     zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "associatedapparatus", ignore: true);
+                                                if (sme != null)
+                                                    zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
                                                 sme = findeSME(smc: project[countProject], idShortPath: "leitungslaenge", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    try
+                                                    {
+                                                        cableLength[countProject] = Convert.ToDouble(sme.ValueAsText(), CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "cablelength", ignore: true);
                                                 if (sme != null)
                                                 {
                                                     try
