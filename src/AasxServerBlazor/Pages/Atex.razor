@@ -25,8 +25,8 @@
             if (iOut == -1 || iIn == -1)
                 continue;
 
-            <div style="border-width:3px; border-style: solid; border-color: darkgrey">
-                <b>@projectName[p] : Proof of intrinsic safety</b>
+            <div style="border-width:5px; border-style: solid; border-color: blue; padding: 6px">
+                <b style="color:blue">@projectName[p] : Proof of intrinsic safety</b>
                 <br /><br />
 
                 <b>Intrinsically safe apparatus / field device</b><br />
@@ -88,12 +88,12 @@
                                                 {
                                                     if (!svg)
                                                     {
-                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
                                          src=data:image;base64,@detailsImage />
                                                     }
                                                     else
                                                     {
-                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                        <img style="max-height:50px;object-fit:contain" alt="Details Image"
                                          src=data:image/svg+xml;base64,@detailsImage />
                                                     }
                                                 }
@@ -139,13 +139,33 @@
 
                 <br />
                 @{
-                    double Lc = cableLength[p] / 1000.0 * 1;
-                    double Cc = cableLength[p] / 1000.0 * 110;
+                    double cl = cableLength[p];
+                    if (inputLength[iOut] == Double.MinValue)
+                        inputLength[iOut] = cl;
+                    else
+                        cl = inputLength[iOut];
+                    double Lc = cl / 1000.0 * 1;
+                    double Cc = cl / 1000.0 * 110;
+                    // 0,5 * Lo >= Li + Lc => 0,5 * Lo >= Li + cl / 1000 => clMax = (0,5 * Lo - Li) * 1000;
+                    double clMax1 = (0.5 * L[iOut] - L[iIn]) * 1000;
+                    // 0,5 * Co >= Ci + Cc => 0,5 * Co >= Ci + cl * 0.11 => clMax = (0,5 * Co - Ci) / 0.11;
+                    double clMax2 = (0.5 * C[iOut] - C[iIn]) / 0.11;
+                    if (clMax2 < clMax1)
+                        clMax1 = clMax2;
+                    if (clMax1 < 0)
+                        clMax1 = 0;
+                    else
+                        clMax1 = Math.Round(clMax1, 0, MidpointRounding.AwayFromZero);
                     string color = "red";
                     <span>
                         <b>
-                            Cable length: @cableLength[p].ToString(CultureInfo.InvariantCulture)
+                            Cable length:
+                        </b>
+                        <input @bind="inputLength[iOut]" style="width:100px; border-width: 1px; border-color: black;" />
+                        <b>
+                            @* cl.ToString(CultureInfo.InvariantCulture) *@
                             => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)
+                            (Maximum cable length: @clMax1)
                         </b>
                     </span>
                     <br />
@@ -179,6 +199,9 @@
                             </td>
                         </tr>
                     </table>
+
+                    if (inputLength[iOut] != Double.MinValue && inputLength[iOut] != cableLength[p])
+                        cableLength[p] = inputLength[iOut];
                 }
                 <br>
 
@@ -535,6 +558,7 @@
     List<Double> L = null;
     List<Double> C = null;
     List<string> Alternatives = null;
+    List<Double> inputLength = null;
 
     void collectData()
     {
@@ -568,6 +592,8 @@
         C = new List<double>();
         if (Alternatives == null)
             Alternatives = new List<string>();
+        if (inputLength == null)
+            inputLength = new List<Double>();
 
         int aascount = AasxServer.Program.env.Length;
 
@@ -662,6 +688,8 @@
                                     C.Add(0);
                                     if (C.Count > Alternatives.Count)
                                         Alternatives.Add("");
+                                    if (C.Count > inputLength.Count)
+                                        inputLength.Add(Double.MinValue);
 
                                     var sme = findeSME(sm: sm, idShortPath: "ManufacturerProductDesignation", ignore: true);
                                     if (sme != null)
