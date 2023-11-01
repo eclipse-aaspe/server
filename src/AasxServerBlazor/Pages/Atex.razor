@@ -104,23 +104,31 @@
                                             @DesignationOfCertificateOrApproval[i]
                                             @{
                                                 svg = false;
-                                                detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+                                                // detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+                                                detailsImage = "";
 
-                                                @if (detailsImage != "")
+                                                if (PreviewFileUrl[i] != "")
                                                 {
-                                                    if (!svg)
+                                                    @if (detailsImage != "")
                                                     {
-                                                        <a href="@PreviewFileUrl[i]" target="_blank">
-                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                        if (!svg)
+                                                        {
+                                                            <a href="@PreviewFileUrl[i]" target="_blank">
+                                                                <img style="max-height:100px;object-fit:contain" alt="Details Image"
                                              src=data:image;base64,@detailsImage />
-                                                        </a>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="@PreviewFileUrl[i]" target="_blank">
+                                                                <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                             src=data:image/svg+xml;base64,@detailsImage />
+                                                            </a>
+                                                        }
                                                     }
                                                     else
                                                     {
-                                                        <a href="@PreviewFileUrl[i]" target="_blank">
-                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                             src=data:image/svg+xml;base64,@detailsImage />
-                                                        </a>
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">link</a>
                                                     }
                                                 }
                                             }
@@ -161,10 +169,10 @@
                         <b>
                             Cable length:
                         </b>
-                        <input @bind="inputLength[iOut]" style="width:100px; border-width: 1px; border-color: black;" />
+                        <input @bind="inputLength[iOut]" style="width:100px; border-width: 1px; border-color: black;" /> m
                         <b>
                             @* cl.ToString(CultureInfo.InvariantCulture) *@
-                            => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)
+                            => Lc = @Lc.ToString(CultureInfo.InvariantCulture) mH (1 mH/km), Cc = @Cc.ToString(CultureInfo.InvariantCulture) nF (110 nF/km)
                         </b>
                     </span>
                     <span style="color:red">(Maximum cable length: @clMax1)</span>
@@ -317,24 +325,33 @@
                                             @{
                                                 svg = false;
                                                 detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+                                                detailsImage = "";
 
-                                                @if (detailsImage != "")
+                                                if (PreviewFileUrl[i] != "")
                                                 {
-                                                    if (!svg)
+                                                    @if (detailsImage != "")
                                                     {
-                                                        <a href="@PreviewFileUrl[i]" target="_blank">
-                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                        if (!svg)
+                                                        {
+                                                            <a href="@PreviewFileUrl[i]" target="_blank">
+                                                                <img style="max-height:100px;object-fit:contain" alt="Details Image"
                                              src=data:image;base64,@detailsImage />
-                                                        </a>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="@PreviewFileUrl[i]" target="_blank">
+                                                                <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                             src=data:image/svg+xml;base64,@detailsImage />
+                                                            </a>
+                                                        }
                                                     }
                                                     else
                                                     {
-                                                        <a href="@PreviewFileUrl[i]" target="_blank">
-                                                            <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                             src=data:image/svg+xml;base64,@detailsImage />
-                                                        </a>
+                                                        <a href="@PreviewFileUrl[i]" target="_blank">link</a>
                                                     }
                                                 }
+
                                             }
                                         </td>
                                         @{
@@ -495,22 +512,30 @@
                                     @{
                                         svg = false;
                                         detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+                                        detailsImage = "";
 
-                                        @if (detailsImage != "")
+                                        if (PreviewFileUrl[i] != "")
                                         {
-                                            if (!svg)
+                                            @if (detailsImage != "")
                                             {
-                                                <a href="@PreviewFileUrl[i]" target="_blank">
-                                                    <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                                if (!svg)
+                                                {
+                                                    <a href="@PreviewFileUrl[i]" target="_blank">
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
                                          src=data:image;base64,@detailsImage />
-                                                </a>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a href="@PreviewFileUrl[i]" target="_blank">
+                                                        <img style="max-height:100px;object-fit:contain" alt="Details Image"
+                                         src=data:image/svg+xml;base64,@detailsImage />
+                                                    </a>
+                                                }
                                             }
                                             else
                                             {
-                                                <a href="@PreviewFileUrl[i]" target="_blank">
-                                                    <img style="max-height:100px;object-fit:contain" alt="Details Image"
-                                         src=data:image/svg+xml;base64,@detailsImage />
-                                                </a>
+                                                <a href="@PreviewFileUrl[i]" target="_blank">link</a>
                                             }
                                         }
                                     }
