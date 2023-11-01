@@ -165,9 +165,9 @@
                         <b>
                             @* cl.ToString(CultureInfo.InvariantCulture) *@
                             => Lc = @Lc.ToString(CultureInfo.InvariantCulture), Cc = @Cc.ToString(CultureInfo.InvariantCulture)
-                            (Maximum cable length: @clMax1)
                         </b>
                     </span>
+                    <span style="color:red">(Maximum cable length: @clMax1)</span>
                     <br />
                     <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                         <tr>
@@ -201,7 +201,11 @@
                     </table>
 
                     if (inputLength[iOut] != Double.MinValue && inputLength[iOut] != cableLength[p])
+                    {
                         cableLength[p] = inputLength[iOut];
+                        pCableLength[p].Value = inputLength[iOut].ToString(CultureInfo.InvariantCulture);
+                        Program.signalNewData(1);
+                    }
                 }
                 <br>
 
@@ -533,6 +537,7 @@
     List<SubmodelElementCollection> project = null;
     List<string> projectName = null;
     List<double> cableLength = null;
+    List<Property> pCableLength = null;
     List<string> eigensicheresbetriebsmittel = null;
     List<string> zugehoerigesbetriebsmittel = null;
 
@@ -566,6 +571,7 @@
         project = new List<SubmodelElementCollection>();
         projectName = new List<string>();
         cableLength = new List<double>();
+        pCableLength = new List<Property>();
         eigensicheresbetriebsmittel = new List<string>();
         zugehoerigesbetriebsmittel = new List<string>();
 
@@ -623,6 +629,7 @@
                                                 project.Add(s as SubmodelElementCollection);
                                                 projectName.Add("");
                                                 cableLength.Add(0);
+                                                pCableLength.Add(null);
                                                 eigensicheresbetriebsmittel.Add("");
                                                 zugehoerigesbetriebsmittel.Add("");
 
@@ -650,6 +657,7 @@
                                                     try
                                                     {
                                                         cableLength[countProject] = Convert.ToDouble(sme.ValueAsText(), CultureInfo.InvariantCulture);
+                                                        pCableLength[countProject] = sme as Property;
                                                     }
                                                     catch { }
                                                 }
@@ -659,6 +667,7 @@
                                                     try
                                                     {
                                                         cableLength[countProject] = Convert.ToDouble(sme.ValueAsText(), CultureInfo.InvariantCulture);
+                                                        pCableLength[countProject] = sme as Property;
                                                     }
                                                     catch { }
                                                 }
@@ -929,6 +938,41 @@
                                             if (path != null)
                                             {
                                                 PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                            }
+                                        }
+                                    }
+                                    foreach (var se in sm.SubmodelElements)
+                                    {
+                                        if (se is SubmodelElementCollection smc)
+                                        {
+                                            var sme = findeSME(smc: smc,
+                                                        idShortPath: "DocumentVersion.PreviewFile",
+                                                        ignore: true, contains: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is File f)
+                                                {
+                                                    if (f.Value.ToLower().Contains("atex"))
+                                                    {
+                                                        PreviewFile[count] = f.Value;
+                                                        var path = getPath(f);
+                                                        if (path != null)
+                                                        {
+                                                            PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                                        }
+                                                        TypeOfApproval[count] = "ATEX";
+                                                    }
+                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                    {
+                                                        PreviewFile[count] = f.Value;
+                                                        var path = getPath(f);
+                                                        if (path != null)
+                                                        {
+                                                            PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                                        }
+                                                        TypeOfApproval[count] = "IECEX";
+                                                    }
+                                                }
                                             }
                                         }
                                     }
