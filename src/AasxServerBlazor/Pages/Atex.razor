@@ -101,7 +101,7 @@
                                         </td>
                                         <td>
                                             @TypeOfApproval[i]
-                                            @DesignationOfCertificateOrApproval[i]
+                                            @* @DesignationOfCertificateOrApproval[i] *@
                                             @{
                                                 svg = false;
                                                 // detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
@@ -109,6 +109,7 @@
 
                                                 if (PreviewFileUrl[i] != "")
                                                 {
+                                                    <br>
                                                     @if (detailsImage != "")
                                                     {
                                                         if (!svg)
@@ -133,11 +134,11 @@
                                                 }
                                             }
                                         </td>
-                                        <td>@U[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@I[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@P[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@L[i].ToString(CultureInfo.InvariantCulture)</td>
-                                        <td>@C[i].ToString(CultureInfo.InvariantCulture)</td>
+                                        <td>@U[i].ToString(CultureInfo.InvariantCulture) V</td>
+                                        <td>@I[i].ToString(CultureInfo.InvariantCulture) mA</td>
+                                        <td>@P[i].ToString(CultureInfo.InvariantCulture) mW</td>
+                                        <td>@L[i].ToString(CultureInfo.InvariantCulture) mH</td>
+                                        <td>@C[i].ToString(CultureInfo.InvariantCulture) nF</td>
                                     </tr>
                                 }
                             }
@@ -168,14 +169,15 @@
                     <span>
                         <b>
                             Cable length:
-                        </b>
                         <input @bind="inputLength[iOut]" style="width:100px; border-width: 1px; border-color: black;" /> m
-                        <b>
-                            @* cl.ToString(CultureInfo.InvariantCulture) *@
-                            => Lc = @Lc.ToString(CultureInfo.InvariantCulture) mH (1 mH/km), Cc = @Cc.ToString(CultureInfo.InvariantCulture) nF (110 nF/km)
                         </b>
+                        @* cl.ToString(CultureInfo.InvariantCulture) *@
+                        <b> => Lc = @Lc.ToString(CultureInfo.InvariantCulture) mH </b>
+                        (1 mH/km),
+                        <b>Cc = @Cc.ToString(CultureInfo.InvariantCulture) nF</b>
+                        (110 nF/km)
                     </span>
-                    <span style="color:red">(Maximum cable length: @clMax1)</span>
+                    <span style="color:red">(Maximum cable length: @clMax1 m)</span>
                     <br />
                     <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
                         <tr>
@@ -321,7 +323,7 @@
                                         </td>
                                         <td>
                                             @TypeOfApproval[i]
-                                            @DesignationOfCertificateOrApproval[i]
+                                            @* @DesignationOfCertificateOrApproval[i] *@
                                             @{
                                                 svg = false;
                                                 detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
@@ -329,6 +331,7 @@
 
                                                 if (PreviewFileUrl[i] != "")
                                                 {
+                                                    <br />
                                                     @if (detailsImage != "")
                                                     {
                                                         if (!svg)
@@ -359,12 +362,12 @@
                                             @if (U[i] <= U[iIn]) color = "green";
                                         }
                                         <td>
-                                            @U[i].ToString(CultureInfo.InvariantCulture)
+                                            @U[i].ToString(CultureInfo.InvariantCulture) V
                                             <br><br>
                                             <span style="word-break:keep-all;color:@color;">
                                                 <b>
                                                     @("Uo <= Ui:")<br />
-                                                    @(U[i].ToString(CultureInfo.InvariantCulture) + "<=" + U[iIn].ToString(CultureInfo.InvariantCulture))
+                                                    @(U[i].ToString(CultureInfo.InvariantCulture) + " V <= " + U[iIn].ToString(CultureInfo.InvariantCulture) + " V")
                                                 </b>
                                             </span>
                                         </td>
@@ -373,12 +376,12 @@
                                             if (I[i] <= I[iIn]) color = "green";
                                         }
                                         <td>
-                                            @I[i].ToString(CultureInfo.InvariantCulture)
+                                            @I[i].ToString(CultureInfo.InvariantCulture) mA
                                             <br><br>
                                             <span style="word-break:keep-all;color:@color;">
                                                 <b>
                                                     @("Io <= Ii:")<br />
-                                                    @(I[i].ToString(CultureInfo.InvariantCulture) + "<=" + I[iIn].ToString(CultureInfo.InvariantCulture))
+                                                    @(I[i].ToString(CultureInfo.InvariantCulture) + " mA <= " + I[iIn].ToString(CultureInfo.InvariantCulture) + " mA")
                                                 </b>
                                             </span>
                                         </td>
@@ -387,12 +390,12 @@
                                             if (P[i] <= P[iIn]) color = "green";
                                         }
                                         <td>
-                                            @P[i].ToString(CultureInfo.InvariantCulture)
+                                            @P[i].ToString(CultureInfo.InvariantCulture) mW
                                             <br><br>
                                             <span style="word-break:keep-all;color:@color;">
                                                 <b>
                                                     @("Po <= Pi:")<br />
-                                                    @(P[i].ToString(CultureInfo.InvariantCulture) + "<=" + P[iIn].ToString(CultureInfo.InvariantCulture))
+                                                    @(P[i].ToString(CultureInfo.InvariantCulture) + " mW <= " + P[iIn].ToString(CultureInfo.InvariantCulture) + " mW")
                                                 </b>
                                             </span>
                                         </td>
@@ -401,13 +404,13 @@
                                             if (0.5 * L[i] >= L[iIn] + Lc) color = "green";
                                         }
                                         <td>
-                                            @L[i].ToString(CultureInfo.InvariantCulture)
+                                            @L[i].ToString(CultureInfo.InvariantCulture) mH
                                             <br><br>
                                             <span style="word-break:keep-all;color:@color;">
                                                 <b>
                                                     0,5 * Lo >= Li + Lc:<br>
-                                                    0,5 * @L[i].ToString(CultureInfo.InvariantCulture) >= @L[iIn].ToString(CultureInfo.InvariantCulture)
-                                                    + @Lc.ToString(CultureInfo.InvariantCulture)
+                                                    0,5 * @L[i].ToString(CultureInfo.InvariantCulture) mH >= @L[iIn].ToString(CultureInfo.InvariantCulture)
+                                                    + @Math.Round(Lc, 3, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture) mH
                                                 </b>
                                             </span>
                                         </td>
@@ -416,13 +419,13 @@
                                             if (0.5 * C[i] >= C[iIn] + Cc) color = "green";
                                         }
                                         <td>
-                                            @C[i].ToString(CultureInfo.InvariantCulture)
+                                            @C[i].ToString(CultureInfo.InvariantCulture) nF
                                             <br><br>
                                             <span style="word-break:keep-all;color:@color;">
                                                 <b>
                                                     0,5 Co >= Ci + Cc:<br />
-                                                    0,5 * @C[i].ToString(CultureInfo.InvariantCulture) >= @C[iIn].ToString(CultureInfo.InvariantCulture)
-                                                    + @Cc.ToString(CultureInfo.InvariantCulture)
+                                                    0,5 * @C[i].ToString(CultureInfo.InvariantCulture) nF >= @C[iIn].ToString(CultureInfo.InvariantCulture)
+                                                    + @Math.Round(Cc, 3, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture) nF
                                                 </b>
                                             </span>
                                         </td>
@@ -508,7 +511,7 @@
                                 </td>
                                 <td>
                                     @TypeOfApproval[i]
-                                    @DesignationOfCertificateOrApproval[i]
+                                    @* @DesignationOfCertificateOrApproval[i] *@
                                     @{
                                         svg = false;
                                         detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
@@ -516,6 +519,7 @@
 
                                         if (PreviewFileUrl[i] != "")
                                         {
+                                            <br />
                                             @if (detailsImage != "")
                                             {
                                                 if (!svg)
@@ -540,11 +544,11 @@
                                         }
                                     }
                                 </td>
-                                <td>@U[i].ToString(CultureInfo.InvariantCulture)</td>
-                                <td>@I[i].ToString(CultureInfo.InvariantCulture)</td>
-                                <td>@P[i].ToString(CultureInfo.InvariantCulture)</td>
-                                <td>@L[i].ToString(CultureInfo.InvariantCulture)</td>
-                                <td>@C[i].ToString(CultureInfo.InvariantCulture)</td>
+                                <td>@U[i].ToString(CultureInfo.InvariantCulture) V</td>
+                                <td>@I[i].ToString(CultureInfo.InvariantCulture) mA</td>
+                                <td>@P[i].ToString(CultureInfo.InvariantCulture) mW</td>
+                                <td>@L[i].ToString(CultureInfo.InvariantCulture) mH</td>
+                                <td>@C[i].ToString(CultureInfo.InvariantCulture) nF</td>
                             </tr>
                         }
                     }
