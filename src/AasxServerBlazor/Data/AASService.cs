@@ -228,40 +228,40 @@ namespace AasxServerBlazor.Data
         {
             List<Item> smChilds = new List<Item>();
             if (smec != null && smec.Value != null)
-            foreach (var sme in smec.Value)
-            {
-                if (sme != null && sme != null)
+                foreach (var sme in smec.Value)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
-                    smeItem.Text = sme.IdShort;
-                    smeItem.Tag = sme;
-                    smChilds.Add(smeItem);
-                    if (sme is SubmodelElementCollection)
+                    if (sme != null && sme != null)
                     {
-                        var smecNext = sme as SubmodelElementCollection;
-                        createSMECItems(smeItem, smecNext, i);
-                    }
-                    if (sme is Operation)
-                    {
-                        var o = sme as Operation;
-                        createOperationItems(smeItem, o, i);
-                    }
-                    if (sme is Entity)
-                    {
-                        var e = sme as Entity;
-                        createEntityItems(smeItem, e, i);
-                    }
-                    if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
-                    {
-                        CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
-                    }
-                    if (sme is SubmodelElementList smeList)
-                    {
-                        CreateSMEListItems(smeItem, smeList, i);
+                        var smeItem = new Item();
+                        smeItem.envIndex = i;
+                        smeItem.Text = sme.IdShort;
+                        smeItem.Tag = sme;
+                        smChilds.Add(smeItem);
+                        if (sme is SubmodelElementCollection)
+                        {
+                            var smecNext = sme as SubmodelElementCollection;
+                            createSMECItems(smeItem, smecNext, i);
+                        }
+                        if (sme is Operation)
+                        {
+                            var o = sme as Operation;
+                            createOperationItems(smeItem, o, i);
+                        }
+                        if (sme is Entity)
+                        {
+                            var e = sme as Entity;
+                            createEntityItems(smeItem, e, i);
+                        }
+                        if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
+                        {
+                            CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                        }
+                        if (sme is SubmodelElementList smeList)
+                        {
+                            CreateSMEListItems(smeItem, smeList, i);
+                        }
                     }
                 }
-            }
             smeRootItem.Childs = smChilds;
             foreach (var c in smChilds)
                 c.parent = smeRootItem;
@@ -314,24 +314,27 @@ namespace AasxServerBlazor.Data
         void createEntityItems(Item smeRootItem, Entity e, int i)
         {
             List<Item> smChilds = new List<Item>();
-            foreach (var s in e.Statements)
+            if (e.Statements != null && e.Statements.Count > 0)
             {
-                if (s != null && s != null)
+                foreach (var s in e.Statements)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
-                    smeItem.Text = s.IdShort;
-                    smeItem.Type = "In";
-                    smeItem.Tag = s;
-                    smChilds.Add(smeItem);
-                    if (s is SubmodelElementCollection collection)
+                    if (s != null && s != null)
                     {
-                        createSMECItems(smeItem, collection, i);
-                    }
+                        var smeItem = new Item();
+                        smeItem.envIndex = i;
+                        smeItem.Text = s.IdShort;
+                        smeItem.Type = "In";
+                        smeItem.Tag = s;
+                        smChilds.Add(smeItem);
+                        if (s is SubmodelElementCollection collection)
+                        {
+                            createSMECItems(smeItem, collection, i);
+                        }
 
-                    if (s is SubmodelElementList smeList)
-                    {
-                        CreateSMEListItems(smeItem, smeList, i);
+                        if (s is SubmodelElementList smeList)
+                        {
+                            CreateSMEListItems(smeItem, smeList, i);
+                        }
                     }
                 }
             }
