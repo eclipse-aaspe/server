@@ -25,12 +25,15 @@
             if (iOut == -1 || iIn == -1)
                 continue;
 
-            <div style="border-width:5px; border-style: solid; border-color: blue; padding: 6px">
+            @* <div style="border-width:5px; border-style: solid; border-color: blue; padding: 6px; border-collapse:separate;border-radius:10px"> *@
+            <div class="node mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-4 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
                 <b style="color:blue">@projectName[p] : Proof of intrinsic safety</b>
-                <br /><br />
+                <br />
 
+                <div class="node mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-2 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
                 <b>Intrinsically safe apparatus / field device</b><br />
-                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                <table class="table table-bordered table-sm"
+                       style="word-wrap:break-word;word-break:break-all;border:solid;border-color:darkgrey;border-collapse:separate;border-radius:10px">
                     <thead>
                         <tr>
                             <th style="word-break:keep-all;width:18%">Designation</th>
@@ -145,8 +148,8 @@
                         }
                     </tbody>
                 </table>
+                </div>
 
-                <br />
                 @{
                     double cl = cableLength[p];
                     if (inputLength[iOut] == Double.MinValue)
@@ -166,10 +169,13 @@
                     else
                         clMax1 = Math.Round(clMax1, 0, MidpointRounding.AwayFromZero);
                     string color = "red";
+
+                    <div class="node mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-2 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
                     <span>
                         <b>
                             Cable length:
-                        <input @bind="inputLength[iOut]" style="width:100px; border-width: 1px; border-color: black;" /> m
+                        <input @bind="inputLength[iOut]"
+                           style="width:100px;border-width:1px;border-color:darkgrey;border-collapse:separate;border-radius:10px;padding:5px" /> m
                         </b>
                         @* cl.ToString(CultureInfo.InvariantCulture) *@
                         <b> => Lc = @Lc.ToString(CultureInfo.InvariantCulture) mH </b>
@@ -178,8 +184,11 @@
                         (110 nF/km)
                     </span>
                     <span style="color:red">(Maximum cable length: @clMax1 m)</span>
-                    <br />
-                    <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                    </div>
+
+                    <div class="node mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-2 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
+                    <table class="table table-bordered table-sm"
+                           style="word-wrap:break-word;word-break:break-all;border:solid;border-color:darkgrey;border-collapse:separate;border-radius:10px">
                         <tr>
                             <td style="word-break:keep-all;width:70%">Rules for intrinsic safety</td>
                             <td style="word-break:keep-all;width:6%">
@@ -209,6 +218,7 @@
                             </td>
                         </tr>
                     </table>
+                    </div>
 
                     if (inputLength[iOut] != Double.MinValue && inputLength[iOut] != cableLength[p])
                     {
@@ -217,26 +227,15 @@
                         // Program.signalNewData(1);
                     }
                 }
-                <br>
 
+                <div class="node mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-2 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
                 <b>Associated apparatus</b><br>
                 Alternatives:
-                <input @bind="Alternatives[iOut]" style="width:500px; border-width: 1px; border-color: black;" />
-                @*
-        @code {
-        private string CurrentValue { get; set; }
-        }
-        @if (CurrentValue != null && CurrentValue != "")
-        {
-        if (CurrentValue == " ")
-        CurrentValue = "";
-        Alternatives[iOut] = CurrentValue;
-        CurrentValue = "";
-        }
-        *@
-                <br>
+                    <input @bind="Alternatives[iOut]"
+                   style="width:300px;border-width:1px;border-color:darkgrey;border-collapse:separate;border-radius:10px;padding:5px" />
 
-                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+                <table class="table table-bordered table-sm"
+                   style="word-wrap:break-word;word-break:break-all;border:solid;border-color:darkgrey;border-collapse:separate;border-radius:10px">
                     <thead>
                         <tr>
                             <th style="word-break:keep-all;width:18%">Designation</th>
@@ -435,6 +434,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
             </div>
             <br />
             <br />
@@ -443,7 +443,8 @@
         <b>All associated apparatus</b>
 
         <br>
-        <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;border:solid">
+        <table class="table table-bordered table-sm"
+               style="word-wrap:break-word;word-break:break-all;border:solid;border-color:darkgrey;border-collapse:separate;border-radius:10px">
             <thead>
                 <tr>
                     <th style="word-break:keep-all;width:18%">Designation</th>
