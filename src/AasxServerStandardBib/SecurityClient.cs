@@ -1170,7 +1170,7 @@ namespace AasxServer
                 if (env != null)
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[0];
-                    if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                    if (aas.IdShort != "ZveiControlCabinetAas" && aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                         continue;
 
                     Submodel newsm = null;

@@ -1053,6 +1053,8 @@ namespace IO.Swagger.Registry.Controllers
                             initiallyEmpty = i;
                             foreach (var ad in aasDescriptors)
                             {
+                                if (ad == null)
+                                    continue;
                                 if (ad.IdShort == "myAASwithGlobalSecurityMetaModel")
                                     continue;
 
