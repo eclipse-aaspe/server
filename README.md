@@ -62,7 +62,30 @@ services:
     command: --no-security --data-path /usr/share/aasxs --external-blazor YOURURL  
 ```
 
-  
+The V3 also has a first basic implementation of persistence in a database.
+We are using the Entity Framework, which has been tested with SQLite and PostgreSQL.
+SQLite is part of the standard deployment. (PostgreSQL will be explained in the README later in the future.)
+
+Add --with-db to turn on database storage.
+For the first start please add "--start-index 0" to get the AASX files in --data-path imported into the database.
+For further starts add "--start-index number" with number greater than you number of AASX files, e.g. 1000.
+If you change content by the API, you may add "--save-temp number_of_seconds" and the changes will written to the database after the  number_of_seconds.
+With "--aasx-in-memory number" you can specifiy how many AAS shall be shown in the blazor tree. Only the latest changed AAS will be shown.
+
+You can find an example server with database running here: https://cloudrepo.h2894164.stratoserver.net
+The database content can be seen here: https://cloudrepo.h2894164.stratoserver.net/db . Click on the links on the right.
+You may also do GraphQL queries to the database here: https://cloudrepo.h2894164.stratoserver.net/graphql/
+On the graphql page enter { followed by a space and the wizard will lead you further.
+An example graphql query is:
+{
+   searchSubmodels (semanticId: "https://admin-shell.io/zvei/nameplate/1/0/Nameplate")
+   {
+     submodelId
+     url
+   }
+}
+
+
 # OLD DOCUMENTATION
 
 This documentation will be updated to V3 soon.
