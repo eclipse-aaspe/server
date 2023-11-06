@@ -11,8 +11,6 @@ RUN dotnet restore -r linux-arm64
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux-arm64 --self-contained false --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm64v8
-EXPOSE 51210
-EXPOSE 51310
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
