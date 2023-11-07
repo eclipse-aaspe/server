@@ -71,6 +71,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             else
                 return false;
         }
@@ -162,6 +166,31 @@ namespace IO.Swagger.Lib.V3.Formatters
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                if (context.Object is PagedResult pagedResult)
+                {
+                    cursor = pagedResult.paging_metadata.cursor;
+                    foreach (var item in pagedResult.result)
+                    {
+                        var json = Jsonization.Serialize.ToJsonObject(item);
+                        jsonArray.Add(json);
+                    }
+                }
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+                jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
 
