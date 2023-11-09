@@ -24917,8 +24917,8 @@ namespace AasCore.Aas3_0
                 if (that.DataSpecificationContent != null)
                 {
                     writer.WriteStartElement(
-                                "dataSpecificationContent",
-                                NS);
+                               "dataSpecificationContent",
+                               NS);
 
                     if (that.DataSpecificationContent != null)
                         this.Visit(
