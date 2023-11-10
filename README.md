@@ -85,6 +85,8 @@ An example graphql query is:
    }
 }
 
+If you want to createa registry and also automatically POST to it, please take a look at:
+https://github.com/admin-shell-io/aasx-server/issues/189
 
 # OLD DOCUMENTATION
 
