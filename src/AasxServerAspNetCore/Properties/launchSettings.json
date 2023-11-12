@@ -1,0 +1,29 @@
+﻿{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:13138",
+      "sslPort": 0
+    }
+  },
+  "profiles": {
+    "AasxServerAspNetCore": {
+      "commandName": "Project",
+      "commandLineArgs": "--aasx-in-memory 1000 --data-path \"C:\\Development\\AASX\\v3security\" --edit --external-blazor http://localhost:5001",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
