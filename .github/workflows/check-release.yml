@@ -57,11 +57,11 @@ jobs:
           name: AasxServerBlazor.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
 
-      - name: Upload AasxServerCore
+      - name: Upload AasxServerAspNetCore
         uses: actions/upload-artifact@v2
         with:
-          name: AasxServerCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerCore.zip
+          name: AasxServerAspNetCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          path: artefacts/release/LATEST.alpha/AasxServerAspNetCore.zip
 
       # - name: Upload AasxServerWindows
       #   uses: actions/upload-artifact@v2
