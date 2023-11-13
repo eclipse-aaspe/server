@@ -253,7 +253,7 @@ namespace Extensions
             }
 
             //jtikekar:as per old implementation
-            if (srcCD.embeddedDataSpecification != null)
+            if (srcCD.embeddedDataSpecification != null && srcCD.embeddedDataSpecification.Count > 0)
             {
                 foreach (var sourceEds in srcCD.embeddedDataSpecification)
                 {
@@ -270,8 +270,7 @@ namespace Extensions
         {
             if (cd == null)
                 return null;
-            if (cd.EmbeddedDataSpecifications == null)
-                cd.EmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
+            cd.EmbeddedDataSpecifications ??= new List<IEmbeddedDataSpecification>();
             if (eds == null)
                 return null;
             cd.EmbeddedDataSpecifications.Add(eds);
