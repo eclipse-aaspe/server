@@ -42,29 +42,29 @@ jobs:
           tags: v3latest
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
 
-      # - name: Build and publish AasxServerCore
-      #   uses: docker/build-push-action@v1
-      #   with:
-      #     username: adminshellio
-      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      #     repository: adminshellio/aasx-server-core-for-demo
-      #     tags: v3latest
-      #     dockerfile: src/docker/Dockerfile-AasxServerCore
+      - name: Build and publish AasxServerCore
+        uses: docker/build-push-action@v1
+        with:
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: adminshellio/aasx-server-aspnetcore-for-demo
+          tags: v3latest
+          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore
 
-      # - name: Build and publish AasxServerCore-arm32
-      #   uses: docker/build-push-action@v1
-      #   with:
-      #     username: adminshellio
-      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      #     repository: adminshellio/aasx-server-core-for-demo-arm32
-      #     tags: v3latest
-      #     dockerfile: src/docker/Dockerfile-AasxServerCore-arm32
+      - name: Build and publish AasxServerCore-arm32
+        uses: docker/build-push-action@v1
+        with:
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: adminshellio/aasx-server-aspnetcore-for-demo-arm32
+          tags: v3latest
+          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm32
 
-      # - name: Build and publish AasxServerCore-arm64
-      #   uses: docker/build-push-action@v1
-      #   with:
-      #     username: adminshellio
-      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      #     repository: adminshellio/aasx-server-core-for-demo-arm64
-      #     tags: v3latest
-      #     dockerfile: src/docker/Dockerfile-AasxServerCore-arm64
+      - name: Build and publish AasxServerCore-arm64
+        uses: docker/build-push-action@v1
+        with:
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: adminshellio/aasx-aspnetcore-for-demo-arm64
+          tags: v3latest
+          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm64

@@ -13,8 +13,6 @@ RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm32v7 as base
 # RUN apt-get update && apt-get install -y libgdiplus
 EXPOSE 5001
-EXPOSE 51210
-EXPOSE 51310
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
 WORKDIR /AasxServerBlazor
