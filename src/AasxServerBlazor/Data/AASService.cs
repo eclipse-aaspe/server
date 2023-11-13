@@ -1,6 +1,7 @@
 ﻿
 using AasxServer;
 using Extensions;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -163,114 +164,123 @@ namespace AasxServerBlazor.Data
 
         private void CreateSMEListItems(Item smeRootItem, SubmodelElementList smeList, int i)
         {
-            List<Item> smChilds = new List<Item>();
-            foreach (var s in smeList.Value)
+            if (smeList != null && !smeList.Value.IsNullOrEmpty())
             {
-                if (s != null && s != null)
+                List<Item> smChilds = new List<Item>();
+                foreach (var s in smeList.Value)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
-                    smeItem.Text = s.IdShort;
-                    //smeItem.Type = "In";
-                    smeItem.Tag = s;
-                    smChilds.Add(smeItem);
-                    if (s is SubmodelElementCollection)
+                    if (s != null && s != null)
                     {
-                        var smecNext = s as SubmodelElementCollection;
-                        createSMECItems(smeItem, smecNext, i);
-                    }
-                    if (s is Operation)
-                    {
-                        var o = s as Operation;
-                        createOperationItems(smeItem, o, i);
-                    }
-                    if (s is Entity)
-                    {
-                        var e = s as Entity;
-                        createEntityItems(smeItem, e, i);
-                    }
-                    if (s is AnnotatedRelationshipElement annotatedRelationshipElement)
-                    {
-                        CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
-                    }
-                    if (s is SubmodelElementList childSmeList)
-                    {
-                        CreateSMEListItems(smeItem, childSmeList, i);
+                        var smeItem = new Item();
+                        smeItem.envIndex = i;
+                        smeItem.Text = s.IdShort;
+                        //smeItem.Type = "In";
+                        smeItem.Tag = s;
+                        smChilds.Add(smeItem);
+                        if (s is SubmodelElementCollection)
+                        {
+                            var smecNext = s as SubmodelElementCollection;
+                            createSMECItems(smeItem, smecNext, i);
+                        }
+                        if (s is Operation)
+                        {
+                            var o = s as Operation;
+                            createOperationItems(smeItem, o, i);
+                        }
+                        if (s is Entity)
+                        {
+                            var e = s as Entity;
+                            createEntityItems(smeItem, e, i);
+                        }
+                        if (s is AnnotatedRelationshipElement annotatedRelationshipElement)
+                        {
+                            CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                        }
+                        if (s is SubmodelElementList childSmeList)
+                        {
+                            CreateSMEListItems(smeItem, childSmeList, i);
+                        }
                     }
                 }
+                smeRootItem.Childs = smChilds;
+                foreach (var c in smChilds)
+                    c.parent = smeRootItem;
             }
-            smeRootItem.Childs = smChilds;
-            foreach (var c in smChilds)
-                c.parent = smeRootItem;
         }
 
         private void CreateAnnotedRelationshipElementItems(Item smeRootItem, AnnotatedRelationshipElement annotatedRelationshipElement, int i)
         {
-            List<Item> smChilds = new List<Item>();
-            foreach (var s in annotatedRelationshipElement.Annotations)
+            if (annotatedRelationshipElement != null && !annotatedRelationshipElement.Annotations.IsNullOrEmpty())
             {
-                if (s != null && s != null)
+                List<Item> smChilds = new List<Item>();
+                foreach (var s in annotatedRelationshipElement.Annotations)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
-                    smeItem.Text = s.IdShort;
-                    smeItem.Type = "In";
-                    smeItem.Tag = s;
-                    smChilds.Add(smeItem);
+                    if (s != null && s != null)
+                    {
+                        var smeItem = new Item();
+                        smeItem.envIndex = i;
+                        smeItem.Text = s.IdShort;
+                        smeItem.Type = "In";
+                        smeItem.Tag = s;
+                        smChilds.Add(smeItem);
+                    }
                 }
+                smeRootItem.Childs = smChilds;
+                foreach (var c in smChilds)
+                    c.parent = smeRootItem;
             }
-            smeRootItem.Childs = smChilds;
-            foreach (var c in smChilds)
-                c.parent = smeRootItem;
         }
 
         void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)
         {
-            List<Item> smChilds = new List<Item>();
-            if (smec != null && smec.Value != null)
-                foreach (var sme in smec.Value)
-                {
-                    if (sme != null && sme != null)
+            if (smec != null && !smec.Value.IsNullOrEmpty())
+            {
+                List<Item> smChilds = new List<Item>();
+                if (smec != null && smec.Value != null)
+                    foreach (var sme in smec.Value)
                     {
-                        var smeItem = new Item();
-                        smeItem.envIndex = i;
-                        smeItem.Text = sme.IdShort;
-                        smeItem.Tag = sme;
-                        smChilds.Add(smeItem);
-                        if (sme is SubmodelElementCollection)
+                        if (sme != null && sme != null)
                         {
-                            var smecNext = sme as SubmodelElementCollection;
-                            createSMECItems(smeItem, smecNext, i);
-                        }
-                        if (sme is Operation)
-                        {
-                            var o = sme as Operation;
-                            createOperationItems(smeItem, o, i);
-                        }
-                        if (sme is Entity)
-                        {
-                            var e = sme as Entity;
-                            createEntityItems(smeItem, e, i);
-                        }
-                        if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
-                        {
-                            CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
-                        }
-                        if (sme is SubmodelElementList smeList)
-                        {
-                            CreateSMEListItems(smeItem, smeList, i);
+                            var smeItem = new Item();
+                            smeItem.envIndex = i;
+                            smeItem.Text = sme.IdShort;
+                            smeItem.Tag = sme;
+                            smChilds.Add(smeItem);
+                            if (sme is SubmodelElementCollection)
+                            {
+                                var smecNext = sme as SubmodelElementCollection;
+                                createSMECItems(smeItem, smecNext, i);
+                            }
+                            if (sme is Operation)
+                            {
+                                var o = sme as Operation;
+                                createOperationItems(smeItem, o, i);
+                            }
+                            if (sme is Entity)
+                            {
+                                var e = sme as Entity;
+                                createEntityItems(smeItem, e, i);
+                            }
+                            if (sme is AnnotatedRelationshipElement annotatedRelationshipElement)
+                            {
+                                CreateAnnotedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                            }
+                            if (sme is SubmodelElementList smeList)
+                            {
+                                CreateSMEListItems(smeItem, smeList, i);
+                            }
                         }
                     }
-                }
-            smeRootItem.Childs = smChilds;
-            foreach (var c in smChilds)
-                c.parent = smeRootItem;
+                smeRootItem.Childs = smChilds;
+                foreach (var c in smChilds)
+                    c.parent = smeRootItem;
+            }
         }
 
         void createOperationItems(Item smeRootItem, Operation op, int i)
         {
             List<Item> smChilds = new List<Item>();
-            if (op.InputVariables != null)
+            if (!op.InputVariables.IsNullOrEmpty())
             {
                 foreach (var v in op.InputVariables)
                 {
@@ -282,7 +292,7 @@ namespace AasxServerBlazor.Data
                     smChilds.Add(smeItem);
                 }
             }
-            if (op.OutputVariables != null)
+            if (!op.OutputVariables.IsNullOrEmpty())
             {
                 foreach (var v in op.OutputVariables)
                 {
@@ -294,7 +304,7 @@ namespace AasxServerBlazor.Data
                     smChilds.Add(smeItem);
                 }
             }
-            if (op.InoutputVariables != null)
+            if (!op.InoutputVariables.IsNullOrEmpty())
             {
                 foreach (var v in op.InoutputVariables)
                 {

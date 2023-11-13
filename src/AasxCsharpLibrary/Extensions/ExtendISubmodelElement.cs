@@ -381,12 +381,9 @@ namespace Extensions
                 }
             }
 
-            if (sourceSubmodelElement.hasDataSpecification != null)
+            if (sourceSubmodelElement.hasDataSpecification != null && sourceSubmodelElement.hasDataSpecification.reference.Count > 0)
             {
-                if (submodelElement.EmbeddedDataSpecifications == null)
-                {
-                    submodelElement.EmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
-                }
+                submodelElement.EmbeddedDataSpecifications ??= new List<IEmbeddedDataSpecification>();
                 foreach (var dataSpecification in sourceSubmodelElement.hasDataSpecification.reference)
                 {
                     if (!dataSpecification.IsEmpty)
@@ -573,10 +570,9 @@ namespace Extensions
                 }
             }
 
-            if (sourceSubmodelElement.hasDataSpecification != null)
+            if (sourceSubmodelElement.hasDataSpecification != null && sourceSubmodelElement.hasDataSpecification.Count > 0)
             {
-                if (submodelElement.EmbeddedDataSpecifications == null)
-                    submodelElement.EmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
+                submodelElement.EmbeddedDataSpecifications ??= new List<IEmbeddedDataSpecification>();
 
                 // TODO (jtikekar, 2023-09-04): DataSpecificationContent?? (as per old implementation)
                 foreach (var sourceDataSpec in sourceSubmodelElement.hasDataSpecification)

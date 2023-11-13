@@ -163,12 +163,9 @@ namespace Extensions
                 }
             }
 
-            if (sourceAas.hasDataSpecification != null)
+            if (sourceAas.hasDataSpecification != null && sourceAas.hasDataSpecification.reference.Count > 0)
             {
-                if (assetAdministrationShell.EmbeddedDataSpecifications == null)
-                {
-                    assetAdministrationShell.EmbeddedDataSpecifications = new List<IEmbeddedDataSpecification>();
-                }
+                assetAdministrationShell.EmbeddedDataSpecifications ??= new List<IEmbeddedDataSpecification>();
                 foreach (var dataSpecification in sourceAas.hasDataSpecification.reference)
                 {
                     if (!dataSpecification.IsEmpty)
