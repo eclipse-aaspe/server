@@ -8,12 +8,12 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 #RUN dotnet restore -r linux-arm
 
-RUN dotnet publish -c Release -o /out/AasxServerCore AasxServerCore -r linux-arm --self-contained false
+RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore -r linux-arm --self-contained false
 
 FROM mcr.microsoft.com/dotnet/runtime:6.0-bullseye-slim-arm32v7
 EXPOSE 51210
 EXPOSE 51310
-COPY --from=build-env /out/AasxServerCore/ /AasxServerCore/
-COPY ./content-for-demo/ /AasxServerCore/
-WORKDIR /AasxServerCore
+COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
+COPY ./content-for-demo/ /AasxServerAspNetCore/
+WORKDIR /AasxServerAspNetCore
 ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]

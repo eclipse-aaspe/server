@@ -9,8 +9,6 @@ RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 as base
 RUN apt-get update && apt-get install -y libgdiplus
-EXPOSE 51210
-EXPOSE 51310
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
