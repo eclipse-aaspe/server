@@ -13,5 +13,5 @@ EXPOSE 51310
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
 WORKDIR /AasxServerAspNetCore
-RUN chmod +x /startForDemo.sh
-ENTRYPOINT ["/bin/bash", "-c", "/startForDemo.sh"]
+RUN chmod +x ./startForDemo.sh
+ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]
