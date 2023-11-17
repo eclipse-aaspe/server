@@ -11,8 +11,7 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore -r linux-arm --self-contained false
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm32v7
-EXPOSE 51210
-EXPOSE 51310
+EXPOSE 5001
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
 WORKDIR /AasxServerAspNetCore

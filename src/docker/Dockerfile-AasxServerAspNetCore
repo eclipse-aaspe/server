@@ -8,8 +8,7 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
-EXPOSE 51210
-EXPOSE 51310
+EXPOSE 5001
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
 WORKDIR /AasxServerAspNetCore
