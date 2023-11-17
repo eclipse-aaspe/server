@@ -16,4 +16,4 @@ EXPOSE 51310
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
 WORKDIR /AasxServerAspNetCore
-ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]
+ENTRYPOINT ["/bin/bash", "-c", "dotnet AasxServerAspNetCore.dll --no-security --data-path ./aasxs --host 0.0.0.0"]
