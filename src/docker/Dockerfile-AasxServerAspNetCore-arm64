@@ -10,10 +10,11 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore -r linux-arm64 --self-contained false
 
-FROM mcr.microsoft.com/dotnet/runtime:6.0-bullseye-slim-arm64v8
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm64v8
 EXPOSE 51210
 EXPOSE 51310
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
 WORKDIR /AasxServerAspNetCore
+RUN chmod +x ./startForDemo.sh
 ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]
