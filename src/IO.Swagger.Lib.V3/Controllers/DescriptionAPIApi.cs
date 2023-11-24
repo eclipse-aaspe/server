@@ -40,10 +40,12 @@ namespace IO.Swagger.Controllers
             var output = new ServiceDescription();
             output.Profiles = new List<ProfilesEnum>
             {
-                ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationV30Enum,
-                ProfilesEnum.SubmodelRepositoryServiceSpecificationV30Enum,
-                ProfilesEnum.AasxFileServerServiceSpecificationV30Enum,
-                ProfilesEnum.RegistryAndDiscoveryServiceSpecificationV30Enum
+                ProfilesEnum.AasxFileServerServiceSpecificationSSP001,
+                ProfilesEnum.SubmodelRepositoryServiceSpecificationSSP001,
+                ProfilesEnum.AasxFileServerServiceSpecificationSSP001,
+                ProfilesEnum.AssetAdministrationShellRegistryServiceSpecificationSSP001,
+                ProfilesEnum.SubmodelRegistryServiceSpecificationSSP001,
+                ProfilesEnum.DiscoveryServiceSpecificationSSP001,
             };
             return new ObjectResult(output);
         }
