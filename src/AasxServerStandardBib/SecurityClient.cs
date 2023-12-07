@@ -1510,10 +1510,23 @@ namespace AasxServer
                 text = text.Replace(" - COPY", "");
             return text;
         }
+
+        public static string hashBOM = "";
+        public static long logCount = 0;
         public static bool createCfpTree(int envIndex, DateTime timeStamp)
         {
             bool changed = false;
+            string digest = "";
             cfpValid = true;
+
+            if (logCount % 10 == 0)
+            {
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.Write(logCount % 10 + " ");
+            }
 
             // GET actual BOM
             AdminShellPackageEnv env = null;
@@ -1525,8 +1538,8 @@ namespace AasxServer
                 if (env != null)
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[0];
-                    if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-                        continue;
+                    // if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                    //    continue;
 
                     Submodel newsm = null;
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -1582,7 +1595,8 @@ namespace AasxServer
                                         try
                                         {
                                             requestPath += queryPara;
-                                            Console.WriteLine("GET Submodel " + requestPath);
+                                            if (logCount % 10 == 0)
+                                                Console.WriteLine("GET Submodel " + requestPath);
                                             client.Timeout = TimeSpan.FromSeconds(3);
                                             var task1 = Task.Run(async () =>
                                             {
@@ -1593,10 +1607,10 @@ namespace AasxServer
                                             {
                                                 var json = response.Content.ReadAsStringAsync().Result;
                                                 byte[] buffer = Encoding.UTF8.GetBytes(json);
-                                                string digest = Convert.ToBase64String(SHA256.HashData(buffer));
-                                                if (digest != hashBOM)
-                                                    changed= true;
-                                                hashBOM = digest;
+                                                digest += Convert.ToBase64String(SHA256.HashData(buffer));
+                                                // if (digest != hashBOM)
+                                                //    changed= true;
+                                                // hashBOM = digest;
                                                 MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
                                                 JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                                 newsm = new Submodel("");
@@ -1950,11 +1964,19 @@ namespace AasxServer
                 }
             }
 
+            logCount++;
+
+            if (digest != hashBOM)
+            {
+                changed = true;
+                hashBOM = digest;
+            }
+
             return changed;
         }
 
         public static bool once = false;
-        public static string hashBOM = "";
+
         public static void operation_calculate_cfp(Operation op, int envIndex, DateTime timeStamp)
         {
             if (AasxServer.Program.initializingRegistry)
