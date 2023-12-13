@@ -224,7 +224,7 @@ namespace IO.Swagger.Controllers
             string exampleJson = null;
             exampleJson = "\"\"";
 
-            return new ObjectResult(null);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace IO.Swagger.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            return new ObjectResult(null);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -411,7 +411,7 @@ namespace IO.Swagger.Controllers
 
             //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(0, default(Result));
-            return new ObjectResult(null);
+            throw new NotImplementedException();
         }
 
         /// <summary>
