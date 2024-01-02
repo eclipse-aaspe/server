@@ -1146,7 +1146,7 @@ namespace AasxServer
                                     return 1;
                                 }
                                 Console.WriteLine("SAVE TO TEMP: " + fn);
-                                Program.env[envi].SaveAs(tempName, true);
+                                Program.env[envi].SaveAs(tempName);
                                 fi++;
                                 continue;
                             }
