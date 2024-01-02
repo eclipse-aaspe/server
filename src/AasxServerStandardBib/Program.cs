@@ -1145,7 +1145,7 @@ namespace AasxServer
                                     Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
                                     return 1;
                                 }
-                                Console.WriteLine("SAVE TO TEMP: " + fn);
+                                Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s " + "SAVE TO TEMP: " + fn);
                                 Program.env[envi].SaveAs(tempName);
                                 fi++;
                                 continue;
