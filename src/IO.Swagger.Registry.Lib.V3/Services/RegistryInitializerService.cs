@@ -21,6 +21,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using static AasxServer.Program;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {
@@ -35,6 +36,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         static List<string> postRegistry = new List<string>();
         static List<string> federatedElemensSemanticId = new List<string>();
         static int submodelRegistryCount = 0;
+        static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = new List<AssetAdministrationShellDescriptor>();
 
         public List<string> GetRegistryList()
         {
@@ -43,6 +45,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         public ISubmodel GetAasRegistry()
         {
             return aasRegistry;
+        }
+        public List<AssetAdministrationShellDescriptor> GetAasDescriptorsForSubmodelView()
+        {
+            return aasDescriptorsForSubmodelView;
         }
 
         public static X509Certificate2 certificate = null;
@@ -185,6 +191,86 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 }
                 if (getRegistry.Count != 0)
                 {
+                    var submodelDescriptors = new List<SubmodelDescriptor>();
+                    string submodelRegistryUrl = System.Environment.GetEnvironmentVariable("SUBMODELREGISTRY");
+                    if (submodelRegistryUrl != null)
+                    {
+                        string json = null;
+                        string accessToken = null;
+
+                        submodelRegistryUrl = submodelRegistryUrl.Replace("\r", "");
+                        submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
+
+                        // basyx with Submodel Registry: read submodel descriptors
+                        string requestPath = submodelRegistryUrl + "/submodel-descriptors";
+
+                        var handler = new HttpClientHandler();
+
+                        if (!requestPath.Contains("localhost"))
+                        {
+                            if (AasxServer.AasxTask.proxy != null)
+                                handler.Proxy = AasxServer.AasxTask.proxy;
+                            else
+                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                        }
+
+                        var client = new HttpClient(handler);
+                        client.Timeout = TimeSpan.FromSeconds(10);
+                        if (accessToken != null)
+                            client.SetBearerToken(accessToken);
+
+                        bool error = false;
+                        HttpResponseMessage response = new HttpResponseMessage();
+                        try
+                        {
+                            Console.WriteLine("GET " + requestPath);
+                            var task = Task.Run(async () =>
+                            {
+                                response = await client.GetAsync(requestPath);
+                            });
+                            task.Wait();
+                            json = response.Content.ReadAsStringAsync().Result;
+                            // TODO (jtikekar, 2023-09-04): check this call flow
+                            // aasDescriptors = JsonConvert.DeserializeObject<List<AssetAdministrationShellDescriptor>>(json);
+                            if (!string.IsNullOrEmpty(json))
+                            {
+                                MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                if (node is JsonObject jo)
+                                {
+                                    if (jo.ContainsKey("result"))
+                                    {
+                                        node = (JsonNode)jo["result"];
+                                        if (node is JsonArray a)
+                                        {
+                                            foreach (JsonNode n in a)
+                                            {
+                                                if (n != null)
+                                                    submodelDescriptors.Add(DescriptorDeserializer.SubmodelDescriptorFrom(n));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            error = !response.IsSuccessStatusCode;
+                        }
+                        catch
+                        {
+                            error = true;
+                        }
+                        if (error)
+                        {
+                            string r = "ERROR GET; " + response.StatusCode.ToString();
+                            r += " ; " + requestPath;
+                            if (response.Content != null)
+                                r += " ; " + response.Content.ReadAsStringAsync().Result;
+                            Console.WriteLine(r);
+                        }
+                        else // OK
+                        { 
+                        }
+                    }
+
                     foreach (var greg in getRegistry)
                     {
                         List<AssetAdministrationShellDescriptor> aasDescriptors = new List<AssetAdministrationShellDescriptor>();
@@ -236,7 +322,39 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                             foreach (JsonNode n in a)
                                             {
                                                 if (n != null)
-                                                    aasDescriptors.Add(DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(n));
+                                                {
+                                                    var ad = DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(n);
+                                                    aasDescriptors.Add(ad);
+                                                    if (ad.SubmodelDescriptors == null)
+                                                        ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                                                    if (ad.SubmodelDescriptors.Count == 0)
+                                                    {
+                                                        requestPath = ad.Endpoints[0].ProtocolInformation.Href;
+                                                        Console.WriteLine("GET " + requestPath);
+                                                        task = Task.Run(async () =>
+                                                        {
+                                                            response = await client.GetAsync(requestPath);
+                                                        });
+                                                        task.Wait();
+                                                        json = response.Content.ReadAsStringAsync().Result;
+                                                        mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                        node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                        var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
+
+                                                        var ids = new List<string>();
+                                                        foreach (var s in aas.Submodels)
+                                                        {
+                                                            var id = s.Keys[0].Value;
+                                                            ids.Add(id);
+                                                        }
+                                                        foreach (var sd in submodelDescriptors)
+                                                        {
+                                                            if (ids.Contains(sd.Id))
+                                                                ad.SubmodelDescriptors.Add(sd);
+                                                        }
+                                                        aasDescriptorsForSubmodelView.Add(ad);
+                                                    }
+                                                }
                                             }
                                         }
                                     }

@@ -10,13 +10,14 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--save-temp -1 --no-security --aasx-in-memory 1000 --data-path \"C:\\Development\\basyxV2\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--no-security --aasx-in-memory 1000 --data-path \"C:\\Development\\eis-view\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "AASREGISTRY": "http://localhost:5002",
+        "AASREGISTRY": "https://basyx-aasreg.h2894164.stratoserver.net/api/v3.0",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html",
-        "AASREGISTRY2": "https://pcf-v3-registry.h2894164.stratoserver.net"
+        "AASREGISTRY2": "https://pcf-v3-registry.h2894164.stratoserver.net",
+        "SUBMODELREGISTRY": "https://basyx-subreg.h2894164.stratoserver.net/api/v3.0"
       },
       "applicationUrl": "http://localhost:5001",
       "jsWebView2Debugging": true

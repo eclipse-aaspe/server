@@ -20,5 +20,21 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 ?? throw new System.InvalidOperationException(
                     "Unexpected output null when error is null");
         }
+
+        public static SubmodelDescriptor SubmodelDescriptorFrom(JsonNode node)
+        {
+            SubmodelDescriptor? result = DescriptorDeserializeImplementation.SubmodelDescriptorFrom(
+                    node,
+                    out Reporting.Error? error);
+            if (error != null)
+            {
+                throw new Jsonization.Exception(
+                    Reporting.GenerateJsonPath(error.PathSegments),
+                    error.Cause);
+            }
+            return result
+                ?? throw new System.InvalidOperationException(
+                    "Unexpected output null when error is null");
+        }
     }
 }

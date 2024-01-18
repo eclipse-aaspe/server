@@ -259,7 +259,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new AssetAdministrationShellDescriptor(administrativeInformation, assetKind, assetType, endpoints, globalAssetId, idShort, id, specificAssetIds, submodelDescriptors);
         }
 
-        private static SubmodelDescriptor SubmodelDescriptorFrom(JsonNode node, out Reporting.Error error)
+        internal static SubmodelDescriptor SubmodelDescriptorFrom(JsonNode node, out Reporting.Error error)
         {
             error = null;
 

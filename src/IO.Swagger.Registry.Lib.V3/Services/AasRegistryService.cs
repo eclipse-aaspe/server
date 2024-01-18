@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using static AasxServer.Program;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {
@@ -90,6 +91,30 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
             if (aasIdentifier != null && assetList != null)
                 return result;
+
+            // Check for stored combined basyx list for descriptors by getRegistry()
+            var aasDescriptors = _registryInitializerService.GetAasDescriptorsForSubmodelView();
+
+            if (aasDescriptors != null && aasDescriptors.Count != 0)
+            {
+                foreach (var ad in aasDescriptors)
+                {
+                    bool found = false;
+                    if (aasIdentifier == null && assetList.IsNullOrEmpty())
+                        found = true;
+                    if (aasIdentifier != null)
+                    {
+                        if (aasIdentifier.Equals(ad.Id))
+                        {
+                            found = true;
+                        }
+                    }
+                    if (found)
+                        result.Add(ad);
+                }
+
+                return result;
+            }
 
             var aasRegistry = _registryInitializerService.GetAasRegistry();
             if (aasRegistry != null)

@@ -156,7 +156,7 @@ namespace IO.Swagger.Controllers
             List<AssetAdministrationShellDescriptor> aasDescriptors;
             if (!Program.withDb)
             {
-                // from memory
+                // from AAS memory
                 aasDescriptors = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetKind, assetList);
             }
             else

@@ -12,6 +12,7 @@
 @using System.Drawing;
 @using System.Globalization;
 @using static AasxServer.AasxTask;
+@inject NavigationManager NavMan
 @implements IDisposable
 
 @{
@@ -283,12 +284,25 @@
                                             string iframePath = getIframePath();
                                             link = getAasLink(@node.aas);
                                             // JUIJUI
-                                            
+
                                             // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
                                             var registry = AasRegistryService.GetRegistryList();
                                             if (registry.Count != 0)
                                             {
-                                                link += "&registryURL=" + registry[0];
+                                                // check for buffered shell descriptors from getregistry() for basyx
+                                                var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
+
+                                                if (aasDescriptors != null && aasDescriptors.Count != 0)
+                                                {
+                                                    string registryURL = NavMan.Uri;
+                                                    registryURL = registryURL.Substring(0, registryURL.Length - "/pcf".Length);
+                                                    Console.WriteLine("registryURL " + registryURL);
+                                                    link += "&registryURL=" + registryURL;
+                                                }
+                                                else
+                                                {
+                                                    link += "&registryURL=" + registry[0];
+                                                }
                                             }
                                            
                                             // JUIJUI
