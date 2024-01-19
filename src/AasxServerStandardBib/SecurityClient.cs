@@ -33,6 +33,7 @@ using System.Threading.Channels;
 using System.CommandLine.Parsing;
 using Microsoft.EntityFrameworkCore;
 using static QRCoder.PayloadGenerator;
+using Microsoft.AspNetCore.Components;
 
 namespace AasxServer
 {

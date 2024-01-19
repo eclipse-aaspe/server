@@ -157,10 +157,37 @@
                                 var hideClass = "hidden";
                                 var hideCircle = hideClass; //always hide circle
                                 var hideElement = hideClass; //decide hiding of elements
-
+                                string buttonText = "-";
 
                                 <div class="node mb-2 flex flex-row space-x-2">
-
+                                    @if (viewCombination && node != null)
+                                    {
+                                        if (!closedNode.Contains(node.aas.Id))
+                                        {
+                                            buttonText = "+";
+                                        }
+                                        var n = node;
+                                        <div class="grid place-items-center self-center">
+                                            <div class="ring-3 ring-gray-900/5 font-bold text-slate-700 dark:text-slate-500">
+                                                <button class="btn btn-primary btn-sm" style="background-color: #174a87" @onclick="() => toggle(n)">@buttonText</button>
+                                            </div>
+                                        </div/>
+                                        @code {
+                                            // void toggle(int clickIndex)
+                                            void toggle(AasxTask.cfpNode n)
+                                            {
+                                                if (closedNode.Contains(n.aas.Id))
+                                                {
+                                                    closedNode.Remove(n.aas.Id);
+                                                }
+                                                else
+                                                {
+                                                    closedNode.Add(n.aas.Id);
+                                                }
+                                                StateHasChanged();
+                                            }
+                                        }
+                                    }
                                     <div class="grid place-items-center self-center @hideElement">
                                         <div class="w-10 mx-auto @hideCircle">
                                             <svg height="35" width="35" viewBox="0 0 20 20">
@@ -486,14 +513,14 @@
                         }
 
                         // move up, if all children iterated
-                        if (moduleOnly || node.iChild == node.children.Count)
+                        if (moduleOnly || node.iChild == node.children.Count || closedNode.Contains(node.aas.Id))
                         {
                             node.iChild = 0;
                             node = null;
                         }
                         else
                         {
-                            // Interate children
+                            // Iterate children
                             nextLevel(node.children[node.iChild], total, timeStamp);
                             node.iChild++;
                         }
@@ -507,6 +534,7 @@
 @code {
     static string path = "";
     static bool pathIntit = true;
+    static List<string> closedNode = new List<String>();
 
     static string getIframePath()
     {
