@@ -2,7 +2,7 @@
 {
     public class PaginationParameters
     {
-        const int MAX_RESULT_SIZE = 100;
+        const int MAX_RESULT_SIZE = 500;
 
 
 
