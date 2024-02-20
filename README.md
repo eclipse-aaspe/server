@@ -1,3 +1,9 @@
+> [!warning]
+> This repository is moving alongside Eclipse AASX Package Explorer to the [eclipse-aaspe](https://github.com/eclipse-aaspe) organisation.  
+> Branches and issues will be unaffected.
+> All links to the previous repository location are automatically redirected to the new location, e.g. when using `git clone`, `git push` etc.
+> It is, however, recommended to update the `origin` of any clones to avoid confusion.
+
 # AASX Server 
 ![Check-release-workflow](
 https://github.com/admin-shell-io/aasx-server/workflows/Check-release-workflow/badge.svg
@@ -8,14 +14,23 @@ https://github.com/admin-shell-io/aasx-server/workflows/Build-and-package-releas
 ) ![Build-and-publish-docker-images-workflow](
 https://github.com/admin-shell-io/aasx-server/workflows/Build-and-publish-docker-images-workflow/badge.svg
 )
-  
-AASX Server is now V3 and branch main includes a first release:  
-https://github.com/admin-shell-io/aasx-server/releases/tag/v2023-09-13.alpha  
-The latest work takes place in branch policy3, which will be included in main then.  
-  
-A demo server is running on https://v3.admin-shell-io.com.  
-https://v3.admin-shell-io.com/swagger shows the API and you can try it manually.  
-An AASX Server with security enabled can be found here: https://v3security.admin-shell-io.com/. Please click on readme.  
+
+AASX Server is a companion app for [AASX Package Explorer](). 
+It provides a local service to host and serve Industrie 4.0 AASX packages.
+The Core version exposes endpoints for REST, OPC UA and MQTT protocols.
+The GUI version offers the same functionality and additionally uses Blazor Framework to provide a GUI in the browser for exploring AASX Packages. 
+
+> [!IMPORTANT]
+> AASX Server is now V3 and branch main includes a first release:  
+> https://github.com/admin-shell-io/aasx-server/releases/tag/v2023-09-13.alpha  
+> The latest work takes place in branch policy3, which will be included in main then.  
+
+> [!tip]
+> A demo server is running on https://v3.admin-shell-io.com.  
+> https://v3.admin-shell-io.com/swagger shows the API and you can try it manually.  
+> An AASX Server with security enabled can be found here: https://v3security.admin-shell-io.com/.
+
+## How-to
   
 Mainly AasxServerBlazor is currently used, but AasxServerCore will also be supported.  
 AasxServerWindows will not be further developed, since .NET 6 works well also on Windows.  
@@ -88,7 +103,7 @@ An example graphql query is:
 If you want to createa registry and also automatically POST to it, please take a look at:
 https://github.com/admin-shell-io/aasx-server/issues/189
 
-# OLD DOCUMENTATION
+## OLD DOCUMENTATION
 
 This documentation will be updated to V3 soon.
 
