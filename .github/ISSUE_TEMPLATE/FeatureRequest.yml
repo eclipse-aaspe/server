@@ -6,14 +6,6 @@ labels: [
 ]
 body:
   - type: textarea
-    id: implementation_pr
-    attributes:
-      label: "Implementation PR"
-      description: Pull request used
-      placeholder: "#Pull Request ID"
-    validations:
-      required: false
-  - type: textarea
     id: reference_issues
     attributes:
       label: "Reference Issues"
