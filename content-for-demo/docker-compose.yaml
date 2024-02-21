@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+    mongodb:
+        image: mongo
+        hostname: "mongo"
+        restart: always
+        volumes:
+          - ./mongo/data:/data/db
+        ports:
+          - '27017:27017'
+        environment:
+          - MONGO_INITDB_ROOT_USERNAME=mongo
+          - MONGO_INITDB_ROOT_PASSWORD=mongo
