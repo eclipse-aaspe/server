@@ -1582,27 +1582,14 @@ namespace AasxServer
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
             {
                 new Option<string>(
-                    new[] {"--host", "-h"},
+                    new[] {"--host"},
                     () => "localhost",
                     "Host which the server listens on"),
-
-                new Option<string>(
-                    new[] {"--port", "-p"},
-                    ()=>"51310",
-                    "Port which the server listens on"),
-
-                new Option<bool>(
-                    new[] {"--https"},
-                    "If set, opens SSL connections. " +
-                    "Make sure you bind a certificate to the port before."),
 
                 new Option<string>(
                     new[] {"--data-path"},
                     "Path to where the AASXs reside"),
 
-                new Option<bool>(
-                    new[] {"--rest"},
-                    "If set, starts the REST server"),
 
                 new Option<bool>(
                     new[] {"--opc"},
@@ -1621,15 +1608,6 @@ namespace AasxServer
                     "If set, starts an OPC client and refreshes on the given period " +
                     "(in milliseconds)"),
 
-                new Option<string[]>(
-                    new[] {"--connect"},
-                    "If set, connects to AAS connect server. " +
-                    "Given as a comma-separated-values (server, node name, period in milliseconds) or " +
-                    "as a flag (in which case it connects to a default server).")
-                {
-                    Argument = new Argument<string[]>{ Arity = ArgumentArity.ZeroOrOne }
-                },
-
                 new Option<string>(
                     new[] {"--proxy-file"},
                     "If set, parses the proxy information from the given proxy file"),
@@ -1645,10 +1623,6 @@ namespace AasxServer
                 new Option<string>(
                     new[] {"--name"},
                     "Name of the server"),
-
-                new Option<string>(
-                    new[] {"--external-rest"},
-                    "external name of the server"),
 
                 new Option<string>(
                     new[] {"--external-blazor"},
