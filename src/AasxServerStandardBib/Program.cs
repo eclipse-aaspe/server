@@ -1,6 +1,8 @@
 ﻿using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
+using AasxServerStandardBib;
+
 //using AasxServerStandardBib.Migrations;
 using AdminShellNS;
 using Extensions;
@@ -34,6 +36,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
+using static AasxServerStandardBib.IDatabase;
 using Formatting = Newtonsoft.Json.Formatting;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -530,6 +533,7 @@ namespace AasxServer
         public static string[] envFileName = null;
         public static string[] envSymbols = null;
         public static string[] envSubjectIssuer = null;
+        public static IDatabase database = null;
         /*
         public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[envimax];
             {
@@ -1012,6 +1016,10 @@ namespace AasxServer
             int envi = 0;
             int count = 0;
 
+            //Mongo Database
+            database = new MongoDatabase();
+            database.Initialize("mongodb://mongo:mongo@localhost:27017/");
+
             // Migrate always
             if (withDb)
             {
@@ -1110,6 +1118,10 @@ namespace AasxServer
                     // try
                     {
                         fn = fileNames[fi];
+
+                        //Insert into DB
+                        database.importAASCoreEnvironment(new AdminShellPackageEnv(fn, true, false).AasEnv);
+
                         if (fn.ToLower().Contains("globalsecurity"))
                         {
                             envFileName[envi] = fn;
