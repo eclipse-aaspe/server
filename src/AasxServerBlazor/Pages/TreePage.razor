@@ -86,7 +86,8 @@
                         @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
                         out error, null, "/submodelelements", "READ", out withAllow, out getPolicy,
                         path, "", p, null); *@
-                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ, out error, out withAllow, out getPolicy, path, "", p);
+                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
+                            out error, out withAllow, out getPolicy, path, "", p);
                         display = true;
                         // JUIJUI
                     }

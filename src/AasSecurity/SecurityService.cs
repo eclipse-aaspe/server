@@ -261,7 +261,7 @@ namespace AasSecurity
 
                                             if (u == "secret")
                                             {
-                                                // accessrights = "READ";
+                                                accessRights = "READ";
                                                 {
                                                     if (p == Program.secretStringAPI)
                                                         accessRights = "CREATE";
@@ -384,7 +384,9 @@ namespace AasSecurity
             return null;
         }
 
-        public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy, string objPath = null, string aasResourceType = null, IClass aasResource = null, string policy = null)
+        public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights,
+                out string error, out bool withAllow, out string getPolicy, string objPath = null, string aasResourceType = null,
+                IClass aasResource = null, string policy = null)
         {
             return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy, objPath, aasResourceType, aasResource, policy: policy);
         }
@@ -403,12 +405,9 @@ namespace AasSecurity
             withAllow = false;
             getPolicy = "";
 
-            if (Program.secretStringAPI != null)
+            if (Program.secretStringAPI != null && currentRole == "CREATE")
             {
-                if (currentRole == "CREATE")
-                {
                     return true;
-                }
             }
             else
             {
