@@ -207,13 +207,14 @@ namespace Extensions
 
             if (sourceConceptDescription.IsCaseOf != null && sourceConceptDescription.IsCaseOf.Count != 0)
             {
-                if (conceptDescription.IsCaseOf == null)
-                {
-                    conceptDescription.IsCaseOf = new List<IReference>();
-                }
+                
                 foreach (var caseOf in sourceConceptDescription.IsCaseOf)
                 {
-                    conceptDescription.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV10(caseOf, ReferenceTypes.ModelReference));
+                    if (!caseOf.IsEmpty)
+                    {
+                        conceptDescription.IsCaseOf ??= new List<IReference>();
+                        conceptDescription.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV10(caseOf, ReferenceTypes.ModelReference)); 
+                    }
                 }
             }
 
@@ -242,13 +243,14 @@ namespace Extensions
 
             if (srcCD.IsCaseOf != null && srcCD.IsCaseOf.Count != 0)
             {
-                if (cd.IsCaseOf == null)
-                {
-                    cd.IsCaseOf = new List<IReference>();
-                }
+                
                 foreach (var caseOf in srcCD.IsCaseOf)
                 {
-                    cd.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV20(caseOf, ReferenceTypes.ModelReference));
+                    if (!caseOf.IsEmpty)
+                    {
+                        cd.IsCaseOf ??= new List<IReference>();
+                        cd.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV20(caseOf, ReferenceTypes.ModelReference)); 
+                    }
                 }
             }
 
