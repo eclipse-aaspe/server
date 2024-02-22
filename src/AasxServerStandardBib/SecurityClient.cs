@@ -1514,19 +1514,20 @@ namespace AasxServer
 
         public static string hashBOM = "";
         public static long logCount = 0;
+        public static long logCountModulo = 30;
         public static bool createCfpTree(int envIndex, DateTime timeStamp)
         {
             bool changed = false;
             string digest = "";
             cfpValid = true;
 
-            if (logCount % 10 == 0)
+            if (logCount % logCountModulo == 0)
             {
                 Console.WriteLine();
             }
             else
             {
-                Console.Write(logCount % 10 + " ");
+                Console.Write(logCount % logCountModulo + " ");
             }
 
             // GET actual BOM
@@ -1596,7 +1597,7 @@ namespace AasxServer
                                         try
                                         {
                                             requestPath += queryPara;
-                                            if (logCount % 10 == 0)
+                                            if (logCount % logCountModulo == 0)
                                                 Console.WriteLine("GET Submodel " + requestPath);
                                             client.Timeout = TimeSpan.FromSeconds(3);
                                             var task1 = Task.Run(async () =>
