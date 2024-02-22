@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using AasxServerStandardBib.Exceptions;
 using MongoDB.Bson;
+using MongoDB.Driver.Linq;
+using System.Collections;
+using AasCore.Aas3_0;
 
 
 //Author: Jonas Graubner
@@ -17,9 +20,14 @@ namespace AasxServerStandardBib
     public interface IDatabase
     {
         void Initialize(String connectionString);
-        public void writeDB(String collectionName, object data, bool throwError = false);
-        public void importAASCoreEnvironment(AasCore.Aas3_0.Environment environment);
+        public void writeDBAssetAdministrationShell(IAssetAdministrationShell shell);
+        public bool deleteDBAssetAdministrationShell(IAssetAdministrationShell shell);
+        public IQueryable<AssetAdministrationShell> getLINQAssetAdministrationShell();
+        public void updateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);
+        public void importAASCoreEnvironment(IEnvironment environment);
     }
+
+
     public class MongoDatabase : IDatabase
     {
         private MongoClient _client;
@@ -43,39 +51,79 @@ namespace AasxServerStandardBib
             var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("AasCore") || type.FullName.StartsWith("MongoDB"));
             BsonSerializer.RegisterSerializer(objectSerializer);
         }
-
-        public void writeDB(String collectionName, object data, bool throwError = false)
+        private IMongoCollection<AssetAdministrationShell> getAasCollection()
         {
-            var collection = _database.GetCollection<object>(collectionName);
-            try
-            {
-                collection.InsertOne(data);
-            }
-            catch (MongoWriteException ex)
-            {
-                if (throwError)
-                {
-                    throw new DuplicateException($"{collectionName} with id {data} already exists.");
-                }
-            }
+            return _database.GetCollection<AssetAdministrationShell>("AssetAdministrationShells");
+        }
+        private IMongoCollection<ISubmodel> getSubmodelCollection()
+        {
+            return _database.GetCollection<ISubmodel>("Submodels");
+        }
+        private IMongoCollection<IConceptDescription> getConceptDescriptionCollection()
+        {
+            return _database.GetCollection<IConceptDescription>("ConceptDescriptions");
         }
 
-        public void importAASCoreEnvironment(AasCore.Aas3_0.Environment environment)
+        
+        public void writeDBAssetAdministrationShell(IAssetAdministrationShell shell)
+        {
+            try
+            {
+                getAasCollection().InsertOne((AssetAdministrationShell)shell);
+            } catch (MongoWriteException)
+            {
+            }
+        }
+        public void writeDBSubmodel(ISubmodel submodel)
+        {
+            try
+            {
+                getSubmodelCollection().InsertOne(submodel);
+            }
+            catch (MongoWriteException)
+            {
+            }
+        }
+        public void writeDBConceptDescription(IConceptDescription conceptDescription)
+        {
+            try
+            {
+                getConceptDescriptionCollection().InsertOne(conceptDescription);
+            }
+            catch (MongoWriteException)
+            {
+            }
+        }
+        
+        public bool deleteDBAssetAdministrationShell(IAssetAdministrationShell shell)
+        {
+            throw new NotImplementedException();
+        }
+        public IQueryable<AssetAdministrationShell> getLINQAssetAdministrationShell()
+        {
+            return getAasCollection().AsQueryable();
+        }
+        public async void updateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
+        {
+            await getAasCollection().ReplaceOneAsync(r => r.Id.Equals(aasIdentifier), (AssetAdministrationShell)body);
+        }
+
+
+        public void importAASCoreEnvironment(IEnvironment environment)
         {
             environment.AssetAdministrationShells.ForEach(shell => {
-                writeDB("AssetAdministrationShells", shell);
+                writeDBAssetAdministrationShell(shell);
             });
 
             environment.Submodels.ForEach(submodel =>
             {
-                writeDB("Submodels", submodel);
+                writeDBSubmodel(submodel);
             });
 
             environment.ConceptDescriptions.ForEach(conceptDescription =>
             {
-                writeDB("ConceptDescriptions", conceptDescription);
+                writeDBConceptDescription(conceptDescription);
             });
-
-        }
+        } 
     }
 }

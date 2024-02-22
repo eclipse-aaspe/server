@@ -96,7 +96,7 @@ namespace AasxServerBlazor
             services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
-            services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
+            services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentServiceDB>();
             services.AddTransient<ISubmodelService, SubmodelService>();
             services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
             services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
