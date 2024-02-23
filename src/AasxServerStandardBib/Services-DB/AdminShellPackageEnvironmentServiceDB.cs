@@ -159,11 +159,15 @@ namespace AasxServerStandardBib.Services
 
         public Stream GetAssetInformationThumbnail(int packageIndex)
         {
+            //TODO
+            throw new NotImplementedException(); 
             return _packages[packageIndex].GetLocalThumbnailStream();
         }
 
         public void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex)
         {
+            //TODO
+            throw new NotImplementedException();
             _packages[packageIndex].EmbeddAssetInformationThumbnail(defaultThumbnail, fileContent);
             Program.signalNewData(0);
         }
