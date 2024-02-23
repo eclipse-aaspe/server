@@ -58,14 +58,14 @@ namespace AasxServerStandardBib.Services
             var timeStamp = DateTime.UtcNow;
             body.TimeStampCreate = timeStamp;
             body.SetTimeStamp(timeStamp);
-            _database.writeDBAssetAdministrationShell(body);
+            _database.WriteDBAssetAdministrationShell(body);
             Program.signalNewData(2);
             return body;
         }
 
         public void DeleteAssetAdministrationShell(int packageIndex, IAssetAdministrationShell aas)
         {
-            bool deleted = _database.deleteDBAssetAdministrationShell(aas);
+            bool deleted = _database.DeleteDBAssetAdministrationShell(aas);
             if (deleted)
             {
                 _logger.LogDebug($"Deleted Asset Administration Shell with id {aas.Id}");
@@ -102,9 +102,9 @@ namespace AasxServerStandardBib.Services
 
         public bool IsAssetAdministrationShellPresent(string aasIdentifier)
         {
-            //TODO unused -> remove in the future
-            throw new NotImplementedException();
-            return false;
+            return _database.getLINQAssetAdministrationShell()
+                .Where(r => r.Id.Equals(aasIdentifier))
+                .ToList().Any();
         }
 
         private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
@@ -143,7 +143,7 @@ namespace AasxServerStandardBib.Services
             body.TimeStampCreate = timeStamp;
             body.SetTimeStamp(timeStamp); 
             
-            _database.updateDBAssetAdministrationShellById(body, aasIdentifier);
+            _database.UpdateDBAssetAdministrationShellById(body, aasIdentifier);
 
             Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
             _logger.LogDebug($"Successfully updated the AAS with requested AAS");
@@ -174,86 +174,141 @@ namespace AasxServerStandardBib.Services
         #endregion
 
         #region Submodel
-
-        public void DeleteSubmodelById(string submodelIdentifier)
+        public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null)
         {
-            var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
-            if (submodel != null && packageIndex != -1)
-            {
-                foreach (var aas in _packages[packageIndex].AasEnv.AssetAdministrationShells)
-                {
-                    _aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);
-                }
-                _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
-                _logger.LogDebug($"Deleted submodel with id {submodelIdentifier}.");
-                AasxServer.Program.signalNewData(1);
-            }
-        }
-
-        public ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex)
-        {
-            var found = IsSubmodelPresent(submodelIdentifier, out ISubmodel submodel, out packageIndex);
+            //Check if Submodel exists
+            var found = IsSubmodelPresent(newSubmodel.Id);
             if (found)
             {
+                throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
+            }
+            DateTime timeStamp = DateTime.UtcNow;
+            //Check if corresponding AAS exist. If yes, then add to the same environment
+            if (!string.IsNullOrEmpty(aasIdentifier))
+            {
+                IAssetAdministrationShell aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex); //Throws Exception if not found
+                newSubmodel.SetAllParents(timeStamp);
+
+                aas.Submodels ??= new List<IReference>();
+                aas.Submodels.Add(newSubmodel.GetReference());
+                aas.SetTimeStamp(timeStamp);
+                _database.UpdateDBAssetAdministrationShellById(aas, aasIdentifier); //Save aas Changes in db
+
+                newSubmodel.TimeStampCreate = timeStamp;
+                newSubmodel.SetTimeStamp(timeStamp);
+                _database.WriteDBSubmodel(newSubmodel);
+
+                AasxServer.Program.signalNewData(2);
+                return newSubmodel; // TODO: jtikekar find proper solution
+            }
+
+            newSubmodel.TimeStampCreate = timeStamp;
+            newSubmodel.SetTimeStamp(timeStamp);
+            _database.WriteDBSubmodel(newSubmodel);
+            Program.signalNewData(2);
+            return newSubmodel;
+        }
+        public List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null)
+        {
+            //Get All Submodels
+            List<ISubmodel> output = _database.getLINQSubmodel().ToList().Cast<ISubmodel>().ToList();
+            // TODO (jtikekar, 2023-09-04): uncomment and support
+            //if (SecurityCheckTestOnly(s.IdShort, "", s))
+
+            //Apply filters
+            if (output.Any())
+            {
+                //Filter w.r.t idShort
+                if (!string.IsNullOrEmpty(idShort))
+                {
+                    var submodels = output.Where(s => s.IdShort.Equals(idShort)).ToList();
+                    if (submodels.IsNullOrEmpty())
+                    {
+                        _logger.LogInformation($"Submodels with IdShort {idShort} Not Found.");
+                    }
+
+                    output = submodels;
+                }
+
+                //Filter w.r.t. SemanticId
+                if (reqSemanticId != null)
+                {
+                    if (output.Any())
+                    {
+                        var submodels = output.Where(s => s.SemanticId.Matches(reqSemanticId)).ToList();
+                        if (submodels.IsNullOrEmpty())
+                        {
+                            _logger.LogInformation($"Submodels with requested SemnaticId Not Found.");
+                        }
+
+                        output = submodels;
+                    }
+                }
+            }
+
+            return output;
+        }
+        public ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex)
+        {
+            packageIndex = -1; //TODO unused -> remove in the future
+            List<Submodel> output = _database.getLINQSubmodel()
+                .Where(r => r.Id.Equals(submodelIdentifier))
+                .ToList();
+
+            if (output.Any())
+            {
                 _logger.LogDebug($"Found the submodel with Id {submodelIdentifier}");
-                return submodel;
+                return output.First();
             }
             else
             {
                 throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found.");
             }
         }
+        public bool IsSubmodelPresent(string submodelIdentifier)
+        {
+            return _database.getLINQSubmodel()
+                .Where(r => r.Id.Equals(submodelIdentifier))
+                .ToList().Any();
+        }
+        public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
+        {
+            var timeStamp = DateTime.UtcNow;
+            newSubmodel.TimeStampCreate = timeStamp;
+            newSubmodel.SetParentAndTimestamp(timeStamp);
+            _database.UpdateDBSubmodelById(submodelIdentifier, newSubmodel);
+            Program.signalNewData(1);
+        }
+        public void DeleteSubmodelById(string submodelIdentifier)
+        {
+            // Get all Submodels that Reference the given submodelIdentifier
+            List<AssetAdministrationShell> aasToModify = _database.getLINQAssetAdministrationShell()
+                .Where(aas => aas.Submodels
+                    .Any(s => s.Keys
+                        .Any(k => k.Value.Equals(submodelIdentifier))))
+                .ToList();
 
+            foreach (var aas in aasToModify)
+            {
+                _aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);
+                //TODO Jonas Graubner make sure, that reference is deleted in DB
+            }
+            _database.DeleteDBSubmodelById(submodelIdentifier);
+            _logger.LogDebug($"Deleted submodel with id {submodelIdentifier}.");
+            AasxServer.Program.signalNewData(1);
+        }
         public void DeleteSupplementaryFileInPackage(string submodelIdentifier, string filePath)
         {
+            //TODO
+            throw new NotImplementedException();
             _ = GetSubmodelById(submodelIdentifier, out int packageIndex);
             if (packageIndex != -1)
             {
                 _packages[packageIndex].DeleteSupplementaryFile(filePath);
             }
         }
-
-        public bool IsSubmodelPresent(string submodelIdentifier)
-        {
-            return IsSubmodelPresent(submodelIdentifier, out _, out _);
-        }
-
-        private bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
-        {
-            output = null;
-            packageIndex = -1;
-
-            Program.loadPackageForSubmodel(submodelIdentifier, out output, out packageIndex);
-
-            foreach (var package in _packages)
-            {
-                if (package != null)
-                {
-                    var env = package.AasEnv;
-                    if (env != null)
-                    {
-                        var submodels = env.Submodels.Where(a => a.Id.Equals(submodelIdentifier));
-                        if (submodels.Any())
-                        {
-                            if (!Program.withDb)
-                            {
-                                output = submodels.First();
-                            }
-                            else
-                            {
-                                output = DBRead.getSubmodel(submodelIdentifier);
-                            }
-                            packageIndex = Array.IndexOf(_packages, package);
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
         #endregion
+
 
         #region ConceptDescription
 
@@ -397,120 +452,6 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
-        {
-            var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
-            if (submodel != null && packageIndex != -1)
-            {
-                var existingIndex = _packages[packageIndex].AasEnv.Submodels.IndexOf(submodel);
-                _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
-                _packages[packageIndex].AasEnv.Submodels.Insert(existingIndex, newSubmodel);
-                var timeStamp = DateTime.UtcNow;
-                newSubmodel.TimeStampCreate = timeStamp;
-                newSubmodel.SetParentAndTimestamp(timeStamp);
-                Program.signalNewData(1);
-            }
-        }
-
-        public List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null)
-        {
-            List<ISubmodel> output = new List<ISubmodel>();
-
-            //Get All Submodels
-            foreach (var package in _packages)
-            {
-                if (package != null)
-                {
-                    var env = package.AasEnv;
-                    if (env != null)
-                    {
-                        foreach (var s in env.Submodels)
-                        {
-                            // TODO (jtikekar, 2023-09-04): uncomment and support
-                            //if (SecurityCheckTestOnly(s.IdShort, "", s))
-                            output.Add(s);
-                        }
-                    }
-                }
-            }
-
-            //Apply filters
-            if (output.Any())
-            {
-                //Filter w.r.t idShort
-                if (!string.IsNullOrEmpty(idShort))
-                {
-                    var submodels = output.Where(s => s.IdShort.Equals(idShort)).ToList();
-                    if (submodels.IsNullOrEmpty())
-                    {
-                        _logger.LogInformation($"Submodels with IdShort {idShort} Not Found.");
-                    }
-
-                    output = submodels;
-                }
-
-                //Filter w.r.t. SemanticId
-                if (reqSemanticId != null)
-                {
-                    if (output.Any())
-                    {
-                        var submodels = output.Where(s => s.SemanticId.Matches(reqSemanticId)).ToList();
-                        if (submodels.IsNullOrEmpty())
-                        {
-                            _logger.LogInformation($"Submodels with requested SemnaticId Not Found.");
-                        }
-
-                        output = submodels;
-                    }
-
-                }
-            }
-
-            return output;
-        }
-
-        public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null)
-        {
-            //Check if Submodel exists
-            var found = IsSubmodelPresent(newSubmodel.Id, out _, out _);
-            if (found)
-            {
-                throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
-            }
-
-            //Check if corresponding AAS exist. If yes, then add to the same environment
-            if (!string.IsNullOrEmpty(aasIdentifier))
-            {
-                var aasFound = IsAssetAdministrationShellPresent(aasIdentifier, out IAssetAdministrationShell aas, out int packageIndex);
-                if (aasFound)
-                {
-                    newSubmodel.SetAllParents(DateTime.UtcNow);
-                    aas.Submodels ??= new List<IReference>();
-                    aas.Submodels.Add(newSubmodel.GetReference());
-                    _packages[packageIndex].AasEnv.Submodels.Add(newSubmodel);
-                    var timeStamp = DateTime.UtcNow;
-                    aas.SetTimeStamp(timeStamp);
-                    newSubmodel.TimeStampCreate = timeStamp;
-                    newSubmodel.SetTimeStamp(timeStamp);
-                    AasxServer.Program.signalNewData(2);
-                    return newSubmodel; // TODO: jtikekar find proper solution
-                }
-            }
-
-            if (EmptyPackageAvailable(out int emptyPackageIndex))
-            {
-                _packages[emptyPackageIndex].AasEnv.Submodels.Add(newSubmodel);
-                var timeStamp = DateTime.UtcNow;
-                newSubmodel.TimeStampCreate = timeStamp;
-                newSubmodel.SetTimeStamp(timeStamp);
-                Program.signalNewData(2);
-                return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
-            }
-            else
-            {
-                throw new Exception("No empty environment package available in the server.");
-            }
-        }
 
         public Task ReplaceSupplementaryFileInPackage(string submodelIdentifier, string sourceFile, string targetFile, string contentType, MemoryStream fileContent)
         {

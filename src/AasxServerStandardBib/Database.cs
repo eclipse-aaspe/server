@@ -20,10 +20,21 @@ namespace AasxServerStandardBib
     public interface IDatabase
     {
         void Initialize(String connectionString);
-        public void writeDBAssetAdministrationShell(IAssetAdministrationShell shell);
-        public bool deleteDBAssetAdministrationShell(IAssetAdministrationShell shell);
+
+        #region AssetAdministrationShell
+        public void WriteDBAssetAdministrationShell(IAssetAdministrationShell shell);
         public IQueryable<AssetAdministrationShell> getLINQAssetAdministrationShell();
-        public void updateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);
+        public void UpdateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);
+        public bool DeleteDBAssetAdministrationShell(IAssetAdministrationShell shell);
+        #endregion
+
+        #region Submodel
+        public void WriteDBSubmodel(ISubmodel submodel);
+        public IQueryable<Submodel> getLINQSubmodel();
+        public void UpdateDBSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
+        public void DeleteDBSubmodelById(string submodelIdentifier);
+        #endregion
+
         public void importAASCoreEnvironment(IEnvironment environment);
     }
 
@@ -55,9 +66,9 @@ namespace AasxServerStandardBib
         {
             return _database.GetCollection<AssetAdministrationShell>("AssetAdministrationShells");
         }
-        private IMongoCollection<ISubmodel> getSubmodelCollection()
+        private IMongoCollection<Submodel> getSubmodelCollection()
         {
-            return _database.GetCollection<ISubmodel>("Submodels");
+            return _database.GetCollection<Submodel>("Submodels");
         }
         private IMongoCollection<IConceptDescription> getConceptDescriptionCollection()
         {
@@ -65,22 +76,12 @@ namespace AasxServerStandardBib
         }
 
         
-        public void writeDBAssetAdministrationShell(IAssetAdministrationShell shell)
+        public void WriteDBAssetAdministrationShell(IAssetAdministrationShell shell)
         {
             try
             {
                 getAasCollection().InsertOne((AssetAdministrationShell)shell);
             } catch (MongoWriteException)
-            {
-            }
-        }
-        public void writeDBSubmodel(ISubmodel submodel)
-        {
-            try
-            {
-                getSubmodelCollection().InsertOne(submodel);
-            }
-            catch (MongoWriteException)
             {
             }
         }
@@ -94,8 +95,9 @@ namespace AasxServerStandardBib
             {
             }
         }
-        
-        public bool deleteDBAssetAdministrationShell(IAssetAdministrationShell shell)
+
+        #region AssetAdministrationShell
+        public bool DeleteDBAssetAdministrationShell(IAssetAdministrationShell shell)
         {
             throw new NotImplementedException();
         }
@@ -103,21 +105,49 @@ namespace AasxServerStandardBib
         {
             return getAasCollection().AsQueryable();
         }
-        public async void updateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
+        public async void UpdateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
         {
             await getAasCollection().ReplaceOneAsync(r => r.Id.Equals(aasIdentifier), (AssetAdministrationShell)body);
         }
+        #endregion
+
+        #region Submodel
+        public void WriteDBSubmodel(ISubmodel submodel)
+        {
+            try
+            {
+                getSubmodelCollection().InsertOne((Submodel)submodel);
+            }
+            catch (MongoWriteException)
+            {
+            }
+        }
+        public async void DeleteDBSubmodelById(string submodelIdentifier)
+        {
+            await getSubmodelCollection().DeleteOneAsync(a => a.Id == submodelIdentifier);
+        }
+        public IQueryable<Submodel> getLINQSubmodel()
+        {
+            return getSubmodelCollection().AsQueryable();
+        }
+        public async void UpdateDBSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
+        {
+            await getSubmodelCollection().ReplaceOneAsync(r => r.Id.Equals(submodelIdentifier), (Submodel)newSubmodel);
+        }
+        #endregion
+
+
 
 
         public void importAASCoreEnvironment(IEnvironment environment)
         {
             environment.AssetAdministrationShells.ForEach(shell => {
-                writeDBAssetAdministrationShell(shell);
+                WriteDBAssetAdministrationShell(shell);
             });
 
             environment.Submodels.ForEach(submodel =>
             {
-                writeDBSubmodel(submodel);
+                WriteDBSubmodel(submodel);
             });
 
             environment.ConceptDescriptions.ForEach(conceptDescription =>
