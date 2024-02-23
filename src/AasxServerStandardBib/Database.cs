@@ -23,16 +23,23 @@ namespace AasxServerStandardBib
 
         #region AssetAdministrationShell
         public void WriteDBAssetAdministrationShell(IAssetAdministrationShell shell);
-        public IQueryable<AssetAdministrationShell> getLINQAssetAdministrationShell();
+        public IQueryable<AssetAdministrationShell> GetLINQAssetAdministrationShell();
         public void UpdateDBAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier);
-        public bool DeleteDBAssetAdministrationShell(IAssetAdministrationShell shell);
+        public bool DeleteDBAssetAdministrationShellById(IAssetAdministrationShell shell);
         #endregion
 
         #region Submodel
         public void WriteDBSubmodel(ISubmodel submodel);
-        public IQueryable<Submodel> getLINQSubmodel();
+        public IQueryable<Submodel> GetLINQSubmodel();
         public void UpdateDBSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
         public void DeleteDBSubmodelById(string submodelIdentifier);
+        #endregion
+
+        #region ConceptDescription
+        public void WriteDBConceptDescription(IConceptDescription conceptDescription);
+        public IQueryable<ConceptDescription> GetLINQConceptDescription();
+        public void UpdateDBConceptDescriptionById(IConceptDescription newConceptDescription, string cdIdentifier);
+        public void DeleteDBConceptDescriptionById(string conceptDescription);
         #endregion
 
         public void importAASCoreEnvironment(IEnvironment environment);
@@ -70,38 +77,28 @@ namespace AasxServerStandardBib
         {
             return _database.GetCollection<Submodel>("Submodels");
         }
-        private IMongoCollection<IConceptDescription> getConceptDescriptionCollection()
+        private IMongoCollection<ConceptDescription> getConceptDescriptionCollection()
         {
-            return _database.GetCollection<IConceptDescription>("ConceptDescriptions");
+            return _database.GetCollection<ConceptDescription>("ConceptDescriptions");
         }
 
-        
+
+        #region AssetAdministrationShell
         public void WriteDBAssetAdministrationShell(IAssetAdministrationShell shell)
         {
             try
             {
                 getAasCollection().InsertOne((AssetAdministrationShell)shell);
-            } catch (MongoWriteException)
-            {
-            }
-        }
-        public void writeDBConceptDescription(IConceptDescription conceptDescription)
-        {
-            try
-            {
-                getConceptDescriptionCollection().InsertOne(conceptDescription);
             }
             catch (MongoWriteException)
             {
             }
         }
-
-        #region AssetAdministrationShell
-        public bool DeleteDBAssetAdministrationShell(IAssetAdministrationShell shell)
+        public bool DeleteDBAssetAdministrationShellById(IAssetAdministrationShell shell)
         {
             throw new NotImplementedException();
         }
-        public IQueryable<AssetAdministrationShell> getLINQAssetAdministrationShell()
+        public IQueryable<AssetAdministrationShell> GetLINQAssetAdministrationShell()
         {
             return getAasCollection().AsQueryable();
         }
@@ -122,11 +119,7 @@ namespace AasxServerStandardBib
             {
             }
         }
-        public async void DeleteDBSubmodelById(string submodelIdentifier)
-        {
-            await getSubmodelCollection().DeleteOneAsync(a => a.Id == submodelIdentifier);
-        }
-        public IQueryable<Submodel> getLINQSubmodel()
+        public IQueryable<Submodel> GetLINQSubmodel()
         {
             return getSubmodelCollection().AsQueryable();
         }
@@ -134,9 +127,36 @@ namespace AasxServerStandardBib
         {
             await getSubmodelCollection().ReplaceOneAsync(r => r.Id.Equals(submodelIdentifier), (Submodel)newSubmodel);
         }
+        public async void DeleteDBSubmodelById(string submodelIdentifier)
+        {
+            await getSubmodelCollection().DeleteOneAsync(a => a.Id.Equals(submodelIdentifier));
+        }
         #endregion
 
-
+        #region ConceptDescription
+        public void WriteDBConceptDescription(IConceptDescription conceptDescription)
+        {
+            try
+            {
+                getConceptDescriptionCollection().InsertOne((ConceptDescription)conceptDescription);
+            }
+            catch (MongoWriteException)
+            {
+            }
+        }
+        public IQueryable<ConceptDescription> GetLINQConceptDescription()
+        {
+            return getConceptDescriptionCollection().AsQueryable();
+        }
+        public async void UpdateDBConceptDescriptionById(IConceptDescription newConceptDescription, string cdIdentifier)
+        {
+            await getConceptDescriptionCollection().ReplaceOneAsync(r => r.Id.Equals(cdIdentifier), (ConceptDescription)newConceptDescription);
+        }
+        public async void DeleteDBConceptDescriptionById(string conceptDescription)
+        {
+            await getConceptDescriptionCollection().DeleteOneAsync(a => a.Id.Equals(conceptDescription));
+        }
+        #endregion
 
 
         public void importAASCoreEnvironment(IEnvironment environment)
@@ -152,7 +172,7 @@ namespace AasxServerStandardBib
 
             environment.ConceptDescriptions.ForEach(conceptDescription =>
             {
-                writeDBConceptDescription(conceptDescription);
+                WriteDBConceptDescription(conceptDescription);
             });
         } 
     }
