@@ -13,14 +13,25 @@
 @using System.Drawing;
 @using System.IO;
 @using AasxServerBlazor.Data
+@inject Microsoft.JSInterop.IJSRuntime JsRuntime;
 @*@using static AdminShellNS.AdminShellV30;*@
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 
 @implements IDisposable
 
-<div class="col-12 row">
+@functions {
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeAsync<object>("resize");
+        }
+    }
+}
+
+<div id="con" style="display: flex;">
     <br />
-    <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
+    <div class="col-5" style="width: 33%;border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
         @updateVisibleTree(Items, selectedNode)
         @if (Program.isLoading)
@@ -114,19 +125,19 @@
                         }
                     }
                 }
-                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                <span style="color:white;background-color:purple;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
                 @if (Program.withPolicy && getPolicy != "")
                 {
                     <span style="color:blue">&nbsp @getPolicy</span>
                 }
-                <span style="color:blue;font-size:14px">@getSymbols(context)</span>
-                <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
+                    <strong><span class="test">@getSymbols(context)</span></strong>
+                    <span style="color:green;">@ViewTimeStamp(context)</span>
                 }
             </TitleTemplate>
         </Tree>
     </div>
-    <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
+    <div class="col-7" style="flex-grow: 100; border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
                 if (selectedNode != null)
@@ -204,7 +215,8 @@
                         string detailsId="SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
-                        <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
+                        <span id="@detailsId">@nodeDetails1 @nodeDetails2</span>
+
                         <br>
                     }
                 }
@@ -2455,4 +2467,11 @@
 .modal-fullscreen .modal-body {
   overflow-y: auto;
 }
+
+.resize {
+    min-width: 20%;
+        max-width: 80%;
+        padding: 10px;
+}
+
 </style>
