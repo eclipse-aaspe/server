@@ -690,6 +690,7 @@ namespace AasxServer
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
+        public static string withMongoDB { get; set; }
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -719,6 +720,7 @@ namespace AasxServer
             public bool WithDb { get; set; }
             public bool NoDbFiles { get; set; }
             public int StartIndex { get; set; }
+            public string WithMongoDB { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -862,6 +864,7 @@ namespace AasxServer
             {
                 Console.WriteLine("Recommend an OPC client update rate > 200 ms.");
             }
+            Program.withMongoDB = a.WithMongoDB;
 
             // allocate memory
             env = new AdminShellPackageEnv[envimax];
@@ -1017,8 +1020,12 @@ namespace AasxServer
             int count = 0;
 
             //Mongo Database
-            database = new MongoDatabase();
-            database.Initialize("mongodb://mongo:mongo@localhost:27017/");
+            if (!withMongoDB.IsNullOrEmpty())
+            {
+                database = new MongoDatabase();
+                //database.Initialize("mongodb://mongo:mongo@localhost:27017/");
+                database.Initialize(withMongoDB);
+            }
 
             // Migrate always
             if (withDb)
@@ -1700,7 +1707,11 @@ namespace AasxServer
 
                 new Option<int>(
                     new[] {"--start-index"},
-                    "If set, start index in list of AASX files")
+                    "If set, start index in list of AASX files"),
+
+                new Option<string>(
+                    new[] {"--with-mongodb"},
+                    "If set, will use MongoDB Data save")
             };
 
             if (args.Length == 0)

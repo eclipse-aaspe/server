@@ -56,7 +56,7 @@ namespace AasxServerStandardBib.Services
         }
         public List<IAssetAdministrationShell> GetAllAssetAdministrationShells()
         {
-            return _database.GetLINQAssetAdministrationShell().Cast<IAssetAdministrationShell>().ToList();
+            return _database.GetLINQAssetAdministrationShell().ToList().Cast<IAssetAdministrationShell>().ToList();
         }
         public IAssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier, out int packageIndex)
         {

@@ -5,13 +5,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace AasxServerBlazor
 {
     public class Program1
     {
-
+        public static bool withMongodb = false;
         public static void Main(string[] args)
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
@@ -25,6 +26,7 @@ namespace AasxServerBlazor
             if (url[2] != null)
                 AasxServer.Program.blazorPort = url[2];
 
+            withMongodb = args.Contains("--with-mongodb");
             var host = CreateHostBuilder(args).Build();
 
             host.RunAsync();
