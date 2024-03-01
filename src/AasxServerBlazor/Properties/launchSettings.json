@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Development\\PCF-backend2\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--no-security --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\03_Studium\\01_Bachelor\\04_Abschluss\\01_Studienarbeit(SA)\\01_AASX-Server_AASen\\aasxs_dev\" --external-blazor 127.0.0.1:5001 --with-db",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

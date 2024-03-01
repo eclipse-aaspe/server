@@ -1253,7 +1253,10 @@ namespace AasxServer
                                             {
                                                 Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
                                                 var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                st.CopyTo(fst);
+                                                if (st != null)
+                                                {
+                                                    st.CopyTo(fst);
+                                                }
                                             }
                                         }
                                         catch { }
