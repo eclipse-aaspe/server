@@ -682,11 +682,11 @@
      filename,
      data
      );
-    /*
-    await js.InvokeAsync<object>(
+        /*
+        await js.InvokeAsync<object>(
         "saveAsFile",
         filename,
-        Convert.ToBase64String(data)
+    Convert.ToBase64String(data)
         );
         */
         /*
@@ -1488,6 +1488,10 @@
         if(o is AnnotatedRelationshipElement)
         {
             ret += "RelA";
+        }
+        if(o is Capability)
+        {
+            ret += "Cap";
         }
 
         return (ret);

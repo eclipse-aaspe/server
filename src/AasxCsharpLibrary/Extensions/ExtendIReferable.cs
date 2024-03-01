@@ -593,5 +593,43 @@ namespace Extensions
                 iq.Qualifiers.Remove(q);
             }
         }
+
+        public static ISubmodelElement FindSubmodelElementByIdShort(this IReferable referable, string idShort)
+        {
+            if(string.IsNullOrEmpty(idShort))
+            {
+                throw new ArgumentNullException(nameof(idShort));
+            }
+
+            if(referable == null)
+            {
+                throw new ArgumentNullException(nameof(referable));
+            }
+
+            if(referable is Submodel submodel)
+            {
+                return submodel.FindFirstIdShortAs<ISubmodelElement>(idShort);
+            }
+            else if(referable is ISubmodelElementCollection smColl)
+            {
+                return smColl.FindFirstIdShortAs<ISubmodelElement>(idShort);
+            }
+            else if(referable is ISubmodelElementList smList)
+            {
+                return smList.FindFirstIdShortAs<ISubmodelElement>(idShort);
+            }
+            else if(referable is IEntity entity)
+            {
+                return entity.FindFirstIdShortAs<ISubmodelElement>(idShort);
+            }
+            else if(referable is IAnnotatedRelationshipElement annotatedRelationshipElement)
+            {
+                return annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShort) ;
+            }
+            else
+            {
+                throw new Exception($"Parent of type {referable.GetType()} not allowed.");
+            }
+        }
     }
 }

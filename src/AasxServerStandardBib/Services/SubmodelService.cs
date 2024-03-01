@@ -8,6 +8,7 @@ using Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -18,12 +19,15 @@ namespace AasxServerStandardBib.Services
         private readonly IAppLogger<SubmodelService> _logger;
         private readonly IAdminShellPackageEnvironmentService _packageEnvService;
         private readonly IMetamodelVerificationService _verificationService;
+        private readonly IIdShortPathParserService _pathParserService;
+        private const string SML_IdShortPath_Regex = @"\[(?<numbers>[\d]+)\]";
 
-        public SubmodelService(IAppLogger<SubmodelService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService)
+        public SubmodelService(IAppLogger<SubmodelService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService, IIdShortPathParserService pathParserService)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
-            _packageEnvService = packageEnvService;
-            _verificationService = verificationService;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _packageEnvService = packageEnvService ?? throw new ArgumentNullException(nameof(_packageEnvService));
+            _verificationService = verificationService ?? throw new ArgumentNullException(nameof(_verificationService));
+            _pathParserService = pathParserService ?? throw new ArgumentNullException(nameof(pathParserService));
         }
 
         #region PrivateMethods
@@ -36,6 +40,7 @@ namespace AasxServerStandardBib.Services
 
             if (submodel != null)
             {
+                //output = GetSubmodelElementByPath(submodel, idShortPath, out IReferable parent);
                 output = GetSubmodelElementByPath(submodel, idShortPath, out IReferable parent);
                 smeParent = parent;
                 if (output != null)
@@ -51,105 +56,166 @@ namespace AasxServerStandardBib.Services
 
         private ISubmodelElement GetSubmodelElementByPath(IReferable parent, string idShortPath, out IReferable outParent)
         {
+            ISubmodelElement output = null;
             outParent = parent;
-            if (idShortPath.Contains('.'))
+
+            var idShorts = _pathParserService.ParseIdShortPath(idShortPath);
+
+            if (idShorts.Count == 1)
             {
-                string[] idShorts = idShortPath.Split('.', 2);
-                if (parent is Submodel submodel)
+                return parent.FindSubmodelElementByIdShort((string)idShorts[0]);
+            }
+            foreach (var idShortObject in idShorts)
+            {
+                if (output != null)
                 {
-                    var submodelElement = submodel.FindSubmodelElementByIdShort(idShorts[0]);
-                    if (submodelElement != null)
+                    outParent = output;
+                }
+
+                if (idShortObject is string idShortStr)
+                {
+                    output = outParent.FindSubmodelElementByIdShort(idShortStr);
+                    if (output == null)
                     {
-                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                        throw new NotFoundException($"Submodel element {idShortStr} not found.");
                     }
                 }
-                else if (parent is SubmodelElementCollection collection)
+                else if (idShortObject is int idShortInt)
                 {
-                    var submodelElement = collection.FindFirstIdShortAs<ISubmodelElement>(idShorts[0]);
-                    if (submodelElement != null)
+                    if (outParent is ISubmodelElementList smeList)
                     {
-                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                        try
+                        {
+                            output = smeList.Value?[idShortInt];
+                        }
+                        catch (ArgumentOutOfRangeException ex)
+                        {
+                            throw new InvalidIdShortPathException(smeList.IdShort + "[" + idShortInt + "]");
+                        }
+                        if (output == null)
+                        {
+                            throw new NotFoundException($"Submodel element with index {idShortInt} not found in the list {smeList.IdShort}.");
+                        }
                     }
-                }
-                else if (parent is SubmodelElementList list)
-                {
-                    var submodelElement = list.FindFirstIdShortAs<ISubmodelElement>(idShorts[0]);
-                    if (submodelElement != null)
+                    else
                     {
-                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-                    }
-                }
-                else if (parent is Entity entity)
-                {
-                    var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-                    }
-                }
-                else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
-                {
-                    var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+                        throw new InvalidIdShortPathException(idShortPath);
                     }
                 }
                 else
                 {
-                    throw new Exception($"Parent of type {parent.GetType()} not supported.");
+                    throw new Exception($"IdShort of {idShortObject.GetType} not supported.");
                 }
             }
-            else
-            {
-                if (parent is Submodel submodel)
-                {
-                    var submodelElement = submodel.FindSubmodelElementByIdShort(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return submodelElement;
-                    }
-                }
-                else if (parent is SubmodelElementCollection collection)
-                {
-                    var submodelElement = collection.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return submodelElement;
-                    }
-                }
-                else if (parent is SubmodelElementList list)
-                {
-                    var submodelElement = list.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return submodelElement;
-                    }
-                }
-                else if (parent is Entity entity)
-                {
-                    var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return submodelElement;
-                    }
-                }
-                else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
-                {
-                    var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-                    if (submodelElement != null)
-                    {
-                        return submodelElement;
-                    }
-                }
-                else
-                {
-                    throw new Exception($"Parent of type {parent.GetType()} not supported.");
-                }
-            }
-            return null;
+
+            return output;
         }
 
+        //TODO:jtikekar Remove after testing
+        //private ISubmodelElement GetSubmodelElementByPath(IReferable parent, string idShortPath, out IReferable outParent)
+        //{
+        //    outParent = parent;
+        //    if (idShortPath.Contains('.'))
+        //    {
+        //        string[] idShorts = idShortPath.Split('.', 2);
+        //        if (parent is Submodel submodel)
+        //        {
+        //            var submodelElement = submodel.FindSubmodelElementByIdShort(idShorts[0]);
+        //            if (submodelElement != null)
+        //            {
+        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+        //            }
+        //        }
+        //        else if (parent is SubmodelElementCollection collection)
+        //        {
+        //            var submodelElement = collection.FindFirstIdShortAs<ISubmodelElement>(idShorts[0]);
+        //            if (submodelElement != null)
+        //            {
+        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+        //            }
+        //        }
+        //        else if (parent is SubmodelElementList list)
+        //        {
+        //            var submodelElement = list.FindFirstIdShortAs<ISubmodelElement>(idShorts[0]);
+        //            if (submodelElement != null)
+        //            {
+        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+        //            }
+        //        }
+        //        else if (parent is Entity entity)
+        //        {
+        //            var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+        //            }
+        //        }
+        //        else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
+        //        {
+        //            var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            throw new Exception($"Parent of type {parent.GetType()} not supported.");
+        //        }
+        //    }
+        //    else if (Regex.IsMatch(idShortPath, SML_IdShortPath_Regex))
+        //    {
+        //        return GetSubmodelElementFromSmeListByIdShortPath(parent, idShortPath, out outParent);
+        //    }
+        //    else
+        //    {
+        //        if (parent is Submodel submodel)
+        //        {
+        //            var submodelElement = submodel.FindSubmodelElementByIdShort(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return submodelElement;
+        //            }
+        //        }
+        //        else if (parent is SubmodelElementCollection collection)
+        //        {
+        //            var submodelElement = collection.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return submodelElement;
+        //            }
+        //        }
+        //        else if (parent is SubmodelElementList list)
+        //        {
+        //            var submodelElement = list.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return submodelElement;
+        //            }
+        //        }
+        //        else if (parent is Entity entity)
+        //        {
+        //            var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return submodelElement;
+        //            }
+        //        }
+        //        else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
+        //        {
+        //            var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
+        //            if (submodelElement != null)
+        //            {
+        //                return submodelElement;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            throw new Exception($"Parent of type {parent.GetType()} not supported.");
+        //        }
+        //    }
+        //    return null;
+        //}
 
 
         #endregion

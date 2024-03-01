@@ -1,6 +1,7 @@
 ﻿using DataTransferObjects;
 using DataTransferObjects.CommonDTOs;
 using DataTransferObjects.ValueDTOs;
+using IO.Swagger.Lib.V3.Exceptions;
 using System.Collections.Generic;
 using static AasCore.Aas3_0.Visitation;
 
@@ -56,7 +57,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformCapability(ICapability that)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("ValueOnly", that.GetType().Name);
         }
 
         public IDTO TransformConceptDescription(IConceptDescription that)

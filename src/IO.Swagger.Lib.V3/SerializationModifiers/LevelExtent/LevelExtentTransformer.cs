@@ -100,7 +100,18 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformCapability(ICapability that, LevelExtentModifierContext context)
         {
-            throw new System.NotImplementedException();
+            if (context.IsRoot)
+            {
+                if (context.Extent == ExtentEnum.WithBlobValue)
+                {
+                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+                }
+                if (context.Level == LevelEnum.Core)
+                {
+                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+                }
+            }
+            return Copying.Deep(that);
         }
 
         public override IClass TransformConceptDescription(IConceptDescription that, LevelExtentModifierContext context)
