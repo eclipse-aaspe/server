@@ -87,7 +87,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 }
             }
 
-            return new EntityValue(that.IdShort, statements, that.EntityType, that.GlobalAssetId);
+            return new EntityValue(that.IdShort,  that.EntityType, statements, that.GlobalAssetId);
         }
 
         public IDTO TransformEnvironment(IEnvironment that)
