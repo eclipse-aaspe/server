@@ -112,112 +112,81 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        //TODO:jtikekar Remove after testing
-        //private ISubmodelElement GetSubmodelElementByPath(IReferable parent, string idShortPath, out IReferable outParent)
-        //{
-        //    outParent = parent;
-        //    if (idShortPath.Contains('.'))
-        //    {
-        //        string[] idShorts = idShortPath.Split('.', 2);
-        //        if (parent is Submodel submodel)
-        //        {
-        //            var submodelElement = submodel.FindSubmodelElementByIdShort(idShorts[0]);
-        //            if (submodelElement != null)
-        //            {
-        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-        //            }
-        //        }
-        //        else if (parent is SubmodelElementCollection collection)
-        //        {
-        //            var submodelElement = collection.FindFirstIdShortAs<ISubmodelElement>(idShorts[0]);
-        //            if (submodelElement != null)
-        //            {
-        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-        //            }
-        //        }
-        //        else if (parent is SubmodelElementList list)
-        //        {
-        //            var submodelElement = list.FindFirstIdShortAs<ISubmodelElement>(idShorts[0]);
-        //            if (submodelElement != null)
-        //            {
-        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-        //            }
-        //        }
-        //        else if (parent is Entity entity)
-        //        {
-        //            var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-        //            }
-        //        }
-        //        else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
-        //        {
-        //            var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return GetSubmodelElementByPath(submodelElement, idShorts[1], out outParent);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            throw new Exception($"Parent of type {parent.GetType()} not supported.");
-        //        }
-        //    }
-        //    else if (Regex.IsMatch(idShortPath, SML_IdShortPath_Regex))
-        //    {
-        //        return GetSubmodelElementFromSmeListByIdShortPath(parent, idShortPath, out outParent);
-        //    }
-        //    else
-        //    {
-        //        if (parent is Submodel submodel)
-        //        {
-        //            var submodelElement = submodel.FindSubmodelElementByIdShort(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return submodelElement;
-        //            }
-        //        }
-        //        else if (parent is SubmodelElementCollection collection)
-        //        {
-        //            var submodelElement = collection.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return submodelElement;
-        //            }
-        //        }
-        //        else if (parent is SubmodelElementList list)
-        //        {
-        //            var submodelElement = list.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return submodelElement;
-        //            }
-        //        }
-        //        else if (parent is Entity entity)
-        //        {
-        //            var submodelElement = entity.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return submodelElement;
-        //            }
-        //        }
-        //        else if (parent is AnnotatedRelationshipElement annotatedRelationshipElement)
-        //        {
-        //            var submodelElement = annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShortPath);
-        //            if (submodelElement != null)
-        //            {
-        //                return submodelElement;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            throw new Exception($"Parent of type {parent.GetType()} not supported.");
-        //        }
-        //    }
-        //    return null;
-        //}
+        private ISubmodelElement CreateSubmodelElementByPath(IReferable smeParent, ISubmodelElement newSubmodelElement, bool first)
+        {
+            //Create new SME
+            _logger.LogDebug("Create the new submodel element.");
+            if (smeParent != null && smeParent is Submodel submodel)
+            {
+                submodel.SubmodelElements ??= new List<ISubmodelElement>();
+                if (first)
+                {
+                    submodel.SubmodelElements.Insert(0, newSubmodelElement);
+                }
+                else
+                {
+                    submodel.SubmodelElements.Add(newSubmodelElement);
+                }
+            }
+            else if (smeParent != null && smeParent is SubmodelElementCollection collection)
+            {
+                collection.Value ??= new List<ISubmodelElement>();
+                if (first)
+                {
+                    collection.Value.Insert(0, newSubmodelElement);
+                }
+                else
+                {
+                    collection.Value.Add(newSubmodelElement);
+                }
+            }
+            else if (smeParent != null && smeParent is SubmodelElementList list)
+            {
+                list.Value ??= new List<ISubmodelElement>();
+                if (first)
+                {
+                    list.Value.Insert(0, newSubmodelElement);
+                }
+                else
+                {
+                    list.Value.Add(newSubmodelElement);
+                }
+            }
+            else if (smeParent != null && smeParent is Entity entity)
+            {
+                entity.Statements ??= new List<ISubmodelElement>();
+                if (first)
+                {
+                    entity.Statements.Insert(0, newSubmodelElement);
+                }
+                else
+                {
+                    entity.Statements.Add(newSubmodelElement);
+                }
+            }
+            else if (smeParent != null && smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
+            {
+                annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
+                if (first)
+                {
+                    annotatedRelationshipElement.Annotations.Insert(0, (IDataElement)newSubmodelElement);
+                }
+                else
+                {
+                    annotatedRelationshipElement.Annotations.Add((IDataElement)newSubmodelElement);
+                }
+            }
+            else
+            {
+                throw new Exception($"The submodel element {smeParent.IdShort} does not support child elements.");
+            }
 
+            var timeStamp = DateTime.UtcNow;
+            newSubmodelElement.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp);
+            newSubmodelElement.SetTimeStamp(timeStamp);
+            Program.signalNewData(1);
+            return newSubmodelElement;
+        }
 
         #endregion
 
@@ -449,81 +418,7 @@ namespace AasxServerStandardBib.Services
             
         }
 
-        private ISubmodelElement CreateSubmodelElementByPath(IReferable smeParent, ISubmodelElement newSubmodelElement, bool first)
-        {
-            //Create new SME
-            _logger.LogDebug("Create the new submodel element.");
-            if (smeParent != null && smeParent is Submodel submodel)
-            {
-                submodel.SubmodelElements ??= new List<ISubmodelElement>();
-                if (first)
-                {
-                    submodel.SubmodelElements.Insert(0, newSubmodelElement);
-                }
-                else
-                {
-                    submodel.SubmodelElements.Add(newSubmodelElement);
-                }
-            }
-            else if (smeParent != null && smeParent is SubmodelElementCollection collection)
-            {
-                collection.Value ??= new List<ISubmodelElement>();
-                if (first)
-                {
-                    collection.Value.Insert(0, newSubmodelElement);
-                }
-                else
-                {
-                    collection.Value.Add(newSubmodelElement);
-                }
-            }
-            else if (smeParent != null && smeParent is SubmodelElementList list)
-            {
-                list.Value ??= new List<ISubmodelElement>();
-                if (first)
-                {
-                    list.Value.Insert(0, newSubmodelElement);
-                }
-                else
-                {
-                    list.Value.Add(newSubmodelElement);
-                }
-            }
-            else if (smeParent != null && smeParent is Entity entity)
-            {
-                entity.Statements ??= new List<ISubmodelElement>();
-                if (first)
-                {
-                    entity.Statements.Insert(0, newSubmodelElement);
-                }
-                else
-                {
-                    entity.Statements.Add(newSubmodelElement);
-                }
-            }
-            else if (smeParent != null && smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
-            {
-                annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
-                if (first)
-                {
-                    annotatedRelationshipElement.Annotations.Insert(0, (IDataElement)newSubmodelElement);
-                }
-                else
-                {
-                    annotatedRelationshipElement.Annotations.Add((IDataElement)newSubmodelElement);
-                }
-            }
-            else
-            {
-                throw new Exception($"The submodel element {smeParent.IdShort} does not support child elements.");
-            }
-
-            var timeStamp = DateTime.UtcNow;
-            newSubmodelElement.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp);
-            newSubmodelElement.SetTimeStamp(timeStamp);
-            Program.signalNewData(1);
-            return newSubmodelElement;
-        }
+        
 
         public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
         {
