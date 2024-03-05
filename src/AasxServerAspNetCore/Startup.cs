@@ -73,6 +73,7 @@ internal class Startup
         services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
         services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
         services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
+        services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();

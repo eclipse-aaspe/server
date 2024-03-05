@@ -249,7 +249,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                     statements.Add((ISubmodelElementValue)statement);
                 }
             }
-            return new EntityValue(idShort, statements, (EntityType)Stringification.EntityTypeFromString(entityType), globalAssetId);
+            return new EntityValue(idShort, (EntityType)Stringification.EntityTypeFromString(entityType), statements, globalAssetId);
         }
 
         private IValueDTO CreateReferenceElementValue(string idShort, JsonObject valueObject)
