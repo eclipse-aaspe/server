@@ -174,7 +174,6 @@ namespace AasxServerBlazor.Data
                         var smeItem = new Item();
                         smeItem.envIndex = i;
                         smeItem.Text = s.IdShort;
-                        //smeItem.Type = "In";
                         smeItem.Tag = s;
                         smChilds.Add(smeItem);
                         if (s is SubmodelElementCollection)
@@ -220,7 +219,6 @@ namespace AasxServerBlazor.Data
                         var smeItem = new Item();
                         smeItem.envIndex = i;
                         smeItem.Text = s.IdShort;
-                        smeItem.Type = "In";
                         smeItem.Tag = s;
                         smChilds.Add(smeItem);
                     }
@@ -333,7 +331,6 @@ namespace AasxServerBlazor.Data
                         var smeItem = new Item();
                         smeItem.envIndex = i;
                         smeItem.Text = s.IdShort;
-                        smeItem.Type = "In";
                         smeItem.Tag = s;
                         smChilds.Add(smeItem);
                         if (s is SubmodelElementCollection collection)

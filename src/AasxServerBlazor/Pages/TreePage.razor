@@ -353,13 +353,31 @@
                 if (selectedNode != null && selectedNode.Tag is ISubmodelElement sme)
                 {
                     string path = sme.IdShort;
-                    var p = sme.Parent;
-                    while (!(p is Submodel))
+                    IReferable parent = sme.Parent as IReferable;
+                    while(parent is not Submodel)
                     {
-                        path = (p as ISubmodelElement).IdShort + "." + path;
-                        p = (p as ISubmodelElement).Parent;
+                        if(parent is ISubmodelElementList parentList)
+                        {
+                            if(path.Equals(sme.IdShort)) 
+                            {
+                                var index = parentList.Value?.IndexOf(sme);
+                                path = "[" + index + "]";
+                            }
+                            path = parentList.IdShort + path;
+                        }
+                        else if(parent.Parent is ISubmodelElementList prevParentList)
+                        {
+                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                            path = "[" + index + "]" + "." + path;
+                        }
+                        else
+                        {
+                            path = parent.IdShort + "." + path;
+                        }
+
+                        parent = (IReferable)parent.Parent;
                     }
-                    var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
+                    var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
                     // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
                     path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                     <span style="color:white;background-color:blue;">URL:</span>
@@ -684,9 +702,9 @@
      );
         /*
         await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
-    Convert.ToBase64String(data)
+    "saveAsFile",
+    filename,
+        Convert.ToBase64String(data)
         );
         */
         /*
@@ -1283,43 +1301,37 @@
             {
                 if (split.Length == 2 || split[1].ToLower() == "aasx")
                 {
-                    // return prefix + hostPort + "/server/getfile/" + item.envIndex.ToString() + value;
-                    //return Program.externalRest + "/server/getfile/" + item.envIndex.ToString() + value;   //Old Grapevine implementation
-                    string idShortPath = item.Text;
-                    string submodelId = "", aasId = "";
-                    var currentParentItem = item.parent;
-                    while (currentParentItem != null)
+                    ISubmodelElement sme = item.Tag as ISubmodelElement;
+                    string path = sme.IdShort;
+                    IReferable parent = sme.Parent as IReferable;
+                    while (parent is not Submodel)
                     {
-                        if (currentParentItem is Item parentItem)
+                        if (parent is ISubmodelElementList parentList)
                         {
-                            var parent = parentItem.Tag;
-                            if(parent is IIdentifiable identifiable)
+                            if (path.Equals(sme.IdShort))
                             {
-                                if(parent is Submodel submodel)
-                                {
-                                    submodelId = submodel.Id;
-                                }
-                                else if(parent is AssetAdministrationShell aas)
-                                {
-                                    aasId = aas.Id;
-                                }
+                                var index = parentList.Value?.IndexOf(sme);
+                                path = "[" + index + "]";
                             }
-                            else if(parent is IReferable referable)
-                            {
-                                idShortPath = referable.IdShort + "." + idShortPath;
-                            }
-                            currentParentItem = parentItem.parent;
+                            path = parentList.IdShort + path;
                         }
+                        else if (parent.Parent is ISubmodelElementList prevParentList)
+                        {
+                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                            path = "[" + index + "]" + "." + path;
+                        }
+                        else
+                        {
+                            path = parent.IdShort + "." + path;
+                        }
+
+                        parent = (IReferable)parent.Parent;
                     }
 
                     string currentUrl = NavigationManager.Uri;
-                    // return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
-                    // "/submodel/submodel-elements/" + idShortPath + "/attachment";
-                    return currentUrl + "shells/" + Base64UrlEncoder.Encode(aasId) + "/submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
-                    "/submodel-elements/" + idShortPath + "/attachment";
-                    // return currentUrl + "submodels/"+ Base64UrlEncoder.Encode(submodelId) + 
-                    // "/submodelelements/" + idShortPath + "/attachment";
-
+                    
+                    return currentUrl + "submodels/" + Base64UrlEncoder.Encode((parent as Submodel).Id) +
+                    "/submodel-elements/" + path + "/attachment";
                 }
             }
         }

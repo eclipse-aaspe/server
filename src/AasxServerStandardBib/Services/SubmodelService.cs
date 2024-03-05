@@ -75,9 +75,9 @@ namespace AasxServerStandardBib.Services
                 if (idShortObject is string idShortStr)
                 {
                     output = outParent.FindSubmodelElementByIdShort(idShortStr);
-                    if (output == null)
+                    if(output == null)
                     {
-                        throw new NotFoundException($"Submodel element {idShortStr} not found.");
+                        return null;
                     }
                 }
                 else if (idShortObject is int idShortInt)
@@ -92,9 +92,10 @@ namespace AasxServerStandardBib.Services
                         {
                             throw new InvalidIdShortPathException(smeList.IdShort + "[" + idShortInt + "]");
                         }
+
                         if (output == null)
                         {
-                            throw new NotFoundException($"Submodel element with index {idShortInt} not found in the list {smeList.IdShort}.");
+                            return null;
                         }
                     }
                     else
@@ -435,13 +436,21 @@ namespace AasxServerStandardBib.Services
             _verificationService.VerifyRequestBody(newSubmodelElement);
 
             var newIdShortPath = idShortPath + "." + newSubmodelElement.IdShort;
-            var smeFound = IsSubmodelElementPresent(submodelIdentifier, newIdShortPath, out _, out IReferable smeParent);
+            bool smeFound = IsSubmodelElementPresent(submodelIdentifier, newIdShortPath, out _, out IReferable smeParent);
             if (smeFound)
             {
                 _logger.LogDebug($"Cannot create requested submodel element !!");
                 throw new DuplicateException($"SubmodelElement with idShort {newSubmodelElement.IdShort} already exists at {idShortPath} in the submodel.");
             }
+            else
+            {
+                return CreateSubmodelElementByPath(smeParent, newSubmodelElement, first);
+            }
+            
+        }
 
+        private ISubmodelElement CreateSubmodelElementByPath(IReferable smeParent, ISubmodelElement newSubmodelElement, bool first)
+        {
             //Create new SME
             _logger.LogDebug("Create the new submodel element.");
             if (smeParent != null && smeParent is Submodel submodel)
@@ -506,7 +515,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new Exception($"The submodel element {idShortPath} does not support child elements.");
+                throw new Exception($"The submodel element {smeParent.IdShort} does not support child elements.");
             }
 
             var timeStamp = DateTime.UtcNow;
