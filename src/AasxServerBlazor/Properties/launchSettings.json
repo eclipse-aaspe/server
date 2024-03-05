@@ -10,14 +10,14 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\03_Studium\\01_Bachelor\\04_Abschluss\\01_Studienarbeit(SA)\\01_AASX-Server_AASen\\aasxs_dev\" --external-blazor 127.0.0.1:5001 --with-db",
+      "commandLineArgs": "--no-security --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasxs_refactoring\" --external-blazor http://127.0.0.1:5001 --with-db --start-index 10000",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AASREGISTRY": "https://registry.dpp40-2-v2.industrialdigitaltwin.org",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html"
       },
-      "applicationUrl": "http://localhost:5001",
+      "applicationUrl": "http://127.0.0.1:5001",
       "jsWebView2Debugging": true
     }
   },
