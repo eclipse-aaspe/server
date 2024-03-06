@@ -3,6 +3,7 @@ using AdminShellNS;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using SpookilySharp;
@@ -12,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 // using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using static AasCore.Aas3_0.Visitation;
@@ -597,6 +599,229 @@ namespace AasxServer
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
                         r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
                         result.Add(r);
+                    }
+                }
+                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            }
+
+            return result;
+        }
+
+        public List<SmeResult> SearchSMEsResult(
+            string submodelSemanticId = "",
+            string searchSemanticId = "",
+            string searchIdShort = "",
+            string equal = "",
+            string contains = "",
+            string resultSemanticId = "",
+            string resultIdShort = ""
+            )
+        {
+            List<SmeResult> result = new List<SmeResult>();
+
+            if (searchSemanticId == "" && searchIdShort == "")
+                return result;
+            if (equal == "" && contains == "")
+                return result;
+            if (resultSemanticId == "" && resultIdShort == "")
+                return result;
+
+            bool withI = false;
+            long iEqual = 0;
+            bool withF = false;
+            double fEqual = 0;
+            try
+            {
+                if (equal != "")
+                {
+                    iEqual = Convert.ToInt64(equal);
+                    withI = true;
+                    fEqual = Convert.ToDouble(equal);
+                    withF = true;
+                }
+            }
+            catch { }
+
+            using (AasContext db = new AasContext())
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Console.WriteLine();
+                Console.WriteLine("SearchSMEs");
+                Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                bool withContains = (contains != "");
+                bool withEqual = !withContains && (equal != "");
+
+                var list = db.SValueSets.Where(v =>
+                    (withContains && v.Value.Contains(contains)) ||
+                    (withEqual && v.Value == equal)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            ParentSme = sme.ParentSMENum,
+                            Value = v.Value
+                        }
+                    )
+                    .Where(s =>
+                        (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
+                        (searchIdShort != "" && s.Idshort == searchIdShort)
+                    )
+                    .Join(db.SubmodelSets,
+                        v => v.SubmodelNum,
+                        s => s.SubmodelNum,
+                        (v, s) => new
+                        {
+                            SubmodelNum = s.SubmodelNum,
+                            SemanticId = s.SemanticId,
+                            ParentSme = v.ParentSme,
+                            Value = v.Value
+                        }
+                    )
+                    .Where(s =>
+                        submodelSemanticId == "" || s.SemanticId == submodelSemanticId
+                    )
+                    .ToList();
+
+                list.AddRange(db.IValueSets.Where(v =>
+                    (withEqual && withI && v.Value == iEqual)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            ParentSme = sme.ParentSMENum,
+                            Value = v.Value.ToString()
+                        }
+                    )
+                    .Where(s =>
+                        (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
+                        (searchIdShort != "" && s.Idshort == searchIdShort)
+                    )
+                    .Join(db.SubmodelSets,
+                        v => v.SubmodelNum,
+                        s => s.SubmodelNum,
+                        (v, s) => new
+                        {
+                            SubmodelNum = s.SubmodelNum,
+                            SemanticId = s.SemanticId,
+                            ParentSme = v.ParentSme,
+                            Value = v.Value
+                        }
+                    )
+                    .Where(s =>
+                        submodelSemanticId == "" || s.SemanticId == submodelSemanticId
+                    )
+                    .ToList());
+
+                list.AddRange(db.DValueSets.Where(v =>
+                    (withEqual && withF && v.Value == fEqual)
+                    )
+                    .Join(db.SMESets,
+                        v => v.ParentSMENum,
+                        sme => sme.SMENum,
+                        (v, sme) => new
+                        {
+                            SemanticId = sme.SemanticId,
+                            Idshort = sme.Idshort,
+                            SubmodelNum = sme.SubmodelNum,
+                            ParentSme = sme.ParentSMENum,
+                            Value = v.Value.ToString()
+                        }
+                    )
+                    .Where(s =>
+                        (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
+                        (searchIdShort != "" && s.Idshort == searchIdShort)
+                    )
+                    .Join(db.SubmodelSets,
+                        v => v.SubmodelNum,
+                        s => s.SubmodelNum,
+                        (v, s) => new
+                        {
+                            SubmodelNum = s.SubmodelNum,
+                            SemanticId = s.SemanticId,
+                            ParentSme = v.ParentSme,
+                            Value = v.Value
+                        }
+                    )
+                    .Where(s =>
+                        submodelSemanticId == "" || s.SemanticId == submodelSemanticId
+                    )
+                    .ToList());
+
+                Console.WriteLine("Found " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+
+                var hSubmodel = new HashSet<long>();
+                var lParentParentNum = new List<long>();
+                var lValue = new List<string>();
+                foreach (var l in list)
+                {
+                    hSubmodel.Add(l.SubmodelNum);
+                    var smeDB = db.SMESets.Where(s => s.SMENum == l.ParentSme).First();
+                    lParentParentNum.Add(smeDB.ParentSMENum);
+                    lValue.Add(l.Value);
+                }
+
+                Console.WriteLine("Found " + hSubmodel.Count() + " Submodels");
+
+                watch.Restart();
+
+                var smeResult = db.SMESets.Where(s =>
+                    hSubmodel.Contains(s.SubmodelNum) &&
+                    ((resultSemanticId != "" && s.SemanticId == resultSemanticId) ||
+                    (resultIdShort != "" && s.Idshort == resultIdShort))
+                    )
+                    .ToList();
+
+                if (equal == "")
+                    equal = contains;
+
+                foreach (var l in smeResult)
+                {
+                    SmeResult r = new SmeResult();
+                    bool found = false;
+
+                    var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
+                    if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
+                    {
+                        r.value = equal;
+                        r.url = "";
+                        r.submodelId = submodelDB.SubmodelId;
+                        string path = l.Idshort;
+                        long pnum = l.ParentSMENum;
+                        while (pnum != 0)
+                        {
+                            var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
+                            path = smeDB.Idshort + "." + path;
+                            pnum = smeDB.ParentSMENum;
+                            int i = lParentParentNum.IndexOf(pnum);
+                            if (i != -1)
+                            {
+                                found = true;
+                                if (l.SMEType == "F")
+                                {
+                                    var v = db.SValueSets.Where(v => v.ParentSMENum == l.SMENum).FirstOrDefault();
+                                    if (v.Value.ToLower().StartsWith("http"))
+                                        r.url = v.Value;
+                                }
+                            }
+                        }
+                        r.idShortPath = path;
+                        string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                        if (r.url == "")
+                            r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path + "/attachment";
+                        if (found)
+                            result.Add(r);
                     }
                 }
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
