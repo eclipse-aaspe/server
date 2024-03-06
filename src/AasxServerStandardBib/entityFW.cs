@@ -763,13 +763,11 @@ namespace AasxServer
 
                 var hSubmodel = new HashSet<long>();
                 var lParentParentNum = new List<long>();
-                var lValue = new List<string>();
                 foreach (var l in list)
                 {
                     hSubmodel.Add(l.SubmodelNum);
                     var smeDB = db.SMESets.Where(s => s.SMENum == l.ParentSme).First();
                     lParentParentNum.Add(smeDB.ParentSMENum);
-                    lValue.Add(l.Value);
                 }
 
                 Console.WriteLine("Found " + hSubmodel.Count() + " Submodels");
@@ -804,8 +802,7 @@ namespace AasxServer
                             var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
                             path = smeDB.Idshort + "." + path;
                             pnum = smeDB.ParentSMENum;
-                            int i = lParentParentNum.IndexOf(pnum);
-                            if (i != -1)
+                            if (lParentParentNum.Contains(pnum))
                             {
                                 found = true;
                                 if (l.SMEType == "F")
