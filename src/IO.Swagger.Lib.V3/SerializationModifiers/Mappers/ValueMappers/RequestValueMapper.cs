@@ -105,7 +105,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 value = new List<ISubmodelElement>();
                 foreach (var element in valueDTO.value)
                 {
-                    value.Add((IDataElement)Map(element));
+                    value.Add((ISubmodelElement)Map(element));
                 }
             }
 

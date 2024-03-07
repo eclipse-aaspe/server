@@ -1,4 +1,4 @@
 ﻿namespace DataTransferObjects.ValueDTOs
 {
-    public record class SubmodelElementListValue(string idShort, List<ISubmodelElementValue> value) : ISubmodelElementValue;
+    public record class SubmodelElementListValue(string idShort, List<ISubmodelElementValue>? value = null) : ISubmodelElementValue;
 }

@@ -1,4 +1,4 @@
-﻿using AasOpcUaServer;
+using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
 //using AasxServerStandardBib.Migrations;
