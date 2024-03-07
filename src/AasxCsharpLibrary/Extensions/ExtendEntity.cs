@@ -82,7 +82,7 @@ namespace Extensions
             return entity;
         }
 
-        public static T FindFirstIdShortAs<T>(this Entity entity, string idShort) where T : ISubmodelElement
+        public static T FindFirstIdShortAs<T>(this IEntity entity, string idShort) where T : ISubmodelElement
         {
 
             var submodelElements = entity.Statements.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));

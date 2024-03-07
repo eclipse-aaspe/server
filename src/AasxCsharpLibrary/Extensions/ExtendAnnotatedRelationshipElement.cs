@@ -73,7 +73,7 @@ namespace Extensions
             return annotatedRelationshipElement;
         }
 
-        public static T FindFirstIdShortAs<T>(this AnnotatedRelationshipElement annotedRelationshipElement, string idShort) where T : ISubmodelElement
+        public static T FindFirstIdShortAs<T>(this IAnnotatedRelationshipElement annotedRelationshipElement, string idShort) where T : ISubmodelElement
         {
             if (annotedRelationshipElement.Annotations.IsNullOrEmpty())
             {

@@ -1569,7 +1569,7 @@ namespace IO.Swagger.Controllers
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-            _logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+            _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
             if (!Program.noSecurity)
             {
                 var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
