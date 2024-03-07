@@ -2,5 +2,5 @@
 
 namespace DataTransferObjects.ValueDTOs
 {
-    public record class EntityValue(string idShort, List<ISubmodelElementValue> statements, EntityType entityType, string globalAssetId) : ISubmodelElementValue;
+    public record class EntityValue(string idShort, EntityType entityType, List<ISubmodelElementValue>? statements = null, string? globalAssetId = null) : ISubmodelElementValue;
 }

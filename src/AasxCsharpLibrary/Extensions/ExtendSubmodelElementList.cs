@@ -68,7 +68,7 @@ namespace Extensions
         }
 
         #endregion
-        public static T FindFirstIdShortAs<T>(this SubmodelElementList submodelElementList, string idShort) where T : ISubmodelElement
+        public static T FindFirstIdShortAs<T>(this ISubmodelElementList submodelElementList, string idShort) where T : ISubmodelElement
         {
 
             var submodelElements = submodelElementList.Value.Where(sme => sme != null && sme is T && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));
