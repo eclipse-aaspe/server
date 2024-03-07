@@ -4,12 +4,12 @@ using Microsoft.Extensions.Configuration;
 using AdminShellNS;
 
 // Initial Migration
-// Add-Migration InitialCreate -Context SqliteAasContextTest -OutputDir Migrations\Sqlite
-// Add-Migration InitialCreate -Context PostgreAasContextTest -OutputDir Migrations\Postgres
+// Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
+// Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
 
 namespace AasxServerDB
 {
-    public class AasContextTest : DbContext
+    public class AasContext : DbContext
     {
         // --------------- Database Schema ---------------
         public DbSet<DbConfigSet> DbConfigSets { get; set; }
@@ -140,7 +140,7 @@ namespace AasxServerDB
                     {
                         if (aasId != null && aasId != "" && assetId != null && assetId != "")
                         {
-                            VisitorAASXTest.LoadAASInDB(this, aas, aasxNum, asp, dbConfig);
+                            VisitorAASX.LoadAASInDB(this, aas, aasxNum, asp, dbConfig);
                         }
                     }
                     SaveChanges();
@@ -230,7 +230,7 @@ namespace AasxServerDB
         }
     }
 
-    public class SqliteAasContextTest : AasContextTest
+    public class SqliteAasContext : AasContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -248,7 +248,7 @@ namespace AasxServerDB
         }
     }
 
-    public class PostgreAasContextTest : AasContextTest
+    public class PostgreAasContext : AasContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -326,7 +326,7 @@ namespace AasxServerDB
 
         public string getValue()
         {
-            using (AasContextTest db = new AasContextTest())
+            using (AasContext db = new AasContext())
             {
                 switch (ValueType)
                 {
@@ -378,7 +378,7 @@ namespace AasxServerDB
             long first = smeNums.First();
             long last = smeNums.Last();
             List<StringValue> valueList = null;
-            using (AasContextTest db = new AasContextTest())
+            using (AasContext db = new AasContext())
             {
                 /* Syntax korrekt, kann aber nicht übersetzt werden
                 valueList = db.SValueSets

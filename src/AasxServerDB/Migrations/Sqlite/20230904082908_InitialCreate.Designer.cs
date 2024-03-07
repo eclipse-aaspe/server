@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AasxServerStandardBib.Migrations.Sqlite
 {
-    [DbContext(typeof(SqliteAasContextTest))]
+    [DbContext(typeof(SqliteAasContext))]
     [Migration("20230904082908_InitialCreate")]
     partial class InitialCreate
     {

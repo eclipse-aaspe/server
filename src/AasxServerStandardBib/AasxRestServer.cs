@@ -2,6 +2,7 @@
 
 using AasCore.Aas3_0;
 using AasxMqttClient;
+using AasxServerDB;
 using AasxServer;
 using AdminShellEvents;
 using AdminShellNS;

@@ -3,6 +3,7 @@
     zur Foerderung der angewandten Forschung e.V.
  */
 using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;

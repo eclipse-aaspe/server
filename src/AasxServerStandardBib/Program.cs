@@ -1030,7 +1030,7 @@ namespace AasxServer
                     {
                         db.Database.Migrate();
                     }*/
-                    using (SqliteAasContextTest db = new SqliteAasContextTest())
+                    using (SqliteAasContext db = new SqliteAasContext())
                     {
                         db.setPath(AasxHttpContextHelper.DataPath);
                         db.Database.Migrate();
@@ -1060,45 +1060,11 @@ namespace AasxServer
                 }
                 */
 
-                // ----- TEST -----
-                using (AasContextTest db = new AasContextTest())
+                using (AasContext db = new AasContext())
                 {
                     db.setPath(AasxHttpContextHelper.DataPath);
                     db.clearDB();
                 }
-
-                /*using (AasContext db = new AasContext())
-                {
-                    int count = 0;
-                    var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-
-                    DbConfigSet dbConfig = null;
-                    dbConfig = new DbConfigSet
-                    {
-                        Id = 1,
-                        AasCount = 0,
-                        SubmodelCount = 0,
-                        AASXCount = 0,
-                        SMECount = 0
-                    };
-                    db.Add(dbConfig);
-                    db.SaveChanges();
-                }*/
             }
 
             string[] fileNames = null;
@@ -1182,7 +1148,7 @@ namespace AasxServer
                             }
                             else
                             {
-                                using (AasContextTest db = new AasContextTest())
+                                using (AasContext db = new AasContext())
                                 {
                                     db.setPath(AasxHttpContextHelper.DataPath);
                                     db.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
@@ -1190,125 +1156,6 @@ namespace AasxServer
 
                                 envFileName[envi] = null;
                                 env[envi] = null;
-
-                                /*using (var asp = new AdminShellPackageEnv(fn, false, true))
-                                {
-                                    if (!createFilesOnly)
-                                    {
-                                        using (AasContext db = new AasContext())
-                                        {
-                                            var configDBList = db.DbConfigSets.Where(d => true);
-                                            var dbConfig = configDBList.FirstOrDefault();
-
-                                            long aasxNum = ++dbConfig.AASXCount;
-                                            var aasxDB = new AASXSet
-                                            {
-                                                AASXNum = aasxNum,
-                                                AASX = fn
-                                            };
-                                            db.Add(aasxDB);
-
-                                            var aas = asp.AasEnv.AssetAdministrationShells[0];
-                                            var aasId = aas.Id;
-                                            var assetId = aas.AssetInformation.GlobalAssetId;
-
-                                            // Check security
-                                            if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                                            {
-                                                // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                                                // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                                            }
-                                            else
-                                            {
-                                                if (aasId != null && aasId != "" && assetId != null && assetId != "")
-                                                {
-                                                    VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
-                                                }
-                                            }
-                                            db.SaveChanges();
-                                            /*
-                                            Task t = db.SaveChangesAsync();
-                                            if (saveTasks.Count == maxTasks)
-                                            {
-                                                // search for completed task
-                                                int i = 0;
-                                                while (!saveTasks[i].IsCompleted && i < maxTasks)
-                                                {
-                                                    i++;
-                                                }
-                                                if (i < maxTasks)
-                                                {
-                                                    taskIndex = i;
-                                                }
-                                                else
-                                                {
-                                                    await saveTasks[taskIndex];
-                                                }
-                                            }
-                                            if (taskIndex <= saveTasks.Count)
-                                            {
-                                                saveTasks.Add(t);
-                                            }
-                                            else
-                                            {
-                                                saveTasks[taskIndex] = t;
-                                            }
-                                            taskIndex++;
-                                            if (taskIndex >= maxTasks)
-                                                taskIndex = 0;
-                                            *//*
-                                        }
-                                    }
-
-                                    if (withDbFiles)
-                                    {
-                                        try
-                                        {
-                                            string fcopyt = name + "__thumbnail";
-                                            fcopyt = fcopyt.Replace("/", "_");
-                                            fcopyt = fcopyt.Replace(".", "_");
-                                            Uri dummy = null;
-                                            using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
-                                            {
-                                                Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                if (st != null)
-                                                {
-                                                    st.CopyTo(fst);
-                                                }
-                                            }
-                                        }
-                                        catch { }
-
-                                        using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                                        {
-                                            var files = asp.GetListOfSupplementaryFiles();
-                                            foreach (var f in files)
-                                            {
-                                                try
-                                                {
-                                                    // string fcopy = name + "__" + f.Uri.OriginalString;
-                                                    // fcopy = fcopy.Replace("/", "_");
-                                                    // fcopy = fcopy.Replace(".", "_");
-                                                    using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                                    {
-                                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                                        Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                                        using (var archiveStream = archiveFile.Open())
-                                                        {
-                                                            // Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                                            // var fs = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                                            s.CopyTo(archiveStream);
-                                                        }
-                                                    }
-                                                }
-                                                catch { }
-                                            }
-                                        }
-                                    }
-                                }*/
                             }
 
                             // check if signed
@@ -1591,7 +1438,6 @@ namespace AasxServer
             }
 
             AasContext._con = con;
-            AasContextTest._con = con;
             if (con != null)
             {
                 if (con["DatabaseConnection:ConnectionString"] != null)

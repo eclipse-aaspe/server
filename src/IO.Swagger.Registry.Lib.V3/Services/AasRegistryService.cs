@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using static AasxServer.Program;
+using AasxServerDB;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {

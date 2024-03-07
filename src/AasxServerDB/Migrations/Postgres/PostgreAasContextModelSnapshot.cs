@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace AasxServerStandardBib.Migrations.Postgres
 {
-    [DbContext(typeof(PostgreAasContextTest))]
+    [DbContext(typeof(PostgreAasContext))]
     partial class PostgreAasContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

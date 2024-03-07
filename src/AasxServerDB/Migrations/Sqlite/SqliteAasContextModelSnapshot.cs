@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AasxServerStandardBib.Migrations.Sqlite
 {
-    [DbContext(typeof(SqliteAasContextTest))]
+    [DbContext(typeof(SqliteAasContext))]
     partial class SqliteAasContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

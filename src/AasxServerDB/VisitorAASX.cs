@@ -6,14 +6,14 @@ using Extensions;
 
 namespace AasxServerDB
 {
-    public class VisitorAASXTest : VisitorThrough
+    public class VisitorAASX : VisitorThrough
     {
-        AasContextTest _db = null;
+        AasContext _db = null;
         DbConfigSet _dbConfig = null;
         long _smNum = 0;
         List<long> _parentNum = null;
 
-        public VisitorAASXTest(AasContextTest db, DbConfigSet dbConfigSet, long smNum)
+        public VisitorAASX(AasContext db, DbConfigSet dbConfigSet, long smNum)
         {
             _db = db;
             _dbConfig = dbConfigSet;
@@ -21,13 +21,13 @@ namespace AasxServerDB
             _parentNum = new List<long>();
         }
 
-        public static void LoadAASInDB(AasContextTest db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp)
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp)
         {
             var dbConfig = db.DbConfigSets.FirstOrDefault();
             LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
         }
 
-        public static void LoadAASInDB(AasContextTest db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DbConfigSet dbConfig)
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DbConfigSet dbConfig)
         {
 
             long aasNum = ++dbConfig.AasCount;
@@ -67,7 +67,7 @@ namespace AasxServerDB
                         };
                         db.Add(submodelDB);
 
-                        VisitorAASXTest v = new VisitorAASXTest(db, dbConfig, submodelNum);
+                        VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
                         v.Visit(sm);
                     }
                 }
