@@ -186,6 +186,7 @@ namespace AasxServer
             }
         }
     }
+
     public class DbConfigSet
     {
         public int Id { get; set; }

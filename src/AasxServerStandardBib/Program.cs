@@ -1,5 +1,6 @@
 using AasOpcUaServer;
 using AasxMqttServer;
+using AasxServerDB;
 using AasxRestServerLibrary;
 //using AasxServerStandardBib.Migrations;
 using AdminShellNS;
@@ -1010,7 +1011,6 @@ namespace AasxServer
                 createFilesOnly = true;
 
             int envi = 0;
-            int count = 0;
 
             // Migrate always
             if (withDb)
@@ -1026,8 +1026,13 @@ namespace AasxServer
                 else
                 {
                     Console.WriteLine("Use SQLITE");
-                    using (SqliteAasContext db = new SqliteAasContext())
+                    /*using (SqliteAasContext db = new SqliteAasContext())
                     {
+                        db.Database.Migrate();
+                    }*/
+                    using (SqliteAasContextTest db = new SqliteAasContextTest())
+                    {
+                        db.setPath(AasxHttpContextHelper.DataPath);
                         db.Database.Migrate();
                     }
                 }
@@ -1055,8 +1060,16 @@ namespace AasxServer
                 }
                 */
 
-                using (AasContext db = new AasContext())
+                // ----- TEST -----
+                using (AasContextTest db = new AasContextTest())
                 {
+                    db.setPath(AasxHttpContextHelper.DataPath);
+                    db.clearDB();
+                }
+
+                /*using (AasContext db = new AasContext())
+                {
+                    int count = 0;
                     var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
                     task.Wait();
                     task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
@@ -1085,7 +1098,7 @@ namespace AasxServer
                     };
                     db.Add(dbConfig);
                     db.SaveChanges();
-                }
+                }*/
             }
 
             string[] fileNames = null;
@@ -1169,10 +1182,16 @@ namespace AasxServer
                             }
                             else
                             {
+                                using (AasContextTest db = new AasContextTest())
+                                {
+                                    db.setPath(AasxHttpContextHelper.DataPath);
+                                    db.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
+                                }
+
                                 envFileName[envi] = null;
                                 env[envi] = null;
 
-                                using (var asp = new AdminShellPackageEnv(fn, false, true))
+                                /*using (var asp = new AdminShellPackageEnv(fn, false, true))
                                 {
                                     if (!createFilesOnly)
                                     {
@@ -1237,7 +1256,7 @@ namespace AasxServer
                                             taskIndex++;
                                             if (taskIndex >= maxTasks)
                                                 taskIndex = 0;
-                                            */
+                                            *//*
                                         }
                                     }
 
@@ -1289,7 +1308,7 @@ namespace AasxServer
                                             }
                                         }
                                     }
-                                }
+                                }*/
                             }
 
                             // check if signed
@@ -1572,6 +1591,7 @@ namespace AasxServer
             }
 
             AasContext._con = con;
+            AasContextTest._con = con;
             if (con != null)
             {
                 if (con["DatabaseConnection:ConnectionString"] != null)
