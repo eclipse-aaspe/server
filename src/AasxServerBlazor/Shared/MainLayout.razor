@@ -152,6 +152,11 @@
                                                 edit = !edit;
                                                 AasxServer.Program.signalNewData(2);
                                             }
+                                            else if (CurrentValue == "weight")
+                                            {
+                                                AasxServer.Program.showWeight = !AasxServer.Program.showWeight;
+                                                AasxServer.Program.signalNewData(2);
+                                            }
                                             else if (CurrentValue == "count=0")
                                             {
                                                 AasxServer.Program.submodelAPIcount = 0;

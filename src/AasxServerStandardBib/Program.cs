@@ -686,6 +686,8 @@ namespace AasxServer
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
+
+        public static bool showWeight = false;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
