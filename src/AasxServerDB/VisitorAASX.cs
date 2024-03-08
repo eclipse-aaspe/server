@@ -467,6 +467,5 @@ namespace AasxServerDB
             IDataSpecificationIec61360 that
         )
         { }
-
     }
 }

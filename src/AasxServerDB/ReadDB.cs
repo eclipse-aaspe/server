@@ -120,33 +120,6 @@ namespace AasxServerDB
                 {
                     loadSME(submodel, nextSME, smel.SMEType, SMEList, smel.SMENum);
                 }
-
-                /*
-                if (sme is RelationshipElement)
-                    return "RE";
-                if (sme is SubmodelElementList)
-                    return "SEL";
-                if (sme is SubmodelElementCollection)
-                    return "SEC";
-                if (sme is MultiLanguageProperty)
-                    return "MLP";
-                if (sme is ReferenceElement)
-                    return ("RE");
-                if (sme is AasCore.Aas3_0_RC02.Range)
-                    return "R";
-                if (sme is Blob)
-                    return "B";
-                if (sme is File)
-                    return "F";
-                if (sme is AnnotatedRelationshipElement)
-                    return "ARE";
-                if (sme is Entity)
-                    return "E";
-                if (sme is Operation)
-                    return "O";
-                if (sme is Capability)
-                    return "C";
-                */
             }
         }
     }

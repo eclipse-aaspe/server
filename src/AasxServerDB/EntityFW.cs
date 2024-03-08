@@ -2,15 +2,29 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using AdminShellNS;
+using AasCore.Aas3_0;
+using Extensions;
 
-// Initial Migration
-// Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
-// Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
+/*
+ * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
+ * 
+ * Initial Migration
+ * Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
+ * Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
+ * 
+ * Change database
+ * Add-Migration XXX -Context SqliteAasContext
+ * Add-Migration XXX -Context PostgreAasContext
+ * Update-Database -Context SqliteAasContext
+ * Update-Database -Context PostgreAasContext
+ */
 
 namespace AasxServerDB
 {
     public class AasContext : DbContext
     {
+        public static IConfiguration _con { get; set; }
+
         // --------------- Database Schema ---------------
         public DbSet<DbConfigSet> DbConfigSets { get; set; }
         public DbSet<AASXSet> AASXSets { get; set; }
@@ -21,16 +35,13 @@ namespace AasxServerDB
         public DbSet<IntValue> IValueSets { get; set; }
         public DbSet<DoubleValue> DValueSets { get; set; }
 
-        public static IConfiguration _con { get; set; }
-
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            string connectionString = "";
             if (_con == null)
             {
                 throw new Exception("No Configuration!");
             }
-            connectionString = _con["DatabaseConnection:ConnectionString"];
+            string connectionString = _con["DatabaseConnection:ConnectionString"];
             if (connectionString != null)
             {
                 if (connectionString.Contains("$DATAPATH"))
@@ -38,8 +49,8 @@ namespace AasxServerDB
                 if (connectionString.ToLower().Contains("host")) // Postgres
                 {
                     string[] Params = connectionString.Split(";");
-                    string dbPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
-                    string dbUser = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string dbPassword = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string dbUser = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
                     for (int i = 0; i < Params.Length; i++)
                     {
                         if (Params[i].Contains("Username") && dbUser != null)
@@ -51,12 +62,12 @@ namespace AasxServerDB
                             Params[i] = "Password=" + dbPassword;
                         }
                     }
-                    /*Program.isPostgres = true;*/
+                    GlobalDB.IsPostgres = true;
                     options.UseNpgsql(connectionString);
                 }
                 else // SQLite
                 {
-                    /*Program.isPostgres = false;*/
+                    GlobalDB.IsPostgres = false;
                     options.UseSqlite(connectionString);
                 }
             }
@@ -218,6 +229,65 @@ namespace AasxServerDB
                 }
             }
         }
+
+        public string getAASXPath(string aasId = "", string submodelId = "")
+        {
+            long aasxNum = 0;
+            if (!submodelId.Equals(""))
+            { 
+                var submodelDBList = SubmodelSets.Where(s => s.SubmodelId == submodelId);
+                if (submodelDBList.Count() > 0)
+                {
+                    var submodelDB = submodelDBList.First();
+                    aasxNum = submodelDB.AASXNum;
+                }
+            }
+            if (!aasId.Equals(""))
+            {
+                var aasDBList = AasSets.Where(a => a.AasId == aasId);
+                if (aasDBList.Any())
+                {
+                    var aasDB = aasDBList.First();
+                    aasxNum = aasDB.AASXNum;
+                }
+            }
+            if (aasxNum == 0 )
+                return null;
+            var aasxDBList = AASXSets.Where(a => a.AASXNum == aasxNum);
+            if (!aasxDBList.Any())
+                return null;
+            var aasxDB = aasxDBList.First();
+            return aasxDB.AASX;
+        }
+
+        public AdminShellPackageEnv AASXToPackageEnv(string path, AasSet aasDB)
+        {
+            if (path == null || path.Equals("") || aasDB == null)
+                return null;
+
+            AssetAdministrationShell aas = new AssetAdministrationShell(
+                id: aasDB.AasId,
+                idShort: aasDB.Idshort,
+                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId),
+                submodels: new List<AasCore.Aas3_0.IReference>());
+
+            AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
+            aasEnv.SetFilename(path);
+            aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
+
+            var submodelDBList = SubmodelSets
+                .OrderBy(sm => sm.SubmodelNum)
+                .Where(sm => sm.AasNum == aasDB.AasNum)
+                .ToList();
+            foreach (var submodelDB in submodelDBList)
+            {
+                var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
+                aas.Submodels.Add(sm.GetReference());
+                aasEnv.AasEnv.Submodels.Add(sm);
+            }
+
+            return aasEnv;
+        }
     }
 
     public class SqliteAasContext : AasContext
@@ -231,7 +301,7 @@ namespace AasxServerDB
             else
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
-                if (connectionString.Contains("$DATAPATH"))
+                if (connectionString != null && connectionString.Contains("$DATAPATH"))
                     connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
                 options.UseSqlite(connectionString);
             }
@@ -249,7 +319,7 @@ namespace AasxServerDB
             else
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
-                if (connectionString.Contains("$DATAPATH"))
+                if (connectionString != null && connectionString.Contains("$DATAPATH"))
                     connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
                 options.UseNpgsql(connectionString);
             }
@@ -258,14 +328,13 @@ namespace AasxServerDB
 
 
 
-
     // --------------- Database Schema ---------------
     public class DbConfigSet
     {
         public int Id { get; set; }
+        public long AASXCount { get; set; }
         public long AasCount { get; set; }
         public long SubmodelCount { get; set; }
-        public long AASXCount { get; set; }
         public long SMECount { get; set; }
     }
 
@@ -343,7 +412,7 @@ namespace AasxServerDB
         public List<string> getMLPValue()
         {
             var list = new List<String>();
-            /*if (SMEType == "MLP")
+            if (SMEType == "MLP")
             {
                 using (AasContext db = new AasContext())
                 {
@@ -357,8 +426,7 @@ namespace AasxServerDB
                     }
                     return list;
                 }
-            }*/
-
+            }
             return new List<string>();
         }
 
@@ -370,23 +438,13 @@ namespace AasxServerDB
             List<StringValue> valueList = null;
             using (AasContext db = new AasContext())
             {
-                /* Syntax korrekt, kann aber nicht übersetzt werden
-                valueList = db.SValueSets
-                    .Union(db.IValueSets.Select(v => v.asStringValue()))
-                    .Union(db.DValueSets.Select(v => v.asStringValue()))
-                    .Where(v => smeNums.Contains(v.ParentSMENum))
-                    .OrderBy(v => v.ParentSMENum)
-                    .ToList();
-                */
-
-                // SValue, IValue, DValue Tabellen zusammenführen
-                var watch2 = System.Diagnostics.Stopwatch.StartNew();
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM IValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM DValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last)
                     .Where(v => smeNums.Contains(v.ParentSMENum))
                     .OrderBy(v => v.ParentSMENum)
                     .ToList();
-                watch2.Stop();
-                Console.WriteLine("It took this time: " + watch2.ElapsedMilliseconds);
+                watch.Stop();
+                Console.WriteLine("Getting the value list took this time: " + watch.ElapsedMilliseconds);
             }
             return valueList;
         }

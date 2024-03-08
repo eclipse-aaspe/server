@@ -27,5 +27,18 @@
                 _externalBlazor = value;
             }
         }
+
+        private static bool _isPostgres = false;
+        public static bool IsPostgres
+        {
+            get
+            {
+                return _isPostgres;
+            }
+            set
+            {
+                _isPostgres = value;
+            }
+        }
     }
 }

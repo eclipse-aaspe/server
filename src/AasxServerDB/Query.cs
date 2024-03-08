@@ -1,27 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AdminShellNS;
-using Extensions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
-using System;
-using System.Collections.Generic;
-using System.Collections;
-using System.ComponentModel;
+﻿using Extensions;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.IdentityModel.Tokens;
-using static AasCore.Aas3_0.Visitation;
 
 namespace AasxServerDB
 {
+    // --------------- Result Schema ---------------
     public class SubmodelResult
     {
         public string submodelId { get; set; }
@@ -34,6 +17,8 @@ namespace AasxServerDB
         public string value { get; set; }
         public string url { get; set; }
     }
+
+    // --------------- Query ---------------
     public class Query
     {
         public List<SubmodelResult> SearchSubmodels(string semanticId)
@@ -119,7 +104,6 @@ namespace AasxServerDB
                     return false;
                 }
             }
-            
             return false;
         }
 
@@ -258,7 +242,6 @@ namespace AasxServerDB
                 }
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
-            
             return result;
         }
 

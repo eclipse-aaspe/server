@@ -319,86 +319,57 @@ namespace AasxServer
                     oldest = envimin;
             }
 
-            using (AasContext db = new AasContext())
+            lock (Program.changeAasxFile)
             {
-                var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
-                if (aasDBList.Any())
+                using (AasContext db = new AasContext())
                 {
-                    lock (Program.changeAasxFile)
+                    envFileName[i] = db.getAASXPath(aasId: aasIdentifier);
+                    if (envFileName[i] == null)
+                        return false;
+                    
+                    if (env[i] != null)
                     {
-                        if (env[i] != null)
+                        Console.WriteLine("UNLOAD: " + envFileName[i]);
+                        if (env[i].getWrite())
                         {
-                            Console.WriteLine("UNLOAD: " + envFileName[i]);
-                            if (env[i].getWrite())
-                            {
-                                saveEnv(i);
-                                env[i].setWrite(false);
-                            }
-                            env[i].Close();
+                            saveEnv(i);
+                            env[i].setWrite(false);
                         }
-
-                        var aasDB = aasDBList.First();
-                        long aasxNum = aasDB.AASXNum;
-                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                        var aasxDB = aasxDBList.First();
-                        string fn = aasxDB.AASX;
-                        envFileName[i] = fn;
-
-                        if (!withDbFiles)
-                        {
-                            Console.WriteLine("LOAD: " + fn);
-                            env[i] = new AdminShellPackageEnv(fn);
-
-                            DateTime timeStamp = DateTime.Now;
-                            var a = env[i].AasEnv.AssetAdministrationShells[0];
-                            a.TimeStampCreate = timeStamp;
-                            a.SetTimeStamp(timeStamp);
-                            foreach (var submodel in env[i].AasEnv.Submodels)
-                            {
-                                submodel.TimeStampCreate = timeStamp;
-                                submodel.SetTimeStamp(timeStamp);
-                                submodel.SetAllParents(timeStamp);
-                            }
-                            output = a;
-                        }
-                        else
-                        {
-                            Console.WriteLine("LOAD: " + aasDB.Idshort);
-                            env[i] = new AdminShellPackageEnv();
-                            env[i].SetFilename(fn);
-
-                            AssetAdministrationShell aas = new AssetAdministrationShell(
-                                id: aasDB.AasId,
-                                idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) }) */
-                                );
-                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
-
-                            var submodelDBList = db.SubmodelSets
-                                .OrderBy(sm => sm.SubmodelNum)
-                                .Where(sm => sm.AasNum == aasDB.AasNum)
-                                .ToList();
-
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
-                            foreach (var submodelDB in submodelDBList)
-                            {
-                                var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
-                                aas.Submodels.Add(sm.GetReference());
-                                env[i].AasEnv.Submodels.Add(sm);
-                            }
-                            output = aas;
-                        }
-
-                        packageIndex = i;
-                        Program.signalNewData(2);
-                        return true;
+                        env[i].Close();
                     }
+
+
+                    if (!withDbFiles)
+                    {
+                        Console.WriteLine("LOAD: " + envFileName[i]);
+                        env[i] = new AdminShellPackageEnv(envFileName[i]);
+
+                        DateTime timeStamp = DateTime.Now;
+                        var a = env[i].AasEnv.AssetAdministrationShells[0];
+                        a.TimeStampCreate = timeStamp;
+                        a.SetTimeStamp(timeStamp);
+                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        {
+                            submodel.TimeStampCreate = timeStamp;
+                            submodel.SetTimeStamp(timeStamp);
+                            submodel.SetAllParents(timeStamp);
+                        }
+                        output = a;
+                    }
+                    else
+                    {
+                        Console.WriteLine("LOAD: " + aasIdentifier);
+                        var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
+                        var aasDB = aasDBList.First();
+                        env[i] = db.AASXToPackageEnv(envFileName[i], aasDB);
+                        output = env[i].AasEnv.AssetAdministrationShells[0];
+                    }
+
+                    packageIndex = i;
+                    Program.signalNewData(2);
+                    return true;
                 }
             }
-
-            return false;
         }
 
         public static bool loadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
@@ -433,96 +404,70 @@ namespace AasxServer
                     oldest = envimin;
             }
 
-            using (AasContext db = new AasContext())
+            lock (Program.changeAasxFile)
             {
-                var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
-                if (submodelDBList.Any())
+                using (AasContext db = new AasContext())
                 {
-                    lock (Program.changeAasxFile)
+                    envFileName[i] = db.getAASXPath(submodelId: submodelIdentifier);
+                    if (envFileName[i] == null)
+                        return false;
+
+                
+                    if (env[i] != null)
                     {
-                        if (env[i] != null)
+                        Console.WriteLine("UNLOAD: " + envFileName[i]);
+                        if (env[i].getWrite())
                         {
-                            Console.WriteLine("UNLOAD: " + envFileName[i]);
-                            if (env[i].getWrite())
-                            {
-                                saveEnv(i);
-                                env[i].setWrite(false);
-                            }
-                            env[i].Close();
+                            saveEnv(i);
+                            env[i].setWrite(false);
                         }
-
-                        var submodelDB = submodelDBList.First();
-                        long aasxNum = submodelDB.AASXNum;
-                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                        var aasxDB = aasxDBList.First();
-                        string fn = aasxDB.AASX;
-                        envFileName[i] = fn;
-
-                        if (!withDbFiles)
-                        {
-                            Console.WriteLine("LOAD: " + fn);
-                            env[i] = new AdminShellPackageEnv(fn);
-
-                            DateTime timeStamp = DateTime.Now;
-                            var a = env[i].AasEnv.AssetAdministrationShells[0];
-                            a.TimeStampCreate = timeStamp;
-                            a.SetTimeStamp(timeStamp);
-                            foreach (var submodel in env[i].AasEnv.Submodels)
-                            {
-                                submodel.TimeStampCreate = timeStamp;
-                                submodel.SetTimeStamp(timeStamp);
-                                submodel.SetAllParents(timeStamp);
-                            }
-
-                            var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                            if (submodels.Any())
-                            {
-                                output = submodels.First();
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
-                            env[i] = new AdminShellPackageEnv();
-                            env[i].SetFilename(fn);
-
-                            var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
-                            var aasDB = aasDBList.First();
-
-                            AssetAdministrationShell aas = new AssetAdministrationShell(
-                                id: aasDB.AasId,
-                                idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                    new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
-                                ) */
-                                );
-                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
-
-                            var submodelDBList2 = db.SubmodelSets
-                                .OrderBy(sm => sm.SubmodelNum)
-                                .Where(sm => sm.AasNum == aasDB.AasNum)
-                                .ToList();
-
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
-                            foreach (var sDB in submodelDBList2)
-                            {
-                                var sm = DBRead.getSubmodel(sDB.SubmodelId);
-                                aas.Submodels.Add(sm.GetReference());
-                                env[i].AasEnv.Submodels.Add(sm);
-                                if (sDB.SubmodelId == submodelIdentifier)
-                                    output = sm;
-                            }
-                        }
-
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
+                        env[i].Close();
                     }
+
+                    if (!withDbFiles)
+                    {
+                        Console.WriteLine("LOAD: " + envFileName[i]);
+                        env[i] = new AdminShellPackageEnv(envFileName[i]);
+
+                        DateTime timeStamp = DateTime.Now;
+                        var a = env[i].AasEnv.AssetAdministrationShells[0];
+                        a.TimeStampCreate = timeStamp;
+                        a.SetTimeStamp(timeStamp);
+                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        {
+                            submodel.TimeStampCreate = timeStamp;
+                            submodel.SetTimeStamp(timeStamp);
+                            submodel.SetAllParents(timeStamp);
+                        }
+
+                        var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                        if (submodels.Any())
+                        {
+                            output = submodels.First();
+                        }
+                    }
+                    else
+                    {
+                        var submodelDBList = db.SubmodelSets
+                        .OrderBy(sm => sm.SubmodelNum)
+                        .Where(sm => sm.SubmodelId == submodelIdentifier)
+                        .ToList();
+                        if (!submodelDBList.Any())
+                            return false;
+                        var submodelDB = submodelDBList.First();
+
+                        Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
+                        var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
+                        var aasDB = aasDBList.First();
+                        env[i] = db.AASXToPackageEnv(envFileName[i], aasDB);
+                        output = DBRead.getSubmodel(submodelDB.SubmodelId);
+                    }
+
+                    packageIndex = i;
+                    AasxServer.Program.signalNewData(2);
+                    return true;
                 }
             }
-
-            return false;
         }
 
         public static int envimin = 0;
@@ -682,7 +627,6 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = false;
-        public static bool isPostgres = false;
         public static bool withDbFiles = false;
         public static int startIndex = 0;
 
@@ -1017,7 +961,7 @@ namespace AasxServer
             // Migrate always
             if (withDb)
             {
-                if (isPostgres)
+                if (GlobalDB.IsPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
@@ -1028,10 +972,6 @@ namespace AasxServer
                 else
                 {
                     Console.WriteLine("Use SQLITE");
-                    /*using (SqliteAasContext db = new SqliteAasContext())
-                    {
-                        db.Database.Migrate();
-                    }*/
                     using (SqliteAasContext db = new SqliteAasContext())
                     {
                         db.Database.Migrate();
@@ -1042,25 +982,6 @@ namespace AasxServer
             // Clear DB
             if (withDb && startIndex == 0 && !createFilesOnly)
             {
-                /*
-                if (isPostgres)
-                {
-                    Console.WriteLine("Use POSTGRES");
-                    using (PostgreAasContext db = new PostgreAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Use SQLITE");
-                    using (SqliteAasContext db = new SqliteAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
-                }
-                */
-
                 using (AasContext db = new AasContext())
                 {
                     db.clearDB();
@@ -1441,7 +1362,7 @@ namespace AasxServer
             {
                 if (con["DatabaseConnection:ConnectionString"] != null)
                 {
-                    isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+                    GlobalDB.IsPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
                 }
             }
 

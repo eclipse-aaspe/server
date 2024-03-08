@@ -111,7 +111,7 @@
                 if (!url.EndsWith("/aasx") && !url.EndsWith("/aas") && !url.EndsWith("/submodel") && !url.EndsWith("/subjson") && !url.EndsWith("/sme")
                     && !url.EndsWith("/ivalue") && !url.EndsWith("/dvalue") && !url.EndsWith("/svalue"))
                 {
-                    if (Program.isPostgres)
+                    if (GlobalDB.IsPostgres)
                     {
                         <span>PostgreSQL database</span>
 
