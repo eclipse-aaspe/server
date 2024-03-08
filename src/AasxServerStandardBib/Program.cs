@@ -392,7 +392,7 @@ namespace AasxServer
                         }
 
                         packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
+                        Program.signalNewData(2);
                         return true;
                     }
                 }
@@ -833,6 +833,7 @@ namespace AasxServer
             {
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
+                GlobalDB.DataPath = AasxHttpContextHelper.DataPath;
             }
             Program.runOPC = a.Opc;
             Program.noSecurity = a.NoSecurity;
@@ -929,6 +930,7 @@ namespace AasxServer
             {
                 externalBlazor = blazorHostPort;
             }
+            GlobalDB.ExternalBlazor = externalBlazor;
 
             /*
             if (File.Exists("redirect.dat"))
@@ -1032,7 +1034,6 @@ namespace AasxServer
                     }*/
                     using (SqliteAasContext db = new SqliteAasContext())
                     {
-                        db.setPath(AasxHttpContextHelper.DataPath);
                         db.Database.Migrate();
                     }
                 }
@@ -1062,7 +1063,6 @@ namespace AasxServer
 
                 using (AasContext db = new AasContext())
                 {
-                    db.setPath(AasxHttpContextHelper.DataPath);
                     db.clearDB();
                 }
             }
@@ -1150,7 +1150,6 @@ namespace AasxServer
                             {
                                 using (AasContext db = new AasContext())
                                 {
-                                    db.setPath(AasxHttpContextHelper.DataPath);
                                     db.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
                                 }
 

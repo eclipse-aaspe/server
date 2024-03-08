@@ -21,17 +21,7 @@ namespace AasxServerDB
         public DbSet<IntValue> IValueSets { get; set; }
         public DbSet<DoubleValue> DValueSets { get; set; }
 
-
-
-        public string DataPath { get; set; }
-        public string DBPath { get; set; }
         public static IConfiguration _con { get; set; }
-
-        public void setPath(string path)
-        {
-            DataPath = path;
-            DBPath = DataPath + "/database.db";
-        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -44,7 +34,7 @@ namespace AasxServerDB
             if (connectionString != null)
             {
                 if (connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", DataPath);
+                    connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
                 if (connectionString.ToLower().Contains("host")) // Postgres
                 {
                     string[] Params = connectionString.Split(";");
@@ -188,8 +178,8 @@ namespace AasxServerDB
                         Uri dummy = null;
                         using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                         {
-                            Console.WriteLine("Copy " + DataPath + "/files/" + fcopyt + ".dat");
-                            var fst = System.IO.File.Create(DataPath + "/files/" + fcopyt + ".dat");
+                            Console.WriteLine("Copy " + GlobalDB.DataPath + "/files/" + fcopyt + ".dat");
+                            var fst = System.IO.File.Create(GlobalDB.DataPath + "/files/" + fcopyt + ".dat");
                             if (st != null)
                             {
                                 st.CopyTo(fst);
@@ -198,7 +188,7 @@ namespace AasxServerDB
                     }
                     catch { }
 
-                    using (var fileStream = new FileStream(DataPath + "/files/" + name + ".zip", FileMode.Create))
+                    using (var fileStream = new FileStream(GlobalDB.DataPath + "/files/" + name + ".zip", FileMode.Create))
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                     {
                         var files = asp.GetListOfSupplementaryFiles();
@@ -212,12 +202,12 @@ namespace AasxServerDB
                                 using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                                 {
                                     var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                    Console.WriteLine("Copy " + DataPath + "/" + name + "/" + f.Uri.OriginalString);
+                                    Console.WriteLine("Copy " + GlobalDB.DataPath + "/" + name + "/" + f.Uri.OriginalString);
 
                                     using (var archiveStream = archiveFile.Open())
                                     {
-                                        // Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                        // var fs = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
+                                        // Console.WriteLine("Copy " + AasxHttpContextHelper.GlobalPath.DataPath + "/files/" + fcopy + ".dat");
+                                        // var fs = System.IO.File.Create(AasxHttpContextHelper.GlobalPath.DataPath + "/files/" + fcopy + ".dat");
                                         s.CopyTo(archiveStream);
                                     }
                                 }
@@ -242,7 +232,7 @@ namespace AasxServerDB
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
                 if (connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", DataPath);
+                    connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
                 options.UseSqlite(connectionString);
             }
         }
@@ -260,7 +250,7 @@ namespace AasxServerDB
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
                 if (connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", DataPath);
+                    connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
                 options.UseNpgsql(connectionString);
             }
         }

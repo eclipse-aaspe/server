@@ -1,5 +1,4 @@
 ﻿using AasCore.Aas3_0;
-using static AasCore.Aas3_0.Visitation;
 using Extensions;
 
 namespace AasxServerDB
