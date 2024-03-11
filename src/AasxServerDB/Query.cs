@@ -31,16 +31,16 @@ namespace AasxServerDB
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 Console.WriteLine();
                 Console.WriteLine("SearchSubmodels");
-                Console.WriteLine("Submodels " + db.SubmodelSets.Count());
+                Console.WriteLine("Submodels " + db.SMSets.Count());
 
-                var subList = db.SubmodelSets.Where(s => s.SemanticId == semanticId).ToList();
+                var subList = db.SMSets.Where(s => s.SemanticId == semanticId).ToList();
                 Console.WriteLine("Found " + subList.Count() + " Submodels in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
                 foreach (var submodel in subList)
                 {
                     var sr = new SubmodelResult();
-                    sr.submodelId = submodel.SubmodelId;
+                    sr.submodelId = submodel.SMId;
                     string sub64 = Base64UrlEncoder.Encode(sr.submodelId);
                     sr.url = _externalBlazor + "/submodels/" + sub64;
                     list.Add(sr);
@@ -168,8 +168,8 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             Value = v.Value.ToString(),
                             ParentSMENum = sme.ParentSMENum
                         }
@@ -187,8 +187,8 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             Value = v.Value.ToString(),
                             ParentSMENum = sme.ParentSMENum
                         }
@@ -206,8 +206,8 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             Value = v.Value.ToString(),
                             ParentSMENum = sme.ParentSMENum
                         }
@@ -222,17 +222,17 @@ namespace AasxServerDB
                 {
                     SmeResult r = new SmeResult();
 
-                    var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
+                    var submodelDB = db.SMSets.Where(s => s.SMNum == l.SMNum).First();
                     if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
                     {
-                        r.submodelId = submodelDB.SubmodelId;
+                        r.submodelId = submodelDB.SMId;
                         r.value = l.Value;
-                        string path = l.Idshort;
+                        string path = l.IdShort;
                         long pnum = l.ParentSMENum;
                         while (pnum != 0)
                         {
                             var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                            path = smeDB.Idshort + "." + path;
+                            path = smeDB.IdShort + "." + path;
                             pnum = smeDB.ParentSMENum;
                         }
                         r.idShortPath = path;
@@ -302,22 +302,22 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             ParentSme = sme.ParentSMENum,
                             Value = v.Value
                         }
                     )
                     .Where(s =>
                         (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
-                        (searchIdShort != "" && s.Idshort == searchIdShort)
+                        (searchIdShort != "" && s.IdShort == searchIdShort)
                     )
-                    .Join(db.SubmodelSets,
-                        v => v.SubmodelNum,
-                        s => s.SubmodelNum,
+                    .Join(db.SMSets,
+                        v => v.SMNum,
+                        s => s.SMNum,
                         (v, s) => new
                         {
-                            SubmodelNum = s.SubmodelNum,
+                            SMNum = s.SMNum,
                             SemanticId = s.SemanticId,
                             ParentSme = v.ParentSme,
                             Value = v.Value
@@ -337,22 +337,22 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             ParentSme = sme.ParentSMENum,
                             Value = v.Value.ToString()
                         }
                     )
                     .Where(s =>
                         (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
-                        (searchIdShort != "" && s.Idshort == searchIdShort)
+                        (searchIdShort != "" && s.IdShort == searchIdShort)
                     )
-                    .Join(db.SubmodelSets,
-                        v => v.SubmodelNum,
-                        s => s.SubmodelNum,
+                    .Join(db.SMSets,
+                        v => v.SMNum,
+                        s => s.SMNum,
                         (v, s) => new
                         {
-                            SubmodelNum = s.SubmodelNum,
+                            SMNum = s.SMNum,
                             SemanticId = s.SemanticId,
                             ParentSme = v.ParentSme,
                             Value = v.Value
@@ -372,22 +372,22 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             ParentSme = sme.ParentSMENum,
                             Value = v.Value.ToString()
                         }
                     )
                     .Where(s =>
                         (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
-                        (searchIdShort != "" && s.Idshort == searchIdShort)
+                        (searchIdShort != "" && s.IdShort == searchIdShort)
                     )
-                    .Join(db.SubmodelSets,
-                        v => v.SubmodelNum,
-                        s => s.SubmodelNum,
+                    .Join(db.SMSets,
+                        v => v.SMNum,
+                        s => s.SMNum,
                         (v, s) => new
                         {
-                            SubmodelNum = s.SubmodelNum,
+                            SMNum = s.SMNum,
                             SemanticId = s.SemanticId,
                             ParentSme = v.ParentSme,
                             Value = v.Value
@@ -404,7 +404,7 @@ namespace AasxServerDB
                 var lParentParentNum = new List<long>();
                 foreach (var l in list)
                 {
-                    hSubmodel.Add(l.SubmodelNum);
+                    hSubmodel.Add(l.SMNum);
                     var smeDB = db.SMESets.Where(s => s.SMENum == l.ParentSme).First();
                     lParentParentNum.Add(smeDB.ParentSMENum);
                 }
@@ -414,9 +414,9 @@ namespace AasxServerDB
                 watch.Restart();
 
                 var smeResult = db.SMESets.Where(s =>
-                    hSubmodel.Contains(s.SubmodelNum) &&
+                    hSubmodel.Contains(s.SMNum) &&
                     ((resultSemanticId != "" && s.SemanticId == resultSemanticId) ||
-                    (resultIdShort != "" && s.Idshort == resultIdShort))
+                    (resultIdShort != "" && s.IdShort == resultIdShort))
                     )
                     .ToList();
 
@@ -428,18 +428,18 @@ namespace AasxServerDB
                     SmeResult r = new SmeResult();
                     bool found = false;
 
-                    var submodelDB = db.SubmodelSets.Where(s => s.SubmodelNum == l.SubmodelNum).First();
+                    var submodelDB = db.SMSets.Where(s => s.SMNum == l.SMNum).First();
                     if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
                     {
                         r.value = equal;
                         r.url = "";
-                        r.submodelId = submodelDB.SubmodelId;
-                        string path = l.Idshort;
+                        r.submodelId = submodelDB.SMId;
+                        string path = l.IdShort;
                         long pnum = l.ParentSMENum;
                         while (pnum != 0)
                         {
                             var smeDB = db.SMESets.Where(s => s.SMENum == pnum).First();
-                            path = smeDB.Idshort + "." + path;
+                            path = smeDB.IdShort + "." + path;
                             pnum = smeDB.ParentSMENum;
                             if (lParentParentNum.Contains(pnum))
                             {
@@ -527,8 +527,8 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             Value = v.Value.ToString(),
                             ParentSMENum = sme.ParentSMENum
                         }
@@ -546,8 +546,8 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             Value = v.Value.ToString(),
                             ParentSMENum = sme.ParentSMENum
                         }
@@ -565,8 +565,8 @@ namespace AasxServerDB
                         (v, sme) => new
                         {
                             SemanticId = sme.SemanticId,
-                            Idshort = sme.Idshort,
-                            SubmodelNum = sme.SubmodelNum,
+                            IdShort = sme.IdShort,
+                            SMNum = sme.SMNum,
                             Value = v.Value.ToString(),
                             ParentSMENum = sme.ParentSMENum
                         }

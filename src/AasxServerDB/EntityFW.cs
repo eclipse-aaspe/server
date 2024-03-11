@@ -1,7 +1,5 @@
-﻿using System.IO.Compression;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using AdminShellNS;
 using Extensions;
 
 /*
@@ -27,14 +25,14 @@ namespace AasxServerDB
         public static bool _isPostgres { get; set; }
 
         // --------------- Database Schema ---------------
-        public DbSet<DbConfigSet> DbConfigSets { get; set; }
+        public DbSet<DBConfigSet> DBConfigSets { get; set; }
         public DbSet<AASXSet> AASXSets { get; set; }
-        public DbSet<AasSet> AasSets { get; set; }
-        public DbSet<SubmodelSet> SubmodelSets { get; set; }
+        public DbSet<AASSet> AASSets { get; set; }
+        public DbSet<SMSet> SMSets { get; set; }
         public DbSet<SMESet> SMESets { get; set; }
-        public DbSet<StringValue> SValueSets { get; set; }
-        public DbSet<IntValue> IValueSets { get; set; }
-        public DbSet<DoubleValue> DValueSets { get; set; }
+        public DbSet<SValueSet> SValueSets { get; set; }
+        public DbSet<IValueSet> IValueSets { get; set; }
+        public DbSet<DValueSet> DValueSets { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -81,13 +79,13 @@ namespace AasxServerDB
         public void ClearDB()
         {
             int count = 0;
-            var task = Task.Run(async () => count = await DbConfigSets.ExecuteDeleteAsync());
+            var task = Task.Run(async () => count = await DBConfigSets.ExecuteDeleteAsync());
             task.Wait();
             task = Task.Run(async () => count = await AASXSets.ExecuteDeleteAsync());
             task.Wait();
-            task = Task.Run(async () => count = await AasSets.ExecuteDeleteAsync());
+            task = Task.Run(async () => count = await AASSets.ExecuteDeleteAsync());
             task.Wait();
-            task = Task.Run(async () => count = await SubmodelSets.ExecuteDeleteAsync());
+            task = Task.Run(async () => count = await SMSets.ExecuteDeleteAsync());
             task.Wait();
             task = Task.Run(async () => count = await SMESets.ExecuteDeleteAsync());
             task.Wait();
@@ -98,98 +96,16 @@ namespace AasxServerDB
             task = Task.Run(async () => count = await DValueSets.ExecuteDeleteAsync());
             task.Wait();
 
-            DbConfigSet dbConfig = new DbConfigSet
+            DBConfigSet dbConfig = new DBConfigSet
             {
                 Id = 1,
-                AasCount = 0,
-                SubmodelCount = 0,
+                AASCount = 0,
+                SMCount = 0,
                 AASXCount = 0,
                 SMECount = 0
             };
             Add(dbConfig);
             SaveChanges();
-        }
-    
-        public void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
-        {
-            using (var asp = new AdminShellPackageEnv(filePath, false, true))
-            {
-                if (!createFilesOnly)
-                {
-                    var configDBList = DbConfigSets.Where(d => true);
-                    var dbConfig = configDBList.FirstOrDefault();
-
-                    long aasxNum = ++dbConfig.AASXCount;
-                    var aasxDB = new AASXSet
-                    {
-                        AASXNum = aasxNum,
-                        AASX = filePath
-                    };
-                    Add(aasxDB);
-
-                    var aas = asp.AasEnv.AssetAdministrationShells[0];
-                    var aasId = aas.Id;
-                    var assetId = aas.AssetInformation.GlobalAssetId;
-
-                    // Check security
-                    if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                    {
-                        // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                        // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                    }
-                    else
-                    {
-                        if (aasId != null && aasId != "" && assetId != null && assetId != "")
-                        {
-                            VisitorAASX.LoadAASInDB(this, aas, aasxNum, asp, dbConfig);
-                        }
-                    }
-                    SaveChanges();
-                }
-
-                if (withDbFiles)
-                {
-                    string name = Path.GetFileName(filePath);
-                    try
-                    {
-                        string fcopyt = name + "__thumbnail";
-                        fcopyt = fcopyt.Replace("/", "_");
-                        fcopyt = fcopyt.Replace(".", "_");
-                        Uri dummy = null;
-                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
-                        {
-                            Console.WriteLine("Copy " + _dataPath + "/files/" + fcopyt + ".dat");
-                            var fst = System.IO.File.Create(_dataPath + "/files/" + fcopyt + ".dat");
-                            if (st != null)
-                            {
-                                st.CopyTo(fst);
-                            }
-                        }
-                    }
-                    catch { }
-
-                    using (var fileStream = new FileStream(_dataPath + "/files/" + name + ".zip", FileMode.Create))
-                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                    {
-                        var files = asp.GetListOfSupplementaryFiles();
-                        foreach (var f in files)
-                        {
-                            try
-                            {
-                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                {
-                                    var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                    Console.WriteLine("Copy " + _dataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                    using var archiveStream = archiveFile.Open();
-                                    s.CopyTo(archiveStream);
-                                }
-                            }
-                            catch { }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -232,12 +148,12 @@ namespace AasxServerDB
 
 
     // --------------- Database Schema ---------------
-    public class DbConfigSet
+    public class DBConfigSet
     {
         public int Id { get; set; }
         public long AASXCount { get; set; }
-        public long AasCount { get; set; }
-        public long SubmodelCount { get; set; }
+        public long AASCount { get; set; }
+        public long SMCount { get; set; }
         public long SMECount { get; set; }
     }
 
@@ -249,42 +165,42 @@ namespace AasxServerDB
         public string AASX { get; set; }
     }
 
-    [Index(nameof(AasNum))]
-    public class AasSet
+    [Index(nameof(AASNum))]
+    public class AASSet
     {
         public int Id { get; set; }
+        public long AASNum { get; set; }
         public long AASXNum { get; set; }
-        public long AasNum { get; set; }
-        public string AasId { get; set; }
-        public string Idshort { get; set; }
-        public string AssetId { get; set; }
+        public string AASId { get; set; }
+        public string IdShort { get; set; }
         public string AssetKind { get; set; }
+        public string GlobalAssetId { get; set; }
     }
 
-    [Index(nameof(SubmodelNum))]
-    public class SubmodelSet
+    [Index(nameof(SMNum))]
+    public class SMSet
     {
         public int Id { get; set; }
+        public long SMNum { get; set; }
         public long AASXNum { get; set; }
-        public long AasNum { get; set; }
-        public long SubmodelNum { get; set; }
-        public string SubmodelId { get; set; }
-        public string Idshort { get; set; }
+        public long AASNum { get; set; }
         public string SemanticId { get; set; }
+        public string SMId { get; set; }
+        public string IdShort { get; set; }
     }
 
-    [Index(nameof(SubmodelNum))]
+    [Index(nameof(SMNum))]
     [Index(nameof(SMENum))]
     public class SMESet
     {
         public int Id { get; set; }
-        public long SubmodelNum { get; set; }
-        public long ParentSMENum { get; set; }
         public long SMENum { get; set; }
+        public long SMNum { get; set; }
+        public long ParentSMENum { get; set; }
         public string SMEType { get; set; }
-        public string Idshort { get; set; }
-        public string SemanticId { get; set; }
         public string ValueType { get; set; }
+        public string SemanticId { get; set; }
+        public string IdShort { get; set; }
 
         public string getValue()
         {
@@ -333,12 +249,12 @@ namespace AasxServerDB
             return new List<string>();
         }
 
-        public static List<StringValue> getValueList(List<SMESet> smesets)
+        public static List<SValueSet> getValueList(List<SMESet> smesets)
         {
             var smeNums = smesets.OrderBy(s => s.SMENum).Select(s => s.SMENum).ToList();
             long first = smeNums.First();
             long last = smeNums.Last();
-            List<StringValue> valueList = null;
+            List<SValueSet> valueList = null;
             using (AasContext db = new AasContext())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -354,15 +270,15 @@ namespace AasxServerDB
     }
 
     [Index(nameof(ParentSMENum))]
-    public class IntValue
+    public class IValueSet
     {
         public int Id { get; set; }
         public long ParentSMENum { get; set; }
         public long Value { get; set; }
         public string Annotation { get; set; }
-        public StringValue asStringValue()
+        public SValueSet asStringValue()
         {
-            return new StringValue
+            return new SValueSet
             {
                 Id = Id,
                 ParentSMENum = ParentSMENum,
@@ -373,7 +289,7 @@ namespace AasxServerDB
     }
 
     [Index(nameof(ParentSMENum))]
-    public class StringValue
+    public class SValueSet
     {
         public int Id { get; set; }
         public long ParentSMENum { get; set; }
@@ -382,15 +298,15 @@ namespace AasxServerDB
     }
 
     [Index(nameof(ParentSMENum))]
-    public class DoubleValue
+    public class DValueSet
     {
         public int Id { get; set; }
         public long ParentSMENum { get; set; }
         public double Value { get; set; }
         public string Annotation { get; set; }
-        public StringValue asStringValue()
+        public SValueSet asStringValue()
         {
-            return new StringValue
+            return new SValueSet
             {
                 Id = Id,
                 ParentSMENum = ParentSMENum,

@@ -3,17 +3,18 @@ using AdminShellNS;
 using System.Globalization;
 using static AasCore.Aas3_0.Visitation;
 using Extensions;
+using System.IO.Compression;
 
 namespace AasxServerDB
 {
     public class VisitorAASX : VisitorThrough
     {
         AasContext _db = null;
-        DbConfigSet _dbConfig = null;
+        DBConfigSet _dbConfig = null;
         long _smNum = 0;
         List<long> _parentNum = null;
 
-        public VisitorAASX(AasContext db, DbConfigSet dbConfigSet, long smNum)
+        public VisitorAASX(AasContext db, DBConfigSet dbConfigSet, long smNum)
         {
             _db = db;
             _dbConfig = dbConfigSet;
@@ -21,22 +22,107 @@ namespace AasxServerDB
             _parentNum = new List<long>();
         }
 
+        static public void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
+        {
+            using (AasContext db = new AasContext())
+            { 
+                using (var asp = new AdminShellPackageEnv(filePath, false, true))
+                {
+                    if (!createFilesOnly)
+                    {
+                        var configDBList = db.DBConfigSets.Where(d => true);
+                        var dbConfig = configDBList.FirstOrDefault();
+
+                        long aasxNum = ++dbConfig.AASXCount;
+                        var aasxDB = new AASXSet
+                        {
+                            AASXNum = aasxNum,
+                            AASX = filePath
+                        };
+                        db.Add(aasxDB);
+
+                        var aas = asp.AasEnv.AssetAdministrationShells[0];
+                        var aasId = aas.Id;
+                        var assetId = aas.AssetInformation.GlobalAssetId;
+
+                        // Check security
+                        if (aas.IdShort.ToLower().Contains("globalsecurity"))
+                        {
+                            // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                            // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                        }
+                        else
+                        {
+                            if (aasId != null && aasId != "" && assetId != null && assetId != "")
+                            {
+                                VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
+                            }
+                        }
+                        db.SaveChanges();
+                    }
+
+                    if (withDbFiles)
+                    {
+                        string name = Path.GetFileName(filePath);
+                        try
+                        {
+                            string fcopyt = name + "__thumbnail";
+                            fcopyt = fcopyt.Replace("/", "_");
+                            fcopyt = fcopyt.Replace(".", "_");
+                            Uri dummy = null;
+                            using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                            {
+                                Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + fcopyt + ".dat");
+                                var fst = System.IO.File.Create(AasContext._dataPath + "/files/" + fcopyt + ".dat");
+                                if (st != null)
+                                {
+                                    st.CopyTo(fst);
+                                }
+                            }
+                        }
+                        catch { }
+
+                        using (var fileStream = new FileStream(AasContext._dataPath + "/files/" + name + ".zip", FileMode.Create))
+                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+                        {
+                            var files = asp.GetListOfSupplementaryFiles();
+                            foreach (var f in files)
+                            {
+                                try
+                                {
+                                    using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
+                                    {
+                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                        Console.WriteLine("Copy " + AasContext._dataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                                        using var archiveStream = archiveFile.Open();
+                                        s.CopyTo(archiveStream);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp)
         {
-            var dbConfig = db.DbConfigSets.FirstOrDefault();
+            var dbConfig = db.DBConfigSets.FirstOrDefault();
             LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
         }
 
-        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DbConfigSet dbConfig)
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DBConfigSet dbConfig)
         {
-            long aasNum = ++dbConfig.AasCount;
-            var aasDB = new AasSet
+            long aasNum = ++dbConfig.AASCount;
+            var aasDB = new AASSet
             {
-                AasNum = aasNum,
-                AasId = aas.Id,
-                AssetId = aas.AssetInformation.GlobalAssetId,
+                AASNum = aasNum,
+                AASId = aas.Id,
+                GlobalAssetId = aas.AssetInformation.GlobalAssetId,
                 AASXNum = aasxNum,
-                Idshort = aas.IdShort,
+                IdShort = aas.IdShort,
                 AssetKind = aas.AssetInformation.AssetKind.ToString()
             };
             db.Add(aasDB);
@@ -53,16 +139,16 @@ namespace AasxServerDB
                         if (semanticId == null)
                             semanticId = "";
 
-                        long submodelNum = ++dbConfig.SubmodelCount;
+                        long submodelNum = ++dbConfig.SMCount;
 
-                        var submodelDB = new SubmodelSet
+                        var submodelDB = new SMSet
                         {
-                            SubmodelNum = submodelNum,
-                            SubmodelId = sm.Id,
+                            SMNum = submodelNum,
+                            SMId = sm.Id,
                             SemanticId = semanticId,
                             AASXNum = aasxNum,
-                            AasNum = aasNum,
-                            Idshort = sm.IdShort
+                            AASNum = aasNum,
+                            IdShort = sm.IdShort
                         };
                         db.Add(submodelDB);
 
@@ -156,6 +242,7 @@ namespace AasxServerDB
             sValue = v;
             return "S";
         }
+
         private void getValue(ISubmodelElement sme, long smeNum, out string vt, out string sValue, out long iValue, out double fValue)
         {
             sValue = "";
@@ -187,7 +274,7 @@ namespace AasxServerDB
                 {
                     for (int i = 0; i < ls.Count; i++)
                     {
-                        var mlpval = new StringValue()
+                        var mlpval = new SValueSet()
                         {
                             Annotation = ls[i].Language,
                             Value = ls[i].Text,
@@ -208,6 +295,7 @@ namespace AasxServerDB
                 sValue = v;
             }
         }
+
         private long collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
@@ -228,7 +316,7 @@ namespace AasxServerDB
 
             if (vt == "S" && st != "MLP")
             {
-                var ValueDB = new StringValue
+                var ValueDB = new SValueSet
                 {
                     ParentSMENum = smeNum,
                     Value = sValue,
@@ -238,7 +326,7 @@ namespace AasxServerDB
             }
             if (vt == "I")
             {
-                var ValueDB = new IntValue
+                var ValueDB = new IValueSet
                 {
                     ParentSMENum = smeNum,
                     Value = iValue,
@@ -248,7 +336,7 @@ namespace AasxServerDB
             }
             if (vt == "F")
             {
-                var ValueDB = new DoubleValue
+                var ValueDB = new DValueSet
                 {
                     ParentSMENum = smeNum,
                     Value = fValue,
@@ -262,9 +350,9 @@ namespace AasxServerDB
                 SMENum = smeNum,
                 SMEType = st,
                 SemanticId = semanticId,
-                Idshort = sme.IdShort,
+                IdShort = sme.IdShort,
                 ValueType = vt,
-                SubmodelNum = _smNum,
+                SMNum = _smNum,
                 ParentSMENum = pn
             };
             _db.Add(smeDB);

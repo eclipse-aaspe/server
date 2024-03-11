@@ -13,7 +13,7 @@ namespace AasxServerDB
                 long aasxNum = 0;
                 if (!submodelId.Equals(""))
                 {
-                    var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelId);
+                    var submodelDBList = db.SMSets.Where(s => s.SMId == submodelId);
                     if (submodelDBList.Count() > 0)
                     {
                         var submodelDB = submodelDBList.First();
@@ -22,7 +22,7 @@ namespace AasxServerDB
                 }
                 if (!aasId.Equals(""))
                 {
-                    var aasDBList = db.AasSets.Where(a => a.AasId == aasId);
+                    var aasDBList = db.AASSets.Where(a => a.AASId == aasId);
                     if (aasDBList.Any())
                     {
                         var aasDB = aasDBList.First();
@@ -40,7 +40,7 @@ namespace AasxServerDB
                 
         }
 
-        static public AdminShellPackageEnv AASToPackageEnv(string path, AasSet aasDB)
+        static public AdminShellPackageEnv AASToPackageEnv(string path, AASSet aasDB)
         {
             using (AasContext db = new AasContext())
             {
@@ -48,22 +48,22 @@ namespace AasxServerDB
                     return null;
 
                 AssetAdministrationShell aas = new AssetAdministrationShell(
-                    id: aasDB.AasId,
-                    idShort: aasDB.Idshort,
-                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId),
+                    id: aasDB.AASId,
+                    idShort: aasDB.IdShort,
+                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
                     submodels: new List<AasCore.Aas3_0.IReference>());
 
                 AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
                 aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
 
-                var submodelDBList = db.SubmodelSets
-                    .OrderBy(sm => sm.SubmodelNum)
-                    .Where(sm => sm.AasNum == aasDB.AasNum)
+                var submodelDBList = db.SMSets
+                    .OrderBy(sm => sm.SMNum)
+                    .Where(sm => sm.AASNum == aasDB.AASNum)
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
-                    var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
+                    var sm = DBRead.getSubmodel(submodelDB.SMId);
                     aas.Submodels.Add(sm.GetReference());
                     aasEnv.AasEnv.Submodels.Add(sm);
                 }
@@ -76,9 +76,9 @@ namespace AasxServerDB
         {
             using (AasContext db = new AasContext())
             {
-                var subDB = db.SubmodelSets
-                    .OrderBy(s => s.SubmodelNum)
-                    .Where(s => s.SubmodelId == submodelId)
+                var subDB = db.SMSets
+                    .OrderBy(s => s.SMNum)
+                    .Where(s => s.SMId == submodelId)
                     .ToList()
                     .First();
 
@@ -86,11 +86,11 @@ namespace AasxServerDB
                 {
                     var SMEList = db.SMESets
                             .OrderBy(sme => sme.SMENum)
-                            .Where(sme => sme.SubmodelNum == subDB.SubmodelNum)
+                            .Where(sme => sme.SMNum == subDB.SMNum)
                             .ToList();
 
                     Submodel submodel = new Submodel(submodelId);
-                    submodel.IdShort = subDB.Idshort;
+                    submodel.IdShort = subDB.IdShort;
                     submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                         new List<IKey>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
 
@@ -124,7 +124,7 @@ namespace AasxServerDB
 
         static private void loadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, long smeNum)
         {
-            var smeLevel = SMEList.Where(s => s.ParentSMENum == smeNum).OrderBy(s => s.Idshort).ToList();
+            var smeLevel = SMEList.Where(s => s.ParentSMENum == smeNum).OrderBy(s => s.IdShort).ToList();
 
             foreach (var smel in smeLevel)
             {
@@ -132,13 +132,13 @@ namespace AasxServerDB
                 switch (smel.SMEType)
                 {
                     case "P":
-                        nextSME = new Property(DataTypeDefXsd.String, idShort: smel.Idshort, value: smel.getValue());
+                        nextSME = new Property(DataTypeDefXsd.String, idShort: smel.IdShort, value: smel.getValue());
                         break;
                     case "SEC":
-                        nextSME = new SubmodelElementCollection(idShort: smel.Idshort, value: new List<ISubmodelElement>());
+                        nextSME = new SubmodelElementCollection(idShort: smel.IdShort, value: new List<ISubmodelElement>());
                         break;
                     case "MLP":
-                        var mlp = new MultiLanguageProperty(idShort: smel.Idshort);
+                        var mlp = new MultiLanguageProperty(idShort: smel.IdShort);
                         var ls = new List<ILangStringTextType>();
 
                         using (AasContext db = new AasContext())
@@ -156,7 +156,7 @@ namespace AasxServerDB
                         nextSME = mlp;
                         break;
                     case "F":
-                        nextSME = new AasCore.Aas3_0.File("text", idShort: smel.Idshort, value: smel.getValue());
+                        nextSME = new AasCore.Aas3_0.File("text", idShort: smel.IdShort, value: smel.getValue());
                         break;
                 }
                 if (nextSME == null)

@@ -1500,7 +1500,7 @@ namespace AasxRestServerLibrary
                         int foundInRepository = 0;
                         using (AasContext db = new AasContext())
                         {
-                            var aasDBList = db.AasSets.ToList();
+                            var aasDBList = db.AASSets.ToList();
                             int aascount = aasDBList.Count();
 
                             for (int i = 0; i < aascount; i++)
@@ -1509,12 +1509,12 @@ namespace AasxRestServerLibrary
 
                                 var aasDB = aasDBList[i];
                                 AssetAdministrationShell aas = new AssetAdministrationShell(
-                                    id: aasDB.AasId,
-                                    idShort: aasDB.Idshort,
+                                    id: aasDB.AASId,
+                                    idShort: aasDB.IdShort,
                                     /*assetInformation: new AssetInformation(AssetKind.Type,
                                         new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, 
-                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })*/
-                                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
+                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.GlobalAssetId) })*/
+                                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId)
                                     );
 
                                 {
@@ -1600,14 +1600,14 @@ namespace AasxRestServerLibrary
                                         }
                                     }
 
-                                    var submodelDBList = db.SubmodelSets
-                                    .OrderBy(sm => sm.SubmodelNum)
-                                    .Where(sm => sm.AasNum == aasDB.AasNum)
+                                    var submodelDBList = db.SMSets
+                                    .OrderBy(sm => sm.SMNum)
+                                    .Where(sm => sm.AASNum == aasDB.AASNum)
                                     .ToList();
 
                                     foreach (var submodelDB in submodelDBList)
                                     {
-                                        var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
+                                        var sm = DBRead.getSubmodel(submodelDB.SMId);
 
                                         if (from == "submodel")
                                         {
@@ -3298,7 +3298,7 @@ namespace AasxRestServerLibrary
             }
 
             [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$")]
-            public IHttpContext AssetId(IHttpContext context)
+            public IHttpContext GlobalAssetId(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)

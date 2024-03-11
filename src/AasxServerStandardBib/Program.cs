@@ -79,7 +79,7 @@ namespace AasxServer
 
             return "";
         }
-        public static void createDbFiles(List<SubmodelSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
+        public static void createDbFiles(List<SMSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
         {
             string envXml = env.getEnvXml();
 
@@ -175,8 +175,8 @@ namespace AasxServer
                                 search = "";
                                 if (subId != null)
                                 {
-                                    SubmodelSet submodelDB = null;
-                                    var submodelDBList = slist.Where(s => s.SubmodelId == subId);
+                                    SMSet submodelDB = null;
+                                    var submodelDBList = slist.Where(s => s.SMId == subId);
                                     if (submodelDBList.Any())
                                     {
                                         submodelDB = submodelDBList.First();
@@ -360,7 +360,7 @@ namespace AasxServer
                     using (AasContext db = new AasContext())
                     {
                         Console.WriteLine("LOAD: " + aasIdentifier);
-                        var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
+                        var aasDBList = db.AASSets.Where(a => a.AASId == aasIdentifier);
                         var aasDB = aasDBList.First();
                         env[i] = DBRead.AASToPackageEnv(envFileName[i], aasDB);
                         output = env[i].AasEnv.AssetAdministrationShells[0];
@@ -448,14 +448,14 @@ namespace AasxServer
                 {
                     using (AasContext db = new AasContext())
                     {
-                        var submodelDBList = db.SubmodelSets.OrderBy(sm => sm.SubmodelNum).Where(sm => sm.SubmodelId == submodelIdentifier).ToList();
+                        var submodelDBList = db.SMSets.OrderBy(sm => sm.SMNum).Where(sm => sm.SMId == submodelIdentifier).ToList();
                         var submodelDB = submodelDBList.First();
 
-                        Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
-                        var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
+                        Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
+                        var aasDBList = db.AASSets.Where(a => a.AASXNum == submodelDB.AASXNum);
                         var aasDB = aasDBList.First();
                         env[i] = DBRead.AASToPackageEnv(envFileName[i], aasDB);
-                        output = DBRead.getSubmodel(submodelDB.SubmodelId);
+                        output = DBRead.getSubmodel(submodelDB.SMId);
                     }
                 }
 
@@ -1064,11 +1064,7 @@ namespace AasxServer
                             }
                             else
                             {
-                                using (AasContext db = new AasContext())
-                                {
-                                    db.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
-                                }
-
+                                VisitorAASX.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
                                 envFileName[envi] = null;
                                 env[envi] = null;
                             }

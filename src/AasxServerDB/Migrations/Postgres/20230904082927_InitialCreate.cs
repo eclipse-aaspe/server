@@ -12,16 +12,16 @@ namespace AasxServerStandardBib.Migrations.Postgres
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AasSets",
+                name: "AASSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AASXNum = table.Column<long>(type: "bigint", nullable: false),
-                    AasNum = table.Column<long>(type: "bigint", nullable: false),
-                    AasId = table.Column<string>(type: "text", nullable: true),
-                    Idshort = table.Column<string>(type: "text", nullable: true),
-                    AssetId = table.Column<string>(type: "text", nullable: true),
+                    AASNum = table.Column<long>(type: "bigint", nullable: false),
+                    AASId = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    GlobalAssetId = table.Column<string>(type: "text", nullable: true),
                     AssetKind = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -44,12 +44,12 @@ namespace AasxServerStandardBib.Migrations.Postgres
                 });
 
             migrationBuilder.CreateTable(
-                name: "DbConfigSets",
+                name: "DBConfigSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AasCount = table.Column<long>(type: "bigint", nullable: false),
+                    AASCount = table.Column<long>(type: "bigint", nullable: false),
                     SubmodelCount = table.Column<long>(type: "bigint", nullable: false),
                     AASXCount = table.Column<long>(type: "bigint", nullable: false),
                     SMECount = table.Column<long>(type: "bigint", nullable: false)
@@ -95,11 +95,11 @@ namespace AasxServerStandardBib.Migrations.Postgres
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SubmodelNum = table.Column<long>(type: "bigint", nullable: false),
+                    SMNum = table.Column<long>(type: "bigint", nullable: false),
                     ParentSMENum = table.Column<long>(type: "bigint", nullable: false),
                     SMENum = table.Column<long>(type: "bigint", nullable: false),
                     SMEType = table.Column<string>(type: "text", nullable: true),
-                    Idshort = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: true),
                     SemanticId = table.Column<string>(type: "text", nullable: true),
                     ValueType = table.Column<string>(type: "text", nullable: true)
                 },
@@ -109,16 +109,16 @@ namespace AasxServerStandardBib.Migrations.Postgres
                 });
 
             migrationBuilder.CreateTable(
-                name: "SubmodelSets",
+                name: "SMSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AASXNum = table.Column<long>(type: "bigint", nullable: false),
-                    AasNum = table.Column<long>(type: "bigint", nullable: false),
-                    SubmodelNum = table.Column<long>(type: "bigint", nullable: false),
-                    SubmodelId = table.Column<string>(type: "text", nullable: true),
-                    Idshort = table.Column<string>(type: "text", nullable: true),
+                    AASNum = table.Column<long>(type: "bigint", nullable: false),
+                    SMNum = table.Column<long>(type: "bigint", nullable: false),
+                    SMId = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: true),
                     SemanticId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -143,8 +143,8 @@ namespace AasxServerStandardBib.Migrations.Postgres
 
             migrationBuilder.CreateIndex(
                 name: "IX_AasSets_AasNum",
-                table: "AasSets",
-                column: "AasNum");
+                table: "AASSets",
+                column: "AASNum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AASXSets_AASXNum",
@@ -169,12 +169,12 @@ namespace AasxServerStandardBib.Migrations.Postgres
             migrationBuilder.CreateIndex(
                 name: "IX_SMESets_SubmodelNum",
                 table: "SMESets",
-                column: "SubmodelNum");
+                column: "SMNum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubmodelSets_SubmodelNum",
-                table: "SubmodelSets",
-                column: "SubmodelNum");
+                table: "SMSets",
+                column: "SMNum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SValueSets_ParentSMENum",
@@ -186,13 +186,13 @@ namespace AasxServerStandardBib.Migrations.Postgres
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AasSets");
+                name: "AASSets");
 
             migrationBuilder.DropTable(
                 name: "AASXSets");
 
             migrationBuilder.DropTable(
-                name: "DbConfigSets");
+                name: "DBConfigSets");
 
             migrationBuilder.DropTable(
                 name: "DValueSets");
@@ -204,7 +204,7 @@ namespace AasxServerStandardBib.Migrations.Postgres
                 name: "SMESets");
 
             migrationBuilder.DropTable(
-                name: "SubmodelSets");
+                name: "SMSets");
 
             migrationBuilder.DropTable(
                 name: "SValueSets");

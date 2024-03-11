@@ -2177,14 +2177,14 @@ namespace AasxServer
                             {
                                 //Deleting all related Aas, Submodel and SME
                                 //Join zwischen Liste und DB Tabelle nicht möglich, deswegen Contains für AAS und Submodelle
-                                aasToDeleteAASXNumsDic = db.AasSets.Where(x => aasIds.Contains(x.AasId)).ToDictionary(x => x.AasId, x => x.AASXNum);
-                                db.AasSets.Where(x => aasIds.Contains(x.AasId)).ExecuteDelete();
-                                var submodelsToDeleteNums = db.SubmodelSets.Where(x => submodelIds.Contains(x.SubmodelId)).Select(x => x.SubmodelNum).ToList();
+                                aasToDeleteAASXNumsDic = db.AASSets.Where(x => aasIds.Contains(x.AASId)).ToDictionary(x => x.AASId, x => x.AASXNum);
+                                db.AASSets.Where(x => aasIds.Contains(x.AASId)).ExecuteDelete();
+                                var submodelsToDeleteNums = db.SMSets.Where(x => submodelIds.Contains(x.SMId)).Select(x => x.SMNum).ToList();
 
-                                db.SubmodelSets.Where(x => submodelIds.Contains(x.SubmodelId)).ExecuteDelete();
+                                db.SMSets.Where(x => submodelIds.Contains(x.SMId)).ExecuteDelete();
 
-                                var smeToDeleteNums = db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SubmodelNum)).Select(x => x.SMENum).ToList();
-                                db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SubmodelNum)).ExecuteDelete();
+                                var smeToDeleteNums = db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SMNum)).Select(x => x.SMENum).ToList();
+                                db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SMNum)).ExecuteDelete();
 
                                 db.IValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
                                 db.SValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();

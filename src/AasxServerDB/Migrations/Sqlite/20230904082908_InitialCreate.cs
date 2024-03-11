@@ -11,16 +11,16 @@ namespace AasxServerStandardBib.Migrations.Sqlite
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AasSets",
+                name: "AASSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AASXNum = table.Column<long>(type: "INTEGER", nullable: false),
-                    AasNum = table.Column<long>(type: "INTEGER", nullable: false),
-                    AasId = table.Column<string>(type: "TEXT", nullable: true),
-                    Idshort = table.Column<string>(type: "TEXT", nullable: true),
-                    AssetId = table.Column<string>(type: "TEXT", nullable: true),
+                    AASNum = table.Column<long>(type: "INTEGER", nullable: false),
+                    AASId = table.Column<string>(type: "TEXT", nullable: true),
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
+                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
                     AssetKind = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -43,12 +43,12 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 });
 
             migrationBuilder.CreateTable(
-                name: "DbConfigSets",
+                name: "DBConfigSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AasCount = table.Column<long>(type: "INTEGER", nullable: false),
+                    AASCount = table.Column<long>(type: "INTEGER", nullable: false),
                     SubmodelCount = table.Column<long>(type: "INTEGER", nullable: false),
                     AASXCount = table.Column<long>(type: "INTEGER", nullable: false),
                     SMECount = table.Column<long>(type: "INTEGER", nullable: false)
@@ -94,11 +94,11 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    SubmodelNum = table.Column<long>(type: "INTEGER", nullable: false),
+                    SMNum = table.Column<long>(type: "INTEGER", nullable: false),
                     ParentSMENum = table.Column<long>(type: "INTEGER", nullable: false),
                     SMENum = table.Column<long>(type: "INTEGER", nullable: false),
                     SMEType = table.Column<string>(type: "TEXT", nullable: true),
-                    Idshort = table.Column<string>(type: "TEXT", nullable: true),
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true),
                     ValueType = table.Column<string>(type: "TEXT", nullable: true)
                 },
@@ -108,16 +108,16 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 });
 
             migrationBuilder.CreateTable(
-                name: "SubmodelSets",
+                name: "SMSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AASXNum = table.Column<long>(type: "INTEGER", nullable: false),
-                    AasNum = table.Column<long>(type: "INTEGER", nullable: false),
-                    SubmodelNum = table.Column<long>(type: "INTEGER", nullable: false),
-                    SubmodelId = table.Column<string>(type: "TEXT", nullable: true),
-                    Idshort = table.Column<string>(type: "TEXT", nullable: true),
+                    AASNum = table.Column<long>(type: "INTEGER", nullable: false),
+                    SMNum = table.Column<long>(type: "INTEGER", nullable: false),
+                    SMId = table.Column<string>(type: "TEXT", nullable: true),
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -142,8 +142,8 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
             migrationBuilder.CreateIndex(
                 name: "IX_AasSets_AasNum",
-                table: "AasSets",
-                column: "AasNum");
+                table: "AASSets",
+                column: "AASNum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AASXSets_AASXNum",
@@ -168,12 +168,12 @@ namespace AasxServerStandardBib.Migrations.Sqlite
             migrationBuilder.CreateIndex(
                 name: "IX_SMESets_SubmodelNum",
                 table: "SMESets",
-                column: "SubmodelNum");
+                column: "SMNum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubmodelSets_SubmodelNum",
-                table: "SubmodelSets",
-                column: "SubmodelNum");
+                table: "SMSets",
+                column: "SMNum");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SValueSets_ParentSMENum",
@@ -185,13 +185,13 @@ namespace AasxServerStandardBib.Migrations.Sqlite
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AasSets");
+                name: "AASSets");
 
             migrationBuilder.DropTable(
                 name: "AASXSets");
 
             migrationBuilder.DropTable(
-                name: "DbConfigSets");
+                name: "DBConfigSets");
 
             migrationBuilder.DropTable(
                 name: "DValueSets");
@@ -203,7 +203,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                 name: "SMESets");
 
             migrationBuilder.DropTable(
-                name: "SubmodelSets");
+                name: "SMSets");
 
             migrationBuilder.DropTable(
                 name: "SValueSets");

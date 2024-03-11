@@ -24,18 +24,18 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             _registryInitializerService = registryInitializerService;
         }
 
-        public AssetAdministrationShellDescriptor CreateAasDescriptorFromDB(AasSet aasDB)
+        public AssetAdministrationShellDescriptor CreateAasDescriptorFromDB(AASSet aasDB)
         {
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
             //string asset = aas.assetRef?[0].Value;
-            string globalAssetId = aasDB.AssetId;
+            string globalAssetId = aasDB.GlobalAssetId;
 
             using (AasContext db = new AasContext())
             {
                 // ad.Administration.Version = aas.administration.version;
                 // ad.Administration.Revision = aas.administration.revision;
-                ad.IdShort = aasDB.Idshort;
-                ad.Id = aasDB.AasId;
+                ad.IdShort = aasDB.IdShort;
+                ad.Id = aasDB.AASId;
                 var e = new Models.Endpoint();
                 e.ProtocolInformation = new ProtocolInformation();
                 e.ProtocolInformation.Href =
@@ -54,15 +54,15 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 ad.SpecificAssetIds.Add(specificAssetId);
 
                 // Submodels
-                var submodelDBList = db.SubmodelSets.Where(s => s.AasNum == aasDB.AasNum);
+                var submodelDBList = db.SMSets.Where(s => s.AASNum == aasDB.AASNum);
                 if (submodelDBList.Any())
                 {
                     ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
                     foreach (var submodelDB in submodelDBList)
                     {
                         SubmodelDescriptor sd = new SubmodelDescriptor();
-                        sd.IdShort = submodelDB.Idshort;
-                        sd.Id = submodelDB.SubmodelId;
+                        sd.IdShort = submodelDB.IdShort;
+                        sd.Id = submodelDB.SMId;
                         var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.Href =

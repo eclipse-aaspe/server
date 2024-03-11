@@ -31,8 +31,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
-                name: "SubmodelId",
-                table: "SubmodelSets",
+                name: "SMId",
+                table: "SMSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -42,7 +42,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
             migrationBuilder.AlterColumn<string>(
                 name: "SemanticId",
-                table: "SubmodelSets",
+                table: "SMSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -51,8 +51,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
-                name: "Idshort",
-                table: "SubmodelSets",
+                name: "IdShort",
+                table: "SMSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -91,7 +91,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
-                name: "Idshort",
+                name: "IdShort",
                 table: "SMESets",
                 type: "TEXT",
                 nullable: false,
@@ -131,8 +131,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
-                name: "Idshort",
-                table: "AasSets",
+                name: "IdShort",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -142,7 +142,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
             migrationBuilder.AlterColumn<string>(
                 name: "AssetKind",
-                table: "AasSets",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -151,8 +151,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
-                name: "AssetId",
-                table: "AasSets",
+                name: "GlobalAssetId",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -161,8 +161,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
-                name: "AasId",
-                table: "AasSets",
+                name: "AASId",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "",
@@ -191,8 +191,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldType: "TEXT");
 
             migrationBuilder.AlterColumn<string>(
-                name: "SubmodelId",
-                table: "SubmodelSets",
+                name: "SMId",
+                table: "SMSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),
@@ -200,15 +200,15 @@ namespace AasxServerDB.Migrations.Sqlite
 
             migrationBuilder.AlterColumn<string>(
                 name: "SemanticId",
-                table: "SubmodelSets",
+                table: "SMSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
             migrationBuilder.AlterColumn<string>(
-                name: "Idshort",
-                table: "SubmodelSets",
+                name: "IdShort",
+                table: "SMSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),
@@ -239,7 +239,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldType: "TEXT");
 
             migrationBuilder.AlterColumn<string>(
-                name: "Idshort",
+                name: "IdShort",
                 table: "SMESets",
                 type: "TEXT",
                 nullable: true,
@@ -271,8 +271,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 oldType: "TEXT");
 
             migrationBuilder.AlterColumn<string>(
-                name: "Idshort",
-                table: "AasSets",
+                name: "IdShort",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),
@@ -280,23 +280,23 @@ namespace AasxServerDB.Migrations.Sqlite
 
             migrationBuilder.AlterColumn<string>(
                 name: "AssetKind",
-                table: "AasSets",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
             migrationBuilder.AlterColumn<string>(
-                name: "AssetId",
-                table: "AasSets",
+                name: "GlobalAssetId",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
             migrationBuilder.AlterColumn<string>(
-                name: "AasId",
-                table: "AasSets",
+                name: "AASId",
+                table: "AASSets",
                 type: "TEXT",
                 nullable: true,
                 oldClrType: typeof(string),

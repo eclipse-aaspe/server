@@ -39,7 +39,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("AASXSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.AasSet", b =>
+            modelBuilder.Entity("AasxServerDB.AASSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -48,14 +48,14 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<long>("AASXNum")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AasId")
+                    b.Property<string>("AASId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("AasNum")
+                    b.Property<long>("AASNum")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AssetId")
+                    b.Property<string>("GlobalAssetId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -63,18 +63,18 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Idshort")
+                    b.Property<string>("IdShort")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AasNum");
+                    b.HasIndex("AASNum");
 
-                    b.ToTable("AasSets");
+                    b.ToTable("AASSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.DbConfigSet", b =>
+            modelBuilder.Entity("AasxServerDB.DBConfigSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -83,7 +83,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<long>("AASXCount")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("AasCount")
+                    b.Property<long>("AASCount")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("SMECount")
@@ -94,7 +94,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("DbConfigSets");
+                    b.ToTable("DBConfigSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.DoubleValue", b =>
@@ -149,7 +149,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Idshort")
+                    b.Property<string>("IdShort")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -167,7 +167,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("SubmodelNum")
+                    b.Property<long>("SMNum")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ValueType")
@@ -178,7 +178,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("SMENum");
 
-                    b.HasIndex("SubmodelNum");
+                    b.HasIndex("SMNum");
 
                     b.ToTable("SMESets");
                 });
@@ -207,7 +207,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("SValueSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SubmodelSet", b =>
+            modelBuilder.Entity("AasxServerDB.SMSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -216,10 +216,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<long>("AASXNum")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("AasNum")
+                    b.Property<long>("AASNum")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Idshort")
+                    b.Property<string>("IdShort")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -227,18 +227,18 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SubmodelId")
+                    b.Property<string>("SMId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("SubmodelNum")
+                    b.Property<long>("SMNum")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubmodelNum");
+                    b.HasIndex("SMNum");
 
-                    b.ToTable("SubmodelSets");
+                    b.ToTable("SMSets");
                 });
 #pragma warning restore 612, 618
         }
