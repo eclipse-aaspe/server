@@ -21,6 +21,8 @@ namespace AasxServerDB
     // --------------- Query ---------------
     public class Query
     {
+        public static string _externalBlazor { get; set; }
+
         public List<SubmodelResult> SearchSubmodels(string semanticId)
         {
             List<SubmodelResult> list = new List<SubmodelResult>();
@@ -40,7 +42,7 @@ namespace AasxServerDB
                     var sr = new SubmodelResult();
                     sr.submodelId = submodel.SubmodelId;
                     string sub64 = Base64UrlEncoder.Encode(sr.submodelId);
-                    sr.url = GlobalDB.ExternalBlazor + "/submodels/" + sub64;
+                    sr.url = _externalBlazor + "/submodels/" + sub64;
                     list.Add(sr);
                 }
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
@@ -66,7 +68,6 @@ namespace AasxServerDB
                             return false;
                     }
                     var decSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-                    // Console.WriteLine("seperator = " + decSep);
                     lower = lower.Replace(".", decSep);
                     lower = lower.Replace(",", decSep);
                     upper = upper.Replace(".", decSep);
@@ -236,7 +237,7 @@ namespace AasxServerDB
                         }
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
-                        r.url = GlobalDB.ExternalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
+                        r.url = _externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
                         result.Add(r);
                     }
                 }
@@ -454,7 +455,7 @@ namespace AasxServerDB
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
                         if (r.url == "")
-                            r.url = GlobalDB.ExternalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path + "/attachment";
+                            r.url = _externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path + "/attachment";
                         if (found)
                             result.Add(r);
                     }

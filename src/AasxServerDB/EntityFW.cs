@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using AdminShellNS;
-using AasCore.Aas3_0;
 using Extensions;
 
 /*
@@ -24,6 +23,8 @@ namespace AasxServerDB
     public class AasContext : DbContext
     {
         public static IConfiguration _con { get; set; }
+        public static string _dataPath { get; set; }
+        public static bool _isPostgres { get; set; }
 
         // --------------- Database Schema ---------------
         public DbSet<DbConfigSet> DbConfigSets { get; set; }
@@ -45,7 +46,7 @@ namespace AasxServerDB
             if (connectionString != null)
             {
                 if (connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
+                    connectionString = connectionString.Replace("$DATAPATH", _dataPath);
                 if (connectionString.ToLower().Contains("host")) // Postgres
                 {
                     string[] Params = connectionString.Split(";");
@@ -62,12 +63,12 @@ namespace AasxServerDB
                             Params[i] = "Password=" + dbPassword;
                         }
                     }
-                    GlobalDB.IsPostgres = true;
+                    _isPostgres = true;
                     options.UseNpgsql(connectionString);
                 }
                 else // SQLite
                 {
-                    GlobalDB.IsPostgres = false;
+                    _isPostgres = false;
                     options.UseSqlite(connectionString);
                 }
             }
@@ -77,7 +78,7 @@ namespace AasxServerDB
             }
         }
 
-        public void clearDB()
+        public void ClearDB()
         {
             int count = 0;
             var task = Task.Run(async () => count = await DbConfigSets.ExecuteDeleteAsync());
@@ -97,8 +98,7 @@ namespace AasxServerDB
             task = Task.Run(async () => count = await DValueSets.ExecuteDeleteAsync());
             task.Wait();
 
-            DbConfigSet dbConfig = null;
-            dbConfig = new DbConfigSet
+            DbConfigSet dbConfig = new DbConfigSet
             {
                 Id = 1,
                 AasCount = 0,
@@ -145,37 +145,6 @@ namespace AasxServerDB
                         }
                     }
                     SaveChanges();
-                    /*
-                    Task t = db.SaveChangesAsync();
-                    if (saveTasks.Count == maxTasks)
-                    {
-                        // search for completed task
-                        int i = 0;
-                        while (!saveTasks[i].IsCompleted && i < maxTasks)
-                        {
-                            i++;
-                        }
-                        if (i < maxTasks)
-                        {
-                            taskIndex = i;
-                        }
-                        else
-                        {
-                            await saveTasks[taskIndex];
-                        }
-                    }
-                    if (taskIndex <= saveTasks.Count)
-                    {
-                        saveTasks.Add(t);
-                    }
-                    else
-                    {
-                        saveTasks[taskIndex] = t;
-                    }
-                    taskIndex++;
-                    if (taskIndex >= maxTasks)
-                        taskIndex = 0;
-                    */
                 }
 
                 if (withDbFiles)
@@ -189,8 +158,8 @@ namespace AasxServerDB
                         Uri dummy = null;
                         using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                         {
-                            Console.WriteLine("Copy " + GlobalDB.DataPath + "/files/" + fcopyt + ".dat");
-                            var fst = System.IO.File.Create(GlobalDB.DataPath + "/files/" + fcopyt + ".dat");
+                            Console.WriteLine("Copy " + _dataPath + "/files/" + fcopyt + ".dat");
+                            var fst = System.IO.File.Create(_dataPath + "/files/" + fcopyt + ".dat");
                             if (st != null)
                             {
                                 st.CopyTo(fst);
@@ -199,7 +168,7 @@ namespace AasxServerDB
                     }
                     catch { }
 
-                    using (var fileStream = new FileStream(GlobalDB.DataPath + "/files/" + name + ".zip", FileMode.Create))
+                    using (var fileStream = new FileStream(_dataPath + "/files/" + name + ".zip", FileMode.Create))
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                     {
                         var files = asp.GetListOfSupplementaryFiles();
@@ -207,20 +176,13 @@ namespace AasxServerDB
                         {
                             try
                             {
-                                // string fcopy = name + "__" + f.Uri.OriginalString;
-                                // fcopy = fcopy.Replace("/", "_");
-                                // fcopy = fcopy.Replace(".", "_");
                                 using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                                 {
                                     var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                    Console.WriteLine("Copy " + GlobalDB.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+                                    Console.WriteLine("Copy " + _dataPath + "/" + name + "/" + f.Uri.OriginalString);
 
-                                    using (var archiveStream = archiveFile.Open())
-                                    {
-                                        // Console.WriteLine("Copy " + AasxHttpContextHelper.GlobalPath.DataPath + "/files/" + fcopy + ".dat");
-                                        // var fs = System.IO.File.Create(AasxHttpContextHelper.GlobalPath.DataPath + "/files/" + fcopy + ".dat");
-                                        s.CopyTo(archiveStream);
-                                    }
+                                    using var archiveStream = archiveFile.Open();
+                                    s.CopyTo(archiveStream);
                                 }
                             }
                             catch { }
@@ -228,65 +190,6 @@ namespace AasxServerDB
                     }
                 }
             }
-        }
-
-        public string getAASXPath(string aasId = "", string submodelId = "")
-        {
-            long aasxNum = 0;
-            if (!submodelId.Equals(""))
-            { 
-                var submodelDBList = SubmodelSets.Where(s => s.SubmodelId == submodelId);
-                if (submodelDBList.Count() > 0)
-                {
-                    var submodelDB = submodelDBList.First();
-                    aasxNum = submodelDB.AASXNum;
-                }
-            }
-            if (!aasId.Equals(""))
-            {
-                var aasDBList = AasSets.Where(a => a.AasId == aasId);
-                if (aasDBList.Any())
-                {
-                    var aasDB = aasDBList.First();
-                    aasxNum = aasDB.AASXNum;
-                }
-            }
-            if (aasxNum == 0 )
-                return null;
-            var aasxDBList = AASXSets.Where(a => a.AASXNum == aasxNum);
-            if (!aasxDBList.Any())
-                return null;
-            var aasxDB = aasxDBList.First();
-            return aasxDB.AASX;
-        }
-
-        public AdminShellPackageEnv AASXToPackageEnv(string path, AasSet aasDB)
-        {
-            if (path == null || path.Equals("") || aasDB == null)
-                return null;
-
-            AssetAdministrationShell aas = new AssetAdministrationShell(
-                id: aasDB.AasId,
-                idShort: aasDB.Idshort,
-                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId),
-                submodels: new List<AasCore.Aas3_0.IReference>());
-
-            AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
-            aasEnv.SetFilename(path);
-            aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
-
-            var submodelDBList = SubmodelSets
-                .OrderBy(sm => sm.SubmodelNum)
-                .Where(sm => sm.AasNum == aasDB.AasNum)
-                .ToList();
-            foreach (var submodelDB in submodelDBList)
-            {
-                var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
-                aas.Submodels.Add(sm.GetReference());
-                aasEnv.AasEnv.Submodels.Add(sm);
-            }
-
-            return aasEnv;
         }
     }
 
@@ -302,7 +205,7 @@ namespace AasxServerDB
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
                 if (connectionString != null && connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
+                    connectionString = connectionString.Replace("$DATAPATH", _dataPath);
                 options.UseSqlite(connectionString);
             }
         }
@@ -320,7 +223,7 @@ namespace AasxServerDB
             {
                 var connectionString = _con["DatabaseConnection:ConnectionString"];
                 if (connectionString != null && connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", GlobalDB.DataPath);
+                    connectionString = connectionString.Replace("$DATAPATH", _dataPath);
                 options.UseNpgsql(connectionString);
             }
         }

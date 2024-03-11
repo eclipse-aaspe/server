@@ -29,7 +29,6 @@ namespace AasxServerDB
 
         public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DbConfigSet dbConfig)
         {
-
             long aasNum = ++dbConfig.AasCount;
             var aasDB = new AasSet
             {
@@ -203,32 +202,15 @@ namespace AasxServerDB
             if (sme is AasCore.Aas3_0.Range r)
             {
                 v = r.Min;
-                // if (v != "")
-                //    vt = getValueType(v);
-
                 var v2 = r.Max;
-                // var vt2 = "";
-                // if (v2 != "")
-                //    vt2 = getValueType(v2);
-
                 v += "$$" + v2;
                 vt = "S";
                 sValue = v;
-
-                /*
-                if (vt == "S" || vt2 == "S")
-                    vt = "S";
-                else if (vt == "I" && vt2 == "I")
-                    vt = "I";
-                else
-                    vt = "F";
-                */
             }
         }
         private long collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
-            // Console.WriteLine(st + " idshort " + sme.IdShort);
 
             long smeNum = ++_dbConfig.SMECount;
             long pn = 0;

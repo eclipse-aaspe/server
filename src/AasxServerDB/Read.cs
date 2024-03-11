@@ -1,11 +1,77 @@
 ﻿using AasCore.Aas3_0;
+using AdminShellNS;
 using Extensions;
 
 namespace AasxServerDB
 {
     public class DBRead
     {
-        public DBRead() { }
+        static public string GetAASXPath(string aasId = "", string submodelId = "")
+        {
+            using (AasContext db = new AasContext())
+            { 
+                long aasxNum = 0;
+                if (!submodelId.Equals(""))
+                {
+                    var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelId);
+                    if (submodelDBList.Count() > 0)
+                    {
+                        var submodelDB = submodelDBList.First();
+                        aasxNum = submodelDB.AASXNum;
+                    }
+                }
+                if (!aasId.Equals(""))
+                {
+                    var aasDBList = db.AasSets.Where(a => a.AasId == aasId);
+                    if (aasDBList.Any())
+                    {
+                        var aasDB = aasDBList.First();
+                        aasxNum = aasDB.AASXNum;
+                    }
+                }
+                if (aasxNum == 0)
+                    return null;
+                var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
+                if (!aasxDBList.Any())
+                    return null;
+                var aasxDB = aasxDBList.First();
+                return aasxDB.AASX;
+            }
+                
+        }
+
+        static public AdminShellPackageEnv AASToPackageEnv(string path, AasSet aasDB)
+        {
+            using (AasContext db = new AasContext())
+            {
+                if (path == null || path.Equals("") || aasDB == null)
+                    return null;
+
+                AssetAdministrationShell aas = new AssetAdministrationShell(
+                    id: aasDB.AasId,
+                    idShort: aasDB.Idshort,
+                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId),
+                    submodels: new List<AasCore.Aas3_0.IReference>());
+
+                AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
+                aasEnv.SetFilename(path);
+                aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
+
+                var submodelDBList = db.SubmodelSets
+                    .OrderBy(sm => sm.SubmodelNum)
+                    .Where(sm => sm.AasNum == aasDB.AasNum)
+                    .ToList();
+                foreach (var submodelDB in submodelDBList)
+                {
+                    var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
+                    aas.Submodels.Add(sm.GetReference());
+                    aasEnv.AasEnv.Submodels.Add(sm);
+                }
+
+                return aasEnv;
+            }
+        }
+
         static public Submodel getSubmodel(string submodelId)
         {
             using (AasContext db = new AasContext())
