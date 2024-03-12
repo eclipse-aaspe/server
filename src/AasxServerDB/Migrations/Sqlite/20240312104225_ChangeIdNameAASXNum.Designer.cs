@@ -2,16 +2,19 @@
 using AasxServerDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace AasxServerStandardBib.Migrations.Sqlite
+namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    partial class SqliteAasContextModelSnapshot : ModelSnapshot
+    [Migration("20240312104225_ChangeIdNameAASXNum")]
+    partial class ChangeIdNameAASXNum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -26,7 +29,10 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("AASXId")
+                    b.Property<long>("AASNum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("AASXId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetKind")
@@ -43,7 +49,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id");
+                    b.HasIndex("AASNum");
 
                     b.ToTable("AASSets");
                 });
@@ -75,7 +81,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ParentSMEId")
+                    b.Property<long>("ParentSMENum")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("Value")
@@ -83,7 +89,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentSMEId");
+                    b.HasIndex("ParentSMENum");
 
                     b.ToTable("DValueSets");
                 });
@@ -98,7 +104,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ParentSMEId")
+                    b.Property<long>("ParentSMENum")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("Value")
@@ -106,7 +112,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentSMEId");
+                    b.HasIndex("ParentSMENum");
 
                     b.ToTable("IValueSets");
                 });
@@ -121,14 +127,17 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ParentSMEId")
+                    b.Property<long>("ParentSMENum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("SMENum")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SMEType")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SMId")
+                    b.Property<long>("SMNum")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SemanticId")
@@ -141,7 +150,9 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id");
+                    b.HasIndex("SMENum");
+
+                    b.HasIndex("SMNum");
 
                     b.ToTable("SMESets");
                 });
@@ -152,10 +163,10 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AASId")
+                    b.Property<long>("AASNum")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AASXId")
+                    b.Property<long>("AASXId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IdShort")
@@ -166,13 +177,16 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("SMNum")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SemanticId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id");
+                    b.HasIndex("SMNum");
 
                     b.ToTable("SMSets");
                 });
@@ -187,7 +201,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ParentSMEId")
+                    b.Property<long>("ParentSMENum")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Value")
@@ -196,7 +210,7 @@ namespace AasxServerStandardBib.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentSMEId");
+                    b.HasIndex("ParentSMENum");
 
                     b.ToTable("SValueSets");
                 });

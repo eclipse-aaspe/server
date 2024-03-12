@@ -37,12 +37,12 @@
                 list = query.Get("search");
                 if (list != null)
                     search = list;
-                list = query.Get("aasxnum");
+                list = query.Get("aasxid");
                 if (list != null)
-                    aasxnum = Convert.ToInt32(list);
-                list = query.Get("aasnum");
+                    aasxid = Convert.ToInt32(list);
+                list = query.Get("aasid");
                 if (list != null)
-                    aasnum = Convert.ToInt32(list);
+                    aasid = Convert.ToInt32(list);
                 list = query.Get("smnum");
                 if (list != null)
                     smnum = Convert.ToInt32(list);
@@ -77,15 +77,15 @@
                             case "search":
                                 search = splitCur[1];
                                 break;
-                            case "aasxnum":
-                                aasxnum = 0;
+                            case "aasxid":
+                                aasxid = 0;
                                 if (splitCur[1] != "")
-                                    aasxnum = Convert.ToInt32(splitCur[1]);
+                                    aasxid = Convert.ToInt32(splitCur[1]);
                                 break;
-                            case "aasnum":
-                                aasnum = 0;
+                            case "aasid":
+                                aasid = 0;
                                 if (splitCur[1] != "")
-                                    aasnum = Convert.ToInt32(splitCur[1]);
+                                    aasid = Convert.ToInt32(splitCur[1]);
                                 break;
                             case "smnum":
                                 smnum = 0;
@@ -171,18 +171,18 @@
                 if (url.EndsWith("/aasx"))
                 {
                     List<AASXSet> data = null;
-                    if (searchLower == "" && aasxnum == 0)
+                    if (searchLower == "" && aasxid == 0)
                     {
                         data = db.AASXSets
-                        .OrderBy(a => a.AASXNum)
+                        .OrderBy(a => a.Id)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
                         data = db.AASXSets
-                        .OrderBy(a => a.AASXNum)
-                        .Where(a => (aasxnum == 0 || a.AASXNum == aasxnum) &&
+                        .OrderBy(a => a.Id)
+                        .Where(a => (aasxid == 0 || a.Id == aasxid) &&
                         (searchLower == "" || a.AASX.ToLower().Contains(searchLower)))
                         .Take(size)
                         .ToList();
@@ -191,7 +191,7 @@
                     total = db.AASXSets.Count();
                     count = data.Count();
 
-                    <span>&nbsp&nbsp@("AASX#: " + found + total + " size=" + size + " search=" + search + " aasxnum=" + aasxnum)</span>
+                    <span>&nbsp&nbsp@("AASX#: " + found + total + " size=" + size + " search=" + search + " aasxid=" + aasxid)</span>
                     <br />
                     <br />
                     @if (size > 1000 && count > 1000)
@@ -212,11 +212,11 @@
                             {
                                 var aasxDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all"><b>@aasxDB.AASXNum</b></td>
+                                    <td style="word-break:keep-all"><b>@aasxDB.Id</b></td>
                                     <td>@aasxDB.AASX</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/aas?aasxnum=" + aasxDB.AASXNum)" target="_blank">aas </a>
-                                        <a href="@(shorturl + "/sm?aasxnum=" + aasxDB.AASXNum)" target="_blank">sm</a>
+                                        <a href="@(shorturl + "/aas?aasxid=" + aasxDB.Id)" target="_blank">aas </a>
+                                        <a href="@(shorturl + "/sm?aasxid=" + aasxDB.Id)" target="_blank">sm</a>
                                     </td>
                                 </tr>
                             }
@@ -230,12 +230,12 @@
                         {
                             var aasxDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span><b>@aasxDB.AASXNum</b></span>
+                            <span><b>@aasxDB.Id</b></span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@aasxDB.AASX</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/aas?aasxnum=" + aasxDB.AASXNum)" target="_blank">aas </a>
-                            <a href="@(shorturl + "/sm?aasxnum=" + aasxDB.AASXNum)" target="_blank">sm</a>
+                            <a href="@(shorturl + "/aas?aasxid=" + aasxDB.Id)" target="_blank">aas </a>
+                            <a href="@(shorturl + "/sm?aasxid=" + aasxDB.Id)" target="_blank">sm</a>
                             <br />
                         }
                         <br />
@@ -247,18 +247,18 @@
                 if (url.EndsWith("/aas"))
                 {
                     List<AASSet> data = null;
-                    if (searchLower == "" && aasxnum == 0 && aasnum == 0)
+                    if (searchLower == "" && aasxid == 0 && aasid == 0)
                     {
                         data = db.AASSets
-                        .OrderBy(a => a.AASNum)
+                        .OrderBy(a => a.AASId)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
                         data = db.AASSets
-                        .OrderBy(a => a.AASNum)
-                        .Where(a => (aasxnum == 0 || a.AASXNum == aasxnum) && (aasnum == 0 || a.AASNum == aasnum) &&
+                        .OrderBy(a => a.AASId)
+                        .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
                             (searchLower == "" || a.IdShort.ToLower().Contains(searchLower) || a.AASId.ToLower().Contains(searchLower) || a.AssetKind.ToLower().Contains(searchLower) || a.GlobalAssetId.ToLower().Contains(searchLower)))
                         .Take(size)
                         .ToList();
@@ -267,7 +267,7 @@
                     total = db.AASSets.Count();
                     count = data.Count();
 
-                    <span>&nbsp&nbsp@("AAS#: " + found + total + " size=" + size + " search=" + search + " aasxnum=" + aasxnum + " aasnum=" + aasnum)</span>
+                    <span>&nbsp&nbsp@("AAS#: " + found + total + " size=" + size + " search=" + search + " aasxid=" + aasxid + " aasid=" + aasid)</span>
                     <br />
                     <br />
                     @if (size > 1000 && count > 1000)
@@ -295,15 +295,15 @@
                                 string aas64 = Base64UrlEncoder.Encode((aasDB.AASId));
                                 string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
                                 <tr>
-                                    <td style="word-break:keep-all">@aasDB.AASXNum</td>
-                                    <td style="word-break:keep-all"><b>@aasDB.AASNum</b></td>
+                                    <td style="word-break:keep-all">@aasDB.AASXId</td>
+                                    <td style="word-break:keep-all"><b>@aasDB.AASId</b></td>
                                     <td>@aasDB.AASId</td>
                                     <td>@aasDB.IdShort</td>
                                     <td>@aasDB.AssetKind</td>
                                     <td>@aasDB.GlobalAssetId</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/aasx?aasxnum=" + aasDB.AASXNum)" target="_blank">aasx </a>
-                                        <a href="@(shorturl + "/sm?aasnum=" + aasDB.AASNum)" target="_blank">sm</a>
+                                        <a href="@(shorturl + "/aasx?aasxid=" + aasDB.AASXId)" target="_blank">aasx </a>
+                                        <a href="@(shorturl + "/sm?aasid=" + aasDB.AASId)" target="_blank">sm</a>
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
                                 </tr>
@@ -320,9 +320,9 @@
                             string aas64 = Base64UrlEncoder.Encode((aasDB.AASId));
                             string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@aasDB.AASXNum</span>
+                            <span>@aasDB.AASXId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span><b>@aasDB.AASNum</b></span>
+                            <span><b>@aasDB.AASId</b></span>
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@aasDB.AASId</span>
                             <span smDB="background-color:blue;">&nbsp</span>
@@ -332,8 +332,8 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@aasDB.GlobalAssetId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/aasx?aasxnum=" + aasDB.AASXNum)" target="_blank">aasx </a>
-                            <a href="@(shorturl + "/sm?aasnum=" + aasDB.AASNum)" target="_blank">sm</a>
+                            <a href="@(shorturl + "/aasx?aasxid=" + aasDB.AASXId)" target="_blank">aasx </a>
+                            <a href="@(shorturl + "/sm?aasid=" + aasDB.AASId)" target="_blank">sm</a>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@link" target="_blank">@link</a>
                             <br />
@@ -347,18 +347,18 @@
                 if (url.EndsWith("/sm"))
                 {
                     List<SMSet> data = null;
-                    if (searchLower == "" && aasxnum == 0 && aasnum == 0 && smnum == 0)
+                    if (searchLower == "" && aasxid == 0 && aasid == 0 && smnum == 0)
                     {
                         data = db.SMSets
-                        .OrderBy(s => s.SMNum)
+                        .OrderBy(s => s.Id)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
                         data = db.SMSets
-                        .OrderBy(s => s.SMNum)
-                        .Where(s => (aasxnum == 0 || s.AASXNum == aasxnum) && (aasnum == 0 || s.AASNum == aasnum) && (smnum == 0 || s.SMNum == smnum) &&
+                        .OrderBy(s => s.Id)
+                        .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smnum == 0 || s.Id == smnum) &&
                             (searchLower == "" || s.SMId.ToLower().Contains(searchLower) || s.IdShort.ToLower().Contains(searchLower) || s.SemanticId.ToLower().Contains(searchLower)))
                         .Take(size)
                         .ToList();
@@ -368,7 +368,7 @@
                     count = data.Count();
 
                     <span>
-                        &nbsp&nbsp@("SM#: " + found + total + " size=" + size + " search=" + search + " aasxnum=" + aasxnum + " aasnum=" + aasnum + " smnum=" + smnum)
+                        &nbsp&nbsp@("SM#: " + found + total + " size=" + size + " search=" + search + " aasxid=" + aasxid + " aasid=" + aasid + " smnum=" + smnum)
                     </span>
                     <br />
                     <br />
@@ -397,21 +397,21 @@
                                 string submodel64 = Base64UrlEncoder.Encode((smDB.SMId));
                                 string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
                                 int smeCount = db.SMESets
-                                .OrderBy(sme => sme.SMENum)
-                                .Where(sme => sme.SMNum == smDB.SMNum)
+                                .OrderBy(sme => sme.Id)
+                                .Where(sme => sme.Id == smDB.Id)
                                 .Count();
 
                                 <tr>
-                                    <td style="word-break:keep-all">@smDB.AASXNum</td>
-                                    <td style="word-break:keep-all">@smDB.AASNum</td>
-                                    <td style="word-break:keep-all"><b>@smDB.SMNum</b></td>
+                                    <td style="word-break:keep-all">@smDB.AASXId</td>
+                                    <td style="word-break:keep-all">@smDB.AASId</td>
+                                    <td style="word-break:keep-all"><b>@smDB.Id</b></td>
                                     <td>@smDB.SMId</td>
                                     <td>@smDB.IdShort</td>
                                     <td>@smDB.SemanticId</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/aasx?aasxnum=" + smDB.AASXNum)" target="_blank">aasx </a>
-                                        <a href="@(shorturl + "/aas?aasnum=" + smDB.AASNum)" target="_blank">aas </a>
-                                        <a href="@(shorturl + "/sme?smnum=" + smDB.SMNum)" target="_blank">sme:@(smeCount)</a>
+                                        <a href="@(shorturl + "/aasx?aasxid=" + smDB.AASXId)" target="_blank">aasx </a>
+                                        <a href="@(shorturl + "/aas?aasid=" + smDB.AASId)" target="_blank">aas </a>
+                                        <a href="@(shorturl + "/sme?smnum=" + smDB.Id)" target="_blank">sme:@(smeCount)</a>
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
                                 </tr>
@@ -428,15 +428,15 @@
                             string submodel64 = Base64UrlEncoder.Encode((smDB.SMId));
                             string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
                             int smeCount = db.SMESets
-                            .OrderBy(sme => sme.SMENum)
-                            .Where(sme => sme.SMNum == smDB.SMNum)
+                            .OrderBy(sme => sme.Id)
+                            .Where(sme => sme.Id == smDB.Id)
                             .Count();
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smDB.AASXNum</span>
+                            <span>@smDB.AASXId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smDB.AASNum</span>
+                            <span>@smDB.AASId</span>
                             <span smDB="background-color:blue;">&nbsp</span>
-                            <span><b>@smDB.SMNum</b></span>
+                            <span><b>@smDB.Id</b></span>
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@smDB.SMId</span>
                             <span smDB="background-color:blue;">&nbsp</span>
@@ -444,9 +444,9 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@smDB.SemanticId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/aasx?aasxnum=" + smDB.AASXNum)" target="_blank">aasx </a>
-                            <a href="@(shorturl + "/aas?aasnum=" + smDB.AASNum)" target="_blank">aas </a>
-                            <a href="@(shorturl + "/sme?smnum=" + smDB.SMNum)" target="_blank">sme:@(smeCount)</a>
+                            <a href="@(shorturl + "/aasx?aasxid=" + smDB.AASXId)" target="_blank">aasx </a>
+                            <a href="@(shorturl + "/aas?aasid=" + smDB.AASId)" target="_blank">aas </a>
+                            <a href="@(shorturl + "/sme?smnum=" + smDB.Id)" target="_blank">sme:@(smeCount)</a>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@link" target="_blank">@link</a>
                             <br />
@@ -473,19 +473,19 @@
                     if (searchLower == "" && smnum == 0 && smenum == 0)
                     {
                         data = db.SMESets
-                        .OrderBy(sme => sme.SMENum)
+                        .OrderBy(sme => sme.Id)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
                         data = db.SMESets
-                        .OrderBy(sme => sme.SMENum)
-                        .Where(sme => (smnum == 0 || sme.SMNum == smnum) && (smenum == 0 || sme.SMENum == smenum) &&
+                        .OrderBy(sme => sme.Id)
+                        .Where(sme => (smnum == 0 || sme.Id == smnum) && (smenum == 0 || sme.Id == smenum) &&
                             (searchLower == "" || sme.IdShort.ToLower().Contains(searchLower) || sme.SemanticId.ToLower().Contains(searchLower) || sme.SMEType.ToLower().Contains(searchLower) || sme.ValueType.ToLower().Contains(searchLower)
-                            || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToLower().Contains(searchLower)))
-                            || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
-                            || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
+                            || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToLower().Contains(searchLower)))
+                            || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
+                            || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
                             ))
                         .Take(size)
                         .ToList();
@@ -524,20 +524,20 @@
                             {
                                 var smeDB = data[i];
                                 string path = smeDB.IdShort;
-                                long pnum = smeDB.ParentSMENum;
+                                long pnum = smeDB.ParentSMEId;
                                 while (pnum != 0)
                                 {
-                                    var smeDBP = db.SMESets.Where(s => s.SMENum == pnum).First();
+                                    var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
                                     path = smeDBP.IdShort + "." + path;
-                                    pnum = smeDBP.ParentSMENum;
+                                    pnum = smeDBP.ParentSMEId;
                                 }
-                                var smDB = db.SMSets.Where(s => s.SMNum == smeDB.SMNum).First();
+                                var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
                                 string submodel64 = Base64UrlEncoder.Encode((smDB.SMId));
                                 string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.SMNum</td>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
-                                    <td style="word-break:keep-all"><b>@smeDB.SMENum</b></td>
+                                    <td style="word-break:keep-all">@smeDB.Id</td>
+                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
+                                    <td style="word-break:keep-all"><b>@smeDB.Id</b></td>
                                     <td style="word-break:keep-all">@smeDB.SMEType</td>
                                     <td>@smeDB.IdShort</td>
                                     <td>@smeDB.SemanticId</td>
@@ -562,14 +562,14 @@
                                     </td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/sm?smnum=" + smeDB.SMNum)" target="_blank">sm </a>
-                                        @if (smeDB.ParentSMENum != 0)
+                                        <a href="@(shorturl + "/sm?smnum=" + smeDB.Id)" target="_blank">sm </a>
+                                        @if (smeDB.ParentSMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smnum="+ smeDB.SMNum + "&smenum=" + smeDB.ParentSMENum)" target="_blank">par </a>
+                                            <a href="@(shorturl + "/sme?smnum="+ smeDB.Id + "&smenum=" + smeDB.ParentSMEId)" target="_blank">par </a>
                                         }
                                         @if (smeDB.SMEType == "MLP")
                                         {
-                                            <a href="@(shorturl + "/svalue?smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
+                                            <a href="@(shorturl + "/svalue?smenum=" + smeDB.Id)" target="_blank">mlp</a>
                                         }
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
@@ -585,22 +585,22 @@
                         {
                             var smeDB = data[i];
                             string path = smeDB.IdShort;
-                            long pnum = smeDB.ParentSMENum;
+                            long pnum = smeDB.ParentSMEId;
                             while (pnum != 0)
                             {
-                                var smeDBP = db.SMESets.Where(s => s.SMENum == pnum).First();
+                                var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
                                 path = smeDBP.IdShort + "." + path;
-                                pnum = smeDBP.ParentSMENum;
+                                pnum = smeDBP.ParentSMEId;
                             }
-                            var smDB = db.SMSets.Where(s => s.SMNum == smeDB.SMNum).First();
+                            var smDB = db.SMSets.Where(s => s.Id == smeDB.Id).First();
                             string submodel64 = Base64UrlEncoder.Encode((smDB.SMId));
                             string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
 
-                            <span>@smeDB.SMNum</span>
+                            <span>@smeDB.Id</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMENum</span>
+                            <span>@smeDB.ParentSMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span><b>@smeDB.SMENum</b></span>
+                            <span><b>@smeDB.Id</b></span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.SMEType</span>
                             <span style="background-color:blue;">&nbsp</span>
@@ -629,14 +629,14 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.ValueType</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/sm?smnum=" + smeDB.SMNum)" target="_blank">sm </a>
-                            @if (smeDB.ParentSMENum != 0)
+                            <a href="@(shorturl + "/sm?smnum=" + smeDB.Id)" target="_blank">sm </a>
+                            @if (smeDB.ParentSMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smnum="+ smeDB.SMNum + "&smenum=" + smeDB.ParentSMENum)" target="_blank">par </a>
+                                <a href="@(shorturl + "/sme?smnum="+ smeDB.Id + "&smenum=" + smeDB.ParentSMEId)" target="_blank">par </a>
                             }
                             @if (smeDB.SMEType == "MLP")
                             {
-                                <a href="@(shorturl + "/svalue?smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
+                                <a href="@(shorturl + "/svalue?smenum=" + smeDB.Id)" target="_blank">mlp</a>
                             }
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@link" target="_blank">@link</a>
@@ -654,15 +654,15 @@
                     if (searchLower == "" && smenum == 0)
                     {
                         data = db.SValueSets
-                        .OrderBy(v => v.ParentSMENum)
+                        .OrderBy(v => v.ParentSMEId)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
                         data = db.SValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && 
+                        .OrderBy(v => v.ParentSMEId)
+                        .Where(v => (smenum == 0 || v.ParentSMEId == smenum) && 
                             (searchLower == "" || v.Value.ToLower().Contains(searchLower) || v.Annotation.ToLower().Contains(searchLower)))
                         .Take(size)
                         .ToList();
@@ -695,13 +695,13 @@
                             {
                                 var smeDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
+                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMENum != 0)
+                                        @if (smeDB.ParentSMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum)" target="_blank">par</a>
+                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMEId)" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -716,15 +716,15 @@
                         {
                             var smeDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMENum</span>
+                            <span>@smeDB.ParentSMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Value</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.ParentSMENum != 0)
+                            @if (smeDB.ParentSMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum)" target="_blank">par</a>
+                                <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMEId)" target="_blank">par</a>
                             }
                             <br />
                         }
@@ -759,8 +759,8 @@
                     else
                     {
                         data = db.IValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && 
+                        .OrderBy(v => v.ParentSMEId)
+                        .Where(v => (smenum == 0 || v.ParentSMEId == smenum) && 
                             (searchLower == "" || (withI && v.Value == iEqual) || v.Annotation.ToLower().Contains(searchLower)))
                         .Take(size)
                         .ToList();
@@ -793,13 +793,13 @@
                             {
                                 var smeDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
+                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMENum != 0)
+                                        @if (smeDB.ParentSMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum)" target="_blank">par</a>
+                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMEId)" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -814,15 +814,15 @@
                         {
                             var smeDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMENum</span>
+                            <span>@smeDB.ParentSMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Value</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.ParentSMENum != 0)
+                            @if (smeDB.ParentSMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum)" target="_blank">par</a>
+                                <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMEId)" target="_blank">par</a>
                             }
                             <br />
                         }
@@ -850,15 +850,15 @@
                     if (searchLower == "" && smenum == 0)
                     {
                         data = db.DValueSets
-                        .OrderBy(v => v.ParentSMENum)
+                        .OrderBy(v => v.ParentSMEId)
                         .Take(size)
                         .ToList();
                     }
                     else
                     {
                         data = db.DValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) &&
+                        .OrderBy(v => v.ParentSMEId)
+                        .Where(v => (smenum == 0 || v.ParentSMEId == smenum) &&
                         (searchLower == "" || (withF && v.Value == fEqual) || v.Annotation.ToLower().Contains(searchLower)))
                         .Take(size)
                         .ToList();
@@ -891,13 +891,13 @@
                             {
                                 var smeDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
+                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMENum != 0)
+                                        @if (smeDB.ParentSMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum)" target="_blank">par</a>
+                                            <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMEId)" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -912,15 +912,15 @@
                         {
                             var smeDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMENum</span>
+                            <span>@smeDB.ParentSMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Value</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.ParentSMENum != 0)
+                            @if (smeDB.ParentSMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum)" target="_blank">par </a>
+                                <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMEId)" target="_blank">par </a>
                             }
                             <br />
                         }
@@ -942,8 +942,8 @@
     long total = 0;
     int size = 1000;
     string search = "";
-    long aasxnum = 0;
-    long aasnum = 0;
+    long aasxid = 0;
+    long aasid = 0;
     long smnum = 0;
     long smenum = 0;
     string smId = "";

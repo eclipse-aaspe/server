@@ -1601,8 +1601,8 @@ namespace AasxRestServerLibrary
                                     }
 
                                     var submodelDBList = db.SMSets
-                                    .OrderBy(sm => sm.SMNum)
-                                    .Where(sm => sm.AASNum == aasDB.AASNum)
+                                    .OrderBy(sm => sm.Id)
+                                    .Where(sm => sm.AASId == aasDB.Id)
                                     .ToList();
 
                                     foreach (var submodelDB in submodelDBList)

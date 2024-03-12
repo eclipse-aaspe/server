@@ -134,46 +134,41 @@ namespace AasxServerDB
 
 
     // --------------- Database Schema ---------------
-    [Index(nameof(AASXNum))]
+    [Index(nameof(Id))]
     public class AASXSet
     {
         public int Id { get; set; }
-        public long AASXNum { get; set; }
         public string AASX { get; set; }
     }
 
-    [Index(nameof(AASNum))]
+    [Index(nameof(Id))]
     public class AASSet
     {
         public int Id { get; set; }
-        public long AASNum { get; set; }
-        public long AASXNum { get; set; }
+        public int AASXId { get; set; }
         public string AASId { get; set; }
         public string IdShort { get; set; }
         public string AssetKind { get; set; }
         public string GlobalAssetId { get; set; }
     }
 
-    [Index(nameof(SMNum))]
+    [Index(nameof(Id))]
     public class SMSet
     {
         public int Id { get; set; }
-        public long SMNum { get; set; }
-        public long AASXNum { get; set; }
-        public long AASNum { get; set; }
+        public int AASXId { get; set; }
+        public int AASId { get; set; }
         public string SemanticId { get; set; }
         public string SMId { get; set; }
         public string IdShort { get; set; }
     }
 
-    [Index(nameof(SMNum))]
-    [Index(nameof(SMENum))]
+    [Index(nameof(Id))]
     public class SMESet
     {
         public int Id { get; set; }
-        public long SMENum { get; set; }
-        public long SMNum { get; set; }
-        public long ParentSMENum { get; set; }
+        public int SMId { get; set; }
+        public int ParentSMEId { get; set; }
         public string SMEType { get; set; }
         public string ValueType { get; set; }
         public string SemanticId { get; set; }
@@ -186,17 +181,17 @@ namespace AasxServerDB
                 switch (ValueType)
                 {
                     case "S":
-                        var ls = db.SValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList();
+                        var ls = db.SValueSets.Where(s => s.ParentSMEId == Id).Select(s => s.Value).ToList();
                         if (ls.Count != 0)
                             return ls.First() + "";
                         break;
                     case "I":
-                        var li = db.IValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList();
+                        var li = db.IValueSets.Where(s => s.ParentSMEId == Id).Select(s => s.Value).ToList();
                         if (li.Count != 0)
                             return li.First() + "";
                         break;
                     case "F":
-                        var ld = db.DValueSets.Where(s => s.ParentSMENum == SMENum).Select(s => s.Value).ToList();
+                        var ld = db.DValueSets.Where(s => s.ParentSMEId == Id).Select(s => s.Value).ToList();
                         if (ld.Count != 0)
                             return ld.First() + "";
                         break;
@@ -213,7 +208,7 @@ namespace AasxServerDB
                 using (AasContext db = new AasContext())
                 {
                     var MLPValueSetList = db.SValueSets
-                        .Where(s => s.ParentSMENum == SMENum)
+                        .Where(s => s.ParentSMEId == Id)
                         .ToList();
                     foreach (var MLPValue in MLPValueSetList)
                     {
@@ -228,16 +223,16 @@ namespace AasxServerDB
 
         public static List<SValueSet> getValueList(List<SMESet> smesets)
         {
-            var smeNums = smesets.OrderBy(s => s.SMENum).Select(s => s.SMENum).ToList();
-            long first = smeNums.First();
-            long last = smeNums.Last();
+            var smeIds = smesets.OrderBy(s => s.Id).Select(s => s.Id).ToList();
+            long first = smeIds.First();
+            long last = smeIds.Last();
             List<SValueSet> valueList = null;
             using (AasContext db = new AasContext())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
-                valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM IValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM DValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last)
-                    .Where(v => smeNums.Contains(v.ParentSMENum))
-                    .OrderBy(v => v.ParentSMENum)
+                valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMEId >= " + first + " AND ParentSMEId <=" + last + " UNION SELECT * FROM IValueSets WHERE ParentSMEId >= " + first + " AND ParentSMEId <=" + last + " UNION SELECT * FROM DValueSets WHERE ParentSMEId >= " + first + " AND ParentSMEId <=" + last)
+                    .Where(v => smeIds.Contains(v.ParentSMEId))
+                    .OrderBy(v => v.ParentSMEId)
                     .ToList();
                 watch.Stop();
                 Console.WriteLine("Getting the value list took this time: " + watch.ElapsedMilliseconds);
@@ -246,11 +241,11 @@ namespace AasxServerDB
         }
     }
 
-    [Index(nameof(ParentSMENum))]
+    [Index(nameof(ParentSMEId))]
     public class IValueSet
     {
         public int Id { get; set; }
-        public long ParentSMENum { get; set; }
+        public int ParentSMEId { get; set; }
         public long Value { get; set; }
         public string Annotation { get; set; }
         public SValueSet asStringValue()
@@ -258,27 +253,27 @@ namespace AasxServerDB
             return new SValueSet
             {
                 Id = Id,
-                ParentSMENum = ParentSMENum,
+                ParentSMEId = ParentSMEId,
                 Annotation = Annotation,
                 Value = Value.ToString()
             };
         }
     }
 
-    [Index(nameof(ParentSMENum))]
+    [Index(nameof(ParentSMEId))]
     public class SValueSet
     {
         public int Id { get; set; }
-        public long ParentSMENum { get; set; }
+        public int ParentSMEId { get; set; }
         public string Value { get; set; }
         public string Annotation { get; set; }
     }
 
-    [Index(nameof(ParentSMENum))]
+    [Index(nameof(ParentSMEId))]
     public class DValueSet
     {
         public int Id { get; set; }
-        public long ParentSMENum { get; set; }
+        public int ParentSMEId { get; set; }
         public double Value { get; set; }
         public string Annotation { get; set; }
         public SValueSet asStringValue()
@@ -286,7 +281,7 @@ namespace AasxServerDB
             return new SValueSet
             {
                 Id = Id,
-                ParentSMENum = ParentSMENum,
+                ParentSMEId = ParentSMEId,
                 Annotation = Annotation,
                 Value = Value.ToString()
             };

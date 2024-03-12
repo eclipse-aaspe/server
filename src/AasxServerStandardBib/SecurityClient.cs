@@ -2171,34 +2171,34 @@ namespace AasxServer
                             var submodelList = Program.env[envi].AasEnv.Submodels;
                             var submodelIds = submodelList.Select(x => x.Id).ToList();
 
-                            Dictionary<string, long> aasToDeleteAASXNumsDic;
+                            Dictionary<string, int> aasToDeleteAASXIdsDic;
 
                             using (AasContext db = new AasContext())
                             {
                                 //Deleting all related Aas, Submodel and SME
                                 //Join zwischen Liste und DB Tabelle nicht möglich, deswegen Contains für AAS und Submodelle
-                                aasToDeleteAASXNumsDic = db.AASSets.Where(x => aasIds.Contains(x.AASId)).ToDictionary(x => x.AASId, x => x.AASXNum);
+                                aasToDeleteAASXIdsDic = db.AASSets.Where(x => aasIds.Contains(x.AASId)).ToDictionary(x => x.AASId, x => x.AASXId);
                                 db.AASSets.Where(x => aasIds.Contains(x.AASId)).ExecuteDelete();
-                                var submodelsToDeleteNums = db.SMSets.Where(x => submodelIds.Contains(x.SMId)).Select(x => x.SMNum).ToList();
 
+                                var submodelsToDeleteIds = db.SMSets.Where(x => submodelIds.Contains(x.SMId)).Select(x => x.Id).ToList();
                                 db.SMSets.Where(x => submodelIds.Contains(x.SMId)).ExecuteDelete();
 
-                                var smeToDeleteNums = db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SMNum)).Select(x => x.SMENum).ToList();
-                                db.SMESets.Where(x => submodelsToDeleteNums.Contains(x.SMNum)).ExecuteDelete();
+                                var smeToDeleteIds = db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).Select(x => x.Id).ToList();
+                                db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).ExecuteDelete();
 
-                                db.IValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
-                                db.SValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
-                                db.DValueSets.Where(x => smeToDeleteNums.Contains(x.ParentSMENum)).ExecuteDelete();
+                                db.IValueSets.Where(x => smeToDeleteIds.Contains(x.ParentSMEId)).ExecuteDelete();
+                                db.SValueSets.Where(x => smeToDeleteIds.Contains(x.ParentSMEId)).ExecuteDelete();
+                                db.DValueSets.Where(x => smeToDeleteIds.Contains(x.ParentSMEId)).ExecuteDelete();
 
                                 //Load Everything back in
                                 foreach (IAssetAdministrationShell aas in aasList)
                                 {
-                                    long assxNum = 0;
-                                    if (aasToDeleteAASXNumsDic.ContainsKey(aas.Id))
+                                    int assxId = 0;
+                                    if (aasToDeleteAASXIdsDic.ContainsKey(aas.Id))
                                     {
-                                        assxNum = aasToDeleteAASXNumsDic[aas.Id];
+                                        assxId = aasToDeleteAASXIdsDic[aas.Id];
                                     }
-                                    VisitorAASX.LoadAASInDB(db, aas, assxNum, Program.env[envi]);
+                                    VisitorAASX.LoadAASInDB(db, aas, assxId, Program.env[envi]);
                                 }
                                 db.SaveChanges();
                             }

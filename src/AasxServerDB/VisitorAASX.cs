@@ -10,14 +10,14 @@ namespace AasxServerDB
     public class VisitorAASX : VisitorThrough
     {
         AasContext _db = null;
-        long _smNum = 0;
-        List<long> _parentNum = null;
+        int _smId = 0;
+        List<int> _parentId = null;
 
-        public VisitorAASX(AasContext db, long smNum)
+        public VisitorAASX(AasContext db, int smId)
         {
             _db = db;
-            _smNum = smNum;
-            _parentNum = new List<long>();
+            _smId = smId;
+            _parentId = new List<int>();
         }
 
         static public void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
@@ -36,8 +36,6 @@ namespace AasxServerDB
                         db.SaveChanges();
 
                         var aas = asp.AasEnv.AssetAdministrationShells[0];
-                        var aasId = aas.Id;
-                        var assetId = aas.AssetInformation.GlobalAssetId;
 
                         // Check security
                         if (aas.IdShort.ToLower().Contains("globalsecurity"))
@@ -47,10 +45,9 @@ namespace AasxServerDB
                         }
                         else
                         {
-                            if (aasId != null && aasId != "" && assetId != null && assetId != "")
-                            {
+                            if (aas.Id != null && aas.Id != "" && 
+                                aas.AssetInformation.GlobalAssetId != null && aas.AssetInformation.GlobalAssetId != "")
                                 VisitorAASX.LoadAASInDB(db, aas, aasxDB.Id, asp);
-                            }
                         }
                         db.SaveChanges();
                     }
@@ -101,13 +98,13 @@ namespace AasxServerDB
             }
         }
 
-        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxId, AdminShellPackageEnv asp)
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, int aasxId, AdminShellPackageEnv asp)
         {
             var aasDB = new AASSet
             {
                 AASId = aas.Id,
                 GlobalAssetId = aas.AssetInformation.GlobalAssetId,
-                AASXNum = aasxId,
+                AASXId = aasxId,
                 IdShort = aas.IdShort,
                 AssetKind = aas.AssetInformation.AssetKind.ToString()
             };
@@ -130,8 +127,8 @@ namespace AasxServerDB
                         {
                             SMId = sm.Id,
                             SemanticId = semanticId,
-                            AASXNum = aasxId,
-                            AASNum = aasDB.Id,
+                            AASXId = aasxId,
+                            AASId = aasDB.Id,
                             IdShort = sm.IdShort
                         };
                         db.Add(submodelDB);
@@ -271,12 +268,12 @@ namespace AasxServerDB
             }
         }
 
-        private long collectSMEData(ISubmodelElement sme)
+        private int collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
-            long pn = 0;
-            if (_parentNum.Count > 0)
-                pn = _parentNum[_parentNum.Count - 1];
+            int pn = 0;
+            if (_parentId.Count > 0)
+                pn = _parentId[_parentId.Count - 1];
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
@@ -287,8 +284,8 @@ namespace AasxServerDB
                 SemanticId = semanticId,
                 IdShort = sme.IdShort,
                 ValueType = vt,
-                SMNum = _smNum,
-                ParentSMENum = pn
+                SMId = _smId,
+                ParentSMEId = pn
             };
             _db.Add(smeDB);
             _db.SaveChanges();
@@ -306,7 +303,7 @@ namespace AasxServerDB
                             {
                                 Annotation = ls[i].Language,
                                 Value = ls[i].Text,
-                                ParentSMENum = smeDB.Id
+                                ParentSMEId = smeDB.Id
                             };
                             _db.Add(mlpval);
                         }
@@ -317,7 +314,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new SValueSet
                 {
-                    ParentSMENum = smeDB.Id,
+                    ParentSMEId = smeDB.Id,
                     Value = sValue,
                     Annotation = ""
                 };
@@ -327,7 +324,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new IValueSet
                 {
-                    ParentSMENum = smeDB.Id,
+                    ParentSMEId = smeDB.Id,
                     Value = iValue,
                     Annotation = ""
                 };
@@ -337,7 +334,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new DValueSet
                 {
-                    ParentSMENum = smeDB.Id,
+                    ParentSMEId = smeDB.Id,
                     Value = fValue,
                     Annotation = ""
                 };
@@ -372,80 +369,80 @@ namespace AasxServerDB
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitRelationshipElement(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitSubmodelElementList(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitSubmodelElementCollection(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitProperty(IProperty that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitProperty(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitMultiLanguageProperty(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitRange(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitReferenceElement(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitBlob(IBlob that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitBlob(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitFile(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitAnnotatedRelationshipElement(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitEntity(IEntity that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitEntity(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitEventPayload(IEventPayload that)
         {
@@ -455,20 +452,20 @@ namespace AasxServerDB
         }
         public override void VisitOperation(IOperation that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitOperation(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitOperationVariable(IOperationVariable that)
         {
         }
         public override void VisitCapability(ICapability that)
         {
-            long smeNum = collectSMEData(that);
-            _parentNum.Add(smeNum);
+            int smeId = collectSMEData(that);
+            _parentId.Add(smeId);
             base.VisitCapability(that);
-            _parentNum.RemoveAt(_parentNum.Count - 1);
+            _parentId.RemoveAt(_parentId.Count - 1);
         }
         public override void VisitConceptDescription(IConceptDescription that)
         {

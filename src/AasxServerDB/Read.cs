@@ -17,7 +17,7 @@ namespace AasxServerDB
                     if (submodelDBList.Count() > 0)
                     {
                         var submodelDB = submodelDBList.First();
-                        aasxNum = submodelDB.AASXNum;
+                        aasxNum = submodelDB.AASXId;
                     }
                 }
                 if (!aasId.Equals(""))
@@ -26,12 +26,12 @@ namespace AasxServerDB
                     if (aasDBList.Any())
                     {
                         var aasDB = aasDBList.First();
-                        aasxNum = aasDB.AASXNum;
+                        aasxNum = aasDB.AASXId;
                     }
                 }
                 if (aasxNum == 0)
                     return null;
-                var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
+                var aasxDBList = db.AASXSets.Where(a => a.Id == aasxNum);
                 if (!aasxDBList.Any())
                     return null;
                 var aasxDB = aasxDBList.First();
@@ -58,8 +58,8 @@ namespace AasxServerDB
                 aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
 
                 var submodelDBList = db.SMSets
-                    .OrderBy(sm => sm.SMNum)
-                    .Where(sm => sm.AASNum == aasDB.AASNum)
+                    .OrderBy(sm => sm.Id)
+                    .Where(sm => sm.AASId == aasDB.Id)
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
@@ -77,7 +77,7 @@ namespace AasxServerDB
             using (AasContext db = new AasContext())
             {
                 var subDB = db.SMSets
-                    .OrderBy(s => s.SMNum)
+                    .OrderBy(s => s.Id)
                     .Where(s => s.SMId == submodelId)
                     .ToList()
                     .First();
@@ -85,8 +85,8 @@ namespace AasxServerDB
                 if (subDB != null)
                 {
                     var SMEList = db.SMESets
-                            .OrderBy(sme => sme.SMENum)
-                            .Where(sme => sme.SMNum == subDB.SMNum)
+                            .OrderBy(sme => sme.Id)
+                            .Where(sme => sme.Id == subDB.Id)
                             .ToList();
 
                     Submodel submodel = new Submodel(submodelId);
@@ -124,7 +124,7 @@ namespace AasxServerDB
 
         static private void loadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, long smeNum)
         {
-            var smeLevel = SMEList.Where(s => s.ParentSMENum == smeNum).OrderBy(s => s.IdShort).ToList();
+            var smeLevel = SMEList.Where(s => s.ParentSMEId == smeNum).OrderBy(s => s.IdShort).ToList();
 
             foreach (var smel in smeLevel)
             {
@@ -144,7 +144,7 @@ namespace AasxServerDB
                         using (AasContext db = new AasContext())
                         {
                             var SValueSetList = db.SValueSets
-                                .Where(s => s.ParentSMENum == smel.SMENum)
+                                .Where(s => s.ParentSMEId == smel.Id)
                                 .ToList();
                             foreach (var MLPValue in SValueSetList)
                             {
@@ -184,7 +184,7 @@ namespace AasxServerDB
 
                 if (smel.SMEType == "SMC")
                 {
-                    loadSME(submodel, nextSME, smel.SMEType, SMEList, smel.SMENum);
+                    loadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
                 }
             }
         }

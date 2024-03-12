@@ -448,11 +448,11 @@ namespace AasxServer
                 {
                     using (AasContext db = new AasContext())
                     {
-                        var submodelDBList = db.SMSets.OrderBy(sm => sm.SMNum).Where(sm => sm.SMId == submodelIdentifier).ToList();
+                        var submodelDBList = db.SMSets.OrderBy(sm => sm.Id).Where(sm => sm.SMId == submodelIdentifier).ToList();
                         var submodelDB = submodelDBList.First();
 
                         Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
-                        var aasDBList = db.AASSets.Where(a => a.AASXNum == submodelDB.AASXNum);
+                        var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
                         var aasDB = aasDBList.First();
                         env[i] = DBRead.AASToPackageEnv(envFileName[i], aasDB);
                         output = DBRead.getSubmodel(submodelDB.SMId);
