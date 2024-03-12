@@ -25,7 +25,6 @@ namespace AasxServerDB
         public static bool _isPostgres { get; set; }
 
         // --------------- Database Schema ---------------
-        public DbSet<DBConfigSet> DBConfigSets { get; set; }
         public DbSet<AASXSet> AASXSets { get; set; }
         public DbSet<AASSet> AASSets { get; set; }
         public DbSet<SMSet> SMSets { get; set; }
@@ -79,9 +78,7 @@ namespace AasxServerDB
         public void ClearDB()
         {
             int count = 0;
-            var task = Task.Run(async () => count = await DBConfigSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await AASXSets.ExecuteDeleteAsync());
+            var task = Task.Run(async () => count = await AASXSets.ExecuteDeleteAsync());
             task.Wait();
             task = Task.Run(async () => count = await AASSets.ExecuteDeleteAsync());
             task.Wait();
@@ -95,17 +92,6 @@ namespace AasxServerDB
             task.Wait();
             task = Task.Run(async () => count = await DValueSets.ExecuteDeleteAsync());
             task.Wait();
-
-            DBConfigSet dbConfig = new DBConfigSet
-            {
-                Id = 1,
-                AASXCount = 0,
-                AASCount = 0,
-                SMCount = 0,
-                SMECount = 0
-            };
-            Add(dbConfig);
-            SaveChanges();
         }
     }
 
@@ -148,15 +134,6 @@ namespace AasxServerDB
 
 
     // --------------- Database Schema ---------------
-    public class DBConfigSet
-    {
-        public int Id { get; set; }
-        public long AASXCount { get; set; }
-        public long AASCount { get; set; }
-        public long SMCount { get; set; }
-        public long SMECount { get; set; }
-    }
-
     [Index(nameof(AASXNum))]
     public class AASXSet
     {

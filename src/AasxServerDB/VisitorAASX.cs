@@ -10,14 +10,12 @@ namespace AasxServerDB
     public class VisitorAASX : VisitorThrough
     {
         AasContext _db = null;
-        DBConfigSet _dbConfig = null;
         long _smNum = 0;
         List<long> _parentNum = null;
 
-        public VisitorAASX(AasContext db, DBConfigSet dbConfigSet, long smNum)
+        public VisitorAASX(AasContext db, long smNum)
         {
             _db = db;
-            _dbConfig = dbConfigSet;
             _smNum = smNum;
             _parentNum = new List<long>();
         }
@@ -30,16 +28,12 @@ namespace AasxServerDB
                 {
                     if (!createFilesOnly)
                     {
-                        var configDBList = db.DBConfigSets.Where(d => true);
-                        var dbConfig = configDBList.FirstOrDefault();
-
-                        long aasxNum = ++dbConfig.AASXCount;
                         var aasxDB = new AASXSet
                         {
-                            AASXNum = aasxNum,
                             AASX = filePath
                         };
                         db.Add(aasxDB);
+                        db.SaveChanges();
 
                         var aas = asp.AasEnv.AssetAdministrationShells[0];
                         var aasId = aas.Id;
@@ -55,7 +49,7 @@ namespace AasxServerDB
                         {
                             if (aasId != null && aasId != "" && assetId != null && assetId != "")
                             {
-                                VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
+                                VisitorAASX.LoadAASInDB(db, aas, aasxDB.Id, asp);
                             }
                         }
                         db.SaveChanges();
@@ -107,25 +101,18 @@ namespace AasxServerDB
             }
         }
 
-        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp)
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxId, AdminShellPackageEnv asp)
         {
-            var dbConfig = db.DBConfigSets.FirstOrDefault();
-            LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
-        }
-
-        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DBConfigSet dbConfig)
-        {
-            long aasNum = ++dbConfig.AASCount;
             var aasDB = new AASSet
             {
-                AASNum = aasNum,
                 AASId = aas.Id,
                 GlobalAssetId = aas.AssetInformation.GlobalAssetId,
-                AASXNum = aasxNum,
+                AASXNum = aasxId,
                 IdShort = aas.IdShort,
                 AssetKind = aas.AssetInformation.AssetKind.ToString()
             };
             db.Add(aasDB);
+            db.SaveChanges();
 
             // Iterate submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -139,20 +126,18 @@ namespace AasxServerDB
                         if (semanticId == null)
                             semanticId = "";
 
-                        long submodelNum = ++dbConfig.SMCount;
-
                         var submodelDB = new SMSet
                         {
-                            SMNum = submodelNum,
                             SMId = sm.Id,
                             SemanticId = semanticId,
-                            AASXNum = aasxNum,
-                            AASNum = aasNum,
+                            AASXNum = aasxId,
+                            AASNum = aasDB.Id,
                             IdShort = sm.IdShort
                         };
                         db.Add(submodelDB);
+                        db.SaveChanges();
 
-                        VisitorAASX v = new VisitorAASX(db, dbConfig, submodelNum);
+                        VisitorAASX v = new VisitorAASX(db, submodelDB.Id);
                         v.Visit(sm);
                     }
                 }
@@ -187,7 +172,6 @@ namespace AasxServerDB
                 return "O";
             if (sme is Capability)
                 return "C";
-
             return null;
         }
 
@@ -243,7 +227,7 @@ namespace AasxServerDB
             return "S";
         }
 
-        private void getValue(ISubmodelElement sme, long smeNum, out string vt, out string sValue, out long iValue, out double fValue)
+        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
         {
             sValue = "";
             iValue = 0;
@@ -272,20 +256,11 @@ namespace AasxServerDB
                 var ls = mlp.Value;
                 if (ls != null)
                 {
-                    for (int i = 0; i < ls.Count; i++)
-                    {
-                        var mlpval = new SValueSet()
-                        {
-                            Annotation = ls[i].Language,
-                            Value = ls[i].Text,
-                            ParentSMENum = smeNum
-                        };
-                        _db.Add(mlpval);
-                    }
                     vt = "S";
                     sValue = v;
                 }
             }
+
             if (sme is AasCore.Aas3_0.Range r)
             {
                 v = r.Min;
@@ -299,26 +274,50 @@ namespace AasxServerDB
         private long collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
-
-            long smeNum = ++_dbConfig.SMECount;
             long pn = 0;
             if (_parentNum.Count > 0)
                 pn = _parentNum[_parentNum.Count - 1];
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
+            getValue(sme, out string vt, out string sValue, out long iValue, out double fValue);
+            var smeDB = new SMESet
+            {
+                SMEType = st,
+                SemanticId = semanticId,
+                IdShort = sme.IdShort,
+                ValueType = vt,
+                SMNum = _smNum,
+                ParentSMENum = pn
+            };
+            _db.Add(smeDB);
+            _db.SaveChanges();
 
-            string vt = "";
-            string sValue = "";
-            long iValue = 0;
-            double fValue = 0;
-            getValue(sme, smeNum, out vt, out sValue, out iValue, out fValue);
-
+            if (vt == "S" && st == "MLP")
+            {
+                if (sme is MultiLanguageProperty mlp)
+                {
+                    var ls = mlp.Value;
+                    if (ls != null)
+                    {
+                        for (int i = 0; i < ls.Count; i++)
+                        {
+                            var mlpval = new SValueSet()
+                            {
+                                Annotation = ls[i].Language,
+                                Value = ls[i].Text,
+                                ParentSMENum = smeDB.Id
+                            };
+                            _db.Add(mlpval);
+                        }
+                    }
+                }
+            }
             if (vt == "S" && st != "MLP")
             {
                 var ValueDB = new SValueSet
                 {
-                    ParentSMENum = smeNum,
+                    ParentSMENum = smeDB.Id,
                     Value = sValue,
                     Annotation = ""
                 };
@@ -328,7 +327,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new IValueSet
                 {
-                    ParentSMENum = smeNum,
+                    ParentSMENum = smeDB.Id,
                     Value = iValue,
                     Annotation = ""
                 };
@@ -338,25 +337,13 @@ namespace AasxServerDB
             {
                 var ValueDB = new DValueSet
                 {
-                    ParentSMENum = smeNum,
+                    ParentSMENum = smeDB.Id,
                     Value = fValue,
                     Annotation = ""
                 };
                 _db.Add(ValueDB);
             }
-
-            var smeDB = new SMESet
-            {
-                SMENum = smeNum,
-                SMEType = st,
-                SemanticId = semanticId,
-                IdShort = sme.IdShort,
-                ValueType = vt,
-                SMNum = _smNum,
-                ParentSMENum = pn
-            };
-            _db.Add(smeDB);
-            return smeNum;
+            return smeDB.Id;
         }
         public override void VisitExtension(IExtension that)
         {
