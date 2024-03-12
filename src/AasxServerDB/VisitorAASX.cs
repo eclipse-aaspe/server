@@ -168,7 +168,7 @@ namespace AasxServerDB
             if (sme is SubmodelElementList)
                 return "SEL";
             if (sme is SubmodelElementCollection)
-                return "SEC";
+                return "SMC";
             if (sme is MultiLanguageProperty)
                 return "MLP";
             if (sme is ReferenceElement)

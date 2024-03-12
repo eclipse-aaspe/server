@@ -99,9 +99,9 @@ namespace AasxServerDB
             DBConfigSet dbConfig = new DBConfigSet
             {
                 Id = 1,
+                AASXCount = 0,
                 AASCount = 0,
                 SMCount = 0,
-                AASXCount = 0,
                 SMECount = 0
             };
             Add(dbConfig);

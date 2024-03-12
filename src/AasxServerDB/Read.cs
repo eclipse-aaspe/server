@@ -134,7 +134,7 @@ namespace AasxServerDB
                     case "P":
                         nextSME = new Property(DataTypeDefXsd.String, idShort: smel.IdShort, value: smel.getValue());
                         break;
-                    case "SEC":
+                    case "SMC":
                         nextSME = new SubmodelElementCollection(idShort: smel.IdShort, value: new List<ISubmodelElement>());
                         break;
                     case "MLP":
@@ -176,13 +176,13 @@ namespace AasxServerDB
                 {
                     switch (SMEType)
                     {
-                        case "SEC":
+                        case "SMC":
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
                             break;
                     }
                 }
 
-                if (smel.SMEType == "SEC")
+                if (smel.SMEType == "SMC")
                 {
                     loadSME(submodel, nextSME, smel.SMEType, SMEList, smel.SMENum);
                 }
