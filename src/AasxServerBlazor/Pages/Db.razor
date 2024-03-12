@@ -516,12 +516,24 @@
                                 <th style="word-break:keep-all">Value</th>
                                 <th style="word-break:keep-all">ValueType</th>
                                 <th style="word-break:keep-all">Links</th>
+                                <th style="word-break:keep-all">API</th>
                             </tr>
                         </thead>
                         <tbody>
                             @for (int i = 0; i < data.Count && i < 1000; i++)
                             {
                                 var smeDB = data[i];
+                                string path = smeDB.IdShort;
+                                long pnum = smeDB.ParentSMENum;
+                                while (pnum != 0)
+                                {
+                                    var smeDBP = db.SMESets.Where(s => s.SMENum == pnum).First();
+                                    path = smeDBP.IdShort + "." + path;
+                                    pnum = smeDBP.ParentSMENum;
+                                }
+                                var smDB = db.SMSets.Where(s => s.SMNum == smeDB.SMNum).First();
+                                string submodel64 = Base64UrlEncoder.Encode((smDB.SMId));
+                                string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
                                 <tr>
                                     <td style="word-break:keep-all">@smeDB.SMNum</td>
                                     <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
@@ -560,6 +572,7 @@
                                             <a href="@(shorturl + "/svalue?smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
                                         }
                                     </td>
+                                    <td><a href="@link" target="_blank">@link</a></td>
                                 </tr>
                             }
                         </tbody>
@@ -571,6 +584,18 @@
                         @for (int i = 1000; i < data.Count; i++)
                         {
                             var smeDB = data[i];
+                            string path = smeDB.IdShort;
+                            long pnum = smeDB.ParentSMENum;
+                            while (pnum != 0)
+                            {
+                                var smeDBP = db.SMESets.Where(s => s.SMENum == pnum).First();
+                                path = smeDBP.IdShort + "." + path;
+                                pnum = smeDBP.ParentSMENum;
+                            }
+                            var smDB = db.SMSets.Where(s => s.SMNum == smeDB.SMNum).First();
+                            string submodel64 = Base64UrlEncoder.Encode((smDB.SMId));
+                            string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
+
                             <span>@smeDB.SMNum</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.ParentSMENum</span>
@@ -613,6 +638,8 @@
                             {
                                 <a href="@(shorturl + "/svalue?smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
                             }
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@link" target="_blank">@link</a>
                             <br />
                         }
                         <br />
