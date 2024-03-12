@@ -10,13 +10,15 @@ namespace AasxServerDB
     public class VisitorAASX : VisitorThrough
     {
         AasContext _db = null;
-        int _smId = 0;
         List<int> _parentId = null;
+        public static int CurrentAASXId { get; set; }
+        public static int CurrentAASId { get; set; }
+        public static int CurrentSMId { get; set; }
+        public static int CurrentSMEId { get; set; }
 
-        public VisitorAASX(AasContext db, int smId)
+        public VisitorAASX(AasContext db)
         {
             _db = db;
-            _smId = smId;
             _parentId = new List<int>();
         }
 
@@ -33,7 +35,7 @@ namespace AasxServerDB
                             AASX = filePath
                         };
                         db.Add(aasxDB);
-                        db.SaveChanges();
+                        CurrentAASXId++;
 
                         var aas = asp.AasEnv.AssetAdministrationShells[0];
 
@@ -47,7 +49,7 @@ namespace AasxServerDB
                         {
                             if (aas.Id != null && aas.Id != "" && 
                                 aas.AssetInformation.GlobalAssetId != null && aas.AssetInformation.GlobalAssetId != "")
-                                VisitorAASX.LoadAASInDB(db, aas, aasxDB.Id, asp);
+                                VisitorAASX.LoadAASInDB(db, aas, asp);
                         }
                         db.SaveChanges();
                     }
@@ -98,18 +100,18 @@ namespace AasxServerDB
             }
         }
 
-        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, int aasxId, AdminShellPackageEnv asp)
+        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, AdminShellPackageEnv asp)
         {
             var aasDB = new AASSet
             {
-                AASId = aas.Id,
+                IdIdentifier = aas.Id,
                 GlobalAssetId = aas.AssetInformation.GlobalAssetId,
-                AASXId = aasxId,
+                AASXId = CurrentAASXId,
                 IdShort = aas.IdShort,
                 AssetKind = aas.AssetInformation.AssetKind.ToString()
             };
             db.Add(aasDB);
-            db.SaveChanges();
+            CurrentAASId++;
 
             // Iterate submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -125,16 +127,16 @@ namespace AasxServerDB
 
                         var submodelDB = new SMSet
                         {
-                            SMId = sm.Id,
+                            IdIdentifier = sm.Id,
                             SemanticId = semanticId,
-                            AASXId = aasxId,
-                            AASId = aasDB.Id,
+                            AASXId = CurrentAASXId,
+                            AASId = CurrentAASId,
                             IdShort = sm.IdShort
                         };
                         db.Add(submodelDB);
-                        db.SaveChanges();
+                        CurrentSMId++;
 
-                        VisitorAASX v = new VisitorAASX(db, submodelDB.Id);
+                        VisitorAASX v = new VisitorAASX(db);
                         v.Visit(sm);
                     }
                 }
@@ -284,11 +286,11 @@ namespace AasxServerDB
                 SemanticId = semanticId,
                 IdShort = sme.IdShort,
                 ValueType = vt,
-                SMId = _smId,
+                SMId = CurrentSMId,
                 ParentSMEId = pn
             };
             _db.Add(smeDB);
-            _db.SaveChanges();
+            CurrentSMEId++;
 
             if (vt == "S" && st == "MLP")
             {
@@ -303,7 +305,7 @@ namespace AasxServerDB
                             {
                                 Annotation = ls[i].Language,
                                 Value = ls[i].Text,
-                                ParentSMEId = smeDB.Id
+                                ParentSMEId = CurrentSMEId
                             };
                             _db.Add(mlpval);
                         }
@@ -314,7 +316,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new SValueSet
                 {
-                    ParentSMEId = smeDB.Id,
+                    ParentSMEId = CurrentSMEId,
                     Value = sValue,
                     Annotation = ""
                 };
@@ -324,7 +326,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new IValueSet
                 {
-                    ParentSMEId = smeDB.Id,
+                    ParentSMEId = CurrentSMEId,
                     Value = iValue,
                     Annotation = ""
                 };
@@ -334,7 +336,7 @@ namespace AasxServerDB
             {
                 var ValueDB = new DValueSet
                 {
-                    ParentSMEId = smeDB.Id,
+                    ParentSMEId = CurrentSMEId,
                     Value = fValue,
                     Annotation = ""
                 };

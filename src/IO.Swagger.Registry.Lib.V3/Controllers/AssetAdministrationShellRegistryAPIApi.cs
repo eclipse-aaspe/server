@@ -267,7 +267,7 @@ namespace IO.Swagger.Controllers
                 {
                     foreach (var aasDB in db.AASSets)
                     {
-                        if (decodedAasIdentifier.Equals(aasDB.AASId))
+                        if (decodedAasIdentifier.Equals(aasDB.IdIdentifier))
                         {
                             var aasDesc = _aasRegistryService.CreateAasDescriptorFromDB(aasDB);
                             return new ObjectResult(aasDesc);
@@ -575,7 +575,7 @@ namespace IO.Swagger.Controllers
                         foreach (var aasDB in db.AASSets)
                         {
                             if (assetList.Contains(aasDB.GlobalAssetId))
-                                aasList.Add(aasDB.AASId);
+                                aasList.Add(aasDB.IdIdentifier);
                         }
                     }
                 }

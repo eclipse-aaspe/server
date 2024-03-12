@@ -13,7 +13,7 @@ namespace AasxServerDB
                 long aasxNum = 0;
                 if (!submodelId.Equals(""))
                 {
-                    var submodelDBList = db.SMSets.Where(s => s.SMId == submodelId);
+                    var submodelDBList = db.SMSets.Where(s => s.IdIdentifier == submodelId);
                     if (submodelDBList.Count() > 0)
                     {
                         var submodelDB = submodelDBList.First();
@@ -22,7 +22,7 @@ namespace AasxServerDB
                 }
                 if (!aasId.Equals(""))
                 {
-                    var aasDBList = db.AASSets.Where(a => a.AASId == aasId);
+                    var aasDBList = db.AASSets.Where(a => a.IdIdentifier == aasId);
                     if (aasDBList.Any())
                     {
                         var aasDB = aasDBList.First();
@@ -48,7 +48,7 @@ namespace AasxServerDB
                     return null;
 
                 AssetAdministrationShell aas = new AssetAdministrationShell(
-                    id: aasDB.AASId,
+                    id: aasDB.IdIdentifier,
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
                     submodels: new List<AasCore.Aas3_0.IReference>());
@@ -63,7 +63,7 @@ namespace AasxServerDB
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
-                    var sm = DBRead.getSubmodel(submodelDB.SMId);
+                    var sm = DBRead.getSubmodel(submodelDB.IdIdentifier);
                     aas.Submodels.Add(sm.GetReference());
                     aasEnv.AasEnv.Submodels.Add(sm);
                 }
@@ -78,7 +78,7 @@ namespace AasxServerDB
             {
                 var subDB = db.SMSets
                     .OrderBy(s => s.Id)
-                    .Where(s => s.SMId == submodelId)
+                    .Where(s => s.IdIdentifier == submodelId)
                     .ToList()
                     .First();
 

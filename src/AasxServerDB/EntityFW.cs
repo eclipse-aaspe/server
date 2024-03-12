@@ -47,8 +47,8 @@ namespace AasxServerDB
                 if (connectionString.ToLower().Contains("host")) // Postgres
                 {
                     string[] Params = connectionString.Split(";");
-                    string dbPassword = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
-                    string dbUser = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string dbPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string dbUser = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
                     for (int i = 0; i < Params.Length; i++)
                     {
                         if (Params[i].Contains("Username") && dbUser != null)
@@ -146,7 +146,7 @@ namespace AasxServerDB
     {
         public int Id { get; set; }
         public int AASXId { get; set; }
-        public string AASId { get; set; }
+        public string IdIdentifier { get; set; }
         public string IdShort { get; set; }
         public string AssetKind { get; set; }
         public string GlobalAssetId { get; set; }
@@ -159,7 +159,7 @@ namespace AasxServerDB
         public int AASXId { get; set; }
         public int AASId { get; set; }
         public string SemanticId { get; set; }
-        public string SMId { get; set; }
+        public string IdIdentifier { get; set; }
         public string IdShort { get; set; }
     }
 

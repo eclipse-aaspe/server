@@ -1509,7 +1509,7 @@ namespace AasxRestServerLibrary
 
                                 var aasDB = aasDBList[i];
                                 AssetAdministrationShell aas = new AssetAdministrationShell(
-                                    id: aasDB.AASId,
+                                    id: aasDB.IdIdentifier,
                                     idShort: aasDB.IdShort,
                                     /*assetInformation: new AssetInformation(AssetKind.Type,
                                         new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, 
@@ -1607,7 +1607,7 @@ namespace AasxRestServerLibrary
 
                                     foreach (var submodelDB in submodelDBList)
                                     {
-                                        var sm = DBRead.getSubmodel(submodelDB.SMId);
+                                        var sm = DBRead.getSubmodel(submodelDB.IdIdentifier);
 
                                         if (from == "submodel")
                                         {

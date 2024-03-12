@@ -2177,11 +2177,11 @@ namespace AasxServer
                             {
                                 //Deleting all related Aas, Submodel and SME
                                 //Join zwischen Liste und DB Tabelle nicht möglich, deswegen Contains für AAS und Submodelle
-                                aasToDeleteAASXIdsDic = db.AASSets.Where(x => aasIds.Contains(x.AASId)).ToDictionary(x => x.AASId, x => x.AASXId);
-                                db.AASSets.Where(x => aasIds.Contains(x.AASId)).ExecuteDelete();
+                                aasToDeleteAASXIdsDic = db.AASSets.Where(x => aasIds.Contains(x.IdIdentifier)).ToDictionary(x => x.IdIdentifier, x => x.AASXId);
+                                db.AASSets.Where(x => aasIds.Contains(x.IdIdentifier)).ExecuteDelete();
 
-                                var submodelsToDeleteIds = db.SMSets.Where(x => submodelIds.Contains(x.SMId)).Select(x => x.Id).ToList();
-                                db.SMSets.Where(x => submodelIds.Contains(x.SMId)).ExecuteDelete();
+                                var submodelsToDeleteIds = db.SMSets.Where(x => submodelIds.Contains(x.IdIdentifier)).Select(x => x.Id).ToList();
+                                db.SMSets.Where(x => submodelIds.Contains(x.IdIdentifier)).ExecuteDelete();
 
                                 var smeToDeleteIds = db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).Select(x => x.Id).ToList();
                                 db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).ExecuteDelete();
