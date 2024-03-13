@@ -4,7 +4,7 @@ using Extensions;
 
 namespace AasxServerDB
 {
-    public class DBRead
+    public class ReadDB
     {
         static public string GetAASXPath(string aasId = "", string submodelId = "")
         {
@@ -63,7 +63,7 @@ namespace AasxServerDB
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
-                    var sm = DBRead.getSubmodel(submodelDB.IdIdentifier);
+                    var sm = ReadDB.getSubmodel(submodelDB.IdIdentifier);
                     aas.Submodels.Add(sm.GetReference());
                     aasEnv.AasEnv.Submodels.Add(sm);
                 }

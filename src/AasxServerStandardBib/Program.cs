@@ -322,7 +322,7 @@ namespace AasxServer
             lock (Program.changeAasxFile)
             {
                 
-                envFileName[i] = DBRead.GetAASXPath(aasId: aasIdentifier);
+                envFileName[i] = ReadDB.GetAASXPath(aasId: aasIdentifier);
                 if (envFileName[i] == null)
                     return false;
                     
@@ -362,7 +362,7 @@ namespace AasxServer
                         Console.WriteLine("LOAD: " + aasIdentifier);
                         var aasDBList = db.AASSets.Where(a => a.IdIdentifier == aasIdentifier);
                         var aasDB = aasDBList.First();
-                        env[i] = DBRead.AASToPackageEnv(envFileName[i], aasDB);
+                        env[i] = ReadDB.AASToPackageEnv(envFileName[i], aasDB);
                         output = env[i].AasEnv.AssetAdministrationShells[0];
                     }
                 }
@@ -407,7 +407,7 @@ namespace AasxServer
 
             lock (Program.changeAasxFile)
             {
-                envFileName[i] = DBRead.GetAASXPath(submodelId: submodelIdentifier);
+                envFileName[i] = ReadDB.GetAASXPath(submodelId: submodelIdentifier);
                 if (envFileName[i] == null)
                     return false;
                 
@@ -454,8 +454,8 @@ namespace AasxServer
                         Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
                         var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
                         var aasDB = aasDBList.First();
-                        env[i] = DBRead.AASToPackageEnv(envFileName[i], aasDB);
-                        output = DBRead.getSubmodel(submodelDB.IdIdentifier);
+                        env[i] = ReadDB.AASToPackageEnv(envFileName[i], aasDB);
+                        output = ReadDB.getSubmodel(submodelDB.IdIdentifier);
                     }
                 }
 
@@ -869,7 +869,7 @@ namespace AasxServer
             {
                 externalBlazor = blazorHostPort;
             }
-            Query._externalBlazor = externalBlazor;
+            Query.ExternalBlazor = externalBlazor;
 
             /*
             if (File.Exists("redirect.dat"))
@@ -1355,12 +1355,6 @@ namespace AasxServer
                 {
                     AasContext._isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
                 }
-            }
-            using (AasContext db = new AasContext())
-            { 
-                VisitorAASX.CurrentAASXId = db.AASXSets.Max(a => a.Id);
-                VisitorAASX.CurrentAASId = db.AASSets.Max(a => a.Id);
-                VisitorAASX.CurrentSMId = db.SMSets.Max(a => a.Id);
             }
 
             string nl = System.Environment.NewLine;

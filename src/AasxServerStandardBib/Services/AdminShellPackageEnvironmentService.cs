@@ -262,7 +262,7 @@ namespace AasxServerStandardBib.Services
                             }
                             else
                             {
-                                output = DBRead.getSubmodel(submodelIdentifier);
+                                output = ReadDB.getSubmodel(submodelIdentifier);
                             }
                             packageIndex = Array.IndexOf(_packages, package);
                             return true;

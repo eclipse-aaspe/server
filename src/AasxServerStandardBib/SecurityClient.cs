@@ -2198,7 +2198,7 @@ namespace AasxServer
                                     {
                                         assxId = aasToDeleteAASXIdsDic[aas.Id];
                                     }
-                                    VisitorAASX.LoadAASInDB(db, aas, assxId, Program.env[envi]);
+                                    VisitorAASX.LoadAASInDB(db, aas, Program.env[envi]);
                                 }
                                 db.SaveChanges();
                             }

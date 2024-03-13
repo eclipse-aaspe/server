@@ -134,14 +134,12 @@ namespace AasxServerDB
 
 
     // --------------- Database Schema ---------------
-    [Index(nameof(Id))]
     public class AASXSet
     {
         public int Id { get; set; }
         public string AASX { get; set; }
     }
 
-    [Index(nameof(Id))]
     public class AASSet
     {
         public int Id { get; set; }
@@ -152,7 +150,6 @@ namespace AasxServerDB
         public string GlobalAssetId { get; set; }
     }
 
-    [Index(nameof(Id))]
     public class SMSet
     {
         public int Id { get; set; }
@@ -163,7 +160,6 @@ namespace AasxServerDB
         public string IdShort { get; set; }
     }
 
-    [Index(nameof(Id))]
     public class SMESet
     {
         public int Id { get; set; }
@@ -241,7 +237,6 @@ namespace AasxServerDB
         }
     }
 
-    [Index(nameof(ParentSMEId))]
     public class IValueSet
     {
         public int Id { get; set; }
@@ -260,7 +255,6 @@ namespace AasxServerDB
         }
     }
 
-    [Index(nameof(ParentSMEId))]
     public class SValueSet
     {
         public int Id { get; set; }
@@ -269,7 +263,6 @@ namespace AasxServerDB
         public string Annotation { get; set; }
     }
 
-    [Index(nameof(ParentSMEId))]
     public class DValueSet
     {
         public int Id { get; set; }

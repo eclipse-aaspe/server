@@ -55,8 +55,8 @@
             }
 
             // change parameters to input window
-            if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/sme")
-            || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
+            if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
+            || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
             {
                 <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;" />
                 @code {
@@ -104,15 +104,12 @@
             }
 
             string searchLower = search.ToLower();
-            string found = "";
-            int count = 0;
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
             using (AasContext db = new AasContext())
             {
-                // startpage with count values
-                if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/sme")
-                || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue")))
+                if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson") 
+                || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue")))
                 {
                     if (AasContext._isPostgres)
                     {
@@ -170,31 +167,11 @@
 
                 if (url.EndsWith("/aasx"))
                 {
-                    List<AASXSet> data = null;
-                    if (searchLower == "" && aasxid == 0)
-                    {
-                        data = db.AASXSets
-                        .OrderBy(a => a.Id)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.AASXSets
-                        .OrderBy(a => a.Id)
-                        .Where(a => (aasxid == 0 || a.Id == aasxid) &&
-                        (searchLower == "" || a.AASX.ToLower().Contains(searchLower)))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.AASXSets.Count();
-                    count = data.Count();
-
-                    <span>&nbsp&nbsp@("AASX#: " + found + total + " size=" + size + " search=" + search + " aasxid=" + aasxid)</span>
+                    List<AASXSet> data = PageDB.GetPageAASXData(size, searchLower, aasxid);
+                    <span>&nbsp&nbsp@("AASX#: " + data.Count + "/" + db.AASXSets.Count() + " size=" + size + " search=" + search + " aasxid=" + aasxid)</span>
                     <br />
                     <br />
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -222,7 +199,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -240,37 +217,17 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
 
                 if (url.EndsWith("/aas"))
                 {
-                    List<AASSet> data = null;
-                    if (searchLower == "" && aasxid == 0 && aasid == 0)
-                    {
-                        data = db.AASSets
-                        .OrderBy(a => a.Id)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.AASSets
-                        .OrderBy(a => a.Id)
-                        .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
-                            (searchLower == "" || a.IdShort.ToLower().Contains(searchLower) || a.IdIdentifier.ToLower().Contains(searchLower) || a.AssetKind.ToLower().Contains(searchLower) || a.GlobalAssetId.ToLower().Contains(searchLower)))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.AASSets.Count();
-                    count = data.Count();
-
-                    <span>&nbsp&nbsp@("AAS#: " + found + total + " size=" + size + " search=" + search + " aasxid=" + aasxid + " aasid=" + aasid)</span>
+                    List<AASSet> data = PageDB.GetPageAASData(size, searchLower, aasxid, aasid);
+                    <span>&nbsp&nbsp@("AAS#: " + data.Count + "/" + db.AASSets.Count() + " size=" + size + " search=" + search + " aasxid=" + aasxid + " aasid=" + aasid)</span>
                     <br />
                     <br />
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -310,7 +267,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -340,39 +297,19 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
 
                 if (url.EndsWith("/sm"))
                 {
-                    List<SMSet> data = null;
-                    if (searchLower == "" && aasxid == 0 && aasid == 0 && smid == 0)
-                    {
-                        data = db.SMSets
-                        .OrderBy(s => s.Id)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.SMSets
-                        .OrderBy(s => s.Id)
-                        .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
-                            (searchLower == "" || s.IdIdentifier.ToLower().Contains(searchLower) || s.IdShort.ToLower().Contains(searchLower) || s.SemanticId.ToLower().Contains(searchLower)))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.SMSets.Count();
-                    count = data.Count();
-
+                    List<SMSet> data = PageDB.GetPageSMData(size, searchLower, aasxid, aasid, smid);
                     <span>
-                        &nbsp&nbsp@("SM#: " + found + total + " size=" + size + " search=" + search + " aasxid=" + aasxid + " aasid=" + aasid + " smid=" + smid)
+                        &nbsp&nbsp@("SM#: " + data.Count + "/" + db.SMSets.Count() + " size=" + size + " search=" + search + " aasxid=" + aasxid + " aasid=" + aasid + " smid=" + smid)
                     </span>
                     <br />
                     <br />
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -418,7 +355,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -453,53 +390,31 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
 
                 if (url.EndsWith("/smjson") && smididentifier != "")
                 {
-                    var smDB = db.SMSets.Where(s => s.IdIdentifier == smididentifier).ToList().First();
-                    if (smDB != null)
+                    var smDBList = db.SMSets.Where(s => s.IdIdentifier.Equals(smididentifier)).ToList();
+                    if (smDBList.Any())
                     {
-                        string json = DBRead.getSubmodelJson(smDB.IdIdentifier);
+                        var smDB = smDBList.First();
+                        string json = ReadDB.getSubmodelJson(smDB.IdIdentifier);
                         <span>@json</span>
+                        <br />
                     }
                 }
 
                 if (url.EndsWith("/sme"))
                 {
-                    List<SMESet> data = null;
-                    if (searchLower == "" && smid == 0 && smeid == 0)
-                    {
-                        data = db.SMESets
-                        .OrderBy(sme => sme.Id)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.SMESets
-                        .OrderBy(sme => sme.Id)
-                        .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) &&
-                            (searchLower == "" || sme.IdShort.ToLower().Contains(searchLower) || sme.SemanticId.ToLower().Contains(searchLower) || sme.SMEType.ToLower().Contains(searchLower) || sme.ValueType.ToLower().Contains(searchLower)
-                            || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToLower().Contains(searchLower)))
-                            || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
-                            || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
-                            ))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.SMESets.Count();
-                    count = data.Count();
-
+                    List<SMESet> data = PageDB.GetPageSMEData(size, searchLower, smid, smeid);
                     <span>
-                        &nbsp&nbsp@("SME#: " + found + total + " size=" + size + " search=" + search + " smid=" + smid + " smeid=" + smeid)
+                        &nbsp&nbsp@("SME#: " + data.Count + "/" + db.SMESets.Count() + " size=" + size + " search=" + search + " smid=" + smid + " smeid=" + smeid)
                     </span>
                     <br />
                     <br />
-                    @if(size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -577,7 +492,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -644,39 +559,19 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
 
                 if (url.EndsWith("/svalue"))
                 {
-                    List<SValueSet> data = null;
-                    if (searchLower == "" && smeid == 0)
-                    {
-                        data = db.SValueSets
-                        .OrderBy(v => v.ParentSMEId)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.SValueSets
-                        .OrderBy(v => v.ParentSMEId)
-                        .Where(v => (smeid == 0 || v.ParentSMEId == smeid) && 
-                            (searchLower == "" || v.Value.ToLower().Contains(searchLower) || v.Annotation.ToLower().Contains(searchLower)))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.SValueSets.Count();
-                    count = data.Count();
-
+                    List<SValueSet> data = PageDB.GetPageSValueData(size, searchLower, smeid);
                     <span>
-                        &nbsp&nbsp@("SValue#: " + found + total + " size=" + size + " search=" + search + " smeid=" + smeid)
+                        &nbsp&nbsp@("SValue#: " + data.Count + "/" + db.SValueSets.Count() + " size=" + size + " search=" + search + " smeid=" + smeid)
                     </span>
                     <br />
                     <br />
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -708,7 +603,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -730,51 +625,19 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
 
                 if (url.EndsWith("/ivalue"))
                 {
-                    bool withI = false;
-                    long iEqual = 0;
-                    try
-                    {
-                        if (searchLower != "")
-                        {
-                            iEqual = Convert.ToInt64(searchLower);
-                            withI = true;
-                        }
-                    }
-                    catch { }
-
-                    List<IValueSet> data = null;
-                    if (searchLower == "" && smeid == 0)
-                    {
-                        data = db.IValueSets
-                        .OrderBy(v => v.Id)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.IValueSets
-                        .OrderBy(v => v.ParentSMEId)
-                        .Where(v => (smeid == 0 || v.ParentSMEId == smeid) && 
-                            (searchLower == "" || (withI && v.Value == iEqual) || v.Annotation.ToLower().Contains(searchLower)))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.IValueSets.Count();
-                    count = data.Count();
-
+                    List<IValueSet> data = PageDB.GetPageIValueData(size, searchLower, smeid);
                     <span>
-                        &nbsp&nbsp@("IValue#: " + found + total + " size=" + size + " search=" + search + " smeid=" + smeid)
+                        &nbsp&nbsp@("IValue#: " + data.Count + "/" + db.IValueSets.Count() + " size=" + size + " search=" + search + " smeid=" + smeid)
                     </span>
                     <br />
                     <br />
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -806,7 +669,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -828,51 +691,19 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
 
                 if (url.EndsWith("/dvalue"))
                 {
-                    bool withF = false;
-                    double fEqual = 0;
-                    try
-                    {
-                        if (searchLower != "")
-                        {
-                            fEqual = Convert.ToDouble(searchLower);
-                            withF = true;
-                        }
-                    }
-                    catch { }
-
-                    List<DValueSet> data = null;
-                    if (searchLower == "" && smeid == 0)
-                    {
-                        data = db.DValueSets
-                        .OrderBy(v => v.ParentSMEId)
-                        .Take(size)
-                        .ToList();
-                    }
-                    else
-                    {
-                        data = db.DValueSets
-                        .OrderBy(v => v.ParentSMEId)
-                        .Where(v => (smeid == 0 || v.ParentSMEId == smeid) &&
-                        (searchLower == "" || (withF && v.Value == fEqual) || v.Annotation.ToLower().Contains(searchLower)))
-                        .Take(size)
-                        .ToList();
-                        found = data.Count() + "/";
-                    }
-                    total = db.DValueSets.Count();
-                    count = data.Count();
-
+                    List<DValueSet> data = PageDB.GetPageDValueData(size, searchLower, smeid);
                     <span>
-                        &nbsp&nbsp@("DValue#: " + found + total + " size=" + size + " search=" + search + " smeid=" + smeid)
+                        &nbsp&nbsp@("DValue#: " + data.Count + "/" + db.DValueSets.Count() + " size=" + size + " search=" + search + " smeid=" + smeid)
                     </span>
                     <br />
                     <br />
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">First 1000 as TABLE</span></b>
                         <br />
@@ -904,7 +735,7 @@
                             }
                         </tbody>
                     </table>
-                    @if (size > 1000 && count > 1000)
+                    @if (size > 1000 && data.Count > 1000)
                     {
                         <b><span style="color:red;">All other as text</span></b>
                         <br />
@@ -926,9 +757,10 @@
                         }
                         <br />
                     }
-                    <span>@("Count: " + count)</span>
+                    <span>@("Count: " + data.Count)</span>
                     <br />
                 }
+                
                 watch.Stop();
                 <span>@("Elapsed ms: " + watch.ElapsedMilliseconds)</span>
             }
@@ -939,7 +771,6 @@
 </div>
 
 @code {
-    long total = 0;
     int size = 1000;
     string search = "";
     long aasxid = 0;

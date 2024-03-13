@@ -35,7 +35,13 @@ namespace AasxServerDB
                             AASX = filePath
                         };
                         db.Add(aasxDB);
-                        CurrentAASXId++;
+                        if (VisitorAASX.CurrentAASXId == 0)
+                        {
+                            db.SaveChanges();
+                            VisitorAASX.CurrentAASXId = aasxDB.Id;
+                        }
+                        else
+                            CurrentAASXId++;
 
                         var aas = asp.AasEnv.AssetAdministrationShells[0];
 
@@ -111,7 +117,13 @@ namespace AasxServerDB
                 AssetKind = aas.AssetInformation.AssetKind.ToString()
             };
             db.Add(aasDB);
-            CurrentAASId++;
+            if (VisitorAASX.CurrentAASId == 0)
+            {
+                db.SaveChanges();
+                VisitorAASX.CurrentAASId = aasDB.Id;
+            }
+            else
+                CurrentAASId++;
 
             // Iterate submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -125,7 +137,7 @@ namespace AasxServerDB
                         if (semanticId == null)
                             semanticId = "";
 
-                        var submodelDB = new SMSet
+                        var smDB = new SMSet
                         {
                             IdIdentifier = sm.Id,
                             SemanticId = semanticId,
@@ -133,8 +145,14 @@ namespace AasxServerDB
                             AASId = CurrentAASId,
                             IdShort = sm.IdShort
                         };
-                        db.Add(submodelDB);
-                        CurrentSMId++;
+                        db.Add(smDB);
+                        if (VisitorAASX.CurrentSMId == 0)
+                        {
+                            db.SaveChanges();
+                            VisitorAASX.CurrentSMId = smDB.Id;
+                        }
+                        else
+                            CurrentSMId++;
 
                         VisitorAASX v = new VisitorAASX(db);
                         v.Visit(sm);
@@ -290,7 +308,13 @@ namespace AasxServerDB
                 ParentSMEId = pn
             };
             _db.Add(smeDB);
-            CurrentSMEId++;
+            if (VisitorAASX.CurrentSMEId == 0)
+            {
+                _db.SaveChanges();
+                VisitorAASX.CurrentSMEId = smeDB.Id;
+            }
+            else
+                CurrentSMEId++;
 
             if (vt == "S" && st == "MLP")
             {
