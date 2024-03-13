@@ -439,7 +439,7 @@
                             {
                                 var smeDB = data[i];
                                 string path = smeDB.IdShort;
-                                long pnum = smeDB.ParentSMEId;
+                                int? pnum = smeDB.ParentSMEId;
                                 while (pnum != 0)
                                 {
                                     var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
@@ -500,7 +500,7 @@
                         {
                             var smeDB = data[i];
                             string path = smeDB.IdShort;
-                            long pnum = smeDB.ParentSMEId;
+                            int? pnum = smeDB.ParentSMEId;
                             while (pnum != 0)
                             {
                                 var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
@@ -590,13 +590,13 @@
                             {
                                 var smeDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
+                                    <td style="word-break:keep-all">@smeDB.SMEId</td>
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMEId != 0)
+                                        @if (smeDB.SMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.ParentSMEId)" target="_blank">par</a>
+                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -611,15 +611,15 @@
                         {
                             var smeDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMEId</span>
+                            <span>@smeDB.SMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Value</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.ParentSMEId != 0)
+                            @if (smeDB.SMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smeid=" + smeDB.ParentSMEId)" target="_blank">par</a>
+                                <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                             }
                             <br />
                         }
@@ -656,13 +656,13 @@
                             {
                                 var smeDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
+                                    <td style="word-break:keep-all">@smeDB.SMEId</td>
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMEId != 0)
+                                        @if (smeDB.SMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.ParentSMEId)" target="_blank">par</a>
+                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -677,15 +677,15 @@
                         {
                             var smeDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMEId</span>
+                            <span>@smeDB.SMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Value</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.ParentSMEId != 0)
+                            @if (smeDB.SMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smeid=" + smeDB.ParentSMEId)" target="_blank">par</a>
+                                <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                             }
                             <br />
                         }
@@ -722,13 +722,13 @@
                             {
                                 var smeDB = data[i];
                                 <tr>
-                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
+                                    <td style="word-break:keep-all">@smeDB.SMEId</td>
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.ParentSMEId != 0)
+                                        @if (smeDB.SMEId != 0)
                                         {
-                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.ParentSMEId)" target="_blank">par</a>
+                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -743,15 +743,15 @@
                         {
                             var smeDB = data[i];
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@smeDB.ParentSMEId</span>
+                            <span>@smeDB.SMEId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Value</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.ParentSMEId != 0)
+                            @if (smeDB.SMEId != 0)
                             {
-                                <a href="@(shorturl + "/sme?smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
+                                <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par </a>
                             }
                             <br />
                         }

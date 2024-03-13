@@ -2186,9 +2186,9 @@ namespace AasxServer
                                 var smeToDeleteIds = db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).Select(x => x.Id).ToList();
                                 db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).ExecuteDelete();
 
-                                db.IValueSets.Where(x => smeToDeleteIds.Contains(x.ParentSMEId)).ExecuteDelete();
-                                db.SValueSets.Where(x => smeToDeleteIds.Contains(x.ParentSMEId)).ExecuteDelete();
-                                db.DValueSets.Where(x => smeToDeleteIds.Contains(x.ParentSMEId)).ExecuteDelete();
+                                db.IValueSets.Where(x => smeToDeleteIds.Contains(x.SMEId)).ExecuteDelete();
+                                db.SValueSets.Where(x => smeToDeleteIds.Contains(x.SMEId)).ExecuteDelete();
+                                db.DValueSets.Where(x => smeToDeleteIds.Contains(x.SMEId)).ExecuteDelete();
 
                                 //Load Everything back in
                                 foreach (IAssetAdministrationShell aas in aasList)

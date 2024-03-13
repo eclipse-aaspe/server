@@ -10,7 +10,10 @@ namespace AasxServerDB
     public class VisitorAASX : VisitorThrough
     {
         AasContext _db = null;
-        List<int> _parentId = null;
+        AASXSet _aasxDB = null;
+        AASSet _aasDB = null;
+        SMSet _smDB = null;
+        List<SMESet> _parentSME = null;
         public static int CurrentAASXId { get; set; }
         public static int CurrentAASId { get; set; }
         public static int CurrentSMId { get; set; }
@@ -19,87 +22,121 @@ namespace AasxServerDB
         public VisitorAASX(AasContext db)
         {
             _db = db;
-            _parentId = new List<int>();
+            _parentSME = new List<SMESet>();
+        }
+
+        public VisitorAASX(AasContext db, AASXSet aasxdb)
+        {
+            _db = db;
+            _parentSME = new List<SMESet>();
+            _aasxDB = aasxdb;
         }
 
         static public void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
         {
-            using (AasContext db = new AasContext())
-            { 
-                using (var asp = new AdminShellPackageEnv(filePath, false, true))
+            using (var asp = new AdminShellPackageEnv(filePath, false, true))
+            {
+                if (!createFilesOnly)
                 {
-                    if (!createFilesOnly)
+                    using (AasContext db = new AasContext())
                     {
+                        // AASX
                         var aasxDB = new AASXSet
                         {
-                            AASX = filePath
+                            AASX = filePath,
+                            AASSets = new List<AASSet>(),
+                            SMSets = new List<SMSet>()
                         };
-                        db.Add(aasxDB);
-                        if (VisitorAASX.CurrentAASXId == 0)
-                        {
-                            db.SaveChanges();
-                            VisitorAASX.CurrentAASXId = aasxDB.Id;
-                        }
-                        else
-                            CurrentAASXId++;
-
-                        var aas = asp.AasEnv.AssetAdministrationShells[0];
 
                         // Check security
+                        var aas = asp.AasEnv.AssetAdministrationShells[0];
+                        if (!aas.IdShort.ToLower().Contains("globalsecurity") && aas.Id != null && aas.Id != "" && aas.AssetInformation.GlobalAssetId != null && aas.AssetInformation.GlobalAssetId != "")
+                        {
+                            VisitorAASX v = new VisitorAASX(db, aasxDB);
+                            v.Visit(aas);
+                            
+
+                            // Iterate submodels
+                            if (aas.Submodels != null && aas.Submodels.Count > 0)
+                            {
+                                foreach (var smr in aas.Submodels)
+                                {
+                                    var sm = asp.AasEnv.FindSubmodel(smr);
+                                    if (sm != null)
+                                    {
+                                        v = new VisitorAASX(db, aasxDB);
+                                        v.Visit(sm);
+                                        /*var semanticId = sm.SemanticId.GetAsIdentifier();
+                                        if (semanticId == null)
+                                            semanticId = "";
+
+                                        var smDB = new SMSet
+                                        {
+                                            AASXSet = aasxDB,
+                                            AASSet = aasDB,
+                                            SemanticId = semanticId,
+                                            IdIdentifier = sm.Id,
+                                            IdShort = sm.IdShort
+                                        };
+                                        aasxDB.SMSets.Add(smDB);
+                                        aasDB.SMSets.Add(smDB);
+
+                                        VisitorAASX v = new VisitorAASX(db);
+                                        v.Visit(sm);*/
+                                    }
+                                }
+                            }
+                        }
+                        db.Add(aasxDB);
+                        db.SaveChanges();
+
                         if (aas.IdShort.ToLower().Contains("globalsecurity"))
                         {
                             // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
                             // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
                         }
-                        else
-                        {
-                            if (aas.Id != null && aas.Id != "" && 
-                                aas.AssetInformation.GlobalAssetId != null && aas.AssetInformation.GlobalAssetId != "")
-                                VisitorAASX.LoadAASInDB(db, aas, asp);
-                        }
-                        db.SaveChanges();
                     }
+                }
 
-                    if (withDbFiles)
+                if (withDbFiles)
+                {
+                    string name = Path.GetFileName(filePath);
+                    try
                     {
-                        string name = Path.GetFileName(filePath);
-                        try
+                        string fcopyt = name + "__thumbnail";
+                        fcopyt = fcopyt.Replace("/", "_");
+                        fcopyt = fcopyt.Replace(".", "_");
+                        Uri dummy = null;
+                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                         {
-                            string fcopyt = name + "__thumbnail";
-                            fcopyt = fcopyt.Replace("/", "_");
-                            fcopyt = fcopyt.Replace(".", "_");
-                            Uri dummy = null;
-                            using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                            Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + fcopyt + ".dat");
+                            var fst = System.IO.File.Create(AasContext._dataPath + "/files/" + fcopyt + ".dat");
+                            if (st != null)
                             {
-                                Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + fcopyt + ".dat");
-                                var fst = System.IO.File.Create(AasContext._dataPath + "/files/" + fcopyt + ".dat");
-                                if (st != null)
-                                {
-                                    st.CopyTo(fst);
-                                }
+                                st.CopyTo(fst);
                             }
                         }
-                        catch { }
+                    }
+                    catch { }
 
-                        using (var fileStream = new FileStream(AasContext._dataPath + "/files/" + name + ".zip", FileMode.Create))
-                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+                    using (var fileStream = new FileStream(AasContext._dataPath + "/files/" + name + ".zip", FileMode.Create))
+                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+                    {
+                        var files = asp.GetListOfSupplementaryFiles();
+                        foreach (var f in files)
                         {
-                            var files = asp.GetListOfSupplementaryFiles();
-                            foreach (var f in files)
+                            try
                             {
-                                try
+                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                                 {
-                                    using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                    {
-                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                        Console.WriteLine("Copy " + AasContext._dataPath + "/" + name + "/" + f.Uri.OriginalString);
+                                    var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                    Console.WriteLine("Copy " + AasContext._dataPath + "/" + name + "/" + f.Uri.OriginalString);
 
-                                        using var archiveStream = archiveFile.Open();
-                                        s.CopyTo(archiveStream);
-                                    }
+                                    using var archiveStream = archiveFile.Open();
+                                    s.CopyTo(archiveStream);
                                 }
-                                catch { }
                             }
+                            catch { }
                         }
                     }
                 }
@@ -116,7 +153,7 @@ namespace AasxServerDB
                 IdShort = aas.IdShort,
                 AssetKind = aas.AssetInformation.AssetKind.ToString()
             };
-            db.Add(aasDB);
+            db.AASSets.Add(aasDB);
             if (VisitorAASX.CurrentAASId == 0)
             {
                 db.SaveChanges();
@@ -124,9 +161,8 @@ namespace AasxServerDB
             }
             else
                 CurrentAASId++;
-
             // Iterate submodels
-            if (aas.Submodels != null && aas.Submodels.Count > 0)
+            /*if (aas.Submodels != null && aas.Submodels.Count > 0)
             {
                 foreach (var smr in aas.Submodels)
                 {
@@ -158,7 +194,9 @@ namespace AasxServerDB
                         v.Visit(sm);
                     }
                 }
-            }
+            }*/
+
+            db.SaveChanges();
         }
 
         private string shortType(ISubmodelElement sme)
@@ -288,33 +326,30 @@ namespace AasxServerDB
             }
         }
 
-        private int collectSMEData(ISubmodelElement sme)
+        private SMESet collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
-            int pn = 0;
-            if (_parentId.Count > 0)
-                pn = _parentId[_parentId.Count - 1];
+            SMESet pn = null;
+            if (_parentSME.Count > 0)
+                pn = _parentSME[_parentSME.Count - 1];
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
             getValue(sme, out string vt, out string sValue, out long iValue, out double fValue);
             var smeDB = new SMESet
             {
+                SMSet = _smDB,
+                ParentSMESet = pn,
                 SMEType = st,
                 SemanticId = semanticId,
                 IdShort = sme.IdShort,
                 ValueType = vt,
                 SMId = CurrentSMId,
-                ParentSMEId = pn
+                IValueSets = new List<IValueSet>(),
+                DValueSets = new List<DValueSet>(),
+                SValueSets = new List<SValueSet>()
             };
-            _db.Add(smeDB);
-            if (VisitorAASX.CurrentSMEId == 0)
-            {
-                _db.SaveChanges();
-                VisitorAASX.CurrentSMEId = smeDB.Id;
-            }
-            else
-                CurrentSMEId++;
+            _smDB.SMESets.Add(smeDB);
 
             if (vt == "S" && st == "MLP")
             {
@@ -327,11 +362,11 @@ namespace AasxServerDB
                         {
                             var mlpval = new SValueSet()
                             {
+                                SMESet = smeDB,
                                 Annotation = ls[i].Language,
-                                Value = ls[i].Text,
-                                ParentSMEId = CurrentSMEId
+                                Value = ls[i].Text
                             };
-                            _db.Add(mlpval);
+                            smeDB.SValueSets.Add(mlpval);
                         }
                     }
                 }
@@ -340,33 +375,33 @@ namespace AasxServerDB
             {
                 var ValueDB = new SValueSet
                 {
-                    ParentSMEId = CurrentSMEId,
+                    SMESet = smeDB,
                     Value = sValue,
                     Annotation = ""
                 };
-                _db.Add(ValueDB);
+                smeDB.SValueSets.Add(ValueDB);
             }
             if (vt == "I")
             {
                 var ValueDB = new IValueSet
                 {
-                    ParentSMEId = CurrentSMEId,
+                    SMESet = smeDB,
                     Value = iValue,
                     Annotation = ""
                 };
-                _db.Add(ValueDB);
+                smeDB.IValueSets.Add(ValueDB);
             }
             if (vt == "F")
             {
                 var ValueDB = new DValueSet
                 {
-                    ParentSMEId = CurrentSMEId,
+                    SMESet = smeDB,
                     Value = fValue,
                     Annotation = ""
                 };
-                _db.Add(ValueDB);
+                smeDB.DValueSets.Add(ValueDB);
             }
-            return smeDB.Id;
+            return smeDB;
         }
         public override void VisitExtension(IExtension that)
         {
@@ -379,6 +414,17 @@ namespace AasxServerDB
         }
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
+            var aasDB = new AASSet
+            {
+                AASXSet = _aasxDB,
+                IdIdentifier = that.Id,
+                IdShort = that.IdShort,
+                AssetKind = that.AssetInformation.AssetKind.ToString(),
+                GlobalAssetId = that.AssetInformation.GlobalAssetId,
+                SMSets = new List<SMSet>()
+            };
+            _aasxDB.AASSets.Add(aasDB);
+            // base.VisitAssetAdministrationShell(that);
         }
         public override void VisitAssetInformation(IAssetInformation that)
         {
@@ -391,84 +437,102 @@ namespace AasxServerDB
         }
         public override void VisitSubmodel(ISubmodel that)
         {
+            var semanticId = that.SemanticId.GetAsIdentifier();
+            if (semanticId == null)
+                semanticId = "";
+
+            _smDB = new SMSet
+            {
+                AASXSet = _aasxDB,
+                AASSet = _aasDB,
+                SemanticId = semanticId,
+                IdIdentifier = that.Id,
+                IdShort = that.IdShort,
+                SMESets = new List<SMESet>()
+            };
+            _aasxDB.SMSets.Add(_smDB);
+            _aasxDB.AASSets.Last().SMSets.Add(_smDB);
+
+            _parentSME = new List<SMESet>();
+
             base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitRelationshipElement(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitSubmodelElementList(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitSubmodelElementCollection(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitProperty(IProperty that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitProperty(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitMultiLanguageProperty(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitRange(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitReferenceElement(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitBlob(IBlob that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitBlob(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitFile(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitAnnotatedRelationshipElement(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitEntity(IEntity that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitEntity(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitEventPayload(IEventPayload that)
         {
@@ -478,20 +542,20 @@ namespace AasxServerDB
         }
         public override void VisitOperation(IOperation that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitOperation(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitOperationVariable(IOperationVariable that)
         {
         }
         public override void VisitCapability(ICapability that)
         {
-            int smeId = collectSMEData(that);
-            _parentId.Add(smeId);
+            SMESet smeSet = collectSMEData(that);
+            _parentSME.Add(smeSet);
             base.VisitCapability(that);
-            _parentId.RemoveAt(_parentId.Count - 1);
+            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitConceptDescription(IConceptDescription that)
         {

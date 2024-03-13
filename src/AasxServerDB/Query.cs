@@ -163,7 +163,7 @@ namespace AasxServerDB
                     (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -182,7 +182,7 @@ namespace AasxServerDB
                     (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -201,7 +201,7 @@ namespace AasxServerDB
                     (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -228,7 +228,7 @@ namespace AasxServerDB
                         r.submodelId = submodelDB.IdIdentifier;
                         r.value = l.Value;
                         string path = l.IdShort;
-                        long pnum = l.ParentSMEId;
+                        int? pnum = l.ParentSMEId;
                         while (pnum != 0)
                         {
                             var smeDB = db.SMESets.Where(s => s.Id == pnum).First();
@@ -297,7 +297,7 @@ namespace AasxServerDB
                     (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -332,7 +332,7 @@ namespace AasxServerDB
                     (withEqual && withI && v.Value == iEqual)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -367,7 +367,7 @@ namespace AasxServerDB
                     (withEqual && withF && v.Value == fEqual)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -401,7 +401,7 @@ namespace AasxServerDB
                 Console.WriteLine("Found " + list.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
                 var hSubmodel = new HashSet<long>();
-                var lParentParentNum = new List<long>();
+                var lParentParentNum = new List<int?>();
                 foreach (var l in list)
                 {
                     hSubmodel.Add(l.Id);
@@ -435,7 +435,7 @@ namespace AasxServerDB
                         r.url = "";
                         r.submodelId = submodelDB.IdIdentifier;
                         string path = l.IdShort;
-                        long pnum = l.ParentSMEId;
+                        int? pnum = l.ParentSMEId;
                         while (pnum != 0)
                         {
                             var smeDB = db.SMESets.Where(s => s.Id == pnum).First();
@@ -446,7 +446,7 @@ namespace AasxServerDB
                                 found = true;
                                 if (l.SMEType == "F")
                                 {
-                                    var v = db.SValueSets.Where(v => v.ParentSMEId == l.Id).FirstOrDefault();
+                                    var v = db.SValueSets.Where(v => v.SMEId == l.Id).FirstOrDefault();
                                     if (v.Value.ToLower().StartsWith("http"))
                                         r.url = v.Value;
                                 }
@@ -522,7 +522,7 @@ namespace AasxServerDB
                     (withEqual && v.Value == equal) 
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -541,7 +541,7 @@ namespace AasxServerDB
                     (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
@@ -560,7 +560,7 @@ namespace AasxServerDB
                     (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
                     )
                     .Join(db.SMESets,
-                        v => v.ParentSMEId,
+                        v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {

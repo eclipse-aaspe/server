@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Extensions;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Claims;
 
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -92,6 +94,7 @@ namespace AasxServerDB
             task.Wait();
             task = Task.Run(async () => count = await DValueSets.ExecuteDeleteAsync());
             task.Wait();
+            SaveChanges();
         }
     }
 
@@ -138,37 +141,67 @@ namespace AasxServerDB
     {
         public int Id { get; set; }
         public string AASX { get; set; }
+
+        public virtual ICollection<AASSet> AASSets { get; set; }
+        public virtual ICollection<SMSet> SMSets { get; set; }
     }
 
     public class AASSet
     {
         public int Id { get; set; }
+
+        [ForeignKey("AASXSet")]
         public int AASXId { get; set; }
+        public virtual AASXSet AASXSet { get; set; }
+
         public string IdIdentifier { get; set; }
         public string IdShort { get; set; }
         public string AssetKind { get; set; }
         public string GlobalAssetId { get; set; }
+
+        public virtual ICollection<SMSet> SMSets { get; set; }
     }
 
     public class SMSet
     {
         public int Id { get; set; }
+
+        [ForeignKey("AASXSet")]
         public int AASXId { get; set; }
+        public virtual AASXSet AASXSet { get; set; }
+
+
+        [ForeignKey("AASSet")]
         public int AASId { get; set; }
+        public virtual AASSet AASSet { get; set; }
+
         public string SemanticId { get; set; }
         public string IdIdentifier { get; set; }
         public string IdShort { get; set; }
+
+        public virtual ICollection<SMESet> SMESets { get; set; }
     }
 
     public class SMESet
     {
         public int Id { get; set; }
+
+        [ForeignKey("SMSet")]
         public int SMId { get; set; }
-        public int ParentSMEId { get; set; }
+        public virtual SMSet SMSet { get; set; }
+
+        [ForeignKey("ParentSMEId")]
+        public int? ParentSMEId { get; set; }
+        public virtual SMESet? ParentSMESet { get; set; }
+
         public string SMEType { get; set; }
         public string ValueType { get; set; }
         public string SemanticId { get; set; }
         public string IdShort { get; set; }
+
+        public virtual ICollection<IValueSet> IValueSets { get; set; }
+        public virtual ICollection<DValueSet> DValueSets { get; set; }
+        public virtual ICollection<SValueSet> SValueSets { get; set; }
 
         public string getValue()
         {
@@ -177,17 +210,17 @@ namespace AasxServerDB
                 switch (ValueType)
                 {
                     case "S":
-                        var ls = db.SValueSets.Where(s => s.ParentSMEId == Id).Select(s => s.Value).ToList();
+                        var ls = db.SValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ls.Count != 0)
                             return ls.First() + "";
                         break;
                     case "I":
-                        var li = db.IValueSets.Where(s => s.ParentSMEId == Id).Select(s => s.Value).ToList();
+                        var li = db.IValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (li.Count != 0)
                             return li.First() + "";
                         break;
                     case "F":
-                        var ld = db.DValueSets.Where(s => s.ParentSMEId == Id).Select(s => s.Value).ToList();
+                        var ld = db.DValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ld.Count != 0)
                             return ld.First() + "";
                         break;
@@ -204,7 +237,7 @@ namespace AasxServerDB
                 using (AasContext db = new AasContext())
                 {
                     var MLPValueSetList = db.SValueSets
-                        .Where(s => s.ParentSMEId == Id)
+                        .Where(s => s.SMEId == Id)
                         .ToList();
                     foreach (var MLPValue in MLPValueSetList)
                     {
@@ -227,8 +260,8 @@ namespace AasxServerDB
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMEId >= " + first + " AND ParentSMEId <=" + last + " UNION SELECT * FROM IValueSets WHERE ParentSMEId >= " + first + " AND ParentSMEId <=" + last + " UNION SELECT * FROM DValueSets WHERE ParentSMEId >= " + first + " AND ParentSMEId <=" + last)
-                    .Where(v => smeIds.Contains(v.ParentSMEId))
-                    .OrderBy(v => v.ParentSMEId)
+                    .Where(v => smeIds.Contains(v.SMEId))
+                    .OrderBy(v => v.SMEId)
                     .ToList();
                 watch.Stop();
                 Console.WriteLine("Getting the value list took this time: " + watch.ElapsedMilliseconds);
@@ -240,7 +273,11 @@ namespace AasxServerDB
     public class IValueSet
     {
         public int Id { get; set; }
-        public int ParentSMEId { get; set; }
+
+        [ForeignKey("SMESet")]
+        public int SMEId { get; set; }
+        public virtual SMESet SMESet { get; set; }
+
         public long Value { get; set; }
         public string Annotation { get; set; }
         public SValueSet asStringValue()
@@ -248,7 +285,7 @@ namespace AasxServerDB
             return new SValueSet
             {
                 Id = Id,
-                ParentSMEId = ParentSMEId,
+                SMEId = SMEId,
                 Annotation = Annotation,
                 Value = Value.ToString()
             };
@@ -258,7 +295,11 @@ namespace AasxServerDB
     public class SValueSet
     {
         public int Id { get; set; }
-        public int ParentSMEId { get; set; }
+
+        [ForeignKey("SMESet")]
+        public int SMEId { get; set; }
+        public virtual SMESet SMESet { get; set; }
+
         public string Value { get; set; }
         public string Annotation { get; set; }
     }
@@ -266,15 +307,20 @@ namespace AasxServerDB
     public class DValueSet
     {
         public int Id { get; set; }
-        public int ParentSMEId { get; set; }
+
+        [ForeignKey("SMESet")]
+        public int SMEId { get; set; }
+        public virtual SMESet SMESet { get; set; }
+
         public double Value { get; set; }
         public string Annotation { get; set; }
+
         public SValueSet asStringValue()
         {
             return new SValueSet
             {
                 Id = Id,
-                ParentSMEId = ParentSMEId,
+                SMEId = SMEId,
                 Annotation = Annotation,
                 Value = Value.ToString()
             };

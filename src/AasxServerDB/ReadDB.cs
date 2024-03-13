@@ -144,7 +144,7 @@ namespace AasxServerDB
                         using (AasContext db = new AasContext())
                         {
                             var SValueSetList = db.SValueSets
-                                .Where(s => s.ParentSMEId == smel.Id)
+                                .Where(s => s.SMEId == smel.Id)
                                 .ToList();
                             foreach (var MLPValue in SValueSetList)
                             {

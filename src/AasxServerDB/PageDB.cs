@@ -56,9 +56,9 @@
                     .OrderBy(sme => sme.Id)
                     .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) &&
                         (searchLower == "" || sme.IdShort.ToLower().Contains(searchLower) || sme.SemanticId.ToLower().Contains(searchLower) || sme.SMEType.ToLower().Contains(searchLower) || sme.ValueType.ToLower().Contains(searchLower)
-                        || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToLower().Contains(searchLower)))
-                        || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
-                        || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
+                        || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.SMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToLower().Contains(searchLower)))
+                        || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.SMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
+                        || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.SMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
                         ))
                     .Take(size)
                     .ToList();
@@ -72,8 +72,8 @@
             using (AasContext db = new AasContext())
             {
                 data = db.SValueSets
-                    .OrderBy(v => v.ParentSMEId)
-                    .Where(v => (smeid == 0 || v.ParentSMEId == smeid) &&
+                    .OrderBy(v => v.SMEId)
+                    .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                         (searchLower == "" || v.Value.ToLower().Contains(searchLower) || v.Annotation.ToLower().Contains(searchLower)))
                     .Take(size)
                     .ToList();
@@ -94,8 +94,8 @@
             using (AasContext db = new AasContext())
             {
                 data = db.IValueSets
-                    .OrderBy(v => v.ParentSMEId)
-                    .Where(v => (smeid == 0 || v.ParentSMEId == smeid) &&
+                    .OrderBy(v => v.SMEId)
+                    .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                        (searchLower == "" || v.Annotation.ToLower().Contains(searchLower)) &&
                        (iEqual == 0 || v.Value == iEqual))
                     .Take(size)
@@ -117,8 +117,8 @@
             using (AasContext db = new AasContext())
             {
                 data = db.DValueSets
-                    .OrderBy(v => v.ParentSMEId)
-                    .Where(v => (smeid == 0 || v.ParentSMEId == smeid) &&
+                    .OrderBy(v => v.SMEId)
+                    .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                        (searchLower == "" || v.Annotation.ToLower().Contains(searchLower)) &&
                        (fEqual == 0 || v.Value == fEqual))
                     .Take(size)
