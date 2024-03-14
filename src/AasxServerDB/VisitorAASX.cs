@@ -9,27 +9,16 @@ namespace AasxServerDB
 {
     public class VisitorAASX : VisitorThrough
     {
-        AasContext _db = null;
-        AASXSet _aasxDB = null;
-        AASSet _aasDB = null;
-        SMSet _smDB = null;
-        List<SMESet> _parentSME = null;
-        public static int CurrentAASXId { get; set; }
-        public static int CurrentAASId { get; set; }
-        public static int CurrentSMId { get; set; }
-        public static int CurrentSMEId { get; set; }
+        AASXSet _aasxDB;
+        AASSet _aasDB;
+        SMSet _smDB;
+        List<SMESet> _parentSME;
 
-        public VisitorAASX(AasContext db)
+        public VisitorAASX(AASXSet? aasxDB = null, AASSet? aasDB = null)
         {
-            _db = db;
+            _aasxDB = aasxDB;
+            _aasDB = aasDB;
             _parentSME = new List<SMESet>();
-        }
-
-        public VisitorAASX(AasContext db, AASXSet aasxdb)
-        {
-            _db = db;
-            _parentSME = new List<SMESet>();
-            _aasxDB = aasxdb;
         }
 
         static public void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
@@ -38,64 +27,17 @@ namespace AasxServerDB
             {
                 if (!createFilesOnly)
                 {
-                    using (AasContext db = new AasContext())
+                    var aasxDB = new AASXSet
                     {
-                        // AASX
-                        var aasxDB = new AASXSet
-                        {
-                            AASX = filePath,
-                            AASSets = new List<AASSet>(),
-                            SMSets = new List<SMSet>()
-                        };
+                        AASX = filePath,
+                        AASSets = new List<AASSet>(),
+                        SMSets = new List<SMSet>()
+                    };
+                    LoadAASInDB(asp, aasxDB);
 
-                        // Check security
-                        var aas = asp.AasEnv.AssetAdministrationShells[0];
-                        if (!aas.IdShort.ToLower().Contains("globalsecurity") && aas.Id != null && aas.Id != "" && aas.AssetInformation.GlobalAssetId != null && aas.AssetInformation.GlobalAssetId != "")
-                        {
-                            VisitorAASX v = new VisitorAASX(db, aasxDB);
-                            v.Visit(aas);
-                            
-
-                            // Iterate submodels
-                            if (aas.Submodels != null && aas.Submodels.Count > 0)
-                            {
-                                foreach (var smr in aas.Submodels)
-                                {
-                                    var sm = asp.AasEnv.FindSubmodel(smr);
-                                    if (sm != null)
-                                    {
-                                        v = new VisitorAASX(db, aasxDB);
-                                        v.Visit(sm);
-                                        /*var semanticId = sm.SemanticId.GetAsIdentifier();
-                                        if (semanticId == null)
-                                            semanticId = "";
-
-                                        var smDB = new SMSet
-                                        {
-                                            AASXSet = aasxDB,
-                                            AASSet = aasDB,
-                                            SemanticId = semanticId,
-                                            IdIdentifier = sm.Id,
-                                            IdShort = sm.IdShort
-                                        };
-                                        aasxDB.SMSets.Add(smDB);
-                                        aasDB.SMSets.Add(smDB);
-
-                                        VisitorAASX v = new VisitorAASX(db);
-                                        v.Visit(sm);*/
-                                    }
-                                }
-                            }
-                        }
-                        db.Add(aasxDB);
-                        db.SaveChanges();
-
-                        if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                        {
-                            // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                            // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                        }
-                    }
+                    using AasContext db = new AasContext();
+                    db.Add(aasxDB);
+                    db.SaveChanges();
                 }
 
                 if (withDbFiles)
@@ -143,60 +85,29 @@ namespace AasxServerDB
             }
         }
 
-        public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, AdminShellPackageEnv asp)
+        public static void LoadAASInDB(AdminShellPackageEnv asp, AASXSet aasxDB)
         {
-            var aasDB = new AASSet
+            if (aasxDB == null || asp == null || asp.AasEnv == null || asp.AasEnv.AssetAdministrationShells == null || asp.AasEnv.AssetAdministrationShells.Count <= 0)
+                return;
+
+            foreach (IAssetAdministrationShell aas in asp.AasEnv.AssetAdministrationShells)
             {
-                IdIdentifier = aas.Id,
-                GlobalAssetId = aas.AssetInformation.GlobalAssetId,
-                AASXId = CurrentAASXId,
-                IdShort = aas.IdShort,
-                AssetKind = aas.AssetInformation.AssetKind.ToString()
-            };
-            db.AASSets.Add(aasDB);
-            if (VisitorAASX.CurrentAASId == 0)
-            {
-                db.SaveChanges();
-                VisitorAASX.CurrentAASId = aasDB.Id;
-            }
-            else
-                CurrentAASId++;
-            // Iterate submodels
-            /*if (aas.Submodels != null && aas.Submodels.Count > 0)
-            {
-                foreach (var smr in aas.Submodels)
+                if (aas.IdShort != null && aas.IdShort != "" && aas.IdShort.ToLower().Contains("globalsecurity"))
                 {
-                    var sm = asp.AasEnv.FindSubmodel(smr);
-                    if (sm != null)
-                    {
-                        var semanticId = sm.SemanticId.GetAsIdentifier();
-                        if (semanticId == null)
-                            semanticId = "";
-
-                        var smDB = new SMSet
-                        {
-                            IdIdentifier = sm.Id,
-                            SemanticId = semanticId,
-                            AASXId = CurrentAASXId,
-                            AASId = CurrentAASId,
-                            IdShort = sm.IdShort
-                        };
-                        db.Add(smDB);
-                        if (VisitorAASX.CurrentSMId == 0)
-                        {
-                            db.SaveChanges();
-                            VisitorAASX.CurrentSMId = smDB.Id;
-                        }
-                        else
-                            CurrentSMId++;
-
-                        VisitorAASX v = new VisitorAASX(db);
-                        v.Visit(sm);
-                    }
+                    // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
+                    // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
+                    continue;
                 }
-            }*/
 
-            db.SaveChanges();
+                if (aas.Id == null || aas.Id == "" || aas.AssetInformation.GlobalAssetId == null || aas.AssetInformation.GlobalAssetId == "")
+                    continue;
+                new VisitorAASX(aasxDB: aasxDB).Visit(aas);
+
+                if (asp.AasEnv.Submodels == null || asp.AasEnv.Submodels.Count <= 0)
+                    continue;
+                foreach (var sm in asp.AasEnv.Submodels)
+                    new VisitorAASX(aasxDB: aasxDB, aasDB: aasxDB.AASSets.Last()).Visit(sm);
+            }
         }
 
         private string shortType(ISubmodelElement sme)
@@ -341,10 +252,9 @@ namespace AasxServerDB
                 SMSet = _smDB,
                 ParentSMESet = pn,
                 SMEType = st,
+                ValueType = vt,
                 SemanticId = semanticId,
                 IdShort = sme.IdShort,
-                ValueType = vt,
-                SMId = CurrentSMId,
                 IValueSets = new List<IValueSet>(),
                 DValueSets = new List<DValueSet>(),
                 SValueSets = new List<SValueSet>()
@@ -403,6 +313,7 @@ namespace AasxServerDB
             }
             return smeDB;
         }
+        
         public override void VisitExtension(IExtension that)
         {
         }
@@ -424,7 +335,6 @@ namespace AasxServerDB
                 SMSets = new List<SMSet>()
             };
             _aasxDB.AASSets.Add(aasDB);
-            // base.VisitAssetAdministrationShell(that);
         }
         public override void VisitAssetInformation(IAssetInformation that)
         {
@@ -440,7 +350,6 @@ namespace AasxServerDB
             var semanticId = that.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
-
             _smDB = new SMSet
             {
                 AASXSet = _aasxDB,
@@ -451,10 +360,7 @@ namespace AasxServerDB
                 SMESets = new List<SMESet>()
             };
             _aasxDB.SMSets.Add(_smDB);
-            _aasxDB.AASSets.Last().SMSets.Add(_smDB);
-
-            _parentSME = new List<SMESet>();
-
+            _aasDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)

@@ -123,9 +123,6 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ParentSMESetId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("SMEType")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -143,7 +140,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentSMESetId");
+                    b.HasIndex("ParentSMEId");
 
                     b.HasIndex("SMId");
 
@@ -244,7 +241,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 {
                     b.HasOne("AasxServerDB.SMESet", "ParentSMESet")
                         .WithMany()
-                        .HasForeignKey("ParentSMESetId");
+                        .HasForeignKey("ParentSMEId");
 
                     b.HasOne("AasxServerDB.SMSet", "SMSet")
                         .WithMany("SMESets")

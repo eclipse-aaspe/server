@@ -83,7 +83,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .Annotation("Sqlite:Autoincrement", true),
                     SMId = table.Column<int>(type: "INTEGER", nullable: false),
                     ParentSMEId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ParentSMESetId = table.Column<int>(type: "INTEGER", nullable: true),
                     SMEType = table.Column<string>(type: "TEXT", nullable: false),
                     ValueType = table.Column<string>(type: "TEXT", nullable: false),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: false),
@@ -93,8 +92,8 @@ namespace AasxServerDB.Migrations.Sqlite
                 {
                     table.PrimaryKey("PK_SMESets", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SMESets_SMESets_ParentSMESetId",
-                        column: x => x.ParentSMESetId,
+                        name: "FK_SMESets_SMESets_ParentSMEId",
+                        column: x => x.ParentSMEId,
                         principalTable: "SMESets",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -184,9 +183,9 @@ namespace AasxServerDB.Migrations.Sqlite
                 column: "SMEId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SMESets_ParentSMESetId",
+                name: "IX_SMESets_ParentSMEId",
                 table: "SMESets",
-                column: "ParentSMESetId");
+                column: "ParentSMEId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SMESets_SMId",

@@ -333,10 +333,7 @@
                                 var smDB = data[i];
                                 string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
                                 string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
-                                int smeCount = db.SMESets
-                                .OrderBy(sme => sme.Id)
-                                .Where(sme => sme.Id == smDB.Id)
-                                .Count();
+                                int smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
 
                                 <tr>
                                     <td style="word-break:keep-all">@smDB.AASXId</td>
@@ -364,10 +361,7 @@
                             var smDB = data[i];
                             string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
                             string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
-                            int smeCount = db.SMESets
-                            .OrderBy(sme => sme.Id)
-                            .Where(sme => sme.Id == smDB.Id)
-                            .Count();
+                            int smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smDB.AASXId</span>
                             <span style="background-color:blue;">&nbsp</span>
@@ -400,7 +394,7 @@
                     if (smDBList.Any())
                     {
                         var smDB = smDBList.First();
-                        string json = ReadDB.getSubmodelJson(smDB.IdIdentifier);
+                        string json = ReadDB.getSubmodelJson(smDB);
                         <span>@json</span>
                         <br />
                     }
@@ -440,7 +434,7 @@
                                 var smeDB = data[i];
                                 string path = smeDB.IdShort;
                                 int? pnum = smeDB.ParentSMEId;
-                                while (pnum != 0)
+                                while (pnum != null)
                                 {
                                     var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
                                     path = smeDBP.IdShort + "." + path;
@@ -477,10 +471,10 @@
                                     </td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/sm?smid=" + smeDB.Id)" target="_blank">sm </a>
-                                        @if (smeDB.ParentSMEId != 0)
+                                        <a href="@(shorturl + "/sm?smid=" + smeDB.SMId)" target="_blank">sm </a>
+                                        @if (smeDB.ParentSMEId != null)
                                         {
-                                            <a href="@(shorturl + "/sme?smid="+ smeDB.Id + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
+                                            <a href="@(shorturl + "/sme?smid="+ smeDB.SMId + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
                                         }
                                         @if (smeDB.SMEType == "MLP")
                                         {
@@ -501,13 +495,13 @@
                             var smeDB = data[i];
                             string path = smeDB.IdShort;
                             int? pnum = smeDB.ParentSMEId;
-                            while (pnum != 0)
+                            while (pnum != null)
                             {
                                 var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
                                 path = smeDBP.IdShort + "." + path;
                                 pnum = smeDBP.ParentSMEId;
                             }
-                            var smDB = db.SMSets.Where(s => s.Id == smeDB.Id).First();
+                            var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
                             string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
                             string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
 
@@ -545,7 +539,7 @@
                             <span>@smeDB.ValueType</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@(shorturl + "/sm?smid=" + smeDB.Id)" target="_blank">sm </a>
-                            @if (smeDB.ParentSMEId != 0)
+                            @if (smeDB.ParentSMEId != null)
                             {
                                 <a href="@(shorturl + "/sme?smid="+ smeDB.Id + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
                             }
@@ -594,7 +588,7 @@
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.SMEId != 0)
+                                        @if (smeDB.SMEId != null)
                                         {
                                             <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                                         }
@@ -617,7 +611,7 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.SMEId != 0)
+                            @if (smeDB.SMEId != null)
                             {
                                 <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                             }
@@ -660,7 +654,7 @@
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.SMEId != 0)
+                                        @if (smeDB.SMEId != null)
                                         {
                                             <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                                         }
@@ -683,7 +677,7 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.SMEId != 0)
+                            @if (smeDB.SMEId != null)
                             {
                                 <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                             }
@@ -726,7 +720,7 @@
                                     <td style="word-break:keep-all">@smeDB.Value</td>
                                     <td style="word-break:keep-all">@smeDB.Annotation</td>
                                     <td style="word-break:keep-all">
-                                        @if (smeDB.SMEId != 0)
+                                        @if (smeDB.SMEId != null)
                                         {
                                             <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
                                         }
@@ -749,7 +743,7 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.Annotation</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            @if (smeDB.SMEId != 0)
+                            @if (smeDB.SMEId != null)
                             {
                                 <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par </a>
                             }

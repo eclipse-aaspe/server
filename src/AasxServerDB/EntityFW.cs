@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Extensions;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Security.Claims;
 
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -26,7 +25,6 @@ namespace AasxServerDB
         public static string _dataPath { get; set; }
         public static bool _isPostgres { get; set; }
 
-        // --------------- Database Schema ---------------
         public DbSet<AASXSet> AASXSets { get; set; }
         public DbSet<AASSet> AASSets { get; set; }
         public DbSet<SMSet> SMSets { get; set; }
@@ -134,9 +132,6 @@ namespace AasxServerDB
         }
     }
 
-
-
-    // --------------- Database Schema ---------------
     public class AASXSet
     {
         public int Id { get; set; }
@@ -190,9 +185,9 @@ namespace AasxServerDB
         public int SMId { get; set; }
         public virtual SMSet SMSet { get; set; }
 
-        [ForeignKey("ParentSMEId")]
+        [ForeignKey("ParentSMESet")]
         public int? ParentSMEId { get; set; }
-        public virtual SMESet? ParentSMESet { get; set; }
+        public virtual SMESet ParentSMESet { get; set; }
 
         public string SMEType { get; set; }
         public string ValueType { get; set; }

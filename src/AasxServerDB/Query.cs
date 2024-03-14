@@ -228,12 +228,12 @@ namespace AasxServerDB
                         r.submodelId = submodelDB.IdIdentifier;
                         r.value = l.Value;
                         string path = l.IdShort;
-                        int? pnum = l.ParentSMEId;
-                        while (pnum != 0)
+                        int? pId = l.ParentSMEId;
+                        while (pId != null)
                         {
-                            var smeDB = db.SMESets.Where(s => s.Id == pnum).First();
+                            var smeDB = db.SMESets.Where(s => s.Id == pId).First();
                             path = smeDB.IdShort + "." + path;
-                            pnum = smeDB.ParentSMEId;
+                            pId = smeDB.ParentSMEId;
                         }
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
@@ -435,13 +435,13 @@ namespace AasxServerDB
                         r.url = "";
                         r.submodelId = submodelDB.IdIdentifier;
                         string path = l.IdShort;
-                        int? pnum = l.ParentSMEId;
-                        while (pnum != 0)
+                        int? pId = l.ParentSMEId;
+                        while (pId != null)
                         {
-                            var smeDB = db.SMESets.Where(s => s.Id == pnum).First();
+                            var smeDB = db.SMESets.Where(s => s.Id == pId).First();
                             path = smeDB.IdShort + "." + path;
-                            pnum = smeDB.ParentSMEId;
-                            if (lParentParentNum.Contains(pnum))
+                            pId = smeDB.ParentSMEId;
+                            if (lParentParentNum.Contains(pId))
                             {
                                 found = true;
                                 if (l.SMEType == "F")

@@ -2193,12 +2193,14 @@ namespace AasxServer
                                 //Load Everything back in
                                 foreach (IAssetAdministrationShell aas in aasList)
                                 {
-                                    int assxId = 0;
+                                    int aasxId = 0;
                                     if (aasToDeleteAASXIdsDic.ContainsKey(aas.Id))
                                     {
-                                        assxId = aasToDeleteAASXIdsDic[aas.Id];
+                                        aasxId = aasToDeleteAASXIdsDic[aas.Id];
                                     }
-                                    VisitorAASX.LoadAASInDB(db, aas, Program.env[envi]);
+                                    AASXSet aasxDB = db.AASXSets.Where(a => a.Id == aasxId).ToList<AASXSet>().First();
+                                    VisitorAASX.LoadAASInDB(Program.env[envi], aasxDB);
+                                    db.Add(aasxDB.AASSets);
                                 }
                                 db.SaveChanges();
                             }

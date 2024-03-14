@@ -8,36 +8,28 @@ namespace AasxServerDB
     {
         static public string GetAASXPath(string aasId = "", string submodelId = "")
         {
-            using (AasContext db = new AasContext())
-            { 
-                long aasxNum = 0;
-                if (!submodelId.Equals(""))
-                {
-                    var submodelDBList = db.SMSets.Where(s => s.IdIdentifier == submodelId);
-                    if (submodelDBList.Count() > 0)
-                    {
-                        var submodelDB = submodelDBList.First();
-                        aasxNum = submodelDB.AASXId;
-                    }
-                }
-                if (!aasId.Equals(""))
-                {
-                    var aasDBList = db.AASSets.Where(a => a.IdIdentifier == aasId);
-                    if (aasDBList.Any())
-                    {
-                        var aasDB = aasDBList.First();
-                        aasxNum = aasDB.AASXId;
-                    }
-                }
-                if (aasxNum == 0)
-                    return null;
-                var aasxDBList = db.AASXSets.Where(a => a.Id == aasxNum);
-                if (!aasxDBList.Any())
-                    return null;
-                var aasxDB = aasxDBList.First();
-                return aasxDB.AASX;
+            using AasContext db = new AasContext();
+            int? aasxId = null;
+            if (!submodelId.Equals(""))
+            {
+                var submodelDBList = db.SMSets.Where(s => s.IdIdentifier == submodelId);
+                if (submodelDBList.Count() > 0)
+                    aasxId = submodelDBList.First().AASXId;
             }
-                
+            if (!aasId.Equals(""))
+            {
+                var aasDBList = db.AASSets.Where(a => a.IdIdentifier == aasId);
+                if (aasDBList.Any())
+                    aasxId = aasDBList.First().AASXId;
+            }
+            if (aasxId == null)
+                return "";
+            var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
+            if (!aasxDBList.Any())
+                return "";
+            var aasxDB = aasxDBList.First();
+            return aasxDB.AASX;
+
         }
 
         static public AdminShellPackageEnv AASToPackageEnv(string path, AASSet aasDB)
@@ -63,7 +55,7 @@ namespace AasxServerDB
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
-                    var sm = ReadDB.getSubmodel(submodelDB.IdIdentifier);
+                    Submodel sm = ReadDB.getSubmodel(smDB:submodelDB);
                     aas.Submodels.Add(sm.GetReference());
                     aasEnv.AasEnv.Submodels.Add(sm);
                 }
@@ -72,45 +64,44 @@ namespace AasxServerDB
             }
         }
 
-        static public Submodel getSubmodel(string submodelId)
+        static public Submodel getSubmodel(SMSet? smDB = null, string? smIdentifier = "")
         {
             using (AasContext db = new AasContext())
             {
-                var subDB = db.SMSets
-                    .OrderBy(s => s.Id)
-                    .Where(s => s.IdIdentifier == submodelId)
-                    .ToList()
-                    .First();
-
-                if (subDB != null)
+                if (!smIdentifier.Equals(""))
                 {
-                    var SMEList = db.SMESets
-                            .OrderBy(sme => sme.Id)
-                            .Where(sme => sme.Id == subDB.Id)
-                            .ToList();
-
-                    Submodel submodel = new Submodel(submodelId);
-                    submodel.IdShort = subDB.IdShort;
-                    submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                        new List<IKey>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
-
-                    loadSME(submodel, null, null, SMEList, 0);
-
-                    DateTime timeStamp = DateTime.Now;
-                    submodel.TimeStampCreate = timeStamp;
-                    submodel.SetTimeStamp(timeStamp);
-                    submodel.SetAllParents(timeStamp);
-
-                    return submodel;
+                    var smList = db.SMSets.Where(sm => sm.IdIdentifier == smIdentifier).ToList();
+                    if (smList.Count == 0)
+                        return null;
+                    smDB = smList.First();
                 }
-            }
+                if (smDB == null)
+                    return null;
 
-            return null;
+                var SMEList = db.SMESets
+                    .OrderBy(sme => sme.Id)
+                    .Where(sme => sme.SMId == smDB.Id)
+                    .ToList();
+
+                Submodel submodel = new Submodel(smDB.IdIdentifier);
+                submodel.IdShort = smDB.IdShort;
+                submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
+
+                loadSME(submodel, null, null, SMEList, null);
+
+                DateTime timeStamp = DateTime.Now;
+                submodel.TimeStampCreate = timeStamp;
+                submodel.SetTimeStamp(timeStamp);
+                submodel.SetAllParents(timeStamp);
+
+                return submodel;
+            }           
         }
 
-        static public string getSubmodelJson(string submodelId)
+        static public string getSubmodelJson(SMSet smSet)
         {
-            var submodel = getSubmodel(submodelId);
+            var submodel = getSubmodel(smDB: smSet);
 
             if (submodel != null)
             {
@@ -122,9 +113,9 @@ namespace AasxServerDB
             return "";
         }
 
-        static private void loadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, long smeNum)
+        static private void loadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, int? smeId)
         {
-            var smeLevel = SMEList.Where(s => s.ParentSMEId == smeNum).OrderBy(s => s.IdShort).ToList();
+            var smeLevel = SMEList.Where(s => s.ParentSMEId == smeId).OrderBy(s => s.IdShort).ToList();
 
             foreach (var smel in smeLevel)
             {

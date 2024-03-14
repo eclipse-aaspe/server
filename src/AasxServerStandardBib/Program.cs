@@ -323,7 +323,7 @@ namespace AasxServer
             {
                 
                 envFileName[i] = ReadDB.GetAASXPath(aasId: aasIdentifier);
-                if (envFileName[i] == null)
+                if (envFileName[i].Equals(""))
                     return false;
                     
                 if (env[i] != null)
@@ -408,7 +408,7 @@ namespace AasxServer
             lock (Program.changeAasxFile)
             {
                 envFileName[i] = ReadDB.GetAASXPath(submodelId: submodelIdentifier);
-                if (envFileName[i] == null)
+                if (envFileName[i].Equals(""))
                     return false;
                 
                 if (env[i] != null)
@@ -455,7 +455,7 @@ namespace AasxServer
                         var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
                         var aasDB = aasDBList.First();
                         env[i] = ReadDB.AASToPackageEnv(envFileName[i], aasDB);
-                        output = ReadDB.getSubmodel(submodelDB.IdIdentifier);
+                        output = ReadDB.getSubmodel(smDB: submodelDB);
                     }
                 }
 
