@@ -1127,7 +1127,8 @@ namespace AasxServer
                         fn = fileNames[fi];
 
                         //Insert into DB
-                        database.importAASCoreEnvironment(new AdminShellPackageEnv(fn, true, false).AasEnv);
+                        //database.importAASCoreEnvironment(new AdminShellPackageEnv(fn, true, false).AasEnv);
+                        database.importAdminShellPackageEnv(new AdminShellPackageEnv(fn, true, false));
 
                         if (fn.ToLower().Contains("globalsecurity"))
                         {

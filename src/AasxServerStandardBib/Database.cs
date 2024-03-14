@@ -11,6 +11,10 @@ using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using System.Collections;
 using AasCore.Aas3_0;
+using AdminShellNS;
+using MongoDB.Driver.GridFS;
+using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
+using System.IO;
 
 
 //Author: Jonas Graubner
@@ -42,7 +46,13 @@ namespace AasxServerStandardBib
         public void DeleteDBConceptDescriptionById(string conceptDescription);
         #endregion
 
+        #region Filestream
+        public void WriteFile(Stream stream, string filename);
+        public Stream ReadFile(string filename);
+        #endregion
+
         public void importAASCoreEnvironment(IEnvironment environment);
+        public void importAdminShellPackageEnv(AdminShellPackageEnv adminShellPackageEnv);
     }
 
 
@@ -50,6 +60,7 @@ namespace AasxServerStandardBib
     {
         private MongoClient _client;
         private IMongoDatabase _database;
+        private GridFSBucket _bucket;
 
         public void Initialize(String connectionString)
         {
@@ -68,6 +79,10 @@ namespace AasxServerStandardBib
             _database = _client.GetDatabase("AAS");
             var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("AasCore") || type.FullName.StartsWith("MongoDB"));
             BsonSerializer.RegisterSerializer(objectSerializer);
+            _bucket = new GridFSBucket(_database, new GridFSBucketOptions
+            {
+                BucketName = "aasxFiles",
+            });
         }
         private IMongoCollection<AssetAdministrationShell> getAasCollection()
         {
@@ -158,6 +173,40 @@ namespace AasxServerStandardBib
         }
         #endregion
 
+        #region Filestream
+        public async void WriteFile(Stream stream, string filename)
+        {
+            if (stream != null)
+            {
+                Console.WriteLine("New File");
+                var id = await _bucket.UploadFromStreamAsync(filename, stream);
+                stream.Close();
+            }else
+            {
+                //throw new ArgumentNullException(nameof(stream));
+            }
+        }
+        public Stream ReadFile(string filename)
+        {
+            var filter = Builders<GridFSFileInfo>.Filter.Eq(x => x.Filename, filename);
+            var sort = Builders<GridFSFileInfo>.Sort.Descending(x => x.UploadDateTime);
+            var options = new GridFSFindOptions
+            {
+                Limit = 1,
+                Sort = sort
+            };
+
+            using (var cursor = _bucket.Find(filter, options))
+            {
+                var fileInfo = cursor.ToList().FirstOrDefault();
+                // fileInfo either has the matching file information or is null
+                return _bucket.OpenDownloadStream(fileInfo.Id);
+            }
+        }
+
+
+        #endregion
+
 
         public void importAASCoreEnvironment(IEnvironment environment)
         {
@@ -174,6 +223,24 @@ namespace AasxServerStandardBib
             {
                 WriteDBConceptDescription(conceptDescription);
             });
-        } 
+        }
+
+        public void importAdminShellPackageEnv(AdminShellPackageEnv adminShellPackageEnv)
+        {
+            importAASCoreEnvironment(adminShellPackageEnv.AasEnv);
+
+            //now import Files
+            var files = adminShellPackageEnv.GetListOfSupplementaryFiles();
+            var assetid = adminShellPackageEnv.AasEnv.AssetAdministrationShells[0].AssetInformation.GlobalAssetId; //unique identifier
+            foreach ( var file in files )
+            {
+                if (file.Location == AdminShellNS.AdminShellPackageSupplementaryFile.LocationType.InPackage)
+                {                    
+                    WriteFile(adminShellPackageEnv.GetLocalStreamFromPackage(file.Uri.ToString()), assetid+file.Uri.ToString());
+                    //ReadFile(assetid + file.Uri.ToString());
+                }
+            }
+            
+        }
     }
 }
