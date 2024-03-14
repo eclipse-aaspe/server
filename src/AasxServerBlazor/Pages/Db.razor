@@ -521,14 +521,17 @@
                                 @if (smeDB.SMEType == "MLP")
                                 {
                                     List<string> list = smeDB.getMLPValue();
-                                    string mlp = "";
-                                    string seperateString = " | ";
-                                    @for (int z = 0; z + 1 < list.Count; z++)
+                                    if (list.Count > 0)
                                     {
-                                        mlp += "[" + list[z] + "] " + list[z + 1] + seperateString;
-                                        z++;
+                                        string mlp = "";
+                                        string seperateString = " | ";
+                                        @for (int z = 0; z + 1 < list.Count; z++)
+                                        {
+                                            mlp += "[" + list[z] + "] " + list[z + 1] + seperateString;
+                                            z++;
+                                        }
+                                        @mlp.Substring(0, mlp.Length - seperateString.Length)
                                     }
-                                    @mlp.Substring(0, mlp.Length - seperateString.Length)
                                 }
                                 else
                                 {
@@ -538,10 +541,10 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.ValueType</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/sm?smid=" + smeDB.Id)" target="_blank">sm </a>
+                            <a href="@(shorturl + "/sm?smid=" + smeDB.SMId)" target="_blank">sm </a>
                             @if (smeDB.ParentSMEId != null)
                             {
-                                <a href="@(shorturl + "/sme?smid="+ smeDB.Id + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
+                                <a href="@(shorturl + "/sme?smid="+ smeDB.SMId + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
                             }
                             @if (smeDB.SMEType == "MLP")
                             {
