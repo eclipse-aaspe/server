@@ -49,6 +49,7 @@ namespace AasxServerStandardBib
         #region Filestream
         public void WriteFile(Stream stream, string filename);
         public Stream ReadFile(string filename);
+        public void DeleteFile(string filename);
         #endregion
 
         public void importAASCoreEnvironment(IEnvironment environment);
@@ -188,6 +189,17 @@ namespace AasxServerStandardBib
         }
         public Stream ReadFile(string filename)
         {
+            return _bucket.OpenDownloadStream(getFileIdFromFilename(filename));
+        }
+
+        public async void DeleteFile(string filename)
+        {
+            ObjectId fileId = getFileIdFromFilename(filename);
+            await _bucket.DeleteAsync(fileId);
+        }
+
+        private ObjectId getFileIdFromFilename(string filename)
+        {
             var filter = Builders<GridFSFileInfo>.Filter.Eq(x => x.Filename, filename);
             var sort = Builders<GridFSFileInfo>.Sort.Descending(x => x.UploadDateTime);
             var options = new GridFSFindOptions
@@ -200,7 +212,7 @@ namespace AasxServerStandardBib
             {
                 var fileInfo = cursor.ToList().FirstOrDefault();
                 // fileInfo either has the matching file information or is null
-                return _bucket.OpenDownloadStream(fileInfo.Id);
+                return fileInfo.Id;
             }
         }
 

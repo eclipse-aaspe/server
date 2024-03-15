@@ -9,6 +9,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
+using SharpCompress.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +23,6 @@ namespace AasxServerStandardBib.Services
         private readonly IAppLogger<AdminShellPackageEnvironmentService> _logger;
         private readonly Lazy<IAssetAdministrationShellService> _aasService;
         private IDatabase _database;
-        private AdminShellPackageEnv[] _packages;
 
         public AdminShellPackageEnvironmentServiceDB(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService)
         {
@@ -30,6 +30,17 @@ namespace AasxServerStandardBib.Services
             _aasService = aasService;
             _database = Program.database;
         }
+
+        #region private
+        private List<AssetAdministrationShell> GetAssetAdministrationShellsBySubmodelIdentifier(string submodelIdentifier) { 
+            // Get all AssetAdministrationShells that Reference the given submodelIdentifier
+            return _database.GetLINQAssetAdministrationShell()
+                .Where(aas => aas.Submodels
+                    .Any(s => s.Keys
+                        .Any(k => k.Value.Equals(submodelIdentifier))))
+                .ToList();
+        }
+        #endregion
 
         #region AssetAdministrationShell
         public IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body)
@@ -111,16 +122,18 @@ namespace AasxServerStandardBib.Services
         }
         public Stream GetAssetInformationThumbnail(int packageIndex)
         {
-            //TODO
+            //TODO find a solution to get the right Thumbnail
             throw new NotImplementedException(); 
-            return _packages[packageIndex].GetLocalThumbnailStream();
+            //return _packages[packageIndex].GetLocalThumbnailStream();
         }
         public void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex)
         {
-            //TODO
+            //TODO find a solution to get the right Thumbnail
             throw new NotImplementedException();
+            /*
             _packages[packageIndex].EmbeddAssetInformationThumbnail(defaultThumbnail, fileContent);
             Program.signalNewData(0);
+            */
         }
         #endregion
 
@@ -232,16 +245,12 @@ namespace AasxServerStandardBib.Services
         }
         public void DeleteSubmodelById(string submodelIdentifier)
         {
-            // Get all Submodels that Reference the given submodelIdentifier
-            List<AssetAdministrationShell> aasToModify = _database.GetLINQAssetAdministrationShell()
-                .Where(aas => aas.Submodels
-                    .Any(s => s.Keys
-                        .Any(k => k.Value.Equals(submodelIdentifier))))
-                .ToList();
+            List<AssetAdministrationShell> aasToModify = GetAssetAdministrationShellsBySubmodelIdentifier(submodelIdentifier);
 
             foreach (var aas in aasToModify)
             {
-                _aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);
+                _aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);  //Just in Memory Modification
+                UpdateAssetAdministrationShellById(aas, aas.Id);    //Update the Asset in the DB
                 //TODO Jonas Graubner make sure, that reference is deleted in DB
             }
             _database.DeleteDBSubmodelById(submodelIdentifier);
@@ -251,22 +260,28 @@ namespace AasxServerStandardBib.Services
 
         public void DeleteSupplementaryFileInPackage(string submodelIdentifier, string filePath)
         {
-            //TODO
-            throw new NotImplementedException();
-            _ = GetSubmodelById(submodelIdentifier, out int packageIndex);
-            if (packageIndex != -1)
+            //TODO tests & maybe optimization
+            // Get all AssetAdministrationShells that Reference the given submodelIdentifier
+            List<AssetAdministrationShell> aasWithSubmodel = GetAssetAdministrationShellsBySubmodelIdentifier(submodelIdentifier);
+
+            foreach (var aas in aasWithSubmodel)
             {
-                _packages[packageIndex].DeleteSupplementaryFile(filePath);
+                string GlobalAssetId = aas.AssetInformation.GlobalAssetId;
+                string filename = GlobalAssetId + filePath;
+                _database.DeleteFile(filename);
             }
         }
         public Stream GetFileFromPackage(string submodelIdentifier, string fileName)
         {
             //TODO
-            throw new NotImplementedException();
             if (!string.IsNullOrEmpty(fileName))
             {
-                var _ = GetSubmodelById(submodelIdentifier, out int packageIndex);
-                return _packages[packageIndex].GetLocalStreamFromPackage(fileName);
+                List<AssetAdministrationShell> aasWithSubmodel = GetAssetAdministrationShellsBySubmodelIdentifier(submodelIdentifier);
+                
+
+                string GlobalAssetId = aasWithSubmodel.First().AssetInformation.GlobalAssetId;
+                string filename = GlobalAssetId + fileName;
+                return _database.ReadFile(filename);               
             }
             else
             {
@@ -278,8 +293,10 @@ namespace AasxServerStandardBib.Services
         {
             //TODO
             throw new NotImplementedException();
+            /*
             var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
             return _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(sourceFile, targetFile, contentType, fileContent);
+            */
         }
         #endregion
 
