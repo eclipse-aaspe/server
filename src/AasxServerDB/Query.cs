@@ -5,14 +5,14 @@ using Microsoft.IdentityModel.Tokens;
 namespace AasxServerDB
 {
     // --------------- Result Schema ---------------
-    public class SubmodelResult
+    public class SmResult
     {
-        public string submodelId { get; set; }
+        public string smId { get; set; }
         public string url { get; set; }
     }
     public class SmeResult
     {
-        public string submodelId { get; set; }
+        public string smId { get; set; }
         public string idShortPath { get; set; }
         public string value { get; set; }
         public string url { get; set; }
@@ -23,9 +23,9 @@ namespace AasxServerDB
     {
         public static string ExternalBlazor { get; set; }
 
-        public List<SubmodelResult> SearchSubmodels(string semanticId)
+        public List<SmResult> SearchSMs(string semanticId)
         {
-            List<SubmodelResult> list = new List<SubmodelResult>();
+            List<SmResult> list = new List<SmResult>();
             using (AasContext db = new AasContext())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -39,9 +39,9 @@ namespace AasxServerDB
 
                 foreach (var submodel in subList)
                 {
-                    var sr = new SubmodelResult();
-                    sr.submodelId = submodel.IdIdentifier;
-                    string sub64 = Base64UrlEncoder.Encode(sr.submodelId);
+                    var sr = new SmResult();
+                    sr.smId = submodel.IdIdentifier;
+                    string sub64 = Base64UrlEncoder.Encode(sr.smId);
                     sr.url = ExternalBlazor + "/submodels/" + sub64;
                     list.Add(sr);
                 }
@@ -109,7 +109,7 @@ namespace AasxServerDB
         }
 
         public List<SmeResult> SearchSMEs(
-            string submodelSemanticId = "", string semanticId = "",
+            string smSemanticId = "", string semanticId = "",
             string equal = "", string lower = "", string upper = "", string contains = "")
         {
             List<SmeResult> result = new List<SmeResult>();
@@ -160,7 +160,8 @@ namespace AasxServerDB
 
                 var list = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal)
+                    (withEqual && v.Value == equal) ||
+                    semanticId != ""
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
@@ -171,7 +172,8 @@ namespace AasxServerDB
                             IdShort = sme.IdShort,
                             Id = sme.Id,
                             Value = v.Value.ToString(),
-                            ParentSMEId = sme.ParentSMEId
+                            ParentSMEId = sme.ParentSMEId,
+                            SMId = sme.SMId
                         }
                     )
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
@@ -179,7 +181,8 @@ namespace AasxServerDB
 
                 list.AddRange(db.IValueSets.Where(v =>
                     (withEqual && withI && v.Value == iEqual) ||
-                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
+                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper) ||
+                    semanticId != ""
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
@@ -190,7 +193,8 @@ namespace AasxServerDB
                             IdShort = sme.IdShort,
                             Id = sme.Id,
                             Value = v.Value.ToString(),
-                            ParentSMEId = sme.ParentSMEId
+                            ParentSMEId = sme.ParentSMEId,
+                            SMId = sme.SMId
                         }
                     )
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
@@ -198,7 +202,8 @@ namespace AasxServerDB
 
                 list.AddRange(db.DValueSets.Where(v =>
                     (withEqual && withF && v.Value == fEqual) ||
-                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
+                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper) ||
+                    semanticId != ""
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
@@ -209,7 +214,8 @@ namespace AasxServerDB
                             IdShort = sme.IdShort,
                             Id = sme.Id,
                             Value = v.Value.ToString(),
-                            ParentSMEId = sme.ParentSMEId
+                            ParentSMEId = sme.ParentSMEId,
+                            SMId = sme.SMId
                         }
                     )
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
@@ -222,10 +228,13 @@ namespace AasxServerDB
                 {
                     SmeResult r = new SmeResult();
 
-                    var submodelDB = db.SMSets.Where(s => s.Id == l.Id).First();
-                    if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
+                    var submodelDBList = db.SMSets.Where(s => s.Id == l.SMId);
+                    if (submodelDBList.Count() != 0)
                     {
-                        r.submodelId = submodelDB.IdIdentifier;
+                        var submodelDB = submodelDBList.First();
+                        if (submodelDB == null || (smSemanticId != "" && submodelDB.SemanticId != smSemanticId))
+                            continue;
+                        r.smId = submodelDB.IdIdentifier;
                         r.value = l.Value;
                         string path = l.IdShort;
                         int? pId = l.ParentSMEId;
@@ -236,7 +245,7 @@ namespace AasxServerDB
                             pId = smeDB.ParentSMEId;
                         }
                         r.idShortPath = path;
-                        string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                        string sub64 = Base64UrlEncoder.Encode(r.smId);
                         r.url = ExternalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
                         result.Add(r);
                     }
@@ -247,7 +256,7 @@ namespace AasxServerDB
         }
 
         public List<SmeResult> SearchSMEsResult(
-            string submodelSemanticId = "",
+            string smSemanticId = "",
             string searchSemanticId = "",
             string searchIdShort = "",
             string equal = "",
@@ -324,7 +333,7 @@ namespace AasxServerDB
                         }
                     )
                     .Where(s =>
-                        submodelSemanticId == "" || s.SemanticId == submodelSemanticId
+                        smSemanticId == "" || s.SemanticId == smSemanticId
                     )
                     .ToList();
 
@@ -359,7 +368,7 @@ namespace AasxServerDB
                         }
                     )
                     .Where(s =>
-                        submodelSemanticId == "" || s.SemanticId == submodelSemanticId
+                        smSemanticId == "" || s.SemanticId == smSemanticId
                     )
                     .ToList());
 
@@ -394,7 +403,7 @@ namespace AasxServerDB
                         }
                     )
                     .Where(s =>
-                        submodelSemanticId == "" || s.SemanticId == submodelSemanticId
+                        smSemanticId == "" || s.SemanticId == smSemanticId
                     )
                     .ToList());
 
@@ -429,11 +438,11 @@ namespace AasxServerDB
                     bool found = false;
 
                     var submodelDB = db.SMSets.Where(s => s.Id == l.Id).First();
-                    if (submodelDB != null && (submodelSemanticId == "" || submodelDB.SemanticId == submodelSemanticId))
+                    if (submodelDB != null && (smSemanticId == "" || submodelDB.SemanticId == smSemanticId))
                     {
                         r.value = equal;
                         r.url = "";
-                        r.submodelId = submodelDB.IdIdentifier;
+                        r.smId = submodelDB.IdIdentifier;
                         string path = l.IdShort;
                         int? pId = l.ParentSMEId;
                         while (pId != null)
@@ -453,7 +462,7 @@ namespace AasxServerDB
                             }
                         }
                         r.idShortPath = path;
-                        string sub64 = Base64UrlEncoder.Encode(r.submodelId);
+                        string sub64 = Base64UrlEncoder.Encode(r.smId);
                         if (r.url == "")
                             r.url = ExternalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path + "/attachment";
                         if (found)
@@ -467,7 +476,7 @@ namespace AasxServerDB
         }
 
         public int CountSMEs(
-            string submodelSemanticId = "", string semanticId = "",
+            string smSemanticId = "", string semanticId = "",
             string equal = "", string lower = "", string upper = "", string contains = "")
 
         {

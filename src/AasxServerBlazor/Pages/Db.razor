@@ -123,41 +123,50 @@
                     }
                     <br />
                     <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;">
-                        <tr>
-                            <td><span>AASX#:</span></td>
-                            <td><span>@db.AASXSets.Count()</span></td>
-                            <td><a href="@(url + "/aasx")" target="_blank">aasx</a></td>
-                        </tr>
-                        <tr>
-                            <td><span>AAS#:</span></td>
-                            <td><span>@db.AASSets.Count()</span></td>
-                            <td><a href="@(url + "/aas")" target="_blank">aas</a></td>
-                        </tr>
-                        <tr>
-                            <td><span>SM#:</span></td>
-                            <td><span>@db.SMSets.Count()</span></td>
-                            <td><a href="@(url + "/sm")" target="_blank">sm</a></td>
-                        </tr>
-                        <tr>
-                            <td><span>SME#:</span></td>
-                            <td><span>@db.SMESets.Count()</span></td>
-                            <td><a href="@(url + "/sme")" target="_blank">sme</a></td>
-                        </tr>
-                        <tr>
-                            <td><span>IValue#:</span></td>
-                            <td><span>@db.IValueSets.Count()</span></td>
-                            <td><a href="@(url + "/ivalue")" target="_blank">ivalue</a></td>
-                        </tr>
-                        <tr>
-                            <td><span>SValue#:</span></td>
-                            <td><span>@db.SValueSets.Count()</span></td>
-                            <td><a href="@(url + "/svalue")" target="_blank">svalue</a></td>
-                        </tr>
-                        <tr>
-                            <td><span>DValue#:</span></td>
-                            <td><span>@db.DValueSets.Count()</span></td>
-                            <td><a href="@(url + "/dvalue")" target="_blank">dvalue</a></td>
-                        </tr>
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Tabel</th>
+                                <th style="word-break:keep-all">Count</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span>AASX#:</span></td>
+                                <td><span>@db.AASXSets.Count()</span></td>
+                                <td><a href="@(url + "/aasx")" target="_blank">aasx</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>AAS#:</span></td>
+                                <td><span>@db.AASSets.Count()</span></td>
+                                <td><a href="@(url + "/aas")" target="_blank">aas</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>SM#:</span></td>
+                                <td><span>@db.SMSets.Count()</span></td>
+                                <td><a href="@(url + "/sm")" target="_blank">sm</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>SME#:</span></td>
+                                <td><span>@db.SMESets.Count()</span></td>
+                                <td><a href="@(url + "/sme")" target="_blank">sme</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>IValue#:</span></td>
+                                <td><span>@db.IValueSets.Count()</span></td>
+                                <td><a href="@(url + "/ivalue")" target="_blank">ivalue</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>SValue#:</span></td>
+                                <td><span>@db.SValueSets.Count()</span></td>
+                                <td><a href="@(url + "/svalue")" target="_blank">svalue</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>DValue#:</span></td>
+                                <td><span>@db.DValueSets.Count()</span></td>
+                                <td><a href="@(url + "/dvalue")" target="_blank">dvalue</a></td>
+                            </tr>
+                        </tbody>
                     </table>
                     <br />
                     <b>Database structure:</b>
