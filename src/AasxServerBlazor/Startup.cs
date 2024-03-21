@@ -104,6 +104,7 @@ namespace AasxServerBlazor
             {
                 services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
             }
+            services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
             services.AddTransient<ISubmodelService, SubmodelService>();
             services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
             services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();

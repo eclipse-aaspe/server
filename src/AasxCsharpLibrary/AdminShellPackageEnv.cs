@@ -587,7 +587,10 @@ namespace AdminShellNS
                 }
             if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
             {
-                _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
+                if (_aasEnv.AssetAdministrationShells.Count > 0)
+                {
+                    _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString); 
+                }
             }
         }
 

@@ -72,13 +72,17 @@ namespace Extensions
             {
                 // TODO (jtikekar, 2023-09-04):jtikekar whether to convert to Global or specific asset id
                 var assetRef = ExtensionsUtil.ConvertReferenceFromV20(sourceEntity.assetRef, ReferenceTypes.ExternalReference);
-                entity.GlobalAssetId = assetRef.GetAsIdentifier();
+                if (assetRef!=null)
+                {
+                    entity.GlobalAssetId = assetRef.GetAsIdentifier();
+
+                }            
             }
 
             return entity;
         }
 
-        public static T FindFirstIdShortAs<T>(this Entity entity, string idShort) where T : ISubmodelElement
+        public static T FindFirstIdShortAs<T>(this IEntity entity, string idShort) where T : ISubmodelElement
         {
 
             var submodelElements = entity.Statements.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));

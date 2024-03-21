@@ -2,7 +2,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--rest --port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --edit --secret-string=123",
+      "commandLineArgs": "--port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --edit --secret-string=123",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

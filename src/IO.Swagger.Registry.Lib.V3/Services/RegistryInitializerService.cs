@@ -447,6 +447,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                         case "CarbonFootprint":
                                         case "TechnicalData":
                                         case "Nameplate":
+                                        case "WeightInformation":
                                             // copy specific submodels locally
                                             try
                                             {
@@ -511,20 +512,30 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                 if (response.IsSuccessStatusCode)
                                                 {
                                                     json = response.Content.ReadAsStringAsync().Result;
-                                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                                     var sm = new Submodel("");
-                                                    sm = Jsonization.Deserialize.SubmodelFrom(node);
-                                                    sm.IdShort += " - COPY";
-                                                    sm.Extensions = new List<IExtension>
+                                                    try
                                                     {
-                                                        new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.Href),
-                                                        new Extension("clientToken", value: clientToken)
-                                                    };
-                                                    sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
-                                                    aas.AddSubmodelReference(sm.GetReference());
-                                                    newEnv.AasEnv.Submodels.Add(sm);
-                                                    success = true;
+                                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                        sm = Jsonization.Deserialize.SubmodelFrom(node);
+
+                                                        sm.IdShort += " - COPY";
+                                                        sm.Extensions = new List<IExtension>
+                                                        {
+                                                            new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.Href),
+                                                            new Extension("clientToken", value: clientToken)
+                                                        };
+                                                        sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                                        aas.AddSubmodelReference(sm.GetReference());
+                                                        newEnv.AasEnv.Submodels.Add(sm);
+                                                        success = true;
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        Console.WriteLine("ERROR Deserialization " + requestPath + " " + ex.Message);
+
+                                                        success= false;
+                                                    }
                                                 }
                                             }
                                             catch
