@@ -6,26 +6,27 @@
 
 
 <style>
-                    input:checked ~ .dot {
-                        transform: translateX(100%);
-                        background-color: #174a87 !important; /* zvei blau */
-                    }
+    input:checked ~ .dot {
+        transform: translateX(100%);
+        background-color: #174a87 !important; /* zvei blau */
+    }
 
-                    @@media (max-width: 600px) { /* hide iframe in low widths - mobile phones*/
-                        .hide-slim {
-                            display: none;
-                        }
+    @@media (max-width: 600px) { /* hide iframe in low widths - mobile phones*/
+        .hide-slim {
+            display: none;
+        }
 
-                        .expand-slim {
-                            overflow-y: visible !important;
-                        }
+        .expand-slim {
+            overflow-y: visible !important;
+        }
 
-                        .node {
-                            padding-left: 1.2rem !important;
-                            padding-right: 0.5rem !important;
-                        }
-                    }
-                </style>
+        .node {
+            padding-left: 1.2rem !important;
+            padding-right: 0.5rem !important;
+        }
+    }
+</style>
+
 <div style="height:100%; flex:1; padding:0 !important; overflow-y: visible;">
     <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0; min-height: 8%;">
         <div class="self-center">
@@ -57,7 +58,7 @@
                 <select @bind="_role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <!--<option selected="@role"></option>-->
 
-                    @foreach (var t in roleList)
+                    @foreach (var t in _roleList)
                     {
                         <option value="@t">@t</option>
                     }
@@ -117,7 +118,7 @@
                                         else
                                         {
                                             if (_role == "")
-                                                _role = roleList[0];
+                                                _role = _roleList[0];
                                             if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
                                             {
                                                 CurrentValue = CurrentValue.Replace("Email=", "");
@@ -198,12 +199,12 @@
 
 @code{
 
-    static List<string> roleList = new()
+    static List<string> _roleList = new()
     {
         "Anonym", "Isabelle", "Steven", "Albert"
     };
 
-    static string _role = roleList[0];
+    static string _role = _roleList[0];
     static string _input = "";
     static string _watchText = "";
     static string _path = "";
@@ -230,53 +231,60 @@
     string GetIframePath()
     {
         var link = "";
-        //get the admin shell of the cabinet
-        foreach (var env in Program.env)
+
+        var adminShell = FindAdminShell();
+        if (adminShell != null)
         {
-            if (env == null)
-            {
-                continue;
-            }
-
-            var aas = env.AasEnv.AssetAdministrationShells?[0];
-            if (aas?.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-                continue;
-
-            link = $"?aasUrl={GetAasLink(aas)}";
-
-            var registry = AasRegistryService.GetRegistryList();
-            if (registry != null && registry.Count != 0)
-            {
-                link += "&registryURL=" + registry[0];
-            }
-
-            if (!AasxCredentials.get(cs.credentials, link, out var queryPara, out _, out _, out var replace))
-            {
-                continue;
-            }
-
-            if (replace != "")
-            {
-                link = replace;
-            }
-
-            queryPara = Base64UrlEncoder.Encode(queryPara);
-            link += $"&query={queryPara}";
+            link = $"?aasUrl={GetAasLink(adminShell)}";
+            AddRegistryUrlToLink(ref link);
+            AddQueryParametersToLink(ref link);
         }
 
-        //TODO: not passing credentials
-        var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
-        if (p != null)
-        {
-            p = p.Replace("\r", "");
-            p = p.Replace("\n", "");
-            _path = p;
-        }
+        UpdatePathEnvironmentVariable();
 
-        _path += link;
-
-        return _path;
+        return _path + link;
     }
+
+    IAssetAdministrationShell FindAdminShell()
+    {
+        return (from env in Program.env where env != null select env.AasEnv.AssetAdministrationShells?[0])
+            .FirstOrDefault(aas => aas?.IdShort == "ZveiControlCabinetAas - EXTERNAL");
+    }
+
+    void AddRegistryUrlToLink(ref string link)
+    {
+        var registry = AasRegistryService.GetRegistryList();
+        if (registry?.Any() ?? false)
+        {
+            link += "&registryURL=" + registry[0];
+        }
+
+    }
+
+    void AddQueryParametersToLink(ref string link)
+    {
+        if (!AasxCredentials.get(cs.credentials, link, out var queryParameter, out _, out _, out var replace))
+        {
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(replace))
+        {
+            link = replace;
+        }
+
+        queryParameter = Base64UrlEncoder.Encode(queryParameter);
+        link += $"&query={queryParameter}";
+    }
+
+    void UpdatePathEnvironmentVariable()
+    {
+        var framePath = Environment.GetEnvironmentVariable("IFRAMEPATH");
+        if (string.IsNullOrEmpty(framePath)) {return;}
+        framePath = framePath.Replace("\r", "").Replace("\n", "");
+        _path = framePath;
+    }
+
 
     void NewData(object source, EventArgs args)
     {
@@ -294,4 +302,5 @@
             InvokeAsync(StateHasChanged);
         }
     }
+
 }
