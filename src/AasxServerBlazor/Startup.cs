@@ -40,12 +40,6 @@ namespace AasxServerBlazor
         private const string _corsPolicyName = "AllowAll";
         private readonly IWebHostEnvironment _hostingEnv;
 
-        /*
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-        */
         public Startup(IWebHostEnvironment env, IConfiguration configuration)
         {
             _hostingEnv = env;
@@ -85,7 +79,6 @@ namespace AasxServerBlazor
             });
 
             services.AddScoped<BlazorSessionService>();
-            // services.AddScoped<CredentialService>();
             services.AddSingleton<CredentialService>();
 
             services.AddControllers();
@@ -150,7 +143,6 @@ namespace AasxServerBlazor
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
                     opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
                 });
-            //.AddXmlSerializerFormatters();
 
             services
                 .AddSwaggerGen(c =>
@@ -172,8 +164,7 @@ namespace AasxServerBlazor
                     c.EnableAnnotations();
                     c.CustomSchemaIds(type => type.FullName);
 
-                    //string swaggerCommentedAssembly = typeof(AssetAdministrationShellEnvironmentAPIController).Assembly.GetName().Name;
-                    string swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryAPIApiController).Assembly.GetName().Name;
+                    var swaggerCommentedAssembly = typeof(AssetAdministrationShellRepositoryAPIApiController).Assembly.GetName().Name;
                     c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
 
                     // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
@@ -207,11 +198,8 @@ namespace AasxServerBlazor
 
             app.UseMiddleware<ExceptionMiddleware>();
 
-            // app.UseHttpsRedirection();
-
             app.UseStaticFiles();
             app.UseRouting();
-            //app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseCors(_corsPolicyName);
@@ -234,7 +222,6 @@ namespace AasxServerBlazor
                 };
 
                 //TODO: Or alternatively use the original Swagger contract that's included in the static files
-                // c.SwaggerEndpoint("swagger-original.json", "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository Original");
             });
 
             app.UseEndpoints(endpoints =>
