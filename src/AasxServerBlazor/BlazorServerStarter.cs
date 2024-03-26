@@ -16,13 +16,7 @@ namespace AasxServerBlazor
 
         public static void Main(string[] args)
         {
-            Console.WriteLine(Directory.GetCurrentDirectory());
-
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile(AppSettingsFileName)
-                .AddEnvironmentVariables()
-                .Build();
+            var config = LoadConfiguration();
             var url = config[KestrelEndpointsHttpUrl]?.Split(':');
             if (url?[2] != null)
                 Program.blazorPort = url[2];
@@ -37,6 +31,18 @@ namespace AasxServerBlazor
 
             host.WaitForShutdownAsync();
 
+        }
+
+        private static IConfigurationRoot LoadConfiguration()
+        {
+            Console.WriteLine($"Loading Configuration in path: {Directory.GetCurrentDirectory()}");
+
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile(AppSettingsFileName)
+                .AddEnvironmentVariables()
+                .Build();
+            return config;
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
