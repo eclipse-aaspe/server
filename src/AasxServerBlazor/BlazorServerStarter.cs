@@ -8,7 +8,7 @@ using System.IO;
 
 namespace AasxServerBlazor
 {
-    public class BlazorServerStarter
+    public static class BlazorServerStarter
     {
         private const string AppSettingsFileName = "appsettings.json";
         private const string KestrelEndpointsHttpUrl = "Kestrel:Endpoints:Http:Url";
@@ -27,15 +27,17 @@ namespace AasxServerBlazor
             host.WaitForShutdownAsync();
         }
 
-        private static void InitializeProgram(string[] args, IConfigurationRoot config)
+        private static void InitializeProgram(string[] args, IConfiguration config)
         {
+            Console.WriteLine($"{nameof(InitializeProgram)}");
             Program.con = config;
             Program.Main(args);
             SecurityHelper.SecurityInit();
         }
 
-        private static IHost BuildHost(string[] args, IConfigurationRoot config)
+        private static IHost BuildHost(string[] args, IConfiguration config)
         {
+            Console.WriteLine($"{nameof(BuildHost)} with {config}");
             var hostBuilder = CreateHostBuilder(args, config);
             return hostBuilder.Build();
         }
@@ -47,7 +49,7 @@ namespace AasxServerBlazor
             {
                 Program.blazorPort = url[2];
             }
-
+            
             return Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
