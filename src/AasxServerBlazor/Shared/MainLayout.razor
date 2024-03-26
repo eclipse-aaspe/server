@@ -31,6 +31,12 @@
 
 <div class="main h-screen">
     @{
+        static bool IsProductCarbonFootprintShowcaseUri(string uri)
+        {
+            string[] pcfEndings = { "/pcf", "/pcf/", "/pcf2", "/pcf2/", "/pcf2edc", "/pcf2edc/" };
+            return pcfEndings.Any(uri.EndsWith);
+        }
+
         if (Program.isLoading)
         {
             <span style="color:white;background-color:blue;">Loading...</span>
@@ -39,19 +45,17 @@
         }
         else
         {
-            if (input == "")
+            if (_input == "")
             {
-                input = "anonymous";
+                _input = "anonymous";
                 AasxCredentials.initAnonymous(cs.credentials);
                 AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
                 AasxTask.resetTimeStamp();
             }
 
-            var isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
-                                                    || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
-                                                    || NavMan.Uri.EndsWith("/pcf2edc") || NavMan.Uri.EndsWith("/pcf2edc/");
-
-            if (!isPcf)
+            var isProductCarbonFootprintShowcase = IsProductCarbonFootprintShowcaseUri(NavMan.Uri);
+            
+            if (!isProductCarbonFootprintShowcase)
             {
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;" class="px-4">
                     <span style="color: blue; font-size: xx-large; margin-right: 20px;">
@@ -114,20 +118,20 @@
                             <!-- toggle -->
                             <!-- label -->
                             <span class="ml-3 text-gray-700 font-medium">
-                                @if (loading)
+                                @if (_loading)
                                 {
                                     <span class="loader align-middle"></span>
                                     <span style="">Loading submodels...</span>
                                 }
                                 else
                                 {
-                                    <span style="">Loaded @AasxServer.Program.submodelAPIcount submodels @watchText</span>
+                                    <span style="">Loaded @AasxServer.Program.submodelAPIcount submodels @_watchText</span>
                                 }
                                 &nbsp&nbsp&nbsp&nbsp&nbsp
                                 Role:
                                 <!--Curr: <span style="border-width: 1px; color: blue;">@input</span>-->
 
-                                <select @bind="role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <select @bind="_role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     <!--<option selected="@role"></option>-->
 
                                     @foreach (var t in roleList)
@@ -144,7 +148,7 @@
                                 }
 
                                 @{
-                                    if (edit)
+                                    if (_edit)
                                     {
                                         <span style="color:red;">edit&nbsp&nbsp</span>
                                     }
@@ -157,7 +161,7 @@
                                             switch (CurrentValue)
                                             {
                                                 case "edit":
-                                                    edit = !edit;
+                                                    _edit = !_edit;
                                                     Program.signalNewData(2);
                                                     break;
                                                 case "weight":
@@ -189,44 +193,44 @@
                                                         }
                                                         else
                                                         {
-                                                            if (role == "")
-                                                                role = roleList[0];
+                                                            if (_role == "")
+                                                                _role = roleList[0];
                                                             if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
                                                             {
                                                                 CurrentValue = CurrentValue.Replace("Email=", "");
                                                                 AasxCredentials.initByEmail(cs.credentials, CurrentValue);
-                                                                input = CurrentValue;
-                                                                role = "";
+                                                                _input = CurrentValue;
+                                                                _role = "";
                                                             }
                                                             else if (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT"))
                                                             {
                                                                 AasxCredentials.initByFile(cs.credentials, CurrentValue);
-                                                                input = CurrentValue;
-                                                                role = "";
+                                                                _input = CurrentValue;
+                                                                _role = "";
                                                             }
                                                             else if (CurrentValue.Contains("edc="))
                                                             {
                                                                 CurrentValue = CurrentValue.Replace("edc=", "");
                                                                 AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
-                                                                input = CurrentValue;
-                                                                role = "";
+                                                                _input = CurrentValue;
+                                                                _role = "";
                                                             }
                                                             else
                                                             {
-                                                                AasxCredentials.initByUserPW(cs.credentials, role, CurrentValue);
-                                                                input = role;
+                                                                AasxCredentials.initByUserPW(cs.credentials, _role, CurrentValue);
+                                                                _input = _role;
                                                             }
 
-                                                            loading = true;
+                                                            _loading = true;
                                                             StateHasChanged();
                                                             await Task.Delay(1); //hack to let frontend update
                                                             var watch = System.Diagnostics.Stopwatch.StartNew();
                                                             AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
                                                             watch.Stop();
                                                             Console.WriteLine(watch.ElapsedMilliseconds + " ms");
-                                                            watchText = $"in " + ((watch.ElapsedMilliseconds + 500) / 1000) + "s";
+                                                            _watchText = $"in " + ((watch.ElapsedMilliseconds + 500) / 1000) + "s";
                                                             AasxTask.resetTimeStamp();
-                                                            loading = false;
+                                                            _loading = false;
                                                         }
                                                     }
 
@@ -262,7 +266,7 @@
                             @Body
                         </div>
                         <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
-                            <iframe src="@getIframePath()"
+                            <iframe src="@GetIframePath()"
                                     id="iframe" style="width: 100%; height: 100%;">
                             </iframe>
                         </div>
@@ -280,15 +284,15 @@
         "Anonym", "Isabelle", "Steven", "Albert"
     };
 
-    static string role = roleList[0];
-    static string input = "";
-    static string watchText = "";
-    static string path = "";
-    static bool loading;
-    static bool edit;
+    static string _role = roleList[0];
+    static string _input = "";
+    static string _watchText = "";
+    static string _path = "";
+    static bool _loading;
+    static bool _edit;
 
     //TODO: code duplication with Pcf2.razor
-    static string getAasLink(IIdentifiable aas)
+    static string GetAasLink(IIdentifiable aas)
     {
         string endpoint = null;
         var idEncoded = Base64UrlEncoder.Encode(aas.Id);
@@ -304,7 +308,7 @@
         return endpoint;
     }
 
-    string getIframePath()
+    string GetIframePath()
     {
         var link = "";
         //get the admin shell of the cabinet
@@ -315,11 +319,11 @@
                 continue;
             }
 
-            var aas = env.AasEnv.AssetAdministrationShells[0];
-            if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+            var aas = env.AasEnv.AssetAdministrationShells?[0];
+            if (aas?.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                 continue;
 
-            link = $"?aasUrl={getAasLink(aas)}";
+            link = $"?aasUrl={GetAasLink(aas)}";
 
             var registry = AasRegistryService.GetRegistryList();
             if (registry != null && registry.Count != 0)
@@ -327,11 +331,7 @@
                 link += "&registryURL=" + registry[0];
             }
 
-            var queryPara = "";
-            var userPW = "";
-            var urlEdcWrapper = "";
-            var replace = "";
-            if (!AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
+            if (!AasxCredentials.get(cs.credentials, link, out var queryPara, out _, out _, out var replace))
             {
                 continue;
             }
@@ -351,12 +351,12 @@
         {
             p = p.Replace("\r", "");
             p = p.Replace("\n", "");
-            path = p;
+            _path = p;
         }
 
-        path += link;
+        _path += link;
 
-        return path;
+        return _path;
     }
 
     protected override void OnInitialized()
