@@ -53,21 +53,26 @@
 
             if (!isPcf)
             {
-                <div class="top-row px-4">
-                    <span align=left hspace=20 style="color:blue;font-size:xx-large">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;" class="px-4">
+                    <span style="color: blue; font-size: xx-large; margin-right: 20px;">
                         <strong>AASX Browser</strong>
                     </span>
-                    <img align=left hspace=20 src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" height="55" width="60"/>
-                    <img align=left hspace=20 src="Logo_IDTA.jpg" height="30" width="140"/>
-                    <img align=left hspace=20 src="SpecPI40_t.png" height="22" width="250"/>
-                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
-                    </NavLink>
-                    <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
-                        <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
-                    </NavLink>
+                    <div style="display: flex; align-items: center; margin-right: 20px;">
+                        <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" alt="AASX Logo" height="3.4rem" style="max-height: 3.63rem; margin-right: 0.3125rem;">
+                        <img src="Logo_IDTA.jpg" alt="IDTA Logo" height="1.8rem" style="max-height: 3.63rem; margin-left: 0.3125rem; margin-right: 0.3125rem;">
+                        <img src="SpecPI40_t.png" alt="SpecPI40 Logo" height="1.3rem" style="max-height: 3.63rem; margin-left: 0.3125rem;">
+                    </div>
+                    <nav>
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All" style="margin-right: 20px;">
+                            <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
+                        </NavLink>
+                        <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
+                            <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
+                        </NavLink>
+                    </nav>
                 </div>
-                <div class="content px-4">
+
+                <div style="padding: 20px 0;" class="content px-4">
                     @Body
                 </div>
             }
