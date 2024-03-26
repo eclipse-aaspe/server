@@ -14,11 +14,32 @@
             transform: rotate(360deg);
         }
     } 
+    
+    header {
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+    
+    .main {
+        height: 100vh;
+    }
+
+    .navbar {
+        display: flex;
+        justify-content: center;
+        padding: 10px 0;
+    }
 
     .logo {
         max-height: 3.63rem;
         margin-left: 0.3125rem;
         margin-right: 0.3125rem;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
     }
 
     .nav-link {
@@ -27,13 +48,20 @@
 
     .content {
         padding: 20px 0;
+        margin-top: 5rem;
+        text-align: center;
+    }
+    
+    .loading {
+        color: white;
+        background-color: blue;
     }
 </style>
 
-<div class="main h-screen">
+<div class="main">
     @if (Program.isLoading)
     {
-        <span style="color:white;background-color:blue;">Loading...</span>
+        <span class="loading">Loading...</span>
         System.Threading.Thread.Sleep(1000);
         StateHasChanged();
     }
@@ -45,26 +73,28 @@
 
         if (!isProductCarbonFootprintShowcase)
         {
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;" class="px-4">
-                <span style="color: blue; font-size: xx-large; margin-right: 20px;">
-                    <strong>AASX Browser</strong>
-                </span>
-                <div style="display: flex; align-items: center; margin-right: 20px;">
-                    <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" alt="AASX Logo" height="3.4rem" class="logo">
-                    <img src="Logo_IDTA.jpg" alt="IDTA Logo" height="1.8rem" class="logo">
-                    <img src="SpecPI40_t.png" alt="SpecPI40 Logo" height="1.3rem" class="logo">
+            <header>
+                <div class="navbar">
+                    <span class="title">
+                        <strong>AASX Browser</strong>
+                    </span>
+                    <div class="logo-container">
+                        <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" alt="AASX Logo" class="logo">
+                        <img src="Logo_IDTA.jpg" alt="IDTA Logo" class="logo">
+                        <img src="SpecPI40_t.png" alt="SpecPI40 Logo" class="logo">
+                    </div>
+                    <nav>
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                            <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
+                        </NavLink>
+                        <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
+                            <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
+                        </NavLink>
+                    </nav>
                 </div>
-                <nav>
-                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
-                    </NavLink>
-                    <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
-                        <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
-                    </NavLink>
-                </nav>
-            </div>
+            </header>
 
-            <div class="content px-4">
+            <div class="content">
                 @Body
             </div>
         }
@@ -123,4 +153,5 @@
         string[] pcfEndings = {"/pcf", "/pcf/", "/pcf2", "/pcf2/", "/pcf2edc", "/pcf2edc/"};
         return pcfEndings.Any(uri.EndsWith);
     }
+
 }
