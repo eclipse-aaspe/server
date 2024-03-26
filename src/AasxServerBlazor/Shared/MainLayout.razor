@@ -6,70 +6,76 @@
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
 
 <style>
-       @@keyframes rotation {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+    @@keyframes rotation {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     } 
+
+    .logo {
+        max-height: 3.63rem;
+        margin-left: 0.3125rem;
+        margin-right: 0.3125rem;
+    }
+
+    .nav-link {
+        margin-right: 20px;
+    }
+
+    .content {
+        padding: 20px 0;
+    }
 </style>
 
 <div class="main h-screen">
-    @{
-        if (Program.isLoading)
+    @if (Program.isLoading)
+    {
+        <span style="color:white;background-color:blue;">Loading...</span>
+        System.Threading.Thread.Sleep(1000);
+        StateHasChanged();
+    }
+    else
+    {
+        InitializeCredentialsAndRegistry();
+
+        var isProductCarbonFootprintShowcase = IsProductCarbonFootprintShowcaseUri(NavMan.Uri);
+
+        if (!isProductCarbonFootprintShowcase)
         {
-            <span style="color:white;background-color:blue;">Loading...</span>
-            System.Threading.Thread.Sleep(1000);
-            StateHasChanged();
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;" class="px-4">
+                <span style="color: blue; font-size: xx-large; margin-right: 20px;">
+                    <strong>AASX Browser</strong>
+                </span>
+                <div style="display: flex; align-items: center; margin-right: 20px;">
+                    <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" alt="AASX Logo" height="3.4rem" class="logo">
+                    <img src="Logo_IDTA.jpg" alt="IDTA Logo" height="1.8rem" class="logo">
+                    <img src="SpecPI40_t.png" alt="SpecPI40 Logo" height="1.3rem" class="logo">
+                </div>
+                <nav>
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
+                    </NavLink>
+                    <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
+                    </NavLink>
+                </nav>
+            </div>
+
+            <div class="content px-4">
+                @Body
+            </div>
         }
         else
         {
-            if (_input == "")
-            {
-                _input = "anonymous";
-                AasxCredentials.initAnonymous(cs.credentials);
-                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
-                AasxTask.resetTimeStamp();
-            }
-
-            var isProductCarbonFootprintShowcase = IsProductCarbonFootprintShowcaseUri(NavMan.Uri);
-
-            if (isProductCarbonFootprintShowcase)
-            {
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;" class="px-4">
-                    <span style="color: blue; font-size: xx-large; margin-right: 20px;">
-                        <strong>AASX Browser</strong>
-                    </span>
-                    <div style="display: flex; align-items: center; margin-right: 20px;">
-                        <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" alt="AASX Logo" height="3.4rem" style="max-height: 3.63rem; margin-right: 0.3125rem;">
-                        <img src="Logo_IDTA.jpg" alt="IDTA Logo" height="1.8rem" style="max-height: 3.63rem; margin-left: 0.3125rem; margin-right: 0.3125rem;">
-                        <img src="SpecPI40_t.png" alt="SpecPI40 Logo" height="1.3rem" style="max-height: 3.63rem; margin-left: 0.3125rem;">
-                    </div>
-                    <nav>
-                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All" style="margin-right: 20px;">
-                            <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
-                        </NavLink>
-                        <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
-                            <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
-                        </NavLink>
-                    </nav>
-                </div>
-
-                <div style="padding: 20px 0;" class="content px-4">
-                    @Body
-                </div>
-            }
-            else
-            {
-                <CarbonFootprintShowcaseLayout></CarbonFootprintShowcaseLayout>
-            }
+            <CarbonFootprintShowcaseLayout></CarbonFootprintShowcaseLayout>
         }
     }
 </div>
 
-@code{
+@code {
     static string _input = "";
 
     protected override void OnInitialized()
@@ -99,10 +105,22 @@
         }
     }
 
+    void InitializeCredentialsAndRegistry()
+    {
+        if (_input != "")
+        {
+            return;
+        }
+
+        _input = "anonymous";
+        AasxCredentials.initAnonymous(cs.credentials);
+        AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
+        AasxTask.resetTimeStamp();
+    }
+
     static bool IsProductCarbonFootprintShowcaseUri(string uri)
     {
         string[] pcfEndings = {"/pcf", "/pcf/", "/pcf2", "/pcf2/", "/pcf2edc", "/pcf2edc/"};
         return pcfEndings.Any(uri.EndsWith);
     }
-
 }
