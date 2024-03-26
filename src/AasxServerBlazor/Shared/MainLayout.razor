@@ -71,7 +71,11 @@
 
         var isProductCarbonFootprintShowcase = IsProductCarbonFootprintShowcaseUri(NavMan.Uri);
 
-        if (!isProductCarbonFootprintShowcase)
+        if (isProductCarbonFootprintShowcase)
+        {
+            <CarbonFootprintShowcaseLayout></CarbonFootprintShowcaseLayout>
+        }
+        else
         {
             <header>
                 <div class="navbar">
@@ -97,10 +101,6 @@
             <div class="content">
                 @Body
             </div>
-        }
-        else
-        {
-            <CarbonFootprintShowcaseLayout></CarbonFootprintShowcaseLayout>
         }
     }
 </div>
