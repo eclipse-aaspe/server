@@ -12,7 +12,6 @@ using IO.Swagger.Registry.Lib.V3.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Opc.Ua.Gds.Client;
 
 namespace AasxServerBlazor.Configuration;
 
@@ -20,6 +19,8 @@ public static class DependencyRegistry
 {
     public static void Register(IServiceCollection services)
     {
+        // NOTE: If you register new classes, keep them sorted alphabetically for better readability!
+
         services.AddSingleton<AASService>();
         services.AddScoped<BlazorSessionService>();
         services.AddSingleton<CredentialService>();
