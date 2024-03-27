@@ -13,7 +13,6 @@
 @using System.Drawing;
 @using System.IO;
 @using AasxServerBlazor.Data
-@*@using static AdminShellNS.AdminShellV30;*@
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 
 @implements IDisposable
@@ -29,7 +28,6 @@
         }
         else
         { 
-            // IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow);
             AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
         }
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
@@ -40,7 +38,6 @@
             <TitleTemplate>
                 @{ 
                 string getPolicy = "";
-                @* @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification) *@
                 @if (GlobalSecurityVariables.WithAuthentication)
                 {
                     var display = false;
@@ -51,17 +48,8 @@
                         // check, if access to submodel is allowed
                         string error = "";
                         withAllow = false;
-                        // JUIJUI
-                        //TODO:jtikekar Remove after testing
-                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
-                            out error, null, "/submodels", "READ", out withAllow, out getPolicy,
-                            sm.IdShort, "sm", sm, null);
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-                            null, "/submodels", "READ", out withAllow,
-                                sm.IdShort, "sm", sm); *@
                         access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
                             out error, out withAllow, out getPolicy, sm.IdShort! , "submodel", sm);
-                        // JUIJUI
                         display = true;
                     }
                     if (context.Tag is ISubmodelElement sme)
@@ -74,22 +62,10 @@
                             p = (p as ISubmodelElement).Parent;
                         }
                         path = (p as Submodel).IdShort + "." + path;
-                        // check, if access to submodelelement is allowed
-                        /*
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-                            null, "/submodelelements", "READ", out withAllow,
-                                path, "", p);
-                        */
                         string error = "";
-                        // JUIJUI
-                        //TODO:jtikekar Remove after testing
-                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
-                        out error, null, "/submodelelements", "READ", out withAllow, out getPolicy,
-                        path, "", p, null); *@
                         access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
                             out error, out withAllow, out getPolicy, path, "", p);
                         display = true;
-                        // JUIJUI
                     }
                     if (display)
                     {
@@ -146,10 +122,8 @@
                             text = text.Replace("%BLAZOR%", Program.externalBlazor);
                             if (text.Contains("%ACCESSRULES%"))
                             {
-                                // string accessRules = AasxRestServerLibrary.AasxHttpContextHelper.securityAccessRules();
                                 string accessRules = SecService.GetSecurityRules();
                                 <table class="table table-bordered table-sm">
-                                @*<table border=1 cellpadding=4>*@
                                     <thead>
                                         <tr>
                                             <th>Name</th>
@@ -225,16 +199,10 @@
                         }
                     }
                 }
-                // if (selectedNode != null && hasDownloadFile(selectedNode))
-                // {
-                //     <button @onclick="DownloadFile">Download File</button><br>
-                //     <img src="test.jpg" alt="Thumbnail" />
-                // }
                 bool externalLink = false;
                 string link = getLink(selectedNode, out externalLink);
                 if (selectedNode != null && link != "")
                 {
-                    // if (externalLink)
                     if (true)
                     {
                         <a href="@link" target="_blank">@link</a><br>
@@ -263,7 +231,6 @@
                         {
                             <button @onclick="setSubmodelToSubscribe">Subscribe</button>
                         }
-                        // <button onclick="window.location.href = '@link';">Subscribe</button><br>
                         @code {
                             private void resetSubmodelToPublish()
                             {
@@ -290,7 +257,6 @@
                 }
                 if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
                 {
-                    // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
                     <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;" />
                     <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
                     <br>
@@ -305,7 +271,6 @@
                             (selectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
                             Program.env[selectedNode.envIndex].setWrite(true);
                             Program.signalNewData(0);
-                            // this.StateHasChanged();
                         }
                         CurrentValue = "";
                     }
@@ -388,8 +353,7 @@
                 if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
                 {
                     string semanticId = "";
-                    // bool render = false;
-
+                    
                     try
                     {
                         semanticId = smc.SemanticId?.GetAsIdentifier();
@@ -407,9 +371,7 @@
                             collectionPlot = smc;
                             timeStampPlot = smc.TimeStampTree;
 
-                            //ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
                             _timeSeriesData.Clear();
-                            //var mm = AdminShell.Key.MatchMode.Relaxed;
 
                             // make initial data for time series
                             var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
@@ -421,12 +383,7 @@
                             // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
                             var pcts = ZveiTimeSeriesDataV10.Static;
 
-                            //var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
-                            // var tssReference = pcts.CD_TimeSeriesSegment.GetCdReference();
                             var tssReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-                            //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-                            //var tssReference = new Reference(k);
-                            //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
 
                             // is it a segment
                             if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
@@ -436,7 +393,6 @@
                             else
                             {
                                 // search for segements on current level
-                                // var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReference.GetAsExactlyOneKey().Value);
                                 var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReferenceKey, MatchMode.Relaxed);
 
                                 if (smcAllValues.Count() != 0)
@@ -621,7 +577,7 @@
 
         public PlotFilter()
         {
-            this.SetInitialFilterState();
+            SetInitialFilterState();
         }
 
         public void SetInitialFilterState()
@@ -693,28 +649,12 @@
         }
     }
     async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    // async Task SaveAs(IJSRuntime js, string filename, string data)
     {
         ; await js.InvokeAsync<object>(
      "saveAsFile",
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
-        Convert.ToBase64String(data)
-        );
-        */
-        /*
-        await js.InvokeAsync<object>(
-            "download",
-            data,
-            filename,
-            "application/pdf"
-    );
-    */
     }
 
     public class Item
@@ -722,7 +662,6 @@
         public string Text { get; set; }
         public IEnumerable<Item> Childs { get; set; }
         public object parent { get; set; }
-        // public List<Item> Childs { get; set; }
         public string Type { get; set; }
         public object Tag { get; set; }
         public int envIndex { get; set; }
@@ -738,7 +677,6 @@
         set
         {
             selectedNode = value;
-            // OnSelectNode(selectedNode);
         }
     }
 
@@ -749,7 +687,6 @@
         if (Program.getDataVersion() != dataVersion)
         {
             dataVersion = Program.getDataVersion();
-            // TreePage.StateHasChanged();
         }
     }
 
@@ -759,30 +696,8 @@
 
     protected override void OnInitialized()
     {
-        // OnInitialized() allways called twice
-        // if (hack++ == 0)
-        //    return;
-
-        // hack = 0;
-        // SubmodelService.buildTree();
-        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-        // newDataMode = 1;
-        // StateHasChanged();
-
-        //ExpandedNodes.Add(Items.Skip(1).First());
-        //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
-
         SubmodelService.NewDataAvailable += NewData;
         Program.signalNewData(1);
-
-        /*
-        refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
-            {
-            // Note that the following line is necessary because otherwise
-            // Blazor would not recognize the state change and not refresh the UI
-            // InvokeAsync(() => this.StateHasChanged());
-        }), null, 5000, 5000);
-    */
     }
 
     public void Dispose()
@@ -797,21 +712,14 @@
         if (Program.isLoading)
             return;
 
-        // update = true;
         if (newDataMode == 0)
         {
             if (args is Program.NewDataAvailableArgs newArgs)
             {
                 newDataMode = newArgs.signalNewDataMode;
-                // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                 InvokeAsync(() => this.StateHasChanged());
             }
         }
-        // newDataMode = Program.getSignalNewDataMode();
-        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-
-        // InvokeAsync(() => this.StateHasChanged());
-        // this.StateHasChanged();
     }
 
     bool update = true;
@@ -869,8 +777,6 @@
                     break;
             }
             SelectedNode = selectedNode;
-            // update = false;
-            // updateNode(viewItems[0]);
         }
         return "";
     }
@@ -1009,7 +915,6 @@
     {
         svg = false;
         url = false;
-        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
 
         if (item == null)
         {
@@ -1025,7 +930,6 @@
             {
                 try
                 {
-                    // if (Program.env[item.envIndex].IsOpen)
                     {
                         if (Program.env[item.envIndex] == null)
                             return "";
@@ -1107,11 +1011,6 @@
         string hostPort = Program.hostPort;
 
         string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            // prefix = "https://";
-            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
 
         object o = item.Tag;
 
@@ -1121,10 +1020,7 @@
             var asset = aas.AssetInformation;
             if (asset != null)
             {
-                // string url = WebUtility.UrlEncode(asset.identification.id);
                 string url = asset.GlobalAssetId;
-                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
-                // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
 
                 return link;
@@ -1156,8 +1052,6 @@
 
     void createQRCodeImage(Item item)
     {
-        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
-
         if (item == null)
         {
             return;
@@ -1167,11 +1061,6 @@
         string hostPort = Program.hostPort;
 
         string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            // prefix = "https://";
-            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
 
         object o = item.Tag;
 
@@ -1187,10 +1076,7 @@
             var asset = aas.AssetInformation;
             if (asset != null)
             {
-                // string url = WebUtility.UrlEncode(asset.identification.id);
                 string url = asset.GlobalAssetId;
-                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
-                // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
                 string link = url;
 
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
@@ -1208,32 +1094,10 @@
                 return;
             }
         }
-
-        return;
     }
 
     bool hasDownloadFile(Item item)
     {
-        return false;
-
-        if (item == null)
-        {
-            return false;
-        }
-
-        object o = item.Tag;
-
-        if (o is AasCore.Aas3_0.File f)
-        {
-
-            // Test for /aasx/
-            string[] split = f.Value.Split(new Char[] { '/' });
-            if (split.Length == 2 || split[1].ToLower() == "aasx")
-            {
-                return true;
-            }
-        }
-
         return false;
     }
 
@@ -1260,14 +1124,11 @@
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
             return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
         }
 
         if (o is AssetAdministrationShell)
         {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            //return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
             string currentUrl = NavigationManager.Uri;
             return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
         }
@@ -1420,14 +1281,6 @@
 
         object o = item.Tag;
 
-        /*
-        if (o is Referable)
-        {
-        ret = (o as Referable).GetElementName();
-        return (ret);
-        }
-        */
-
         if (o is string && item.Text.Contains("/readme"))
         {
             ret += item.Text;
@@ -1521,7 +1374,6 @@
         object o = item.Tag;
 
         if (o is IReferable r)
-            // ret += " (" + r.TimeStamp.Ticks + ") ";
             ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
 
         return ret;
@@ -1617,12 +1469,10 @@
         if (o is AssetAdministrationShell)
         {
             var aas = o as AssetAdministrationShell;
-            // ret = aas.identification.ToString();
         }
         if (o is Submodel)
         {
             var sm = o as Submodel;
-            // ret = sm.identification.ToString();
             if (sm.Qualifiers != null && sm.Qualifiers.Count > 0)
             {
                 ret += " @QUALIFIERS";
@@ -1631,7 +1481,6 @@
         if (o is SubmodelElementCollection)
         {
             var sme = o as SubmodelElementCollection;
-            // ret = sm.identification.ToString();
             if (sme.Value != null)
             {
                 if (sme.Value.Count > 0)
@@ -1710,7 +1559,6 @@
             return "";
         }
 
-        // string ret = "NULL";
         string ret = "";
 
         object o = item.Tag;
@@ -1774,34 +1622,6 @@
                         }
                     }
                     break;
-                /*
-                case 3:
-                subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                if (subjectIssuer != null)
-                            {
-                            string[] s = subjectIssuer.Split(';');
-                            if (s.Length > 0 && s[0] != "")
-                {
-                ret = "SUBJECT";
-                if (col == 1)
-                ret = s[0];
-                }
-                }
-                break;
-                case 4:
-                subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                if (subjectIssuer != null)
-                    {
-                        string[] s = subjectIssuer.Split(';');
-                        if (s.Length > 1 && s[1] != "")
-                        {
-                        ret = "ISSUER";
-                            if (col == 1)
-                            ret = s[1];
-                            }
-                }
-                break;
-                */
                 case 4:
                     if (aas.Extensions != null)
                     {
@@ -1879,7 +1699,6 @@
         if (o is Property)
         {
             var prop = o as Property;
-            // ret += ", " + prop.value;
             ret = "";
             switch (line)
             {
@@ -1925,7 +1744,6 @@
         if (o is Entity)
         {
             var e = o as Entity;
-            // ret += ", " + e.entityType;
             switch (line)
             {
                 case 0:
@@ -2111,7 +1929,6 @@
         if (o is Operation)
         {
             var op = o as Operation;
-            // ret = op.idShort;
             switch (line)
             {
                 case 0:
@@ -2164,7 +1981,6 @@
         if (o is AnnotatedRelationshipElement)
         {
             var r = o as AnnotatedRelationshipElement;
-            // ret = r.idShort;
             switch (line)
             {
                 case 0:
@@ -2219,7 +2035,6 @@
         if (o is RelationshipElement)
         {
             var r = o as RelationshipElement;
-            // ret = r.idShort;
             switch (line)
             {
                 case 0:
@@ -2274,7 +2089,6 @@
         if (o is ReferenceElement)
         {
             var r = o as ReferenceElement;
-            // ret = r.idShort;
             switch (line)
             {
                 case 0:
@@ -2296,16 +2110,6 @@
                     if (col == 1)
                     {
                         ret = "NULL";
-                        /*
-                        if (r.GetModelReference() != null)
-                        {
-                            var k = r.Value.Keys;
-                            if (k != null)
-                            {
-                                ret = k.ToStringExtended();
-                            }
-                        }
-                        */
                         if (r.Value != null)
                         {
                             var k = r.Value.Keys;
@@ -2369,7 +2173,6 @@
         if (o is ISubmodelElement)
         {
             var sme = o as ISubmodelElement;
-            // ret = sme.idShort + ", " + sme.semanticId;
             switch (line)
             {
                 case 0:
@@ -2434,22 +2237,7 @@
         {
             return ret;
         }
-        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescriptionByReference(se.SemanticId);
-        if (cd != null)
-        {
-            // TODO (jtikekar, 2023-09-04): temporarily commented
-            //var iec = cd.GetIEC61360();
-            //if (iec != null)
-            //{
-            //    ret = "Unit";
-            //    if (col == 1)
-            //    {
-            //        ret = iec.unit;
-            //        if (iec.unitId != null && iec.unitId.Value != null && iec.unitId.Value.Count > 0)
-            //            ret += " (UnitId = " + iec.unitId.Value.ToString() + ")";
-            //    }
-            //}
-        }
+        
         return ret;
     }
 }
