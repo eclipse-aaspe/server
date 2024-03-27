@@ -4,6 +4,7 @@
 @using AasxServer
 @inject IRegistryInitializerService AasRegistryService
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
+@using System.Reflection
 
 <style>
     @@keyframes rotation {
@@ -19,6 +20,8 @@
         position: fixed;
         top: 0;
         width: 100%;
+        background-color: #f8f9fa;
+        box-shadow: 0 0.25rem 0.25rem rgba(0, 0, 0, 0.15);
     }
     
     .main {
@@ -48,7 +51,7 @@
 
     .content {
         padding: 20px 0;
-        margin-top: 5rem;
+        margin-top: 5.5rem;
         text-align: center;
     }
     
@@ -56,6 +59,23 @@
         color: white;
         background-color: blue;
     }
+    
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f8f9fa; /* Change background color as needed */
+        padding: 0.625rem 0; /* Equivalent to 10px top and bottom padding */
+        text-align: center;
+        box-shadow: 0 -0.125rem 0.25rem rgba(0, 0, 0, 0.1); /* Small shadow effect */
+    }
+    
+    .footer div {
+        display: inline-block;
+        margin: 0 0.625rem; /* Equivalent to 10px horizontal margin */
+    }
+
 </style>
 
 <div class="main">
@@ -101,6 +121,15 @@
             <div class="content">
                 @Body
             </div>
+            
+            <footer class="footer">
+                <div class="copyright">
+                    &copy; @DateTime.Now.Year IDTA
+                </div>
+                <div class="version">
+                    Version: @GetAssemblyFileVersion()
+                </div>
+            </footer>
         }
     }
 </div>
@@ -154,6 +183,14 @@
     {
         string[] pcfEndings = {"/pcf", "/pcf/", "/pcf2", "/pcf2/", "/pcf2edc", "/pcf2edc/"};
         return pcfEndings.Any(uri.EndsWith);
+    }
+
+    private static string GetAssemblyFileVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var version = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
+
+        return version ?? "0.0.0";
     }
 
 }
