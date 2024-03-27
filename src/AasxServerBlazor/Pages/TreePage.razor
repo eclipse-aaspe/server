@@ -18,7 +18,7 @@
 @implements IDisposable
 
 <div class="col-12 row">
-    <br />
+    <br/>
     <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
         @updateVisibleTree(Items, SelectedNode)
@@ -27,7 +27,7 @@
             <span style="color:white;background-color:blue;">Loading...</span>
         }
         else
-        { 
+        {
             AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
         }
         <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
@@ -36,69 +36,75 @@
               HasChildNodes="@(item => item.Childs?.Any() == true)"
               HtmlId="@(item => GetHtmlId(item))">
             <TitleTemplate>
-                @{ 
-                var getPolicy = "";
-                @if (GlobalSecurityVariables.WithAuthentication)
-                {
-                    var display = false;
-                    var access = false;
-                    var withAllow = false;
-                    if (context.Tag is Submodel sm)
+                @{
+                    var getPolicy = "";
+                    @if (GlobalSecurityVariables.WithAuthentication)
                     {
-                        // check, if access to submodel is allowed
-                        var error = "";
-                        withAllow = false;
-                        access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                            out error, out withAllow, out getPolicy, sm.IdShort! , "submodel", sm);
-                        display = true;
-                    }
-                    if (context.Tag is ISubmodelElement sme)
-                    {
-                        var path = sme.IdShort;
-                        var p = sme.Parent;
-                        while (!(p is Submodel))
+                        var display = false;
+                        var access = false;
+                        var withAllow = false;
+                        if (context.Tag is Submodel sm)
                         {
-                            path = (p as ISubmodelElement).IdShort + "." + path;
-                            p = (p as ISubmodelElement).Parent;
-                        }
-                        path = (p as Submodel).IdShort + "." + path;
-                        var error = "";
-                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-                            out error, out withAllow, out getPolicy, path, "", p);
-                        display = true;
-                    }
-                    if (display)
-                    {
-                        if (context.Childs == null || context.Childs.Count() == 0)
+                            // check, if access to submodel is allowed
+                            var error = "";
                             withAllow = false;
-                        if (access)
-                        {
-                            <span style="color:green;background-color:green;">&nbsp&nbsp</span>
-                            <span>&nbsp</span>
+                            access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
+                                out error, out withAllow, out getPolicy, sm.IdShort!, "submodel", sm);
+                            display = true;
                         }
-                        else
+
+                        if (context.Tag is ISubmodelElement sme)
                         {
-                            if (!withAllow)
+                            var path = sme.IdShort;
+                            var p = sme.Parent;
+                            while (!(p is Submodel))
                             {
-                                <span style="color:red;background-color:red;">&nbsp&nbsp</span>
+                                path = (p as ISubmodelElement).IdShort + "." + path;
+                                p = (p as ISubmodelElement).Parent;
+                            }
+
+                            path = (p as Submodel).IdShort + "." + path;
+                            var error = "";
+                            access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
+                                out error, out withAllow, out getPolicy, path, "", p);
+                            display = true;
+                        }
+
+                        if (display)
+                        {
+                            if (context.Childs == null || context.Childs.Count() == 0)
+                                withAllow = false;
+                            if (access)
+                            {
+                                <span style="color:green;background-color:green;">&nbsp&nbsp</span>
                                 <span>&nbsp</span>
                             }
                             else
                             {
-                                <span style="color:red;background-color:red;">&nbsp</span><span style="color:green;background-color:green;">&nbsp</span>
-                                <span>&nbsp</span>
+                                if (!withAllow)
+                                {
+                                    <span style="color:red;background-color:red;">&nbsp&nbsp</span>
+                                    <span>&nbsp</span>
+                                }
+                                else
+                                {
+                                    <span style="color:red;background-color:red;">&nbsp</span>
+                                    <span style="color:green;background-color:green;">&nbsp</span>
+                                    <span>&nbsp</span>
+                                }
                             }
                         }
                     }
-                }
-                <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                @ViewNodeID(context)@ViewNodeInfo(context)
-                @if (Program.withPolicy && getPolicy != "")
-                {
-                    <span style="color:blue">&nbsp @getPolicy</span>
-                }
-                <span style="color:blue;font-size:14px">@getSymbols(context)</span>
-                <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
+
+                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                    @ViewNodeID(context)@ViewNodeInfo(context)
+                    @if (Program.withPolicy && getPolicy != "")
+                    {
+                        <span style="color:blue">&nbsp @getPolicy</span>
+                    }
+
+                    <span style="color:blue;font-size:14px">@getSymbols(context)</span>
+                    <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
                 }
             </TitleTemplate>
         </Tree>
@@ -125,50 +131,51 @@
                                 var accessRules = SecService.GetSecurityRules();
                                 <table class="table table-bordered table-sm">
                                     <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th nowrap>Kind</th>
-                                            <th>Permission</th>
-                                            <th>Type</th>
-                                            <th>API</th>
-                                            <th>Path</th>
-                                            <th>SemanticID</th>
-                                            <th>See</th>
-                                        </tr>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th nowrap>Kind</th>
+                                        <th>Permission</th>
+                                        <th>Type</th>
+                                        <th>API</th>
+                                        <th>Path</th>
+                                        <th>SemanticID</th>
+                                        <th>See</th>
+                                    </tr>
                                     </thead>
                                     <tbody>
-                                        @{
-                                            var lines = accessRules.Split('\n');
-                                            foreach (var l in lines)
-                                            {
-                                                <tr>
-                                                    @{
-                                                        var cols = l.Split('\t');
-                                                        for (var c = 0; c < cols.Count(); c++)
+                                    @{
+                                        var lines = accessRules.Split('\n');
+                                        foreach (var l in lines)
+                                        {
+                                            <tr>
+                                                @{
+                                                    var cols = l.Split('\t');
+                                                    for (var c = 0; c < cols.Count(); c++)
+                                                    {
+                                                        if (c != 1 && c != 2)
                                                         {
-                                                            if (c != 1 && c!= 2)
-                                                            {
-                                                                <td>@cols[c]</td>
-                                                            }
-                                                            else
-                                                            {
-                                                                <td nowrap>@cols[c]</td>
-                                                            }
+                                                            <td>@cols[c]</td>
                                                         }
+                                                        else
+                                                        {
+                                                            <td nowrap>@cols[c]</td>
+                                                        }
+                                                    }
                                                 }
-                                                </tr>
-                                            }
+                                            </tr>
                                         }
+                                    }
                                     </tbody>
                                 </table>
                             }
                             else
                             {
-                                <span>@((MarkupString)text)</span>
+                                <span>@((MarkupString) text)</span>
                             }
                         }
                     }
                 }
+
                 for (var line = 0; line < 20; line++)
                 {
                     var nodeDetails0 = ViewNodeDetails(SelectedNode, line, 0);
@@ -176,41 +183,51 @@
                     var nodeDetails2 = ViewNodeDetails(SelectedNode, line, 2);
                     if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
-                        var detailsId="SelectedNodeDetailsLeft_" + line;
+                        var detailsId = "SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
                         <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
                         <br>
                     }
                 }
+
                 if (SelectedNode != null && SelectedNode.Tag is IReferable r)
                 {
-                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
-                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <br/>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button>
+                    <br/>
+                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <br/>
                     <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
 
-                    <br />
+                    <br/>
                     @code {
+
                         private void setTimeStamp()
                         {
                             (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
                             Program.env[SelectedNode.envIndex].setWrite(true);
                         }
+
                     }
                 }
+
                 var externalLink = false;
                 var link = getLink(SelectedNode, out externalLink);
                 if (SelectedNode != null && link != "")
                 {
                     if (true)
                     {
-                        <a href="@link" target="_blank">@link</a><br>
+                        <a href="@link" target="_blank">@link</a>
+                        <br>
                     }
                     else
                     {
-                        <button onclick="window.location.href = '@link'; ">Download</button><br>
+                        <button onclick="window.location.href = '@link'; ">Download</button>
+                        <br>
                     }
+
                     if (SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != "")
                     {
                         var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
@@ -223,6 +240,7 @@
                         {
                             <button @onclick="setSubmodelToPublish">Publish</button>
                         }
+
                         if (toSubscribe)
                         {
                             <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
@@ -232,32 +250,38 @@
                             <button @onclick="setSubmodelToSubscribe">Subscribe</button>
                         }
                         @code {
+
                             private void resetSubmodelToPublish()
                             {
                                 Program.submodelsToPublish.Remove(SelectedNode.Tag);
                             }
+
                             private void setSubmodelToPublish()
                             {
                                 var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
                                 if (!toSubscribe)
                                     Program.submodelsToPublish.Add(SelectedNode.Tag);
                             }
+
                             private void resetSubmodelToSubscribe()
                             {
                                 Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
                             }
+
                             private void setSubmodelToSubscribe()
                             {
                                 var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
                                 if (!toPublish)
                                     Program.submodelsToSubscribe.Add(SelectedNode.Tag);
                             }
+
                         }
                     }
                 }
+
                 if (SelectedNode != null && SelectedNode.Tag is Property && Program.edit)
                 {
-                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;" />
+                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
                     <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
                     <br>
                     @code { private string CurrentValue { get; set; } }
@@ -279,7 +303,8 @@
                 {
                     if (SelectedNode.Tag is AssetAdministrationShell)
                     {
-                        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
+                        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
+                        <br/>
                         var qrcodeLink = getQRCodeLink(SelectedNode);
                         if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
                         {
@@ -288,20 +313,23 @@
                             {
                                 <a href="@qrcodeLink" target="_blank">
                                     <div>
-                                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image" />
+                                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image"/>
                                     </div>
                                 </a>
                             }
                         }
                         else
                         {
-                            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
+                            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
+                            <br>
                         }
                         @code {
+
                             private void runCreateQRCodeImage()
                             {
                                 createQRCodeImage(SelectedNode);
                             }
+
                         }
                     }
                 }
@@ -312,25 +340,27 @@
                     var path = Program.externalBlazor + "/submodels/" + idEncoded;
                     <span style="color:white;background-color:blue;">URL:</span>
                     <span>&nbsp</span>
-                    <a href="@path" target="_blank">@path</a><br>
+                    <a href="@path" target="_blank">@path</a>
+                    <br>
                 }
 
                 if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
                 {
                     var path = sme.IdShort;
                     var parent = sme.Parent as IReferable;
-                    while(parent is not Submodel)
+                    while (parent is not Submodel)
                     {
-                        if(parent is ISubmodelElementList parentList)
+                        if (parent is ISubmodelElementList parentList)
                         {
-                            if(path.Equals(sme.IdShort)) 
+                            if (path.Equals(sme.IdShort))
                             {
                                 var index = parentList.Value?.IndexOf(sme);
                                 path = "[" + index + "]";
                             }
+
                             path = parentList.IdShort + path;
                         }
-                        else if(parent.Parent is ISubmodelElementList prevParentList)
+                        else if (parent.Parent is ISubmodelElementList prevParentList)
                         {
                             var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
                             path = "[" + index + "]" + "." + path;
@@ -340,24 +370,29 @@
                             path = parent.IdShort + "." + path;
                         }
 
-                        parent = (IReferable)parent.Parent;
+                        parent = (IReferable) parent.Parent;
                     }
+
                     var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
                     path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                     <span style="color:white;background-color:blue;">URL:</span>
                     <span>&nbsp</span>
-                    <a href="@path" target="_blank">@path</a><br>
+                    <a href="@path" target="_blank">@path</a>
+                    <br>
                 }
 
                 if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection smc)
                 {
                     var semanticId = "";
-                    
+
                     try
                     {
                         semanticId = smc.SemanticId?.GetAsIdentifier();
                     }
-                    catch { }
+                    catch
+                    {
+                    }
+
                     if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
                         semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
                     {
@@ -373,7 +408,7 @@
                             _timeSeriesData.Clear();
 
                             // make initial data for time series
-                            var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
+                            var tsd = new TimeSeriesData() {SourceTimeSeries = smc};
                             _timeSeriesData.Add(tsd);
 
                             // plot arguments for time series
@@ -423,35 +458,47 @@
                         {
                             <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
                                 <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
-                                <input type="time" @bind-value="plotFilter.fromTime" />
+                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate"/>
+                                <input type="time" @bind-value="plotFilter.fromTime"/>
                                 <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
-                                <input type="time" @bind-value="plotFilter.toTime" />
+                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate"/>
+                                <input type="time" @bind-value="plotFilter.toTime"/>
                                 <div>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray" 
-                                        type="submit">Apply</button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="plotFilter.SetInitialFilterState">Reset</button>
+                                            type="submit">
+                                        Apply
+                                    </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
+                                            @onclick="plotFilter.SetInitialFilterState">
+                                        Reset
+                                    </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray" 
-                                        @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
+                                            @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">
+                                        Today
+                                    </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
+                                            @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">
+                                        Yesterday
+                                    </button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                            @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">
+                                        Prev day
+                                    </button>
+                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                            @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">
+                                        Next day
+                                    </button>
                                 </div>
                             </EditForm>
 
                             <div class="d-flex flex-column">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
+                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;"/>
                                 <span class="text-muted" style="font-size:14px;">
                                     Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
                                 </span>
                             </div>
 
-                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
+                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -461,7 +508,7 @@
                                             </button>
                                         </div>
                                         <div class="modal-body text-center">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
+                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2"/>
                                         </div>
                                     </div>
                                 </div>
@@ -489,16 +536,16 @@
                     {
                         if (!url)
                         {
-                            <br />
+                            <br/>
                             <div>
-                                <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                                <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
                             </div>
                         }
                         else
                         {
-                            <br />
+                            <br/>
                             <div>
-                                <img src="@detailsImage" style="max-width: 50%" alt="Details Image" />
+                                <img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
                             </div>
                         }
                     }
@@ -506,16 +553,16 @@
                     {
                         if (!url)
                         {
-                            <br />
+                            <br/>
                             <div>
-                                <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
+                                <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
                             </div>
                         }
                         else
                         {
-                            <br />
+                            <br/>
                             <div>
-                                <img src="detailsImage" style="max-width: 50%" alt="Details Image" />
+                                <img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
                             </div>
                         }
                     }
@@ -527,16 +574,20 @@
                     {
                         var okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
                         <span style="color:white;background-color:blue;">Observed</span>
-                        <span>@(" " + okey)</span><br />
+                        <span>@(" " + okey)</span>
+                        <br/>
                         var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
                         if (refsme != null)
                         {
-                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                            <br/>
+                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                            <br/>
                         }
                         else
                         {
-                            <span>Referenced element does not exist!</span><br />
+                            <span>Referenced element does not exist!</span>
+                            <br/>
                         }
                     }
                 }
@@ -552,6 +603,7 @@
 @using AdminShellNS;
 @using System.Globalization;
 @using System.Reflection;
+@using AasxServerBlazor.TreeVisualisation
 @using Newtonsoft.Json;
 @using Newtonsoft.Json.Linq;
 @using ScottPlot;
@@ -564,64 +616,6 @@
     bool showImageModal = false;
     ListOfTimeSeriesData _timeSeriesData = new();
     int plotFilterTsdOffset = 0;
-
-    private class PlotFilter
-    {
-        public DateTime fromDate { get; set; }
-        public DateTime fromTime { get; set; }
-        public DateTime toDate { get; set; }
-        public DateTime toTime { get; set; }
-        public DateTime combinedFromDate { get; set; }
-        public DateTime combinedToDate { get; set; }
-
-        public PlotFilter()
-        {
-            SetInitialFilterState();
-        }
-
-        public void SetInitialFilterState()
-        {
-            ResetTimeOfDates();
-            var initialFromDate = DateTime.Now.AddYears(-3);
-            var initialToDate = DateTime.Now.AddYears(3);
-            fromDate = initialFromDate;
-            toDate = initialToDate;
-            combinedFromDate = initialFromDate;
-            combinedToDate = initialToDate;
-        }
-
-        public void SetFilterStateDay(int offset)
-        {
-            ResetTimeOfDates();
-            var day = DateTime.Today.AddDays(offset);
-            var midnight = new System.TimeSpan(0, 23, 59, 59);
-            var endOfDay = day.Add(midnight);
-
-            fromDate = day;
-            fromTime = day;
-            toDate = endOfDay;
-            toTime = endOfDay;
-            combinedFromDate = day;
-            combinedToDate = endOfDay;
-        }
-
-        public void ResetTimeOfDates()
-        {
-            // Reset to 0 AM
-            fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
-            toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
-        }
-
-        public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
-        {
-            ResetTimeOfDates();
-            var fromTimeSpan = fromTime.TimeOfDay;
-            var toTimeSpan = toTime.TimeOfDay;
-            combinedFromDate = fromDate.Add(fromTimeSpan);
-            combinedToDate = toDate.Add(toTimeSpan);
-            tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
-        }
-    }
 
     async Task DownloadFile()
     {
@@ -638,22 +632,24 @@
                     Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
                     data = ms.ToArray();
                 }
+
                 //
                 await SaveAs(js, fileName, data);
             }
             catch
             {
             }
-
         }
     }
+
     async Task SaveAs(IJSRuntime js, string filename, byte[] data)
     {
-        ; await js.InvokeAsync<object>(
-     "saveAsFile",
-     filename,
-     data
-     );
+        ;
+        await js.InvokeAsync<object>(
+            "saveAsFile",
+            filename,
+            data
+        );
     }
 
     public class Item
@@ -740,6 +736,7 @@
                             expandedNodesPath[j] = getPath(ExpandedNodes[j]);
                         }
                     }
+
                     SubmodelService.buildTree();
                     Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
                     ExpandedNodes.Clear();
@@ -748,6 +745,7 @@
                     {
                         selectedNode = findPath(selectedNodePath);
                     }
+
                     if (isExpanded)
                     {
                         foreach (var path in expandedNodesPath)
@@ -757,6 +755,7 @@
                                 ExpandedNodes.Add(p);
                         }
                     }
+
                     newDataMode = 0;
                     break;
                 // 3 == build new tree, all nodes closed
@@ -768,8 +767,10 @@
                     newDataMode = 0;
                     break;
             }
+
             SelectedNode = selectedNode;
         }
+
         return "";
     }
 
@@ -781,15 +782,17 @@
         var upPath = new List<string> {i.Text};
         while (i.parent != null)
         {
-            i = (Item)i.parent;
+            i = (Item) i.parent;
             upPath.Add(i.Text);
         }
+
         var downPath = new List<string>();
         var j = upPath.Count - 1;
         while (j >= 0)
         {
             downPath.Add(upPath[j--]);
         }
+
         return downPath;
     }
 
@@ -807,6 +810,7 @@
                     k++;
                     continue;
                 }
+
                 var j = 0;
                 found = i;
                 while (++j < path.Count)
@@ -823,16 +827,20 @@
                             }
                         }
                     }
+
                     if (found == null)
                     {
                         return null;
                     }
+
                     i = found;
                 }
+
                 if (found != null)
                     return found;
             }
         }
+
         return null;
     }
 
@@ -847,21 +855,26 @@
             {
                 listIdshort.Add(smew1.IdShort);
             }
+
             done = true;
         }
+
         if (!done && i.Tag is SubmodelElementCollection smec)
         {
             foreach (var smew2 in smec.Value)
             {
                 listIdshort.Add(smew2.IdShort);
             }
+
             done = true;
         }
+
         if (!done && i.Tag is ISubmodelElement sme)
         {
             listIdshort.Add(sme.IdShort);
             done = true;
         }
+
         // check if child name exists in data children idshorts, if not delete
         if (done)
         {
@@ -883,6 +896,7 @@
                     toDelete.Add(i);
                 }
             }
+
             foreach (var c in toDelete)
             {
                 var parent = c.parent as Item;
@@ -892,6 +906,7 @@
                 }
             }
         }
+
         // check if data children idshorts exist in child names, if not insert
         if (clist != null)
         {
@@ -938,20 +953,21 @@
                         }
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
         if (o is AasCore.Aas3_0.File f)
         {
-
             // Test for /aasx/
             if (!string.IsNullOrEmpty(f.Value))
             {
-                var split = f.Value.Split(new Char[] { '/' });
+                var split = f.Value.Split(new Char[] {'/'});
                 if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
                 {
-                    split = f.Value.Split(new Char[] { '.' });
+                    split = f.Value.Split(new Char[] {'.'});
                     switch (split.Last().ToLower())
                     {
                         case "jpg":
@@ -970,13 +986,17 @@
                                             {
                                                 svg = true;
                                             }
+
                                             s.CopyTo(m);
                                             return System.Convert.ToBase64String(m.ToArray());
                                         }
                                     }
                                 }
                             }
-                            catch { }
+                            catch
+                            {
+                            }
+
                             break;
                     }
                 }
@@ -1080,7 +1100,6 @@
                     var base64 = Convert.ToBase64String(memory.ToArray());
 
                     Program.generatedQrCodes.Add(item.Tag, base64);
-
                 }
             }
         }
@@ -1131,6 +1150,7 @@
             {
                 value = (o as AasCore.Aas3_0.File).Value;
             }
+
             if (o is Property)
             {
                 value = (o as Property).Value;
@@ -1139,7 +1159,7 @@
             if (value == null || value == "")
                 return "";
 
-            split = value.Split(new[] { ':' });
+            split = value.Split(new[] {':'});
             if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
             {
                 external = true;
@@ -1147,7 +1167,7 @@
             }
 
             // Test for /aasx/
-            split = value.Split(new Char[] { '/' });
+            split = value.Split(new Char[] {'/'});
             if (split.Length > 1)
             {
                 if (split.Length == 2 || split[1].ToLower() == "aasx")
@@ -1164,6 +1184,7 @@
                                 var index = parentList.Value?.IndexOf(sme);
                                 path = "[" + index + "]";
                             }
+
                             path = parentList.IdShort + path;
                         }
                         else if (parent.Parent is ISubmodelElementList prevParentList)
@@ -1176,13 +1197,13 @@
                             path = parent.IdShort + "." + path;
                         }
 
-                        parent = (IReferable)parent.Parent;
+                        parent = (IReferable) parent.Parent;
                     }
 
                     var currentUrl = NavigationManager.Uri;
-                    
+
                     return currentUrl + "submodels/" + Base64UrlEncoder.Encode((parent as Submodel).Id) +
-                    "/submodel-elements/" + path + "/attachment";
+                           "/submodel-elements/" + path + "/attachment";
                 }
             }
         }
@@ -1237,17 +1258,17 @@
     /// <returns></returns>
     bool IsSmColl(Item item)
     {
-        if(item == null)
+        if (item == null)
         {
             return false;
         }
 
-        if(item.Tag is SubmodelElementList)
+        if (item.Tag is SubmodelElementList)
         {
             return false;
         }
 
-        if(item.Tag is SubmodelElementCollection)
+        if (item.Tag is SubmodelElementCollection)
         {
             return true;
         }
@@ -1285,13 +1306,15 @@
         {
             ret += "AAS";
         }
+
         if (o is Submodel)
         {
             ret += "Sub";
         }
+
         if (o is ISubmodelElement)
         {
-            if(o is SubmodelElementList)
+            if (o is SubmodelElementList)
             {
                 ret += "SML";
             }
@@ -1299,52 +1322,64 @@
             {
                 ret += "Coll";
             }
+
             if (o is Property)
             {
                 ret += "Prop";
             }
         }
+
         if (o is Operation)
         {
             ret += "Opr";
         }
+
         if (o is AasCore.Aas3_0.File)
         {
             ret += "File";
         }
+
         if (o is Blob)
         {
             ret += "Blob";
         }
+
         if (o is AasCore.Aas3_0.Range)
         {
             ret += "Range";
         }
+
         if (o is MultiLanguageProperty)
         {
             ret += "Lang";
         }
+
         if (o is RelationshipElement)
         {
             ret += "Rel";
         }
+
         if (o is ReferenceElement)
         {
             ret += "Ref";
         }
+
         if (o is Entity)
         {
             ret += "Ent";
         }
+
         if (o is BasicEventElement)
         {
             ret += "Evt";
         }
-        if(o is AnnotatedRelationshipElement)
+
+        if (o is AnnotatedRelationshipElement)
         {
             ret += "RelA";
         }
-        if(o is Capability)
+
+        if (o is Capability)
         {
             ret += "Cap";
         }
@@ -1395,6 +1430,7 @@
             var aas = o as AssetAdministrationShell;
             ret = aas.IdShort;
         }
+
         if (o is Submodel)
         {
             var sm = o as Submodel;
@@ -1403,35 +1439,41 @@
                 ret += "<T> ";
             ret += sm.IdShort;
         }
+
         if (o is ISubmodelElement)
         {
             var sme = o as ISubmodelElement;
             ret = "";
             ret += sme.IdShort;
         }
+
         if (o is AasCore.Aas3_0.File f)
         {
             ret = "";
             ret += f.IdShort;
         }
+
         if (o is Blob)
         {
             var b = o as Blob;
             ret = "";
             ret += b.IdShort;
         }
+
         if (o is AasCore.Aas3_0.Range)
         {
             var r = o as AasCore.Aas3_0.Range;
             ret = "";
             ret += r.IdShort;
         }
+
         if (o is MultiLanguageProperty)
         {
             var mlp = o as MultiLanguageProperty;
             ret = "";
             ret += mlp.IdShort;
         }
+
         return (ret);
     }
 
@@ -1442,6 +1484,7 @@
         {
             ret = GetHtmlId(item.parent as Item) + "." + ret;
         }
+
         return (ret);
     }
 
@@ -1460,6 +1503,7 @@
         {
             var aas = o as AssetAdministrationShell;
         }
+
         if (o is Submodel)
         {
             var sm = o as Submodel;
@@ -1468,6 +1512,7 @@
                 ret += " @QUALIFIERS";
             }
         }
+
         if (o is SubmodelElementCollection)
         {
             var sme = o as SubmodelElementCollection;
@@ -1478,28 +1523,32 @@
                     ret += " #" + sme.Value.Count;
                 }
             }
+
             if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
             {
                 ret += " @QUALIFIERS";
             }
         }
+
         if (o is ISubmodelElement)
         {
             if (o is Property)
             {
                 var prop = o as Property;
-                if (prop.Value!= null && prop.Value != "")
+                if (prop.Value != null && prop.Value != "")
                 {
                     var v = prop.Value;
                     if (v.Length > 100)
                         v = v.Substring(0, 100) + " ..";
                     ret = " = " + v;
                 }
+
                 if (prop.Qualifiers != null && prop.Qualifiers.Count > 0)
                 {
                     ret += " @QUALIFIERS";
                 }
             }
+
             if (o is AasCore.Aas3_0.File f)
             {
                 if (f.Value != null)
@@ -1510,6 +1559,7 @@
                 }
             }
         }
+
         if (o is AasCore.Aas3_0.Range)
         {
             var r = o as AasCore.Aas3_0.Range;
@@ -1520,6 +1570,7 @@
                 ret += " @QUALIFIERS";
             }
         }
+
         if (o is MultiLanguageProperty)
         {
             var mlp = o as MultiLanguageProperty;
@@ -1534,11 +1585,13 @@
                         ret += ls[i].Text + " ";
                 }
             }
+
             if (mlp.Qualifiers != null && mlp.Qualifiers.Count > 0)
             {
                 ret += " @QUALIFIERS";
             }
         }
+
         return (ret);
     }
 
@@ -1585,6 +1638,7 @@
                         if (col == 1)
                             ret = asset.GlobalAssetId;
                     }
+
                     break;
                 case 2:
                     if (asset != null)
@@ -1594,11 +1648,12 @@
                         if (col == 1)
                             ret = asset.GlobalAssetId + "";
                         if (col == 2)
-                            if(asset.GlobalAssetId != null)
+                            if (asset.GlobalAssetId != null)
                             {
                                 ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + "";
                             }
                     }
+
                     break;
                 case 3:
                     if (asset != null)
@@ -1611,6 +1666,7 @@
                             ret = url;
                         }
                     }
+
                     break;
                 case 4:
                     if (aas.Extensions != null)
@@ -1626,11 +1682,13 @@
                             }
                         }
                     }
+
                     break;
                 default:
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1660,6 +1718,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 2:
                     ret = getQualifiers(sm.Qualifiers, col);
@@ -1678,11 +1737,13 @@
                             }
                         }
                     }
+
                     break;
                 default:
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1704,6 +1765,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1728,6 +1790,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1748,6 +1811,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1775,10 +1839,10 @@
                                 ret = "Asset";
                             if (col == 1)
                             {
-                                foreach(var specificAssetId in e.SpecificAssetIds)
+                                foreach (var specificAssetId in e.SpecificAssetIds)
                                 {
                                     var k = specificAssetId.Value;
-                                    if(!string.IsNullOrEmpty(k))
+                                    if (!string.IsNullOrEmpty(k))
                                     {
                                         ret = "[" + k + "]";
                                     }
@@ -1786,6 +1850,7 @@
                             }
                         }
                     }
+
                     break;
                 case 3:
                     ret = getQualifiers(e.Qualifiers, col);
@@ -1794,6 +1859,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1814,6 +1880,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1828,6 +1895,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1848,6 +1916,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1868,6 +1937,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1889,6 +1959,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1913,6 +1984,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1933,6 +2005,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1945,6 +2018,7 @@
                             ret = op.InputVariables.Count + "";
                         }
                     }
+
                     break;
                 case 2:
                     if (col == 0)
@@ -1957,6 +2031,7 @@
                             ret = op.OutputVariables.Count + "";
                         }
                     }
+
                     break;
                 case 3:
                     ret = getQualifiers(op.Qualifiers, col);
@@ -1965,6 +2040,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -1985,6 +2061,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -1998,6 +2075,7 @@
                             ret = k.Keys.ToStringExtended();
                         }
                     }
+
                     break;
                 case 2:
                     if (col == 0)
@@ -2011,6 +2089,7 @@
                             ret = k.Keys.ToStringExtended();
                         }
                     }
+
                     break;
                 case 3:
                     if (col == 0)
@@ -2020,8 +2099,10 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
+
         if (o is RelationshipElement)
         {
             var r = o as RelationshipElement;
@@ -2039,6 +2120,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -2052,6 +2134,7 @@
                             ret = k.Keys.ToStringExtended();
                         }
                     }
+
                     break;
                 case 2:
                     if (col == 0)
@@ -2065,6 +2148,7 @@
                             ret = k.Keys.ToStringExtended();
                         }
                     }
+
                     break;
                 case 3:
                     ret = getQualifiers(r.Qualifiers, col);
@@ -2073,6 +2157,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -2093,6 +2178,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     if (col == 0)
@@ -2109,6 +2195,7 @@
                             }
                         }
                     }
+
                     break;
                 case 2:
                     ret = getQualifiers(r.Qualifiers, col);
@@ -2117,6 +2204,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -2128,6 +2216,7 @@
             {
                 ret += ls[i].Language + " ";
             }
+
             switch (line)
             {
                 case 0:
@@ -2142,10 +2231,11 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     ret = getQualifiers(mlp.Qualifiers, col);
-                    break;                
+                    break;
                 default:
                     ret = "";
                     if (ls.Count > line - 2)
@@ -2155,8 +2245,10 @@
                         if (col == 1)
                             ret = ls[line - 2].Text + "";
                     }
+
                     break;
             }
+
             return ret;
         }
 
@@ -2177,6 +2269,7 @@
                             ret = $"[{k.Type}, {k.Value}]";
                         }
                     }
+
                     break;
                 case 1:
                     ret = getQualifiers(sme.Qualifiers, col);
@@ -2185,6 +2278,7 @@
                     ret = "";
                     break;
             }
+
             return ret;
         }
 
@@ -2210,6 +2304,7 @@
                     {
                         ret += q[i].Type + " ";
                     }
+
                     if (q[i].Value != null && q[i].Value != "")
                     {
                         ret += "= " + q[i].Value;
@@ -2217,6 +2312,7 @@
                 }
             }
         }
+
         return ret;
     }
 
@@ -2227,9 +2323,10 @@
         {
             return ret;
         }
-        
+
         return ret;
     }
+
 }
 
 <style>

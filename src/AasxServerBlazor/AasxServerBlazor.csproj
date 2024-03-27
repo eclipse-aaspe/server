@@ -84,4 +84,10 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="AasxServerBlazor">
+        <HintPath>..\AasxServerBlazor.Tests\bin\Debug\net6.0\AasxServerBlazor.dll</HintPath>
+      </Reference>
+    </ItemGroup>
 </Project>
