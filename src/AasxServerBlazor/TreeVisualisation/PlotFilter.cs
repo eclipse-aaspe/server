@@ -1,62 +1,80 @@
 ﻿using System;
 using AasxServerStandardBib;
 
-namespace AasxServerBlazor.TreeVisualisation;
-
-public class PlotFilter
+namespace AasxServerBlazor.TreeVisualisation
 {
-    public DateTime FromDate { get; set; }
-    public DateTime FromTime { get; set; }
-    public DateTime ToDate { get; set; }
-    public DateTime ToTime { get; set; }
-    public DateTime CombinedFromDate { get; private set; }
-    public DateTime CombinedToDate { get; private set; }
-
-    public PlotFilter()
+    /// <summary>
+    /// Represents a filter used for plotting time series data.
+    /// </summary>
+    public class PlotFilter
     {
-        SetInitialFilterState();
-    }
+        public DateTime StartDate { get; set; }
 
-    public void SetInitialFilterState()
-    {
-        ResetTimeOfDates();
-        var initialFromDate = DateTime.Now.AddYears(-3);
-        var initialToDate = DateTime.Now.AddYears(3);
-        FromDate = initialFromDate;
-        ToDate = initialToDate;
-        CombinedFromDate = initialFromDate;
-        CombinedToDate = initialToDate;
-    }
+        public DateTime StartTime { get; set; }
 
-    public void SetFilterStateDay(int offset)
-    {
-        ResetTimeOfDates();
-        var day = DateTime.Today.AddDays(offset);
-        var midnight = new TimeSpan(0, 23, 59, 59);
-        var endOfDay = day.Add(midnight);
+        public DateTime EndDate { get; set; }
 
-        FromDate = day;
-        FromTime = day;
-        ToDate = endOfDay;
-        ToTime = endOfDay;
-        CombinedFromDate = day;
-        CombinedToDate = endOfDay;
-    }
+        public DateTime EndTime { get; set; }
 
-    private void ResetTimeOfDates()
-    {
-        // Reset to 0 AM
-        FromDate = new DateTime(FromDate.Year, FromDate.Month, FromDate.Day, 0, 0, 0);
-        ToDate = new DateTime(ToDate.Year, ToDate.Month, ToDate.Day, 0, 0, 0);
-    }
+        public DateTime CombinedStartDateTime { get; private set; }
 
-    public void UpdateFilter(TimeSeriesPlotting.ListOfTimeSeriesData timeSeriesData, int sessionNumber)
-    {
-        ResetTimeOfDates();
-        var fromTimeSpan = FromTime.TimeOfDay;
-        var toTimeSpan = ToTime.TimeOfDay;
-        CombinedFromDate = FromDate.Add(fromTimeSpan);
-        CombinedToDate = ToDate.Add(toTimeSpan);
-        timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, CombinedFromDate, CombinedToDate);
+        public DateTime CombinedEndDateTime { get; private set; }
+
+        public PlotFilter()
+        {
+            SetInitialFilterState();
+        }
+
+        /// <summary>
+        /// Sets the filter state to its initial values, spanning a range of three years from the current date.
+        /// </summary>
+        public void SetInitialFilterState()
+        {
+            var initialFromDate = DateTime.Now.AddYears(-3);
+            var initialToDate = DateTime.Now.AddYears(3);
+            SetFilterDates(initialFromDate, initialFromDate, initialToDate, initialToDate);
+        }
+
+        /// <summary>
+        /// Sets the filter state for a specific day based on the given offset.
+        /// </summary>
+        /// <param name="offset">The offset from the current day.</param>
+        public void SetFilterStateForDay(int offset)
+        {
+            var day = DateTime.Today.AddDays(offset);
+            var endOfDay = day.Date.AddDays(1).AddTicks(-1);
+            SetFilterDates(day, day, endOfDay, endOfDay);
+        }
+
+        private void SetFilterDates(DateTime fromDate, DateTime fromTime, DateTime toDate, DateTime toTime)
+        {
+            StartDate = fromDate;
+            StartTime = fromTime;
+            EndDate = toDate;
+            EndTime = toTime;
+            ResetTimeOfDates();
+        }
+
+        /// <summary>
+        /// Resets the time part of start and end dates to midnight.
+        /// </summary>
+        private void ResetTimeOfDates()
+        {
+            StartDate = StartDate.Date;
+            EndDate = EndDate.Date.AddDays(1).AddTicks(-1);
+            CombinedStartDateTime = StartDate.Add(StartTime.TimeOfDay);
+            CombinedEndDateTime = EndDate.Add(EndTime.TimeOfDay);
+        }
+
+        /// <summary>
+        /// Applies the filter to the provided time series data.
+        /// </summary>
+        /// <param name="timeSeriesData">The time series data to be filtered.</param>
+        /// <param name="sessionNumber">The session number for the filtered data.</param>
+        public void ApplyFilterToTimeSeriesData(TimeSeriesPlotting.ListOfTimeSeriesData timeSeriesData, int sessionNumber)
+        {
+            ResetTimeOfDates();
+            timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, CombinedStartDateTime, CombinedEndDateTime);
+        }
     }
 }

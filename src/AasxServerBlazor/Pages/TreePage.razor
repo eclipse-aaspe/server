@@ -438,7 +438,7 @@
                                 }
                             }
 
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.CombinedFromDate, plotFilter.CombinedToDate);
+                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.CombinedStartDateTime, plotFilter.CombinedEndDateTime);
                             watchTimeToProcessImage.Stop();
                         }
 
@@ -456,13 +456,13 @@
 
                         if (System.IO.File.Exists(scottplotImgPath))
                         {
-                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.ApplyFilterToTimeSeriesData(_timeSeriesData, bi.sessionNumber)">
                                 <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.FromDate"/>
-                                <input type="time" @bind-value="plotFilter.FromTime"/>
+                                <InputDate id="filterFromDate" @bind-Value="plotFilter.StartDate"/>
+                                <input type="time" @bind-value="plotFilter.StartTime"/>
                                 <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.ToDate"/>
-                                <input type="time" @bind-value="plotFilter.ToTime"/>
+                                <InputDate id="filterToDate" @bind-Value="plotFilter.EndDate"/>
+                                <input type="time" @bind-value="plotFilter.EndTime"/>
                                 <div>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
                                             type="submit">
@@ -473,19 +473,19 @@
                                         Reset
                                     </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">
+                                            @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateForDay(0); }">
                                         Today
                                     </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">
+                                            @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateForDay(-1); }">
                                         Yesterday
                                     </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">
+                                            @onclick="() => plotFilter.SetFilterStateForDay(--plotFilterTsdOffset)">
                                         Prev day
                                     </button>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">
+                                            @onclick="() => plotFilter.SetFilterStateForDay(++plotFilterTsdOffset)">
                                         Next day
                                     </button>
                                 </div>
