@@ -18,9 +18,9 @@
 @code {
     private bool _isNavMenuCollapsed = true;
 
-    private string NavMenuCssClass => _isNavMenuCollapsed ? "collapse" : null;
+    public string NavMenuCssClass => _isNavMenuCollapsed ? "collapse" : null;
 
-    private void ToggleNavMenu()
+    public void ToggleNavMenu()
     {
         _isNavMenuCollapsed = !_isNavMenuCollapsed;
     }

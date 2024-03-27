@@ -4,7 +4,6 @@
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
 @using Microsoft.IdentityModel.Tokens
 
-
 <style>
     input:checked ~ .dot {
         transform: translateX(100%);
@@ -258,7 +257,6 @@
         {
             link += "&registryURL=" + registry[0];
         }
-
     }
 
     void AddQueryParametersToLink(ref string link)
@@ -280,7 +278,11 @@
     void UpdatePathEnvironmentVariable()
     {
         var framePath = Environment.GetEnvironmentVariable("IFRAMEPATH");
-        if (string.IsNullOrEmpty(framePath)) {return;}
+        if (string.IsNullOrEmpty(framePath))
+        {
+            return;
+        }
+
         framePath = framePath.Replace("\r", "").Replace("\n", "");
         _path = framePath;
     }

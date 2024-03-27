@@ -1,5 +1,5 @@
 ﻿@inherits LayoutComponentBase
-@inject NavigationManager NavMan
+@inject NavigationManager NavigationManager
 @inject Data.AASService SubmodelService
 @using AasxServer
 @inject IRegistryInitializerService AasRegistryService
@@ -69,7 +69,7 @@
     {
         InitializeCredentialsAndRegistry();
 
-        var isProductCarbonFootprintShowcase = IsProductCarbonFootprintShowcaseUri(NavMan.Uri);
+        var isProductCarbonFootprintShowcase = IsProductCarbonFootprintShowcaseUri(NavigationManager.Uri);
 
         if (isProductCarbonFootprintShowcase)
         {
@@ -121,7 +121,9 @@
     void NewData(object source, EventArgs args)
     {
         if (Program.isLoading)
+        {
             return;
+        }
 
         if (args is not Program.NewDataAvailableArgs newArgs)
         {
