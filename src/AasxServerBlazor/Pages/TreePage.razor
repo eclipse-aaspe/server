@@ -21,7 +21,7 @@
     <br />
     <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
-        @updateVisibleTree(Items, selectedNode)
+        @updateVisibleTree(Items, SelectedNode)
         @if (Program.isLoading)
         {
             <span style="color:white;background-color:blue;">Loading...</span>
@@ -37,16 +37,16 @@
               HtmlId="@(item => GetHtmlId(item))">
             <TitleTemplate>
                 @{ 
-                string getPolicy = "";
+                var getPolicy = "";
                 @if (GlobalSecurityVariables.WithAuthentication)
                 {
                     var display = false;
                     var access = false;
-                    bool withAllow = false;
+                    var withAllow = false;
                     if (context.Tag is Submodel sm)
                     {
                         // check, if access to submodel is allowed
-                        string error = "";
+                        var error = "";
                         withAllow = false;
                         access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
                             out error, out withAllow, out getPolicy, sm.IdShort! , "submodel", sm);
@@ -54,7 +54,7 @@
                     }
                     if (context.Tag is ISubmodelElement sme)
                     {
-                        string path = sme.IdShort;
+                        var path = sme.IdShort;
                         var p = sme.Parent;
                         while (!(p is Submodel))
                         {
@@ -62,7 +62,7 @@
                             p = (p as ISubmodelElement).Parent;
                         }
                         path = (p as Submodel).IdShort + "." + path;
-                        string error = "";
+                        var error = "";
                         access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
                             out error, out withAllow, out getPolicy, path, "", p);
                         display = true;
@@ -106,23 +106,23 @@
     <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
-                if (selectedNode != null)
+                if (SelectedNode != null)
                 {
-                    if (!(selectedNode.Tag is string))
+                    if (!(SelectedNode.Tag is string))
                     {
-                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
-                        <span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span>
+                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
+                        <span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
                         <br>
                     }
                     else
                     {
-                        if (selectedNode.Tag is string && selectedNode.Text.Contains("/readme"))
+                        if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
                         {
-                            string text = System.IO.File.ReadAllText(selectedNode.Text);
+                            var text = System.IO.File.ReadAllText(SelectedNode.Text);
                             text = text.Replace("%BLAZOR%", Program.externalBlazor);
                             if (text.Contains("%ACCESSRULES%"))
                             {
-                                string accessRules = SecService.GetSecurityRules();
+                                var accessRules = SecService.GetSecurityRules();
                                 <table class="table table-bordered table-sm">
                                     <thead>
                                         <tr>
@@ -144,7 +144,7 @@
                                                 <tr>
                                                     @{
                                                         var cols = l.Split('\t');
-                                                        for (int c = 0; c < cols.Count(); c++)
+                                                        for (var c = 0; c < cols.Count(); c++)
                                                         {
                                                             if (c != 1 && c!= 2)
                                                             {
@@ -169,21 +169,21 @@
                         }
                     }
                 }
-                for (int line = 0; line < 20; line++)
+                for (var line = 0; line < 20; line++)
                 {
-                    string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
-                    string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
-                    string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
+                    var nodeDetails0 = ViewNodeDetails(SelectedNode, line, 0);
+                    var nodeDetails1 = ViewNodeDetails(SelectedNode, line, 1);
+                    var nodeDetails2 = ViewNodeDetails(SelectedNode, line, 2);
                     if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
-                        string detailsId="SelectedNodeDetailsLeft_" + line;
+                        var detailsId="SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
                         <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
                         <br>
                     }
                 }
-                if (selectedNode != null && selectedNode.Tag is IReferable r)
+                if (SelectedNode != null && SelectedNode.Tag is IReferable r)
                 {
                     <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
                     <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
@@ -194,14 +194,14 @@
                     @code {
                         private void setTimeStamp()
                         {
-                            (selectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[selectedNode.envIndex].setWrite(true);
+                            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+                            Program.env[SelectedNode.envIndex].setWrite(true);
                         }
                     }
                 }
-                bool externalLink = false;
-                string link = getLink(selectedNode, out externalLink);
-                if (selectedNode != null && link != "")
+                var externalLink = false;
+                var link = getLink(SelectedNode, out externalLink);
+                if (SelectedNode != null && link != "")
                 {
                     if (true)
                     {
@@ -211,10 +211,10 @@
                     {
                         <button onclick="window.location.href = '@link'; ">Download</button><br>
                     }
-                    if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
+                    if (SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != "")
                     {
-                        bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                        bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                        var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+                        var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
                         if (toPublish)
                         {
                             <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
@@ -234,28 +234,28 @@
                         @code {
                             private void resetSubmodelToPublish()
                             {
-                                Program.submodelsToPublish.Remove(selectedNode.Tag);
+                                Program.submodelsToPublish.Remove(SelectedNode.Tag);
                             }
                             private void setSubmodelToPublish()
                             {
-                                bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
+                                var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
                                 if (!toSubscribe)
-                                    Program.submodelsToPublish.Add(selectedNode.Tag);
+                                    Program.submodelsToPublish.Add(SelectedNode.Tag);
                             }
                             private void resetSubmodelToSubscribe()
                             {
-                                Program.submodelsToSubscribe.Remove(selectedNode.Tag);
+                                Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
                             }
                             private void setSubmodelToSubscribe()
                             {
-                                bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
+                                var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
                                 if (!toPublish)
-                                    Program.submodelsToSubscribe.Add(selectedNode.Tag);
+                                    Program.submodelsToSubscribe.Add(SelectedNode.Tag);
                             }
                         }
                     }
                 }
-                if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
+                if (SelectedNode != null && SelectedNode.Tag is Property && Program.edit)
                 {
                     <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;" />
                     <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
@@ -263,27 +263,27 @@
                     @code { private string CurrentValue { get; set; } }
                     if (CurrentValue != null && CurrentValue != "")
                     {
-                        if (selectedNode.Tag is Property)
+                        if (SelectedNode.Tag is Property)
                         {
                             if (CurrentValue == " ")
                                 CurrentValue = "";
-                            (selectedNode.Tag as Property).Value = CurrentValue;
-                            (selectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[selectedNode.envIndex].setWrite(true);
+                            (SelectedNode.Tag as Property).Value = CurrentValue;
+                            (SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
+                            Program.env[SelectedNode.envIndex].setWrite(true);
                             Program.signalNewData(0);
                         }
                         CurrentValue = "";
                     }
                 }
-                if (selectedNode != null && (selectedNode.Tag is AssetAdministrationShell || selectedNode.Tag is AasCore.Aas3_0.File))
+                if (SelectedNode != null && (SelectedNode.Tag is AssetAdministrationShell || SelectedNode.Tag is AasCore.Aas3_0.File))
                 {
-                    if (selectedNode.Tag is AssetAdministrationShell)
+                    if (SelectedNode.Tag is AssetAdministrationShell)
                     {
                         <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
-                        string qrcodeLink = getQRCodeLink(selectedNode);
-                        if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
+                        var qrcodeLink = getQRCodeLink(SelectedNode);
+                        if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
                         {
-                            string qrcodeImage = getQRCodeImage(selectedNode);
+                            var qrcodeImage = getQRCodeImage(SelectedNode);
                             if (qrcodeImage != "")
                             {
                                 <a href="@qrcodeLink" target="_blank">
@@ -300,13 +300,13 @@
                         @code {
                             private void runCreateQRCodeImage()
                             {
-                                createQRCodeImage(selectedNode);
+                                createQRCodeImage(SelectedNode);
                             }
                         }
                     }
                 }
 
-                if (selectedNode != null && selectedNode.Tag is Submodel sm)
+                if (SelectedNode != null && SelectedNode.Tag is Submodel sm)
                 {
                     var idEncoded = Base64UrlEncoder.Encode(sm.Id);
                     var path = Program.externalBlazor + "/submodels/" + idEncoded;
@@ -315,10 +315,10 @@
                     <a href="@path" target="_blank">@path</a><br>
                 }
 
-                if (selectedNode != null && selectedNode.Tag is ISubmodelElement sme)
+                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
                 {
-                    string path = sme.IdShort;
-                    IReferable parent = sme.Parent as IReferable;
+                    var path = sme.IdShort;
+                    var parent = sme.Parent as IReferable;
                     while(parent is not Submodel)
                     {
                         if(parent is ISubmodelElementList parentList)
@@ -343,16 +343,15 @@
                         parent = (IReferable)parent.Parent;
                     }
                     var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-                    // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
                     path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                     <span style="color:white;background-color:blue;">URL:</span>
                     <span>&nbsp</span>
                     <a href="@path" target="_blank">@path</a><br>
                 }
 
-                if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
+                if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection smc)
                 {
-                    string semanticId = "";
+                    var semanticId = "";
                     
                     try
                     {
@@ -362,7 +361,7 @@
                     if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
                         semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
                     {
-                        TimeSpan diff = smc.TimeStamp - timeStampPlot;
+                        var diff = smc.TimeStamp - timeStampPlot;
 
                         if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
                         {
@@ -409,8 +408,8 @@
                         }
 
                         byte[] imageArray;
-                        string timeSeriesImageBase64 = "";
-                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+                        var timeSeriesImageBase64 = "";
+                        var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
 
                         if (System.IO.File.Exists(scottplotImgPath))
                         {
@@ -481,9 +480,9 @@
             }
 
             @{
-                bool svg = false;
-                bool url = false;
-                string detailsImage = createDetailsImage(selectedNode, out url, out svg);
+                bool svg;
+                bool url;
+                var detailsImage = createDetailsImage(SelectedNode, out url, out svg);
                 if (detailsImage != "")
                 {
                     if (!svg)
@@ -522,11 +521,11 @@
                     }
                 }
 
-                if (selectedNode != null && (selectedNode.Tag is BasicEventElement be))
+                if (SelectedNode != null && (SelectedNode.Tag is BasicEventElement be))
                 {
                     if (be.Observed != null)
                     {
-                        string okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
+                        var okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
                         <span style="color:white;background-color:blue;">Observed</span>
                         <span>@(" " + okey)</span><br />
                         var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
@@ -558,12 +557,12 @@
 @using ScottPlot;
 
 @code {
-    System.Diagnostics.Stopwatch watchTimeToProcessImage = new System.Diagnostics.Stopwatch();
-    DateTime timeStampPlot = new DateTime();
-    PlotFilter plotFilter = new PlotFilter();
+    System.Diagnostics.Stopwatch watchTimeToProcessImage = new();
+    DateTime timeStampPlot = new();
+    PlotFilter plotFilter = new();
     SubmodelElementCollection collectionPlot = null;
     bool showImageModal = false;
-    ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
+    ListOfTimeSeriesData _timeSeriesData = new();
     int plotFilterTsdOffset = 0;
 
     private class PlotFilter
@@ -594,9 +593,9 @@
         public void SetFilterStateDay(int offset)
         {
             ResetTimeOfDates();
-            DateTime day = DateTime.Today.AddDays(offset);
-            TimeSpan midnight = new System.TimeSpan(0, 23, 59, 59);
-            DateTime endOfDay = day.Add(midnight);
+            var day = DateTime.Today.AddDays(offset);
+            var midnight = new System.TimeSpan(0, 23, 59, 59);
+            var endOfDay = day.Add(midnight);
 
             fromDate = day;
             fromTime = day;
@@ -616,8 +615,8 @@
         public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
         {
             ResetTimeOfDates();
-            TimeSpan fromTimeSpan = fromTime.TimeOfDay;
-            TimeSpan toTimeSpan = toTime.TimeOfDay;
+            var fromTimeSpan = fromTime.TimeOfDay;
+            var toTimeSpan = toTime.TimeOfDay;
             combinedFromDate = fromDate.Add(fromTimeSpan);
             combinedToDate = toDate.Add(toTimeSpan);
             tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
@@ -626,17 +625,17 @@
 
     async Task DownloadFile()
     {
-        this.StateHasChanged();
-        var f = selectedNode.Tag as AasCore.Aas3_0.File;
+        StateHasChanged();
+        var f = SelectedNode.Tag as AasCore.Aas3_0.File;
         var fileName = System.IO.Path.GetFileName(f.Value);
         if (fileName != "")
         {
             try
             {
                 byte[] data;
-                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
+                    Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
                     data = ms.ToArray();
                 }
                 //
@@ -670,15 +669,8 @@
     List<Item> Items = null;
 
     IList<Item> ExpandedNodes = new List<Item>();
-    Item selectedNode;
-    Item SelectedNode
-    {
-        get { return selectedNode; }
-        set
-        {
-            selectedNode = value;
-        }
-    }
+
+    private Item SelectedNode { get; set; }
 
     static ulong dataVersion = 0;
 
@@ -737,13 +729,13 @@
                 // 2 == build new tree, keep open nodes
                 case 1:
                 case 2:
-                    bool isSelected = selectedNode != null;
-                    bool isExpanded = ExpandedNodes.Count != 0;
-                    List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                    List<string> selectedNodePath = getPath(selectedNode);
+                    var isSelected = selectedNode != null;
+                    var isExpanded = ExpandedNodes.Count != 0;
+                    var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
+                    var selectedNodePath = getPath(selectedNode);
                     if (isExpanded)
                     {
-                        for (int j = 0; j < ExpandedNodes.Count; j++)
+                        for (var j = 0; j < ExpandedNodes.Count; j++)
                         {
                             expandedNodesPath[j] = getPath(ExpandedNodes[j]);
                         }
@@ -760,7 +752,7 @@
                     {
                         foreach (var path in expandedNodesPath)
                         {
-                            Item p = findPath(path);
+                            var p = findPath(path);
                             if (p != null)
                                 ExpandedNodes.Add(p);
                         }
@@ -786,15 +778,14 @@
         if (i == null)
             return null;
 
-        List<string> upPath = new List<string>();
-        upPath.Add(i.Text);
+        var upPath = new List<string> {i.Text};
         while (i.parent != null)
         {
             i = (Item)i.parent;
             upPath.Add(i.Text);
         }
-        List<string> downPath = new List<string>();
-        int j = upPath.Count - 1;
+        var downPath = new List<string>();
+        var j = upPath.Count - 1;
         while (j >= 0)
         {
             downPath.Add(upPath[j--]);
@@ -810,13 +801,13 @@
             int k = 0;
             while (k < Items.Count)
             {
-                Item i = Items[k];
+                var i = Items[k];
                 if (i.Text != path[0])
                 {
                     k++;
                     continue;
                 }
-                int j = 0;
+                var j = 0;
                 found = i;
                 while (++j < path.Count)
                 {
@@ -848,8 +839,8 @@
     void updateNode(Item i)
     {
         var clist = i.Childs as List<Item>;
-        List<string> listIdshort = new List<string>();
-        bool done = false;
+        var listIdshort = new List<string>();
+        var done = false;
         if (!done && i.Tag is Submodel sm)
         {
             foreach (var smew1 in sm.SubmodelElements)
@@ -874,7 +865,7 @@
         // check if child name exists in data children idshorts, if not delete
         if (done)
         {
-            List<Item> toDelete = new List<Item>();
+            var toDelete = new List<Item>();
             if (clist != null)
             {
                 foreach (var c in clist)
@@ -921,7 +912,7 @@
             return "";
         }
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -957,7 +948,7 @@
             // Test for /aasx/
             if (!string.IsNullOrEmpty(f.Value))
             {
-                string[] split = f.Value.Split(new Char[] { '/' });
+                var split = f.Value.Split(new Char[] { '/' });
                 if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
                 {
                     split = f.Value.Split(new Char[] { '.' });
@@ -969,11 +960,11 @@
                         case "svg":
                             try
                             {
-                                using (System.IO.Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value))
+                                using (Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value))
                                 {
                                     if (s != null)
                                     {
-                                        using (var m = new System.IO.MemoryStream())
+                                        using (var m = new MemoryStream())
                                         {
                                             if (split.Last().ToLower() == "svg")
                                             {
@@ -1007,12 +998,12 @@
             return "";
         }
 
-        string prefix = "http://";
-        string hostPort = Program.hostPort;
+        var prefix = "http://";
+        var hostPort = Program.hostPort;
 
-        string[] split = Program.hostPort.Split(':');
+        var split = Program.hostPort.Split(':');
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -1020,8 +1011,8 @@
             var asset = aas.AssetInformation;
             if (asset != null)
             {
-                string url = asset.GlobalAssetId;
-                string link = url;
+                var url = asset.GlobalAssetId;
+                var link = url;
 
                 return link;
             }
@@ -1037,11 +1028,11 @@
             return "";
         }
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is AssetAdministrationShell)
         {
-            string image = Program.generatedQrCodes[item.Tag];
+            var image = Program.generatedQrCodes[item.Tag];
 
             if (image != null)
                 return image;
@@ -1057,12 +1048,12 @@
             return;
         }
 
-        string prefix = "http://";
-        string hostPort = Program.hostPort;
+        var prefix = "http://";
+        var hostPort = Program.hostPort;
 
-        string[] split = Program.hostPort.Split(':');
+        var split = Program.hostPort.Split(':');
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -1076,22 +1067,21 @@
             var asset = aas.AssetInformation;
             if (asset != null)
             {
-                string url = asset.GlobalAssetId;
-                string link = url;
+                var url = asset.GlobalAssetId;
+                var link = url;
 
-                QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
-                QRCode qrCode = new QRCode(qrCodeData);
-                Bitmap qrCodeImage = qrCode.GetGraphic(20);
-                using (System.IO.MemoryStream memory = new System.IO.MemoryStream())
+                var qrGenerator = new QRCodeGenerator();
+                var qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new QRCode(qrCodeData);
+                var qrCodeImage = qrCode.GetGraphic(20);
+                using (MemoryStream memory = new MemoryStream())
                 {
                     qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-                    string base64 = Convert.ToBase64String(memory.ToArray());
+                    var base64 = Convert.ToBase64String(memory.ToArray());
 
                     Program.generatedQrCodes.Add(item.Tag, base64);
 
                 }
-                return;
             }
         }
     }
@@ -1110,32 +1100,32 @@
             return "";
         }
 
-        string prefix = "http://";
-        string hostPort = Program.hostPort;
+        var prefix = "http://";
+        var hostPort = Program.hostPort;
 
-        string[] split = Program.hostPort.Split(':');
+        var split = Program.hostPort.Split(':');
         if (split[0].ToLower() == "admin-shell-io.com")
         {
             prefix = "https://";
             hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
         }
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
         }
 
         if (o is AssetAdministrationShell)
         {
-            string currentUrl = NavigationManager.Uri;
-            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
+            var currentUrl = NavigationManager.Uri;
+            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex));
         }
 
         if (o is AasCore.Aas3_0.File || o is Property)
         {
-            string value = "";
+            var value = "";
 
             if (o is AasCore.Aas3_0.File)
             {
@@ -1149,7 +1139,7 @@
             if (value == null || value == "")
                 return "";
 
-            split = value.Split(new Char[] { ':' });
+            split = value.Split(new[] { ':' });
             if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
             {
                 external = true;
@@ -1162,9 +1152,9 @@
             {
                 if (split.Length == 2 || split[1].ToLower() == "aasx")
                 {
-                    ISubmodelElement sme = item.Tag as ISubmodelElement;
-                    string path = sme.IdShort;
-                    IReferable parent = sme.Parent as IReferable;
+                    var sme = item.Tag as ISubmodelElement;
+                    var path = sme.IdShort;
+                    var parent = sme.Parent as IReferable;
                     while (parent is not Submodel)
                     {
                         if (parent is ISubmodelElementList parentList)
@@ -1189,7 +1179,7 @@
                         parent = (IReferable)parent.Parent;
                     }
 
-                    string currentUrl = NavigationManager.Uri;
+                    var currentUrl = NavigationManager.Uri;
                     
                     return currentUrl + "submodels/" + Base64UrlEncoder.Encode((parent as Submodel).Id) +
                     "/submodel-elements/" + path + "/attachment";
@@ -1207,18 +1197,18 @@
             return "";
         }
 
-        string ret = "";
-        object o = item.Tag;
+        var ret = "";
+        var o = item.Tag;
 
         if (o is AssetAdministrationShell)
         {
-            string symbols = Program.envSymbols[item.envIndex];
+            var symbols = Program.envSymbols[item.envIndex];
 
             if (symbols != null)
             {
-                string[] s = symbols.Split(';');
+                var s = symbols.Split(';');
 
-                for (int i = 0; i < s.Length; i++)
+                for (var i = 0; i < s.Length; i++)
                 {
                     switch (s[i])
                     {
@@ -1272,14 +1262,14 @@
             return "";
         }
 
-        string ret = "";
+        var ret = "";
 
         if (item.Type != null)
         {
             ret = item.Type + " ";
         }
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is string && item.Text.Contains("/readme"))
         {
@@ -1369,9 +1359,9 @@
             return "";
         }
 
-        string ret = "";
+        var ret = "";
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is IReferable r)
             ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
@@ -1386,9 +1376,9 @@
             return "";
         }
 
-        string ret = "NULL";
+        var ret = "NULL";
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o == null && Program.envSymbols[item.envIndex] == "L")
         {
@@ -1447,7 +1437,7 @@
 
     string GetHtmlId(Item item)
     {
-        string ret = ViewNodeID(item);
+        var ret = ViewNodeID(item);
         if (item.parent != null)
         {
             ret = GetHtmlId(item.parent as Item) + "." + ret;
@@ -1462,9 +1452,9 @@
             return "";
         }
 
-        string ret = "";
+        var ret = "";
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -1500,7 +1490,7 @@
                 var prop = o as Property;
                 if (prop.Value!= null && prop.Value != "")
                 {
-                    string v = prop.Value;
+                    var v = prop.Value;
                     if (v.Length > 100)
                         v = v.Substring(0, 100) + " ..";
                     ret = " = " + v;
@@ -1537,7 +1527,7 @@
             if (ls != null)
             {
                 ret = " = ";
-                for (int i = 0; i < ls.Count; i++)
+                for (var i = 0; i < ls.Count; i++)
                 {
                     ret += ls[i].Language + " ";
                     if (i == 0)
@@ -1559,9 +1549,9 @@
             return "";
         }
 
-        string ret = "";
+        var ret = "";
 
-        object o = item.Tag;
+        var o = item.Tag;
 
         if (o == null)
         {
@@ -2134,7 +2124,7 @@
         {
             var mlp = o as MultiLanguageProperty;
             var ls = mlp.Value;
-            for (int i = 0; i < ls.Count; i++)
+            for (var i = 0; i < ls.Count; i++)
             {
                 ret += ls[i].Language + " ";
             }
@@ -2212,7 +2202,7 @@
             if (col == 1)
             {
                 ret = "";
-                for (int i = 0; i < q.Count; i++)
+                for (var i = 0; i < q.Count; i++)
                 {
                     if (i != 0)
                         ret += ", ";
@@ -2232,7 +2222,7 @@
 
     public string getUnit(Item item, ISubmodelElement se, int col)
     {
-        string ret = "";
+        var ret = "";
         if (se.SemanticId == null || se.SemanticId.Keys != null || se.SemanticId.Keys.Count != 0)
         {
             return ret;
