@@ -438,7 +438,7 @@
                                 }
                             }
 
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
+                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.CombinedFromDate, plotFilter.CombinedToDate);
                             watchTimeToProcessImage.Stop();
                         }
 
@@ -458,11 +458,11 @@
                         {
                             <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
                                 <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate"/>
-                                <input type="time" @bind-value="plotFilter.fromTime"/>
+                                <InputDate id="filterFromDate" @bind-Value="plotFilter.FromDate"/>
+                                <input type="time" @bind-value="plotFilter.FromTime"/>
                                 <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate"/>
-                                <input type="time" @bind-value="plotFilter.toTime"/>
+                                <InputDate id="filterToDate" @bind-Value="plotFilter.ToDate"/>
+                                <input type="time" @bind-value="plotFilter.ToTime"/>
                                 <div>
                                     <button style="border-width: 1px; border-color: black; background-color: lightgray"
                                             type="submit">

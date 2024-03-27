@@ -5,12 +5,12 @@ namespace AasxServerBlazor.TreeVisualisation;
 
 public class PlotFilter
 {
-    public DateTime fromDate { get; set; }
-    public DateTime fromTime { get; set; }
-    public DateTime toDate { get; set; }
-    public DateTime toTime { get; set; }
-    public DateTime combinedFromDate { get; set; }
-    public DateTime combinedToDate { get; set; }
+    public DateTime FromDate { get; set; }
+    public DateTime FromTime { get; set; }
+    public DateTime ToDate { get; set; }
+    public DateTime ToTime { get; set; }
+    public DateTime CombinedFromDate { get; private set; }
+    public DateTime CombinedToDate { get; private set; }
 
     public PlotFilter()
     {
@@ -22,41 +22,41 @@ public class PlotFilter
         ResetTimeOfDates();
         var initialFromDate = DateTime.Now.AddYears(-3);
         var initialToDate = DateTime.Now.AddYears(3);
-        fromDate = initialFromDate;
-        toDate = initialToDate;
-        combinedFromDate = initialFromDate;
-        combinedToDate = initialToDate;
+        FromDate = initialFromDate;
+        ToDate = initialToDate;
+        CombinedFromDate = initialFromDate;
+        CombinedToDate = initialToDate;
     }
 
     public void SetFilterStateDay(int offset)
     {
         ResetTimeOfDates();
         var day = DateTime.Today.AddDays(offset);
-        var midnight = new System.TimeSpan(0, 23, 59, 59);
+        var midnight = new TimeSpan(0, 23, 59, 59);
         var endOfDay = day.Add(midnight);
 
-        fromDate = day;
-        fromTime = day;
-        toDate = endOfDay;
-        toTime = endOfDay;
-        combinedFromDate = day;
-        combinedToDate = endOfDay;
+        FromDate = day;
+        FromTime = day;
+        ToDate = endOfDay;
+        ToTime = endOfDay;
+        CombinedFromDate = day;
+        CombinedToDate = endOfDay;
     }
 
-    public void ResetTimeOfDates()
+    private void ResetTimeOfDates()
     {
         // Reset to 0 AM
-        fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
-        toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
+        FromDate = new DateTime(FromDate.Year, FromDate.Month, FromDate.Day, 0, 0, 0);
+        ToDate = new DateTime(ToDate.Year, ToDate.Month, ToDate.Day, 0, 0, 0);
     }
 
-    public void UpdateFilter(TimeSeriesPlotting.ListOfTimeSeriesData tsd, int sessionNumber)
+    public void UpdateFilter(TimeSeriesPlotting.ListOfTimeSeriesData timeSeriesData, int sessionNumber)
     {
         ResetTimeOfDates();
-        var fromTimeSpan = fromTime.TimeOfDay;
-        var toTimeSpan = toTime.TimeOfDay;
-        combinedFromDate = fromDate.Add(fromTimeSpan);
-        combinedToDate = toDate.Add(toTimeSpan);
-        tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
+        var fromTimeSpan = FromTime.TimeOfDay;
+        var toTimeSpan = ToTime.TimeOfDay;
+        CombinedFromDate = FromDate.Add(fromTimeSpan);
+        CombinedToDate = ToDate.Add(toTimeSpan);
+        timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, CombinedFromDate, CombinedToDate);
     }
 }
