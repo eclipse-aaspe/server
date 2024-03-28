@@ -1,12 +1,15 @@
 ﻿using System;
 using AasxServerBlazor.TreeVisualisation;
+using JetBrains.Annotations;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerBlazor.WebActions.AasxLinkCreation;
 
-internal static class ExternalLinkCreator
+/// <inheritdoc cref="IExternalLinkCreator"/>
+internal class ExternalLinkCreator : IExternalLinkCreator
 {
-    public static bool TryGetExternalLink(TreeItem selectedNode, out string externalUrl)
+    /// <inheritdoc />
+    public bool TryGetExternalLink(TreeItem selectedNode, out string externalUrl)
     {
         externalUrl = string.Empty;
         var value = GetValue(selectedNode.Tag);
@@ -25,7 +28,7 @@ internal static class ExternalLinkCreator
             return false;
         }
 
-        externalUrl = GetSubmodelAttachmentLink(selectedNode, externalUrl);
+        externalUrl = GetSubModelAttachmentLink(selectedNode, externalUrl);
         return true;
     }
 
@@ -50,31 +53,31 @@ internal static class ExternalLinkCreator
         return url.StartsWith("/aasx/", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string GetSubmodelAttachmentLink(TreeItem selectedNode, string currentUrl)
+    private static string GetSubModelAttachmentLink(TreeItem selectedNode, string currentUrl)
     {
-        // Extract submodel information
-        var submodelId = FindParentSubmodel(selectedNode).Id;
-        var submodelElementPath = GetSubmodelElementPath(selectedNode);
+        // Extract subModel information
+        var submodelId = FindParentSubModel(selectedNode).Id;
+        var submodelElementPath = GetSubModelElementPath(selectedNode);
 
         // Construct attachment link
         var attachmentLink = $"{currentUrl}submodels/{Base64UrlEncoder.Encode(submodelId)}/submodel-elements/{submodelElementPath}/attachment";
 
         return attachmentLink;
     }
-    
-    private static string GetSubmodelElementPath(TreeItem selectedNode)
+
+    private static string GetSubModelElementPath(TreeItem selectedNode)
     {
-        if (!TryGetSubmodelElement(selectedNode, out var submodelElement))
+        if (!TryGetSubModelElement(selectedNode, out var subModelElement))
         {
             return string.Empty;
         }
 
-        var path = submodelElement.IdShort;
-        var parent = submodelElement.Parent as IReferable;
+        var path = subModelElement.IdShort;
+        var parent = subModelElement.Parent as IReferable;
 
         while (parent is not null && parent is not Submodel)
         {
-            path = AppendPathSegment(parent, submodelElement, path);
+            path = AppendPathSegment(parent, subModelElement, path);
             parent = parent.Parent as IReferable;
         }
 
@@ -82,45 +85,43 @@ internal static class ExternalLinkCreator
     }
 
 
-    private static bool TryGetSubmodelElement(TreeItem selectedNode, out ISubmodelElement submodelElement)
+    private static bool TryGetSubModelElement(TreeItem selectedNode, out ISubmodelElement subModelElement)
     {
-        submodelElement = selectedNode.Tag as ISubmodelElement;
-        return submodelElement != null;
+        subModelElement = selectedNode.Tag as ISubmodelElement;
+        return subModelElement != null;
     }
 
-    private static string AppendPathSegment(IReferable parent, ISubmodelElement submodelElement, string path)
+    private static string AppendPathSegment(IReferable parent, ISubmodelElement subModelElement, string path)
     {
-        if (parent is ISubmodelElementList parentList)
+        int? index;
+        switch (parent)
         {
-            if (path?.Equals(submodelElement.IdShort) != true)
-            {
-                return $"{parentList.IdShort}{path}";
-            }
-
-            var index = parentList.Value?.IndexOf(submodelElement);
-            return $"[{index}]{parentList.IdShort}{path}";
-        }
-
-        switch (parent.Parent)
-        {
-            case ISubmodelElementList prevParentList:
-            {
-                var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                return $"[{index}].{parent.IdShort}{path}";
-            }
+            case ISubmodelElementList parentList when path?.Equals(subModelElement.IdShort) != true:
+                index = parentList.Value?.IndexOf(subModelElement);
+                return $"[{index}]{parentList.IdShort}{path}";
+            case ISubmodelElementList parentList:
+                var indexList = parentList.Value?.IndexOf(subModelElement);
+                return $"[{indexList}].{parent.IdShort}{path}";
             default:
-                return $"{parent.IdShort}.{path}";
+                if (parent.Parent is not ISubmodelElementList prevParentList)
+                {
+                    return $"{parent.IdShort}.{path}";
+                }
+                index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                return $"[{index}].{parent.IdShort}{path}";
         }
     }
 
-    private static Submodel FindParentSubmodel(TreeItem selectedNode)
+
+    [CanBeNull]
+    private static Submodel FindParentSubModel(TreeItem selectedNode)
     {
         var parent = (TreeItem) selectedNode.Parent;
         while (parent != null)
         {
-            if (parent.Tag is Submodel submodel)
+            if (parent.Tag is Submodel subModel)
             {
-                return submodel;
+                return subModel;
             }
 
             parent = (TreeItem) parent.Parent;
