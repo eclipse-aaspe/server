@@ -34,7 +34,7 @@
               @bind-SelectedNode="SelectedNode"
               @bind-ExpandedNodes="ExpandedNodes"
               HasChildNodes="@(item => item.Childs?.Any() == true)"
-              HtmlId="@(item => GetHtmlId(item))">
+              HtmlId="@(item => item.GetHtmlId())">
             <TitleTemplate>
                 @{
                     var getPolicy = "";
@@ -97,7 +97,7 @@
                     }
 
                     <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                    @ViewNodeID(context)@ViewNodeInfo(context)
+                    @context.GetIdentifier()
                     @if (Program.withPolicy && getPolicy != "")
                     {
                         <span style="color:blue">&nbsp @getPolicy</span>
@@ -117,7 +117,7 @@
                     if (!(SelectedNode.Tag is string))
                     {
                         <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
-                        <span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
+                        <span id="SelectedNodeInfoId">@SelectedNode.GetIdentifier()</span>
                         <br>
                     }
                     else
@@ -655,14 +655,12 @@
         if (Program.isLoading)
             return;
 
-        if (newDataMode == 0)
+        if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
         {
-            if (args is Program.NewDataAvailableArgs newArgs)
-            {
-                newDataMode = newArgs.signalNewDataMode;
-                InvokeAsync(() => this.StateHasChanged());
-            }
+            return;
         }
+        newDataMode = newArgs.signalNewDataMode;
+        InvokeAsync(() => StateHasChanged());
     }
 
     bool update = true;
@@ -1159,89 +1157,7 @@
         return ret;
     }
 
-    string ViewNodeID(TreeItem treeItem)
-    {
-        if (treeItem == null)
-        {
-            return "";
-        }
-
-        var ret = "NULL";
-
-        var o = treeItem.Tag;
-
-        if (o == null && Program.envSymbols[treeItem.EnvironmentIndex] == "L")
-        {
-            ret = treeItem.Text;
-        }
-
-        if (o is string && treeItem.Text.Contains("/readme"))
-        {
-            ret = " ";
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            var aas = o as AssetAdministrationShell;
-            ret = aas.IdShort;
-        }
-
-        if (o is Submodel)
-        {
-            var sm = o as Submodel;
-            ret = "";
-            if (sm.Kind != null && sm.Kind == ModellingKind.Template)
-                ret += "<T> ";
-            ret += sm.IdShort;
-        }
-
-        if (o is ISubmodelElement)
-        {
-            var sme = o as ISubmodelElement;
-            ret = "";
-            ret += sme.IdShort;
-        }
-
-        if (o is AasCore.Aas3_0.File f)
-        {
-            ret = "";
-            ret += f.IdShort;
-        }
-
-        if (o is Blob)
-        {
-            var b = o as Blob;
-            ret = "";
-            ret += b.IdShort;
-        }
-
-        if (o is AasCore.Aas3_0.Range)
-        {
-            var r = o as AasCore.Aas3_0.Range;
-            ret = "";
-            ret += r.IdShort;
-        }
-
-        if (o is MultiLanguageProperty)
-        {
-            var mlp = o as MultiLanguageProperty;
-            ret = "";
-            ret += mlp.IdShort;
-        }
-
-        return (ret);
-    }
-
-    string GetHtmlId(TreeItem treeItem)
-    {
-        var ret = ViewNodeID(treeItem);
-        if (treeItem.Parent != null)
-        {
-            ret = GetHtmlId(treeItem.Parent as TreeItem) + "." + ret;
-        }
-
-        return (ret);
-    }
+    
 
     string ViewNodeInfo(TreeItem treeItem)
     {

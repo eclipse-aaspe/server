@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using AasxServer;
+using Blob = AasCore.Aas3_0.Blob;
 
 namespace AasxServerBlazor.TreeVisualisation;
 
 public class TreeItem
 {
+    private const string EnvironmentSymbol = "L";
     public string Text { get; set; }
     public IEnumerable<TreeItem> Childs { get; set; }
     public object Parent { get; set; }
@@ -32,4 +35,68 @@ public class TreeItem
 
         return stringBuilder.ToString();
     }
+    
+    public string GetHtmlId()
+    {
+        var nodeId = GetIdentifier();
+        if (Parent != null)
+        {
+            nodeId = ((TreeItem) Parent).GetHtmlId() + "." + nodeId;
+        }
+
+        return (nodeId);
+    }
+    
+    public string GetIdentifier()
+    {
+        var nodeId = "NULL";
+
+        if (Tag == null && Program.envSymbols[EnvironmentIndex] == EnvironmentSymbol)
+        {
+            nodeId = Text;
+        }
+        if (Tag is string && Text.Contains("/readme"))
+        {
+            nodeId = string.Empty;
+        }
+        if (Tag is AssetAdministrationShell assetAdministrationShell)
+        {
+            nodeId = assetAdministrationShell.IdShort;
+        }
+        if (Tag is Submodel submodel)
+        {
+            nodeId = "";
+            if (submodel.Kind != null && submodel.Kind == ModellingKind.Template)
+                nodeId += "<T> ";
+            nodeId += submodel.IdShort;
+        }
+        if (Tag is ISubmodelElement submodelElement)
+        {
+            nodeId = "";
+            nodeId += submodelElement.IdShort;
+        }
+        if (Tag is File f)
+        {
+            nodeId = "";
+            nodeId += f.IdShort;
+        }
+        if (Tag is Blob blob)
+        {
+            nodeId = "";
+            nodeId += blob.IdShort;
+        }
+        if (Tag is Range range)
+        {
+            nodeId = "";
+            nodeId += range.IdShort;
+        }
+        else if (Tag is MultiLanguageProperty multiLanguageProperty)
+        {
+            nodeId = "";
+            nodeId += multiLanguageProperty.IdShort;
+        }
+        
+        return (nodeId);
+    }
+
 }
