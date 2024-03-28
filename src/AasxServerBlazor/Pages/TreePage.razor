@@ -603,6 +603,7 @@
 @using AdminShellNS;
 @using System.Globalization;
 @using System.Reflection;
+@using AasxServerBlazor.DateTimeServices
 @using AasxServerBlazor.TreeVisualisation
 @using Newtonsoft.Json;
 @using Newtonsoft.Json.Linq;
@@ -611,7 +612,7 @@
 @code {
     System.Diagnostics.Stopwatch watchTimeToProcessImage = new();
     DateTime timeStampPlot = new();
-    PlotFilter plotFilter = new();
+    PlotFilter plotFilter = new(new SystemDateTimeProvider());
     SubmodelElementCollection collectionPlot = null;
     bool showImageModal = false;
     ListOfTimeSeriesData _timeSeriesData = new();

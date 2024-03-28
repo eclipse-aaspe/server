@@ -1,4 +1,5 @@
 ﻿using System;
+using AasxServerBlazor.DateTimeServices;
 using AasxServerStandardBib;
 
 namespace AasxServerBlazor.TreeVisualisation
@@ -8,20 +9,18 @@ namespace AasxServerBlazor.TreeVisualisation
     /// </summary>
     public class PlotFilter
     {
+        private readonly IDateTimeProvider _dateTimeProvider;
+
         public DateTime StartDate { get; set; }
-
         public DateTime StartTime { get; set; }
-
         public DateTime EndDate { get; set; }
-
         public DateTime EndTime { get; set; }
-
         public DateTime CombinedStartDateTime { get; private set; }
-
         public DateTime CombinedEndDateTime { get; private set; }
 
-        public PlotFilter()
+        public PlotFilter(IDateTimeProvider dateTimeProvider)
         {
+            _dateTimeProvider = dateTimeProvider;
             SetInitialFilterState();
         }
 
@@ -30,10 +29,22 @@ namespace AasxServerBlazor.TreeVisualisation
         /// </summary>
         public void SetInitialFilterState()
         {
-            var initialFromDate = DateTime.Now.AddYears(-3);
-            var initialToDate = DateTime.Now.AddYears(3);
-            SetFilterDates(initialFromDate, initialFromDate, initialToDate, initialToDate);
+            var currentDateTime = _dateTimeProvider.GetCurrentDateTime();
+    
+            // Ensure current year is within range for calculation
+            var currentYear = currentDateTime.Year;
+            var minYear = DateTime.MinValue.Year + 3;
+            var maxYear = DateTime.MaxValue.Year - 3;
+
+            // Calculate initial dates
+            var initialStartDate = currentYear > minYear ? currentDateTime.AddYears(-3) : DateTime.MinValue;
+            var initialEndDate = currentYear < maxYear ? currentDateTime.AddYears(3) : DateTime.MaxValue;
+
+            // Set StartDate and EndDate
+            StartDate = initialStartDate;
+            EndDate = initialEndDate;
         }
+
 
         /// <summary>
         /// Sets the filter state for a specific day based on the given offset.
@@ -41,7 +52,7 @@ namespace AasxServerBlazor.TreeVisualisation
         /// <param name="offset">The offset from the current day.</param>
         public void SetFilterStateForDay(int offset)
         {
-            var day = DateTime.Today.AddDays(offset);
+            var day =  _dateTimeProvider.GetCurrentDate().AddDays(offset);
             var endOfDay = day.Date.AddDays(1).AddTicks(-1);
             SetFilterDates(day, day, endOfDay, endOfDay);
         }
