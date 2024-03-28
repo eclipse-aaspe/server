@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using AasxServerBlazor.DateTimeServices;
 using AasxServerBlazor.TreeVisualisation;
-using AasxServerStandardBib;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
@@ -11,16 +10,15 @@ namespace AasxServerBlazor.Tests.TreeVisualisation;
 
 public class PlotFilterTests
 {
-    private readonly Fixture _fixture = new();
+    private readonly Fixture _fixture = new Fixture();
 
     [Fact]
-    public void SetInitialFilterState_CurrentDateWithinRange_InitializesStateCorrectly()
+    public void SetInitialFilterState_GivenCurrentDateWithinRange_InitializesStateCorrectly()
     {
         // Arrange
         var dateTimeProviderMock = new Mock<IDateTimeProvider>();
         var currentDateTime = _fixture.Create<DateTime>();
         dateTimeProviderMock.Setup(x => x.GetCurrentDateTime()).Returns(currentDateTime);
-
         var filter = new PlotFilter(dateTimeProviderMock.Object);
 
         // Act
@@ -56,7 +54,7 @@ public class PlotFilterTests
     }
 
     [Fact]
-    public void ApplyFilterToTimeSeriesData_NullTimeSeriesData_DoesNotRender()
+    public void ApplyFilterToTimeSeriesData_GivenNullTimeSeriesData_DoesNotRender()
     {
         // Arrange
         var dateTimeProviderMock = new Mock<IDateTimeProvider>();
@@ -82,7 +80,7 @@ public class PlotFilterTests
 
         // Act
         var methodInfo = typeof(PlotFilter).GetMethod("SetFilterDates", BindingFlags.NonPublic | BindingFlags.Instance);
-        methodInfo!.Invoke(filter, new object[] { startDate, startTime, endDate, endTime });
+        methodInfo!.Invoke(filter, new object[] {startDate, startTime, endDate, endTime});
 
         // Assert
         filter.StartDate.Date.Should().Be(startDate);
@@ -108,11 +106,11 @@ public class PlotFilterTests
         filter.StartDate.Should().Be(startDate);
         filter.EndDate.Should().Be(endDate);
         filter.CombinedStartDateTime.Date.Should().Be(startDate);
-        filter.CombinedEndDateTime.Date.Should().BeCloseTo(endDate,precision: TimeSpan.FromHours(6) );
+        filter.CombinedEndDateTime.Date.Should().BeCloseTo(endDate, precision: TimeSpan.FromHours(6));
     }
 
     [Fact]
-    public void ApplyFilterToTimeSeriesData_NullTimeSeriesData_DoesNotThrow()
+    public void ApplyFilterToTimeSeriesData_GivenNullTimeSeriesData_DoesNotThrow()
     {
         // Arrange
         _fixture.Customize(new AutoMoqCustomization());
