@@ -619,41 +619,6 @@
     bool showImageModal = false;
     ListOfTimeSeriesData _timeSeriesData = new();
     int plotFilterTsdOffset = 0;
-
-    async Task DownloadFile()
-    {
-        StateHasChanged();
-        var f = SelectedNode.Tag as AasCore.Aas3_0.File;
-        var fileName = System.IO.Path.GetFileName(f.Value);
-        if (fileName != "")
-        {
-            try
-            {
-                byte[] data;
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    Program.env[SelectedNode.EnvironmentIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
-                    data = ms.ToArray();
-                }
-
-                //
-                await SaveAs(js, fileName, data);
-            }
-            catch
-            {
-            }
-        }
-    }
-
-    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    {
-        ;
-        await js.InvokeAsync<object>(
-            "saveAsFile",
-            filename,
-            data
-        );
-    }
     
     List<TreeItem> Items = null;
 

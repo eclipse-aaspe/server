@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using System.Reflection;
 using AasCore.Aas3_0;
 using AasxServer;
 using AasxServerBlazor.TreeVisualisation;
