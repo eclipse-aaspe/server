@@ -5,6 +5,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 @using Microsoft.AspNetCore.Components.Web
 @using MW.Blazor
 @using AasCore.Aas3_0
+@using AasxServerBlazor.TreeVisualisation
 
 @typeparam TNode
 @*@using static AdminShellNS.AdminShellV20;*@
@@ -16,7 +17,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         var nodeExpanded = ExpandedNodes.Contains(node);
         var nodeSelected = node.Equals(SelectedNode);
         var hasChilds = HasChildNodes(node);
-        var it = node as Item;
+        var it = node as TreeItem;
         bool itIsAas = it.Tag is AssetAdministrationShell;
         string itMargin = "margin: 0px";
         if (itIsAas)
@@ -30,7 +31,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                     <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
                             string border = "";
-                            var env = AasxServer.Program.env[it.envIndex];
+                            var env = AasxServer.Program.env[it.EnvironmentIndex];
                             if (env != null && env.getWrite())
                             {
                                 border = "border:dotted;border-color:blue;";
@@ -70,7 +71,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                 @{
                     string titleId = "";
                     if (AasxServer.Program.htmlId)
-                        titleId = HtmlId(node as Item) + "._title";
+                        titleId = HtmlId(node as TreeItem) + "._title";
                     <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
                         @TitleTemplate(node) @{
                             /* @(" " + node.GetHashCode() + " ") */
@@ -121,7 +122,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
     [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = node => true;
 
-    [Parameter] public Func<Item, string> HtmlId { get; set; } = node => "";
+    [Parameter] public Func<TreeItem, string> HtmlId { get; set; } = node => "";
 
     private void OnToggleNode(TNode node, bool expand)
     {

@@ -207,7 +207,7 @@
                         private void setTimeStamp()
                         {
                             (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[SelectedNode.envIndex].setWrite(true);
+                            Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
                         }
 
                     }
@@ -293,7 +293,7 @@
                                 CurrentValue = "";
                             (SelectedNode.Tag as Property).Value = CurrentValue;
                             (SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[SelectedNode.envIndex].setWrite(true);
+                            Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
                             Program.signalNewData(0);
                         }
                         CurrentValue = "";
@@ -630,7 +630,7 @@
                 byte[] data;
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
+                    Program.env[SelectedNode.EnvironmentIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
                     data = ms.ToArray();
                 }
 
@@ -652,22 +652,12 @@
             data
         );
     }
+    
+    List<TreeItem> Items = null;
 
-    public class Item
-    {
-        public string Text { get; set; }
-        public IEnumerable<Item> Childs { get; set; }
-        public object parent { get; set; }
-        public string Type { get; set; }
-        public object Tag { get; set; }
-        public int envIndex { get; set; }
-    }
+    IList<TreeItem> ExpandedNodes = new List<TreeItem>();
 
-    List<Item> Items = null;
-
-    IList<Item> ExpandedNodes = new List<Item>();
-
-    private Item SelectedNode { get; set; }
+    private TreeItem SelectedNode { get; set; }
 
     static ulong dataVersion = 0;
 
@@ -713,7 +703,7 @@
 
     bool update = true;
 
-    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+    string updateVisibleTree(List<TreeItem> viewItems, TreeItem selectedNode)
     {
         if (update)
         {
@@ -775,15 +765,15 @@
         return "";
     }
 
-    List<string> getPath(Item i)
+    List<string> getPath(TreeItem i)
     {
         if (i == null)
             return null;
 
         var upPath = new List<string> {i.Text};
-        while (i.parent != null)
+        while (i.Parent != null)
         {
-            i = (Item) i.parent;
+            i = (TreeItem) i.Parent;
             upPath.Add(i.Text);
         }
 
@@ -797,11 +787,11 @@
         return downPath;
     }
 
-    Item findPath(List<string> path)
+    TreeItem findPath(List<string> path)
     {
         if (path != null && path.Count > 0)
         {
-            Item found = null;
+            TreeItem found = null;
             int k = 0;
             while (k < Items.Count)
             {
@@ -845,9 +835,9 @@
         return null;
     }
 
-    void updateNode(Item i)
+    void updateNode(TreeItem i)
     {
-        var clist = i.Childs as List<Item>;
+        var clist = i.Childs as List<TreeItem>;
         var listIdshort = new List<string>();
         var done = false;
         if (!done && i.Tag is Submodel sm)
@@ -879,7 +869,7 @@
         // check if child name exists in data children idshorts, if not delete
         if (done)
         {
-            var toDelete = new List<Item>();
+            var toDelete = new List<TreeItem>();
             if (clist != null)
             {
                 foreach (var c in clist)
@@ -900,10 +890,10 @@
 
             foreach (var c in toDelete)
             {
-                var parent = c.parent as Item;
+                var parent = c.Parent as TreeItem;
                 if (parent != null)
                 {
-                    (parent.Childs as List<Item>).Remove(c);
+                    (parent.Childs as List<TreeItem>).Remove(c);
                 }
             }
         }
@@ -918,17 +908,17 @@
         }
     }
 
-    public static string createDetailsImage(Item item, out bool url, out bool svg)
+    public static string createDetailsImage(TreeItem treeItem, out bool url, out bool svg)
     {
         svg = false;
         url = false;
 
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -938,10 +928,10 @@
                 try
                 {
                     {
-                        if (Program.env[item.envIndex] == null)
+                        if (Program.env[treeItem.EnvironmentIndex] == null)
                             return "";
 
-                        using (System.IO.Stream s = Program.env[item.envIndex].GetLocalThumbnailStream())
+                        using (System.IO.Stream s = Program.env[treeItem.EnvironmentIndex].GetLocalThumbnailStream())
                         {
                             if (s != null)
                             {
@@ -977,7 +967,7 @@
                         case "svg":
                             try
                             {
-                                using (Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value))
+                                using (Stream s = Program.env[treeItem.EnvironmentIndex].GetLocalStreamFromPackage(f.Value))
                                 {
                                     if (s != null)
                                     {
@@ -1012,9 +1002,9 @@
         return "";
     }
 
-    string getQRCodeLink(Item item)
+    string getQRCodeLink(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
@@ -1024,7 +1014,7 @@
 
         var split = Program.hostPort.Split(':');
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -1042,18 +1032,18 @@
         return "";
     }
 
-    string getQRCodeImage(Item item)
+    string getQRCodeImage(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is AssetAdministrationShell)
         {
-            var image = Program.generatedQrCodes[item.Tag];
+            var image = Program.generatedQrCodes[treeItem.Tag];
 
             if (image != null)
                 return image;
@@ -1062,9 +1052,9 @@
         return "";
     }
 
-    void createQRCodeImage(Item item)
+    void createQRCodeImage(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return;
         }
@@ -1074,13 +1064,13 @@
 
         var split = Program.hostPort.Split(':');
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is AssetAdministrationShell)
         {
-            if (Program.generatedQrCodes.ContainsKey(item.Tag))
+            if (Program.generatedQrCodes.ContainsKey(treeItem.Tag))
             {
-                Program.generatedQrCodes.Remove(item.Tag);
+                Program.generatedQrCodes.Remove(treeItem.Tag);
                 return;
             }
 
@@ -1100,22 +1090,22 @@
                     qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
                     var base64 = Convert.ToBase64String(memory.ToArray());
 
-                    Program.generatedQrCodes.Add(item.Tag, base64);
+                    Program.generatedQrCodes.Add(treeItem.Tag, base64);
                 }
             }
         }
     }
 
-    bool hasDownloadFile(Item item)
+    bool hasDownloadFile(TreeItem treeItem)
     {
         return false;
     }
 
-    string getLink(Item item, out bool external)
+    string getLink(TreeItem treeItem, out bool external)
     {
         external = false;
 
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
@@ -1130,17 +1120,17 @@
             hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
         }
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        if (o == null && Program.envSymbols[treeItem.EnvironmentIndex] == "L")
         {
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.envIndex);
+            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvironmentIndex);
         }
 
         if (o is AssetAdministrationShell)
         {
             var currentUrl = NavigationManager.Uri;
-            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex));
+            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.EnvironmentIndex));
         }
 
         if (o is AasCore.Aas3_0.File || o is Property)
@@ -1173,7 +1163,7 @@
             {
                 if (split.Length == 2 || split[1].ToLower() == "aasx")
                 {
-                    var sme = item.Tag as ISubmodelElement;
+                    var sme = treeItem.Tag as ISubmodelElement;
                     var path = sme.IdShort;
                     var parent = sme.Parent as IReferable;
                     while (parent is not Submodel)
@@ -1212,19 +1202,19 @@
         return "";
     }
 
-    string getSymbols(Item item)
+    string getSymbols(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
         var ret = "";
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is AssetAdministrationShell)
         {
-            var symbols = Program.envSymbols[item.envIndex];
+            var symbols = Program.envSymbols[treeItem.EnvironmentIndex];
 
             if (symbols != null)
             {
@@ -1255,21 +1245,21 @@
     /// This method list added to check if Node is only SubmodelElementCollection (from V2)
     /// 
     /// </summary>
-    /// <param name="item"></param>
+    /// <param name="treeItem"></param>
     /// <returns></returns>
-    bool IsSmColl(Item item)
+    bool IsSmColl(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return false;
         }
 
-        if (item.Tag is SubmodelElementList)
+        if (treeItem.Tag is SubmodelElementList)
         {
             return false;
         }
 
-        if (item.Tag is SubmodelElementCollection)
+        if (treeItem.Tag is SubmodelElementCollection)
         {
             return true;
         }
@@ -1277,28 +1267,28 @@
         return false;
     }
 
-    string ViewNodeType(Item item)
+    string ViewNodeType(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
         var ret = "";
 
-        if (item.Type != null)
+        if (treeItem.Type != null)
         {
-            ret = item.Type + " ";
+            ret = treeItem.Type + " ";
         }
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
-        if (o is string && item.Text.Contains("/readme"))
+        if (o is string && treeItem.Text.Contains("/readme"))
         {
-            ret += item.Text;
+            ret += treeItem.Text;
         }
 
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        if (o == null && Program.envSymbols[treeItem.EnvironmentIndex] == "L")
         {
             ret += "AASX2";
         }
@@ -1388,16 +1378,16 @@
         return (ret);
     }
 
-    string ViewTimeStamp(Item item)
+    string ViewTimeStamp(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
         var ret = "";
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is IReferable r)
             ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
@@ -1405,23 +1395,23 @@
         return ret;
     }
 
-    string ViewNodeID(Item item)
+    string ViewNodeID(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
         var ret = "NULL";
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
+        if (o == null && Program.envSymbols[treeItem.EnvironmentIndex] == "L")
         {
-            ret = item.Text;
+            ret = treeItem.Text;
         }
 
-        if (o is string && item.Text.Contains("/readme"))
+        if (o is string && treeItem.Text.Contains("/readme"))
         {
             ret = " ";
         }
@@ -1478,27 +1468,27 @@
         return (ret);
     }
 
-    string GetHtmlId(Item item)
+    string GetHtmlId(TreeItem treeItem)
     {
-        var ret = ViewNodeID(item);
-        if (item.parent != null)
+        var ret = ViewNodeID(treeItem);
+        if (treeItem.Parent != null)
         {
-            ret = GetHtmlId(item.parent as Item) + "." + ret;
+            ret = GetHtmlId(treeItem.Parent as TreeItem) + "." + ret;
         }
 
         return (ret);
     }
 
-    string ViewNodeInfo(Item item)
+    string ViewNodeInfo(TreeItem treeItem)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
         var ret = "";
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o is AssetAdministrationShell)
         {
@@ -1596,16 +1586,16 @@
         return (ret);
     }
 
-    string ViewNodeDetails(Item item, int line, int col)
+    string ViewNodeDetails(TreeItem treeItem, int line, int col)
     {
-        if (item == null)
+        if (treeItem == null)
         {
             return "";
         }
 
         var ret = "";
 
-        var o = item.Tag;
+        var o = treeItem.Tag;
 
         if (o == null)
         {
@@ -1785,7 +1775,7 @@
                     break;
                 case 4:
                     if (col == 0)
-                        ret = getUnit(item, prop, col);
+                        ret = getUnit(treeItem, prop, col);
                     break;
                 default:
                     ret = "";
@@ -1979,7 +1969,7 @@
                     break;
                 case 4:
                     if (col == 0)
-                        ret = getUnit(item, r, col);
+                        ret = getUnit(treeItem, r, col);
                     break;
                 default:
                     ret = "";
@@ -2317,7 +2307,7 @@
         return ret;
     }
 
-    public string getUnit(Item item, ISubmodelElement se, int col)
+    public string getUnit(TreeItem treeItem, ISubmodelElement se, int col)
     {
         var ret = "";
         if (se.SemanticId == null || se.SemanticId.Keys != null || se.SemanticId.Keys.Count != 0)
