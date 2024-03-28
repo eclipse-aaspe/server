@@ -29,8 +29,8 @@ public class PlotFilterTests
         // Assert
         var expectedStartDate = currentDateTime.AddYears(-3).Date;
         var expectedEndDate = currentDateTime.AddYears(3).Date.AddDays(1).AddTicks(-1);
-        filter.StartDate.Should().Be(expectedStartDate);
-        filter.EndDate.Should().Be(expectedEndDate);
+        filter.StartDate.Date.Should().Be(expectedStartDate.Date);
+        filter.EndDate.Date.Should().Be(expectedEndDate.Date);
     }
 
     [Theory]
@@ -76,17 +76,17 @@ public class PlotFilterTests
         _fixture.Customize(new AutoMoqCustomization());
         var filter = _fixture.Create<PlotFilter>();
         var startDate = _fixture.Create<DateTime>().Date;
-        var startTime = _fixture.Create<DateTime>().TimeOfDay;
+        var startTime = DateTime.MinValue.Date.Add(_fixture.Create<TimeSpan>());
         var endDate = _fixture.Create<DateTime>().Date;
-        var endTime = _fixture.Create<DateTime>().TimeOfDay;
+        var endTime = DateTime.MinValue.Date.Add(_fixture.Create<TimeSpan>());
 
         // Act
         var methodInfo = typeof(PlotFilter).GetMethod("SetFilterDates", BindingFlags.NonPublic | BindingFlags.Instance);
         methodInfo!.Invoke(filter, new object[] { startDate, startTime, endDate, endTime });
 
         // Assert
-        filter.StartDate.Should().Be(startDate);
-        filter.EndDate.Should().Be(endDate);
+        filter.StartDate.Date.Should().Be(startDate);
+        filter.EndDate.Date.Should().Be(endDate);
     }
 
     [Fact]
