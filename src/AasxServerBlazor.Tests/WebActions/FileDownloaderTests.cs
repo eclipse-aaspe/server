@@ -1,7 +1,5 @@
-﻿using AasxServer;
-using AasxServerBlazor.TreeVisualisation;
+﻿using AasxServerBlazor.TreeVisualisation;
 using AasxServerBlazor.WebActions;
-using AdminShellNS;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Microsoft.JSInterop;
