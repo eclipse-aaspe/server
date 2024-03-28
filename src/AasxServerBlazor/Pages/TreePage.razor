@@ -306,10 +306,10 @@
                         <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
                         <br/>
                         var qrCodeService = new QrCodeService();
-                        var qrcodeLink = qrCodeService.GetQrCodeLink(SelectedNode);
+                        var qrcodeLink = QrCodeService.GetQrCodeLink(SelectedNode);
                         if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
                         {
-                            var qrcodeImage = qrCodeService.GetQrCodeImage(SelectedNode);
+                            var qrcodeImage = QrCodeService.GetQrCodeImage(SelectedNode);
                             if (qrcodeImage != "")
                             {
                                 <a href="@qrcodeLink" target="_blank">
