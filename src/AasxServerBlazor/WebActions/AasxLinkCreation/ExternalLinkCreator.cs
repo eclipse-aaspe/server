@@ -56,8 +56,14 @@ internal class ExternalLinkCreator : IExternalLinkCreator
     private static string GetSubModelAttachmentLink(TreeItem selectedNode, string currentUrl)
     {
         // Extract subModel information
-        var submodelId = FindParentSubModel(selectedNode).Id;
+        var submodelId = FindParentSubModel(selectedNode)?.Id;
         var submodelElementPath = GetSubModelElementPath(selectedNode);
+
+        // Validate submodelId and submodelElementPath
+        if (string.IsNullOrEmpty(submodelId) || string.IsNullOrEmpty(submodelElementPath))
+        {
+            return string.Empty;
+        }
 
         // Construct attachment link
         var attachmentLink = $"{currentUrl}submodels/{Base64UrlEncoder.Encode(submodelId)}/submodel-elements/{submodelElementPath}/attachment";
@@ -83,8 +89,7 @@ internal class ExternalLinkCreator : IExternalLinkCreator
 
         return path;
     }
-
-
+    
     private static bool TryGetSubModelElement(TreeItem selectedNode, out ISubmodelElement subModelElement)
     {
         subModelElement = selectedNode.Tag as ISubmodelElement;
@@ -107,6 +112,7 @@ internal class ExternalLinkCreator : IExternalLinkCreator
                 {
                     return $"{parent.IdShort}.{path}";
                 }
+
                 index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
                 return $"[{index}].{parent.IdShort}{path}";
         }
