@@ -93,32 +93,33 @@ namespace AasxServerBlazor
             services.AddControllers();
 
             services.AddLazyResolution();
+            services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+            services.AddSingleton<IAasxItemLinkService, AasxItemLinkService>();
+            services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
             services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
             services.AddSingleton<IExternalLinkCreator, ExternalLinkCreator>();
-            services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
-            services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
-            services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
-            services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
-            services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
-            services.AddTransient<ISubmodelService, SubmodelService>();
-            services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
-            services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
-            services.AddTransient<IPaginationService, PaginationService>();
-            services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
-            services.AddTransient<IMetamodelVerificationService, MetamodelVerificationService>();
-            services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
-            services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
-            services.AddTransient<IMappingService, MappingService>();
-            services.AddTransient<IPathModifierService, PathModifierService>();
-            services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
-            services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
-            services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
-            services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
-            services.AddTransient<ISecurityService, SecurityService>();
-            services.AddTransient<IAasRegistryService, AasRegistryService>();
             services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
+            services.AddTransient<IAasRegistryService, AasRegistryService>();
+            services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
+            services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
+            services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
+            services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
+            services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
+            services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
+            services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
+            services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
+            services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
+            services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
+            services.AddTransient<IMappingService, MappingService>();
+            services.AddTransient<IMetamodelVerificationService, MetamodelVerificationService>();
+            services.AddTransient<IPaginationService, PaginationService>();
+            services.AddTransient<IPathModifierService, PathModifierService>();
+            services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
+            services.AddTransient<ISecurityService, SecurityService>();
+            services.AddTransient<ISubmodelService, SubmodelService>();
+            services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
 
             // Add GraphQL services
             services

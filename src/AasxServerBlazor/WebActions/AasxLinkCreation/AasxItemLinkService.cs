@@ -1,20 +1,22 @@
-﻿using System;
-using AasxServer;
+﻿using AasxServer;
 using AasxServerBlazor.TreeVisualisation;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerBlazor.WebActions.AasxLinkCreation;
 
-internal class AasxItemLinkCreator
+/// <inheritdoc cref="IAasxItemLinkService"/>
+internal class AasxItemLinkService: IAasxItemLinkService
 {
+    private const string EnvironmentSymbol = "L";
     private readonly IExternalLinkCreator _externalLinkCreator;
 
-    public AasxItemLinkCreator(IExternalLinkCreator externalLinkCreator)
+    public AasxItemLinkService(IExternalLinkCreator externalLinkCreator)
     {
         _externalLinkCreator = externalLinkCreator;
     }
     
-    public string GetLink(TreeItem selectedNode, string currentUrl, out bool external)
+    /// <inheritdoc/>
+    public string Create(TreeItem selectedNode, string currentUrl, out bool external)
     {
         external = false;
 
@@ -25,7 +27,7 @@ internal class AasxItemLinkCreator
 
         switch (selectedNodeTag)
         {
-            case null when Program.envSymbols[selectedNode.EnvironmentIndex] == "L":
+            case null when Program.envSymbols[selectedNode.EnvironmentIndex] == EnvironmentSymbol:
                 return $"{Program.externalRest}/server/getaasx/{selectedNode.EnvironmentIndex}";
 
             case AssetAdministrationShell _:
