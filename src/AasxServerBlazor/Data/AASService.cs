@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AasxServerBlazor.TreeVisualisation;
 using static AasxServerBlazor.Pages.TreePage;
 
 namespace AasxServerBlazor.Data
@@ -31,13 +32,13 @@ namespace AasxServerBlazor.Data
         }
         public event EventHandler NewDataAvailable;
 
-        public static List<Item> items = null;
-        public static List<Item> viewItems = null;
+        public static List<TreeItem> items = null;
+        public static List<TreeItem> viewItems = null;
 
-        public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
+        public List<TreeItem> GetTree(TreeItem selectedNode, IList<TreeItem> ExpandedNodes)
         {
             // buildTree();
-            // Item.updateVisibleTree(viewItems, selectedNode, ExpandedNodes);
+            // TreeItem.updateVisibleTree(viewItems, selectedNode, ExpandedNodes);
             return viewItems;
         }
 
@@ -46,14 +47,14 @@ namespace AasxServerBlazor.Data
 
         }
 
-        public void syncSubTree(Item item)
+        public void syncSubTree(TreeItem treeItem)
         {
-            if (item.Tag is SubmodelElementCollection)
+            if (treeItem.Tag is SubmodelElementCollection)
             {
-                var smec = item.Tag as SubmodelElementCollection;
-                if (item.Childs.Count() != smec.Value.Count)
+                var smec = treeItem.Tag as SubmodelElementCollection;
+                if (treeItem.Childs.Count() != smec.Value.Count)
                 {
-                    createSMECItems(item, smec, item.envIndex);
+                    createSMECItems(treeItem, smec, treeItem.EnvironmentIndex);
                 }
             }
         }
@@ -63,7 +64,7 @@ namespace AasxServerBlazor.Data
 
             lock (Program.changeAasxFile)
             {
-                items = new List<Item>();
+                items = new List<TreeItem>();
 
                 // Check for README
                 if (Directory.Exists("./readme"))
@@ -73,8 +74,8 @@ namespace AasxServerBlazor.Data
                     foreach (var fname in fileNames)
                     {
                         var fname2 = fname.Replace("\\", "/");
-                        Item demo = new Item();
-                        demo.envIndex = -1;
+                        TreeItem demo = new TreeItem();
+                        demo.EnvironmentIndex = -1;
                         demo.Text = fname2;
                         demo.Tag = "README";
                         items.Add(demo);
@@ -83,8 +84,8 @@ namespace AasxServerBlazor.Data
 
                 for (int i = 0; i < Program.envimax; i++)
                 {
-                    Item root = new Item();
-                    root.envIndex = i;
+                    TreeItem root = new TreeItem();
+                    root.EnvironmentIndex = i;
                     if (Program.env[i] != null)
                     {
                         if (Program.env[i].AasEnv.AssetAdministrationShells != null && Program.env[i].AasEnv.AssetAdministrationShells.Count > 0)
@@ -93,7 +94,7 @@ namespace AasxServerBlazor.Data
                             root.Tag = Program.env[i].AasEnv.AssetAdministrationShells[0];
                             if (Program.envSymbols[i] != "L")
                             {
-                                List<Item> childs = new List<Item>();
+                                List<TreeItem> childs = new List<TreeItem>();
                                 var env = AasxServer.Program.env[i];
                                 var aas = env.AasEnv.AssetAdministrationShells[0];
                                 if (env != null && aas.Submodels != null && aas.Submodels.Count > 0)
@@ -102,17 +103,17 @@ namespace AasxServerBlazor.Data
                                         var sm = env.AasEnv.FindSubmodel(smr);
                                         if (sm != null && sm.IdShort != null)
                                         {
-                                            var smItem = new Item();
-                                            smItem.envIndex = i;
+                                            var smItem = new TreeItem();
+                                            smItem.EnvironmentIndex = i;
                                             smItem.Text = sm.IdShort;
                                             smItem.Tag = sm;
                                             childs.Add(smItem);
-                                            List<Item> smChilds = new List<Item>();
+                                            List<TreeItem> smChilds = new List<TreeItem>();
                                             if (sm.SubmodelElements != null)
                                                 foreach (var sme in sm.SubmodelElements)
                                                 {
-                                                    var smeItem = new Item();
-                                                    smeItem.envIndex = i;
+                                                    var smeItem = new TreeItem();
+                                                    smeItem.EnvironmentIndex = i;
                                                     smeItem.Text = sme.IdShort;
                                                     smeItem.Tag = sme;
                                                     smChilds.Add(smeItem);
@@ -142,12 +143,12 @@ namespace AasxServerBlazor.Data
                                                 }
                                             smItem.Childs = smChilds;
                                             foreach (var c in smChilds)
-                                                c.parent = smItem;
+                                                c.Parent = smItem;
                                         }
                                     }
                                 root.Childs = childs;
                                 foreach (var c in childs)
-                                    c.parent = root;
+                                    c.Parent = root;
                                 items.Add(root);
                             }
                         }
@@ -162,17 +163,17 @@ namespace AasxServerBlazor.Data
             viewItems = items;
         }
 
-        private void CreateSMEListItems(Item smeRootItem, SubmodelElementList smeList, int i)
+        private void CreateSMEListItems(TreeItem smeRootTreeItem, SubmodelElementList smeList, int i)
         {
             if (smeList != null && !smeList.Value.IsNullOrEmpty())
             {
-                List<Item> smChilds = new List<Item>();
+                List<TreeItem> smChilds = new List<TreeItem>();
                 foreach (var s in smeList.Value)
                 {
                     if (s != null && s != null)
                     {
-                        var smeItem = new Item();
-                        smeItem.envIndex = i;
+                        var smeItem = new TreeItem();
+                        smeItem.EnvironmentIndex = i;
                         smeItem.Text = s.IdShort;
                         smeItem.Tag = s;
                         smChilds.Add(smeItem);
@@ -201,46 +202,46 @@ namespace AasxServerBlazor.Data
                         }
                     }
                 }
-                smeRootItem.Childs = smChilds;
+                smeRootTreeItem.Childs = smChilds;
                 foreach (var c in smChilds)
-                    c.parent = smeRootItem;
+                    c.Parent = smeRootTreeItem;
             }
         }
 
-        private void CreateAnnotedRelationshipElementItems(Item smeRootItem, AnnotatedRelationshipElement annotatedRelationshipElement, int i)
+        private void CreateAnnotedRelationshipElementItems(TreeItem smeRootTreeItem, AnnotatedRelationshipElement annotatedRelationshipElement, int i)
         {
             if (annotatedRelationshipElement != null && !annotatedRelationshipElement.Annotations.IsNullOrEmpty())
             {
-                List<Item> smChilds = new List<Item>();
+                List<TreeItem> smChilds = new List<TreeItem>();
                 foreach (var s in annotatedRelationshipElement.Annotations)
                 {
                     if (s != null && s != null)
                     {
-                        var smeItem = new Item();
-                        smeItem.envIndex = i;
+                        var smeItem = new TreeItem();
+                        smeItem.EnvironmentIndex = i;
                         smeItem.Text = s.IdShort;
                         smeItem.Tag = s;
                         smChilds.Add(smeItem);
                     }
                 }
-                smeRootItem.Childs = smChilds;
+                smeRootTreeItem.Childs = smChilds;
                 foreach (var c in smChilds)
-                    c.parent = smeRootItem;
+                    c.Parent = smeRootTreeItem;
             }
         }
 
-        void createSMECItems(Item smeRootItem, SubmodelElementCollection smec, int i)
+        void createSMECItems(TreeItem smeRootTreeItem, SubmodelElementCollection smec, int i)
         {
             if (smec != null && !smec.Value.IsNullOrEmpty())
             {
-                List<Item> smChilds = new List<Item>();
+                List<TreeItem> smChilds = new List<TreeItem>();
                 if (smec != null && smec.Value != null)
                     foreach (var sme in smec.Value)
                     {
                         if (sme != null && sme != null)
                         {
-                            var smeItem = new Item();
-                            smeItem.envIndex = i;
+                            var smeItem = new TreeItem();
+                            smeItem.EnvironmentIndex = i;
                             smeItem.Text = sme.IdShort;
                             smeItem.Tag = sme;
                             smChilds.Add(smeItem);
@@ -269,21 +270,21 @@ namespace AasxServerBlazor.Data
                             }
                         }
                     }
-                smeRootItem.Childs = smChilds;
+                smeRootTreeItem.Childs = smChilds;
                 foreach (var c in smChilds)
-                    c.parent = smeRootItem;
+                    c.Parent = smeRootTreeItem;
             }
         }
 
-        void createOperationItems(Item smeRootItem, Operation op, int i)
+        void createOperationItems(TreeItem smeRootTreeItem, Operation op, int i)
         {
-            List<Item> smChilds = new List<Item>();
+            List<TreeItem> smChilds = new List<TreeItem>();
             if (!op.InputVariables.IsNullOrEmpty())
             {
                 foreach (var v in op.InputVariables)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
+                    var smeItem = new TreeItem();
+                    smeItem.EnvironmentIndex = i;
                     smeItem.Text = v.Value.IdShort;
                     smeItem.Type = "In";
                     smeItem.Tag = v.Value;
@@ -294,8 +295,8 @@ namespace AasxServerBlazor.Data
             {
                 foreach (var v in op.OutputVariables)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
+                    var smeItem = new TreeItem();
+                    smeItem.EnvironmentIndex = i;
                     smeItem.Text = v.Value.IdShort;
                     smeItem.Type = "Out";
                     smeItem.Tag = v.Value;
@@ -306,30 +307,30 @@ namespace AasxServerBlazor.Data
             {
                 foreach (var v in op.InoutputVariables)
                 {
-                    var smeItem = new Item();
-                    smeItem.envIndex = i;
+                    var smeItem = new TreeItem();
+                    smeItem.EnvironmentIndex = i;
                     smeItem.Text = v.Value.IdShort;
                     smeItem.Type = "InOut";
                     smeItem.Tag = v.Value;
                     smChilds.Add(smeItem);
                 }
             }
-            smeRootItem.Childs = smChilds;
+            smeRootTreeItem.Childs = smChilds;
             foreach (var c in smChilds)
-                c.parent = smeRootItem;
+                c.Parent = smeRootTreeItem;
         }
 
-        void createEntityItems(Item smeRootItem, Entity e, int i)
+        void createEntityItems(TreeItem smeRootTreeItem, Entity e, int i)
         {
-            List<Item> smChilds = new List<Item>();
+            List<TreeItem> smChilds = new List<TreeItem>();
             if (e.Statements != null && e.Statements.Count > 0)
             {
                 foreach (var s in e.Statements)
                 {
                     if (s != null && s != null)
                     {
-                        var smeItem = new Item();
-                        smeItem.envIndex = i;
+                        var smeItem = new TreeItem();
+                        smeItem.EnvironmentIndex = i;
                         smeItem.Text = s.IdShort;
                         smeItem.Tag = s;
                         smChilds.Add(smeItem);
@@ -345,9 +346,9 @@ namespace AasxServerBlazor.Data
                     }
                 }
             }
-            smeRootItem.Childs = smChilds;
+            smeRootTreeItem.Childs = smChilds;
             foreach (var c in smChilds)
-                c.parent = smeRootItem;
+                c.Parent = smeRootTreeItem;
         }
 
         public List<ISubmodel> GetSubmodels()
