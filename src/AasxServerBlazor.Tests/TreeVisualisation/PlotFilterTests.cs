@@ -14,7 +14,7 @@ public class PlotFilterTests
     private readonly Fixture _fixture = new();
 
     [Fact]
-    public void SetInitialFilterState_SetsCorrectInitialState()
+    public void SetInitialFilterState_CurrentDateWithinRange_InitializesStateCorrectly()
     {
         // Arrange
         var dateTimeProviderMock = new Mock<IDateTimeProvider>();
@@ -37,7 +37,7 @@ public class PlotFilterTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(1)]
-    public void SetFilterStateForDay_SetsCorrectStateForGivenOffset(int offset)
+    public void SetFilterStateForDay_GivenOffset_SetsStateCorrectly(int offset)
     {
         // Arrange
         var dateTimeProviderMock = new Mock<IDateTimeProvider>();
@@ -56,7 +56,7 @@ public class PlotFilterTests
     }
 
     [Fact]
-    public void ApplyFilterToTimeSeriesData_DoesNotRenderIfTimeSeriesDataIsNull()
+    public void ApplyFilterToTimeSeriesData_NullTimeSeriesData_DoesNotRender()
     {
         // Arrange
         var dateTimeProviderMock = new Mock<IDateTimeProvider>();
@@ -70,7 +70,7 @@ public class PlotFilterTests
     }
 
     [Fact]
-    public void SetFilterDates_SetsCorrectDates()
+    public void SetFilterDates_GivenDates_SetsCorrectDates()
     {
         // Arrange
         _fixture.Customize(new AutoMoqCustomization());
@@ -90,7 +90,7 @@ public class PlotFilterTests
     }
 
     [Fact]
-    public void ResetTimeOfDates_SetsCorrectTime()
+    public void ResetTimeOfDates_GivenDates_SetsCorrectTime()
     {
         // Arrange
         _fixture.Customize(new AutoMoqCustomization());
@@ -112,7 +112,7 @@ public class PlotFilterTests
     }
 
     [Fact]
-    public void ApplyFilterToTimeSeriesData_DoesNotThrowIfTimeSeriesDataIsNull()
+    public void ApplyFilterToTimeSeriesData_NullTimeSeriesData_DoesNotThrow()
     {
         // Arrange
         _fixture.Customize(new AutoMoqCustomization());
