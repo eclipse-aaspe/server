@@ -32,6 +32,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AasxServerBlazor.DateTimeServices;
 
 namespace AasxServerBlazor
 {
@@ -91,6 +92,7 @@ namespace AasxServerBlazor
             services.AddControllers();
 
             services.AddLazyResolution();
+            services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
             services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
