@@ -1,5 +1,4 @@
 ﻿using AasCore.Aas3_0;
-using AasxServerBlazor.Pages;
 using AasxServerBlazor.TreeVisualisation;
 using AasxServerBlazor.WebActions.AasxLinkCreation;
 using AutoFixture;
@@ -38,7 +37,7 @@ public class ExternalLinkCreatorTests
     }
 
     [Fact]
-    public void TryGetExternalLink_ShouldReturnTrueForHttpUrl()
+    public void TryGetExternalLink_ShouldReturnTrue_ForHttpUrl()
     {
         // Arrange
         const string url = "https://example.com";
@@ -53,5 +52,53 @@ public class ExternalLinkCreatorTests
         // Assert
         result.Should().BeTrue();
         externalUrl.Should().Be(url);
+    }
+
+    [Fact]
+    public void TryGetExternalLink_ShouldReturnFalse_ForNonHttpNonAasxUrl()
+    {
+        // Arrange
+        const string url = "ftp://example.com";
+        var file = _fixture.Create<AasCore.Aas3_0.File>();
+        file.Value = url;
+        var selectedNode = new TreeItem {Tag = file};
+        var externalLinkCreator = new ExternalLinkCreator();
+
+        // Act
+        var result = externalLinkCreator.TryGetExternalLink(selectedNode, out _);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void TryGetExternalLink_ShouldReturnFalse_ForAasxUrlNotStartingWithSlash()
+    {
+        // Arrange
+        const string urlWithoutLeadingSlash = "aasx/path";
+        var file = _fixture.Create<AasCore.Aas3_0.File>();
+        file.Value = urlWithoutLeadingSlash;
+        var selectedNode = new TreeItem {Tag = file};
+        var externalLinkCreator = new ExternalLinkCreator();
+
+        // Act
+        var result = externalLinkCreator.TryGetExternalLink(selectedNode, out _);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void TryGetExternalLink_ShouldReturnFalse_ForNullOrEmptySubmodelIdOrSubmodelElementPath()
+    {
+        // Arrange
+        var selectedNode = new TreeItem {Tag = _fixture.Create<ISubmodelElement>()};
+        var externalLinkCreator = new ExternalLinkCreator();
+
+        // Act
+        var result = externalLinkCreator.TryGetExternalLink(selectedNode, out _);
+
+        // Assert
+        result.Should().BeFalse();
     }
 }
