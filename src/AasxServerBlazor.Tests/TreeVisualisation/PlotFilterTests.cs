@@ -1,6 +1,9 @@
-﻿using AasxServerBlazor.DateTimeServices;
+﻿using System.Reflection;
+using AasxServerBlazor.DateTimeServices;
 using AasxServerBlazor.TreeVisualisation;
+using AasxServerStandardBib;
 using AutoFixture;
+using AutoFixture.AutoMoq;
 using FluentAssertions;
 using Moq;
 
@@ -64,5 +67,61 @@ public class PlotFilterTests
 
         // Assert
         action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void SetFilterDates_SetsCorrectDates()
+    {
+        // Arrange
+        _fixture.Customize(new AutoMoqCustomization());
+        var filter = _fixture.Create<PlotFilter>();
+        var startDate = _fixture.Create<DateTime>().Date;
+        var startTime = _fixture.Create<DateTime>().TimeOfDay;
+        var endDate = _fixture.Create<DateTime>().Date;
+        var endTime = _fixture.Create<DateTime>().TimeOfDay;
+
+        // Act
+        var methodInfo = typeof(PlotFilter).GetMethod("SetFilterDates", BindingFlags.NonPublic | BindingFlags.Instance);
+        methodInfo!.Invoke(filter, new object[] { startDate, startTime, endDate, endTime });
+
+        // Assert
+        filter.StartDate.Should().Be(startDate);
+        filter.EndDate.Should().Be(endDate);
+    }
+
+    [Fact]
+    public void ResetTimeOfDates_SetsCorrectTime()
+    {
+        // Arrange
+        _fixture.Customize(new AutoMoqCustomization());
+        var filter = _fixture.Create<PlotFilter>();
+        var startDate = _fixture.Create<DateTime>().Date;
+        var endDate = startDate.AddDays(1).AddTicks(-1);
+        filter.StartDate = startDate;
+        filter.EndDate = endDate;
+
+        // Act
+        var methodInfo = typeof(PlotFilter).GetMethod("ResetTimeOfDates", BindingFlags.NonPublic | BindingFlags.Instance);
+        methodInfo!.Invoke(filter, null);
+
+        // Assert
+        filter.StartDate.Should().Be(startDate);
+        filter.EndDate.Should().Be(endDate);
+        filter.CombinedStartDateTime.Date.Should().Be(startDate);
+        filter.CombinedEndDateTime.Date.Should().BeCloseTo(endDate,precision: TimeSpan.FromHours(6) );
+    }
+
+    [Fact]
+    public void ApplyFilterToTimeSeriesData_DoesNotThrowIfTimeSeriesDataIsNull()
+    {
+        // Arrange
+        _fixture.Customize(new AutoMoqCustomization());
+        var filter = _fixture.Create<PlotFilter>();
+
+        // Act
+        var act = () => filter.ApplyFilterToTimeSeriesData(null, 1);
+
+        // Assert
+        act.Should().NotThrow();
     }
 }

@@ -57,12 +57,12 @@ namespace AasxServerBlazor.TreeVisualisation
             SetFilterDates(day, day, endOfDay, endOfDay);
         }
 
-        private void SetFilterDates(DateTime fromDate, DateTime fromTime, DateTime toDate, DateTime toTime)
+        private void SetFilterDates(DateTime startDate, DateTime startTime, DateTime endDate, DateTime endTime)
         {
-            StartDate = fromDate;
-            StartTime = fromTime;
-            EndDate = toDate;
-            EndTime = toTime;
+            StartDate = startDate;
+            StartTime = startTime;
+            EndDate = endDate;
+            EndTime = endTime;
             ResetTimeOfDates();
         }
 
