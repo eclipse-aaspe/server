@@ -39,13 +39,14 @@ public class TreeItem
     public string GetHtmlId()
     {
         var nodeId = GetIdentifier();
-        if (Parent != null)
+        if (Parent is TreeItem parentItem)
         {
-            nodeId = ((TreeItem) Parent).GetHtmlId() + "." + nodeId;
+            nodeId = parentItem.GetHtmlId() + "." + nodeId;
         }
 
-        return (nodeId);
+        return nodeId;
     }
+
     
     public string GetIdentifier()
     {
@@ -65,35 +66,32 @@ public class TreeItem
         }
         if (Tag is Submodel submodel)
         {
-            nodeId = "";
+            nodeId = string.Empty;
             if (submodel.Kind != null && submodel.Kind == ModellingKind.Template)
+            {
                 nodeId += "<T> ";
+            }
             nodeId += submodel.IdShort;
         }
         if (Tag is ISubmodelElement submodelElement)
         {
-            nodeId = "";
-            nodeId += submodelElement.IdShort;
+            nodeId = submodelElement.IdShort;
         }
         if (Tag is File f)
         {
-            nodeId = "";
-            nodeId += f.IdShort;
+            nodeId = f.IdShort;
         }
         if (Tag is Blob blob)
         {
-            nodeId = "";
-            nodeId += blob.IdShort;
+            nodeId = blob.IdShort;
         }
         if (Tag is Range range)
         {
-            nodeId = "";
-            nodeId += range.IdShort;
+            nodeId = range.IdShort;
         }
         else if (Tag is MultiLanguageProperty multiLanguageProperty)
         {
-            nodeId = "";
-            nodeId += multiLanguageProperty.IdShort;
+            nodeId = multiLanguageProperty.IdShort;
         }
         
         return (nodeId);

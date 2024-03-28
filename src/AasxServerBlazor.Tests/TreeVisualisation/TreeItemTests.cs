@@ -1,4 +1,6 @@
-﻿using AasxServerBlazor.TreeVisualisation;
+﻿using AasCore.Aas3_0;
+using AasxServer;
+using AasxServerBlazor.TreeVisualisation;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 
@@ -10,7 +12,15 @@ using Xunit;
 
 public class TreeItemTests
 {
-    private readonly Fixture _fixture = new();
+    private readonly Fixture _fixture;
+
+    public TreeItemTests()
+    {
+        _fixture = new Fixture();
+        _fixture.Customize(new AutoMoqCustomization());
+        _fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
+        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+    }
 
     [Fact]
     public void Constructor_WithDefaultValues_ShouldSetPropertiesCorrectly()
@@ -85,5 +95,215 @@ public class TreeItemTests
         {
             result.Should().Contain(child.ToString());
         }
+    }
+    
+    
+    [Fact]
+    public void GetHtmlId_ShouldReturnCorrectIdWhenParentIsNull()
+    {
+        // Arrange
+        var treeItem = _fixture.Create<TreeItem>();
+        var expectedId = treeItem.GetIdentifier();
+
+        // Act
+        var result = treeItem.GetHtmlId();
+
+        // Assert
+        result.Should().Be(expectedId);
+    }
+
+    [Fact]
+    public void GetHtmlId_ShouldReturnCorrectIdWhenParentIsNotNull()
+    {
+        // Arrange
+        var parentItem = _fixture.Create<TreeItem>();
+        var treeItem = _fixture.Create<TreeItem>();
+        treeItem.Parent = parentItem;
+        var expectedId = $"{parentItem.GetHtmlId()}.{treeItem.GetIdentifier()}";
+
+        // Act
+        var result = treeItem.GetHtmlId();
+
+        // Assert
+        result.Should().Be(expectedId);
+    }
+
+    [Fact]
+    public void GetIdentifier_WhenEnvironmentIsSetToLAndTagIsNull_ShouldReturnExpectedText()
+    {
+        // Arrange
+        const string expectedText = "Text";
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = null
+        };
+        Program.envSymbols = new[] {"L"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(expectedText);
+    }
+    
+    [Fact]
+    public void GetIdentifier_WhenEnvironmentIsNotSetAndTagIsNull_ShouldReturnNullAsString()
+    {
+        // Arrange
+        const string expectedText = "Text";
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = null
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(expectedText);
+    }
+    
+    [Fact]
+    public void GetIdentifier_WhenTagIsStringAndTextContainsReadme_ShouldReturnEmptyString()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = string.Empty
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+    
+    [Fact]
+    public void GetIdentifier_WhenTagIsAssetAdministrationShell_ShouldReturnAasIdShort()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var assetAdministrationShell = _fixture.Create<AssetAdministrationShell>();
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = assetAdministrationShell
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(assetAdministrationShell.IdShort);
+    }
+
+    [Fact]
+    public void GetIdentifier_WhenTagIsASubmodelAndSubmodelKindIsNull_ShouldReturnSubmodelIdShort()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var submodel = _fixture.Create<Submodel>();
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = submodel
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(submodel.IdShort);
+    }
+    
+    [Fact]
+    public void GetIdentifier_WhenTagIsASubmodelAndSubmodelKindIsTemplate_ShouldReturnSubmodelTypePlusIdShort()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var submodel = _fixture.Create<Submodel>();
+        submodel.Kind = ModellingKind.Template;
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = submodel
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be($"<T> {submodel.IdShort}");
+    }
+    
+    
+    [Fact]
+    public void GetIdentifier_WhenTagIsISubmodelElement_ShouldReturnSubmodelElementIdShort()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var submodel = _fixture.Create<ISubmodelElement>();
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = submodel
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(submodel.IdShort);
+    }
+    
+    [Fact]
+    public void GetIdentifier_WhenTagIsFile_ShouldReturnFileIdShort()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var file = _fixture.Create<AasCore.Aas3_0.File>();
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = file
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(file.IdShort);
+    }
+    
+    [Fact]
+    public void GetIdentifier_WhenTagIsBlob_ShouldReturnBlobIdShort()
+    {
+        // Arrange
+        const string expectedText = "/readme";
+        var blob = _fixture.Create<Blob>();
+        var treeItem = new TreeItem
+        {
+            Text = expectedText, EnvironmentIndex = 0,
+            Tag = blob
+        };
+        Program.envSymbols = new[] {"M"};
+
+        // Act
+        var result = treeItem.GetIdentifier();
+
+        // Assert
+        result.Should().Be(blob.IdShort);
     }
 }
