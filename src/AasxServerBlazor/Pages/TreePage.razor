@@ -214,7 +214,7 @@
                 }
 
                 var externalLink = false;
-                var link = getLink(SelectedNode, out externalLink);
+                var link = AasxItemLinkCreator.GetLink(SelectedNode, NavigationManager.Uri, out externalLink);
                 if (SelectedNode != null && link != "")
                 {
                     if (true)
@@ -296,9 +296,11 @@
                             Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
                             Program.signalNewData(0);
                         }
+
                         CurrentValue = "";
                     }
                 }
+
                 if (SelectedNode != null && (SelectedNode.Tag is AssetAdministrationShell || SelectedNode.Tag is AasCore.Aas3_0.File))
                 {
                     if (SelectedNode.Tag is AssetAdministrationShell)
@@ -607,6 +609,8 @@
 @using System.Reflection;
 @using AasxServerBlazor.DateTimeServices
 @using AasxServerBlazor.TreeVisualisation
+@using AasxServerBlazor.WebActions
+@using AasxServerBlazor.WebActions.AasxLinkCreation
 @using Newtonsoft.Json;
 @using Newtonsoft.Json.Linq;
 @using ScottPlot;
@@ -619,7 +623,7 @@
     bool showImageModal = false;
     ListOfTimeSeriesData _timeSeriesData = new();
     int plotFilterTsdOffset = 0;
-    
+
     List<TreeItem> Items = null;
 
     IList<TreeItem> ExpandedNodes = new List<TreeItem>();
@@ -954,112 +958,6 @@
                 {
                     url = true;
                     return f.Value;
-                }
-            }
-        }
-
-        return "";
-    }
-    
-    bool hasDownloadFile(TreeItem treeItem)
-    {
-        return false;
-    }
-
-    string getLink(TreeItem treeItem, out bool external)
-    {
-        external = false;
-
-        if (treeItem == null)
-        {
-            return "";
-        }
-
-        var prefix = "http://";
-        var hostPort = Program.hostPort;
-
-        var split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            prefix = "https://";
-            hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
-
-        var o = treeItem.Tag;
-
-        if (o == null && Program.envSymbols[treeItem.EnvironmentIndex] == "L")
-        {
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(SelectedNode.EnvironmentIndex);
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            var currentUrl = NavigationManager.Uri;
-            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.EnvironmentIndex));
-        }
-
-        if (o is AasCore.Aas3_0.File || o is Property)
-        {
-            var value = "";
-
-            if (o is AasCore.Aas3_0.File)
-            {
-                value = (o as AasCore.Aas3_0.File).Value;
-            }
-
-            if (o is Property)
-            {
-                value = (o as Property).Value;
-            }
-
-            if (value == null || value == "")
-                return "";
-
-            split = value.Split(new[] {':'});
-            if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
-            {
-                external = true;
-                return value;
-            }
-
-            // Test for /aasx/
-            split = value.Split(new Char[] {'/'});
-            if (split.Length > 1)
-            {
-                if (split.Length == 2 || split[1].ToLower() == "aasx")
-                {
-                    var sme = treeItem.Tag as ISubmodelElement;
-                    var path = sme.IdShort;
-                    var parent = sme.Parent as IReferable;
-                    while (parent is not Submodel)
-                    {
-                        if (parent is ISubmodelElementList parentList)
-                        {
-                            if (path.Equals(sme.IdShort))
-                            {
-                                var index = parentList.Value?.IndexOf(sme);
-                                path = "[" + index + "]";
-                            }
-
-                            path = parentList.IdShort + path;
-                        }
-                        else if (parent.Parent is ISubmodelElementList prevParentList)
-                        {
-                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                            path = "[" + index + "]" + "." + path;
-                        }
-                        else
-                        {
-                            path = parent.IdShort + "." + path;
-                        }
-
-                        parent = (IReferable) parent.Parent;
-                    }
-
-                    var currentUrl = NavigationManager.Uri;
-
-                    return currentUrl + "submodels/" + Base64UrlEncoder.Encode((parent as Submodel).Id) +
-                           "/submodel-elements/" + path + "/attachment";
                 }
             }
         }
