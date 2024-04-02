@@ -682,12 +682,12 @@
                     var isSelected = selectedNode != null;
                     var isExpanded = ExpandedNodes.Count != 0;
                     var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                    var selectedNodePath = getPath(selectedNode);
+                    var selectedNodePath = selectedNode.GetPath();
                     if (isExpanded)
                     {
                         for (var j = 0; j < ExpandedNodes.Count; j++)
                         {
-                            expandedNodesPath[j] = getPath(ExpandedNodes[j]);
+                            expandedNodesPath[j] = ExpandedNodes[j].GetPath();
                         }
                     }
 
@@ -726,29 +726,6 @@
         }
 
         return "";
-    }
-
-    //TODO: Extract to TreeItem
-    List<string> getPath(TreeItem i)
-    {
-        if (i == null)
-            return null;
-
-        var upPath = new List<string> {i.Text};
-        while (i.Parent != null)
-        {
-            i = (TreeItem) i.Parent;
-            upPath.Add(i.Text);
-        }
-
-        var downPath = new List<string>();
-        var j = upPath.Count - 1;
-        while (j >= 0)
-        {
-            downPath.Add(upPath[j--]);
-        }
-
-        return downPath;
     }
 
     TreeItem findPath(List<string> path)

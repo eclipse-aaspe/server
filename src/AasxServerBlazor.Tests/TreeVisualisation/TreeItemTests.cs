@@ -856,4 +856,59 @@ public class TreeItemTests
     }
 
     #endregion
+
+    #region GetPath
+
+    [Fact]
+    public void GetPath_ShouldReturnCorrectPath_WhenNoParent()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Text = "Root"};
+
+        // Act
+        var path = treeItem.GetPath();
+
+        // Assert
+        Assert.Collection(path,
+            item => Assert.Equal("Root", item)
+        );
+    }
+
+    [Fact]
+    public void GetPath_ShouldReturnCorrectPath_WhenSingleParent()
+    {
+        // Arrange
+        var parent = new TreeItem {Text = "Parent"};
+        var child = new TreeItem {Text = "Child", Parent = parent};
+
+        // Act
+        var path = child.GetPath();
+
+        // Assert
+        Assert.Collection(path,
+            item => Assert.Equal("Parent", item),
+            item => Assert.Equal("Child", item)
+        );
+    }
+
+    [Fact]
+    public void GetPath_ShouldReturnCorrectPath_WhenMultipleParents()
+    {
+        // Arrange
+        var grandparent = new TreeItem {Text = "Grandparent"};
+        var parent = new TreeItem {Text = "Parent", Parent = grandparent};
+        var child = new TreeItem {Text = "Child", Parent = parent};
+
+        // Act
+        var path = child.GetPath();
+
+        // Assert
+        Assert.Collection(path,
+            item => Assert.Equal("Grandparent", item),
+            item => Assert.Equal("Parent", item),
+            item => Assert.Equal("Child", item)
+        );
+    }
+
+    #endregion
 }

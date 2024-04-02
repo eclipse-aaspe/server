@@ -199,6 +199,24 @@ public class TreeItem
         };
     }
 
+    public List<string> GetPath()
+    {
+        var upPath = new List<string>();
+
+        // Traverse upwards from the current node and collect the path
+        var currentNode = this;
+        while (currentNode != null)
+        {
+            upPath.Add(currentNode.Text);
+            currentNode = currentNode.Parent as TreeItem;
+        }
+
+        // Reverse the path to get the downward path
+        upPath.Reverse();
+
+        return upPath;
+    }
+    
     private bool IsReadme()
     {
         return Tag is string && Text.Contains("/readme");
