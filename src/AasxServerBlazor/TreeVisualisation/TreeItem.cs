@@ -79,4 +79,19 @@ public class TreeItem
             _ => "NULL" //This based on the previous implementation and I don't know the side effects of changing it yet, so it should stay this way for now.
         };
     }
+    
+    public string GetTimeStamp()
+    {
+        var timeStampString = string.Empty;
+
+        var tagObject = Tag;
+
+        if (tagObject is IReferable referableObject)
+        {
+            timeStampString = $" ({referableObject.TimeStampTree:yy-MM-dd HH:mm:ss.fff}) ";
+        }
+
+        return timeStampString;
+    }
+
 }

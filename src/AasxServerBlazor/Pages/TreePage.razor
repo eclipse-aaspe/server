@@ -104,7 +104,7 @@
                     }
 
                     <span style="color:blue;font-size:14px">@getSymbols(context)</span>
-                    <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
+                    <span style="color:lightgray;font-size:14px">@context.GetTimeStamp()</span>
                 }
             </TitleTemplate>
         </Tree>
@@ -659,6 +659,7 @@
         {
             return;
         }
+
         newDataMode = newArgs.signalNewDataMode;
         InvokeAsync(() => StateHasChanged());
     }
@@ -1138,23 +1139,6 @@
         }
 
         return (ret);
-    }
-
-    string ViewTimeStamp(TreeItem treeItem)
-    {
-        if (treeItem == null)
-        {
-            return "";
-        }
-
-        var ret = "";
-
-        var o = treeItem.Tag;
-
-        if (o is IReferable r)
-            ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
-
-        return ret;
     }
 
     

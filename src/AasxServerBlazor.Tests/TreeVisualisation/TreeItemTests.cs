@@ -3,6 +3,7 @@ using AasxServer;
 using AasxServerBlazor.TreeVisualisation;
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using Moq;
 
 namespace AasxServerBlazor.Tests.TreeVisualisation;
 
@@ -21,6 +22,8 @@ public class TreeItemTests
         _fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
     }
+
+    #region Constructor
 
     [Fact]
     public void Constructor_WithDefaultValues_ShouldSetPropertiesCorrectly()
@@ -69,6 +72,10 @@ public class TreeItemTests
         treeItem.EnvironmentIndex.Should().Be(environmentIndex);
     }
 
+    #endregion
+
+    #region ToString
+
     [Fact]
     public void ToString_ReturnsExpectedString()
     {
@@ -79,8 +86,8 @@ public class TreeItemTests
         var childItem1 = _fixture.Create<TreeItem>();
         var childItem2 = _fixture.Create<TreeItem>();
         var childOfChild2 = _fixture.Create<TreeItem>();
-        childItem2.Childs = new[] { childOfChild2 };
-        treeItem.Childs = new[] { childItem1, childItem2 };
+        childItem2.Childs = new[] {childOfChild2};
+        treeItem.Childs = new[] {childItem1, childItem2};
 
         // Act
         var result = treeItem.ToString();
@@ -96,8 +103,11 @@ public class TreeItemTests
             result.Should().Contain(child.ToString());
         }
     }
-    
-    
+
+    #endregion
+
+    #region GetHtmlId
+
     [Fact]
     public void GetHtmlId_ShouldReturnCorrectIdWhenParentIsNull()
     {
@@ -128,6 +138,10 @@ public class TreeItemTests
         result.Should().Be(expectedId);
     }
 
+    #endregion
+
+    #region GetIdentifier
+
     [Fact]
     public void GetIdentifier_WhenEnvironmentIsSetToLAndTagIsNull_ShouldReturnExpectedText()
     {
@@ -146,7 +160,7 @@ public class TreeItemTests
         // Assert
         result.Should().Be(expectedText);
     }
-    
+
     [Fact]
     public void GetIdentifier_WhenEnvironmentIsNotSetAndTagIsNull_ShouldReturnNullAsString()
     {
@@ -165,7 +179,7 @@ public class TreeItemTests
         // Assert
         result.Should().Be("NULL");
     }
-    
+
     [Fact]
     public void GetIdentifier_WhenTagIsStringAndTextContainsReadme_ShouldReturnEmptyString()
     {
@@ -184,7 +198,7 @@ public class TreeItemTests
         // Assert
         result.Should().BeEmpty();
     }
-    
+
     [Fact]
     public void GetIdentifier_WhenTagIsAssetAdministrationShell_ShouldReturnAasIdShort()
     {
@@ -224,7 +238,7 @@ public class TreeItemTests
         // Assert
         result.Should().Be(submodel.IdShort);
     }
-    
+
     [Fact]
     public void GetIdentifier_WhenTagIsASubmodelAndSubmodelKindIsTemplate_ShouldReturnSubmodelTypePlusIdShort()
     {
@@ -245,8 +259,8 @@ public class TreeItemTests
         // Assert
         result.Should().Be($"<T> {submodel.IdShort}");
     }
-    
-    
+
+
     [Fact]
     public void GetIdentifier_WhenTagIsISubmodelElement_ShouldReturnSubmodelElementIdShort()
     {
@@ -266,7 +280,7 @@ public class TreeItemTests
         // Assert
         result.Should().Be(submodel.IdShort);
     }
-    
+
     [Fact]
     public void GetIdentifier_WhenTagIsFile_ShouldReturnFileIdShort()
     {
@@ -286,7 +300,7 @@ public class TreeItemTests
         // Assert
         result.Should().Be(file.IdShort);
     }
-    
+
     [Fact]
     public void GetIdentifier_WhenTagIsBlob_ShouldReturnBlobIdShort()
     {
@@ -306,4 +320,53 @@ public class TreeItemTests
         // Assert
         result.Should().Be(blob.IdShort);
     }
+
+    #endregion
+
+    #region GetTimeStamp
+
+    [Fact]
+    public void GetTimeStamp_WhenTagIsNull_ShouldReturnEmptyString()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = null};
+
+        // Act
+        var result = treeItem.GetTimeStamp();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void GetTimeStamp_WhenTagIsNotIReferable_ShouldReturnEmptyString()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = new object()};
+
+        // Act
+        var result = treeItem.GetTimeStamp();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+
+    [Fact]
+    public void GetTimeStamp_WhenTagIsIReferableAndTimeStampTreeIsNotNull_ShouldReturnFormattedTimeStampString()
+    {
+        // Arrange
+        var timeStamp = DateTime.Now;
+        var referableObject = new Mock<IReferable>();
+        referableObject.SetupGet(r => r.TimeStampTree).Returns(timeStamp);
+        var treeItem = new TreeItem {Tag = referableObject.Object};
+
+        // Act
+        var result = treeItem.GetTimeStamp();
+
+        // Assert
+        result.Should().Be($" ({timeStamp:yy-MM-dd HH:mm:ss.fff}) ");
+    }
+
+    #endregion
 }
