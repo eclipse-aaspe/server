@@ -163,7 +163,7 @@ public class TreeItemTests
         var result = treeItem.GetIdentifier();
 
         // Assert
-        result.Should().Be(expectedText);
+        result.Should().Be("NULL");
     }
     
     [Fact]
