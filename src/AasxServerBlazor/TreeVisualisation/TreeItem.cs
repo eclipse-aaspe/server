@@ -10,7 +10,7 @@ namespace AasxServerBlazor.TreeVisualisation;
 
 public class TreeItem
 {
-    private const string EnvironmentSymbol = "L";
+    private const string EncryptionEnvironmentSymbol = "L";
     public string Text { get; set; }
     public IEnumerable<TreeItem> Childs { get; set; }
     public object Parent { get; set; }
@@ -181,7 +181,7 @@ public class TreeItem
 
     private bool IsEncrypted()
     {
-        return Program.envSymbols[EnvironmentIndex] == EnvironmentSymbol;
+        return Program.envSymbols[EnvironmentIndex] == EncryptionEnvironmentSymbol;
     }
 
     private void AppendNodeTypeIfMatchesType(object tagObject, StringBuilder builder, Type type, string appendString)
