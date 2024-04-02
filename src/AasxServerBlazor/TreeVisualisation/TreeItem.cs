@@ -214,103 +214,110 @@ public class TreeItem
     
     public string ViewNodeInfo()
     {
-        var ret = "";
+        var nodeInfo = string.Empty;
 
-        var o = Tag;
+        var tagObject = Tag;
 
-        if (o is AssetAdministrationShell)
+        switch (tagObject)
         {
-            var aas = o as AssetAdministrationShell;
-        }
-
-        if (o is Submodel)
-        {
-            var sm = o as Submodel;
-            if (sm.Qualifiers != null && sm.Qualifiers.Count > 0)
+            case AssetAdministrationShell:
+                break;
+            case Submodel submodel:
             {
-                ret += " @QUALIFIERS";
-            }
-        }
-
-        if (o is SubmodelElementCollection)
-        {
-            var sme = o as SubmodelElementCollection;
-            if (sme.Value != null)
-            {
-                if (sme.Value.Count > 0)
+                if (submodel.Qualifiers != null && submodel.Qualifiers.Count > 0)
                 {
-                    ret += " #" + sme.Value.Count;
-                }
-            }
-
-            if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
-            {
-                ret += " @QUALIFIERS";
-            }
-        }
-
-        if (o is ISubmodelElement)
-        {
-            if (o is Property)
-            {
-                var prop = o as Property;
-                if (prop.Value != null && prop.Value != "")
-                {
-                    var v = prop.Value;
-                    if (v.Length > 100)
-                        v = v.Substring(0, 100) + " ..";
-                    ret = " = " + v;
+                    nodeInfo += " @QUALIFIERS";
                 }
 
-                if (prop.Qualifiers != null && prop.Qualifiers.Count > 0)
-                {
-                    ret += " @QUALIFIERS";
-                }
+                break;
             }
-
-            if (o is AasCore.Aas3_0.File f)
+            case SubmodelElementCollection collection:
             {
-                if (f.Value != null)
-                    ret = " = " + f.Value;
-                if (f.Qualifiers != null && f.Qualifiers.Count > 0)
+                if (collection.Value is {Count: > 0})
                 {
-                    ret += " @QUALIFIERS";
+                    nodeInfo += " #" + collection.Value.Count;
                 }
+
+                if (collection.Qualifiers != null && collection.Qualifiers.Count > 0)
+                {
+                    nodeInfo += " @QUALIFIERS";
+                }
+
+                break;
             }
         }
 
-        if (o is AasCore.Aas3_0.Range)
+        if (tagObject is ISubmodelElement)
         {
-            var r = o as AasCore.Aas3_0.Range;
-            if (r.Min != null && r.Max != null)
-                ret = " = " + r.Min + " .. " + r.Max;
-            if (r.Qualifiers != null && r.Qualifiers.Count > 0)
+            switch (tagObject)
             {
-                ret += " @QUALIFIERS";
-            }
-        }
-
-        if (o is MultiLanguageProperty)
-        {
-            var mlp = o as MultiLanguageProperty;
-            var ls = mlp.Value;
-            if (ls != null)
-            {
-                ret = " = ";
-                for (var i = 0; i < ls.Count; i++)
+                case Property property:
                 {
-                    ret += ls[i].Language + " ";
-                    if (i == 0)
-                        ret += ls[i].Text + " ";
+                    if (property.Value != null && property.Value != "")
+                    {
+                        var v = property.Value;
+                        if (v.Length > 100)
+                            v = v[..100] + " ..";
+                        nodeInfo = " = " + v;
+                    }
+
+                    if (property.Qualifiers != null && property.Qualifiers.Count > 0)
+                    {
+                        nodeInfo += " @QUALIFIERS";
+                    }
+
+                    break;
+                }
+                case File f:
+                {
+                    if (f.Value != null)
+                        nodeInfo = " = " + f.Value;
+                    if (f.Qualifiers != null && f.Qualifiers.Count > 0)
+                    {
+                        nodeInfo += " @QUALIFIERS";
+                    }
+
+                    break;
                 }
             }
+        }
 
-            if (mlp.Qualifiers != null && mlp.Qualifiers.Count > 0)
+        switch (tagObject)
+        {
+            case Range rangeObject:
             {
-                ret += " @QUALIFIERS";
+                if (rangeObject.Min != null && rangeObject.Max != null)
+                    nodeInfo = " = " + rangeObject.Min + " .. " + rangeObject.Max;
+                if (rangeObject.Qualifiers != null && rangeObject.Qualifiers.Count > 0)
+                {
+                    nodeInfo += " @QUALIFIERS";
+                }
+
+                break;
+            }
+            case MultiLanguageProperty multiLanguageProperty:
+            {
+                var ls = multiLanguageProperty.Value;
+                if (ls != null)
+                {
+                    nodeInfo = " = ";
+                    for (var i = 0; i < ls.Count; i++)
+                    {
+                        nodeInfo += ls[i].Language + " ";
+                        if (i == 0)
+                            nodeInfo += ls[i].Text + " ";
+                    }
+                }
+
+                if (multiLanguageProperty.Qualifiers != null && multiLanguageProperty.Qualifiers.Count > 0)
+                {
+                    nodeInfo += " @QUALIFIERS";
+                }
+
+                break;
             }
         }
 
-        return (ret);
+        return (nodeInfo);
     }
 }
