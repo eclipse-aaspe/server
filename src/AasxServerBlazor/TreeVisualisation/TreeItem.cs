@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AasxServer;
+using AasxServerBlazor.TreeVisualisation.Builders;
+using Microsoft.Extensions.Primitives;
 using Blob = AasCore.Aas3_0.Blob;
 using Range = AasCore.Aas3_0.Range;
 
@@ -131,27 +133,26 @@ public class TreeItem
         {
             nodeType.Append("AASX2");
         }
+        
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(AssetAdministrationShell), "AAS"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Submodel), "Sub"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Operation), "Opr"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(File), "File"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Blob), "Blob"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Range), "Range"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(MultiLanguageProperty), "Lang"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(RelationshipElement), "Rel"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(ReferenceElement), "Ref"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Entity), "Ent"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(BasicEventElement), "Evt"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(AnnotatedRelationshipElement), "RelA"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Capability), "Cap"));
 
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(AssetAdministrationShell), "AAS");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Submodel), "Sub");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Operation), "Opr");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(File), "File");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Blob), "Blob");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Range), "Range");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(MultiLanguageProperty), "Lang");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(RelationshipElement), "Rel");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(ReferenceElement), "Ref");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Entity), "Ent");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(BasicEventElement), "Evt");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(AnnotatedRelationshipElement), "RelA");
-        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Capability), "Cap");
-
-        AppendSubmodelElementNodeType(tagObject, nodeType);
+        nodeType.Append(NodeRepresentationBuilder.AppendSubmodelElementNodeType(tagObject));
 
         return nodeType.ToString();
     }
-
-
+    
     public string BuildNodeDescription()
     {
         var nodeInfoBuilder = new StringBuilder();
@@ -159,10 +160,10 @@ public class TreeItem
         switch (Tag)
         {
             case Submodel submodel:
-                AppendSubmodelInfo(submodel, nodeInfoBuilder);
+                NodeDescriptionBuilder.AppendSubmodelInfo(submodel, nodeInfoBuilder);
                 break;
             case SubmodelElementCollection collection:
-                AppendCollectionInfo(collection, nodeInfoBuilder);
+                NodeDescriptionBuilder.AppendCollectionInfo(collection, nodeInfoBuilder);
                 break;
         }
 
@@ -171,15 +172,15 @@ public class TreeItem
             switch (Tag)
             {
                 case Property property:
-                    AppendPropertyInfo(property, nodeInfoBuilder);
+                    NodeDescriptionBuilder.AppendPropertyInfo(property, nodeInfoBuilder);
                     break;
                 case File file:
-                    AppendFileInfo(file, nodeInfoBuilder);
+                    NodeDescriptionBuilder.AppendFileInfo(file, nodeInfoBuilder);
                     break;
             }
         }
 
-        AppendAdditionalInfo(nodeInfoBuilder);
+        NodeDescriptionBuilder.AppendAdditionalInfo(nodeInfoBuilder,Tag);
 
         return nodeInfoBuilder.ToString();
     }
@@ -193,87 +194,7 @@ public class TreeItem
     {
         return Program.envSymbols[EnvironmentIndex] == EncryptionEnvironmentSymbol;
     }
-
-    private void AppendNodeTypeIfMatchesType(object tagObject, StringBuilder builder, Type type, string appendString)
-    {
-        if (tagObject is not null && tagObject.GetType() == type)
-        {
-            builder.Append(appendString);
-        }
-    }
-
-    private static void AppendSubmodelElementNodeType(object tagObject, StringBuilder builder)
-    {
-        if (tagObject is not ISubmodelElement submodelElement)
-        {
-            return;
-        }
-
-        switch (submodelElement)
-        {
-            case SubmodelElementList:
-                builder.Append("SML");
-                break;
-            case SubmodelElementCollection:
-                builder.Append("Coll");
-                break;
-            case Property:
-                builder.Append("Prop");
-                break;
-        }
-    }
-
-    private void AppendAdditionalInfo(StringBuilder nodeInfoBuilder)
-    {
-        switch (Tag)
-        {
-            case Range rangeObject:
-                AppendRangeInfo(rangeObject, nodeInfoBuilder);
-                break;
-            case MultiLanguageProperty multiLanguageProperty:
-                AppendMultiLanguagePropertyInfo(multiLanguageProperty, nodeInfoBuilder);
-                break;
-        }
-    }
-
-    private static void AppendRangeInfo(IRange rangeObject, StringBuilder nodeInfoBuilder)
-    {
-        if (rangeObject.Min == null || rangeObject.Max == null)
-        {
-            return;
-        }
-
-        nodeInfoBuilder.Append(" = " + rangeObject.Min + " .. " + rangeObject.Max);
-        AppendQualifiersInfo(rangeObject.Qualifiers, nodeInfoBuilder);
-    }
-
-    private static void AppendMultiLanguagePropertyInfo(IMultiLanguageProperty multiLanguageProperty, StringBuilder nodeInfoBuilder)
-    {
-        var langStringTextTypes = multiLanguageProperty.Value;
-        if (langStringTextTypes != null)
-        {
-            nodeInfoBuilder.Append(" = ");
-            for (var i = 0; i < langStringTextTypes.Count; i++)
-            {
-                nodeInfoBuilder.Append(langStringTextTypes[i].Language + " ");
-                if (i == 0)
-                {
-                    nodeInfoBuilder.Append(langStringTextTypes[i].Text + " ");
-                }
-            }
-        }
-
-        AppendQualifiersInfo(multiLanguageProperty.Qualifiers, nodeInfoBuilder);
-    }
-
-    private static void AppendQualifiersInfo(IEnumerable<IQualifier> qualifiers, StringBuilder nodeInfoBuilder)
-    {
-        if (qualifiers != null && qualifiers.Any())
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
+    
     private static string GetIdShortFromTag(object tag)
     {
         return tag switch
@@ -285,15 +206,7 @@ public class TreeItem
             _ => "NULL" //This based on the previous implementation and I don't know the side effects of changing it yet, so it should stay this way for now.
         };
     }
-
-    private static void AppendSubmodelInfo(IQualifiable submodel, StringBuilder nodeInfoBuilder)
-    {
-        if (submodel.Qualifiers != null && submodel.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
+    
     private static string TranslateSymbol(string symbol)
     {
         return symbol switch
@@ -303,45 +216,5 @@ public class TreeItem
             "V" => "VALIDATED",
             _ => string.Empty
         };
-    }
-
-    private static void AppendCollectionInfo(ISubmodelElementCollection collection, StringBuilder nodeInfoBuilder)
-    {
-        if (collection.Value?.Count > 0)
-        {
-            nodeInfoBuilder.Append(" #" + collection.Value.Count);
-        }
-
-        if (collection.Qualifiers != null && collection.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
-    private static void AppendPropertyInfo(IProperty property, StringBuilder nodeInfoBuilder)
-    {
-        if (!string.IsNullOrEmpty(property.Value))
-        {
-            var value = property.Value.Length > 100 ? property.Value[..100] + " .." : property.Value;
-            nodeInfoBuilder.Append(" = " + value);
-        }
-
-        if (property.Qualifiers != null && property.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
-    private static void AppendFileInfo(IFile file, StringBuilder nodeInfoBuilder)
-    {
-        if (file.Value != null)
-        {
-            nodeInfoBuilder.Append(" = " + file.Value);
-        }
-
-        if (file.Qualifiers != null && file.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
     }
 }
