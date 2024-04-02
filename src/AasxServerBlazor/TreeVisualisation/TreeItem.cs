@@ -71,18 +71,6 @@ public class TreeItem
         }
     }
 
-    private static string GetIdShortFromTag(object tag)
-    {
-        return tag switch
-        {
-            File f => f.IdShort,
-            Blob blob => blob.IdShort,
-            Range range => range.IdShort,
-            MultiLanguageProperty multiLanguageProperty => multiLanguageProperty.IdShort,
-            _ => "NULL" //This based on the previous implementation and I don't know the side effects of changing it yet, so it should stay this way for now.
-        };
-    }
-
     public string GetTimeStamp()
     {
         var timeStampString = string.Empty;
@@ -121,17 +109,6 @@ public class TreeItem
         symbolicRepresentation = environmentSymbols.Split(';').Aggregate(symbolicRepresentation, (current, symbol) => current + (TranslateSymbol(symbol) + " "));
 
         return symbolicRepresentation.Trim();
-    }
-
-    private static string TranslateSymbol(string symbol)
-    {
-        return symbol switch
-        {
-            "L" => "ENCRYPTED",
-            "S" => "SIGNED",
-            "V" => "VALIDATED",
-            _ => string.Empty
-        };
     }
 
     public string BuildNodeRepresentation()
@@ -174,6 +151,39 @@ public class TreeItem
         return nodeType.ToString();
     }
 
+
+    public string BuildNodeDescription()
+    {
+        var nodeInfoBuilder = new StringBuilder();
+
+        switch (Tag)
+        {
+            case Submodel submodel:
+                AppendSubmodelInfo(submodel, nodeInfoBuilder);
+                break;
+            case SubmodelElementCollection collection:
+                AppendCollectionInfo(collection, nodeInfoBuilder);
+                break;
+        }
+
+        if (Tag is ISubmodelElement)
+        {
+            switch (Tag)
+            {
+                case Property property:
+                    AppendPropertyInfo(property, nodeInfoBuilder);
+                    break;
+                case File file:
+                    AppendFileInfo(file, nodeInfoBuilder);
+                    break;
+            }
+        }
+
+        AppendAdditionalInfo(nodeInfoBuilder);
+
+        return nodeInfoBuilder.ToString();
+    }
+
     private bool IsReadme()
     {
         return Tag is string && Text.Contains("/readme");
@@ -210,86 +220,6 @@ public class TreeItem
             case Property:
                 builder.Append("Prop");
                 break;
-        }
-    }
-
-    public string BuildNodeDescription()
-    {
-        var nodeInfoBuilder = new StringBuilder();
-
-        switch (Tag)
-        {
-            case Submodel submodel:
-                AppendSubmodelInfo(submodel, nodeInfoBuilder);
-                break;
-            case SubmodelElementCollection collection:
-                AppendCollectionInfo(collection, nodeInfoBuilder);
-                break;
-        }
-
-        if (Tag is ISubmodelElement)
-        {
-            switch (Tag)
-            {
-                case Property property:
-                    AppendPropertyInfo(property, nodeInfoBuilder);
-                    break;
-                case File file:
-                    AppendFileInfo(file, nodeInfoBuilder);
-                    break;
-            }
-        }
-
-        AppendAdditionalInfo(nodeInfoBuilder);
-
-        return nodeInfoBuilder.ToString();
-    }
-
-    private static void AppendSubmodelInfo(IQualifiable submodel, StringBuilder nodeInfoBuilder)
-    {
-        if (submodel.Qualifiers != null && submodel.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
-    private static void AppendCollectionInfo(ISubmodelElementCollection collection, StringBuilder nodeInfoBuilder)
-    {
-        if (collection.Value?.Count > 0)
-        {
-            nodeInfoBuilder.Append(" #" + collection.Value.Count);
-        }
-
-        if (collection.Qualifiers != null && collection.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
-    private static void AppendPropertyInfo(IProperty property, StringBuilder nodeInfoBuilder)
-    {
-        if (!string.IsNullOrEmpty(property.Value))
-        {
-            var value = property.Value.Length > 100 ? property.Value[..100] + " .." : property.Value;
-            nodeInfoBuilder.Append(" = " + value);
-        }
-
-        if (property.Qualifiers != null && property.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
-        }
-    }
-
-    private static void AppendFileInfo(IFile file, StringBuilder nodeInfoBuilder)
-    {
-        if (file.Value != null)
-        {
-            nodeInfoBuilder.Append(" = " + file.Value);
-        }
-
-        if (file.Qualifiers != null && file.Qualifiers.Count > 0)
-        {
-            nodeInfoBuilder.Append(" @QUALIFIERS");
         }
     }
 
@@ -339,6 +269,77 @@ public class TreeItem
     private static void AppendQualifiersInfo(IEnumerable<IQualifier> qualifiers, StringBuilder nodeInfoBuilder)
     {
         if (qualifiers != null && qualifiers.Any())
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static string GetIdShortFromTag(object tag)
+    {
+        return tag switch
+        {
+            File f => f.IdShort,
+            Blob blob => blob.IdShort,
+            Range range => range.IdShort,
+            MultiLanguageProperty multiLanguageProperty => multiLanguageProperty.IdShort,
+            _ => "NULL" //This based on the previous implementation and I don't know the side effects of changing it yet, so it should stay this way for now.
+        };
+    }
+
+    private static void AppendSubmodelInfo(IQualifiable submodel, StringBuilder nodeInfoBuilder)
+    {
+        if (submodel.Qualifiers != null && submodel.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static string TranslateSymbol(string symbol)
+    {
+        return symbol switch
+        {
+            "L" => "ENCRYPTED",
+            "S" => "SIGNED",
+            "V" => "VALIDATED",
+            _ => string.Empty
+        };
+    }
+
+    private static void AppendCollectionInfo(ISubmodelElementCollection collection, StringBuilder nodeInfoBuilder)
+    {
+        if (collection.Value?.Count > 0)
+        {
+            nodeInfoBuilder.Append(" #" + collection.Value.Count);
+        }
+
+        if (collection.Qualifiers != null && collection.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static void AppendPropertyInfo(IProperty property, StringBuilder nodeInfoBuilder)
+    {
+        if (!string.IsNullOrEmpty(property.Value))
+        {
+            var value = property.Value.Length > 100 ? property.Value[..100] + " .." : property.Value;
+            nodeInfoBuilder.Append(" = " + value);
+        }
+
+        if (property.Qualifiers != null && property.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static void AppendFileInfo(IFile file, StringBuilder nodeInfoBuilder)
+    {
+        if (file.Value != null)
+        {
+            nodeInfoBuilder.Append(" = " + file.Value);
+        }
+
+        if (file.Qualifiers != null && file.Qualifiers.Count > 0)
         {
             nodeInfoBuilder.Append(" @QUALIFIERS");
         }
