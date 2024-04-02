@@ -668,4 +668,136 @@ public class TreeItemTests
     }
 
     #endregion
+
+    #region ViewNodeInfo
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsAssetAdministrationShell_ShouldReturnEmptyString()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<AssetAdministrationShell>()};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsSubmodelAndQualifiersNotNull_ShouldReturnQualifiersString()
+    {
+        // Arrange
+        var qualifiers = new List<IQualifier>
+        {
+            _fixture.Create<IQualifier>(),
+            _fixture.Create<IQualifier>()
+        };
+        var submodel = _fixture.Build<Submodel>().With(sm => sm.Qualifiers, qualifiers).Create();
+        var treeItem = new TreeItem {Tag = submodel};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" @QUALIFIERS");
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsRangeAndQualifiersNotNull_ShouldReturnQualifiersString()
+    {
+        // Arrange
+        var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
+        var range = _fixture.Build<AasCore.Aas3_0.Range>().With(r => r.Min, "Value1").With(r => r.Max, "Value2").With(r => r.Qualifiers, qualifiers).Create();
+        var treeItem = new TreeItem {Tag = range};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" = Value1 .. Value2 @QUALIFIERS");
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsSubmodelElementCollectionAndValueNotNull_ShouldReturnValueCountString()
+    {
+        // Arrange
+        var submodelElements = _fixture.CreateMany<ISubmodelElement>(2).ToList();
+        var submodelElementCollection = _fixture.Build<SubmodelElementCollection>().With(sme => sme.Value, submodelElements).Create();
+        var treeItem = new TreeItem {Tag = submodelElementCollection};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" #2 @QUALIFIERS");
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsSubmodelElementCollectionAndQualifiersNotNull_ShouldReturnQualifiersString()
+    {
+        // Arrange
+        var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
+        var submodelElementCollection = _fixture.Build<SubmodelElementCollection>().With(sme => sme.Qualifiers, qualifiers).Create();
+        var treeItem = new TreeItem {Tag = submodelElementCollection};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" #3 @QUALIFIERS");
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsPropertyAndQualifiersNotNull_ShouldReturnQualifiersString()
+    {
+        // Arrange
+        var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
+        var property = _fixture.Build<Property>()
+            .With(prop => prop.Qualifiers, qualifiers)
+            .With(prop => prop.Value, "PropertyValue")
+            .Create();
+        var treeItem = new TreeItem {Tag = property};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" = PropertyValue @QUALIFIERS");
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsFileAndQualifiersNotNull_ShouldReturnQualifiersString()
+    {
+        // Arrange
+        var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
+        var file = _fixture.Build<AasCore.Aas3_0.File>()
+            .With(f => f.Qualifiers, qualifiers)
+            .With(f => f.Value, string.Empty)
+            .Create();
+        var treeItem = new TreeItem {Tag = file};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" =  @QUALIFIERS");
+    }
+
+    [Fact]
+    public void ViewNodeInfo_WhenTagIsMultiLanguagePropertyAndQualifiersNotNull_ShouldReturnQualifiersString()
+    {
+        // Arrange
+        var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
+        var multiLanguageProperty = _fixture.Build<MultiLanguageProperty>().With(mlp => mlp.Qualifiers, qualifiers).Create();
+        var treeItem = new TreeItem {Tag = multiLanguageProperty};
+
+        // Act
+        var result = treeItem.ViewNodeInfo();
+
+        // Assert
+        result.Should().Be(" =      @QUALIFIERS");
+    }
+
+    #endregion
 }
