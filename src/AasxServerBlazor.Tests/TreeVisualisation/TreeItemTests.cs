@@ -669,7 +669,7 @@ public class TreeItemTests
 
     #endregion
 
-    #region ViewNodeInfo
+    #region BuildNodeDescription
 
     [Fact]
     public void ViewNodeInfo_WhenTagIsAssetAdministrationShell_ShouldReturnEmptyString()
@@ -678,14 +678,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = _fixture.Create<AssetAdministrationShell>()};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsSubmodelAndQualifiersNotNull_ShouldReturnQualifiersString()
+    public void BuildNodeDescription_WhenTagIsSubmodelAndQualifiersNotNull_ShouldReturnQualifiersString()
     {
         // Arrange
         var qualifiers = new List<IQualifier>
@@ -697,14 +697,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = submodel};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" @QUALIFIERS");
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsRangeAndQualifiersNotNull_ShouldReturnQualifiersString()
+    public void BuildNodeDescription_WhenTagIsRangeAndQualifiersNotNull_ShouldReturnQualifiersString()
     {
         // Arrange
         var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
@@ -712,14 +712,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = range};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" = Value1 .. Value2 @QUALIFIERS");
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsSubmodelElementCollectionAndValueNotNull_ShouldReturnValueCountString()
+    public void BuildNodeDescription_WhenTagIsSubmodelElementCollectionAndValueNotNull_ShouldReturnValueCountString()
     {
         // Arrange
         var submodelElements = _fixture.CreateMany<ISubmodelElement>(2).ToList();
@@ -727,14 +727,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = submodelElementCollection};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" #2 @QUALIFIERS");
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsSubmodelElementCollectionAndQualifiersNotNull_ShouldReturnQualifiersString()
+    public void BuildNodeDescription_WhenTagIsSubmodelElementCollectionAndQualifiersNotNull_ShouldReturnQualifiersString()
     {
         // Arrange
         var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
@@ -742,14 +742,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = submodelElementCollection};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" #3 @QUALIFIERS");
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsPropertyAndQualifiersNotNull_ShouldReturnQualifiersString()
+    public void BuildNodeDescription_WhenTagIsPropertyAndQualifiersNotNull_ShouldReturnQualifiersString()
     {
         // Arrange
         var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
@@ -760,14 +760,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = property};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" = PropertyValue @QUALIFIERS");
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsFileAndQualifiersNotNull_ShouldReturnQualifiersString()
+    public void BuildNodeDescription_WhenTagIsFileAndQualifiersNotNull_ShouldReturnQualifiersString()
     {
         // Arrange
         var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
@@ -778,14 +778,14 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = file};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" =  @QUALIFIERS");
     }
 
     [Fact]
-    public void ViewNodeInfo_WhenTagIsMultiLanguagePropertyAndQualifiersNotNull_ShouldReturnQualifiersString()
+    public void BuildNodeDescription_WhenTagIsMultiLanguagePropertyAndQualifiersNotNull_ShouldReturnQualifiersString()
     {
         // Arrange
         var qualifiers = _fixture.CreateMany<IQualifier>(2).ToList();
@@ -793,7 +793,7 @@ public class TreeItemTests
         var treeItem = new TreeItem {Tag = multiLanguageProperty};
 
         // Act
-        var result = treeItem.ViewNodeInfo();
+        var result = treeItem.BuildNodeDescription();
 
         // Assert
         result.Should().Be(" =      @QUALIFIERS");

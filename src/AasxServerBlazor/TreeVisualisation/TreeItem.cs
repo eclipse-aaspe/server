@@ -168,7 +168,7 @@ public class TreeItem
         AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(BasicEventElement), "Evt");
         AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(AnnotatedRelationshipElement), "RelA");
         AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Capability), "Cap");
-        
+
         AppendSubmodelElementNodeType(tagObject, nodeType);
 
         return nodeType.ToString();
@@ -198,6 +198,7 @@ public class TreeItem
         {
             return;
         }
+
         switch (submodelElement)
         {
             case SubmodelElementList:
@@ -211,113 +212,135 @@ public class TreeItem
                 break;
         }
     }
-    
-    public string ViewNodeInfo()
+
+    public string BuildNodeDescription()
     {
-        var nodeInfo = string.Empty;
+        var nodeInfoBuilder = new StringBuilder();
 
-        var tagObject = Tag;
-
-        switch (tagObject)
+        switch (Tag)
         {
-            case AssetAdministrationShell:
-                break;
             case Submodel submodel:
-            {
-                if (submodel.Qualifiers != null && submodel.Qualifiers.Count > 0)
-                {
-                    nodeInfo += " @QUALIFIERS";
-                }
-
+                AppendSubmodelInfo(submodel, nodeInfoBuilder);
                 break;
-            }
             case SubmodelElementCollection collection:
-            {
-                if (collection.Value is {Count: > 0})
-                {
-                    nodeInfo += " #" + collection.Value.Count;
-                }
-
-                if (collection.Qualifiers != null && collection.Qualifiers.Count > 0)
-                {
-                    nodeInfo += " @QUALIFIERS";
-                }
-
+                AppendCollectionInfo(collection, nodeInfoBuilder);
                 break;
-            }
         }
 
-        if (tagObject is ISubmodelElement)
+        if (Tag is ISubmodelElement)
         {
-            switch (tagObject)
+            switch (Tag)
             {
                 case Property property:
-                {
-                    if (property.Value != null && property.Value != "")
-                    {
-                        var v = property.Value;
-                        if (v.Length > 100)
-                            v = v[..100] + " ..";
-                        nodeInfo = " = " + v;
-                    }
-
-                    if (property.Qualifiers != null && property.Qualifiers.Count > 0)
-                    {
-                        nodeInfo += " @QUALIFIERS";
-                    }
-
+                    AppendPropertyInfo(property, nodeInfoBuilder);
                     break;
-                }
-                case File f:
-                {
-                    if (f.Value != null)
-                        nodeInfo = " = " + f.Value;
-                    if (f.Qualifiers != null && f.Qualifiers.Count > 0)
-                    {
-                        nodeInfo += " @QUALIFIERS";
-                    }
-
+                case File file:
+                    AppendFileInfo(file, nodeInfoBuilder);
                     break;
-                }
             }
         }
 
-        switch (tagObject)
+        AppendAdditionalInfo(nodeInfoBuilder);
+
+        return nodeInfoBuilder.ToString();
+    }
+
+    private static void AppendSubmodelInfo(IQualifiable submodel, StringBuilder nodeInfoBuilder)
+    {
+        if (submodel.Qualifiers != null && submodel.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static void AppendCollectionInfo(ISubmodelElementCollection collection, StringBuilder nodeInfoBuilder)
+    {
+        if (collection.Value?.Count > 0)
+        {
+            nodeInfoBuilder.Append(" #" + collection.Value.Count);
+        }
+
+        if (collection.Qualifiers != null && collection.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static void AppendPropertyInfo(IProperty property, StringBuilder nodeInfoBuilder)
+    {
+        if (!string.IsNullOrEmpty(property.Value))
+        {
+            var value = property.Value.Length > 100 ? property.Value[..100] + " .." : property.Value;
+            nodeInfoBuilder.Append(" = " + value);
+        }
+
+        if (property.Qualifiers != null && property.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private static void AppendFileInfo(IFile file, StringBuilder nodeInfoBuilder)
+    {
+        if (file.Value != null)
+        {
+            nodeInfoBuilder.Append(" = " + file.Value);
+        }
+
+        if (file.Qualifiers != null && file.Qualifiers.Count > 0)
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
+    }
+
+    private void AppendAdditionalInfo(StringBuilder nodeInfoBuilder)
+    {
+        switch (Tag)
         {
             case Range rangeObject:
-            {
-                if (rangeObject.Min != null && rangeObject.Max != null)
-                    nodeInfo = " = " + rangeObject.Min + " .. " + rangeObject.Max;
-                if (rangeObject.Qualifiers != null && rangeObject.Qualifiers.Count > 0)
-                {
-                    nodeInfo += " @QUALIFIERS";
-                }
-
+                AppendRangeInfo(rangeObject, nodeInfoBuilder);
                 break;
-            }
             case MultiLanguageProperty multiLanguageProperty:
-            {
-                var ls = multiLanguageProperty.Value;
-                if (ls != null)
-                {
-                    nodeInfo = " = ";
-                    for (var i = 0; i < ls.Count; i++)
-                    {
-                        nodeInfo += ls[i].Language + " ";
-                        if (i == 0)
-                            nodeInfo += ls[i].Text + " ";
-                    }
-                }
-
-                if (multiLanguageProperty.Qualifiers != null && multiLanguageProperty.Qualifiers.Count > 0)
-                {
-                    nodeInfo += " @QUALIFIERS";
-                }
-
+                AppendMultiLanguagePropertyInfo(multiLanguageProperty, nodeInfoBuilder);
                 break;
+        }
+    }
+
+    private static void AppendRangeInfo(IRange rangeObject, StringBuilder nodeInfoBuilder)
+    {
+        if (rangeObject.Min == null || rangeObject.Max == null)
+        {
+            return;
+        }
+
+        nodeInfoBuilder.Append(" = " + rangeObject.Min + " .. " + rangeObject.Max);
+        AppendQualifiersInfo(rangeObject.Qualifiers, nodeInfoBuilder);
+    }
+
+    private static void AppendMultiLanguagePropertyInfo(IMultiLanguageProperty multiLanguageProperty, StringBuilder nodeInfoBuilder)
+    {
+        var langStringTextTypes = multiLanguageProperty.Value;
+        if (langStringTextTypes != null)
+        {
+            nodeInfoBuilder.Append(" = ");
+            for (var i = 0; i < langStringTextTypes.Count; i++)
+            {
+                nodeInfoBuilder.Append(langStringTextTypes[i].Language + " ");
+                if (i == 0)
+                {
+                    nodeInfoBuilder.Append(langStringTextTypes[i].Text + " ");
+                }
             }
         }
 
-        return (nodeInfo);
+        AppendQualifiersInfo(multiLanguageProperty.Qualifiers, nodeInfoBuilder);
+    }
+
+    private static void AppendQualifiersInfo(IEnumerable<IQualifier> qualifiers, StringBuilder nodeInfoBuilder)
+    {
+        if (qualifiers != null && qualifiers.Any())
+        {
+            nodeInfoBuilder.Append(" @QUALIFIERS");
+        }
     }
 }
