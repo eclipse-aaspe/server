@@ -133,26 +133,26 @@ public class TreeItem
         {
             nodeType.Append("AASX2");
         }
-        
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(AssetAdministrationShell), "AAS"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Submodel), "Sub"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Operation), "Opr"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(File), "File"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Blob), "Blob"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Range), "Range"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(MultiLanguageProperty), "Lang"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(RelationshipElement), "Rel"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(ReferenceElement), "Ref"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Entity), "Ent"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(BasicEventElement), "Evt"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(AnnotatedRelationshipElement), "RelA"));
-        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject,typeof(Capability), "Cap"));
+
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(AssetAdministrationShell), "AAS"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(Submodel), "Sub"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(Operation), "Opr"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(File), "File"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(Blob), "Blob"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(Range), "Range"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(MultiLanguageProperty), "Lang"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(RelationshipElement), "Rel"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(ReferenceElement), "Ref"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(Entity), "Ent"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(BasicEventElement), "Evt"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(AnnotatedRelationshipElement), "RelA"));
+        nodeType.Append(NodeRepresentationBuilder.AppendNodeTypeIfMatchesType(tagObject, typeof(Capability), "Cap"));
 
         nodeType.Append(NodeRepresentationBuilder.AppendSubmodelElementNodeType(tagObject));
 
         return nodeType.ToString();
     }
-    
+
     public string BuildNodeDescription()
     {
         var nodeInfoBuilder = new StringBuilder();
@@ -180,7 +180,7 @@ public class TreeItem
             }
         }
 
-        NodeDescriptionBuilder.AppendAdditionalInfo(nodeInfoBuilder,Tag);
+        NodeDescriptionBuilder.AppendAdditionalInfo(nodeInfoBuilder, Tag);
 
         return nodeInfoBuilder.ToString();
     }
@@ -194,7 +194,7 @@ public class TreeItem
     {
         return Program.envSymbols[EnvironmentIndex] == EncryptionEnvironmentSymbol;
     }
-    
+
     private static string GetIdShortFromTag(object tag)
     {
         return tag switch
@@ -206,7 +206,7 @@ public class TreeItem
             _ => "NULL" //This based on the previous implementation and I don't know the side effects of changing it yet, so it should stay this way for now.
         };
     }
-    
+
     private static string TranslateSymbol(string symbol)
     {
         return symbol switch
