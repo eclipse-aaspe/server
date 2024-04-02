@@ -174,7 +174,7 @@ public class TreeItemTests
         var treeItem = new TreeItem
         {
             Text = expectedText, EnvironmentIndex = 0,
-            Tag = string.Empty
+            Tag = expectedText
         };
         Program.envSymbols = new[] {"M"};
 
