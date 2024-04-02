@@ -185,6 +185,20 @@ public class TreeItem
         return nodeInfoBuilder.ToString();
     }
 
+    /// <summary>
+    /// Checks if the node represents a SubmodelElementCollection.
+    /// </summary>
+    /// <returns>True if the node is a SubmodelElementCollection, otherwise false.</returns>
+    public bool IsSubmodelElementCollection()
+    {
+        return Tag switch
+        {
+            SubmodelElementCollection => true,
+            SubmodelElementList => false,
+            _ => false
+        };
+    }
+
     private bool IsReadme()
     {
         return Tag is string && Text.Contains("/readme");

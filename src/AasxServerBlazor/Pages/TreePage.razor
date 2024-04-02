@@ -894,33 +894,6 @@
         return "";
     }
 
-
-    /// <summary>
-    /// This method list added to check if Node is only SubmodelElementCollection (from V2)
-    /// 
-    /// </summary>
-    /// <param name="treeItem"></param>
-    /// <returns></returns>
-    bool IsSmColl(TreeItem treeItem)
-    {
-        if (treeItem == null)
-        {
-            return false;
-        }
-
-        if (treeItem.Tag is SubmodelElementList)
-        {
-            return false;
-        }
-
-        if (treeItem.Tag is SubmodelElementCollection)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     string ViewNodeDetails(TreeItem treeItem, int line, int col)
     {
         if (treeItem == null)

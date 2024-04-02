@@ -800,4 +800,60 @@ public class TreeItemTests
     }
 
     #endregion
+
+    #region IsSubmodelElementCollection
+
+    [Fact]
+    public void IsSubmodelElementCollection_WhenTagIsSubmodelElementList_ShouldReturnFalse()
+    {
+        // Arrange
+        var treeItem = new TreeItem
+        {
+            Tag = _fixture.Create<SubmodelElementList>()
+        };
+
+        // Act
+        var result = treeItem.IsSubmodelElementCollection();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsSubmodelElementCollection_WhenTagIsSubmodelElementCollection_ShouldReturnTrue()
+    {
+        // Arrange
+        var treeItem = new TreeItem
+        {
+            Tag = _fixture.Create<SubmodelElementCollection>()
+        };
+
+        // Act
+        var result = treeItem.IsSubmodelElementCollection();
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsSubmodelElementCollection_WhenTagIsNotSubmodelElement_ShouldReturnFalse()
+    {
+        // Arrange
+        var treeItem = new TreeItem
+        {
+            Tag = _fixture.Create<SomeOtherType>()
+        };
+
+        // Act
+        var result = treeItem.IsSubmodelElementCollection();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    private class SomeOtherType
+    {
+    }
+
+    #endregion
 }
