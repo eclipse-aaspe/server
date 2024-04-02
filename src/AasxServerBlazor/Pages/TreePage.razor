@@ -96,14 +96,14 @@
                         }
                     }
 
-                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+                    <span style="color:white;background-color:blue;">@context.BuildNodeRepresentation()</span>
                     @context.GetIdentifier()
                     @if (Program.withPolicy && getPolicy != "")
                     {
                         <span style="color:blue">&nbsp @getPolicy</span>
                     }
 
-                    <span style="color:blue;font-size:14px">@getSymbols(context)</span>
+                    <span style="color:blue;font-size:14px">@context.GetSymbolicRepresentation()</span>
                     <span style="color:lightgray;font-size:14px">@context.GetTimeStamp()</span>
                 }
             </TitleTemplate>
@@ -116,7 +116,7 @@
                 {
                     if (!(SelectedNode.Tag is string))
                     {
-                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
+                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@SelectedNode.BuildNodeRepresentation()</span>
                         <span id="SelectedNodeInfoId">@SelectedNode.GetIdentifier()</span>
                         <br>
                     }
@@ -965,44 +965,6 @@
         return "";
     }
 
-    string getSymbols(TreeItem treeItem)
-    {
-        if (treeItem == null)
-        {
-            return "";
-        }
-
-        var ret = "";
-        var o = treeItem.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            var symbols = Program.envSymbols[treeItem.EnvironmentIndex];
-
-            if (symbols != null)
-            {
-                var s = symbols.Split(';');
-
-                for (var i = 0; i < s.Length; i++)
-                {
-                    switch (s[i])
-                    {
-                        case "L":
-                            ret += "ENCRYPTED ";
-                            break;
-                        case "S":
-                            ret += "SIGNED ";
-                            break;
-                        case "V":
-                            ret += "VALIDATED ";
-                            break;
-                    }
-                }
-            }
-        }
-
-        return ret;
-    }
 
     /// <summary>
     /// This method list added to check if Node is only SubmodelElementCollection (from V2)
@@ -1030,116 +992,7 @@
         return false;
     }
 
-    string ViewNodeType(TreeItem treeItem)
-    {
-        if (treeItem == null)
-        {
-            return "";
-        }
-
-        var ret = "";
-
-        if (treeItem.Type != null)
-        {
-            ret = treeItem.Type + " ";
-        }
-
-        var o = treeItem.Tag;
-
-        if (o is string && treeItem.Text.Contains("/readme"))
-        {
-            ret += treeItem.Text;
-        }
-
-        if (o == null && Program.envSymbols[treeItem.EnvironmentIndex] == "L")
-        {
-            ret += "AASX2";
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            ret += "AAS";
-        }
-
-        if (o is Submodel)
-        {
-            ret += "Sub";
-        }
-
-        if (o is ISubmodelElement)
-        {
-            if (o is SubmodelElementList)
-            {
-                ret += "SML";
-            }
-            else if (o is SubmodelElementCollection)
-            {
-                ret += "Coll";
-            }
-
-            if (o is Property)
-            {
-                ret += "Prop";
-            }
-        }
-
-        if (o is Operation)
-        {
-            ret += "Opr";
-        }
-
-        if (o is AasCore.Aas3_0.File)
-        {
-            ret += "File";
-        }
-
-        if (o is Blob)
-        {
-            ret += "Blob";
-        }
-
-        if (o is AasCore.Aas3_0.Range)
-        {
-            ret += "Range";
-        }
-
-        if (o is MultiLanguageProperty)
-        {
-            ret += "Lang";
-        }
-
-        if (o is RelationshipElement)
-        {
-            ret += "Rel";
-        }
-
-        if (o is ReferenceElement)
-        {
-            ret += "Ref";
-        }
-
-        if (o is Entity)
-        {
-            ret += "Ent";
-        }
-
-        if (o is BasicEventElement)
-        {
-            ret += "Evt";
-        }
-
-        if (o is AnnotatedRelationshipElement)
-        {
-            ret += "RelA";
-        }
-
-        if (o is Capability)
-        {
-            ret += "Cap";
-        }
-
-        return (ret);
-    }
+   
 
     
 

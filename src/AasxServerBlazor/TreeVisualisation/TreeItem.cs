@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using AasxServer;
 using Blob = AasCore.Aas3_0.Blob;
+using Range = AasCore.Aas3_0.Range;
 
 namespace AasxServerBlazor.TreeVisualisation;
 
@@ -51,7 +54,7 @@ public class TreeItem
     {
         switch (Tag)
         {
-            case null when Program.envSymbols[EnvironmentIndex] == EnvironmentSymbol:
+            case null when IsEncrypted():
                 return Text;
             case string tagString when tagString.Contains("/readme"):
                 return string.Empty;
@@ -79,7 +82,7 @@ public class TreeItem
             _ => "NULL" //This based on the previous implementation and I don't know the side effects of changing it yet, so it should stay this way for now.
         };
     }
-    
+
     public string GetTimeStamp()
     {
         var timeStampString = string.Empty;
@@ -94,4 +97,118 @@ public class TreeItem
         return timeStampString;
     }
 
+    public string GetSymbolicRepresentation()
+    {
+        var symbolicRepresentation = string.Empty;
+
+        if (Tag is not AssetAdministrationShell)
+        {
+            return symbolicRepresentation;
+        }
+
+        if (EnvironmentIndex < 0 || EnvironmentIndex >= Program.envSymbols.Length)
+        {
+            return string.Empty;
+        }
+
+        var environmentSymbols = Program.envSymbols[EnvironmentIndex];
+
+        if (environmentSymbols == null)
+        {
+            return symbolicRepresentation;
+        }
+
+        symbolicRepresentation = environmentSymbols.Split(';').Aggregate(symbolicRepresentation, (current, symbol) => current + (TranslateSymbol(symbol) + " "));
+
+        return symbolicRepresentation.Trim();
+    }
+
+    private static string TranslateSymbol(string symbol)
+    {
+        return symbol switch
+        {
+            "L" => "ENCRYPTED",
+            "S" => "SIGNED",
+            "V" => "VALIDATED",
+            _ => string.Empty
+        };
+    }
+
+    public string BuildNodeRepresentation()
+    {
+        var nodeType = new StringBuilder();
+
+        if (Type != null)
+        {
+            nodeType.Append(Type + " ");
+        }
+
+        if (IsReadme())
+        {
+            nodeType.Append(Text);
+        }
+
+        var tagObject = Tag;
+
+        if (tagObject == null && IsEncrypted())
+        {
+            nodeType.Append("AASX2");
+        }
+
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(AssetAdministrationShell), "AAS");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Submodel), "Sub");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Operation), "Opr");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(File), "File");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Blob), "Blob");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Range), "Range");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(MultiLanguageProperty), "Lang");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(RelationshipElement), "Rel");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(ReferenceElement), "Ref");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Entity), "Ent");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(BasicEventElement), "Evt");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(AnnotatedRelationshipElement), "RelA");
+        AppendNodeTypeIfMatchesType(tagObject, nodeType, typeof(Capability), "Cap");
+        
+        AppendSubmodelElementNodeType(tagObject, nodeType);
+
+        return nodeType.ToString();
+    }
+
+    private bool IsReadme()
+    {
+        return Tag is string && Text.Contains("/readme");
+    }
+
+    private bool IsEncrypted()
+    {
+        return Program.envSymbols[EnvironmentIndex] == EnvironmentSymbol;
+    }
+
+    private void AppendNodeTypeIfMatchesType(object tagObject, StringBuilder builder, Type type, string appendString)
+    {
+        if (tagObject is not null && tagObject.GetType() == type)
+        {
+            builder.Append(appendString);
+        }
+    }
+
+    private static void AppendSubmodelElementNodeType(object tagObject, StringBuilder builder)
+    {
+        if (tagObject is not ISubmodelElement submodelElement)
+        {
+            return;
+        }
+        switch (submodelElement)
+        {
+            case SubmodelElementList:
+                builder.Append("SML");
+                break;
+            case SubmodelElementCollection:
+                builder.Append("Coll");
+                break;
+            case Property:
+                builder.Append("Prop");
+                break;
+        }
+    }
 }

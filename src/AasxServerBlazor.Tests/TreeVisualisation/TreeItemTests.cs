@@ -369,4 +369,303 @@ public class TreeItemTests
     }
 
     #endregion
+
+    #region GetSymbolicRepresentation
+
+    [Fact]
+    public void GetSymbols_WhenTagIsNull_ShouldReturnEmptyString()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = null};
+
+        // Act
+        var result = treeItem.GetSymbolicRepresentation();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void GetSymbols_WhenTagIsNotAssetAdministrationShell_ShouldReturnEmptyString()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = new object()};
+
+        // Act
+        var result = treeItem.GetSymbolicRepresentation();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(999)]
+    [InlineData(-1)]
+    public void GetSymbols_WhenEnvironmentIndexIsOutOfRange_ShouldReturnEmptyString(int environmentIndex)
+    {
+        // Arrange
+        var assetAdministrationShell = _fixture.Create<AssetAdministrationShell>();
+        var treeItem = new TreeItem {Tag = assetAdministrationShell, EnvironmentIndex = environmentIndex};
+
+        // Act
+        var result = treeItem.GetSymbolicRepresentation();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("L;S;V", "ENCRYPTED SIGNED VALIDATED")]
+    [InlineData("S;L;V", "SIGNED ENCRYPTED VALIDATED")]
+    [InlineData("S;V;L", "SIGNED VALIDATED ENCRYPTED")]
+    [InlineData("V;S;L", "VALIDATED SIGNED ENCRYPTED")]
+    [InlineData("L;S", "ENCRYPTED SIGNED")]
+    [InlineData("S;L", "SIGNED ENCRYPTED")]
+    [InlineData("V", "VALIDATED")]
+    [InlineData("S", "SIGNED")]
+    [InlineData("L", "ENCRYPTED")]
+    [InlineData("", "")]
+    public void GetSymbols_WhenAssetAdministrationShellAndValidSymbols_ShouldReturnExpectedString(string symbols, string expectedSymbols)
+    {
+        // Arrange
+        var assetAdministrationShell = _fixture.Create<AssetAdministrationShell>();
+        var envSymbols = new[] {symbols};
+        Program.envSymbols = envSymbols;
+        var treeItem = new TreeItem {Tag = assetAdministrationShell, EnvironmentIndex = 0};
+
+        // Act
+        var result = treeItem.GetSymbolicRepresentation();
+
+        // Assert
+        result.Should().Be(expectedSymbols);
+    }
+
+    #endregion
+
+    #region BuildNodeRepresentation
+
+    [Fact]
+    public void ViewNodeType_WhenTypeIsNotNull_ShouldReturnType()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Type = "SampleType"};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("SampleType ");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsStringAndTextContainsReadme_ShouldReturnText()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Text = "/readme", Tag = "SampleTag"};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("/readme");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsNullAndEnvironmentIndexIsL_ShouldReturnAASX2()
+    {
+        // Arrange
+        var envSymbols = new[] {"L"};
+        Program.envSymbols = envSymbols;
+        var treeItem = new TreeItem {EnvironmentIndex = 0};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("AASX2");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsAssetAdministrationShell_ShouldReturnAAS()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<AssetAdministrationShell>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("AAS");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsSubmodel_ShouldReturnSub()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<Submodel>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Sub");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsISubmodelElementSubclass_ShouldReturnCorrectSubtypeName()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<SubmodelElementList>()}; // Any subclass of ISubmodelElement
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("SML");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsOperation_ShouldReturnOpr()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<Operation>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Opr");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsFile_ShouldReturnFile()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<AasCore.Aas3_0.File>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("File");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsBlob_ShouldReturnBlob()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<Blob>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Blob");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsRange_ShouldReturnRange()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<AasCore.Aas3_0.Range>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Range");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsMultiLanguageProperty_ShouldReturnLang()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<MultiLanguageProperty>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Lang");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsRelationshipElement_ShouldReturnRel()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<RelationshipElement>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Rel");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsReferenceElement_ShouldReturnRef()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<ReferenceElement>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Ref");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsEntity_ShouldReturnEnt()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<Entity>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Ent");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsBasicEventElement_ShouldReturnEvt()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<BasicEventElement>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Evt");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsAnnotatedRelationshipElement_ShouldReturnRelA()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<AnnotatedRelationshipElement>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("RelA");
+    }
+
+    [Fact]
+    public void ViewNodeType_WhenTagIsCapability_ShouldReturnCap()
+    {
+        // Arrange
+        var treeItem = new TreeItem {Tag = _fixture.Create<Capability>()};
+
+        // Act
+        var result = treeItem.BuildNodeRepresentation();
+
+        // Assert
+        result.Should().Be("Cap");
+    }
+
+    #endregion
 }
