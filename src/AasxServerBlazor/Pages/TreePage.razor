@@ -176,12 +176,12 @@
                     }
                 }
 
-                var nodeBuilder = new TreeNodeBuilder();
+                var nodeBuilder = TreeDetailsBuilderFactory.Create(SelectedNode);
                 for (var line = 0; line < 20; line++)
                 {
-                    var nodeDetails0 = nodeBuilder.CreateDetails(SelectedNode, line, 0);
-                    var nodeDetails1 = nodeBuilder.CreateDetails(SelectedNode, line, 1);
-                    var nodeDetails2 = nodeBuilder.CreateDetails(SelectedNode, line, 2);
+                    var nodeDetails0 = nodeBuilder.Build(SelectedNode, line, 0);
+                    var nodeDetails1 = nodeBuilder.Build(SelectedNode, line, 1);
+                    var nodeDetails2 = nodeBuilder.Build(SelectedNode, line, 2);
                     if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
                         var detailsId = "SelectedNodeDetailsLeft_" + line;
