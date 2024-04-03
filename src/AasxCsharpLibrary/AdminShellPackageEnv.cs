@@ -403,7 +403,7 @@ namespace AdminShellNS
                 // get the origin from the package
                 PackagePart originPart = null;
                 var xs = package.GetRelationshipsByType(
-                    "http://www.admin-shell.io/aasx/relationships/aasx-origin");
+                    "http://admin-shell.io/aasx/relationships/aasx-origin");
                 foreach (var x in xs)
                     if (x.SourceUri.ToString() == "/")
                     {
@@ -416,12 +416,30 @@ namespace AdminShellNS
                         break;
                     }
 
+
+                if (originPart == null)
+                {
+                    xs = package.GetRelationshipsByType(
+                        "http://www.admin-shell.io/aasx/relationships/aasx-origin");
+                    foreach (var x in xs)
+                        if (x.SourceUri.ToString() == "/")
+                        {
+                            //originPart = package.GetPart(x.TargetUri);
+                            var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
+                            if (package.PartExists(absoluteURI))
+                            {
+                                originPart = package.GetPart(absoluteURI);
+                            }
+                            break;
+                        }
+                }
+
                 if (originPart == null)
                     throw (new Exception("Unable to find AASX origin. Aborting!"));
 
                 // get the specs from the package
                 PackagePart specPart = null;
-                xs = originPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-spec");
+                xs = originPart.GetRelationshipsByType("http://admin-shell.io/aasx/relationships/aas-spec");
                 foreach (var x in xs)
                 {
                     //specPart = package.GetPart(x.TargetUri);
@@ -431,6 +449,21 @@ namespace AdminShellNS
                         specPart = package.GetPart(absoluteURI);
                     }
                     break;
+                }
+
+                if (specPart == null)
+                {
+                    xs = originPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-spec");
+                    foreach (var x in xs)
+                    {
+                        //specPart = package.GetPart(x.TargetUri);
+                        var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
+                        if (package.PartExists(absoluteURI))
+                        {
+                            specPart = package.GetPart(absoluteURI);
+                        }
+                        break;
+                    }
                 }
 
                 if (specPart == null)
