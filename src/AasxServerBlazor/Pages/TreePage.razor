@@ -17,14 +17,14 @@
 
 @implements IDisposable
 
-<div class="col-12 row">
+<div class="column-12 row">
     <br/>
-    <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
+    <div class="column-5" style="border-width:3px; border-style: solid; border-columnor: blue; border-radius: 8px; background-columnor:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
         @updateVisibleTree(Items, SelectedNode)
         @if (Program.isLoading)
         {
-            <span style="color:white;background-color:blue;">Loading...</span>
+            <span style="columnor:white;background-columnor:blue;">Loading...</span>
         }
         else
         {
@@ -76,47 +76,47 @@
                                 withAllow = false;
                             if (access)
                             {
-                                <span style="color:green;background-color:green;">&nbsp&nbsp</span>
+                                <span style="columnor:green;background-columnor:green;">&nbsp&nbsp</span>
                                 <span>&nbsp</span>
                             }
                             else
                             {
                                 if (!withAllow)
                                 {
-                                    <span style="color:red;background-color:red;">&nbsp&nbsp</span>
+                                    <span style="columnor:red;background-columnor:red;">&nbsp&nbsp</span>
                                     <span>&nbsp</span>
                                 }
                                 else
                                 {
-                                    <span style="color:red;background-color:red;">&nbsp</span>
-                                    <span style="color:green;background-color:green;">&nbsp</span>
+                                    <span style="columnor:red;background-columnor:red;">&nbsp</span>
+                                    <span style="columnor:green;background-columnor:green;">&nbsp</span>
                                     <span>&nbsp</span>
                                 }
                             }
                         }
                     }
 
-                    <span style="color:white;background-color:blue;">@context.BuildNodeRepresentation()</span>
+                    <span style="columnor:white;background-columnor:blue;">@context.BuildNodeRepresentation()</span>
                     @context.GetIdentifier()
                     @if (Program.withPolicy && getPolicy != "")
                     {
-                        <span style="color:blue">&nbsp @getPolicy</span>
+                        <span style="columnor:blue">&nbsp @getPolicy</span>
                     }
 
-                    <span style="color:blue;font-size:14px">@context.GetSymbolicRepresentation()</span>
-                    <span style="color:lightgray;font-size:14px">@context.GetTimeStamp()</span>
+                    <span style="columnor:blue;font-size:14px">@context.GetSymbolicRepresentation()</span>
+                    <span style="columnor:lightgray;font-size:14px">@context.GetTimeStamp()</span>
                 }
             </TitleTemplate>
         </Tree>
     </div>
-    <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
+    <div class="column-7" style="border-width: 3px; border-style: solid; border-columnor: blue; border-radius: 8px; position: sticky; background-columnor:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
                 if (SelectedNode != null)
                 {
                     if (!(SelectedNode.Tag is string))
                     {
-                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@SelectedNode.BuildNodeRepresentation()</span>
+                        <span style="columnor:white;background-columnor:blue;" id="SelectedNodeInfoType">@SelectedNode.BuildNodeRepresentation()</span>
                         <span id="SelectedNodeInfoId">@SelectedNode.GetIdentifier()</span>
                         <br>
                     }
@@ -185,7 +185,7 @@
                     if (nodeDetails0 != "" && nodeDetails1 != "")
                     {
                         var detailsId = "SelectedNodeDetailsLeft_" + line;
-                        <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
+                        <span style="columnor:white;background-columnor:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
                         <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
                         <br>
@@ -194,13 +194,13 @@
 
                 if (SelectedNode != null && SelectedNode.Tag is IReferable r)
                 {
-                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <span style="columnor:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
                     <br/>
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button>
+                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray" @onclick="setTimeStamp">TIMESTAMP</button>
                     <br/>
-                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <span style="columnor:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
                     <br/>
-                    <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <span style="columnor:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
 
                     <br/>
                     @code {
@@ -236,7 +236,7 @@
                         var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
                         if (toPublish)
                         {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
+                            <button style="columnor:white;background-columnor:blue" @onclick="resetSubmodelToPublish">Publish</button>
                         }
                         else
                         {
@@ -245,7 +245,7 @@
 
                         if (toSubscribe)
                         {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
+                            <button style="columnor:white;background-columnor:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
                         }
                         else
                         {
@@ -283,8 +283,8 @@
 
                 if (SelectedNode != null && SelectedNode.Tag is Property && Program.edit)
                 {
-                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
-                    <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
+                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-columnor: black;"/>
+                    <span style="border-width: 1px; border-columnor: black; background-columnor: blue;">@CurrentValue</span>
                     <br>
                     @code { private string CurrentValue { get; set; } }
                     if (CurrentValue != null && CurrentValue != "")
@@ -307,7 +307,7 @@
                 {
                     if (SelectedNode.Tag is AssetAdministrationShell)
                     {
-                        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
+                        <button style="border-width: 1px; border-columnor: black; columnor: white; background-columnor: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
                         <br/>
                         var qrCodeService = new QrCodeService();
                         var qrcodeLink = QrCodeService.GetQrCodeLink(SelectedNode);
@@ -344,7 +344,7 @@
                 {
                     var idEncoded = Base64UrlEncoder.Encode(sm.Id);
                     var path = Program.externalBlazor + "/submodels/" + idEncoded;
-                    <span style="color:white;background-color:blue;">URL:</span>
+                    <span style="columnor:white;background-columnor:blue;">URL:</span>
                     <span>&nbsp</span>
                     <a href="@path" target="_blank">@path</a>
                     <br>
@@ -381,7 +381,7 @@
 
                     var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
                     path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
-                    <span style="color:white;background-color:blue;">URL:</span>
+                    <span style="columnor:white;background-columnor:blue;">URL:</span>
                     <span>&nbsp</span>
                     <a href="@path" target="_blank">@path</a>
                     <br>
@@ -470,34 +470,34 @@
                                 <InputDate id="filterToDate" @bind-Value="plotFilter.EndDate"/>
                                 <input type="time" @bind-value="plotFilter.EndTime"/>
                                 <div>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray"
                                             type="submit">
                                         Apply
                                     </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray"
                                             @onclick="plotFilter.SetInitialFilterState">
                                         Reset
                                     </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray"
                                             @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateForDay(0); }">
                                         Today
                                     </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray"
                                             @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateForDay(-1); }">
                                         Yesterday
                                     </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray"
                                             @onclick="() => plotFilter.SetFilterStateForDay(--plotFilterTsdOffset)">
                                         Prev day
                                     </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                                    <button style="border-width: 1px; border-columnor: black; background-columnor: lightgray"
                                             @onclick="() => plotFilter.SetFilterStateForDay(++plotFilterTsdOffset)">
                                         Next day
                                     </button>
                                 </div>
                             </EditForm>
 
-                            <div class="d-flex flex-column">
+                            <div class="d-flex flex-columnumn">
                                 <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;"/>
                                 <span class="text-muted" style="font-size:14px;">
                                     Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
@@ -579,15 +579,15 @@
                     if (be.Observed != null)
                     {
                         var okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
-                        <span style="color:white;background-color:blue;">Observed</span>
+                        <span style="columnor:white;background-columnor:blue;">Observed</span>
                         <span>@(" " + okey)</span>
                         <br/>
                         var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
                         if (refsme != null)
                         {
-                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                            <span style="columnor:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
                             <br/>
-                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                            <span style="columnor:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
                             <br/>
                         }
                         else

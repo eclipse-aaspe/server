@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -7,75 +8,89 @@ namespace AasxServerBlazor.TreeVisualisation.Builders;
 
 public class TreeNodeBuilder
 {
-    public string CreateDetails(TreeItem treeItem, int line, int col)
+    public string CreateDetails(TreeItem treeItem, int line, int column)
     {
         if (treeItem == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        var ret = "";
+        var treeDetailsInformation = string.Empty;
 
-        var o = treeItem.Tag;
+        var treeItemTag = treeItem.Tag;
 
-        if (o == null)
+        if (treeItemTag == null)
         {
-            return "";
+            return string.Empty;
         }
 
-        if (o is AssetAdministrationShell)
+        if (treeItemTag is AssetAdministrationShell)
         {
             string subjectIssuer = null;
 
-            ret = "";
-            var aas = o as AssetAdministrationShell;
+            treeDetailsInformation = string.Empty;
+            var aas = treeItemTag as AssetAdministrationShell;
 
             var asset = aas.AssetInformation;
 
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "ID";
-                    if (col == 1)
-                        ret = aas.Id + "";
-                    if (col == 2)
-                        ret = " ==> " + Base64UrlEncoder.Encode(aas.Id) + "";
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "ID",
+                        1 => aas.Id + string.Empty,
+                        2 => " ==> " + Base64UrlEncoder.Encode(aas.Id) + string.Empty,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 1:
                     if (asset != null)
                     {
-                        if (col == 0)
-                            ret = "ASSET";
-                        if (col == 1)
-                            ret = asset.GlobalAssetId;
+                        treeDetailsInformation = column switch
+                        {
+                            0 => "ASSET",
+                            1 => asset.GlobalAssetId,
+                            _ => treeDetailsInformation
+                        };
                     }
 
                     break;
                 case 2:
                     if (asset != null)
                     {
-                        if (col == 0)
-                            ret = "ASSETID";
-                        if (col == 1)
-                            ret = asset.GlobalAssetId + "";
-                        if (col == 2)
-                            if (asset.GlobalAssetId != null)
+                        switch (column)
+                        {
+                            case 0:
+                                treeDetailsInformation = "ASSETID";
+                                break;
+                            case 1:
+                                treeDetailsInformation = asset.GlobalAssetId + string.Empty;
+                                break;
+                            case 2:
                             {
-                                ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + "";
+                                if (asset.GlobalAssetId != null)
+                                {
+                                    treeDetailsInformation = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + string.Empty;
+                                }
+
+                                break;
                             }
+                        }
                     }
 
                     break;
                 case 3:
-                    if (asset != null)
+                    switch (column)
                     {
-                        if (col == 0)
-                            ret = "ASSETID URLENCODED";
-                        if (col == 1)
+                        case 0:
+                            treeDetailsInformation = "ASSETID URLENCODED";
+                            break;
+                        case 1:
                         {
-                            string url = WebUtility.UrlEncode(asset.GlobalAssetId);
-                            ret = url;
+                            var url = WebUtility.UrlEncode(asset.GlobalAssetId);
+                            treeDetailsInformation = url;
+                            break;
                         }
                     }
 
@@ -83,181 +98,203 @@ public class TreeNodeBuilder
                 case 4:
                     if (aas.Extensions != null)
                     {
-                        if (col == 0)
-                            ret = "Extensions";
-                        if (col == 1)
+                        treeDetailsInformation = column switch
                         {
-                            ret = "";
-                            foreach (var e in aas.Extensions)
-                            {
-                                ret += e.Name + " : " + e.Value + "; ";
-                            }
-                        }
+                            0 => "Extensions",
+                            1 => aas.Extensions.Aggregate(string.Empty, (current, e) => current + (e.Name + " : " + e.Value + "; ")),
+                            _ => treeDetailsInformation
+                        };
                     }
 
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is Submodel)
+        if (treeItemTag is Submodel)
         {
-            var sm = o as Submodel;
-            ret = "";
+            var submodel = treeItemTag as Submodel;
+            treeDetailsInformation = string.Empty;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "ID";
-                    if (col == 1)
-                        ret = sm.Id + "";
-                    if (col == 2)
-                        ret = " ==> " + Base64UrlEncoder.Encode(sm.Id) + "";
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "ID",
+                        1 => submodel.Id + string.Empty,
+                        2 => " ==> " + Base64UrlEncoder.Encode(submodel.Id) + string.Empty,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = sm.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = submodel.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 2:
-                    ret = getQualifiers(sm.Qualifiers, col);
+                    treeDetailsInformation = getQualifiers(submodel.Qualifiers, column);
                     break;
                 case 3:
-                    if (sm.Extensions != null)
+                    if (submodel.Extensions != null)
                     {
-                        if (col == 0)
-                            ret = "Extensions";
-                        if (col == 1)
+                        treeDetailsInformation = column switch
                         {
-                            ret = "";
-                            foreach (var e in sm.Extensions)
-                            {
-                                ret += e.Name + " : " + e.Value + "; ";
-                            }
-                        }
+                            0 => "Extensions",
+                            1 => submodel.Extensions.Aggregate(string.Empty, (current, e) => current + (e.Name + " : " + e.Value + "; ")),
+                            _ => treeDetailsInformation
+                        };
                     }
 
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is Property)
+        if (treeItemTag is Property)
         {
-            var prop = o as Property;
-            ret = "";
+            var prop = treeItemTag as Property;
+            treeDetailsInformation = string.Empty;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = prop.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = prop.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = "Value Type";
-                    if (col == 1)
-                        ret = prop.ValueType + "";
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Value Type",
+                        1 => prop.ValueType + string.Empty,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                        ret = prop.Value + "";
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Value",
+                        1 => prop.Value + string.Empty,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 3:
-                    ret = getQualifiers(prop.Qualifiers, col);
+                    treeDetailsInformation = getQualifiers(prop.Qualifiers, column);
                     break;
                 case 4:
-                    if (col == 0)
-                        ret = string.Empty;
+                    if (column == 0)
+                        treeDetailsInformation = string.Empty;
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is Entity)
+        if (treeItemTag is Entity entity)
         {
-            var e = o as Entity;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = e.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = entity.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = "Entity Type";
-                    if (col == 1)
-                        ret = e.EntityType + "";
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Entity Type",
+                        1 => entity.EntityType + string.Empty,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 2:
-                    ret = "";
-                    if (e.EntityType == EntityType.SelfManagedEntity)
+                    treeDetailsInformation = string.Empty;
+                    if (entity.EntityType == EntityType.SelfManagedEntity)
                     {
-                        if (e.GlobalAssetId != null)
+                        if (entity.GlobalAssetId != null)
                         {
-                            if (col == 0)
-                                ret = "Asset";
-                            if (col == 1)
+                            switch (column)
                             {
-                                var k = e.GlobalAssetId;
+                                case 0:
+                                    treeDetailsInformation = "Asset";
+                                    break;
+                                case 1:
+                                {
+                                    break;
+                                }
                             }
                         }
 
-                        if (e.SpecificAssetIds != null)
+                        if (entity.SpecificAssetIds != null)
                         {
-                            if (col == 0)
-                                ret = "Asset";
-                            if (col == 1)
+                            switch (column)
                             {
-                                foreach (var specificAssetId in e.SpecificAssetIds)
+                                case 0:
+                                    treeDetailsInformation = "Asset";
+                                    break;
+                                case 1:
                                 {
-                                    var k = specificAssetId.Value;
-                                    if (!string.IsNullOrEmpty(k))
+                                    foreach (var k in entity.SpecificAssetIds.Select(specificAssetId => specificAssetId.Value).Where(k => !string.IsNullOrEmpty(k)))
                                     {
-                                        ret = "[" + k + "]";
+                                        treeDetailsInformation = "[" + k + "]";
                                     }
+
+                                    break;
                                 }
                             }
                         }
@@ -265,467 +302,566 @@ public class TreeNodeBuilder
 
                     break;
                 case 3:
-                    ret = getQualifiers(e.Qualifiers, col);
+                    treeDetailsInformation = getQualifiers(entity.Qualifiers, column);
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is AasCore.Aas3_0.File f)
+        if (treeItemTag is AasCore.Aas3_0.File file)
         {
-            ret += ", " + f.Value;
+            treeDetailsInformation += ", " + file.Value;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = f.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = file.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                        ret = f.Value;
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Value",
+                        1 => file.Value,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 2:
-                    ret = getQualifiers(f.Qualifiers, col);
+                    treeDetailsInformation = getQualifiers(file.Qualifiers, column);
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is Blob b)
+        if (treeItemTag is Blob blob)
         {
-            ret = "";
+            treeDetailsInformation = string.Empty;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = b.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = blob.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 1:
-                    if (col == 0)
-                        ret = "ContentType";
-                    if (col == 1)
-                        ret = b.ContentType;
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "ContentType",
+                        1 => blob.ContentType,
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 2:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                        ret = System.Text.Encoding.ASCII.GetString(b.Value);
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Value",
+                        1 => System.Text.Encoding.ASCII.GetString(blob.Value),
+                        _ => treeDetailsInformation
+                    };
                     break;
                 case 3:
-                    ret = getQualifiers(b.Qualifiers, col);
+                    treeDetailsInformation = getQualifiers(blob.Qualifiers, column);
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is AasCore.Aas3_0.Range)
+        if (treeItemTag is AasCore.Aas3_0.Range range)
         {
-            var r = o as AasCore.Aas3_0.Range;
-            ret = r.IdShort;
+            treeDetailsInformation = range.IdShort;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Min";
-                    if (col == 1)
-                        ret = r.Min + "";
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Max";
-                    if (col == 1)
-                        ret = r.Max + "";
-                    break;
-                case 3:
-                    ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                case 4:
-                    if (col == 0)
-                        ret = string.Empty;
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-
-            return ret;
-        }
-
-        if (o is Operation)
-        {
-            var op = o as Operation;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = op.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "CountInputs";
-                    if (col == 1)
-                    {
-                        ret = "0";
-                        if (op.InputVariables != null)
-                        {
-                            ret = op.InputVariables.Count + "";
-                        }
-                    }
-
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "CountOutputs";
-                    if (col == 1)
-                    {
-                        ret = "0";
-                        if (op.OutputVariables != null)
-                        {
-                            ret = op.OutputVariables.Count + "";
-                        }
-                    }
-
-                    break;
-                case 3:
-                    ret = getQualifiers(op.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-
-            return ret;
-        }
-
-        if (o is AnnotatedRelationshipElement)
-        {
-            var r = o as AnnotatedRelationshipElement;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "First";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.First;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Second";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.Second;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-
-                    break;
-                case 3:
-                    if (col == 0)
-                        ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-
-            return ret;
-        }
-
-        if (o is RelationshipElement)
-        {
-            var r = o as RelationshipElement;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "First";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.First;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Second";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.Second;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-
-                    break;
-                case 3:
-                    ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-
-            return ret;
-        }
-
-        if (o is ReferenceElement)
-        {
-            var r = o as ReferenceElement;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        if (r.Value != null)
-                        {
-                            var k = r.Value.Keys;
+                            treeDetailsInformation = "NULL";
+                            var k = range.SemanticId?.GetAsExactlyOneKey();
                             if (k != null)
                             {
-                                ret = k.ToStringExtended();
+                                treeDetailsInformation = $"[{k.Type}, {k.Value}]";
                             }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 1:
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Min",
+                        1 => range.Min + string.Empty,
+                        _ => treeDetailsInformation
+                    };
+                    break;
+                case 2:
+                    treeDetailsInformation = column switch
+                    {
+                        0 => "Max",
+                        1 => range.Max + string.Empty,
+                        _ => treeDetailsInformation
+                    };
+                    break;
+                case 3:
+                    treeDetailsInformation = getQualifiers(range.Qualifiers, column);
+                    break;
+                case 4:
+                    if (column == 0)
+                        treeDetailsInformation = string.Empty;
+                    break;
+                default:
+                    treeDetailsInformation = string.Empty;
+                    break;
+            }
+
+            return treeDetailsInformation;
+        }
+
+        if (treeItemTag is Operation operation)
+        {
+            switch (line)
+            {
+                case 0:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = operation.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 1:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "CountInputs";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "0";
+                            if (operation.InputVariables != null)
+                            {
+                                treeDetailsInformation = operation.InputVariables.Count + string.Empty;
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 2:
-                    ret = getQualifiers(r.Qualifiers, col);
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "CountOutputs";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "0";
+                            if (operation.OutputVariables != null)
+                            {
+                                treeDetailsInformation = operation.OutputVariables.Count + string.Empty;
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 3:
+                    treeDetailsInformation = getQualifiers(operation.Qualifiers, column);
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is MultiLanguageProperty)
+        if (treeItemTag is AnnotatedRelationshipElement)
         {
-            var mlp = o as MultiLanguageProperty;
-            var ls = mlp.Value;
-            for (var i = 0; i < ls.Count; i++)
-            {
-                ret += ls[i].Language + " ";
-            }
-
+            var annotatedRelationshipElement = treeItemTag as AnnotatedRelationshipElement;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = mlp.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = annotatedRelationshipElement.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 1:
-                    ret = getQualifiers(mlp.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    if (ls.Count > line - 2)
+                    switch (column)
                     {
-                        if (col == 0)
-                            ret = ls[line - 2].Language;
-                        if (col == 1)
-                            ret = ls[line - 2].Text + "";
+                        case 0:
+                            treeDetailsInformation = "First";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = annotatedRelationshipElement.First;
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = semanticIdKey.Keys.ToStringExtended();
+                            }
+
+                            break;
+                        }
                     }
 
                     break;
+                case 2:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Second";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = annotatedRelationshipElement.Second;
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = semanticIdKey.Keys.ToStringExtended();
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 3:
+                    if (column == 0)
+                        treeDetailsInformation = getQualifiers(annotatedRelationshipElement.Qualifiers, column);
+                    break;
+                default:
+                    treeDetailsInformation = string.Empty;
+                    break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        if (o is ISubmodelElement)
+        if (treeItemTag is RelationshipElement relationshipElement)
         {
-            var sme = o as ISubmodelElement;
             switch (line)
             {
                 case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
+                    switch (column)
                     {
-                        ret = "NULL";
-                        var k = sme.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
                         {
-                            ret = $"[{k.Type}, {k.Value}]";
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = relationshipElement.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
                         }
                     }
 
                     break;
                 case 1:
-                    ret = getQualifiers(sme.Qualifiers, col);
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "First";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = relationshipElement.First;
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = semanticIdKey.Keys.ToStringExtended();
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 2:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Second";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = relationshipElement.Second;
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = semanticIdKey.Keys.ToStringExtended();
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 3:
+                    treeDetailsInformation = getQualifiers(relationshipElement.Qualifiers, column);
                     break;
                 default:
-                    ret = "";
+                    treeDetailsInformation = string.Empty;
                     break;
             }
 
-            return ret;
+            return treeDetailsInformation;
         }
 
-        return (ret);
+        if (treeItemTag is ReferenceElement referenceElement)
+        {
+            switch (line)
+            {
+                case 0:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = referenceElement.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 1:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Value";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            if (referenceElement.Value != null)
+                            {
+                                var semanticIdKey = referenceElement.Value.Keys;
+                                if (semanticIdKey != null)
+                                {
+                                    treeDetailsInformation = semanticIdKey.ToStringExtended();
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 2:
+                    treeDetailsInformation = getQualifiers(referenceElement.Qualifiers, column);
+                    break;
+                default:
+                    treeDetailsInformation = string.Empty;
+                    break;
+            }
+
+            return treeDetailsInformation;
+        }
+
+        if (treeItemTag is MultiLanguageProperty multiLanguageProperty)
+        {
+            var langStringTextTypes = multiLanguageProperty.Value;
+            treeDetailsInformation = langStringTextTypes.Aggregate(treeDetailsInformation, (current, t) => current + (t.Language + " "));
+
+            switch (line)
+            {
+                case 0:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var semanticIdKey = multiLanguageProperty.SemanticId?.GetAsExactlyOneKey();
+                            if (semanticIdKey != null)
+                            {
+                                treeDetailsInformation = $"[{semanticIdKey.Type}, {semanticIdKey.Value}]";
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 1:
+                    treeDetailsInformation = getQualifiers(multiLanguageProperty.Qualifiers, column);
+                    break;
+                default:
+                    treeDetailsInformation = string.Empty;
+                    if (langStringTextTypes.Count > line - 2)
+                    {
+                        treeDetailsInformation = column switch
+                        {
+                            0 => langStringTextTypes[line - 2].Language,
+                            1 => langStringTextTypes[line - 2].Text + string.Empty,
+                            _ => treeDetailsInformation
+                        };
+                    }
+
+                    break;
+            }
+
+            return treeDetailsInformation;
+        }
+
+        if (treeItemTag is not ISubmodelElement submodelElement) return (treeDetailsInformation);
+        switch (line)
+            {
+                case 0:
+                    switch (column)
+                    {
+                        case 0:
+                            treeDetailsInformation = "Semantic ID";
+                            break;
+                        case 1:
+                        {
+                            treeDetailsInformation = "NULL";
+                            var k = submodelElement.SemanticId?.GetAsExactlyOneKey();
+                            if (k != null)
+                            {
+                                treeDetailsInformation = $"[{k.Type}, {k.Value}]";
+                            }
+
+                            break;
+                        }
+                    }
+
+                    break;
+                case 1:
+                    treeDetailsInformation = getQualifiers(submodelElement.Qualifiers, column);
+                    break;
+                default:
+                    treeDetailsInformation = string.Empty;
+                    break;
+            }
+
+        return treeDetailsInformation;
     }
      
      
-    private static string getQualifiers(List<IQualifier> q, int col)
+    private static string getQualifiers(IReadOnlyList<IQualifier> q, int col)
     {
-        string ret = "";
+        var qualifiers = string.Empty;
 
-        if (q != null && q.Count > 0)
+        if (q == null || q.Count <= 0) return qualifiers;
+        switch (col)
         {
-            if (col == 0)
-                ret = "Qualifiers";
-            if (col == 1)
+            case 0:
+                qualifiers = "Qualifiers";
+                break;
+            case 1:
             {
-                ret = "";
+                qualifiers = string.Empty;
                 for (var i = 0; i < q.Count; i++)
                 {
                     if (i != 0)
-                        ret += ", ";
-                    if (q[i].Type != null && q[i].Type != "")
+                        qualifiers += ", ";
+                    if (q[i].Type != null && q[i].Type != string.Empty)
                     {
-                        ret += q[i].Type + " ";
+                        qualifiers += q[i].Type + " ";
                     }
 
-                    if (q[i].Value != null && q[i].Value != "")
+                    if (q[i].Value != null && q[i].Value != string.Empty)
                     {
-                        ret += "= " + q[i].Value;
+                        qualifiers += "= " + q[i].Value;
                     }
                 }
+
+                break;
             }
         }
 
-        return ret;
+        return qualifiers;
     }
 }

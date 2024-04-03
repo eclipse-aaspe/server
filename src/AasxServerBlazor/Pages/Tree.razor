@@ -25,11 +25,11 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
             itMargin = "margin: 0px; margin-bottom: 3px";
         // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
 
-        <div class="row" style="background-color:aliceblue; padding: 0px; @itMargin">
+        <div class="row" style="background-columnor:aliceblue; padding: 0px; @itMargin">
             @{
                 if (itIsAas)
                 {
-                    <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
+                    <div class="column" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
                             string border = "";
                             var env = AasxServer.Program.env[it.EnvironmentIndex];
@@ -57,7 +57,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                     </div>       
                 }
             }
-            <div class="col" style="width:100%;float:left;vertical-align:central">
+            <div class="column" style="width:100%;float:left;vertical-align:central">
                 @if (hasChilds)
                 {
                     string iconId = "";
