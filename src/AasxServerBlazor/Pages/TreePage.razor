@@ -534,7 +534,7 @@
             @{
                 bool svg;
                 bool url;
-                var detailsImage = createDetailsImage(SelectedNode, out url, out svg);
+                var detailsImage = ImageBuilder.CreateDetailsImage(SelectedNode, out url, out svg);
                 if (detailsImage != "")
                 {
                     if (!svg)
@@ -610,6 +610,7 @@
 @using System.Reflection;
 @using AasxServerBlazor.DateTimeServices
 @using AasxServerBlazor.TreeVisualisation
+@using AasxServerBlazor.TreeVisualisation.Builders
 @using AasxServerBlazor.WebActions
 @using AasxServerBlazor.WebActions.AasxLinkCreation
 @using Newtonsoft.Json;
@@ -774,101 +775,6 @@
         }
 
         return null;
-    }
-    
-
-    public static string createDetailsImage(TreeItem treeItem, out bool url, out bool svg)
-    {
-        svg = false;
-        url = false;
-
-        if (treeItem == null)
-        {
-            return "";
-        }
-
-        var o = treeItem.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            var aas = o as AssetAdministrationShell;
-            lock (Program.changeAasxFile)
-            {
-                try
-                {
-                    {
-                        if (Program.env[treeItem.EnvironmentIndex] == null)
-                            return "";
-
-                        using (System.IO.Stream s = Program.env[treeItem.EnvironmentIndex].GetLocalThumbnailStream())
-                        {
-                            if (s != null)
-                            {
-                                using (var m = new System.IO.MemoryStream())
-                                {
-                                    s.CopyTo(m);
-                                    return System.Convert.ToBase64String(m.ToArray());
-                                }
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                }
-            }
-        }
-
-        if (o is AasCore.Aas3_0.File f)
-        {
-            // Test for /aasx/
-            if (!string.IsNullOrEmpty(f.Value))
-            {
-                var split = f.Value.Split(new Char[] {'/'});
-                if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
-                {
-                    split = f.Value.Split(new Char[] {'.'});
-                    switch (split.Last().ToLower())
-                    {
-                        case "jpg":
-                        case "bmp":
-                        case "png":
-                        case "svg":
-                            try
-                            {
-                                using (Stream s = Program.env[treeItem.EnvironmentIndex].GetLocalStreamFromPackage(f.Value))
-                                {
-                                    if (s != null)
-                                    {
-                                        using (var m = new MemoryStream())
-                                        {
-                                            if (split.Last().ToLower() == "svg")
-                                            {
-                                                svg = true;
-                                            }
-
-                                            s.CopyTo(m);
-                                            return System.Convert.ToBase64String(m.ToArray());
-                                        }
-                                    }
-                                }
-                            }
-                            catch
-                            {
-                            }
-
-                            break;
-                    }
-                }
-                else
-                {
-                    url = true;
-                    return f.Value;
-                }
-            }
-        }
-
-        return "";
     }
 
     string ViewNodeDetails(TreeItem treeItem, int line, int col)

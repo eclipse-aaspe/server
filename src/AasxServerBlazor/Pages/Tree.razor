@@ -6,6 +6,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 @using MW.Blazor
 @using AasCore.Aas3_0
 @using AasxServerBlazor.TreeVisualisation
+@using AasxServerBlazor.TreeVisualisation.Builders
 
 @typeparam TNode
 @*@using static AdminShellNS.AdminShellV20;*@
@@ -38,7 +39,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                             }
                             bool svg = false;
                             bool url = false;
-                            string detailsImage = createDetailsImage(it, out url, out svg);
+                            string detailsImage = ImageBuilder.CreateDetailsImage(it, out url, out svg);
                             if (detailsImage != "" && !url)
                             {
                                 if (!svg)
