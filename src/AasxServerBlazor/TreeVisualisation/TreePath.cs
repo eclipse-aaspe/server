@@ -7,43 +7,27 @@ public static class TreePath
 {
     public static TreeItem Find(IReadOnlyList<string> path, IReadOnlyList<TreeItem> items)
     {
-        if (path == null || path.Count <= 0)
+        var isPathNonExisting = !(path?.Any() ?? false);
+        var isItemsNonExisting = !(items?.Any() ?? false);
+        
+        if (isPathNonExisting || isItemsNonExisting)
         {
             return null;
         }
 
-        TreeItem found;
-        var k = 0;
-        while (k < items.Count)
+        return FindRecursive(path, items);
+    }
+
+    private static TreeItem FindRecursive(IReadOnlyList<string> path, IEnumerable<TreeItem> items)
+    {
+        var item = items.FirstOrDefault(i => i.Text == path[0]);
+        if (item == null)
         {
-            var i = items[k];
-            if (i.Text != path[0])
-            {
-                k++;
-                continue;
-            }
-
-            var j = 0;
-            found = i;
-            while (++j < path.Count)
-            {
-                if (i.Childs != null)
-                {
-                    found = i.Childs.FirstOrDefault(c => c.Text == path[j]);
-                }
-
-                if (found == null)
-                {
-                    return null;
-                }
-
-                i = found;
-            }
-
-            if (found != null)
-                return found;
+            return null;
         }
 
-        return null;
+        return path.Count == 1
+            ? item
+            : FindRecursive(path.Skip(1).ToList(), item.Childs);
     }
 }
