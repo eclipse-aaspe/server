@@ -1,96 +1,113 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using AasxServer;
 
 namespace AasxServerBlazor.TreeVisualisation.Builders;
 
-public class ImageBuilder
+internal static class ImageBuilder
 {
-    public static string CreateDetailsImage(TreeItem treeItem, out bool url, out bool svg)
+    public static string CreateDetailsImage(TreeItem treeItem, out bool isUrl, out bool isSvg)
     {
-        svg = false;
-        url = false;
+        isSvg = false;
+        isUrl = false;
 
-        if (treeItem == null)
+        if (treeItem == null || treeItem.Tag == null)
         {
             return string.Empty;
         }
 
-        var treeItemTag = treeItem.Tag;
-
-        switch (treeItemTag)
+        return treeItem.Tag switch
         {
-            case AssetAdministrationShell:
-            {
-                lock (Program.changeAasxFile)
-                {
-                    try
-                    {
-                        if (Program.env[treeItem.EnvironmentIndex] == null)
-                            return "";
+            AssetAdministrationShell _ => GetThumbnailFromAssetAdministrationShell(treeItem, out isUrl),
+            AasCore.Aas3_0.File file => GetImageFromFile(file, treeItem, out isUrl, out isSvg),
+            _ => string.Empty
+        };
+    }
 
-                        using var thumbnailStream = Program.env[treeItem.EnvironmentIndex].GetLocalThumbnailStream();
-                        if (thumbnailStream != null)
-                        {
-                            using var memoryStream = new MemoryStream();
-                            thumbnailStream.CopyTo(memoryStream);
-                            return Convert.ToBase64String(memoryStream.ToArray());
-                        }
-                    }
-                    catch
-                    {
-                    }
+    private static string GetThumbnailFromAssetAdministrationShell(TreeItem treeItem, out bool isUrl)
+    {
+        isUrl = false;
+        lock (Program.changeAasxFile)
+        {
+            try
+            {
+                if (Program.env[treeItem.EnvironmentIndex] == null)
+                {
+                    return string.Empty;
                 }
 
-                break;
-            }
-            case AasCore.Aas3_0.File file:
-            {
-                // Test for /aasx/
-                if (!string.IsNullOrEmpty(file.Value))
+                using var thumbnailStream = Program.env[treeItem.EnvironmentIndex].GetLocalThumbnailStream();
+                if (thumbnailStream != null)
                 {
-                    var split = file.Value.Split(new[] {'/'});
-                    if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
-                    {
-                        split = file.Value.Split(new[] {'.'});
-                        switch (split?.Last().ToLower())
-                        {
-                            case "jpg":
-                            case "bmp":
-                            case "png":
-                            case "svg":
-                                try
-                                {
-                                    using var localStreamFromPackage = Program.env[treeItem.EnvironmentIndex].GetLocalStreamFromPackage(file.Value);
-                                    if (localStreamFromPackage != null)
-                                    {
-                                        using var memoryStream = new MemoryStream();
-                                        if (split?.Last().ToLower() == "svg")
-                                        {
-                                            svg = true;
-                                        }
-
-                                        localStreamFromPackage.CopyTo(memoryStream);
-                                        return Convert.ToBase64String(memoryStream.ToArray());
-                                    }
-                                }
-                                catch
-                                {
-                                }
-
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        url = true;
-                        return file.Value;
-                    }
+                    using var memoryStream = new MemoryStream();
+                    thumbnailStream.CopyTo(memoryStream);
+                    return Convert.ToBase64String(memoryStream.ToArray());
                 }
-
-                break;
             }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"{nameof(GetThumbnailFromAssetAdministrationShell)} threw exception: {exception.Message}");
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetImageFromFile(IFile file, TreeItem treeItem, out bool isUrl, out bool isSvg)
+    {
+        isUrl = false;
+        isSvg = false;
+
+        if (string.IsNullOrEmpty(file.Value))
+        {
+            return string.Empty;
+        }
+
+        var split = file.Value.Split(new[] {'/'});
+        if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+        {
+            split = file.Value.Split(new[] {'.'});
+            if (split.Length <= 0)
+            {
+                return string.Empty;
+            }
+
+            var extension = split[^1].ToLower();
+            switch (extension)
+            {
+                case "jpg":
+                case "bmp":
+                case "png":
+                case "svg":
+                    return GetImageFromPackage(file.Value, treeItem, extension, out isSvg);
+            }
+        }
+        else
+        {
+            isUrl = true;
+            return file.Value;
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetImageFromPackage(string filePath, TreeItem treeItem, string extension, out bool isSvg)
+    {
+        isSvg = extension == "svg";
+
+        try
+        {
+            using var localStreamFromPackage = Program.env[treeItem.EnvironmentIndex].GetLocalStreamFromPackage(filePath);
+            if (localStreamFromPackage != null)
+            {
+                using var memoryStream = new MemoryStream();
+                localStreamFromPackage.CopyTo(memoryStream);
+                return Convert.ToBase64String(memoryStream.ToArray());
+            }
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"{nameof(GetImageFromPackage)} threw exception: {exception.Message}");
         }
 
         return string.Empty;

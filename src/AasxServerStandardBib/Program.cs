@@ -676,7 +676,7 @@ namespace AasxServer
 
         public static bool initializingRegistry = false;
 
-        public static object changeAasxFile = new object();
+        public static readonly object changeAasxFile = new();
 
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
