@@ -699,14 +699,15 @@
                     selectedNode = null;
                     if (isSelected)
                     {
-                        selectedNode = findPath(selectedNodePath);
+                        selectedNode = TreePath.Find(selectedNodePath,Items);
                     }
 
                     if (isExpanded)
                     {
                         foreach (var path in expandedNodesPath)
                         {
-                            var p = findPath(path);
+                            var p = TreePath.Find(path,Items);
+                            ;
                             if (p != null)
                                 ExpandedNodes.Add(p);
                         }
@@ -730,54 +731,6 @@
         return "";
     }
 
-    TreeItem findPath(List<string> path)
-    {
-        if (path != null && path.Count > 0)
-        {
-            TreeItem found = null;
-            int k = 0;
-            while (k < Items.Count)
-            {
-                var i = Items[k];
-                if (i.Text != path[0])
-                {
-                    k++;
-                    continue;
-                }
-
-                var j = 0;
-                found = i;
-                while (++j < path.Count)
-                {
-                    if (i.Childs != null)
-                    {
-                        found = null;
-                        foreach (var c in i.Childs)
-                        {
-                            if (c.Text == path[j])
-                            {
-                                found = c;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (found == null)
-                    {
-                        return null;
-                    }
-
-                    i = found;
-                }
-
-                if (found != null)
-                    return found;
-            }
-        }
-
-        return null;
-    }
-    
 }
 
 <style>
