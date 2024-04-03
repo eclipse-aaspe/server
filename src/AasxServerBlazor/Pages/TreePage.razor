@@ -96,21 +96,17 @@
                                 withAllow = false;
                             if (access)
                             {
-                                <span style="color:green;background-color:green;">&nbsp&nbsp</span>
-                                <span>&nbsp</span>
+                                <span style="color:green;background-color:green;">Access</span>
                             }
                             else
                             {
                                 if (!withAllow)
                                 {
-                                    <span style="color:red;background-color:red;">&nbsp&nbsp</span>
-                                    <span>&nbsp</span>
+                                    <span style="color:red;background-color:red;">Not Allowed</span>
                                 }
                                 else
                                 {
-                                    <span style="color:red;background-color:red;">&nbsp</span>
-                                    <span style="color:green;background-color:green;">&nbsp</span>
-                                    <span>&nbsp</span>
+                                    <span style="color:red;background-color:red;">Allowed</span>
                                 }
                             }
                         }
@@ -120,7 +116,7 @@
                     @context.GetIdentifier()
                     @if (Program.withPolicy && getPolicy != "")
                     {
-                        <span style="color:blue">&nbsp @getPolicy</span>
+                        <span style="color:blue">@getPolicy</span>
                     }
 
                     <span style="color:blue;font-size:14px">@context.GetSymbolicRepresentation()</span>
@@ -207,7 +203,7 @@
                         var detailsId = "SelectedNodeDetailsLeft_" + line;
                         <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
                         detailsId = "SelectedNodeDetailsRight_" + line;
-                        <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
+                        <span id="@detailsId">@nodeDetails1 @nodeDetails2</span>
                         <br>
                     }
                 }
@@ -365,7 +361,6 @@
                     var idEncoded = Base64UrlEncoder.Encode(sm.Id);
                     var path = Program.externalBlazor + "/submodels/" + idEncoded;
                     <span style="color:white;background-color:blue;">URL:</span>
-                    <span>&nbsp</span>
                     <a href="@path" target="_blank">@path</a>
                     <br>
                 }
@@ -402,7 +397,6 @@
                     var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
                     path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                     <span style="color:white;background-color:blue;">URL:</span>
-                    <span>&nbsp</span>
                     <a href="@path" target="_blank">@path</a>
                     <br>
                 }
