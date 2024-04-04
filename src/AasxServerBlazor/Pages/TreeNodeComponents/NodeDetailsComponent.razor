@@ -215,25 +215,27 @@
                     {
                         CurrentValue = string.Empty;
                     }
+
                     property.Value = CurrentValue;
                     property.SetTimeStamp(DateTime.UtcNow);
                     Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
                     Program.signalNewData(0);
                 }
 
-                CurrentValue =  string.Empty;
+                CurrentValue = string.Empty;
             }
         }
 
-        if (SelectedNode != null && SelectedNode.Tag is (AssetAdministrationShell or File) and AssetAdministrationShell)@code {
+        if (SelectedNode != null && SelectedNode.Tag is (AssetAdministrationShell or File) and AssetAdministrationShell)
+        @code {
 
-                            private void RunCreateQrCodeImage()
-                            {
-                                var qrCodeService = new QrCodeService();
-                                qrCodeService.CreateQrCodeImage(SelectedNode);
-                            }
+            private void RunCreateQrCodeImage()
+            {
+                var qrCodeService = new QrCodeService();
+                qrCodeService.CreateQrCodeImage(SelectedNode);
+            }
 
-                        }
+        }
         {
             <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="RunCreateQrCodeImage">QRCODE</button>
             <br/>
@@ -256,8 +258,6 @@
                 <a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
                 @:<br>
             }
-                        
-
         }
 
         if (SelectedNode != null && SelectedNode.Tag is Submodel submodel)
@@ -513,10 +513,11 @@
         }
     }
 
-@inject BlazorSessionService BlazorSessionService;
+    @inject BlazorSessionService BlazorSessionService;
+
     @code {
         [Parameter] public TreeItem SelectedNode { get; set; }
-        
+
         DateTime _timeStampPlot = new();
         SubmodelElementCollection _collectionPlot = null;
         System.Diagnostics.Stopwatch _watchTimeToProcessImage = new();
