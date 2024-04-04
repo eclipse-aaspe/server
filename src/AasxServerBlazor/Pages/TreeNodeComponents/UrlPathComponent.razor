@@ -3,56 +3,96 @@
 @using AasxServer
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-@code {
-    [Parameter] public TreeItem SelectedNode { get; set; }
+@if (!string.IsNullOrEmpty(SubmodelUrlPath(SelectedNode)))
+{
+    <span style="color:white;background-color:blue;">URL:</span>
+    <a href="@SubmodelUrlPath(SelectedNode)" target="_blank">@SubmodelUrlPath(SelectedNode)</a>
+    <br>
 }
 
-@{
-    if (SelectedNode is {Tag: Submodel submodel})
+@if (!string.IsNullOrEmpty(SubmodelElementUrlPath(SelectedNode)))
+{
+    <span style="color:white;background-color:blue;">URL:</span>
+    <a href="@SubmodelElementUrlPath(SelectedNode)" target="_blank">@SubmodelElementUrlPath(SelectedNode)</a>
+    <br>
+}
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
+
+    private string SubmodelUrlPath(TreeItem node)
     {
+        if (node?.Tag is not Submodel submodel)
+        {
+            return null;
+        }
+
         var idEncoded = Base64UrlEncoder.Encode(submodel.Id);
-        var path = Program.externalBlazor + "/submodels/" + idEncoded;
-        <span style="color:white;background-color:blue;">URL:</span>
-        <a href="@path" target="_blank">@path</a>
-        <br>
+        return $"{Program.externalBlazor}/submodels/{idEncoded}";
     }
 
-    if (SelectedNode is {Tag: ISubmodelElement submodelElement})
+    private string SubmodelElementUrlPath(TreeItem node)
     {
-        var path = submodelElement.IdShort;
-        var parent = submodelElement.Parent as IReferable;
-        while (parent is not Submodel)
+        if (node?.Tag is not ISubmodelElement submodelElement)
+            return null;
+
+        var path = GetSubmodelElementPath(submodelElement);
+        var submodelIdEncoded = GetSubmodelIdEncoded(submodelElement);
+        return $"{Program.externalBlazor}/submodels/{submodelIdEncoded}/submodel-elements/{path}";
+    }
+
+    private string GetSubmodelElementPath(ISubmodelElement element)
+    {
+        var path = element.IdShort;
+        var parent = element.Parent as IReferable;
+
+        while (parent != null && !(parent is Submodel))
         {
             if (parent is ISubmodelElementList parentList)
             {
-                if (path != null && path.Equals(submodelElement.IdShort))
-                {
-                    var index = parentList.Value?.IndexOf(submodelElement);
-                    path = "[" + index + "]";
-                }
-
-                path = parentList.IdShort + path;
+                path = GetPathFromElementList(parentList, element, path);
             }
-            else if (parent?.Parent is ISubmodelElementList prevParentList)
+            else if (parent.Parent is ISubmodelElementList prevParentList)
             {
-                var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                path = $"[{index}].{path}";
+                path = GetPathFromPreviousElementList(prevParentList, parent as ISubmodelElement, path);
             }
             else
             {
-                if (parent != null)
-                {
-                    path = $"{parent.IdShort}.{path}";
-                }
+                return null; // Cannot determine parent hierarchy
             }
 
-            parent = (IReferable) parent?.Parent;
+            parent = parent.Parent as IReferable;
         }
 
-        var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-        path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
-        <span style="color:white;background-color:blue;">URL:</span>
-        <a href="@path" target="_blank">@path</a>
-        <br>
+        return path;
     }
+
+    private string GetPathFromElementList(ISubmodelElementList parentList, ISubmodelElement element, string currentPath)
+    {
+        if (currentPath == null || !currentPath.Equals(element.IdShort))
+        {
+            return $"{parentList.IdShort}.{currentPath}";
+        }
+
+        var index = parentList.Value?.IndexOf(element);
+        return $"[{index}]";
+    }
+
+    private string GetPathFromPreviousElementList(ISubmodelElementList prevParentList, ISubmodelElement parentElement, string currentPath)
+    {
+        var index = prevParentList.Value?.IndexOf(parentElement);
+        return $"[{index}].{currentPath}";
+    }
+
+    private string GetSubmodelIdEncoded(ISubmodelElement element)
+    {
+        var parent = element.Parent as IReferable;
+        while (parent != null && !(parent is Submodel))
+        {
+            parent = (IReferable) parent.Parent;
+        }
+
+        return parent is Submodel submodel ? Base64UrlEncoder.Encode(submodel.Id) : null;
+    }
+
 }

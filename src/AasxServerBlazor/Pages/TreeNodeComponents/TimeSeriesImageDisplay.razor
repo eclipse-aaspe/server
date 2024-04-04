@@ -1,0 +1,60 @@
+﻿@using AasxServerBlazor.Data
+@using AasxServerBlazor.DateTimeServices
+@using AasxServerBlazor.TreeVisualisation
+@using AasxServerStandardBib
+@using static AasxServerStandardBib.TimeSeriesPlotting
+
+@inject BlazorSessionService BlazorSessionService
+
+@code {
+    [Parameter] public string TimeSeriesImageBase64 { get; set; }
+    [Parameter] public long ElapsedMsToProcessImage { get; set; }
+    [Parameter] public DateTime TimeStampPlot { get; set; }
+    [Parameter] public PlotFilter PlotFilter { get; set; }
+    [Parameter] public int PlotFilterTsdOffset { get; set; }
+    [Parameter] public Action OnFilterApplied { get; set; }
+
+    private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
+}
+
+<div class="d-flex flex-column">
+    <img @onclick="OnFilterApplied" src="data:image;base64,@TimeSeriesImageBase64" alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;"/>
+    <span class="text-muted" style="font-size:14px;">
+        Image processing took @ElapsedMsToProcessImage ms (Last update: @TimeStampPlot.ToString(TimeFormat))
+    </span>
+</div>
+
+<EditForm Model="@PlotFilter" OnValidSubmit="OnFilterApplied">
+    <label for="filterFromDate">Filter from</label>
+    <InputDate id="filterFromDate" @bind-Value="PlotFilter.StartDate"/>
+    <input type="time" @bind-value="PlotFilter.StartTime"/>
+    <label for="filterToDate">Filter to</label>
+    <InputDate id="filterToDate" @bind-Value="PlotFilter.EndDate"/>
+    <input type="time" @bind-value="PlotFilter.EndTime"/>
+    <div>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                type="submit">
+            Apply
+        </button>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                @onclick="PlotFilter.SetInitialFilterState">
+            Reset
+        </button>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                @onclick="() => { PlotFilterTsdOffset = 0; PlotFilter.SetFilterStateForDay(0); }">
+            Today
+        </button>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                @onclick="() => { PlotFilterTsdOffset = -1; PlotFilter.SetFilterStateForDay(-1); }">
+            Yesterday
+        </button>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                @onclick="() => PlotFilter.SetFilterStateForDay(--PlotFilterTsdOffset)">
+            Prev day
+        </button>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                @onclick="() => PlotFilter.SetFilterStateForDay(++PlotFilterTsdOffset)">
+            Next day
+        </button>
+    </div>
+</EditForm>
