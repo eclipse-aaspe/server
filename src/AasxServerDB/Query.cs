@@ -310,9 +310,9 @@ namespace AasxServerDB
                         sme => sme.Id,
                         (v, sme) => new
                         {
+                            SMId = sme.SMId,
                             SemanticId = sme.SemanticId,
                             IdShort = sme.IdShort,
-                            Id = sme.Id,
                             ParentSme = sme.ParentSMEId,
                             Value = v.Value
                         }
@@ -322,7 +322,7 @@ namespace AasxServerDB
                         (searchIdShort != "" && s.IdShort == searchIdShort)
                     )
                     .Join(db.SMSets,
-                        v => v.Id,
+                        v => v.SMId,
                         s => s.Id,
                         (v, s) => new
                         {
@@ -345,9 +345,9 @@ namespace AasxServerDB
                         sme => sme.Id,
                         (v, sme) => new
                         {
+                            SMId = sme.SMId,
                             SemanticId = sme.SemanticId,
                             IdShort = sme.IdShort,
-                            Id = sme.Id,
                             ParentSme = sme.ParentSMEId,
                             Value = v.Value.ToString()
                         }
@@ -357,7 +357,7 @@ namespace AasxServerDB
                         (searchIdShort != "" && s.IdShort == searchIdShort)
                     )
                     .Join(db.SMSets,
-                        v => v.Id,
+                        v => v.SMId,
                         s => s.Id,
                         (v, s) => new
                         {
@@ -380,9 +380,9 @@ namespace AasxServerDB
                         sme => sme.Id,
                         (v, sme) => new
                         {
+                            SMId = sme.SMId,
                             SemanticId = sme.SemanticId,
                             IdShort = sme.IdShort,
-                            Id = sme.Id,
                             ParentSme = sme.ParentSMEId,
                             Value = v.Value.ToString()
                         }
@@ -392,7 +392,7 @@ namespace AasxServerDB
                         (searchIdShort != "" && s.IdShort == searchIdShort)
                     )
                     .Join(db.SMSets,
-                        v => v.Id,
+                        v => v.SMId,
                         s => s.Id,
                         (v, s) => new
                         {
@@ -423,7 +423,7 @@ namespace AasxServerDB
                 watch.Restart();
 
                 var smeResult = db.SMESets.Where(s =>
-                    hSubmodel.Contains(s.Id) &&
+                    hSubmodel.Contains(s.SMId) &&
                     ((resultSemanticId != "" && s.SemanticId == resultSemanticId) ||
                     (resultIdShort != "" && s.IdShort == resultIdShort))
                     )
@@ -437,7 +437,7 @@ namespace AasxServerDB
                     SmeResult r = new SmeResult();
                     bool found = false;
 
-                    var submodelDB = db.SMSets.Where(s => s.Id == l.Id).First();
+                    var submodelDB = db.SMSets.Where(s => s.Id == l.SMId).First();
                     if (submodelDB != null && (smSemanticId == "" || submodelDB.SemanticId == smSemanticId))
                     {
                         r.value = equal;
